@@ -18,6 +18,9 @@ import (
 // swagger:model versioned-host-requirements
 type VersionedHostRequirements struct {
 
+	// Edge Worker OpenShift node requirements
+	EdgeWorkerRequirements *ClusterHostRequirementsDetails `json:"edge-worker,omitempty"`
+
 	// Master node requirements
 	MasterRequirements *ClusterHostRequirementsDetails `json:"master,omitempty"`
 
@@ -35,6 +38,10 @@ type VersionedHostRequirements struct {
 func (m *VersionedHostRequirements) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateEdgeWorkerRequirements(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateMasterRequirements(formats); err != nil {
 		res = append(res, err)
 	}
@@ -50,6 +57,25 @@ func (m *VersionedHostRequirements) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *VersionedHostRequirements) validateEdgeWorkerRequirements(formats strfmt.Registry) error {
+	if swag.IsZero(m.EdgeWorkerRequirements) { // not required
+		return nil
+	}
+
+	if m.EdgeWorkerRequirements != nil {
+		if err := m.EdgeWorkerRequirements.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("edge-worker")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("edge-worker")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -114,6 +140,10 @@ func (m *VersionedHostRequirements) validateWorkerRequirements(formats strfmt.Re
 func (m *VersionedHostRequirements) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateEdgeWorkerRequirements(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateMasterRequirements(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -129,6 +159,22 @@ func (m *VersionedHostRequirements) ContextValidate(ctx context.Context, formats
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *VersionedHostRequirements) contextValidateEdgeWorkerRequirements(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.EdgeWorkerRequirements != nil {
+		if err := m.EdgeWorkerRequirements.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("edge-worker")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("edge-worker")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

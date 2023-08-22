@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -23,21 +24,29 @@ type InfraEnvCreateParams struct {
 	// A comma-separated list of NTP sources (name or IP) going to be added to all the hosts.
 	AdditionalNtpSources *string `json:"additional_ntp_sources,omitempty"`
 
+	// PEM-encoded X.509 certificate bundle. Hosts discovered by this
+	// infra-env will trust the certificates in this bundle. Clusters formed
+	// from the hosts discovered by this infra-env will also trust the
+	// certificates in this bundle.
+	// Max Length: 65535
+	AdditionalTrustBundle string `json:"additional_trust_bundle,omitempty"`
+
 	// If set, all hosts that register will be associated with the specified cluster.
 	// Format: uuid
 	ClusterID *strfmt.UUID `json:"cluster_id,omitempty"`
 
 	// The CPU architecture of the image (x86_64/arm64/etc).
+	// Enum: [x86_64 aarch64 arm64 ppc64le s390x]
 	CPUArchitecture string `json:"cpu_architecture,omitempty"`
-
-	// discovery kernel arguments
-	DiscoveryKernelArguments KernelArguments `json:"discovery_kernel_arguments,omitempty"`
 
 	// JSON formatted string containing the user overrides for the initial ignition config.
 	IgnitionConfigOverride string `json:"ignition_config_override,omitempty"`
 
 	// image type
 	ImageType ImageType `json:"image_type,omitempty"`
+
+	// kernel arguments
+	KernelArguments KernelArguments `json:"kernel_arguments"`
 
 	// Name of the infra-env.
 	// Required: true
@@ -64,15 +73,23 @@ type InfraEnvCreateParams struct {
 func (m *InfraEnvCreateParams) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateAdditionalTrustBundle(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateClusterID(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateDiscoveryKernelArguments(formats); err != nil {
+	if err := m.validateCPUArchitecture(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateImageType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateKernelArguments(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -98,6 +115,18 @@ func (m *InfraEnvCreateParams) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *InfraEnvCreateParams) validateAdditionalTrustBundle(formats strfmt.Registry) error {
+	if swag.IsZero(m.AdditionalTrustBundle) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("additional_trust_bundle", "body", m.AdditionalTrustBundle, 65535); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *InfraEnvCreateParams) validateClusterID(formats strfmt.Registry) error {
 	if swag.IsZero(m.ClusterID) { // not required
 		return nil
@@ -110,17 +139,51 @@ func (m *InfraEnvCreateParams) validateClusterID(formats strfmt.Registry) error 
 	return nil
 }
 
-func (m *InfraEnvCreateParams) validateDiscoveryKernelArguments(formats strfmt.Registry) error {
-	if swag.IsZero(m.DiscoveryKernelArguments) { // not required
+var infraEnvCreateParamsTypeCPUArchitecturePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["x86_64","aarch64","arm64","ppc64le","s390x"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		infraEnvCreateParamsTypeCPUArchitecturePropEnum = append(infraEnvCreateParamsTypeCPUArchitecturePropEnum, v)
+	}
+}
+
+const (
+
+	// InfraEnvCreateParamsCPUArchitectureX8664 captures enum value "x86_64"
+	InfraEnvCreateParamsCPUArchitectureX8664 string = "x86_64"
+
+	// InfraEnvCreateParamsCPUArchitectureAarch64 captures enum value "aarch64"
+	InfraEnvCreateParamsCPUArchitectureAarch64 string = "aarch64"
+
+	// InfraEnvCreateParamsCPUArchitectureArm64 captures enum value "arm64"
+	InfraEnvCreateParamsCPUArchitectureArm64 string = "arm64"
+
+	// InfraEnvCreateParamsCPUArchitecturePpc64le captures enum value "ppc64le"
+	InfraEnvCreateParamsCPUArchitecturePpc64le string = "ppc64le"
+
+	// InfraEnvCreateParamsCPUArchitectureS390x captures enum value "s390x"
+	InfraEnvCreateParamsCPUArchitectureS390x string = "s390x"
+)
+
+// prop value enum
+func (m *InfraEnvCreateParams) validateCPUArchitectureEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, infraEnvCreateParamsTypeCPUArchitecturePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *InfraEnvCreateParams) validateCPUArchitecture(formats strfmt.Registry) error {
+	if swag.IsZero(m.CPUArchitecture) { // not required
 		return nil
 	}
 
-	if err := m.DiscoveryKernelArguments.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("discovery_kernel_arguments")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("discovery_kernel_arguments")
-		}
+	// value enum
+	if err := m.validateCPUArchitectureEnum("cpu_architecture", "body", m.CPUArchitecture); err != nil {
 		return err
 	}
 
@@ -137,6 +200,23 @@ func (m *InfraEnvCreateParams) validateImageType(formats strfmt.Registry) error 
 			return ve.ValidateName("image_type")
 		} else if ce, ok := err.(*errors.CompositeError); ok {
 			return ce.ValidateName("image_type")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *InfraEnvCreateParams) validateKernelArguments(formats strfmt.Registry) error {
+	if swag.IsZero(m.KernelArguments) { // not required
+		return nil
+	}
+
+	if err := m.KernelArguments.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("kernel_arguments")
 		}
 		return err
 	}
@@ -211,11 +291,11 @@ func (m *InfraEnvCreateParams) validateStaticNetworkConfig(formats strfmt.Regist
 func (m *InfraEnvCreateParams) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateDiscoveryKernelArguments(ctx, formats); err != nil {
+	if err := m.contextValidateImageType(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateImageType(ctx, formats); err != nil {
+	if err := m.contextValidateKernelArguments(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -233,20 +313,6 @@ func (m *InfraEnvCreateParams) ContextValidate(ctx context.Context, formats strf
 	return nil
 }
 
-func (m *InfraEnvCreateParams) contextValidateDiscoveryKernelArguments(ctx context.Context, formats strfmt.Registry) error {
-
-	if err := m.DiscoveryKernelArguments.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("discovery_kernel_arguments")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
-			return ce.ValidateName("discovery_kernel_arguments")
-		}
-		return err
-	}
-
-	return nil
-}
-
 func (m *InfraEnvCreateParams) contextValidateImageType(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.ImageType.ContextValidate(ctx, formats); err != nil {
@@ -254,6 +320,20 @@ func (m *InfraEnvCreateParams) contextValidateImageType(ctx context.Context, for
 			return ve.ValidateName("image_type")
 		} else if ce, ok := err.(*errors.CompositeError); ok {
 			return ce.ValidateName("image_type")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *InfraEnvCreateParams) contextValidateKernelArguments(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.KernelArguments.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("kernel_arguments")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("kernel_arguments")
 		}
 		return err
 	}

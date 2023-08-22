@@ -125,7 +125,7 @@ type DomainResolutionRequestDomain struct {
 
 	// The domain name that should be resolved
 	// Required: true
-	// Pattern: ^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}$
+	// Pattern: ^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}[.]?$
 	DomainName *string `json:"domain_name"`
 }
 
@@ -149,7 +149,7 @@ func (m *DomainResolutionRequestDomain) validateDomainName(formats strfmt.Regist
 		return err
 	}
 
-	if err := validate.Pattern("domain_name", "body", *m.DomainName, `^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}$`); err != nil {
+	if err := validate.Pattern("domain_name", "body", *m.DomainName, `^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*[.])+[a-zA-Z]{2,}[.]?$`); err != nil {
 		return err
 	}
 

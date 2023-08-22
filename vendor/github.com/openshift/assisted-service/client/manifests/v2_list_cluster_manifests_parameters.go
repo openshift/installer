@@ -52,10 +52,12 @@ func NewV2ListClusterManifestsParamsWithHTTPClient(client *http.Client) *V2ListC
 	}
 }
 
-/* V2ListClusterManifestsParams contains all the parameters to send to the API endpoint
-   for the v2 list cluster manifests operation.
+/*
+V2ListClusterManifestsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list cluster manifests operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListClusterManifestsParams struct {
 

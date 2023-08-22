@@ -53,7 +53,7 @@ type HypershiftAgentServiceConfig struct {
 	Status HypershiftAgentServiceConfigStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // HypershiftAgentServiceConfigList contains a list of HypershiftAgentServiceConfigs
 type HypershiftAgentServiceConfigList struct {
 	metav1.TypeMeta `json:",inline"`

@@ -54,10 +54,12 @@ func NewV2UpdateHostInstallProgressParamsWithHTTPClient(client *http.Client) *V2
 	}
 }
 
-/* V2UpdateHostInstallProgressParams contains all the parameters to send to the API endpoint
-   for the v2 update host install progress operation.
+/*
+V2UpdateHostInstallProgressParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update host install progress operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateHostInstallProgressParams struct {
 

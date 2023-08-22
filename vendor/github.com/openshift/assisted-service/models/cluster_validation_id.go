@@ -20,8 +20,12 @@ import (
 type ClusterValidationID string
 
 func NewClusterValidationID(value ClusterValidationID) *ClusterValidationID {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated ClusterValidationID.
+func (m ClusterValidationID) Pointer() *ClusterValidationID {
+	return &m
 }
 
 const (
@@ -47,17 +51,17 @@ const (
 	// ClusterValidationIDMachineCidrEqualsToCalculatedCidr captures enum value "machine-cidr-equals-to-calculated-cidr"
 	ClusterValidationIDMachineCidrEqualsToCalculatedCidr ClusterValidationID = "machine-cidr-equals-to-calculated-cidr"
 
-	// ClusterValidationIDAPIVipDefined captures enum value "api-vip-defined"
-	ClusterValidationIDAPIVipDefined ClusterValidationID = "api-vip-defined"
+	// ClusterValidationIDAPIVipsDefined captures enum value "api-vips-defined"
+	ClusterValidationIDAPIVipsDefined ClusterValidationID = "api-vips-defined"
 
-	// ClusterValidationIDAPIVipValid captures enum value "api-vip-valid"
-	ClusterValidationIDAPIVipValid ClusterValidationID = "api-vip-valid"
+	// ClusterValidationIDAPIVipsValid captures enum value "api-vips-valid"
+	ClusterValidationIDAPIVipsValid ClusterValidationID = "api-vips-valid"
 
-	// ClusterValidationIDIngressVipDefined captures enum value "ingress-vip-defined"
-	ClusterValidationIDIngressVipDefined ClusterValidationID = "ingress-vip-defined"
+	// ClusterValidationIDIngressVipsDefined captures enum value "ingress-vips-defined"
+	ClusterValidationIDIngressVipsDefined ClusterValidationID = "ingress-vips-defined"
 
-	// ClusterValidationIDIngressVipValid captures enum value "ingress-vip-valid"
-	ClusterValidationIDIngressVipValid ClusterValidationID = "ingress-vip-valid"
+	// ClusterValidationIDIngressVipsValid captures enum value "ingress-vips-valid"
+	ClusterValidationIDIngressVipsValid ClusterValidationID = "ingress-vips-valid"
 
 	// ClusterValidationIDAllHostsAreReadyToInstall captures enum value "all-hosts-are-ready-to-install"
 	ClusterValidationIDAllHostsAreReadyToInstall ClusterValidationID = "all-hosts-are-ready-to-install"
@@ -89,8 +93,14 @@ const (
 	// ClusterValidationIDLvmRequirementsSatisfied captures enum value "lvm-requirements-satisfied"
 	ClusterValidationIDLvmRequirementsSatisfied ClusterValidationID = "lvm-requirements-satisfied"
 
+	// ClusterValidationIDMceRequirementsSatisfied captures enum value "mce-requirements-satisfied"
+	ClusterValidationIDMceRequirementsSatisfied ClusterValidationID = "mce-requirements-satisfied"
+
 	// ClusterValidationIDNetworkTypeValid captures enum value "network-type-valid"
 	ClusterValidationIDNetworkTypeValid ClusterValidationID = "network-type-valid"
+
+	// ClusterValidationIDPlatformRequirementsSatisfied captures enum value "platform-requirements-satisfied"
+	ClusterValidationIDPlatformRequirementsSatisfied ClusterValidationID = "platform-requirements-satisfied"
 )
 
 // for schema
@@ -98,7 +108,7 @@ var clusterValidationIdEnum []interface{}
 
 func init() {
 	var res []ClusterValidationID
-	if err := json.Unmarshal([]byte(`["machine-cidr-defined","cluster-cidr-defined","service-cidr-defined","no-cidrs-overlapping","networks-same-address-families","network-prefix-valid","machine-cidr-equals-to-calculated-cidr","api-vip-defined","api-vip-valid","ingress-vip-defined","ingress-vip-valid","all-hosts-are-ready-to-install","sufficient-masters-count","dns-domain-defined","pull-secret-set","ntp-server-configured","lso-requirements-satisfied","ocs-requirements-satisfied","odf-requirements-satisfied","cnv-requirements-satisfied","lvm-requirements-satisfied","network-type-valid"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["machine-cidr-defined","cluster-cidr-defined","service-cidr-defined","no-cidrs-overlapping","networks-same-address-families","network-prefix-valid","machine-cidr-equals-to-calculated-cidr","api-vips-defined","api-vips-valid","ingress-vips-defined","ingress-vips-valid","all-hosts-are-ready-to-install","sufficient-masters-count","dns-domain-defined","pull-secret-set","ntp-server-configured","lso-requirements-satisfied","ocs-requirements-satisfied","odf-requirements-satisfied","cnv-requirements-satisfied","lvm-requirements-satisfied","mce-requirements-satisfied","network-type-valid","platform-requirements-satisfied"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

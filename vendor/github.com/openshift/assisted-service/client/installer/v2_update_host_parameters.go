@@ -54,10 +54,12 @@ func NewV2UpdateHostParamsWithHTTPClient(client *http.Client) *V2UpdateHostParam
 	}
 }
 
-/* V2UpdateHostParams contains all the parameters to send to the API endpoint
-   for the v2 update host operation.
+/*
+V2UpdateHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update host operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateHostParams struct {
 

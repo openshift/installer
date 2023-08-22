@@ -54,10 +54,12 @@ func NewV2ReportMonitoredOperatorStatusParamsWithHTTPClient(client *http.Client)
 	}
 }
 
-/* V2ReportMonitoredOperatorStatusParams contains all the parameters to send to the API endpoint
-   for the v2 report monitored operator status operation.
+/*
+V2ReportMonitoredOperatorStatusParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 report monitored operator status operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ReportMonitoredOperatorStatusParams struct {
 

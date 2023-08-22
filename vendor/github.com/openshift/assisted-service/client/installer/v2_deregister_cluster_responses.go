@@ -75,14 +75,44 @@ func NewV2DeregisterClusterNoContent() *V2DeregisterClusterNoContent {
 	return &V2DeregisterClusterNoContent{}
 }
 
-/* V2DeregisterClusterNoContent describes a response with status code 204, with default header values.
+/*
+V2DeregisterClusterNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type V2DeregisterClusterNoContent struct {
 }
 
+// IsSuccess returns true when this v2 deregister cluster no content response has a 2xx status code
+func (o *V2DeregisterClusterNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 deregister cluster no content response has a 3xx status code
+func (o *V2DeregisterClusterNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster no content response has a 4xx status code
+func (o *V2DeregisterClusterNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 deregister cluster no content response has a 5xx status code
+func (o *V2DeregisterClusterNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster no content response a status code equal to that given
+func (o *V2DeregisterClusterNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2DeregisterClusterNoContent) Error() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterNoContent ", 204)
+}
+
+func (o *V2DeregisterClusterNoContent) String() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterNoContent ", 204)
 }
 
@@ -96,7 +126,8 @@ func NewV2DeregisterClusterUnauthorized() *V2DeregisterClusterUnauthorized {
 	return &V2DeregisterClusterUnauthorized{}
 }
 
-/* V2DeregisterClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2DeregisterClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -104,9 +135,39 @@ type V2DeregisterClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 deregister cluster unauthorized response has a 2xx status code
+func (o *V2DeregisterClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster unauthorized response has a 3xx status code
+func (o *V2DeregisterClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster unauthorized response has a 4xx status code
+func (o *V2DeregisterClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister cluster unauthorized response has a 5xx status code
+func (o *V2DeregisterClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster unauthorized response a status code equal to that given
+func (o *V2DeregisterClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2DeregisterClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2DeregisterClusterUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2DeregisterClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -128,7 +189,8 @@ func NewV2DeregisterClusterForbidden() *V2DeregisterClusterForbidden {
 	return &V2DeregisterClusterForbidden{}
 }
 
-/* V2DeregisterClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2DeregisterClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -136,9 +198,39 @@ type V2DeregisterClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 deregister cluster forbidden response has a 2xx status code
+func (o *V2DeregisterClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster forbidden response has a 3xx status code
+func (o *V2DeregisterClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster forbidden response has a 4xx status code
+func (o *V2DeregisterClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister cluster forbidden response has a 5xx status code
+func (o *V2DeregisterClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster forbidden response a status code equal to that given
+func (o *V2DeregisterClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2DeregisterClusterForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2DeregisterClusterForbidden) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2DeregisterClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -160,7 +252,8 @@ func NewV2DeregisterClusterNotFound() *V2DeregisterClusterNotFound {
 	return &V2DeregisterClusterNotFound{}
 }
 
-/* V2DeregisterClusterNotFound describes a response with status code 404, with default header values.
+/*
+V2DeregisterClusterNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -168,9 +261,39 @@ type V2DeregisterClusterNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister cluster not found response has a 2xx status code
+func (o *V2DeregisterClusterNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster not found response has a 3xx status code
+func (o *V2DeregisterClusterNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster not found response has a 4xx status code
+func (o *V2DeregisterClusterNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister cluster not found response has a 5xx status code
+func (o *V2DeregisterClusterNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster not found response a status code equal to that given
+func (o *V2DeregisterClusterNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2DeregisterClusterNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2DeregisterClusterNotFound) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2DeregisterClusterNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -192,7 +315,8 @@ func NewV2DeregisterClusterMethodNotAllowed() *V2DeregisterClusterMethodNotAllow
 	return &V2DeregisterClusterMethodNotAllowed{}
 }
 
-/* V2DeregisterClusterMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2DeregisterClusterMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -200,9 +324,39 @@ type V2DeregisterClusterMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister cluster method not allowed response has a 2xx status code
+func (o *V2DeregisterClusterMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster method not allowed response has a 3xx status code
+func (o *V2DeregisterClusterMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster method not allowed response has a 4xx status code
+func (o *V2DeregisterClusterMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister cluster method not allowed response has a 5xx status code
+func (o *V2DeregisterClusterMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster method not allowed response a status code equal to that given
+func (o *V2DeregisterClusterMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2DeregisterClusterMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2DeregisterClusterMethodNotAllowed) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2DeregisterClusterMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -224,7 +378,8 @@ func NewV2DeregisterClusterConflict() *V2DeregisterClusterConflict {
 	return &V2DeregisterClusterConflict{}
 }
 
-/* V2DeregisterClusterConflict describes a response with status code 409, with default header values.
+/*
+V2DeregisterClusterConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -232,9 +387,39 @@ type V2DeregisterClusterConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister cluster conflict response has a 2xx status code
+func (o *V2DeregisterClusterConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster conflict response has a 3xx status code
+func (o *V2DeregisterClusterConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster conflict response has a 4xx status code
+func (o *V2DeregisterClusterConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister cluster conflict response has a 5xx status code
+func (o *V2DeregisterClusterConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister cluster conflict response a status code equal to that given
+func (o *V2DeregisterClusterConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2DeregisterClusterConflict) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2DeregisterClusterConflict) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2DeregisterClusterConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -256,7 +441,8 @@ func NewV2DeregisterClusterInternalServerError() *V2DeregisterClusterInternalSer
 	return &V2DeregisterClusterInternalServerError{}
 }
 
-/* V2DeregisterClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2DeregisterClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -264,9 +450,39 @@ type V2DeregisterClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister cluster internal server error response has a 2xx status code
+func (o *V2DeregisterClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister cluster internal server error response has a 3xx status code
+func (o *V2DeregisterClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister cluster internal server error response has a 4xx status code
+func (o *V2DeregisterClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 deregister cluster internal server error response has a 5xx status code
+func (o *V2DeregisterClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 deregister cluster internal server error response a status code equal to that given
+func (o *V2DeregisterClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2DeregisterClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2DeregisterClusterInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}][%d] v2DeregisterClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2DeregisterClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

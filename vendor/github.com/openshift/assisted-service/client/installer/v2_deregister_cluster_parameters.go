@@ -52,10 +52,12 @@ func NewV2DeregisterClusterParamsWithHTTPClient(client *http.Client) *V2Deregist
 	}
 }
 
-/* V2DeregisterClusterParams contains all the parameters to send to the API endpoint
-   for the v2 deregister cluster operation.
+/*
+V2DeregisterClusterParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 deregister cluster operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DeregisterClusterParams struct {
 

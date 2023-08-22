@@ -69,7 +69,8 @@ func NewV2RegisterClusterCreated() *V2RegisterClusterCreated {
 	return &V2RegisterClusterCreated{}
 }
 
-/* V2RegisterClusterCreated describes a response with status code 201, with default header values.
+/*
+V2RegisterClusterCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -77,9 +78,39 @@ type V2RegisterClusterCreated struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 register cluster created response has a 2xx status code
+func (o *V2RegisterClusterCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 register cluster created response has a 3xx status code
+func (o *V2RegisterClusterCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster created response has a 4xx status code
+func (o *V2RegisterClusterCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register cluster created response has a 5xx status code
+func (o *V2RegisterClusterCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register cluster created response a status code equal to that given
+func (o *V2RegisterClusterCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2RegisterClusterCreated) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2RegisterClusterCreated) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2RegisterClusterCreated) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewV2RegisterClusterBadRequest() *V2RegisterClusterBadRequest {
 	return &V2RegisterClusterBadRequest{}
 }
 
-/* V2RegisterClusterBadRequest describes a response with status code 400, with default header values.
+/*
+V2RegisterClusterBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -109,9 +141,39 @@ type V2RegisterClusterBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register cluster bad request response has a 2xx status code
+func (o *V2RegisterClusterBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register cluster bad request response has a 3xx status code
+func (o *V2RegisterClusterBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster bad request response has a 4xx status code
+func (o *V2RegisterClusterBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register cluster bad request response has a 5xx status code
+func (o *V2RegisterClusterBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register cluster bad request response a status code equal to that given
+func (o *V2RegisterClusterBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2RegisterClusterBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2RegisterClusterBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2RegisterClusterBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewV2RegisterClusterUnauthorized() *V2RegisterClusterUnauthorized {
 	return &V2RegisterClusterUnauthorized{}
 }
 
-/* V2RegisterClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2RegisterClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -141,9 +204,39 @@ type V2RegisterClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 register cluster unauthorized response has a 2xx status code
+func (o *V2RegisterClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register cluster unauthorized response has a 3xx status code
+func (o *V2RegisterClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster unauthorized response has a 4xx status code
+func (o *V2RegisterClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register cluster unauthorized response has a 5xx status code
+func (o *V2RegisterClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register cluster unauthorized response a status code equal to that given
+func (o *V2RegisterClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2RegisterClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2RegisterClusterUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2RegisterClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewV2RegisterClusterForbidden() *V2RegisterClusterForbidden {
 	return &V2RegisterClusterForbidden{}
 }
 
-/* V2RegisterClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2RegisterClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -173,9 +267,39 @@ type V2RegisterClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 register cluster forbidden response has a 2xx status code
+func (o *V2RegisterClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register cluster forbidden response has a 3xx status code
+func (o *V2RegisterClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster forbidden response has a 4xx status code
+func (o *V2RegisterClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register cluster forbidden response has a 5xx status code
+func (o *V2RegisterClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register cluster forbidden response a status code equal to that given
+func (o *V2RegisterClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2RegisterClusterForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2RegisterClusterForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2RegisterClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewV2RegisterClusterMethodNotAllowed() *V2RegisterClusterMethodNotAllowed {
 	return &V2RegisterClusterMethodNotAllowed{}
 }
 
-/* V2RegisterClusterMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2RegisterClusterMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -205,9 +330,39 @@ type V2RegisterClusterMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register cluster method not allowed response has a 2xx status code
+func (o *V2RegisterClusterMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register cluster method not allowed response has a 3xx status code
+func (o *V2RegisterClusterMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster method not allowed response has a 4xx status code
+func (o *V2RegisterClusterMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register cluster method not allowed response has a 5xx status code
+func (o *V2RegisterClusterMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register cluster method not allowed response a status code equal to that given
+func (o *V2RegisterClusterMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2RegisterClusterMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2RegisterClusterMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2RegisterClusterMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewV2RegisterClusterInternalServerError() *V2RegisterClusterInternalServerE
 	return &V2RegisterClusterInternalServerError{}
 }
 
-/* V2RegisterClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2RegisterClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -237,9 +393,39 @@ type V2RegisterClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register cluster internal server error response has a 2xx status code
+func (o *V2RegisterClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register cluster internal server error response has a 3xx status code
+func (o *V2RegisterClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register cluster internal server error response has a 4xx status code
+func (o *V2RegisterClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register cluster internal server error response has a 5xx status code
+func (o *V2RegisterClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 register cluster internal server error response a status code equal to that given
+func (o *V2RegisterClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2RegisterClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2RegisterClusterInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters][%d] v2RegisterClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2RegisterClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

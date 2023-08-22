@@ -81,14 +81,44 @@ func NewV2UploadLogsNoContent() *V2UploadLogsNoContent {
 	return &V2UploadLogsNoContent{}
 }
 
-/* V2UploadLogsNoContent describes a response with status code 204, with default header values.
+/*
+V2UploadLogsNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type V2UploadLogsNoContent struct {
 }
 
+// IsSuccess returns true when this v2 upload logs no content response has a 2xx status code
+func (o *V2UploadLogsNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 upload logs no content response has a 3xx status code
+func (o *V2UploadLogsNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs no content response has a 4xx status code
+func (o *V2UploadLogsNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 upload logs no content response has a 5xx status code
+func (o *V2UploadLogsNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs no content response a status code equal to that given
+func (o *V2UploadLogsNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2UploadLogsNoContent) Error() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsNoContent ", 204)
+}
+
+func (o *V2UploadLogsNoContent) String() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsNoContent ", 204)
 }
 
@@ -102,7 +132,8 @@ func NewV2UploadLogsUnauthorized() *V2UploadLogsUnauthorized {
 	return &V2UploadLogsUnauthorized{}
 }
 
-/* V2UploadLogsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UploadLogsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -110,9 +141,39 @@ type V2UploadLogsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 upload logs unauthorized response has a 2xx status code
+func (o *V2UploadLogsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs unauthorized response has a 3xx status code
+func (o *V2UploadLogsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs unauthorized response has a 4xx status code
+func (o *V2UploadLogsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 upload logs unauthorized response has a 5xx status code
+func (o *V2UploadLogsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs unauthorized response a status code equal to that given
+func (o *V2UploadLogsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UploadLogsUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UploadLogsUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UploadLogsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -134,7 +195,8 @@ func NewV2UploadLogsForbidden() *V2UploadLogsForbidden {
 	return &V2UploadLogsForbidden{}
 }
 
-/* V2UploadLogsForbidden describes a response with status code 403, with default header values.
+/*
+V2UploadLogsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -142,9 +204,39 @@ type V2UploadLogsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 upload logs forbidden response has a 2xx status code
+func (o *V2UploadLogsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs forbidden response has a 3xx status code
+func (o *V2UploadLogsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs forbidden response has a 4xx status code
+func (o *V2UploadLogsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 upload logs forbidden response has a 5xx status code
+func (o *V2UploadLogsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs forbidden response a status code equal to that given
+func (o *V2UploadLogsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UploadLogsForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UploadLogsForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UploadLogsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -166,7 +258,8 @@ func NewV2UploadLogsNotFound() *V2UploadLogsNotFound {
 	return &V2UploadLogsNotFound{}
 }
 
-/* V2UploadLogsNotFound describes a response with status code 404, with default header values.
+/*
+V2UploadLogsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -174,9 +267,39 @@ type V2UploadLogsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 upload logs not found response has a 2xx status code
+func (o *V2UploadLogsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs not found response has a 3xx status code
+func (o *V2UploadLogsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs not found response has a 4xx status code
+func (o *V2UploadLogsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 upload logs not found response has a 5xx status code
+func (o *V2UploadLogsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs not found response a status code equal to that given
+func (o *V2UploadLogsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UploadLogsNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UploadLogsNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UploadLogsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -198,7 +321,8 @@ func NewV2UploadLogsMethodNotAllowed() *V2UploadLogsMethodNotAllowed {
 	return &V2UploadLogsMethodNotAllowed{}
 }
 
-/* V2UploadLogsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UploadLogsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -206,9 +330,39 @@ type V2UploadLogsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 upload logs method not allowed response has a 2xx status code
+func (o *V2UploadLogsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs method not allowed response has a 3xx status code
+func (o *V2UploadLogsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs method not allowed response has a 4xx status code
+func (o *V2UploadLogsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 upload logs method not allowed response has a 5xx status code
+func (o *V2UploadLogsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs method not allowed response a status code equal to that given
+func (o *V2UploadLogsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UploadLogsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UploadLogsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UploadLogsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -230,7 +384,8 @@ func NewV2UploadLogsConflict() *V2UploadLogsConflict {
 	return &V2UploadLogsConflict{}
 }
 
-/* V2UploadLogsConflict describes a response with status code 409, with default header values.
+/*
+V2UploadLogsConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -238,9 +393,39 @@ type V2UploadLogsConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 upload logs conflict response has a 2xx status code
+func (o *V2UploadLogsConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs conflict response has a 3xx status code
+func (o *V2UploadLogsConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs conflict response has a 4xx status code
+func (o *V2UploadLogsConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 upload logs conflict response has a 5xx status code
+func (o *V2UploadLogsConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 upload logs conflict response a status code equal to that given
+func (o *V2UploadLogsConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UploadLogsConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UploadLogsConflict) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UploadLogsConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -262,7 +447,8 @@ func NewV2UploadLogsInternalServerError() *V2UploadLogsInternalServerError {
 	return &V2UploadLogsInternalServerError{}
 }
 
-/* V2UploadLogsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UploadLogsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -270,9 +456,39 @@ type V2UploadLogsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 upload logs internal server error response has a 2xx status code
+func (o *V2UploadLogsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs internal server error response has a 3xx status code
+func (o *V2UploadLogsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs internal server error response has a 4xx status code
+func (o *V2UploadLogsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 upload logs internal server error response has a 5xx status code
+func (o *V2UploadLogsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 upload logs internal server error response a status code equal to that given
+func (o *V2UploadLogsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UploadLogsInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UploadLogsInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UploadLogsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -294,7 +510,8 @@ func NewV2UploadLogsServiceUnavailable() *V2UploadLogsServiceUnavailable {
 	return &V2UploadLogsServiceUnavailable{}
 }
 
-/* V2UploadLogsServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2UploadLogsServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -302,9 +519,39 @@ type V2UploadLogsServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 upload logs service unavailable response has a 2xx status code
+func (o *V2UploadLogsServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 upload logs service unavailable response has a 3xx status code
+func (o *V2UploadLogsServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 upload logs service unavailable response has a 4xx status code
+func (o *V2UploadLogsServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 upload logs service unavailable response has a 5xx status code
+func (o *V2UploadLogsServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 upload logs service unavailable response a status code equal to that given
+func (o *V2UploadLogsServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2UploadLogsServiceUnavailable) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2UploadLogsServiceUnavailable) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/logs][%d] v2UploadLogsServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2UploadLogsServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

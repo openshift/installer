@@ -54,10 +54,12 @@ func NewBindHostParamsWithHTTPClient(client *http.Client) *BindHostParams {
 	}
 }
 
-/* BindHostParams contains all the parameters to send to the API endpoint
-   for the bind host operation.
+/*
+BindHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the bind host operation.
+
+	Typically these are written to a http.Request.
 */
 type BindHostParams struct {
 

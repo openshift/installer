@@ -52,10 +52,12 @@ func NewGetClusterSupportedPlatformsParamsWithHTTPClient(client *http.Client) *G
 	}
 }
 
-/* GetClusterSupportedPlatformsParams contains all the parameters to send to the API endpoint
-   for the get cluster supported platforms operation.
+/*
+GetClusterSupportedPlatformsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get cluster supported platforms operation.
+
+	Typically these are written to a http.Request.
 */
 type GetClusterSupportedPlatformsParams struct {
 

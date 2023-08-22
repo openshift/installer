@@ -52,10 +52,12 @@ func NewV2GetPresignedForClusterFilesParamsWithHTTPClient(client *http.Client) *
 	}
 }
 
-/* V2GetPresignedForClusterFilesParams contains all the parameters to send to the API endpoint
-   for the v2 get presigned for cluster files operation.
+/*
+V2GetPresignedForClusterFilesParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 get presigned for cluster files operation.
+
+	Typically these are written to a http.Request.
 */
 type V2GetPresignedForClusterFilesParams struct {
 

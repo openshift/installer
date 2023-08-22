@@ -63,7 +63,8 @@ func NewV2ImportClusterCreated() *V2ImportClusterCreated {
 	return &V2ImportClusterCreated{}
 }
 
-/* V2ImportClusterCreated describes a response with status code 201, with default header values.
+/*
+V2ImportClusterCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -71,9 +72,39 @@ type V2ImportClusterCreated struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 import cluster created response has a 2xx status code
+func (o *V2ImportClusterCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 import cluster created response has a 3xx status code
+func (o *V2ImportClusterCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 import cluster created response has a 4xx status code
+func (o *V2ImportClusterCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 import cluster created response has a 5xx status code
+func (o *V2ImportClusterCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 import cluster created response a status code equal to that given
+func (o *V2ImportClusterCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2ImportClusterCreated) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2ImportClusterCreated) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2ImportClusterCreated) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -95,7 +126,8 @@ func NewV2ImportClusterBadRequest() *V2ImportClusterBadRequest {
 	return &V2ImportClusterBadRequest{}
 }
 
-/* V2ImportClusterBadRequest describes a response with status code 400, with default header values.
+/*
+V2ImportClusterBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -103,9 +135,39 @@ type V2ImportClusterBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 import cluster bad request response has a 2xx status code
+func (o *V2ImportClusterBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 import cluster bad request response has a 3xx status code
+func (o *V2ImportClusterBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 import cluster bad request response has a 4xx status code
+func (o *V2ImportClusterBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 import cluster bad request response has a 5xx status code
+func (o *V2ImportClusterBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 import cluster bad request response a status code equal to that given
+func (o *V2ImportClusterBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2ImportClusterBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2ImportClusterBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2ImportClusterBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +189,8 @@ func NewV2ImportClusterUnauthorized() *V2ImportClusterUnauthorized {
 	return &V2ImportClusterUnauthorized{}
 }
 
-/* V2ImportClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ImportClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -135,9 +198,39 @@ type V2ImportClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 import cluster unauthorized response has a 2xx status code
+func (o *V2ImportClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 import cluster unauthorized response has a 3xx status code
+func (o *V2ImportClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 import cluster unauthorized response has a 4xx status code
+func (o *V2ImportClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 import cluster unauthorized response has a 5xx status code
+func (o *V2ImportClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 import cluster unauthorized response a status code equal to that given
+func (o *V2ImportClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ImportClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ImportClusterUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ImportClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -159,7 +252,8 @@ func NewV2ImportClusterForbidden() *V2ImportClusterForbidden {
 	return &V2ImportClusterForbidden{}
 }
 
-/* V2ImportClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2ImportClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -167,9 +261,39 @@ type V2ImportClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 import cluster forbidden response has a 2xx status code
+func (o *V2ImportClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 import cluster forbidden response has a 3xx status code
+func (o *V2ImportClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 import cluster forbidden response has a 4xx status code
+func (o *V2ImportClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 import cluster forbidden response has a 5xx status code
+func (o *V2ImportClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 import cluster forbidden response a status code equal to that given
+func (o *V2ImportClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ImportClusterForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ImportClusterForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ImportClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -191,7 +315,8 @@ func NewV2ImportClusterInternalServerError() *V2ImportClusterInternalServerError
 	return &V2ImportClusterInternalServerError{}
 }
 
-/* V2ImportClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ImportClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -199,9 +324,39 @@ type V2ImportClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 import cluster internal server error response has a 2xx status code
+func (o *V2ImportClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 import cluster internal server error response has a 3xx status code
+func (o *V2ImportClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 import cluster internal server error response has a 4xx status code
+func (o *V2ImportClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 import cluster internal server error response has a 5xx status code
+func (o *V2ImportClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 import cluster internal server error response a status code equal to that given
+func (o *V2ImportClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ImportClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ImportClusterInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/import][%d] v2ImportClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ImportClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

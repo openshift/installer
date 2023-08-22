@@ -20,8 +20,12 @@ import (
 type DriveType string
 
 func NewDriveType(value DriveType) *DriveType {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated DriveType.
+func (m DriveType) Pointer() *DriveType {
+	return &m
 }
 
 const (
@@ -55,6 +59,18 @@ const (
 
 	// DriveTypeLVM captures enum value "LVM"
 	DriveTypeLVM DriveType = "LVM"
+
+	// DriveTypeRAID captures enum value "RAID"
+	DriveTypeRAID DriveType = "RAID"
+
+	// DriveTypeECKD captures enum value "ECKD"
+	DriveTypeECKD DriveType = "ECKD"
+
+	// DriveTypeECKDESE captures enum value "ECKD (ESE)"
+	DriveTypeECKDESE DriveType = "ECKD (ESE)"
+
+	// DriveTypeFBA captures enum value "FBA"
+	DriveTypeFBA DriveType = "FBA"
 )
 
 // for schema
@@ -62,7 +78,7 @@ var driveTypeEnum []interface{}
 
 func init() {
 	var res []DriveType
-	if err := json.Unmarshal([]byte(`["Unknown","HDD","FDD","ODD","SSD","virtual","Multipath","iSCSI","FC","LVM"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["Unknown","HDD","FDD","ODD","SSD","virtual","Multipath","iSCSI","FC","LVM","RAID","ECKD","ECKD (ESE)","FBA"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

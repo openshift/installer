@@ -57,7 +57,8 @@ func NewV2ListSupportedOperatorsOK() *V2ListSupportedOperatorsOK {
 	return &V2ListSupportedOperatorsOK{}
 }
 
-/* V2ListSupportedOperatorsOK describes a response with status code 200, with default header values.
+/*
+V2ListSupportedOperatorsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -65,9 +66,39 @@ type V2ListSupportedOperatorsOK struct {
 	Payload []string
 }
 
+// IsSuccess returns true when this v2 list supported operators o k response has a 2xx status code
+func (o *V2ListSupportedOperatorsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list supported operators o k response has a 3xx status code
+func (o *V2ListSupportedOperatorsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported operators o k response has a 4xx status code
+func (o *V2ListSupportedOperatorsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list supported operators o k response has a 5xx status code
+func (o *V2ListSupportedOperatorsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list supported operators o k response a status code equal to that given
+func (o *V2ListSupportedOperatorsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListSupportedOperatorsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListSupportedOperatorsOK) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListSupportedOperatorsOK) GetPayload() []string {
 	return o.Payload
 }
@@ -87,7 +118,8 @@ func NewV2ListSupportedOperatorsUnauthorized() *V2ListSupportedOperatorsUnauthor
 	return &V2ListSupportedOperatorsUnauthorized{}
 }
 
-/* V2ListSupportedOperatorsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ListSupportedOperatorsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -95,9 +127,39 @@ type V2ListSupportedOperatorsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list supported operators unauthorized response has a 2xx status code
+func (o *V2ListSupportedOperatorsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported operators unauthorized response has a 3xx status code
+func (o *V2ListSupportedOperatorsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported operators unauthorized response has a 4xx status code
+func (o *V2ListSupportedOperatorsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list supported operators unauthorized response has a 5xx status code
+func (o *V2ListSupportedOperatorsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list supported operators unauthorized response a status code equal to that given
+func (o *V2ListSupportedOperatorsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ListSupportedOperatorsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ListSupportedOperatorsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ListSupportedOperatorsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -119,7 +181,8 @@ func NewV2ListSupportedOperatorsForbidden() *V2ListSupportedOperatorsForbidden {
 	return &V2ListSupportedOperatorsForbidden{}
 }
 
-/* V2ListSupportedOperatorsForbidden describes a response with status code 403, with default header values.
+/*
+V2ListSupportedOperatorsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -127,9 +190,39 @@ type V2ListSupportedOperatorsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list supported operators forbidden response has a 2xx status code
+func (o *V2ListSupportedOperatorsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported operators forbidden response has a 3xx status code
+func (o *V2ListSupportedOperatorsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported operators forbidden response has a 4xx status code
+func (o *V2ListSupportedOperatorsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list supported operators forbidden response has a 5xx status code
+func (o *V2ListSupportedOperatorsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list supported operators forbidden response a status code equal to that given
+func (o *V2ListSupportedOperatorsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ListSupportedOperatorsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ListSupportedOperatorsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ListSupportedOperatorsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -151,7 +244,8 @@ func NewV2ListSupportedOperatorsInternalServerError() *V2ListSupportedOperatorsI
 	return &V2ListSupportedOperatorsInternalServerError{}
 }
 
-/* V2ListSupportedOperatorsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ListSupportedOperatorsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -159,9 +253,39 @@ type V2ListSupportedOperatorsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list supported operators internal server error response has a 2xx status code
+func (o *V2ListSupportedOperatorsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported operators internal server error response has a 3xx status code
+func (o *V2ListSupportedOperatorsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported operators internal server error response has a 4xx status code
+func (o *V2ListSupportedOperatorsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list supported operators internal server error response has a 5xx status code
+func (o *V2ListSupportedOperatorsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list supported operators internal server error response a status code equal to that given
+func (o *V2ListSupportedOperatorsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ListSupportedOperatorsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ListSupportedOperatorsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators][%d] v2ListSupportedOperatorsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ListSupportedOperatorsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

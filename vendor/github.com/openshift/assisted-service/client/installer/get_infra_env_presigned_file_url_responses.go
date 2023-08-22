@@ -81,7 +81,8 @@ func NewGetInfraEnvPresignedFileURLOK() *GetInfraEnvPresignedFileURLOK {
 	return &GetInfraEnvPresignedFileURLOK{}
 }
 
-/* GetInfraEnvPresignedFileURLOK describes a response with status code 200, with default header values.
+/*
+GetInfraEnvPresignedFileURLOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type GetInfraEnvPresignedFileURLOK struct {
 	Payload *models.PresignedURL
 }
 
+// IsSuccess returns true when this get infra env presigned file Url o k response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this get infra env presigned file Url o k response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url o k response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env presigned file Url o k response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env presigned file Url o k response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *GetInfraEnvPresignedFileURLOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlOK  %+v", 200, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlOK  %+v", 200, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLOK) GetPayload() *models.PresignedURL {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewGetInfraEnvPresignedFileURLUnauthorized() *GetInfraEnvPresignedFileURLUn
 	return &GetInfraEnvPresignedFileURLUnauthorized{}
 }
 
-/* GetInfraEnvPresignedFileURLUnauthorized describes a response with status code 401, with default header values.
+/*
+GetInfraEnvPresignedFileURLUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -121,9 +153,39 @@ type GetInfraEnvPresignedFileURLUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get infra env presigned file Url unauthorized response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url unauthorized response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url unauthorized response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env presigned file Url unauthorized response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env presigned file Url unauthorized response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *GetInfraEnvPresignedFileURLUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewGetInfraEnvPresignedFileURLForbidden() *GetInfraEnvPresignedFileURLForbi
 	return &GetInfraEnvPresignedFileURLForbidden{}
 }
 
-/* GetInfraEnvPresignedFileURLForbidden describes a response with status code 403, with default header values.
+/*
+GetInfraEnvPresignedFileURLForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -153,9 +216,39 @@ type GetInfraEnvPresignedFileURLForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get infra env presigned file Url forbidden response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url forbidden response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url forbidden response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env presigned file Url forbidden response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env presigned file Url forbidden response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *GetInfraEnvPresignedFileURLForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlForbidden  %+v", 403, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlForbidden  %+v", 403, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewGetInfraEnvPresignedFileURLNotFound() *GetInfraEnvPresignedFileURLNotFou
 	return &GetInfraEnvPresignedFileURLNotFound{}
 }
 
-/* GetInfraEnvPresignedFileURLNotFound describes a response with status code 404, with default header values.
+/*
+GetInfraEnvPresignedFileURLNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -185,9 +279,39 @@ type GetInfraEnvPresignedFileURLNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env presigned file Url not found response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url not found response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url not found response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env presigned file Url not found response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env presigned file Url not found response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *GetInfraEnvPresignedFileURLNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlNotFound  %+v", 404, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlNotFound  %+v", 404, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewGetInfraEnvPresignedFileURLMethodNotAllowed() *GetInfraEnvPresignedFileU
 	return &GetInfraEnvPresignedFileURLMethodNotAllowed{}
 }
 
-/* GetInfraEnvPresignedFileURLMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+GetInfraEnvPresignedFileURLMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -217,9 +342,39 @@ type GetInfraEnvPresignedFileURLMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env presigned file Url method not allowed response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url method not allowed response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url method not allowed response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env presigned file Url method not allowed response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env presigned file Url method not allowed response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewGetInfraEnvPresignedFileURLInternalServerError() *GetInfraEnvPresignedFi
 	return &GetInfraEnvPresignedFileURLInternalServerError{}
 }
 
-/* GetInfraEnvPresignedFileURLInternalServerError describes a response with status code 500, with default header values.
+/*
+GetInfraEnvPresignedFileURLInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -249,9 +405,39 @@ type GetInfraEnvPresignedFileURLInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env presigned file Url internal server error response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url internal server error response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url internal server error response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env presigned file Url internal server error response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env presigned file Url internal server error response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *GetInfraEnvPresignedFileURLInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewGetInfraEnvPresignedFileURLNotImplemented() *GetInfraEnvPresignedFileURL
 	return &GetInfraEnvPresignedFileURLNotImplemented{}
 }
 
-/* GetInfraEnvPresignedFileURLNotImplemented describes a response with status code 501, with default header values.
+/*
+GetInfraEnvPresignedFileURLNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -281,9 +468,39 @@ type GetInfraEnvPresignedFileURLNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env presigned file Url not implemented response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url not implemented response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url not implemented response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env presigned file Url not implemented response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env presigned file Url not implemented response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *GetInfraEnvPresignedFileURLNotImplemented) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLNotImplemented) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewGetInfraEnvPresignedFileURLServiceUnavailable() *GetInfraEnvPresignedFil
 	return &GetInfraEnvPresignedFileURLServiceUnavailable{}
 }
 
-/* GetInfraEnvPresignedFileURLServiceUnavailable describes a response with status code 503, with default header values.
+/*
+GetInfraEnvPresignedFileURLServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -313,9 +531,39 @@ type GetInfraEnvPresignedFileURLServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env presigned file Url service unavailable response has a 2xx status code
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env presigned file Url service unavailable response has a 3xx status code
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env presigned file Url service unavailable response has a 4xx status code
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env presigned file Url service unavailable response has a 5xx status code
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env presigned file Url service unavailable response a status code equal to that given
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *GetInfraEnvPresignedFileURLServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *GetInfraEnvPresignedFileURLServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files-presigned][%d] getInfraEnvPresignedFileUrlServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *GetInfraEnvPresignedFileURLServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

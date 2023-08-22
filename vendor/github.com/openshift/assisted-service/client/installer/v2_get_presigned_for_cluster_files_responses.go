@@ -81,7 +81,8 @@ func NewV2GetPresignedForClusterFilesOK() *V2GetPresignedForClusterFilesOK {
 	return &V2GetPresignedForClusterFilesOK{}
 }
 
-/* V2GetPresignedForClusterFilesOK describes a response with status code 200, with default header values.
+/*
+V2GetPresignedForClusterFilesOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2GetPresignedForClusterFilesOK struct {
 	Payload *models.PresignedURL
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files o k response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files o k response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files o k response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files o k response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files o k response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetPresignedForClusterFilesOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesOK) GetPayload() *models.PresignedURL {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2GetPresignedForClusterFilesBadRequest() *V2GetPresignedForClusterFiles
 	return &V2GetPresignedForClusterFilesBadRequest{}
 }
 
-/* V2GetPresignedForClusterFilesBadRequest describes a response with status code 400, with default header values.
+/*
+V2GetPresignedForClusterFilesBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -121,9 +153,39 @@ type V2GetPresignedForClusterFilesBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files bad request response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files bad request response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files bad request response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files bad request response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files bad request response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2GetPresignedForClusterFilesBadRequest) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2GetPresignedForClusterFilesUnauthorized() *V2GetPresignedForClusterFil
 	return &V2GetPresignedForClusterFilesUnauthorized{}
 }
 
-/* V2GetPresignedForClusterFilesUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetPresignedForClusterFilesUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -153,9 +216,39 @@ type V2GetPresignedForClusterFilesUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files unauthorized response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files unauthorized response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files unauthorized response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files unauthorized response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files unauthorized response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetPresignedForClusterFilesUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2GetPresignedForClusterFilesForbidden() *V2GetPresignedForClusterFilesF
 	return &V2GetPresignedForClusterFilesForbidden{}
 }
 
-/* V2GetPresignedForClusterFilesForbidden describes a response with status code 403, with default header values.
+/*
+V2GetPresignedForClusterFilesForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -185,9 +279,39 @@ type V2GetPresignedForClusterFilesForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files forbidden response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files forbidden response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files forbidden response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files forbidden response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files forbidden response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetPresignedForClusterFilesForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2GetPresignedForClusterFilesNotFound() *V2GetPresignedForClusterFilesNo
 	return &V2GetPresignedForClusterFilesNotFound{}
 }
 
-/* V2GetPresignedForClusterFilesNotFound describes a response with status code 404, with default header values.
+/*
+V2GetPresignedForClusterFilesNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -217,9 +342,39 @@ type V2GetPresignedForClusterFilesNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files not found response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files not found response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files not found response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files not found response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files not found response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2GetPresignedForClusterFilesNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2GetPresignedForClusterFilesMethodNotAllowed() *V2GetPresignedForCluste
 	return &V2GetPresignedForClusterFilesMethodNotAllowed{}
 }
 
-/* V2GetPresignedForClusterFilesMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2GetPresignedForClusterFilesMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -249,9 +405,39 @@ type V2GetPresignedForClusterFilesMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files method not allowed response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files method not allowed response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files method not allowed response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files method not allowed response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files method not allowed response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2GetPresignedForClusterFilesMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2GetPresignedForClusterFilesConflict() *V2GetPresignedForClusterFilesCo
 	return &V2GetPresignedForClusterFilesConflict{}
 }
 
-/* V2GetPresignedForClusterFilesConflict describes a response with status code 409, with default header values.
+/*
+V2GetPresignedForClusterFilesConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -281,9 +468,39 @@ type V2GetPresignedForClusterFilesConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files conflict response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files conflict response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files conflict response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files conflict response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get presigned for cluster files conflict response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2GetPresignedForClusterFilesConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesConflict) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2GetPresignedForClusterFilesInternalServerError() *V2GetPresignedForClu
 	return &V2GetPresignedForClusterFilesInternalServerError{}
 }
 
-/* V2GetPresignedForClusterFilesInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetPresignedForClusterFilesInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -313,9 +531,39 @@ type V2GetPresignedForClusterFilesInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get presigned for cluster files internal server error response has a 2xx status code
+func (o *V2GetPresignedForClusterFilesInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get presigned for cluster files internal server error response has a 3xx status code
+func (o *V2GetPresignedForClusterFilesInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get presigned for cluster files internal server error response has a 4xx status code
+func (o *V2GetPresignedForClusterFilesInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get presigned for cluster files internal server error response has a 5xx status code
+func (o *V2GetPresignedForClusterFilesInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get presigned for cluster files internal server error response a status code equal to that given
+func (o *V2GetPresignedForClusterFilesInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetPresignedForClusterFilesInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetPresignedForClusterFilesInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files-presigned][%d] v2GetPresignedForClusterFilesInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetPresignedForClusterFilesInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

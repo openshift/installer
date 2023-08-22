@@ -11,22 +11,32 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/validate"
+	"github.com/go-openapi/swag"
 )
 
-// KernelArguments List of string values to be passed to discovery image as kernel arguments.
+// KernelArguments List of kernel arugment objects that define the operations and values to be applied.
 //
 // swagger:model kernel_arguments
-type KernelArguments []string
+type KernelArguments []*KernelArgument
 
 // Validate validates this kernel arguments
 func (m KernelArguments) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	for i := 0; i < len(m); i++ {
+		if swag.IsZero(m[i]) { // not required
+			continue
+		}
 
-		if err := validate.Pattern(strconv.Itoa(i), "body", m[i], `^(?:(?:[^ \t\n\r"]+)|(?:"[^"]*"))+$`); err != nil {
-			return err
+		if m[i] != nil {
+			if err := m[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName(strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName(strconv.Itoa(i))
+				}
+				return err
+			}
 		}
 
 	}
@@ -37,7 +47,27 @@ func (m KernelArguments) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this kernel arguments based on context it is used
+// ContextValidate validate this kernel arguments based on the context it is used
 func (m KernelArguments) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	for i := 0; i < len(m); i++ {
+
+		if m[i] != nil {
+			if err := m[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName(strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName(strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
