@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
 	"github.com/openshift/installer/pkg/types"
+	agenttypes "github.com/openshift/installer/pkg/types/agent"
 )
 
 var (
@@ -242,41 +243,77 @@ func (n *NMStateConfig) validateNMStateLabels() field.ErrorList {
 	return allErrs
 }
 
-func getFirstIP(nmStateConfig *nmStateConfig) string {
+func getFirstIP(nmstateRaw []byte) (string, error) {
+	var nmStateConfig nmStateConfig
+	err := yaml.Unmarshal(nmstateRaw, &nmStateConfig)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
+	}
+
 	for _, intf := range nmStateConfig.Interfaces {
 		for _, addr4 := range intf.IPV4.Address {
 			if addr4.IP != "" {
-				return addr4.IP
+				return addr4.IP, nil
 			}
 		}
 		for _, addr6 := range intf.IPV6.Address {
 			if addr6.IP != "" {
-				return addr6.IP
+				return addr6.IP, nil
 			}
 		}
 	}
-	return ""
+
+	return "", nil
 }
 
-// GetNodeZeroIP retrieves the first IP from the user provided NMStateConfigs to set as the node0 IP
-func GetNodeZeroIP(nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
-	for i := range nmStateConfigs {
-		var nmStateConfig nmStateConfig
-		err := yaml.Unmarshal(nmStateConfigs[i].Spec.NetConfig.Raw, &nmStateConfig)
-		if err != nil {
-			return "", fmt.Errorf("error unmarshalling NMStateConfig: %v", err)
-		}
-		if nodeZeroIP := getFirstIP(&nmStateConfig); nodeZeroIP != "" {
-			if net.ParseIP(nodeZeroIP) == nil {
-				return "", fmt.Errorf("could not parse static IP: %s", nodeZeroIP)
+// GetNodeZeroIP retrieves the first IP to be set as the node0 IP.
+// The method prioritizes the search by trying to scan first the NMState configs defined
+// in the agent-config hosts - so that it would be possible to skip the worker nodes - and then
+// the NMStateConfig.
+func GetNodeZeroIP(agentConfig *agenttypes.Config, nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
+	rawConfigs := []aiv1beta1.RawNetConfig{}
+
+	// Select first the configs from the hosts, if defined
+	if agentConfig != nil {
+		// Skip worker hosts (or without an explicit role assigned)
+		for _, host := range agentConfig.Hosts {
+			if host.Role != "master" {
+				continue
 			}
-
-			return nodeZeroIP, nil
+			rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
 		}
 
+		// Add other hosts without explicit role with a lower
+		// priority as potential candidates
+		for _, host := range agentConfig.Hosts {
+			if host.Role != "" {
+				continue
+			}
+			rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
+		}
 	}
 
-	return "", fmt.Errorf("invalid NMStateConfig yaml, no interface IPs set")
+	// Fallback on nmstate configs (in case hosts weren't found or didn't have static configuration)
+	for _, nmStateConfig := range nmStateConfigs {
+		rawConfigs = append(rawConfigs, nmStateConfig.Spec.NetConfig.Raw)
+	}
+
+	// Try to look for an eligible IP
+	for _, raw := range rawConfigs {
+		nodeZeroIP, err := getFirstIP(raw)
+		if err != nil {
+			return "", fmt.Errorf("error unmarshalling NMStateConfig: %w", err)
+		}
+		if nodeZeroIP == "" {
+			continue
+		}
+		if net.ParseIP(nodeZeroIP) == nil {
+			return "", fmt.Errorf("could not parse static IP: %s", nodeZeroIP)
+		}
+		return nodeZeroIP, nil
+	}
+
+	return "", fmt.Errorf("invalid NMState configurations provided, no interface IPs set")
 }
 
 // GetNMIgnitionFiles returns the list of NetworkManager configuration files

@@ -228,7 +228,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "missing rendezvousIP in agent-config or at least one NMStateConfig manifest",
+			expectedError: "missing rendezvousIP in agent-config, at least one host networkConfig in agent-config, or at least one NMStateConfig manifest",
 		},
 		{
 			Name: "non-canonical-ipv6-address",

@@ -518,12 +518,12 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 		rendezvousIP = agentConfig.RendezvousIP
 		logrus.Debug("RendezvousIP from the AgentConfig ", rendezvousIP)
 
-	} else if len(nmStateConfigs) > 0 {
-		rendezvousIP, err = manifests.GetNodeZeroIP(nmStateConfigs)
-		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	} else {
-		err = errors.New("missing rendezvousIP in agent-config or at least one NMStateConfig manifest")
-		return "", err
+		rendezvousIP, err = manifests.GetNodeZeroIP(agentConfig, nmStateConfigs)
+		if err != nil {
+			return "", errors.Wrap(err, "missing rendezvousIP in agent-config, at least one host networkConfig in agent-config, or at least one NMStateConfig manifest")
+		}
+		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	}
 
 	// Convert IPv6 address to canonical to match host format for comparisons
