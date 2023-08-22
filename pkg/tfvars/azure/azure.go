@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -103,7 +102,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
-		masterAvailabilityZones[i] = to.String(c.Zone)
+		masterAvailabilityZones[i] = c.Zone
 	}
 
 	environment, err := environment(sources.CloudName)
