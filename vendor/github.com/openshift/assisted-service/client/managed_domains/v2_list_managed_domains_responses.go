@@ -45,7 +45,8 @@ func NewV2ListManagedDomainsOK() *V2ListManagedDomainsOK {
 	return &V2ListManagedDomainsOK{}
 }
 
-/* V2ListManagedDomainsOK describes a response with status code 200, with default header values.
+/*
+V2ListManagedDomainsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -53,9 +54,39 @@ type V2ListManagedDomainsOK struct {
 	Payload models.ListManagedDomains
 }
 
+// IsSuccess returns true when this v2 list managed domains o k response has a 2xx status code
+func (o *V2ListManagedDomainsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list managed domains o k response has a 3xx status code
+func (o *V2ListManagedDomainsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list managed domains o k response has a 4xx status code
+func (o *V2ListManagedDomainsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list managed domains o k response has a 5xx status code
+func (o *V2ListManagedDomainsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list managed domains o k response a status code equal to that given
+func (o *V2ListManagedDomainsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListManagedDomainsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/domains][%d] v2ListManagedDomainsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListManagedDomainsOK) String() string {
+	return fmt.Sprintf("[GET /v2/domains][%d] v2ListManagedDomainsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListManagedDomainsOK) GetPayload() models.ListManagedDomains {
 	return o.Payload
 }
@@ -75,7 +106,8 @@ func NewV2ListManagedDomainsInternalServerError() *V2ListManagedDomainsInternalS
 	return &V2ListManagedDomainsInternalServerError{}
 }
 
-/* V2ListManagedDomainsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ListManagedDomainsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -83,9 +115,39 @@ type V2ListManagedDomainsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list managed domains internal server error response has a 2xx status code
+func (o *V2ListManagedDomainsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list managed domains internal server error response has a 3xx status code
+func (o *V2ListManagedDomainsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list managed domains internal server error response has a 4xx status code
+func (o *V2ListManagedDomainsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list managed domains internal server error response has a 5xx status code
+func (o *V2ListManagedDomainsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list managed domains internal server error response a status code equal to that given
+func (o *V2ListManagedDomainsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ListManagedDomainsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/domains][%d] v2ListManagedDomainsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ListManagedDomainsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/domains][%d] v2ListManagedDomainsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ListManagedDomainsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

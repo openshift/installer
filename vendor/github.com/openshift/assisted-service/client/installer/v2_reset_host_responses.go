@@ -69,7 +69,8 @@ func NewV2ResetHostOK() *V2ResetHostOK {
 	return &V2ResetHostOK{}
 }
 
-/* V2ResetHostOK describes a response with status code 200, with default header values.
+/*
+V2ResetHostOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -77,9 +78,39 @@ type V2ResetHostOK struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this v2 reset host o k response has a 2xx status code
+func (o *V2ResetHostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 reset host o k response has a 3xx status code
+func (o *V2ResetHostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host o k response has a 4xx status code
+func (o *V2ResetHostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset host o k response has a 5xx status code
+func (o *V2ResetHostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host o k response a status code equal to that given
+func (o *V2ResetHostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ResetHostOK) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ResetHostOK) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ResetHostOK) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewV2ResetHostUnauthorized() *V2ResetHostUnauthorized {
 	return &V2ResetHostUnauthorized{}
 }
 
-/* V2ResetHostUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ResetHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -109,9 +141,39 @@ type V2ResetHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset host unauthorized response has a 2xx status code
+func (o *V2ResetHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host unauthorized response has a 3xx status code
+func (o *V2ResetHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host unauthorized response has a 4xx status code
+func (o *V2ResetHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host unauthorized response has a 5xx status code
+func (o *V2ResetHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host unauthorized response a status code equal to that given
+func (o *V2ResetHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ResetHostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ResetHostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ResetHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewV2ResetHostForbidden() *V2ResetHostForbidden {
 	return &V2ResetHostForbidden{}
 }
 
-/* V2ResetHostForbidden describes a response with status code 403, with default header values.
+/*
+V2ResetHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -141,9 +204,39 @@ type V2ResetHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset host forbidden response has a 2xx status code
+func (o *V2ResetHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host forbidden response has a 3xx status code
+func (o *V2ResetHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host forbidden response has a 4xx status code
+func (o *V2ResetHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host forbidden response has a 5xx status code
+func (o *V2ResetHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host forbidden response a status code equal to that given
+func (o *V2ResetHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ResetHostForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ResetHostForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ResetHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewV2ResetHostNotFound() *V2ResetHostNotFound {
 	return &V2ResetHostNotFound{}
 }
 
-/* V2ResetHostNotFound describes a response with status code 404, with default header values.
+/*
+V2ResetHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -173,9 +267,39 @@ type V2ResetHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host not found response has a 2xx status code
+func (o *V2ResetHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host not found response has a 3xx status code
+func (o *V2ResetHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host not found response has a 4xx status code
+func (o *V2ResetHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host not found response has a 5xx status code
+func (o *V2ResetHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host not found response a status code equal to that given
+func (o *V2ResetHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ResetHostNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ResetHostNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ResetHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewV2ResetHostConflict() *V2ResetHostConflict {
 	return &V2ResetHostConflict{}
 }
 
-/* V2ResetHostConflict describes a response with status code 409, with default header values.
+/*
+V2ResetHostConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -205,9 +330,39 @@ type V2ResetHostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host conflict response has a 2xx status code
+func (o *V2ResetHostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host conflict response has a 3xx status code
+func (o *V2ResetHostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host conflict response has a 4xx status code
+func (o *V2ResetHostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host conflict response has a 5xx status code
+func (o *V2ResetHostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host conflict response a status code equal to that given
+func (o *V2ResetHostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2ResetHostConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2ResetHostConflict) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2ResetHostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewV2ResetHostInternalServerError() *V2ResetHostInternalServerError {
 	return &V2ResetHostInternalServerError{}
 }
 
-/* V2ResetHostInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ResetHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -237,9 +393,39 @@ type V2ResetHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host internal server error response has a 2xx status code
+func (o *V2ResetHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host internal server error response has a 3xx status code
+func (o *V2ResetHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host internal server error response has a 4xx status code
+func (o *V2ResetHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset host internal server error response has a 5xx status code
+func (o *V2ResetHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 reset host internal server error response a status code equal to that given
+func (o *V2ResetHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ResetHostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ResetHostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset][%d] v2ResetHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ResetHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

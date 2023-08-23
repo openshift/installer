@@ -52,10 +52,12 @@ func NewV2CancelInstallationParamsWithHTTPClient(client *http.Client) *V2CancelI
 	}
 }
 
-/* V2CancelInstallationParams contains all the parameters to send to the API endpoint
-   for the v2 cancel installation operation.
+/*
+V2CancelInstallationParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 cancel installation operation.
+
+	Typically these are written to a http.Request.
 */
 type V2CancelInstallationParams struct {
 

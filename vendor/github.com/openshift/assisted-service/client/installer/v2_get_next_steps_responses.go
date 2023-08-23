@@ -81,7 +81,8 @@ func NewV2GetNextStepsOK() *V2GetNextStepsOK {
 	return &V2GetNextStepsOK{}
 }
 
-/* V2GetNextStepsOK describes a response with status code 200, with default header values.
+/*
+V2GetNextStepsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2GetNextStepsOK struct {
 	Payload *models.Steps
 }
 
+// IsSuccess returns true when this v2 get next steps o k response has a 2xx status code
+func (o *V2GetNextStepsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get next steps o k response has a 3xx status code
+func (o *V2GetNextStepsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps o k response has a 4xx status code
+func (o *V2GetNextStepsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get next steps o k response has a 5xx status code
+func (o *V2GetNextStepsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get next steps o k response a status code equal to that given
+func (o *V2GetNextStepsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetNextStepsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetNextStepsOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetNextStepsOK) GetPayload() *models.Steps {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2GetNextStepsUnauthorized() *V2GetNextStepsUnauthorized {
 	return &V2GetNextStepsUnauthorized{}
 }
 
-/* V2GetNextStepsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetNextStepsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -121,9 +153,39 @@ type V2GetNextStepsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get next steps unauthorized response has a 2xx status code
+func (o *V2GetNextStepsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps unauthorized response has a 3xx status code
+func (o *V2GetNextStepsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps unauthorized response has a 4xx status code
+func (o *V2GetNextStepsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get next steps unauthorized response has a 5xx status code
+func (o *V2GetNextStepsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get next steps unauthorized response a status code equal to that given
+func (o *V2GetNextStepsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetNextStepsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetNextStepsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetNextStepsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2GetNextStepsForbidden() *V2GetNextStepsForbidden {
 	return &V2GetNextStepsForbidden{}
 }
 
-/* V2GetNextStepsForbidden describes a response with status code 403, with default header values.
+/*
+V2GetNextStepsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -153,9 +216,39 @@ type V2GetNextStepsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get next steps forbidden response has a 2xx status code
+func (o *V2GetNextStepsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps forbidden response has a 3xx status code
+func (o *V2GetNextStepsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps forbidden response has a 4xx status code
+func (o *V2GetNextStepsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get next steps forbidden response has a 5xx status code
+func (o *V2GetNextStepsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get next steps forbidden response a status code equal to that given
+func (o *V2GetNextStepsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetNextStepsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetNextStepsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetNextStepsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2GetNextStepsNotFound() *V2GetNextStepsNotFound {
 	return &V2GetNextStepsNotFound{}
 }
 
-/* V2GetNextStepsNotFound describes a response with status code 404, with default header values.
+/*
+V2GetNextStepsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -185,9 +279,39 @@ type V2GetNextStepsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get next steps not found response has a 2xx status code
+func (o *V2GetNextStepsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps not found response has a 3xx status code
+func (o *V2GetNextStepsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps not found response has a 4xx status code
+func (o *V2GetNextStepsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get next steps not found response has a 5xx status code
+func (o *V2GetNextStepsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get next steps not found response a status code equal to that given
+func (o *V2GetNextStepsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2GetNextStepsNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2GetNextStepsNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2GetNextStepsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2GetNextStepsMethodNotAllowed() *V2GetNextStepsMethodNotAllowed {
 	return &V2GetNextStepsMethodNotAllowed{}
 }
 
-/* V2GetNextStepsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2GetNextStepsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -217,9 +342,39 @@ type V2GetNextStepsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get next steps method not allowed response has a 2xx status code
+func (o *V2GetNextStepsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps method not allowed response has a 3xx status code
+func (o *V2GetNextStepsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps method not allowed response has a 4xx status code
+func (o *V2GetNextStepsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get next steps method not allowed response has a 5xx status code
+func (o *V2GetNextStepsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get next steps method not allowed response a status code equal to that given
+func (o *V2GetNextStepsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2GetNextStepsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2GetNextStepsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2GetNextStepsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2GetNextStepsInternalServerError() *V2GetNextStepsInternalServerError {
 	return &V2GetNextStepsInternalServerError{}
 }
 
-/* V2GetNextStepsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetNextStepsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -249,9 +405,39 @@ type V2GetNextStepsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get next steps internal server error response has a 2xx status code
+func (o *V2GetNextStepsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps internal server error response has a 3xx status code
+func (o *V2GetNextStepsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps internal server error response has a 4xx status code
+func (o *V2GetNextStepsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get next steps internal server error response has a 5xx status code
+func (o *V2GetNextStepsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get next steps internal server error response a status code equal to that given
+func (o *V2GetNextStepsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetNextStepsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetNextStepsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetNextStepsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2GetNextStepsNotImplemented() *V2GetNextStepsNotImplemented {
 	return &V2GetNextStepsNotImplemented{}
 }
 
-/* V2GetNextStepsNotImplemented describes a response with status code 501, with default header values.
+/*
+V2GetNextStepsNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -281,9 +468,39 @@ type V2GetNextStepsNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get next steps not implemented response has a 2xx status code
+func (o *V2GetNextStepsNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps not implemented response has a 3xx status code
+func (o *V2GetNextStepsNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps not implemented response has a 4xx status code
+func (o *V2GetNextStepsNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get next steps not implemented response has a 5xx status code
+func (o *V2GetNextStepsNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get next steps not implemented response a status code equal to that given
+func (o *V2GetNextStepsNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2GetNextStepsNotImplemented) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2GetNextStepsNotImplemented) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2GetNextStepsNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2GetNextStepsServiceUnavailable() *V2GetNextStepsServiceUnavailable {
 	return &V2GetNextStepsServiceUnavailable{}
 }
 
-/* V2GetNextStepsServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2GetNextStepsServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -313,9 +531,39 @@ type V2GetNextStepsServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get next steps service unavailable response has a 2xx status code
+func (o *V2GetNextStepsServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get next steps service unavailable response has a 3xx status code
+func (o *V2GetNextStepsServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get next steps service unavailable response has a 4xx status code
+func (o *V2GetNextStepsServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get next steps service unavailable response has a 5xx status code
+func (o *V2GetNextStepsServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get next steps service unavailable response a status code equal to that given
+func (o *V2GetNextStepsServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2GetNextStepsServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2GetNextStepsServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2GetNextStepsServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2GetNextStepsServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

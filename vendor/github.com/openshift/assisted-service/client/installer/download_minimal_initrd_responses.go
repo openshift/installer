@@ -85,7 +85,8 @@ func NewDownloadMinimalInitrdOK(writer io.Writer) *DownloadMinimalInitrdOK {
 	}
 }
 
-/* DownloadMinimalInitrdOK describes a response with status code 200, with default header values.
+/*
+DownloadMinimalInitrdOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -93,9 +94,39 @@ type DownloadMinimalInitrdOK struct {
 	Payload io.Writer
 }
 
+// IsSuccess returns true when this download minimal initrd o k response has a 2xx status code
+func (o *DownloadMinimalInitrdOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this download minimal initrd o k response has a 3xx status code
+func (o *DownloadMinimalInitrdOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd o k response has a 4xx status code
+func (o *DownloadMinimalInitrdOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this download minimal initrd o k response has a 5xx status code
+func (o *DownloadMinimalInitrdOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd o k response a status code equal to that given
+func (o *DownloadMinimalInitrdOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *DownloadMinimalInitrdOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdOK  %+v", 200, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdOK  %+v", 200, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdOK) GetPayload() io.Writer {
 	return o.Payload
 }
@@ -115,14 +146,44 @@ func NewDownloadMinimalInitrdNoContent() *DownloadMinimalInitrdNoContent {
 	return &DownloadMinimalInitrdNoContent{}
 }
 
-/* DownloadMinimalInitrdNoContent describes a response with status code 204, with default header values.
+/*
+DownloadMinimalInitrdNoContent describes a response with status code 204, with default header values.
 
 Empty Success.
 */
 type DownloadMinimalInitrdNoContent struct {
 }
 
+// IsSuccess returns true when this download minimal initrd no content response has a 2xx status code
+func (o *DownloadMinimalInitrdNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this download minimal initrd no content response has a 3xx status code
+func (o *DownloadMinimalInitrdNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd no content response has a 4xx status code
+func (o *DownloadMinimalInitrdNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this download minimal initrd no content response has a 5xx status code
+func (o *DownloadMinimalInitrdNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd no content response a status code equal to that given
+func (o *DownloadMinimalInitrdNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *DownloadMinimalInitrdNoContent) Error() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdNoContent ", 204)
+}
+
+func (o *DownloadMinimalInitrdNoContent) String() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdNoContent ", 204)
 }
 
@@ -136,7 +197,8 @@ func NewDownloadMinimalInitrdUnauthorized() *DownloadMinimalInitrdUnauthorized {
 	return &DownloadMinimalInitrdUnauthorized{}
 }
 
-/* DownloadMinimalInitrdUnauthorized describes a response with status code 401, with default header values.
+/*
+DownloadMinimalInitrdUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -144,9 +206,39 @@ type DownloadMinimalInitrdUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this download minimal initrd unauthorized response has a 2xx status code
+func (o *DownloadMinimalInitrdUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd unauthorized response has a 3xx status code
+func (o *DownloadMinimalInitrdUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd unauthorized response has a 4xx status code
+func (o *DownloadMinimalInitrdUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this download minimal initrd unauthorized response has a 5xx status code
+func (o *DownloadMinimalInitrdUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd unauthorized response a status code equal to that given
+func (o *DownloadMinimalInitrdUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *DownloadMinimalInitrdUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -168,7 +260,8 @@ func NewDownloadMinimalInitrdForbidden() *DownloadMinimalInitrdForbidden {
 	return &DownloadMinimalInitrdForbidden{}
 }
 
-/* DownloadMinimalInitrdForbidden describes a response with status code 403, with default header values.
+/*
+DownloadMinimalInitrdForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -176,9 +269,39 @@ type DownloadMinimalInitrdForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this download minimal initrd forbidden response has a 2xx status code
+func (o *DownloadMinimalInitrdForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd forbidden response has a 3xx status code
+func (o *DownloadMinimalInitrdForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd forbidden response has a 4xx status code
+func (o *DownloadMinimalInitrdForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this download minimal initrd forbidden response has a 5xx status code
+func (o *DownloadMinimalInitrdForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd forbidden response a status code equal to that given
+func (o *DownloadMinimalInitrdForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *DownloadMinimalInitrdForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdForbidden  %+v", 403, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdForbidden  %+v", 403, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -200,7 +323,8 @@ func NewDownloadMinimalInitrdNotFound() *DownloadMinimalInitrdNotFound {
 	return &DownloadMinimalInitrdNotFound{}
 }
 
-/* DownloadMinimalInitrdNotFound describes a response with status code 404, with default header values.
+/*
+DownloadMinimalInitrdNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -208,9 +332,39 @@ type DownloadMinimalInitrdNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this download minimal initrd not found response has a 2xx status code
+func (o *DownloadMinimalInitrdNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd not found response has a 3xx status code
+func (o *DownloadMinimalInitrdNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd not found response has a 4xx status code
+func (o *DownloadMinimalInitrdNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this download minimal initrd not found response has a 5xx status code
+func (o *DownloadMinimalInitrdNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd not found response a status code equal to that given
+func (o *DownloadMinimalInitrdNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *DownloadMinimalInitrdNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdNotFound  %+v", 404, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdNotFound  %+v", 404, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -232,7 +386,8 @@ func NewDownloadMinimalInitrdMethodNotAllowed() *DownloadMinimalInitrdMethodNotA
 	return &DownloadMinimalInitrdMethodNotAllowed{}
 }
 
-/* DownloadMinimalInitrdMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+DownloadMinimalInitrdMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -240,9 +395,39 @@ type DownloadMinimalInitrdMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this download minimal initrd method not allowed response has a 2xx status code
+func (o *DownloadMinimalInitrdMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd method not allowed response has a 3xx status code
+func (o *DownloadMinimalInitrdMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd method not allowed response has a 4xx status code
+func (o *DownloadMinimalInitrdMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this download minimal initrd method not allowed response has a 5xx status code
+func (o *DownloadMinimalInitrdMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd method not allowed response a status code equal to that given
+func (o *DownloadMinimalInitrdMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *DownloadMinimalInitrdMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -264,7 +449,8 @@ func NewDownloadMinimalInitrdConflict() *DownloadMinimalInitrdConflict {
 	return &DownloadMinimalInitrdConflict{}
 }
 
-/* DownloadMinimalInitrdConflict describes a response with status code 409, with default header values.
+/*
+DownloadMinimalInitrdConflict describes a response with status code 409, with default header values.
 
 Conflict.
 */
@@ -272,9 +458,39 @@ type DownloadMinimalInitrdConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this download minimal initrd conflict response has a 2xx status code
+func (o *DownloadMinimalInitrdConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd conflict response has a 3xx status code
+func (o *DownloadMinimalInitrdConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd conflict response has a 4xx status code
+func (o *DownloadMinimalInitrdConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this download minimal initrd conflict response has a 5xx status code
+func (o *DownloadMinimalInitrdConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this download minimal initrd conflict response a status code equal to that given
+func (o *DownloadMinimalInitrdConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *DownloadMinimalInitrdConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdConflict  %+v", 409, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdConflict) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdConflict  %+v", 409, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -296,7 +512,8 @@ func NewDownloadMinimalInitrdInternalServerError() *DownloadMinimalInitrdInterna
 	return &DownloadMinimalInitrdInternalServerError{}
 }
 
-/* DownloadMinimalInitrdInternalServerError describes a response with status code 500, with default header values.
+/*
+DownloadMinimalInitrdInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -304,9 +521,39 @@ type DownloadMinimalInitrdInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this download minimal initrd internal server error response has a 2xx status code
+func (o *DownloadMinimalInitrdInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this download minimal initrd internal server error response has a 3xx status code
+func (o *DownloadMinimalInitrdInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this download minimal initrd internal server error response has a 4xx status code
+func (o *DownloadMinimalInitrdInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this download minimal initrd internal server error response has a 5xx status code
+func (o *DownloadMinimalInitrdInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this download minimal initrd internal server error response a status code equal to that given
+func (o *DownloadMinimalInitrdInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *DownloadMinimalInitrdInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *DownloadMinimalInitrdInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/minimal-initrd][%d] downloadMinimalInitrdInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *DownloadMinimalInitrdInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

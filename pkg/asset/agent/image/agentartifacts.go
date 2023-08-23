@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
@@ -69,7 +68,7 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 }
 
 func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
-	release := NewRelease(&executer.CommonExecuter{},
+	release := NewRelease(
 		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
 		releaseImage, pullSecret, mirrorConfig)
 

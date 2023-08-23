@@ -52,10 +52,12 @@ func NewV2GetHostParamsWithHTTPClient(client *http.Client) *V2GetHostParams {
 	}
 }
 
-/* V2GetHostParams contains all the parameters to send to the API endpoint
-   for the v2 get host operation.
+/*
+V2GetHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 get host operation.
+
+	Typically these are written to a http.Request.
 */
 type V2GetHostParams struct {
 

@@ -75,7 +75,8 @@ func NewV2GetCredentialsOK() *V2GetCredentialsOK {
 	return &V2GetCredentialsOK{}
 }
 
-/* V2GetCredentialsOK describes a response with status code 200, with default header values.
+/*
+V2GetCredentialsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type V2GetCredentialsOK struct {
 	Payload *models.Credentials
 }
 
+// IsSuccess returns true when this v2 get credentials o k response has a 2xx status code
+func (o *V2GetCredentialsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get credentials o k response has a 3xx status code
+func (o *V2GetCredentialsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials o k response has a 4xx status code
+func (o *V2GetCredentialsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get credentials o k response has a 5xx status code
+func (o *V2GetCredentialsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials o k response a status code equal to that given
+func (o *V2GetCredentialsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetCredentialsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetCredentialsOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetCredentialsOK) GetPayload() *models.Credentials {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewV2GetCredentialsUnauthorized() *V2GetCredentialsUnauthorized {
 	return &V2GetCredentialsUnauthorized{}
 }
 
-/* V2GetCredentialsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetCredentialsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -115,9 +147,39 @@ type V2GetCredentialsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get credentials unauthorized response has a 2xx status code
+func (o *V2GetCredentialsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials unauthorized response has a 3xx status code
+func (o *V2GetCredentialsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials unauthorized response has a 4xx status code
+func (o *V2GetCredentialsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get credentials unauthorized response has a 5xx status code
+func (o *V2GetCredentialsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials unauthorized response a status code equal to that given
+func (o *V2GetCredentialsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetCredentialsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetCredentialsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetCredentialsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewV2GetCredentialsForbidden() *V2GetCredentialsForbidden {
 	return &V2GetCredentialsForbidden{}
 }
 
-/* V2GetCredentialsForbidden describes a response with status code 403, with default header values.
+/*
+V2GetCredentialsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -147,9 +210,39 @@ type V2GetCredentialsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get credentials forbidden response has a 2xx status code
+func (o *V2GetCredentialsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials forbidden response has a 3xx status code
+func (o *V2GetCredentialsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials forbidden response has a 4xx status code
+func (o *V2GetCredentialsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get credentials forbidden response has a 5xx status code
+func (o *V2GetCredentialsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials forbidden response a status code equal to that given
+func (o *V2GetCredentialsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetCredentialsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetCredentialsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetCredentialsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewV2GetCredentialsNotFound() *V2GetCredentialsNotFound {
 	return &V2GetCredentialsNotFound{}
 }
 
-/* V2GetCredentialsNotFound describes a response with status code 404, with default header values.
+/*
+V2GetCredentialsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -179,9 +273,39 @@ type V2GetCredentialsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get credentials not found response has a 2xx status code
+func (o *V2GetCredentialsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials not found response has a 3xx status code
+func (o *V2GetCredentialsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials not found response has a 4xx status code
+func (o *V2GetCredentialsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get credentials not found response has a 5xx status code
+func (o *V2GetCredentialsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials not found response a status code equal to that given
+func (o *V2GetCredentialsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2GetCredentialsNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2GetCredentialsNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2GetCredentialsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewV2GetCredentialsMethodNotAllowed() *V2GetCredentialsMethodNotAllowed {
 	return &V2GetCredentialsMethodNotAllowed{}
 }
 
-/* V2GetCredentialsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2GetCredentialsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -211,9 +336,39 @@ type V2GetCredentialsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get credentials method not allowed response has a 2xx status code
+func (o *V2GetCredentialsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials method not allowed response has a 3xx status code
+func (o *V2GetCredentialsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials method not allowed response has a 4xx status code
+func (o *V2GetCredentialsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get credentials method not allowed response has a 5xx status code
+func (o *V2GetCredentialsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials method not allowed response a status code equal to that given
+func (o *V2GetCredentialsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2GetCredentialsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2GetCredentialsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2GetCredentialsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewV2GetCredentialsConflict() *V2GetCredentialsConflict {
 	return &V2GetCredentialsConflict{}
 }
 
-/* V2GetCredentialsConflict describes a response with status code 409, with default header values.
+/*
+V2GetCredentialsConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -243,9 +399,39 @@ type V2GetCredentialsConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get credentials conflict response has a 2xx status code
+func (o *V2GetCredentialsConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials conflict response has a 3xx status code
+func (o *V2GetCredentialsConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials conflict response has a 4xx status code
+func (o *V2GetCredentialsConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get credentials conflict response has a 5xx status code
+func (o *V2GetCredentialsConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get credentials conflict response a status code equal to that given
+func (o *V2GetCredentialsConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2GetCredentialsConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2GetCredentialsConflict) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2GetCredentialsConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewV2GetCredentialsInternalServerError() *V2GetCredentialsInternalServerErr
 	return &V2GetCredentialsInternalServerError{}
 }
 
-/* V2GetCredentialsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetCredentialsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -275,9 +462,39 @@ type V2GetCredentialsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get credentials internal server error response has a 2xx status code
+func (o *V2GetCredentialsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get credentials internal server error response has a 3xx status code
+func (o *V2GetCredentialsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get credentials internal server error response has a 4xx status code
+func (o *V2GetCredentialsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get credentials internal server error response has a 5xx status code
+func (o *V2GetCredentialsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get credentials internal server error response a status code equal to that given
+func (o *V2GetCredentialsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetCredentialsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetCredentialsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/credentials][%d] v2GetCredentialsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetCredentialsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

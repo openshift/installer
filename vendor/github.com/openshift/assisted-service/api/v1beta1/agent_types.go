@@ -89,6 +89,9 @@ const (
 	UnbindingMsg                     string                     = "The agent is currently unbinding from a cluster deployment"
 	UnbindingPendingUserActionReason string                     = "UnbindingPendingUserAction"
 	UnbindingPendingUserActionMsg    string                     = "The agent is currently unbinding; Pending host reboot from infraenv image"
+
+	CleanupCondition    conditionsv1.ConditionType = "Cleanup"
+	CleanupFailedReason string                     = "CleanupFailed"
 )
 
 type HostMemory struct {
@@ -191,6 +194,8 @@ type AgentSpec struct {
 	IgnitionConfigOverrides string `json:"ignitionConfigOverrides,omitempty"`
 	// IgnitionEndpointTokenReference references a secret containing an Authorization Bearer token to fetch the ignition from ignition_endpoint_url.
 	IgnitionEndpointTokenReference *IgnitionEndpointTokenReference `json:"ignitionEndpointTokenReference,omitempty"`
+	// NodeLabels are the labels to be applied on the node associated with this agent
+	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
 }
 
 type IgnitionEndpointTokenReference struct {
@@ -236,6 +241,10 @@ type AgentStatus struct {
 	// ValidationsInfo is a JSON-formatted string containing the validation results for each validation id grouped by category (network, hosts-data, etc.)
 	// +optional
 	ValidationsInfo common.ValidationsStatus `json:"validationsInfo,omitempty"`
+
+	// InstallationDiskID is the disk that will be used for the installation.
+	// +optional
+	InstallationDiskID string `json:"installation_disk_id,omitempty"`
 }
 
 type DebugInfo struct {

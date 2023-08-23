@@ -20,8 +20,12 @@ import (
 type OperatorType string
 
 func NewOperatorType(value OperatorType) *OperatorType {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated OperatorType.
+func (m OperatorType) Pointer() *OperatorType {
+	return &m
 }
 
 const (

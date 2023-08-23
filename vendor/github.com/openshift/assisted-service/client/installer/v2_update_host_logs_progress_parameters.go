@@ -54,10 +54,12 @@ func NewV2UpdateHostLogsProgressParamsWithHTTPClient(client *http.Client) *V2Upd
 	}
 }
 
-/* V2UpdateHostLogsProgressParams contains all the parameters to send to the API endpoint
-   for the v2 update host logs progress operation.
+/*
+V2UpdateHostLogsProgressParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update host logs progress operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateHostLogsProgressParams struct {
 

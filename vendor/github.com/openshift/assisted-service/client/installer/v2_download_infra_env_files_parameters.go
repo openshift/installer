@@ -52,10 +52,12 @@ func NewV2DownloadInfraEnvFilesParamsWithHTTPClient(client *http.Client) *V2Down
 	}
 }
 
-/* V2DownloadInfraEnvFilesParams contains all the parameters to send to the API endpoint
-   for the v2 download infra env files operation.
+/*
+V2DownloadInfraEnvFilesParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 download infra env files operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DownloadInfraEnvFilesParams struct {
 

@@ -52,10 +52,12 @@ func NewV2ResetClusterParamsWithHTTPClient(client *http.Client) *V2ResetClusterP
 	}
 }
 
-/* V2ResetClusterParams contains all the parameters to send to the API endpoint
-   for the v2 reset cluster operation.
+/*
+V2ResetClusterParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 reset cluster operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ResetClusterParams struct {
 

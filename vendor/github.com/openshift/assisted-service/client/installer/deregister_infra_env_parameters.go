@@ -52,10 +52,12 @@ func NewDeregisterInfraEnvParamsWithHTTPClient(client *http.Client) *DeregisterI
 	}
 }
 
-/* DeregisterInfraEnvParams contains all the parameters to send to the API endpoint
-   for the deregister infra env operation.
+/*
+DeregisterInfraEnvParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the deregister infra env operation.
+
+	Typically these are written to a http.Request.
 */
 type DeregisterInfraEnvParams struct {
 

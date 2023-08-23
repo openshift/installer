@@ -81,7 +81,8 @@ func NewV2UpdateHostCreated() *V2UpdateHostCreated {
 	return &V2UpdateHostCreated{}
 }
 
-/* V2UpdateHostCreated describes a response with status code 201, with default header values.
+/*
+V2UpdateHostCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2UpdateHostCreated struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this v2 update host created response has a 2xx status code
+func (o *V2UpdateHostCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update host created response has a 3xx status code
+func (o *V2UpdateHostCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host created response has a 4xx status code
+func (o *V2UpdateHostCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host created response has a 5xx status code
+func (o *V2UpdateHostCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host created response a status code equal to that given
+func (o *V2UpdateHostCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2UpdateHostCreated) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2UpdateHostCreated) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2UpdateHostCreated) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2UpdateHostBadRequest() *V2UpdateHostBadRequest {
 	return &V2UpdateHostBadRequest{}
 }
 
-/* V2UpdateHostBadRequest describes a response with status code 400, with default header values.
+/*
+V2UpdateHostBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -121,9 +153,39 @@ type V2UpdateHostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host bad request response has a 2xx status code
+func (o *V2UpdateHostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host bad request response has a 3xx status code
+func (o *V2UpdateHostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host bad request response has a 4xx status code
+func (o *V2UpdateHostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host bad request response has a 5xx status code
+func (o *V2UpdateHostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host bad request response a status code equal to that given
+func (o *V2UpdateHostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2UpdateHostBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2UpdateHostBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2UpdateHostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2UpdateHostUnauthorized() *V2UpdateHostUnauthorized {
 	return &V2UpdateHostUnauthorized{}
 }
 
-/* V2UpdateHostUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -153,9 +216,39 @@ type V2UpdateHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host unauthorized response has a 2xx status code
+func (o *V2UpdateHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host unauthorized response has a 3xx status code
+func (o *V2UpdateHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host unauthorized response has a 4xx status code
+func (o *V2UpdateHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host unauthorized response has a 5xx status code
+func (o *V2UpdateHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host unauthorized response a status code equal to that given
+func (o *V2UpdateHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateHostUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateHostUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2UpdateHostForbidden() *V2UpdateHostForbidden {
 	return &V2UpdateHostForbidden{}
 }
 
-/* V2UpdateHostForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -185,9 +279,39 @@ type V2UpdateHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host forbidden response has a 2xx status code
+func (o *V2UpdateHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host forbidden response has a 3xx status code
+func (o *V2UpdateHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host forbidden response has a 4xx status code
+func (o *V2UpdateHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host forbidden response has a 5xx status code
+func (o *V2UpdateHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host forbidden response a status code equal to that given
+func (o *V2UpdateHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateHostForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateHostForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2UpdateHostNotFound() *V2UpdateHostNotFound {
 	return &V2UpdateHostNotFound{}
 }
 
-/* V2UpdateHostNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -217,9 +342,39 @@ type V2UpdateHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host not found response has a 2xx status code
+func (o *V2UpdateHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host not found response has a 3xx status code
+func (o *V2UpdateHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host not found response has a 4xx status code
+func (o *V2UpdateHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host not found response has a 5xx status code
+func (o *V2UpdateHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host not found response a status code equal to that given
+func (o *V2UpdateHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateHostNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateHostNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2UpdateHostMethodNotAllowed() *V2UpdateHostMethodNotAllowed {
 	return &V2UpdateHostMethodNotAllowed{}
 }
 
-/* V2UpdateHostMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateHostMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -249,9 +405,39 @@ type V2UpdateHostMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host method not allowed response has a 2xx status code
+func (o *V2UpdateHostMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host method not allowed response has a 3xx status code
+func (o *V2UpdateHostMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host method not allowed response has a 4xx status code
+func (o *V2UpdateHostMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host method not allowed response has a 5xx status code
+func (o *V2UpdateHostMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host method not allowed response a status code equal to that given
+func (o *V2UpdateHostMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateHostMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateHostMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateHostMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2UpdateHostConflict() *V2UpdateHostConflict {
 	return &V2UpdateHostConflict{}
 }
 
-/* V2UpdateHostConflict describes a response with status code 409, with default header values.
+/*
+V2UpdateHostConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -281,9 +468,39 @@ type V2UpdateHostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host conflict response has a 2xx status code
+func (o *V2UpdateHostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host conflict response has a 3xx status code
+func (o *V2UpdateHostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host conflict response has a 4xx status code
+func (o *V2UpdateHostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host conflict response has a 5xx status code
+func (o *V2UpdateHostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host conflict response a status code equal to that given
+func (o *V2UpdateHostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UpdateHostConflict) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UpdateHostConflict) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UpdateHostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2UpdateHostInternalServerError() *V2UpdateHostInternalServerError {
 	return &V2UpdateHostInternalServerError{}
 }
 
-/* V2UpdateHostInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -313,9 +531,39 @@ type V2UpdateHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host internal server error response has a 2xx status code
+func (o *V2UpdateHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host internal server error response has a 3xx status code
+func (o *V2UpdateHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host internal server error response has a 4xx status code
+func (o *V2UpdateHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host internal server error response has a 5xx status code
+func (o *V2UpdateHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host internal server error response a status code equal to that given
+func (o *V2UpdateHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateHostInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateHostInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2UpdateHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

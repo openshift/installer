@@ -20,8 +20,12 @@ import (
 type OperatorStatus string
 
 func NewOperatorStatus(value OperatorStatus) *OperatorStatus {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated OperatorStatus.
+func (m OperatorStatus) Pointer() *OperatorStatus {
+	return &m
 }
 
 const (

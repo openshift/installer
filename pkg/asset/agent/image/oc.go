@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,7 +22,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
-	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
 )
@@ -49,7 +49,6 @@ type Release interface {
 }
 
 type release struct {
-	executer     executer.Executer
 	config       Config
 	releaseImage string
 	pullSecret   string
@@ -57,9 +56,8 @@ type release struct {
 }
 
 // NewRelease is used to set up the executor to run oc commands
-func NewRelease(executer executer.Executer, config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) Release {
+func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) Release {
 	return &release{
-		executer:     executer,
 		config:       config,
 		releaseImage: releaseImage,
 		pullSecret:   pullSecret,
@@ -159,7 +157,7 @@ func (r *release) getImageFromRelease(imageName string) (string, error) {
 	}
 
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
-	image, err := execute(r.executer, r.pullSecret, cmd)
+	image, err := execute(r.pullSecret, cmd)
 	if err != nil {
 		if strings.Contains(err.Error(), "unknown flag: --icsp-file") {
 			logrus.Warning("Using older version of \"oc\" that does not support mirroring")
@@ -189,7 +187,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string) ([]string, 
 	}
 
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
-	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, r.pullSecret, cmd)
+	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.pullSecret, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -305,8 +303,8 @@ func removeCacheFile(path string) error {
 	return nil
 }
 
-func execute(executer executer.Executer, pullSecret, command string) (string, error) {
-	ps, err := executer.TempFile("", "registry-config")
+func execute(pullSecret, command string) (string, error) {
+	ps, err := os.CreateTemp("", "registry-config")
 	if err != nil {
 		return "", err
 	}
@@ -323,13 +321,22 @@ func execute(executer executer.Executer, pullSecret, command string) (string, er
 	executeCommand := command[:] + " --registry-config=" + ps.Name()
 	args := strings.Split(executeCommand, " ")
 
-	stdout, stderr, exitCode := executer.Execute(args[0], args[1:]...)
+	var stdoutBytes, stderrBytes bytes.Buffer
+	cmd := exec.Command(args[0], args[1:]...) //nolint:gosec
+	cmd.Stdout = &stdoutBytes
+	cmd.Stderr = &stderrBytes
 
-	if exitCode == 0 {
-		return strings.TrimSpace(stdout), nil
+	err = cmd.Run()
+	if err == nil {
+		return strings.TrimSpace(stdoutBytes.String()), nil
 	}
 
-	err = fmt.Errorf("command '%s' exited with non-zero exit code %d: %s\n%s", executeCommand, exitCode, stdout, stderr)
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		err = fmt.Errorf("command '%s' exited with non-zero exit code %d: %s\n%s", executeCommand, exitErr.ExitCode(), stdoutBytes.String(), stderrBytes.String())
+	} else {
+		err = fmt.Errorf("command '%s' failed: %w", executeCommand, err)
+	}
 	return "", err
 }
 

@@ -20,8 +20,12 @@ import (
 type HostStage string
 
 func NewHostStage(value HostStage) *HostStage {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated HostStage.
+func (m HostStage) Pointer() *HostStage {
+	return &m
 }
 
 const (

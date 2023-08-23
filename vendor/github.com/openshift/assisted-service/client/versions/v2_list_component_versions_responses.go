@@ -39,7 +39,8 @@ func NewV2ListComponentVersionsOK() *V2ListComponentVersionsOK {
 	return &V2ListComponentVersionsOK{}
 }
 
-/* V2ListComponentVersionsOK describes a response with status code 200, with default header values.
+/*
+V2ListComponentVersionsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -47,9 +48,39 @@ type V2ListComponentVersionsOK struct {
 	Payload *models.ListVersions
 }
 
+// IsSuccess returns true when this v2 list component versions o k response has a 2xx status code
+func (o *V2ListComponentVersionsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list component versions o k response has a 3xx status code
+func (o *V2ListComponentVersionsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list component versions o k response has a 4xx status code
+func (o *V2ListComponentVersionsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list component versions o k response has a 5xx status code
+func (o *V2ListComponentVersionsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list component versions o k response a status code equal to that given
+func (o *V2ListComponentVersionsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListComponentVersionsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/component-versions][%d] v2ListComponentVersionsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListComponentVersionsOK) String() string {
+	return fmt.Sprintf("[GET /v2/component-versions][%d] v2ListComponentVersionsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListComponentVersionsOK) GetPayload() *models.ListVersions {
 	return o.Payload
 }

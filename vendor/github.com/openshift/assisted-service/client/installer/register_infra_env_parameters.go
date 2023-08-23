@@ -54,10 +54,12 @@ func NewRegisterInfraEnvParamsWithHTTPClient(client *http.Client) *RegisterInfra
 	}
 }
 
-/* RegisterInfraEnvParams contains all the parameters to send to the API endpoint
-   for the register infra env operation.
+/*
+RegisterInfraEnvParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the register infra env operation.
+
+	Typically these are written to a http.Request.
 */
 type RegisterInfraEnvParams struct {
 

@@ -87,14 +87,44 @@ func NewV2PostStepReplyNoContent() *V2PostStepReplyNoContent {
 	return &V2PostStepReplyNoContent{}
 }
 
-/* V2PostStepReplyNoContent describes a response with status code 204, with default header values.
+/*
+V2PostStepReplyNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type V2PostStepReplyNoContent struct {
 }
 
+// IsSuccess returns true when this v2 post step reply no content response has a 2xx status code
+func (o *V2PostStepReplyNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 post step reply no content response has a 3xx status code
+func (o *V2PostStepReplyNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply no content response has a 4xx status code
+func (o *V2PostStepReplyNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 post step reply no content response has a 5xx status code
+func (o *V2PostStepReplyNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply no content response a status code equal to that given
+func (o *V2PostStepReplyNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2PostStepReplyNoContent) Error() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNoContent ", 204)
+}
+
+func (o *V2PostStepReplyNoContent) String() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNoContent ", 204)
 }
 
@@ -108,7 +138,8 @@ func NewV2PostStepReplyBadRequest() *V2PostStepReplyBadRequest {
 	return &V2PostStepReplyBadRequest{}
 }
 
-/* V2PostStepReplyBadRequest describes a response with status code 400, with default header values.
+/*
+V2PostStepReplyBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -116,9 +147,39 @@ type V2PostStepReplyBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply bad request response has a 2xx status code
+func (o *V2PostStepReplyBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply bad request response has a 3xx status code
+func (o *V2PostStepReplyBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply bad request response has a 4xx status code
+func (o *V2PostStepReplyBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 post step reply bad request response has a 5xx status code
+func (o *V2PostStepReplyBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply bad request response a status code equal to that given
+func (o *V2PostStepReplyBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2PostStepReplyBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2PostStepReplyBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2PostStepReplyBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -140,7 +201,8 @@ func NewV2PostStepReplyUnauthorized() *V2PostStepReplyUnauthorized {
 	return &V2PostStepReplyUnauthorized{}
 }
 
-/* V2PostStepReplyUnauthorized describes a response with status code 401, with default header values.
+/*
+V2PostStepReplyUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -148,9 +210,39 @@ type V2PostStepReplyUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 post step reply unauthorized response has a 2xx status code
+func (o *V2PostStepReplyUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply unauthorized response has a 3xx status code
+func (o *V2PostStepReplyUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply unauthorized response has a 4xx status code
+func (o *V2PostStepReplyUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 post step reply unauthorized response has a 5xx status code
+func (o *V2PostStepReplyUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply unauthorized response a status code equal to that given
+func (o *V2PostStepReplyUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2PostStepReplyUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2PostStepReplyUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2PostStepReplyUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -172,7 +264,8 @@ func NewV2PostStepReplyForbidden() *V2PostStepReplyForbidden {
 	return &V2PostStepReplyForbidden{}
 }
 
-/* V2PostStepReplyForbidden describes a response with status code 403, with default header values.
+/*
+V2PostStepReplyForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -180,9 +273,39 @@ type V2PostStepReplyForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 post step reply forbidden response has a 2xx status code
+func (o *V2PostStepReplyForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply forbidden response has a 3xx status code
+func (o *V2PostStepReplyForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply forbidden response has a 4xx status code
+func (o *V2PostStepReplyForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 post step reply forbidden response has a 5xx status code
+func (o *V2PostStepReplyForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply forbidden response a status code equal to that given
+func (o *V2PostStepReplyForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2PostStepReplyForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2PostStepReplyForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2PostStepReplyForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -204,7 +327,8 @@ func NewV2PostStepReplyNotFound() *V2PostStepReplyNotFound {
 	return &V2PostStepReplyNotFound{}
 }
 
-/* V2PostStepReplyNotFound describes a response with status code 404, with default header values.
+/*
+V2PostStepReplyNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -212,9 +336,39 @@ type V2PostStepReplyNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply not found response has a 2xx status code
+func (o *V2PostStepReplyNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply not found response has a 3xx status code
+func (o *V2PostStepReplyNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply not found response has a 4xx status code
+func (o *V2PostStepReplyNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 post step reply not found response has a 5xx status code
+func (o *V2PostStepReplyNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply not found response a status code equal to that given
+func (o *V2PostStepReplyNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2PostStepReplyNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2PostStepReplyNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2PostStepReplyNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -236,7 +390,8 @@ func NewV2PostStepReplyMethodNotAllowed() *V2PostStepReplyMethodNotAllowed {
 	return &V2PostStepReplyMethodNotAllowed{}
 }
 
-/* V2PostStepReplyMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2PostStepReplyMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -244,9 +399,39 @@ type V2PostStepReplyMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply method not allowed response has a 2xx status code
+func (o *V2PostStepReplyMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply method not allowed response has a 3xx status code
+func (o *V2PostStepReplyMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply method not allowed response has a 4xx status code
+func (o *V2PostStepReplyMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 post step reply method not allowed response has a 5xx status code
+func (o *V2PostStepReplyMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 post step reply method not allowed response a status code equal to that given
+func (o *V2PostStepReplyMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2PostStepReplyMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2PostStepReplyMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2PostStepReplyMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -268,7 +453,8 @@ func NewV2PostStepReplyInternalServerError() *V2PostStepReplyInternalServerError
 	return &V2PostStepReplyInternalServerError{}
 }
 
-/* V2PostStepReplyInternalServerError describes a response with status code 500, with default header values.
+/*
+V2PostStepReplyInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -276,9 +462,39 @@ type V2PostStepReplyInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply internal server error response has a 2xx status code
+func (o *V2PostStepReplyInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply internal server error response has a 3xx status code
+func (o *V2PostStepReplyInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply internal server error response has a 4xx status code
+func (o *V2PostStepReplyInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 post step reply internal server error response has a 5xx status code
+func (o *V2PostStepReplyInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 post step reply internal server error response a status code equal to that given
+func (o *V2PostStepReplyInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2PostStepReplyInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2PostStepReplyInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2PostStepReplyInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -300,7 +516,8 @@ func NewV2PostStepReplyNotImplemented() *V2PostStepReplyNotImplemented {
 	return &V2PostStepReplyNotImplemented{}
 }
 
-/* V2PostStepReplyNotImplemented describes a response with status code 501, with default header values.
+/*
+V2PostStepReplyNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -308,9 +525,39 @@ type V2PostStepReplyNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply not implemented response has a 2xx status code
+func (o *V2PostStepReplyNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply not implemented response has a 3xx status code
+func (o *V2PostStepReplyNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply not implemented response has a 4xx status code
+func (o *V2PostStepReplyNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 post step reply not implemented response has a 5xx status code
+func (o *V2PostStepReplyNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 post step reply not implemented response a status code equal to that given
+func (o *V2PostStepReplyNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2PostStepReplyNotImplemented) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2PostStepReplyNotImplemented) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2PostStepReplyNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -332,7 +579,8 @@ func NewV2PostStepReplyServiceUnavailable() *V2PostStepReplyServiceUnavailable {
 	return &V2PostStepReplyServiceUnavailable{}
 }
 
-/* V2PostStepReplyServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2PostStepReplyServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -340,9 +588,39 @@ type V2PostStepReplyServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 post step reply service unavailable response has a 2xx status code
+func (o *V2PostStepReplyServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 post step reply service unavailable response has a 3xx status code
+func (o *V2PostStepReplyServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 post step reply service unavailable response has a 4xx status code
+func (o *V2PostStepReplyServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 post step reply service unavailable response has a 5xx status code
+func (o *V2PostStepReplyServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 post step reply service unavailable response a status code equal to that given
+func (o *V2PostStepReplyServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2PostStepReplyServiceUnavailable) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2PostStepReplyServiceUnavailable) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/instructions][%d] v2PostStepReplyServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2PostStepReplyServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -52,10 +52,12 @@ func NewV2ListFeatureSupportLevelsParamsWithHTTPClient(client *http.Client) *V2L
 	}
 }
 
-/* V2ListFeatureSupportLevelsParams contains all the parameters to send to the API endpoint
-   for the v2 list feature support levels operation.
+/*
+V2ListFeatureSupportLevelsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list feature support levels operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListFeatureSupportLevelsParams struct {
 	timeout    time.Duration

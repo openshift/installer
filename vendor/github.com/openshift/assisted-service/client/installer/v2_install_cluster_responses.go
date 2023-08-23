@@ -81,7 +81,8 @@ func NewV2InstallClusterAccepted() *V2InstallClusterAccepted {
 	return &V2InstallClusterAccepted{}
 }
 
-/* V2InstallClusterAccepted describes a response with status code 202, with default header values.
+/*
+V2InstallClusterAccepted describes a response with status code 202, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2InstallClusterAccepted struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 install cluster accepted response has a 2xx status code
+func (o *V2InstallClusterAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 install cluster accepted response has a 3xx status code
+func (o *V2InstallClusterAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster accepted response has a 4xx status code
+func (o *V2InstallClusterAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 install cluster accepted response has a 5xx status code
+func (o *V2InstallClusterAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster accepted response a status code equal to that given
+func (o *V2InstallClusterAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *V2InstallClusterAccepted) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterAccepted  %+v", 202, o.Payload)
 }
+
+func (o *V2InstallClusterAccepted) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterAccepted  %+v", 202, o.Payload)
+}
+
 func (o *V2InstallClusterAccepted) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2InstallClusterBadRequest() *V2InstallClusterBadRequest {
 	return &V2InstallClusterBadRequest{}
 }
 
-/* V2InstallClusterBadRequest describes a response with status code 400, with default header values.
+/*
+V2InstallClusterBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -121,9 +153,39 @@ type V2InstallClusterBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install cluster bad request response has a 2xx status code
+func (o *V2InstallClusterBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster bad request response has a 3xx status code
+func (o *V2InstallClusterBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster bad request response has a 4xx status code
+func (o *V2InstallClusterBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster bad request response has a 5xx status code
+func (o *V2InstallClusterBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster bad request response a status code equal to that given
+func (o *V2InstallClusterBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2InstallClusterBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2InstallClusterBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2InstallClusterBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2InstallClusterUnauthorized() *V2InstallClusterUnauthorized {
 	return &V2InstallClusterUnauthorized{}
 }
 
-/* V2InstallClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2InstallClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -153,9 +216,39 @@ type V2InstallClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 install cluster unauthorized response has a 2xx status code
+func (o *V2InstallClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster unauthorized response has a 3xx status code
+func (o *V2InstallClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster unauthorized response has a 4xx status code
+func (o *V2InstallClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster unauthorized response has a 5xx status code
+func (o *V2InstallClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster unauthorized response a status code equal to that given
+func (o *V2InstallClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2InstallClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2InstallClusterUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2InstallClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2InstallClusterForbidden() *V2InstallClusterForbidden {
 	return &V2InstallClusterForbidden{}
 }
 
-/* V2InstallClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2InstallClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -185,9 +279,39 @@ type V2InstallClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 install cluster forbidden response has a 2xx status code
+func (o *V2InstallClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster forbidden response has a 3xx status code
+func (o *V2InstallClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster forbidden response has a 4xx status code
+func (o *V2InstallClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster forbidden response has a 5xx status code
+func (o *V2InstallClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster forbidden response a status code equal to that given
+func (o *V2InstallClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2InstallClusterForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2InstallClusterForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2InstallClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2InstallClusterNotFound() *V2InstallClusterNotFound {
 	return &V2InstallClusterNotFound{}
 }
 
-/* V2InstallClusterNotFound describes a response with status code 404, with default header values.
+/*
+V2InstallClusterNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -217,9 +342,39 @@ type V2InstallClusterNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install cluster not found response has a 2xx status code
+func (o *V2InstallClusterNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster not found response has a 3xx status code
+func (o *V2InstallClusterNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster not found response has a 4xx status code
+func (o *V2InstallClusterNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster not found response has a 5xx status code
+func (o *V2InstallClusterNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster not found response a status code equal to that given
+func (o *V2InstallClusterNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2InstallClusterNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2InstallClusterNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2InstallClusterNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2InstallClusterMethodNotAllowed() *V2InstallClusterMethodNotAllowed {
 	return &V2InstallClusterMethodNotAllowed{}
 }
 
-/* V2InstallClusterMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2InstallClusterMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -249,9 +405,39 @@ type V2InstallClusterMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install cluster method not allowed response has a 2xx status code
+func (o *V2InstallClusterMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster method not allowed response has a 3xx status code
+func (o *V2InstallClusterMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster method not allowed response has a 4xx status code
+func (o *V2InstallClusterMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster method not allowed response has a 5xx status code
+func (o *V2InstallClusterMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster method not allowed response a status code equal to that given
+func (o *V2InstallClusterMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2InstallClusterMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2InstallClusterMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2InstallClusterMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2InstallClusterConflict() *V2InstallClusterConflict {
 	return &V2InstallClusterConflict{}
 }
 
-/* V2InstallClusterConflict describes a response with status code 409, with default header values.
+/*
+V2InstallClusterConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -281,9 +468,39 @@ type V2InstallClusterConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install cluster conflict response has a 2xx status code
+func (o *V2InstallClusterConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster conflict response has a 3xx status code
+func (o *V2InstallClusterConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster conflict response has a 4xx status code
+func (o *V2InstallClusterConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install cluster conflict response has a 5xx status code
+func (o *V2InstallClusterConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install cluster conflict response a status code equal to that given
+func (o *V2InstallClusterConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2InstallClusterConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2InstallClusterConflict) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2InstallClusterConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2InstallClusterInternalServerError() *V2InstallClusterInternalServerErr
 	return &V2InstallClusterInternalServerError{}
 }
 
-/* V2InstallClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2InstallClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -313,9 +531,39 @@ type V2InstallClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install cluster internal server error response has a 2xx status code
+func (o *V2InstallClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install cluster internal server error response has a 3xx status code
+func (o *V2InstallClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install cluster internal server error response has a 4xx status code
+func (o *V2InstallClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 install cluster internal server error response has a 5xx status code
+func (o *V2InstallClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 install cluster internal server error response a status code equal to that given
+func (o *V2InstallClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2InstallClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2InstallClusterInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/install][%d] v2InstallClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2InstallClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

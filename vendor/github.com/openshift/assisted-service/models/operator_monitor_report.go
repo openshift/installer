@@ -26,6 +26,9 @@ type OperatorMonitorReport struct {
 
 	// Detailed information about the operator state.
 	StatusInfo string `json:"status_info,omitempty"`
+
+	// operator version.
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this operator monitor report

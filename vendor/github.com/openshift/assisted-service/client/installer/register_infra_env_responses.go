@@ -87,7 +87,8 @@ func NewRegisterInfraEnvCreated() *RegisterInfraEnvCreated {
 	return &RegisterInfraEnvCreated{}
 }
 
-/* RegisterInfraEnvCreated describes a response with status code 201, with default header values.
+/*
+RegisterInfraEnvCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -95,9 +96,39 @@ type RegisterInfraEnvCreated struct {
 	Payload *models.InfraEnv
 }
 
+// IsSuccess returns true when this register infra env created response has a 2xx status code
+func (o *RegisterInfraEnvCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this register infra env created response has a 3xx status code
+func (o *RegisterInfraEnvCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env created response has a 4xx status code
+func (o *RegisterInfraEnvCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this register infra env created response has a 5xx status code
+func (o *RegisterInfraEnvCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env created response a status code equal to that given
+func (o *RegisterInfraEnvCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *RegisterInfraEnvCreated) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvCreated  %+v", 201, o.Payload)
 }
+
+func (o *RegisterInfraEnvCreated) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvCreated  %+v", 201, o.Payload)
+}
+
 func (o *RegisterInfraEnvCreated) GetPayload() *models.InfraEnv {
 	return o.Payload
 }
@@ -119,7 +150,8 @@ func NewRegisterInfraEnvBadRequest() *RegisterInfraEnvBadRequest {
 	return &RegisterInfraEnvBadRequest{}
 }
 
-/* RegisterInfraEnvBadRequest describes a response with status code 400, with default header values.
+/*
+RegisterInfraEnvBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -127,9 +159,39 @@ type RegisterInfraEnvBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env bad request response has a 2xx status code
+func (o *RegisterInfraEnvBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env bad request response has a 3xx status code
+func (o *RegisterInfraEnvBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env bad request response has a 4xx status code
+func (o *RegisterInfraEnvBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env bad request response has a 5xx status code
+func (o *RegisterInfraEnvBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env bad request response a status code equal to that given
+func (o *RegisterInfraEnvBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *RegisterInfraEnvBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *RegisterInfraEnvBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *RegisterInfraEnvBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +213,8 @@ func NewRegisterInfraEnvUnauthorized() *RegisterInfraEnvUnauthorized {
 	return &RegisterInfraEnvUnauthorized{}
 }
 
-/* RegisterInfraEnvUnauthorized describes a response with status code 401, with default header values.
+/*
+RegisterInfraEnvUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -159,9 +222,39 @@ type RegisterInfraEnvUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this register infra env unauthorized response has a 2xx status code
+func (o *RegisterInfraEnvUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env unauthorized response has a 3xx status code
+func (o *RegisterInfraEnvUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env unauthorized response has a 4xx status code
+func (o *RegisterInfraEnvUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env unauthorized response has a 5xx status code
+func (o *RegisterInfraEnvUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env unauthorized response a status code equal to that given
+func (o *RegisterInfraEnvUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *RegisterInfraEnvUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *RegisterInfraEnvUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *RegisterInfraEnvUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -183,7 +276,8 @@ func NewRegisterInfraEnvForbidden() *RegisterInfraEnvForbidden {
 	return &RegisterInfraEnvForbidden{}
 }
 
-/* RegisterInfraEnvForbidden describes a response with status code 403, with default header values.
+/*
+RegisterInfraEnvForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -191,9 +285,39 @@ type RegisterInfraEnvForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this register infra env forbidden response has a 2xx status code
+func (o *RegisterInfraEnvForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env forbidden response has a 3xx status code
+func (o *RegisterInfraEnvForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env forbidden response has a 4xx status code
+func (o *RegisterInfraEnvForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env forbidden response has a 5xx status code
+func (o *RegisterInfraEnvForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env forbidden response a status code equal to that given
+func (o *RegisterInfraEnvForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *RegisterInfraEnvForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvForbidden  %+v", 403, o.Payload)
 }
+
+func (o *RegisterInfraEnvForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvForbidden  %+v", 403, o.Payload)
+}
+
 func (o *RegisterInfraEnvForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -215,7 +339,8 @@ func NewRegisterInfraEnvNotFound() *RegisterInfraEnvNotFound {
 	return &RegisterInfraEnvNotFound{}
 }
 
-/* RegisterInfraEnvNotFound describes a response with status code 404, with default header values.
+/*
+RegisterInfraEnvNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -223,9 +348,39 @@ type RegisterInfraEnvNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env not found response has a 2xx status code
+func (o *RegisterInfraEnvNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env not found response has a 3xx status code
+func (o *RegisterInfraEnvNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env not found response has a 4xx status code
+func (o *RegisterInfraEnvNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env not found response has a 5xx status code
+func (o *RegisterInfraEnvNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env not found response a status code equal to that given
+func (o *RegisterInfraEnvNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *RegisterInfraEnvNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvNotFound  %+v", 404, o.Payload)
 }
+
+func (o *RegisterInfraEnvNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvNotFound  %+v", 404, o.Payload)
+}
+
 func (o *RegisterInfraEnvNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -247,7 +402,8 @@ func NewRegisterInfraEnvMethodNotAllowed() *RegisterInfraEnvMethodNotAllowed {
 	return &RegisterInfraEnvMethodNotAllowed{}
 }
 
-/* RegisterInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+RegisterInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -255,9 +411,39 @@ type RegisterInfraEnvMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env method not allowed response has a 2xx status code
+func (o *RegisterInfraEnvMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env method not allowed response has a 3xx status code
+func (o *RegisterInfraEnvMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env method not allowed response has a 4xx status code
+func (o *RegisterInfraEnvMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env method not allowed response has a 5xx status code
+func (o *RegisterInfraEnvMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env method not allowed response a status code equal to that given
+func (o *RegisterInfraEnvMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *RegisterInfraEnvMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *RegisterInfraEnvMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *RegisterInfraEnvMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -279,7 +465,8 @@ func NewRegisterInfraEnvConflict() *RegisterInfraEnvConflict {
 	return &RegisterInfraEnvConflict{}
 }
 
-/* RegisterInfraEnvConflict describes a response with status code 409, with default header values.
+/*
+RegisterInfraEnvConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -287,9 +474,39 @@ type RegisterInfraEnvConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env conflict response has a 2xx status code
+func (o *RegisterInfraEnvConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env conflict response has a 3xx status code
+func (o *RegisterInfraEnvConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env conflict response has a 4xx status code
+func (o *RegisterInfraEnvConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this register infra env conflict response has a 5xx status code
+func (o *RegisterInfraEnvConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this register infra env conflict response a status code equal to that given
+func (o *RegisterInfraEnvConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *RegisterInfraEnvConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvConflict  %+v", 409, o.Payload)
 }
+
+func (o *RegisterInfraEnvConflict) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvConflict  %+v", 409, o.Payload)
+}
+
 func (o *RegisterInfraEnvConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -311,7 +528,8 @@ func NewRegisterInfraEnvInternalServerError() *RegisterInfraEnvInternalServerErr
 	return &RegisterInfraEnvInternalServerError{}
 }
 
-/* RegisterInfraEnvInternalServerError describes a response with status code 500, with default header values.
+/*
+RegisterInfraEnvInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -319,9 +537,39 @@ type RegisterInfraEnvInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env internal server error response has a 2xx status code
+func (o *RegisterInfraEnvInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env internal server error response has a 3xx status code
+func (o *RegisterInfraEnvInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env internal server error response has a 4xx status code
+func (o *RegisterInfraEnvInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this register infra env internal server error response has a 5xx status code
+func (o *RegisterInfraEnvInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this register infra env internal server error response a status code equal to that given
+func (o *RegisterInfraEnvInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *RegisterInfraEnvInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *RegisterInfraEnvInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *RegisterInfraEnvInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -343,7 +591,8 @@ func NewRegisterInfraEnvNotImplemented() *RegisterInfraEnvNotImplemented {
 	return &RegisterInfraEnvNotImplemented{}
 }
 
-/* RegisterInfraEnvNotImplemented describes a response with status code 501, with default header values.
+/*
+RegisterInfraEnvNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -351,9 +600,39 @@ type RegisterInfraEnvNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this register infra env not implemented response has a 2xx status code
+func (o *RegisterInfraEnvNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this register infra env not implemented response has a 3xx status code
+func (o *RegisterInfraEnvNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this register infra env not implemented response has a 4xx status code
+func (o *RegisterInfraEnvNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this register infra env not implemented response has a 5xx status code
+func (o *RegisterInfraEnvNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this register infra env not implemented response a status code equal to that given
+func (o *RegisterInfraEnvNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *RegisterInfraEnvNotImplemented) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *RegisterInfraEnvNotImplemented) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs][%d] registerInfraEnvNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *RegisterInfraEnvNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
