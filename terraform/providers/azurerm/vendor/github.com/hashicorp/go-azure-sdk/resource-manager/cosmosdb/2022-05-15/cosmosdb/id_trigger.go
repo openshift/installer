@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = TriggerId{}
 
 // TriggerId is a struct representing the Resource ID for a Trigger
@@ -46,27 +43,27 @@ func ParseTriggerID(input string) (*TriggerId, error) {
 	id := TriggerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SqlDatabaseName, ok = parsed.Parsed["sqlDatabaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "sqlDatabaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'sqlDatabaseName' was not found in the resource id %q", input)
 	}
 
 	if id.ContainerName, ok = parsed.Parsed["containerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "containerName", *parsed)
+		return nil, fmt.Errorf("the segment 'containerName' was not found in the resource id %q", input)
 	}
 
 	if id.TriggerName, ok = parsed.Parsed["triggerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "triggerName", *parsed)
+		return nil, fmt.Errorf("the segment 'triggerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -85,27 +82,27 @@ func ParseTriggerIDInsensitively(input string) (*TriggerId, error) {
 	id := TriggerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SqlDatabaseName, ok = parsed.Parsed["sqlDatabaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "sqlDatabaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'sqlDatabaseName' was not found in the resource id %q", input)
 	}
 
 	if id.ContainerName, ok = parsed.Parsed["containerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "containerName", *parsed)
+		return nil, fmt.Errorf("the segment 'containerName' was not found in the resource id %q", input)
 	}
 
 	if id.TriggerName, ok = parsed.Parsed["triggerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "triggerName", *parsed)
+		return nil, fmt.Errorf("the segment 'triggerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

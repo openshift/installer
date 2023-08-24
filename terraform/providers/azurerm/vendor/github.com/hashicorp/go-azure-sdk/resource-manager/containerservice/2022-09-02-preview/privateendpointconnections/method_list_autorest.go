@@ -7,7 +7,6 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 )
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -19,7 +18,7 @@ type ListOperationResponse struct {
 }
 
 // List ...
-func (c PrivateEndpointConnectionsClient) List(ctx context.Context, id commonids.KubernetesClusterId) (result ListOperationResponse, err error) {
+func (c PrivateEndpointConnectionsClient) List(ctx context.Context, id ManagedClusterId) (result ListOperationResponse, err error) {
 	req, err := c.preparerForList(ctx, id)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "privateendpointconnections.PrivateEndpointConnectionsClient", "List", nil, "Failure preparing request")
@@ -42,7 +41,7 @@ func (c PrivateEndpointConnectionsClient) List(ctx context.Context, id commonids
 }
 
 // preparerForList prepares the List request.
-func (c PrivateEndpointConnectionsClient) preparerForList(ctx context.Context, id commonids.KubernetesClusterId) (*http.Request, error) {
+func (c PrivateEndpointConnectionsClient) preparerForList(ctx context.Context, id ManagedClusterId) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"api-version": defaultApiVersion,
 	}

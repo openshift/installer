@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -53,7 +50,7 @@ func (id SpringCloudBuildPackBindingId) ID() string {
 func SpringCloudBuildPackBindingID(input string) (*SpringCloudBuildPackBindingId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an SpringCloudBuildPackBinding ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := SpringCloudBuildPackBindingId{

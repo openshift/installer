@@ -1,10 +1,6 @@
 package disasterrecoveryconfigs
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -23,19 +19,6 @@ func PossibleValuesForProvisioningStateDR() []string {
 		string(ProvisioningStateDRFailed),
 		string(ProvisioningStateDRSucceeded),
 	}
-}
-
-func (s *ProvisioningStateDR) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProvisioningStateDR(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseProvisioningStateDR(input string) (*ProvisioningStateDR, error) {
@@ -67,19 +50,6 @@ func PossibleValuesForRoleDisasterRecovery() []string {
 		string(RoleDisasterRecoveryPrimaryNotReplicating),
 		string(RoleDisasterRecoverySecondary),
 	}
-}
-
-func (s *RoleDisasterRecovery) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRoleDisasterRecovery(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseRoleDisasterRecovery(input string) (*RoleDisasterRecovery, error) {

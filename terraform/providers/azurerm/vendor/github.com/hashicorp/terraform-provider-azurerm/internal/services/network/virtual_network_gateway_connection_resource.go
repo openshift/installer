@@ -65,7 +65,7 @@ func resourceVirtualNetworkGatewayConnection() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.VirtualNetworkGatewayID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"authorization_key": {
@@ -85,7 +85,7 @@ func resourceVirtualNetworkGatewayConnection() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.ExpressRouteCircuitID,
+				ValidateFunc: azure.ValidateResourceIDOrEmpty,
 			},
 
 			"egress_nat_rule_ids": {
@@ -110,7 +110,7 @@ func resourceVirtualNetworkGatewayConnection() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.VirtualNetworkGatewayID,
+				ValidateFunc: azure.ValidateResourceIDOrEmpty,
 			},
 
 			"local_azure_ip_address_enabled": {
@@ -122,7 +122,7 @@ func resourceVirtualNetworkGatewayConnection() *pluginsdk.Resource {
 			"local_network_gateway_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.LocalNetworkGatewayID,
+				ValidateFunc: azure.ValidateResourceIDOrEmpty,
 			},
 
 			// TODO 4.0: change this from enable_* to *_enabled

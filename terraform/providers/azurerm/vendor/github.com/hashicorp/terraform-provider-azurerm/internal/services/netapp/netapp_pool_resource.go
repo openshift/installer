@@ -288,18 +288,14 @@ func netappPoolDeleteStateRefreshFunc(ctx context.Context, client *capacitypools
 			}
 		}
 
-		statusCode := "dropped connection"
-		if res.HttpResponse != nil {
-			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
-		}
-		return res, statusCode, nil
+		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
 	}
 }
 
 func waitForPoolCreateOrUpdate(ctx context.Context, client *capacitypools.CapacityPoolsClient, id capacitypools.CapacityPoolId) error {
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("internal-error: context had no deadline")
+		return fmt.Errorf("context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		ContinuousTargetOccurence: 5,
@@ -327,10 +323,6 @@ func netappPoolStateRefreshFunc(ctx context.Context, client *capacitypools.Capac
 			}
 		}
 
-		statusCode := "dropped connection"
-		if res.HttpResponse != nil {
-			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
-		}
-		return res, statusCode, nil
+		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
 	}
 }

@@ -67,13 +67,6 @@ func resourceSnapshot() *pluginsdk.Resource {
 				}, false),
 			},
 
-			"incremental_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Optional: true,
-				Default:  false,
-				ForceNew: true,
-			},
-
 			"source_uri": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
@@ -150,7 +143,6 @@ func resourceSnapshotCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) e
 			CreationData: snapshots.CreationData{
 				CreateOption: snapshots.DiskCreateOption(createOption),
 			},
-			Incremental: utils.Bool(d.Get("incremental_enabled").(bool)),
 		},
 		Tags: tags.Expand(t),
 	}
@@ -224,12 +216,6 @@ func resourceSnapshotRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			if err := d.Set("encryption_settings", flattenSnapshotDiskEncryptionSettings(props.EncryptionSettingsCollection)); err != nil {
 				return fmt.Errorf("setting `encryption_settings`: %+v", err)
 			}
-
-			incrementalEnabled := false
-			if props.Incremental != nil {
-				incrementalEnabled = *props.Incremental
-			}
-			d.Set("incremental_enabled", incrementalEnabled)
 
 			trustedLaunchEnabled := false
 			if securityProfile := props.SecurityProfile; securityProfile != nil && securityProfile.SecurityType != nil {

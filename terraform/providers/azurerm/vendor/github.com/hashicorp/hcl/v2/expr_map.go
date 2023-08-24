@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package hcl
 
 // ExprMap tests if the given expression is a static map construct and,

@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = SessionId{}
 
 // SessionId is a struct representing the Resource ID for a Session
@@ -42,19 +39,19 @@ func ParseSessionID(input string) (*SessionId, error) {
 	id := SessionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.IntegrationAccountName, ok = parsed.Parsed["integrationAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "integrationAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'integrationAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SessionName, ok = parsed.Parsed["sessionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "sessionName", *parsed)
+		return nil, fmt.Errorf("the segment 'sessionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseSessionIDInsensitively(input string) (*SessionId, error) {
 	id := SessionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.IntegrationAccountName, ok = parsed.Parsed["integrationAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "integrationAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'integrationAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SessionName, ok = parsed.Parsed["sessionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "sessionName", *parsed)
+		return nil, fmt.Errorf("the segment 'sessionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

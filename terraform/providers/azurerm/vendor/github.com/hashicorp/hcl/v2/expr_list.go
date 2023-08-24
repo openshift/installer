@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package hcl
 
 // ExprList tests if the given expression is a static list construct and,

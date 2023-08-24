@@ -15,13 +15,15 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerinstance/2023-05-01/containerinstance"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerinstance/2021-10-01/containerinstance"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -128,7 +130,6 @@ func resourceContainerGroup() *pluginsdk.Resource {
 				Deprecated: "the 'network_profile_id' has been removed from the latest versions of the container instance API and has been deprecated. It no longer functions and will be removed from the 4.0 AzureRM provider. Please use the 'subnet_ids' field instead",
 			},
 
-			// lintignore:S018
 			"subnet_ids": {
 				Type:     pluginsdk.TypeSet,
 				Optional: true,
@@ -136,7 +137,7 @@ func resourceContainerGroup() *pluginsdk.Resource {
 				MaxItems: 1,
 				Elem: &pluginsdk.Schema{
 					Type:         pluginsdk.TypeString,
-					ValidateFunc: commonids.ValidateSubnetID,
+					ValidateFunc: networkValidate.SubnetID,
 				},
 				Set:           pluginsdk.HashString,
 				ConflictsWith: []string{"dns_name_label"},
@@ -749,7 +750,7 @@ func resourceContainerGroupCreate(d *pluginsdk.ResourceData, meta interface{}) e
 	// Avoid parallel provisioning if "subnet_ids" are given.
 	if subnets != nil && len(*subnets) != 0 {
 		for _, item := range *subnets {
-			subnet, err := commonids.ParseSubnetID(item.Id)
+			subnet, err := networkParse.SubnetID(item.Id)
 			if err != nil {
 				return fmt.Errorf(`parsing subnet id %q: %v`, item.Id, err)
 			}
@@ -897,7 +898,7 @@ func resourceContainerGroupRead(d *pluginsdk.ResourceData, meta interface{}) err
 				return fmt.Errorf("empty value returned for Key Vault Key Name")
 			}
 			keyVersion = kvProps.KeyVersion
-			keyId, err := keyVaultParse.NewNestedItemID(keyVaultUri, keyVaultParse.NestedItemTypeKey, keyName, keyVersion)
+			keyId, err := keyVaultParse.NewNestedItemID(keyVaultUri, "keys", keyName, keyVersion)
 			if err != nil {
 				return err
 			}
@@ -961,7 +962,7 @@ func resourceContainerGroupDelete(d *pluginsdk.ResourceData, meta interface{}) e
 		if subnetIDs := props.SubnetIds; subnetIDs != nil && len(*subnetIDs) != 0 {
 			// Avoid parallel deletion if "subnet_ids" are given.
 			for _, item := range *subnetIDs {
-				subnet, err := commonids.ParseSubnetID(item.Id)
+				subnet, err := networkParse.SubnetID(item.Id)
 				if err != nil {
 					return fmt.Errorf(`parsing subnet id %q: %v`, item.Id, err)
 				}
@@ -2008,7 +2009,7 @@ func flattenContainerGroupSubnets(input *[]containerinstance.ContainerGroupSubne
 			continue
 		}
 
-		id, err := commonids.ParseSubnetIDInsensitively(resourceRef.Id)
+		id, err := networkParse.SubnetIDInsensitively(resourceRef.Id)
 		if err != nil {
 			return nil, fmt.Errorf(`parsing subnet id %q: %v`, resourceRef.Id, err)
 		}
@@ -2026,7 +2027,7 @@ func expandContainerGroupSubnets(input []interface{}) (*[]containerinstance.Cont
 
 	results := make([]containerinstance.ContainerGroupSubnetId, 0)
 	for _, item := range input {
-		id, err := commonids.ParseSubnetID(item.(string))
+		id, err := networkParse.SubnetID(item.(string))
 		if err != nil {
 			return nil, fmt.Errorf(`parsing subnet id %q: %v`, item, err)
 		}

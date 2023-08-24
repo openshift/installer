@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -25,66 +25,37 @@ import (
 var SubnetResourceName = "azurerm_subnet"
 
 var subnetDelegationServiceNames = []string{
-	"GitHub.Network/networkSettings",
 	"Microsoft.ApiManagement/service",
-	"Microsoft.Apollo/npu",
-	"Microsoft.App/environments",
-	"Microsoft.App/testClients",
-	"Microsoft.AVS/PrivateClouds",
 	"Microsoft.AzureCosmosDB/clusters",
-	"Microsoft.BareMetal/AzureHostedService",
-	"Microsoft.BareMetal/AzureHPC",
-	"Microsoft.BareMetal/AzurePaymentHSM",
 	"Microsoft.BareMetal/AzureVMware",
 	"Microsoft.BareMetal/CrayServers",
-	"Microsoft.BareMetal/MonitoringServers",
 	"Microsoft.Batch/batchAccounts",
-	"Microsoft.CloudTest/hostedpools",
-	"Microsoft.CloudTest/images",
-	"Microsoft.CloudTest/pools",
-	"Microsoft.Codespaces/plans",
 	"Microsoft.ContainerInstance/containerGroups",
 	"Microsoft.ContainerService/managedClusters",
-	"Microsoft.ContainerService/TestClients",
 	"Microsoft.Databricks/workspaces",
 	"Microsoft.DBforMySQL/flexibleServers",
-	"Microsoft.DBforMySQL/servers",
 	"Microsoft.DBforMySQL/serversv2",
 	"Microsoft.DBforPostgreSQL/flexibleServers",
 	"Microsoft.DBforPostgreSQL/serversv2",
 	"Microsoft.DBforPostgreSQL/singleServers",
-	"Microsoft.DelegatedNetwork/controller",
-	"Microsoft.DevCenter/networkConnection",
-	"Microsoft.DocumentDB/cassandraClusters",
-	"Microsoft.Fidalgo/networkSettings",
 	"Microsoft.HardwareSecurityModules/dedicatedHSMs",
 	"Microsoft.Kusto/clusters",
-	"Microsoft.LabServices/labplans",
 	"Microsoft.Logic/integrationServiceEnvironments",
+	"Microsoft.LabServices/labplans",
 	"Microsoft.MachineLearningServices/workspaces",
 	"Microsoft.Netapp/volumes",
 	"Microsoft.Network/dnsResolvers",
 	"Microsoft.Network/managedResolvers",
-	"Microsoft.Network/fpgaNetworkInterfaces",
-	"Microsoft.Network/networkWatchers.",
-	"Microsoft.Network/virtualNetworkGateways",
-	"Microsoft.Orbital/orbitalGateways",
-	"Microsoft.PowerPlatform/enterprisePolicies",
 	"Microsoft.PowerPlatform/vnetaccesslinks",
 	"Microsoft.ServiceFabricMesh/networks",
-	"Microsoft.ServiceNetworking/trafficControllers",
-	"Microsoft.Singularity/accounts/networks",
-	"Microsoft.Singularity/accounts/npu",
 	"Microsoft.Sql/managedInstances",
-	"Microsoft.Sql/managedInstancesOnebox",
-	"Microsoft.Sql/managedInstancesStage",
-	"Microsoft.Sql/managedInstancesTest",
 	"Microsoft.Sql/servers",
 	"Microsoft.StoragePool/diskPools",
 	"Microsoft.StreamAnalytics/streamingJobs",
 	"Microsoft.Synapse/workspaces",
 	"Microsoft.Web/hostingEnvironments",
 	"Microsoft.Web/serverFarms",
+	"Microsoft.Orbital/orbitalGateways",
 	"NGINX.NGINXPLUS/nginxDeployments",
 	"PaloAltoNetworks.Cloudngfw/firewalls",
 	"Qumulo.Storage/fileSystems",
@@ -97,7 +68,7 @@ func resourceSubnet() *pluginsdk.Resource {
 		Update: resourceSubnetUpdate,
 		Delete: resourceSubnetDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := commonids.ParseSubnetID(id)
+			_, err := parse.SubnetID(id)
 			return err
 		}),
 
@@ -269,8 +240,8 @@ func resourceSubnetCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] preparing arguments for Azure ARM Subnet creation.")
 
-	id := commonids.NewSubnetID(subscriptionId, d.Get("resource_group_name").(string), d.Get("virtual_network_name").(string), d.Get("name").(string))
-	existing, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	id := parse.NewSubnetID(subscriptionId, d.Get("resource_group_name").(string), d.Get("virtual_network_name").(string), d.Get("name").(string))
+	existing, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		if !utils.ResponseWasNotFound(existing.Response) {
 			return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
@@ -376,11 +347,11 @@ func resourceSubnetCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	properties.Delegations = expandSubnetDelegation(delegationsRaw)
 
 	subnet := network.Subnet{
-		Name:                   utils.String(id.SubnetName),
+		Name:                   utils.String(id.Name),
 		SubnetPropertiesFormat: &properties,
 	}
 
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, subnet)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, subnet)
 	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
@@ -402,7 +373,7 @@ func resourceSubnetCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 		return fmt.Errorf("waiting for provisioning state of %s: %+v", id, err)
 	}
 
-	vnetId := commonids.NewVirtualNetworkID(id.SubscriptionId, id.ResourceGroupName, id.VirtualNetworkName)
+	vnetId := parse.NewVirtualNetworkID(id.SubscriptionId, id.ResourceGroup, id.VirtualNetworkName)
 	vnetStateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(network.ProvisioningStateUpdating)},
 		Target:     []string{string(network.ProvisioningStateSucceeded)},
@@ -424,7 +395,7 @@ func resourceSubnetUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseSubnetID(d.Id())
+	id, err := parse.SubnetID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -432,10 +403,10 @@ func resourceSubnetUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	locks.ByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 	defer locks.UnlockByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 
-	locks.ByName(id.SubnetName, SubnetResourceName)
-	defer locks.UnlockByName(id.SubnetName, SubnetResourceName)
+	locks.ByName(id.Name, SubnetResourceName)
+	defer locks.UnlockByName(id.Name, SubnetResourceName)
 
-	existing, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	existing, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
@@ -527,11 +498,11 @@ func resourceSubnetUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	}
 
 	subnet := network.Subnet{
-		Name:                   utils.String(id.SubnetName),
+		Name:                   utils.String(id.Name),
 		SubnetPropertiesFormat: &props,
 	}
 
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, subnet)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, subnet)
 	if err != nil {
 		return fmt.Errorf("updating %s: %+v", *id, err)
 	}
@@ -553,7 +524,7 @@ func resourceSubnetUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 		return fmt.Errorf("waiting for provisioning state of %s: %+v", id, err)
 	}
 
-	vnetId := commonids.NewVirtualNetworkID(id.SubscriptionId, id.ResourceGroupName, id.VirtualNetworkName)
+	vnetId := parse.NewVirtualNetworkID(id.SubscriptionId, id.ResourceGroup, id.VirtualNetworkName)
 	vnetStateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(network.ProvisioningStateUpdating)},
 		Target:     []string{string(network.ProvisioningStateSucceeded)},
@@ -574,12 +545,12 @@ func resourceSubnetRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseSubnetID(d.Id())
+	id, err := parse.SubnetID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	resp, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
@@ -588,9 +559,9 @@ func resourceSubnetRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.SubnetName)
+	d.Set("name", id.Name)
 	d.Set("virtual_network_name", id.VirtualNetworkName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 
 	if props := resp.SubnetPropertiesFormat; props != nil {
 		if props.AddressPrefixes == nil {
@@ -635,7 +606,7 @@ func resourceSubnetDelete(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseSubnetID(d.Id())
+	id, err := parse.SubnetID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -643,10 +614,10 @@ func resourceSubnetDelete(d *pluginsdk.ResourceData, meta interface{}) error {
 	locks.ByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 	defer locks.UnlockByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 
-	locks.ByName(id.SubnetName, SubnetResourceName)
-	defer locks.UnlockByName(id.SubnetName, SubnetResourceName)
+	locks.ByName(id.Name, SubnetResourceName)
+	defer locks.UnlockByName(id.Name, SubnetResourceName)
 
-	future, err := client.Delete(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
@@ -823,9 +794,9 @@ func flattenSubnetServiceEndpointPolicies(input *[]network.ServiceEndpointPolicy
 	return output
 }
 
-func SubnetProvisioningStateRefreshFunc(ctx context.Context, client *network.SubnetsClient, id commonids.SubnetId) pluginsdk.StateRefreshFunc {
+func SubnetProvisioningStateRefreshFunc(ctx context.Context, client *network.SubnetsClient, id parse.SubnetId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		res, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+		res, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 		if err != nil {
 			return nil, "", fmt.Errorf("polling for %s: %+v", id.String(), err)
 		}

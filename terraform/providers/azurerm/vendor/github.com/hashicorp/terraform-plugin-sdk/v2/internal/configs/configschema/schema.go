@@ -108,10 +108,7 @@ type NestedBlock struct {
 // blocks.
 type NestingMode int
 
-// This code was previously generated with a go:generate directive calling:
-// go run golang.org/x/tools/cmd/stringer -type=NestingMode
-// However, it is now considered frozen and the tooling dependency has been
-// removed. The String method can be manually updated if necessary.
+//go:generate go run golang.org/x/tools/cmd/stringer -type=NestingMode
 
 const (
 	nestingModeInvalid NestingMode = iota

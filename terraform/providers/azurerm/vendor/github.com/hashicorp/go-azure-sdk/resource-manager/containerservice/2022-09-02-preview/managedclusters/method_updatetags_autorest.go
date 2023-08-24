@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/polling"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 )
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -20,7 +19,7 @@ type UpdateTagsOperationResponse struct {
 }
 
 // UpdateTags ...
-func (c ManagedClustersClient) UpdateTags(ctx context.Context, id commonids.KubernetesClusterId, input TagsObject) (result UpdateTagsOperationResponse, err error) {
+func (c ManagedClustersClient) UpdateTags(ctx context.Context, id ManagedClusterId, input TagsObject) (result UpdateTagsOperationResponse, err error) {
 	req, err := c.preparerForUpdateTags(ctx, id, input)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "managedclusters.ManagedClustersClient", "UpdateTags", nil, "Failure preparing request")
@@ -37,7 +36,7 @@ func (c ManagedClustersClient) UpdateTags(ctx context.Context, id commonids.Kube
 }
 
 // UpdateTagsThenPoll performs UpdateTags then polls until it's completed
-func (c ManagedClustersClient) UpdateTagsThenPoll(ctx context.Context, id commonids.KubernetesClusterId, input TagsObject) error {
+func (c ManagedClustersClient) UpdateTagsThenPoll(ctx context.Context, id ManagedClusterId, input TagsObject) error {
 	result, err := c.UpdateTags(ctx, id, input)
 	if err != nil {
 		return fmt.Errorf("performing UpdateTags: %+v", err)
@@ -51,7 +50,7 @@ func (c ManagedClustersClient) UpdateTagsThenPoll(ctx context.Context, id common
 }
 
 // preparerForUpdateTags prepares the UpdateTags request.
-func (c ManagedClustersClient) preparerForUpdateTags(ctx context.Context, id commonids.KubernetesClusterId, input TagsObject) (*http.Request, error) {
+func (c ManagedClustersClient) preparerForUpdateTags(ctx context.Context, id ManagedClusterId, input TagsObject) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"api-version": defaultApiVersion,
 	}

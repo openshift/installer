@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = SnapshotPolicyId{}
 
 // SnapshotPolicyId is a struct representing the Resource ID for a Snapshot Policy
@@ -42,19 +39,19 @@ func ParseSnapshotPolicyID(input string) (*SnapshotPolicyId, error) {
 	id := SnapshotPolicyId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.NetAppAccountName, ok = parsed.Parsed["netAppAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "netAppAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'netAppAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SnapshotPolicyName, ok = parsed.Parsed["snapshotPolicyName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "snapshotPolicyName", *parsed)
+		return nil, fmt.Errorf("the segment 'snapshotPolicyName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseSnapshotPolicyIDInsensitively(input string) (*SnapshotPolicyId, error)
 	id := SnapshotPolicyId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.NetAppAccountName, ok = parsed.Parsed["netAppAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "netAppAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'netAppAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.SnapshotPolicyName, ok = parsed.Parsed["snapshotPolicyName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "snapshotPolicyName", *parsed)
+		return nil, fmt.Errorf("the segment 'snapshotPolicyName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

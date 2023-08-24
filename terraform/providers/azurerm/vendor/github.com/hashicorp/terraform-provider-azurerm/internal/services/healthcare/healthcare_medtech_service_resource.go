@@ -8,19 +8,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/Azure/azure-sdk-for-go/services/healthcareapis/mgmt/2021-11-01/healthcareapis" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/healthcareapis/2022-12-01/iotconnectors"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/healthcareapis/2022-12-01/workspaces"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	eventhubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -46,7 +46,7 @@ func resourceHealthcareApisMedTechService() *pluginsdk.Resource {
 		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := iotconnectors.ParseIotConnectorID(id)
+			_, err := parse.MedTechServiceID(id)
 			return err
 		}),
 
@@ -62,12 +62,12 @@ func resourceHealthcareApisMedTechService() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: workspaces.ValidateWorkspaceID,
+				ValidateFunc: validate.WorkspaceID,
 			},
 
 			"location": commonschema.Location(),
 
-			"identity": commonschema.SystemOrUserAssignedIdentityOptional(),
+			"identity": commonschema.SystemAssignedIdentityOptional(),
 
 			"eventhub_namespace_name": {
 				Type:         pluginsdk.TypeString,
@@ -100,59 +100,62 @@ func resourceHealthcareApisMedTechService() *pluginsdk.Resource {
 }
 
 func resourceHealthcareApisMedTechServiceCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceIotConnectorsClient
+	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceMedTechServiceClient
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	log.Printf("[INFO] preparing arguments for AzureRM Healthcare MedTech Service creation.")
 
-	workspace, err := workspaces.ParseWorkspaceID(d.Get("workspace_id").(string))
+	workspace, err := parse.WorkspaceID(d.Get("workspace_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing healthcare api workspace error: %+v", err)
 	}
-	id := iotconnectors.NewIotConnectorID(workspace.SubscriptionId, workspace.ResourceGroupName, workspace.WorkspaceName, d.Get("name").(string))
+	medTechServiceId := parse.NewMedTechServiceID(workspace.SubscriptionId, workspace.ResourceGroup, workspace.Name, d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, medTechServiceId.ResourceGroup, medTechServiceId.WorkspaceName, medTechServiceId.IotConnectorName)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
-				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
+			if !utils.ResponseWasNotFound(existing.Response) {
+				return fmt.Errorf("checking for presence of existing %s: %+v", medTechServiceId, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
-			return tf.ImportAsExistsError("azurerm_healthcare_medtech_service", id.ID())
+		if !utils.ResponseWasNotFound(existing.Response) {
+			return tf.ImportAsExistsError("azurerm_healthcare_medtech_service", medTechServiceId.ID())
 		}
 	}
 
 	namespaceName := d.Get("eventhub_namespace_name").(string) + ".servicebus.windows.net"
-
-	i, err := identity.ExpandLegacySystemAndUserAssignedMap(d.Get("identity").([]interface{}))
+	identity, err := expandMedTechServiceIdentity(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
 
-	parameters := iotconnectors.IotConnector{
-		Location: pointer.To(location.Normalize(d.Get("location").(string))),
-		Identity: i,
-		Properties: &iotconnectors.IotConnectorProperties{
-			IngestionEndpointConfiguration: &iotconnectors.IotEventHubIngestionEndpointConfiguration{
-				EventHubName:                    pointer.To(d.Get("eventhub_name").(string)),
-				ConsumerGroup:                   pointer.To(d.Get("eventhub_consumer_group_name").(string)),
+	parameters := healthcareapis.IotConnector{
+		Location: utils.String(azure.NormalizeLocation(d.Get("location").(string))),
+		Identity: identity,
+		IotConnectorProperties: &healthcareapis.IotConnectorProperties{
+			IngestionEndpointConfiguration: &healthcareapis.IotEventHubIngestionEndpointConfiguration{
+				EventHubName:                    utils.String(d.Get("eventhub_name").(string)),
+				ConsumerGroup:                   utils.String(d.Get("eventhub_consumer_group_name").(string)),
 				FullyQualifiedEventHubNamespace: &namespaceName,
 			},
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
-	deviceContentMap := iotconnectors.IotMappingProperties{}
+	deviceContentMap := healthcareapis.IotMappingProperties{}
 	deviceMappingJson := fmt.Sprintf(`{ "content": %s }`, d.Get("device_mapping_json").(string))
 	if err := json.Unmarshal([]byte(deviceMappingJson), &deviceContentMap); err != nil {
 		return err
 	}
-	parameters.Properties.DeviceMapping = &deviceContentMap
+	parameters.IotConnectorProperties.DeviceMapping = &deviceContentMap
 
-	err = client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, medTechServiceId.ResourceGroup, medTechServiceId.WorkspaceName, medTechServiceId.IotConnectorName, parameters)
 	if err != nil {
-		return fmt.Errorf("creating %s: %+v", id, err)
+		return fmt.Errorf("creating %s: %+v", medTechServiceId, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation of %s: %+v", medTechServiceId, err)
 	}
 
 	stateConf := &pluginsdk.StateChangeConf{
@@ -161,35 +164,31 @@ func resourceHealthcareApisMedTechServiceCreate(d *pluginsdk.ResourceData, meta 
 		MinTimeout:                10 * time.Second,
 		Pending:                   []string{"Creating", "Updating"},
 		Target:                    []string{"Succeeded"},
-		Refresh:                   medTechServiceCreateStateRefreshFunc(ctx, client, id),
+		Refresh:                   medTechServiceCreateStateRefreshFunc(ctx, client, medTechServiceId),
 		Timeout:                   d.Timeout(pluginsdk.TimeoutUpdate),
 	}
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return fmt.Errorf("waiting for MedTech Service %s to settle down: %+v", id, err)
+		return fmt.Errorf("waiting for MedTech Service %s to settle down: %+v", medTechServiceId, err)
 	}
 
-	d.SetId(id.ID())
+	d.SetId(medTechServiceId.ID())
 
 	return resourceHealthcareApisMedTechServiceRead(d, meta)
 }
 
 func resourceHealthcareApisMedTechServiceRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceIotConnectorsClient
-	domainSuffix, ok := meta.(*clients.Client).Account.Environment.ServiceBus.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("unable to retrieve the Domain Suffix for ServiceBus, this is not configured for this Cloud Environment")
-	}
+	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceMedTechServiceClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := iotconnectors.ParseIotConnectorID(d.Id())
+	id, err := parse.MedTechServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.IotConnectorName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[WARN] Healthcare Apis MedTech Service %s was not found", id)
 			d.SetId("")
 			return nil
@@ -198,100 +197,102 @@ func resourceHealthcareApisMedTechServiceRead(d *pluginsdk.ResourceData, meta in
 	}
 
 	d.Set("name", id.IotConnectorName)
-	d.Set("workspace_id", workspaces.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName).ID())
+	workspaceId := parse.NewWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName)
+	d.Set("workspace_id", workspaceId.ID())
 
-	if m := resp.Model; m != nil {
-		d.Set("location", location.NormalizeNilable(m.Location))
+	if resp.Location != nil {
+		d.Set("location", location.NormalizeNilable(resp.Location))
+	}
 
-		i, err := identity.FlattenLegacySystemAndUserAssignedMap(m.Identity)
-		if err != nil {
-			return fmt.Errorf("flattening `identity`: %+v", err)
+	if resp.Identity != nil {
+		d.Set("identity", flattenMedTechServiceIdentity(resp.Identity))
+	}
+
+	if props := resp.IotConnectorProperties; props != nil {
+		if props.IngestionEndpointConfiguration.EventHubName != nil {
+			d.Set("eventhub_name", props.IngestionEndpointConfiguration.EventHubName)
 		}
-		if err := d.Set("identity", i); err != nil {
-			return fmt.Errorf("setting `identity`: %+v", err)
+
+		if props.IngestionEndpointConfiguration.ConsumerGroup != nil {
+			d.Set("eventhub_consumer_group_name", props.IngestionEndpointConfiguration.ConsumerGroup)
 		}
 
-		if props := m.Properties; props != nil {
-			eventHubNamespaceName := ""
-			if config := props.IngestionEndpointConfiguration; config != nil {
-				d.Set("eventhub_consumer_group_name", pointer.From(config.ConsumerGroup))
-				d.Set("eventhub_name", pointer.From(config.EventHubName))
-
-				if props.IngestionEndpointConfiguration.FullyQualifiedEventHubNamespace != nil {
-					suffixToTrim := "." + *domainSuffix
-					eventHubNamespaceName = strings.TrimSuffix(*props.IngestionEndpointConfiguration.FullyQualifiedEventHubNamespace, suffixToTrim)
-				}
+		if props.DeviceMapping != nil {
+			deviceMapData, err := json.Marshal(props.DeviceMapping)
+			if err != nil {
+				return err
 			}
 
-			d.Set("eventhub_namespace_name", eventHubNamespaceName)
-
+			var m map[string]*json.RawMessage
+			if err = json.Unmarshal(deviceMapData, &m); err != nil {
+				return err
+			}
 			mapContent := ""
-			if props.DeviceMapping != nil {
-				deviceMapData, err := json.Marshal(props.DeviceMapping)
+			if v, ok := m["content"]; ok {
+				contents, err := json.Marshal(v)
 				if err != nil {
 					return err
 				}
-
-				var m map[string]*json.RawMessage
-				if err = json.Unmarshal(deviceMapData, &m); err != nil {
-					return err
-				}
-				if v, ok := m["content"]; ok {
-					contents, err := json.Marshal(v)
-					if err != nil {
-						return err
-					}
-					mapContent = string(contents)
-				}
+				mapContent = string(contents)
 			}
 			d.Set("device_mapping_json", mapContent)
 		}
 
-		return tags.FlattenAndSet(d, m.Tags)
+		if props.IngestionEndpointConfiguration.FullyQualifiedEventHubNamespace != nil {
+			d.Set("eventhub_namespace_name", strings.TrimSuffix(*props.IngestionEndpointConfiguration.FullyQualifiedEventHubNamespace, ".servicebus.windows.net"))
+		}
+	}
+
+	if err := tags.FlattenAndSet(d, resp.Tags); err != nil {
+		return err
 	}
 	return nil
 }
 
 func resourceHealthcareApisMedTechServiceUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceIotConnectorsClient
+	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceMedTechServiceClient
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	workspace, err := workspaces.ParseWorkspaceID(d.Get("workspace_id").(string))
+	workspace, err := parse.WorkspaceID(d.Get("workspace_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing healthcare api workspace error: %+v", err)
 	}
-	id := iotconnectors.NewIotConnectorID(workspace.SubscriptionId, workspace.ResourceGroupName, workspace.WorkspaceName, d.Get("name").(string))
+	medTechServiceId := parse.NewMedTechServiceID(workspace.SubscriptionId, workspace.ResourceGroup, workspace.Name, d.Get("name").(string))
 
 	namespaceName := d.Get("eventhub_namespace_name").(string) + ".servicebus.windows.net"
-	i, err := identity.ExpandLegacySystemAndUserAssignedMap(d.Get("identity").([]interface{}))
+	identity, err := expandMedTechServiceIdentity(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
 
-	parameters := iotconnectors.IotConnector{
-		Location: pointer.To(location.Normalize(d.Get("location").(string))),
-		Identity: i,
-		Properties: &iotconnectors.IotConnectorProperties{
-			IngestionEndpointConfiguration: &iotconnectors.IotEventHubIngestionEndpointConfiguration{
-				EventHubName:                    pointer.To(d.Get("eventhub_name").(string)),
-				ConsumerGroup:                   pointer.To(d.Get("eventhub_consumer_group_name").(string)),
+	parameters := healthcareapis.IotConnector{
+		Location: utils.String(azure.NormalizeLocation(d.Get("location").(string))),
+		Identity: identity,
+		IotConnectorProperties: &healthcareapis.IotConnectorProperties{
+			IngestionEndpointConfiguration: &healthcareapis.IotEventHubIngestionEndpointConfiguration{
+				EventHubName:                    utils.String(d.Get("eventhub_name").(string)),
+				ConsumerGroup:                   utils.String(d.Get("eventhub_consumer_group_name").(string)),
 				FullyQualifiedEventHubNamespace: &namespaceName,
 			},
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
-	deviceContentMap := iotconnectors.IotMappingProperties{}
+	deviceContentMap := healthcareapis.IotMappingProperties{}
 	deviceMappingJson := fmt.Sprintf(`{ "content": %s }`, d.Get("device_mapping_json").(string))
 	if err := json.Unmarshal([]byte(deviceMappingJson), &deviceContentMap); err != nil {
 		return err
 	}
-	parameters.Properties.DeviceMapping = &deviceContentMap
+	parameters.IotConnectorProperties.DeviceMapping = &deviceContentMap
 
-	err = client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, medTechServiceId.ResourceGroup, medTechServiceId.WorkspaceName, medTechServiceId.IotConnectorName, parameters)
 	if err != nil {
-		return fmt.Errorf("updating %s: %+v", id, err)
+		return fmt.Errorf("updating %s: %+v", medTechServiceId, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", medTechServiceId, err)
 	}
 
 	stateConf := &pluginsdk.StateChangeConf{
@@ -300,34 +301,36 @@ func resourceHealthcareApisMedTechServiceUpdate(d *pluginsdk.ResourceData, meta 
 		MinTimeout:                10 * time.Second,
 		Pending:                   []string{"Creating", "Updating"},
 		Target:                    []string{"Succeeded"},
-		Refresh:                   medTechServiceCreateStateRefreshFunc(ctx, client, id),
+		Refresh:                   medTechServiceCreateStateRefreshFunc(ctx, client, medTechServiceId),
 		Timeout:                   d.Timeout(pluginsdk.TimeoutUpdate),
 	}
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return fmt.Errorf("waiting for MedTech Service %s to settle down: %+v", id, err)
+		return fmt.Errorf("waiting for MedTech Service %s to settle down: %+v", medTechServiceId, err)
 	}
 
-	d.SetId(id.ID())
+	d.SetId(medTechServiceId.ID())
 
 	return resourceHealthcareApisMedTechServiceRead(d, meta)
 }
 
 func resourceHealthcareApisMedTechServiceDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceIotConnectorsClient
+	client := meta.(*clients.Client).HealthCare.HealthcareWorkspaceMedTechServiceClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := iotconnectors.ParseIotConnectorID(d.Id())
+	id, err := parse.MedTechServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.IotConnectorName, id.WorkspaceName)
 	if err != nil {
+		if response.WasNotFound(future.Response()) {
+			return nil
+		}
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
 
-	// NOTE: this can be removed when using `hashicorp/go-azure-sdk`'s base layer
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:                   []string{"Pending"},
 		Target:                    []string{"Deleted"},
@@ -343,12 +346,12 @@ func resourceHealthcareApisMedTechServiceDelete(d *pluginsdk.ResourceData, meta 
 	return nil
 }
 
-func medTechServiceStateStatusCodeRefreshFunc(ctx context.Context, client *iotconnectors.IotConnectorsClient, id iotconnectors.IotConnectorId) pluginsdk.StateRefreshFunc {
+func medTechServiceStateStatusCodeRefreshFunc(ctx context.Context, client *healthcareapis.IotConnectorsClient, id parse.MedTechServiceId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		res, err := client.Get(ctx, id)
+		res, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.IotConnectorName)
 
 		if err != nil {
-			if response.WasNotFound(res.HttpResponse) {
+			if utils.ResponseWasNotFound(res.Response) {
 				return res, "Deleted", nil
 			}
 			return nil, "Error", fmt.Errorf("polling for the status of %s: %+v", id, err)
@@ -358,24 +361,51 @@ func medTechServiceStateStatusCodeRefreshFunc(ctx context.Context, client *iotco
 	}
 }
 
+func expandMedTechServiceIdentity(input []interface{}) (*healthcareapis.ServiceManagedIdentityIdentity, error) {
+	expanded, err := identity.ExpandSystemAssigned(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &healthcareapis.ServiceManagedIdentityIdentity{
+		Type: healthcareapis.ServiceManagedIdentityType(string(expanded.Type)),
+	}, nil
+}
+
+func flattenMedTechServiceIdentity(input *healthcareapis.ServiceManagedIdentityIdentity) []interface{} {
+	var transition *identity.SystemAssigned
+
+	if input != nil {
+		transition = &identity.SystemAssigned{
+			Type: identity.Type(string(input.Type)),
+		}
+		if input.PrincipalID != nil {
+			principalID := *input.PrincipalID
+			transition.PrincipalId = principalID.String()
+		}
+		if input.TenantID != nil {
+			tenantID := *input.TenantID
+			transition.TenantId = tenantID.String()
+		}
+	}
+
+	return identity.FlattenSystemAssigned(transition)
+}
+
 func suppressJsonOrderingDifference(_, old, new string, _ *pluginsdk.ResourceData) bool {
 	return utils.NormalizeJson(old) == utils.NormalizeJson(new)
 }
 
-func medTechServiceCreateStateRefreshFunc(ctx context.Context, client *iotconnectors.IotConnectorsClient, id iotconnectors.IotConnectorId) pluginsdk.StateRefreshFunc {
+func medTechServiceCreateStateRefreshFunc(ctx context.Context, client *healthcareapis.IotConnectorsClient, medTechServiceId parse.MedTechServiceId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		resp, err := client.Get(ctx, id)
+		resp, err := client.Get(ctx, medTechServiceId.ResourceGroup, medTechServiceId.WorkspaceName, medTechServiceId.IotConnectorName)
 		if err != nil {
-			if response.WasNotFound(resp.HttpResponse) {
-				return nil, "", fmt.Errorf("unable to retrieve MedTech Service %q: %+v", id, err)
+			if utils.ResponseWasNotFound(resp.Response) {
+				return nil, "", fmt.Errorf("unable to retrieve MedTech Service %q: %+v", medTechServiceId, err)
 			}
-			return nil, "Error", fmt.Errorf("polling for the status of %s: %+v", id, err)
+			return nil, "Error", fmt.Errorf("polling for the status of %s: %+v", medTechServiceId, err)
 		}
 
-		if resp.Model == nil || resp.Model.Properties == nil || resp.Model.Properties.ProvisioningState == nil {
-			return resp, "Error", fmt.Errorf("model or properties or ProvisioningState is nil")
-		}
-
-		return resp, string(pointer.From(resp.Model.Properties.ProvisioningState)), nil
+		return resp, string(resp.ProvisioningState), nil
 	}
 }

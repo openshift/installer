@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
-	helperTags "github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/account"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datashare/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datashare/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceDataShareAccount() *pluginsdk.Resource {
@@ -46,26 +44,23 @@ func dataSourceDataShareAccountRead(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := account.NewAccountID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewAccountID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
-	resp, err := client.Get(ctx, id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s does not exist", id)
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
-	d.Set("name", id.AccountName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		if err := d.Set("identity", identity.FlattenSystemAssigned(&model.Identity)); err != nil {
-			return fmt.Errorf("setting `identity`: %+v", err)
-		}
-		return helperTags.FlattenAndSet(d, model.Tags)
+	if err := d.Set("identity", flattenAccountIdentity(resp.Identity)); err != nil {
+		return fmt.Errorf("setting `identity`: %+v", err)
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }

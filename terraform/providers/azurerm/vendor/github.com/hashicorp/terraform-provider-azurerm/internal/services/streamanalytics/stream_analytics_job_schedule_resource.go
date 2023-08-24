@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/streamanalytics/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/streamanalytics/parse"
 	streamAnalyticsValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/streamanalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -27,8 +26,6 @@ type JobScheduleResourceModel struct {
 	StartTime          string `tfschema:"start_time"`
 	LastOutputTime     string `tfschema:"last_output_time"`
 }
-
-var _ sdk.ResourceWithStateMigration = JobScheduleResource{}
 
 func (r JobScheduleResource) Arguments() map[string]*pluginsdk.Schema {
 	return map[string]*pluginsdk.Schema{
@@ -150,7 +147,7 @@ func (r JobScheduleResource) Read() sdk.ResourceFunc {
 				return err
 			}
 
-			streamAnalyticsId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingJobName)
+			streamAnalyticsId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingjobName)
 
 			var opts streamingjobs.GetOperationOptions
 			resp, err := client.Get(ctx, streamAnalyticsId, opts)
@@ -224,7 +221,7 @@ func (r JobScheduleResource) Update() sdk.ResourceFunc {
 				}
 
 				var opts streamingjobs.GetOperationOptions
-				streamingJobId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingJobName)
+				streamingJobId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingjobName)
 				existing, err := client.Get(ctx, streamingJobId, opts)
 				if err != nil {
 					return fmt.Errorf("retrieving %s: %+v", *id, err)
@@ -258,20 +255,11 @@ func (r JobScheduleResource) Delete() sdk.ResourceFunc {
 
 			metadata.Logger.Infof("deleting %s", *id)
 
-			streamingJobId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingJobName)
+			streamingJobId := streamingjobs.NewStreamingJobID(id.SubscriptionId, id.ResourceGroup, id.StreamingjobName)
 			if err := client.StopThenPoll(ctx, streamingJobId); err != nil {
 				return fmt.Errorf("deleting %s: %+v", *id, err)
 			}
 			return nil
-		},
-	}
-}
-
-func (r JobScheduleResource) StateUpgraders() sdk.StateUpgradeData {
-	return sdk.StateUpgradeData{
-		SchemaVersion: 1,
-		Upgraders: map[int]pluginsdk.StateUpgrade{
-			0: migration.StreamAnalyticsJobScheduleV0ToV1{},
 		},
 	}
 }

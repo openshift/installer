@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ReplicationFabricId{}
 
 // ReplicationFabricId is a struct representing the Resource ID for a Replication Fabric
@@ -42,19 +39,19 @@ func ParseReplicationFabricID(input string) (*ReplicationFabricId, error) {
 	id := ReplicationFabricId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VaultName, ok = parsed.Parsed["vaultName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vaultName", *parsed)
+		return nil, fmt.Errorf("the segment 'vaultName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationFabricName, ok = parsed.Parsed["replicationFabricName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationFabricName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationFabricName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseReplicationFabricIDInsensitively(input string) (*ReplicationFabricId, 
 	id := ReplicationFabricId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VaultName, ok = parsed.Parsed["vaultName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vaultName", *parsed)
+		return nil, fmt.Errorf("the segment 'vaultName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationFabricName, ok = parsed.Parsed["replicationFabricName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationFabricName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationFabricName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

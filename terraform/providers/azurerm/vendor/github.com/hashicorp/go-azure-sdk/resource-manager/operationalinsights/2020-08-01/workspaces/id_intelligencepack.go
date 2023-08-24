@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = IntelligencePackId{}
 
 // IntelligencePackId is a struct representing the Resource ID for a Intelligence Pack
@@ -42,19 +39,19 @@ func ParseIntelligencePackID(input string) (*IntelligencePackId, error) {
 	id := IntelligencePackId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.WorkspaceName, ok = parsed.Parsed["workspaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workspaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'workspaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IntelligencePackName, ok = parsed.Parsed["intelligencePackName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "intelligencePackName", *parsed)
+		return nil, fmt.Errorf("the segment 'intelligencePackName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseIntelligencePackIDInsensitively(input string) (*IntelligencePackId, er
 	id := IntelligencePackId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.WorkspaceName, ok = parsed.Parsed["workspaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workspaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'workspaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IntelligencePackName, ok = parsed.Parsed["intelligencePackName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "intelligencePackName", *parsed)
+		return nil, fmt.Errorf("the segment 'intelligencePackName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

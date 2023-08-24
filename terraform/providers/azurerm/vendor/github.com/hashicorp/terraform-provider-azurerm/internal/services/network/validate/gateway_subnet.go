@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 )
 
 func IsGatewaySubnet(i interface{}, k string) (warnings []string, errors []error) {
@@ -14,13 +14,13 @@ func IsGatewaySubnet(i interface{}, k string) (warnings []string, errors []error
 		return
 	}
 
-	id, err := commonids.ParseSubnetIDInsensitively(value)
+	id, err := parse.SubnetIDInsensitively(value)
 	if err != nil {
 		errors = append(errors, err)
 		return
 	}
 
-	if !strings.EqualFold(id.SubnetName, "GatewaySubnet") {
+	if !strings.EqualFold(id.Name, "GatewaySubnet") {
 		errors = append(errors, fmt.Errorf("expected %s to reference a gateway subnet with name GatewaySubnet", k))
 	}
 

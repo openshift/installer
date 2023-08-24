@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package hclsyntax
 
 import (
@@ -1177,12 +1174,7 @@ Token:
 			// if there was a parse error in the argument then we've
 			// probably been left in a weird place in the token stream,
 			// so we'll bail out with a partial argument list.
-			recoveredTok := p.recover(TokenCParen)
-
-			// record the recovered token, if one was found
-			if recoveredTok.Type == TokenCParen {
-				closeTok = recoveredTok
-			}
+			p.recover(TokenCParen)
 			break Token
 		}
 

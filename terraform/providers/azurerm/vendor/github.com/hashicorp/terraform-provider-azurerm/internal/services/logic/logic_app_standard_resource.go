@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -16,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/validate"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -224,7 +224,7 @@ func resourceLogicAppStandard() *pluginsdk.Resource {
 			"virtual_network_subnet_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: networkValidate.SubnetID,
 			},
 		},
 	}
@@ -232,15 +232,10 @@ func resourceLogicAppStandard() *pluginsdk.Resource {
 
 func resourceLogicAppStandardCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServicesClient
+	endpointSuffix := meta.(*clients.Client).Account.Environment.StorageEndpointSuffix
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-
-	env := meta.(*clients.Client).Account.Environment
-	storageAccountDomainSuffix, ok := env.Storage.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine the domain suffix for storage accounts in environment %q: %+v", env.Name, env.Storage)
-	}
 
 	log.Printf("[INFO] preparing arguments for AzureRM Logic App Standard creation.")
 
@@ -287,7 +282,7 @@ func resourceLogicAppStandardCreate(d *pluginsdk.ResourceData, meta interface{})
 	VirtualNetworkSubnetID := d.Get("virtual_network_subnet_id").(string)
 	t := d.Get("tags").(map[string]interface{})
 
-	basicAppSettings, err := getBasicLogicAppSettings(d, *storageAccountDomainSuffix)
+	basicAppSettings, err := getBasicLogicAppSettings(d, endpointSuffix)
 	if err != nil {
 		return err
 	}
@@ -354,14 +349,9 @@ func resourceLogicAppStandardCreate(d *pluginsdk.ResourceData, meta interface{})
 
 func resourceLogicAppStandardUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServicesClient
+	endpointSuffix := meta.(*clients.Client).Account.Environment.StorageEndpointSuffix
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-
-	env := meta.(*clients.Client).Account.Environment
-	storageAccountDomainSuffix, ok := env.Storage.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine the domain suffix for storage accounts in environment %q: %+v", env.Name, env.Storage)
-	}
 
 	id, err := parse.LogicAppStandardID(d.Id())
 	if err != nil {
@@ -377,7 +367,7 @@ func resourceLogicAppStandardUpdate(d *pluginsdk.ResourceData, meta interface{})
 	httpsOnly := d.Get("https_only").(bool)
 	t := d.Get("tags").(map[string]interface{})
 
-	basicAppSettings, err := getBasicLogicAppSettings(d, *storageAccountDomainSuffix)
+	basicAppSettings, err := getBasicLogicAppSettings(d, endpointSuffix)
 	if err != nil {
 		return err
 	}
@@ -395,7 +385,7 @@ func resourceLogicAppStandardUpdate(d *pluginsdk.ResourceData, meta interface{})
 	siteConfig.AppSettings = &basicAppSettings
 
 	// WEBSITE_VNET_ROUTE_ALL is superseded by a setting in site_config that defaults to false from 2021-02-01
-	appSettings, err := expandLogicAppStandardSettings(d, *storageAccountDomainSuffix)
+	appSettings, err := expandLogicAppStandardSettings(d, endpointSuffix)
 	if err != nil {
 		return fmt.Errorf("expanding `app_settings`: %+v", err)
 	}

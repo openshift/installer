@@ -45,6 +45,7 @@ func dataSourceCdnFrontDoorSecret() *pluginsdk.Resource {
 			"secret": {
 				Type:     pluginsdk.TypeList,
 				Computed: true,
+
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
 						"customer_certificate": {
@@ -52,11 +53,6 @@ func dataSourceCdnFrontDoorSecret() *pluginsdk.Resource {
 							Computed: true,
 							Elem: &pluginsdk.Resource{
 								Schema: map[string]*pluginsdk.Schema{
-									"expiration_date": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-
 									"key_vault_certificate_id": {
 										Type:     pluginsdk.TypeString,
 										Computed: true,
@@ -104,7 +100,7 @@ func dataSourceCdnFrontDoorSecretRead(d *pluginsdk.ResourceData, meta interface{
 
 	if props := resp.SecretProperties; props != nil {
 		var customerCertificate []interface{}
-		if customerCertificate, err = flattenSecretParametersDataSource(ctx, props.Parameters, meta); err != nil {
+		if customerCertificate, err = flattenSecretParameters(ctx, props.Parameters, meta); err != nil {
 			return fmt.Errorf("flattening 'secret': %+v", err)
 		}
 

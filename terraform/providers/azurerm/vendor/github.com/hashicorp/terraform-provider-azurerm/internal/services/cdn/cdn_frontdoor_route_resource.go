@@ -488,10 +488,7 @@ func resourceCdnFrontDoorRouteUpdate(d *pluginsdk.ResourceData, meta interface{}
 	}
 
 	if d.HasChange("cdn_frontdoor_origin_path") {
-		originPath := d.Get("cdn_frontdoor_origin_path").(string)
-		if originPath != "" {
-			updateProps.OriginPath = utils.String(originPath)
-		}
+		updateProps.OriginPath = utils.String(d.Get("cdn_frontdoor_origin_path").(string))
 	}
 
 	if d.HasChange("patterns_to_match") {

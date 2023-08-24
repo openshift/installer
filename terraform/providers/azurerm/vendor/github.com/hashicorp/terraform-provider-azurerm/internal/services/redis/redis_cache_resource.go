@@ -10,20 +10,21 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2023-04-01/patchschedules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2023-04-01/redis"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/patchschedules"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2021-06-01/redis"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network"
+	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/redis/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/redis/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -125,7 +126,7 @@ func resourceRedisCache() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: networkValidate.SubnetID,
 			},
 
 			"private_static_ip_address": {
@@ -432,7 +433,7 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 	}
 
 	if v, ok := d.GetOk("subnet_id"); ok {
-		parsed, parseErr := commonids.ParseSubnetID(v.(string))
+		parsed, parseErr := networkParse.SubnetID(v.(string))
 		if parseErr != nil {
 			return err
 		}
@@ -440,8 +441,8 @@ func resourceRedisCacheCreate(d *pluginsdk.ResourceData, meta interface{}) error
 		locks.ByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 		defer locks.UnlockByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 
-		locks.ByName(parsed.SubnetName, network.SubnetResourceName)
-		defer locks.UnlockByName(parsed.SubnetName, network.SubnetResourceName)
+		locks.ByName(parsed.Name, network.SubnetResourceName)
+		defer locks.UnlockByName(parsed.Name, network.SubnetResourceName)
 
 		parameters.Properties.SubnetId = utils.String(v.(string))
 	}
@@ -688,7 +689,7 @@ func resourceRedisCacheRead(d *pluginsdk.ResourceData, meta interface{}) error {
 
 		subnetId := ""
 		if props.SubnetId != nil {
-			parsed, err := commonids.ParseSubnetIDInsensitively(*props.SubnetId)
+			parsed, err := networkParse.SubnetIDInsensitively(*props.SubnetId)
 			if err != nil {
 				return err
 			}
@@ -747,7 +748,7 @@ func resourceRedisCacheDelete(d *pluginsdk.ResourceData, meta interface{}) error
 		return fmt.Errorf("retrieving %s: `model` was nil", *id)
 	}
 	if subnetID := read.Model.Properties.SubnetId; subnetID != nil {
-		parsed, parseErr := commonids.ParseSubnetIDInsensitively(*subnetID)
+		parsed, parseErr := networkParse.SubnetIDInsensitively(*subnetID)
 		if parseErr != nil {
 			return err
 		}
@@ -755,8 +756,8 @@ func resourceRedisCacheDelete(d *pluginsdk.ResourceData, meta interface{}) error
 		locks.ByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 		defer locks.UnlockByName(parsed.VirtualNetworkName, network.VirtualNetworkResourceName)
 
-		locks.ByName(parsed.SubnetName, network.SubnetResourceName)
-		defer locks.UnlockByName(parsed.SubnetName, network.SubnetResourceName)
+		locks.ByName(parsed.Name, network.SubnetResourceName)
+		defer locks.UnlockByName(parsed.Name, network.SubnetResourceName)
 	}
 
 	if err := client.DeleteThenPoll(ctx, *id); err != nil {
@@ -817,15 +818,11 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 	}
 
 	// RDB Backup
-	// nolint : staticcheck
-	v, valExists := d.GetOkExists("redis_configuration.0.rdb_backup_enabled")
-	if valExists {
-		if v := raw["rdb_backup_enabled"].(bool); v {
-			if connStr := raw["rdb_storage_connection_string"].(string); connStr == "" {
-				return nil, fmt.Errorf("The rdb_storage_connection_string property must be set when rdb_backup_enabled is true")
-			}
+	if v := raw["rdb_backup_enabled"].(bool); v {
+		if connStr := raw["rdb_storage_connection_string"].(string); connStr == "" {
+			return nil, fmt.Errorf("The rdb_storage_connection_string property must be set when rdb_backup_enabled is true")
 		}
-		output.RdbBackupEnabled = utils.String(strconv.FormatBool(v.(bool)))
+		output.RdbBackupEnabled = utils.String(strconv.FormatBool(v))
 	}
 
 	if v := raw["rdb_backup_frequency"].(int); v > 0 {
@@ -845,10 +842,8 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 	}
 
 	// AOF Backup
-	// nolint : staticcheck
-	v, valExists = d.GetOkExists("redis_configuration.0.aof_backup_enabled")
-	if valExists {
-		output.AofBackupEnabled = utils.String(strconv.FormatBool(v.(bool)))
+	if v := raw["aof_backup_enabled"].(bool); v {
+		output.AofBackupEnabled = utils.String(strconv.FormatBool(v))
 	}
 
 	if v := raw["aof_storage_connection_string_0"].(string); v != "" {
@@ -858,6 +853,7 @@ func expandRedisConfiguration(d *pluginsdk.ResourceData) (*redis.RedisCommonProp
 	if v := raw["aof_storage_connection_string_1"].(string); v != "" {
 		output.AofStorageConnectionString1 = utils.String(v)
 	}
+
 	authEnabled := raw["enable_authentication"].(bool)
 	// Redis authentication can only be disabled if it is launched inside a VNET.
 	if _, isPrivate := d.GetOk("subnet_id"); !isPrivate {

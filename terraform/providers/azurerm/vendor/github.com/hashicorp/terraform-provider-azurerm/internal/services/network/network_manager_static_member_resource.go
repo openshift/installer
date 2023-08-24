@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/staticmembers"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 type ManagerStaticMemberModel struct {
@@ -33,7 +34,7 @@ func (r ManagerStaticMemberResource) ModelObject() interface{} {
 }
 
 func (r ManagerStaticMemberResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return staticmembers.ValidateStaticMemberID
+	return validate.NetworkManagerStaticMemberID
 }
 
 func (r ManagerStaticMemberResource) Arguments() map[string]*pluginsdk.Schema {
@@ -49,14 +50,14 @@ func (r ManagerStaticMemberResource) Arguments() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: staticmembers.ValidateNetworkGroupID,
+			ValidateFunc: validate.NetworkManagerNetworkGroupID,
 		},
 
 		"target_virtual_network_id": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: commonids.ValidateVirtualNetworkID,
+			ValidateFunc: validate.VirtualNetworkID,
 		},
 	}
 }
@@ -80,28 +81,28 @@ func (r ManagerStaticMemberResource) Create() sdk.ResourceFunc {
 			}
 
 			client := metadata.Client.Network.ManagerStaticMembersClient
-			networkGroupId, err := staticmembers.ParseNetworkGroupID(model.NetworkGroupId)
+			networkGroupId, err := parse.NetworkManagerNetworkGroupID(model.NetworkGroupId)
 			if err != nil {
 				return err
 			}
 
-			id := staticmembers.NewStaticMemberID(networkGroupId.SubscriptionId, networkGroupId.ResourceGroupName, networkGroupId.NetworkManagerName, networkGroupId.NetworkGroupName, model.Name)
-			existing, err := client.Get(ctx, id)
-			if err != nil && !response.WasNotFound(existing.HttpResponse) {
+			id := parse.NewNetworkManagerStaticMemberID(networkGroupId.SubscriptionId, networkGroupId.ResourceGroup, networkGroupId.NetworkManagerName, networkGroupId.NetworkGroupName, model.Name)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.NetworkManagerName, id.NetworkGroupName, id.StaticMemberName)
+			if err != nil && !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for existing %s: %+v", id, err)
 			}
 
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			staticMember := staticmembers.StaticMember{
-				Properties: &staticmembers.StaticMemberProperties{
-					ResourceId: &model.TargetVNetId,
+			staticMember := &network.StaticMember{
+				StaticMemberProperties: &network.StaticMemberProperties{
+					ResourceID: &model.TargetVNetId,
 				},
 			}
 
-			if _, err := client.CreateOrUpdate(ctx, id, staticMember); err != nil {
+			if _, err := client.CreateOrUpdate(ctx, *staticMember, id.ResourceGroup, id.NetworkManagerName, id.NetworkGroupName, id.StaticMemberName); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -117,38 +118,36 @@ func (r ManagerStaticMemberResource) Read() sdk.ResourceFunc {
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Network.ManagerStaticMembersClient
 
-			id, err := staticmembers.ParseStaticMemberID(metadata.ResourceData.Id())
+			id, err := parse.NetworkManagerStaticMemberID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			existing, err := client.Get(ctx, *id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.NetworkManagerName, id.NetworkGroupName, id.StaticMemberName)
 			if err != nil {
-				if response.WasNotFound(existing.HttpResponse) {
+				if utils.ResponseWasNotFound(existing.Response) {
 					return metadata.MarkAsGone(id)
 				}
 
 				return fmt.Errorf("retrieving %s: %+v", *id, err)
 			}
-			if existing.Model == nil {
-				return fmt.Errorf("retrieving %s: model was nil", *id)
-			}
-			if existing.Model.Properties == nil {
-				return fmt.Errorf("retrieving %s: model properties was nil", *id)
+
+			properties := existing.StaticMemberProperties
+			if properties == nil {
+				return fmt.Errorf("retrieving %s: properties was nil", id)
 			}
 
-			properties := existing.Model.Properties
 			state := ManagerStaticMemberModel{
 				Name:           id.StaticMemberName,
-				NetworkGroupId: staticmembers.NewNetworkGroupID(id.SubscriptionId, id.ResourceGroupName, id.NetworkManagerName, id.NetworkGroupName).ID(),
+				NetworkGroupId: parse.NewNetworkManagerNetworkGroupID(id.SubscriptionId, id.ResourceGroup, id.NetworkManagerName, id.NetworkGroupName).ID(),
 			}
 
 			if properties.Region != nil {
 				state.Region = *properties.Region
 			}
 
-			if properties.ResourceId != nil {
-				state.TargetVNetId = *properties.ResourceId
+			if properties.ResourceID != nil {
+				state.TargetVNetId = *properties.ResourceID
 			}
 
 			return metadata.Encode(&state)
@@ -162,12 +161,12 @@ func (r ManagerStaticMemberResource) Delete() sdk.ResourceFunc {
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Network.ManagerStaticMembersClient
 
-			id, err := staticmembers.ParseStaticMemberID(metadata.ResourceData.Id())
+			id, err := parse.NetworkManagerStaticMemberID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			if _, err := client.Delete(ctx, *id); err != nil {
+			if _, err := client.Delete(ctx, id.ResourceGroup, id.NetworkManagerName, id.NetworkGroupName, id.StaticMemberName); err != nil {
 				return fmt.Errorf("deleting %s: %+v", id, err)
 			}
 

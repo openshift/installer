@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryapplicationversions"
+	identity "github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 func VirtualMachineScaleSetAdditionalCapabilitiesSchema() *pluginsdk.Schema {
@@ -168,7 +166,7 @@ func VirtualMachineScaleSetNetworkInterfaceSchema() *pluginsdk.Schema {
 				"network_security_group_id": {
 					Type:         pluginsdk.TypeString,
 					Optional:     true,
-					ValidateFunc: networkValidate.NetworkSecurityGroupID,
+					ValidateFunc: azure.ValidateResourceIDOrEmpty,
 				},
 				"primary": {
 					Type:     pluginsdk.TypeBool,
@@ -198,7 +196,7 @@ func VirtualMachineScaleSetGalleryApplicationSchema() *pluginsdk.Schema {
 					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: galleryapplicationversions.ValidateApplicationVersionID,
+					ValidateFunc: validate.GalleryApplicationVersionID,
 				},
 
 				// Example: https://mystorageaccount.blob.core.windows.net/configurations/settings.config
@@ -243,7 +241,7 @@ func VirtualMachineScaleSetGalleryApplicationsSchema() *pluginsdk.Schema {
 					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: galleryapplicationversions.ValidateApplicationVersionID,
+					ValidateFunc: validate.GalleryApplicationVersionID,
 					Deprecated:   "`package_reference_id` has been renamed to `version_id` and will be deprecated in 4.0",
 				},
 
@@ -635,7 +633,7 @@ func virtualMachineScaleSetIPConfigurationSchema() *pluginsdk.Schema {
 					Optional: true,
 					Elem: &pluginsdk.Schema{
 						Type:         pluginsdk.TypeString,
-						ValidateFunc: networkValidate.ApplicationSecurityGroupID,
+						ValidateFunc: azure.ValidateResourceID,
 					},
 					Set:      pluginsdk.HashString,
 					MaxItems: 20,
@@ -666,7 +664,7 @@ func virtualMachineScaleSetIPConfigurationSchema() *pluginsdk.Schema {
 				"subnet_id": {
 					Type:         pluginsdk.TypeString,
 					Optional:     true,
-					ValidateFunc: commonids.ValidateSubnetID,
+					ValidateFunc: azure.ValidateResourceID,
 				},
 
 				"version": {
@@ -809,7 +807,7 @@ func virtualMachineScaleSetPublicIPAddressSchema() *pluginsdk.Schema {
 					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ForceNew:     true,
-					ValidateFunc: networkValidate.PublicIpPrefixID,
+					ValidateFunc: azure.ValidateResourceIDOrEmpty,
 				},
 			},
 		},
@@ -1330,20 +1328,16 @@ func VirtualMachineScaleSetDataDiskSchema() *pluginsdk.Schema {
 					Default:  false,
 				},
 
-				// TODO rename `ultra_ssd_disk_iops_read_write` to `disk_iops_read_write` in 4.0
 				"ultra_ssd_disk_iops_read_write": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					ValidateFunc: validation.IntAtLeast(1),
-					Computed:     true,
+					Type:     pluginsdk.TypeInt,
+					Optional: true,
+					Computed: true,
 				},
 
-				// TODO rename `ultra_ssd_disk_mbps_read_write` to `disk_mbps_read_write` in 4.0
 				"ultra_ssd_disk_mbps_read_write": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					ValidateFunc: validation.IntAtLeast(1),
-					Computed:     true,
+					Type:     pluginsdk.TypeInt,
+					Optional: true,
+					Computed: true,
 				},
 			},
 		},
@@ -1356,13 +1350,12 @@ func ExpandVirtualMachineScaleSetDataDisk(input []interface{}, ultraSSDEnabled b
 	for _, v := range input {
 		raw := v.(map[string]interface{})
 
-		storageAccountType := compute.StorageAccountTypes(raw["storage_account_type"].(string))
 		disk := compute.VirtualMachineScaleSetDataDisk{
 			Caching:    compute.CachingTypes(raw["caching"].(string)),
 			DiskSizeGB: utils.Int32(int32(raw["disk_size_gb"].(int))),
 			Lun:        utils.Int32(int32(raw["lun"].(int))),
 			ManagedDisk: &compute.VirtualMachineScaleSetManagedDiskParameters{
-				StorageAccountType: storageAccountType,
+				StorageAccountType: compute.StorageAccountTypes(raw["storage_account_type"].(string)),
 			},
 			WriteAcceleratorEnabled: utils.Bool(raw["write_accelerator_enabled"].(bool)),
 			CreateOption:            compute.DiskCreateOptionTypes(raw["create_option"].(string)),
@@ -1379,21 +1372,25 @@ func ExpandVirtualMachineScaleSetDataDisk(input []interface{}, ultraSSDEnabled b
 		}
 
 		var iops int
-		if diskIops, ok := raw["ultra_ssd_disk_iops_read_write"]; ok && diskIops.(int) > 0 {
+		if diskIops, ok := raw["disk_iops_read_write"]; ok && diskIops.(int) > 0 {
 			iops = diskIops.(int)
+		} else if ssdIops, ok := raw["ultra_ssd_disk_iops_read_write"]; ok && ssdIops.(int) > 0 {
+			iops = ssdIops.(int)
 		}
 
-		if iops > 0 && !ultraSSDEnabled && storageAccountType != compute.StorageAccountTypesPremiumV2LRS {
-			return nil, fmt.Errorf("`ultra_ssd_disk_iops_read_write` can only be set when `storage_account_type` is set to `PremiumV2_LRS` or `UltraSSD_LRS`")
+		if iops > 0 && !ultraSSDEnabled {
+			return nil, fmt.Errorf("disk_iops_read_write and ultra_ssd_disk_iops_read_write are only available for UltraSSD disks")
 		}
 
 		var mbps int
-		if diskMbps, ok := raw["ultra_ssd_disk_mbps_read_write"]; ok && diskMbps.(int) > 0 {
+		if diskMbps, ok := raw["disk_mbps_read_write"]; ok && diskMbps.(int) > 0 {
 			mbps = diskMbps.(int)
+		} else if ssdMbps, ok := raw["ultra_ssd_disk_mbps_read_write"]; ok && ssdMbps.(int) > 0 {
+			mbps = ssdMbps.(int)
 		}
 
-		if mbps > 0 && !ultraSSDEnabled && storageAccountType != compute.StorageAccountTypesPremiumV2LRS {
-			return nil, fmt.Errorf("`ultra_ssd_disk_mbps_read_write` can only be set when `storage_account_type` is set to `PremiumV2_LRS` or `UltraSSD_LRS`")
+		if mbps > 0 && !ultraSSDEnabled {
+			return nil, fmt.Errorf("disk_mbps_read_write and ultra_ssd_disk_mbps_read_write are only available for UltraSSD disks")
 		}
 
 		// Do not set value unless value is greater than 0 - issue 15516
@@ -1460,16 +1457,24 @@ func FlattenVirtualMachineScaleSetDataDisk(input *[]compute.VirtualMachineScaleS
 		}
 
 		dataDisk := map[string]interface{}{
-			"name":                           name,
-			"caching":                        string(v.Caching),
-			"create_option":                  string(v.CreateOption),
-			"lun":                            lun,
-			"disk_encryption_set_id":         diskEncryptionSetId,
-			"disk_size_gb":                   diskSizeGb,
-			"storage_account_type":           storageAccountType,
-			"ultra_ssd_disk_iops_read_write": iops,
-			"ultra_ssd_disk_mbps_read_write": mbps,
-			"write_accelerator_enabled":      writeAcceleratorEnabled,
+			"name":                      name,
+			"caching":                   string(v.Caching),
+			"create_option":             string(v.CreateOption),
+			"lun":                       lun,
+			"disk_encryption_set_id":    diskEncryptionSetId,
+			"disk_size_gb":              diskSizeGb,
+			"storage_account_type":      storageAccountType,
+			"write_accelerator_enabled": writeAcceleratorEnabled,
+		}
+
+		// Do not set value unless value is greater than 0 - issue 15516
+		if iops > 0 {
+			dataDisk["ultra_ssd_disk_iops_read_write"] = iops
+		}
+
+		// Do not set value unless value is greater than 0 - issue 15516
+		if mbps > 0 {
+			dataDisk["ultra_ssd_disk_mbps_read_write"] = mbps
 		}
 
 		output = append(output, dataDisk)

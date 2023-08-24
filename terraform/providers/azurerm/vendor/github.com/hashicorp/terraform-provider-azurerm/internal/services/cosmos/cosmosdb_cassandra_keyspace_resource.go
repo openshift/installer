@@ -104,12 +104,12 @@ func resourceCosmosDbCassandraKeyspaceCreate(d *pluginsdk.ResourceData, meta int
 
 	if throughput, hasThroughput := d.GetOk("throughput"); hasThroughput {
 		if throughput != 0 {
-			db.CassandraKeyspaceCreateUpdateProperties.Options.Throughput = common.ConvertThroughputFromResourceDataLegacy(throughput)
+			db.CassandraKeyspaceCreateUpdateProperties.Options.Throughput = common.ConvertThroughputFromResourceData(throughput)
 		}
 	}
 
 	if _, hasAutoscaleSettings := d.GetOk("autoscale_settings"); hasAutoscaleSettings {
-		db.CassandraKeyspaceCreateUpdateProperties.Options.AutoscaleSettings = common.ExpandCosmosDbAutoscaleSettingsLegacy(d)
+		db.CassandraKeyspaceCreateUpdateProperties.Options.AutoscaleSettings = common.ExpandCosmosDbAutoscaleSettings(d)
 	}
 
 	future, err := client.CreateUpdateCassandraKeyspace(ctx, id.ResourceGroup, id.DatabaseAccountName, id.Name, db)
@@ -160,7 +160,7 @@ func resourceCosmosDbCassandraKeyspaceUpdate(d *pluginsdk.ResourceData, meta int
 	}
 
 	if common.HasThroughputChange(d) {
-		throughputParameters := common.ExpandCosmosDBThroughputSettingsUpdateParametersLegacy(d)
+		throughputParameters := common.ExpandCosmosDBThroughputSettingsUpdateParameters(d)
 		throughputFuture, err := client.UpdateCassandraKeyspaceThroughput(ctx, id.ResourceGroup, id.DatabaseAccountName, id.Name, *throughputParameters)
 		if err != nil {
 			if response.WasNotFound(throughputFuture.Response()) {
@@ -225,7 +225,7 @@ func resourceCosmosDbCassandraKeyspaceRead(d *pluginsdk.ResourceData, meta inter
 				d.Set("autoscale_settings", nil)
 			}
 		} else {
-			common.SetResourceDataThroughputFromResponseLegacy(throughputResp, d)
+			common.SetResourceDataThroughputFromResponse(throughputResp, d)
 		}
 	}
 	return nil

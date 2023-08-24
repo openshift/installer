@@ -203,7 +203,7 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 			}
 
 			properties := resp.Model
-			if properties == nil || properties.Properties == nil {
+			if properties == nil {
 				return fmt.Errorf("retrieving %s: properties was nil", id)
 			}
 
@@ -217,9 +217,6 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 
 			if metadata.ResourceData.HasChange("display_name") {
 				properties.Properties.DisplayName = model.DisplayName
-				if properties.Tags != nil {
-					delete(*properties.Tags, "hidden-title")
-				}
 			}
 
 			if metadata.ResourceData.HasChange("data_json") {

@@ -5,15 +5,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/module"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceAutomationModule() *pluginsdk.Resource {
@@ -24,7 +25,7 @@ func resourceAutomationModule() *pluginsdk.Resource {
 		Delete: resourceAutomationModuleDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := module.ParseModuleID(id)
+			_, err := parse.ModuleID(id)
 			return err
 		}),
 
@@ -89,79 +90,75 @@ func resourceAutomationModule() *pluginsdk.Resource {
 
 func resourceAutomationModuleCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Automation.ModuleClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for AzureRM Automation Module creation.")
 
-	id := module.NewModuleID(subscriptionId, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
+	id := parse.NewModuleID(client.SubscriptionID, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
 		// for existing global module do update instead of raising ImportAsExistsError
-		isGlobal := existing.Model != nil && existing.Model.Properties != nil && existing.Model.Properties.IsGlobal != nil && *existing.Model.Properties.IsGlobal
-		if !response.WasNotFound(existing.HttpResponse) && !isGlobal {
+		isGlobal := existing.ModuleProperties != nil && existing.ModuleProperties.IsGlobal != nil && *existing.ModuleProperties.IsGlobal
+		if !utils.ResponseWasNotFound(existing.Response) && !isGlobal {
 			return tf.ImportAsExistsError("azurerm_automation_module", id.ID())
 		}
 	}
 
-	parameters := module.ModuleCreateOrUpdateParameters{
-		Properties: module.ModuleCreateOrUpdateProperties{
-			ContentLink: expandModuleLink(d),
+	contentLink := expandModuleLink(d)
+
+	parameters := automation.ModuleCreateOrUpdateParameters{
+		ModuleCreateOrUpdateProperties: &automation.ModuleCreateOrUpdateProperties{
+			ContentLink: &contentLink,
 		},
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name, parameters); err != nil {
 		return err
 	}
 
 	// the API returns 'done' but it's not actually finished provisioning yet
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending: []string{
-			string(module.ModuleProvisioningStateActivitiesStored),
-			string(module.ModuleProvisioningStateConnectionTypeImported),
-			string(module.ModuleProvisioningStateContentDownloaded),
-			string(module.ModuleProvisioningStateContentRetrieved),
-			string(module.ModuleProvisioningStateContentStored),
-			string(module.ModuleProvisioningStateContentValidated),
-			string(module.ModuleProvisioningStateCreated),
-			string(module.ModuleProvisioningStateCreating),
-			string(module.ModuleProvisioningStateModuleDataStored),
-			string(module.ModuleProvisioningStateModuleImportRunbookComplete),
-			string(module.ModuleProvisioningStateRunningImportModuleRunbook),
-			string(module.ModuleProvisioningStateStartingImportModuleRunbook),
-			string(module.ModuleProvisioningStateUpdating),
+			string(automation.ModuleProvisioningStateActivitiesStored),
+			string(automation.ModuleProvisioningStateConnectionTypeImported),
+			string(automation.ModuleProvisioningStateContentDownloaded),
+			string(automation.ModuleProvisioningStateContentRetrieved),
+			string(automation.ModuleProvisioningStateContentStored),
+			string(automation.ModuleProvisioningStateContentValidated),
+			string(automation.ModuleProvisioningStateCreated),
+			string(automation.ModuleProvisioningStateCreating),
+			string(automation.ModuleProvisioningStateModuleDataStored),
+			string(automation.ModuleProvisioningStateModuleImportRunbookComplete),
+			string(automation.ModuleProvisioningStateRunningImportModuleRunbook),
+			string(automation.ModuleProvisioningStateStartingImportModuleRunbook),
+			string(automation.ModuleProvisioningStateUpdating),
 		},
 		Target: []string{
-			string(module.ModuleProvisioningStateSucceeded),
+			string(automation.ModuleProvisioningStateSucceeded),
 		},
 		MinTimeout: 30 * time.Second,
 		Refresh: func() (interface{}, string, error) {
-			resp, err2 := client.Get(ctx, id)
+			resp, err2 := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 			if err2 != nil {
 				return resp, "Error", fmt.Errorf("retrieving %s: %+v", id, err2)
 			}
 
-			provisioningState := "Unknown"
-			if model := resp.Model; model != nil {
-				if props := model.Properties; props != nil {
-					if props.ProvisioningState != nil {
-						provisioningState = string(*props.ProvisioningState)
-					}
-					if props.Error != nil && props.Error.Message != nil && *props.Error.Message != "" {
-						return resp, provisioningState, fmt.Errorf(*props.Error.Message)
-					}
-					return resp, provisioningState, nil
+			if properties := resp.ModuleProperties; properties != nil {
+				if properties.Error != nil && properties.Error.Message != nil && *properties.Error.Message != "" {
+					return resp, string(properties.ProvisioningState), fmt.Errorf(*properties.Error.Message)
 				}
+				return resp, string(properties.ProvisioningState), nil
 			}
-			return resp, provisioningState, nil
+
+			return resp, "Unknown", nil
 		},
 	}
 	if d.IsNewResource() {
@@ -184,23 +181,23 @@ func resourceAutomationModuleRead(d *pluginsdk.ResourceData, meta interface{}) e
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := module.ParseModuleID(d.Id())
+	id, err := parse.ModuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("making Read request on %s: %+v", *id, err)
+		return fmt.Errorf("making Read request on AzureRM Automation Module %q: %+v", id.Name, err)
 	}
 
-	d.Set("name", id.ModuleName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("automation_account_name", id.AutomationAccountName)
 
 	return nil
@@ -211,24 +208,24 @@ func resourceAutomationModuleDelete(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := module.ParseModuleID(d.Id())
+	id, err := parse.ModuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Delete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp) {
 			return nil
 		}
 
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+		return fmt.Errorf("issuing AzureRM delete request for Automation Module %q: %+v", id.Name, err)
 	}
 
 	return nil
 }
 
-func expandModuleLink(d *pluginsdk.ResourceData) module.ContentLink {
+func expandModuleLink(d *pluginsdk.ResourceData) automation.ContentLink {
 	inputs := d.Get("module_link").([]interface{})
 	input := inputs[0].(map[string]interface{})
 	uri := input["uri"].(string)
@@ -237,16 +234,19 @@ func expandModuleLink(d *pluginsdk.ResourceData) module.ContentLink {
 
 	if len(hashes) > 0 {
 		hash := hashes[0].(map[string]interface{})
-		return module.ContentLink{
-			Uri: &uri,
-			ContentHash: &module.ContentHash{
-				Algorithm: hash["algorithm"].(string),
-				Value:     hash["value"].(string),
+		hashValue := hash["value"].(string)
+		hashAlgorithm := hash["algorithm"].(string)
+
+		return automation.ContentLink{
+			URI: &uri,
+			ContentHash: &automation.ContentHash{
+				Algorithm: &hashAlgorithm,
+				Value:     &hashValue,
 			},
 		}
 	}
 
-	return module.ContentLink{
-		Uri: &uri,
+	return automation.ContentLink{
+		URI: &uri,
 	}
 }

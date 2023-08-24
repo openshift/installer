@@ -1,10 +1,6 @@
 package encodings
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -23,19 +19,6 @@ func PossibleValuesForAacAudioProfile() []string {
 		string(AacAudioProfileHeAacVOne),
 		string(AacAudioProfileHeAacVTwo),
 	}
-}
-
-func (s *AacAudioProfile) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAacAudioProfile(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAacAudioProfile(input string) (*AacAudioProfile, error) {
@@ -65,19 +48,6 @@ func PossibleValuesForAnalysisResolution() []string {
 		string(AnalysisResolutionSourceResolution),
 		string(AnalysisResolutionStandardDefinition),
 	}
-}
-
-func (s *AnalysisResolution) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAnalysisResolution(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAnalysisResolution(input string) (*AnalysisResolution, error) {
@@ -112,19 +82,6 @@ func PossibleValuesForAttributeFilter() []string {
 	}
 }
 
-func (s *AttributeFilter) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAttributeFilter(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseAttributeFilter(input string) (*AttributeFilter, error) {
 	vals := map[string]AttributeFilter{
 		"all":         AttributeFilterAll,
@@ -153,19 +110,6 @@ func PossibleValuesForAudioAnalysisMode() []string {
 		string(AudioAnalysisModeBasic),
 		string(AudioAnalysisModeStandard),
 	}
-}
-
-func (s *AudioAnalysisMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAudioAnalysisMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAudioAnalysisMode(input string) (*AudioAnalysisMode, error) {
@@ -200,19 +144,6 @@ func PossibleValuesForBlurType() []string {
 		string(BlurTypeLow),
 		string(BlurTypeMed),
 	}
-}
-
-func (s *BlurType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseBlurType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseBlurType(input string) (*BlurType, error) {
@@ -258,19 +189,6 @@ func PossibleValuesForChannelMapping() []string {
 	}
 }
 
-func (s *ChannelMapping) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseChannelMapping(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseChannelMapping(input string) (*ChannelMapping, error) {
 	vals := map[string]ChannelMapping{
 		"backleft":            ChannelMappingBackLeft,
@@ -307,19 +225,6 @@ func PossibleValuesForComplexity() []string {
 	}
 }
 
-func (s *Complexity) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseComplexity(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseComplexity(input string) (*Complexity, error) {
 	vals := map[string]Complexity{
 		"balanced": ComplexityBalanced,
@@ -347,19 +252,6 @@ func PossibleValuesForDeinterlaceMode() []string {
 		string(DeinterlaceModeAutoPixelAdaptive),
 		string(DeinterlaceModeOff),
 	}
-}
-
-func (s *DeinterlaceMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseDeinterlaceMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseDeinterlaceMode(input string) (*DeinterlaceMode, error) {
@@ -390,19 +282,6 @@ func PossibleValuesForDeinterlaceParity() []string {
 		string(DeinterlaceParityBottomFieldFirst),
 		string(DeinterlaceParityTopFieldFirst),
 	}
-}
-
-func (s *DeinterlaceParity) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseDeinterlaceParity(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseDeinterlaceParity(input string) (*DeinterlaceParity, error) {
@@ -462,19 +341,6 @@ func PossibleValuesForEncoderNamedPreset() []string {
 	}
 }
 
-func (s *EncoderNamedPreset) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseEncoderNamedPreset(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseEncoderNamedPreset(input string) (*EncoderNamedPreset, error) {
 	vals := map[string]EncoderNamedPreset{
 		"aacgoodqualityaudio":              EncoderNamedPresetAACGoodQualityAudio,
@@ -517,19 +383,6 @@ func PossibleValuesForEntropyMode() []string {
 	}
 }
 
-func (s *EntropyMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseEntropyMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseEntropyMode(input string) (*EntropyMode, error) {
 	vals := map[string]EntropyMode{
 		"cabac": EntropyModeCabac,
@@ -558,19 +411,6 @@ func PossibleValuesForFaceRedactorMode() []string {
 		string(FaceRedactorModeCombined),
 		string(FaceRedactorModeRedact),
 	}
-}
-
-func (s *FaceRedactorMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseFaceRedactorMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseFaceRedactorMode(input string) (*FaceRedactorMode, error) {
@@ -604,19 +444,6 @@ func PossibleValuesForH264Complexity() []string {
 	}
 }
 
-func (s *H264Complexity) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseH264Complexity(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseH264Complexity(input string) (*H264Complexity, error) {
 	vals := map[string]H264Complexity{
 		"balanced": H264ComplexityBalanced,
@@ -646,19 +473,6 @@ func PossibleValuesForH264RateControlMode() []string {
 		string(H264RateControlModeCBR),
 		string(H264RateControlModeCRF),
 	}
-}
-
-func (s *H264RateControlMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseH264RateControlMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseH264RateControlMode(input string) (*H264RateControlMode, error) {
@@ -698,19 +512,6 @@ func PossibleValuesForH264VideoProfile() []string {
 	}
 }
 
-func (s *H264VideoProfile) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseH264VideoProfile(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseH264VideoProfile(input string) (*H264VideoProfile, error) {
 	vals := map[string]H264VideoProfile{
 		"auto":     H264VideoProfileAuto,
@@ -745,19 +546,6 @@ func PossibleValuesForH265Complexity() []string {
 	}
 }
 
-func (s *H265Complexity) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseH265Complexity(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseH265Complexity(input string) (*H265Complexity, error) {
 	vals := map[string]H265Complexity{
 		"balanced": H265ComplexityBalanced,
@@ -787,19 +575,6 @@ func PossibleValuesForH265VideoProfile() []string {
 		string(H265VideoProfileMain),
 		string(H265VideoProfileMainOneZero),
 	}
-}
-
-func (s *H265VideoProfile) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseH265VideoProfile(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseH265VideoProfile(input string) (*H265VideoProfile, error) {
@@ -833,19 +608,6 @@ func PossibleValuesForInsightsType() []string {
 	}
 }
 
-func (s *InsightsType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseInsightsType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseInsightsType(input string) (*InsightsType, error) {
 	vals := map[string]InsightsType{
 		"allinsights":       InsightsTypeAllInsights,
@@ -873,19 +635,6 @@ func PossibleValuesForInterleaveOutput() []string {
 		string(InterleaveOutputInterleavedOutput),
 		string(InterleaveOutputNonInterleavedOutput),
 	}
-}
-
-func (s *InterleaveOutput) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseInterleaveOutput(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseInterleaveOutput(input string) (*InterleaveOutput, error) {
@@ -920,19 +669,6 @@ func PossibleValuesForJobErrorCategory() []string {
 		string(JobErrorCategoryService),
 		string(JobErrorCategoryUpload),
 	}
-}
-
-func (s *JobErrorCategory) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseJobErrorCategory(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseJobErrorCategory(input string) (*JobErrorCategory, error) {
@@ -980,19 +716,6 @@ func PossibleValuesForJobErrorCode() []string {
 	}
 }
 
-func (s *JobErrorCode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseJobErrorCode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseJobErrorCode(input string) (*JobErrorCode, error) {
 	vals := map[string]JobErrorCode{
 		"configurationunsupported": JobErrorCodeConfigurationUnsupported,
@@ -1026,19 +749,6 @@ func PossibleValuesForJobRetry() []string {
 		string(JobRetryDoNotRetry),
 		string(JobRetryMayRetry),
 	}
-}
-
-func (s *JobRetry) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseJobRetry(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseJobRetry(input string) (*JobRetry, error) {
@@ -1079,19 +789,6 @@ func PossibleValuesForJobState() []string {
 	}
 }
 
-func (s *JobState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseJobState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseJobState(input string) (*JobState, error) {
 	vals := map[string]JobState{
 		"canceled":   JobStateCanceled,
@@ -1125,19 +822,6 @@ func PossibleValuesForOnErrorType() []string {
 	}
 }
 
-func (s *OnErrorType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseOnErrorType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseOnErrorType(input string) (*OnErrorType, error) {
 	vals := map[string]OnErrorType{
 		"continuejob":       OnErrorTypeContinueJob,
@@ -1166,19 +850,6 @@ func PossibleValuesForPriority() []string {
 		string(PriorityLow),
 		string(PriorityNormal),
 	}
-}
-
-func (s *Priority) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePriority(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parsePriority(input string) (*Priority, error) {
@@ -1218,19 +889,6 @@ func PossibleValuesForRotation() []string {
 	}
 }
 
-func (s *Rotation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRotation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseRotation(input string) (*Rotation, error) {
 	vals := map[string]Rotation{
 		"auto":      RotationAuto,
@@ -1265,19 +923,6 @@ func PossibleValuesForStretchMode() []string {
 	}
 }
 
-func (s *StretchMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStretchMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseStretchMode(input string) (*StretchMode, error) {
 	vals := map[string]StretchMode{
 		"autofit":  StretchModeAutoFit,
@@ -1305,19 +950,6 @@ func PossibleValuesForTrackAttribute() []string {
 		string(TrackAttributeBitrate),
 		string(TrackAttributeLanguage),
 	}
-}
-
-func (s *TrackAttribute) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTrackAttribute(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseTrackAttribute(input string) (*TrackAttribute, error) {
@@ -1350,19 +982,6 @@ func PossibleValuesForVideoSyncMode() []string {
 		string(VideoSyncModePassthrough),
 		string(VideoSyncModeVfr),
 	}
-}
-
-func (s *VideoSyncMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseVideoSyncMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseVideoSyncMode(input string) (*VideoSyncMode, error) {

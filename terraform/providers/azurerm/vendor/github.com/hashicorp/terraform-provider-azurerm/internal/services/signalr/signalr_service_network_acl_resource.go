@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/signalr/2023-02-01/signalr"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/signalr/2022-02-01/signalr"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
@@ -197,6 +197,9 @@ func resourceSignalRServiceNetworkACLCreateUpdate(d *pluginsdk.ResourceData, met
 		model.Properties.NetworkACLs = &networkACL
 	}
 
+	// todo remove this when https://github.com/hashicorp/pandora/issues/1096 is fixed
+	model.SystemData = nil
+
 	if err := client.UpdateThenPoll(ctx, *id, model); err != nil {
 		return fmt.Errorf("creating/updating NetworkACL for %s: %v", id, err)
 	}
@@ -298,6 +301,9 @@ func resourceSignalRServiceNetworkACLDelete(d *pluginsdk.ResourceData, meta inte
 	if model.Properties != nil {
 		model.Properties.NetworkACLs = networkACL
 	}
+
+	// todo remove this when https://github.com/hashicorp/pandora/issues/1096 is fixed
+	model.SystemData = nil
 
 	if err := client.UpdateThenPoll(ctx, *id, model); err != nil {
 		return fmt.Errorf("resetting the default Network ACL configuration for %s: %+v", *id, err)

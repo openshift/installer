@@ -1,10 +1,6 @@
 package assetsandassetfilters
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -23,19 +19,6 @@ func PossibleValuesForAssetContainerPermission() []string {
 		string(AssetContainerPermissionReadWrite),
 		string(AssetContainerPermissionReadWriteDelete),
 	}
-}
-
-func (s *AssetContainerPermission) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAssetContainerPermission(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAssetContainerPermission(input string) (*AssetContainerPermission, error) {
@@ -67,19 +50,6 @@ func PossibleValuesForAssetStorageEncryptionFormat() []string {
 	}
 }
 
-func (s *AssetStorageEncryptionFormat) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAssetStorageEncryptionFormat(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseAssetStorageEncryptionFormat(input string) (*AssetStorageEncryptionFormat, error) {
 	vals := map[string]AssetStorageEncryptionFormat{
 		"mediastorageclientencryption": AssetStorageEncryptionFormatMediaStorageClientEncryption,
@@ -106,19 +76,6 @@ func PossibleValuesForFilterTrackPropertyCompareOperation() []string {
 		string(FilterTrackPropertyCompareOperationEqual),
 		string(FilterTrackPropertyCompareOperationNotEqual),
 	}
-}
-
-func (s *FilterTrackPropertyCompareOperation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseFilterTrackPropertyCompareOperation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseFilterTrackPropertyCompareOperation(input string) (*FilterTrackPropertyCompareOperation, error) {
@@ -157,19 +114,6 @@ func PossibleValuesForFilterTrackPropertyType() []string {
 	}
 }
 
-func (s *FilterTrackPropertyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseFilterTrackPropertyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseFilterTrackPropertyType(input string) (*FilterTrackPropertyType, error) {
 	vals := map[string]FilterTrackPropertyType{
 		"bitrate":  FilterTrackPropertyTypeBitrate,
@@ -204,19 +148,6 @@ func PossibleValuesForProvisioningState() []string {
 	}
 }
 
-func (s *ProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseProvisioningState(input string) (*ProvisioningState, error) {
 	vals := map[string]ProvisioningState{
 		"failed":     ProvisioningStateFailed,
@@ -244,19 +175,6 @@ func PossibleValuesForVisibility() []string {
 		string(VisibilityHidden),
 		string(VisibilityVisible),
 	}
-}
-
-func (s *Visibility) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseVisibility(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseVisibility(input string) (*Visibility, error) {

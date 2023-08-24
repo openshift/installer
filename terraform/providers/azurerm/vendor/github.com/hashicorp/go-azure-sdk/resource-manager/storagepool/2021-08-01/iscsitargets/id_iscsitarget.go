@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = IscsiTargetId{}
 
 // IscsiTargetId is a struct representing the Resource ID for a Iscsi Target
@@ -42,19 +39,19 @@ func ParseIscsiTargetID(input string) (*IscsiTargetId, error) {
 	id := IscsiTargetId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DiskPoolName, ok = parsed.Parsed["diskPoolName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "diskPoolName", *parsed)
+		return nil, fmt.Errorf("the segment 'diskPoolName' was not found in the resource id %q", input)
 	}
 
 	if id.IscsiTargetName, ok = parsed.Parsed["iscsiTargetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iscsiTargetName", *parsed)
+		return nil, fmt.Errorf("the segment 'iscsiTargetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseIscsiTargetIDInsensitively(input string) (*IscsiTargetId, error) {
 	id := IscsiTargetId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DiskPoolName, ok = parsed.Parsed["diskPoolName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "diskPoolName", *parsed)
+		return nil, fmt.Errorf("the segment 'diskPoolName' was not found in the resource id %q", input)
 	}
 
 	if id.IscsiTargetName, ok = parsed.Parsed["iscsiTargetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iscsiTargetName", *parsed)
+		return nil, fmt.Errorf("the segment 'iscsiTargetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

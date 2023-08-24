@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
@@ -61,7 +60,9 @@ func resourceArmRoleAssignment() *pluginsdk.Resource {
 					// Elevated access for a global admin is needed to assign roles in this scope:
 					// https://docs.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin#azure-cli
 					// It seems only user account is allowed to be elevated access.
-					validation.StringMatch(regexp.MustCompile("/providers/Microsoft.Subscription.*"), "Subscription scope is invalid"),
+					validation.StringInSlice([]string{
+						"/providers/Microsoft.Subscription",
+					}, false),
 
 					billingValidate.EnrollmentID,
 					commonids.ValidateManagementGroupID,

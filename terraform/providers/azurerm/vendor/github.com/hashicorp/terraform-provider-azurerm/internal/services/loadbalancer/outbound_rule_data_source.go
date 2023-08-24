@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -94,14 +95,18 @@ func dataSourceArmLoadBalancerOutboundRuleRead(d *pluginsdk.ResourceData, meta i
 	loadBalancer, err := client.Get(ctx, loadBalancerId.ResourceGroup, loadBalancerId.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(loadBalancer.Response) {
-			return fmt.Errorf("parent %s was not found", *loadBalancerId)
+			d.SetId("")
+			log.Printf("[INFO] Load Balancer %q not found. Removing from state", loadBalancerId.Name)
+			return nil
 		}
-		return fmt.Errorf("retrieving parent %s: %+v", *loadBalancerId, err)
+		return fmt.Errorf("failed to retrieve Load Balancer %q (resource group %q) for Outbound Rule %q: %+v", loadBalancerId.Name, loadBalancerId.ResourceGroup, name, err)
 	}
 
 	id := parse.NewLoadBalancerOutboundRuleID(loadBalancerId.SubscriptionId, loadBalancerId.ResourceGroup, loadBalancerId.Name, name)
 	config, _, exists := FindLoadBalancerOutboundRuleByName(&loadBalancer, id.OutboundRuleName)
 	if !exists {
+		d.SetId("")
+		log.Printf("[INFO] Load Balancer Outbound Rule %q not found. Removing from state", name)
 		return fmt.Errorf("%s was not found", id)
 	}
 

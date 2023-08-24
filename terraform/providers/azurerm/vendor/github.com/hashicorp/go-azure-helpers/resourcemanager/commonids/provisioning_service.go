@@ -40,15 +40,15 @@ func ParseProvisioningServiceID(input string) (*ProvisioningServiceId, error) {
 	id := ProvisioningServiceId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ProvisioningServiceName, ok = parsed.Parsed["provisioningServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "provisioningServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'provisioningServiceName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +67,15 @@ func ParseProvisioningServiceIDInsensitively(input string) (*ProvisioningService
 	id := ProvisioningServiceId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ProvisioningServiceName, ok = parsed.Parsed["provisioningServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "provisioningServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'provisioningServiceName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

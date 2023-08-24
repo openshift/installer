@@ -63,12 +63,6 @@ func dataSourceFunctionAppHostKeys() *pluginsdk.Resource {
 				Computed:  true,
 				Sensitive: true,
 			},
-
-			"blobs_extension_key": {
-				Type:      pluginsdk.TypeString,
-				Computed:  true,
-				Sensitive: true,
-			},
 		},
 	}
 }
@@ -132,12 +126,6 @@ func dataSourceFunctionAppHostKeysRead(d *pluginsdk.ResourceData, meta interface
 			webPubSubExtensionKey = *v
 		}
 		d.Set("webpubsub_extension_key", webPubSubExtensionKey)
-
-		blobsExtensionKey := ""
-		if v, ok := res.SystemKeys["blobs_extension"]; ok {
-			blobsExtensionKey = *v
-		}
-		d.Set("blobs_extension_key", blobsExtensionKey)
 
 		return nil
 	})

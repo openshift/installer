@@ -65,14 +65,14 @@ if model := read.Model; model != nil {
 ```
 
 
-### Example Usage: `FleetsClient.ListByResourceGroup`
+### Example Usage: `FleetsClient.List`
 
 ```go
 ctx := context.TODO()
-id := fleets.NewResourceGroupID("12345678-1234-9876-4563-123456789012", "example-resource-group")
+id := fleets.NewSubscriptionID("12345678-1234-9876-4563-123456789012")
 
-// alternatively `client.ListByResourceGroup(ctx, id)` can be used to do batched pagination
-items, err := client.ListByResourceGroupComplete(ctx, id)
+// alternatively `client.List(ctx, id)` can be used to do batched pagination
+items, err := client.ListComplete(ctx, id)
 if err != nil {
 	// handle the error
 }
@@ -82,14 +82,14 @@ for _, item := range items {
 ```
 
 
-### Example Usage: `FleetsClient.ListBySubscription`
+### Example Usage: `FleetsClient.ListByResourceGroup`
 
 ```go
 ctx := context.TODO()
-id := fleets.NewSubscriptionID("12345678-1234-9876-4563-123456789012")
+id := fleets.NewResourceGroupID("12345678-1234-9876-4563-123456789012", "example-resource-group")
 
-// alternatively `client.ListBySubscription(ctx, id)` can be used to do batched pagination
-items, err := client.ListBySubscriptionComplete(ctx, id)
+// alternatively `client.ListByResourceGroup(ctx, id)` can be used to do batched pagination
+items, err := client.ListByResourceGroupComplete(ctx, id)
 if err != nil {
 	// handle the error
 }

@@ -20,7 +20,6 @@ type Client struct {
 	BackendClient                      *apimanagement.BackendClient
 	CacheClient                        *apimanagement.CacheClient
 	CertificatesClient                 *apimanagement.CertificateClient
-	DelegationSettingsClient           *apimanagement.DelegationSettingsClient
 	DeletedServicesClient              *apimanagement.DeletedServicesClient
 	DiagnosticClient                   *apimanagement.DiagnosticClient
 	EmailTemplateClient                *apimanagement.EmailTemplateClient
@@ -93,9 +92,6 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	diagnosticClient := apimanagement.NewDiagnosticClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&diagnosticClient.Client, o.ResourceManagerAuthorizer)
-
-	delegationSettingsClient := apimanagement.NewDelegationSettingsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
-	o.ConfigureClient(&delegationSettingsClient.Client, o.ResourceManagerAuthorizer)
 
 	deletedServicesClient := apimanagement.NewDeletedServicesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&deletedServicesClient.Client, o.ResourceManagerAuthorizer)
@@ -192,7 +188,6 @@ func NewClient(o *common.ClientOptions) *Client {
 		BackendClient:                      &backendClient,
 		CacheClient:                        &cacheClient,
 		CertificatesClient:                 &certificatesClient,
-		DelegationSettingsClient:           &delegationSettingsClient,
 		DeletedServicesClient:              &deletedServicesClient,
 		DiagnosticClient:                   &diagnosticClient,
 		EmailTemplateClient:                &emailTemplateClient,

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
@@ -170,11 +169,6 @@ func resourceServiceBusNamespace() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeBool,
 				Optional: true,
 				ForceNew: true,
-			},
-
-			"endpoint": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
 			},
 
 			"tags": tags.Schema(),
@@ -342,10 +336,8 @@ func resourceServiceBusNamespaceRead(d *pluginsdk.ResourceData, meta interface{}
 				d.Set("public_network_access_enabled", publicNetworkAccess)
 
 				if props.MinimumTlsVersion != nil {
-					d.Set("minimum_tls_version", string(pointer.From(props.MinimumTlsVersion)))
+					d.Set("minimum_tls_version", *props.MinimumTlsVersion)
 				}
-
-				d.Set("endpoint", props.ServiceBusEndpoint)
 			}
 		}
 	}
@@ -420,7 +412,7 @@ func flattenServiceBusNamespaceEncryption(encryption *namespaces.Encryption) ([]
 	var identityId string
 	if keyVaultProperties := encryption.KeyVaultProperties; keyVaultProperties != nil && len(*keyVaultProperties) != 0 {
 		props := (*keyVaultProperties)[0]
-		keyVaultKeyId, err := keyVaultParse.NewNestedItemID(*props.KeyVaultUri, keyVaultParse.NestedItemTypeKey, *props.KeyName, *props.KeyVersion)
+		keyVaultKeyId, err := keyVaultParse.NewNestedItemID(*props.KeyVaultUri, "keys", *props.KeyName, *props.KeyVersion)
 		if err != nil {
 			return nil, fmt.Errorf("parsing `key_vault_key_id`: %+v", err)
 		}

@@ -5,14 +5,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/certificate"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceAutomationCertificate() *pluginsdk.Resource {
@@ -23,7 +24,7 @@ func resourceAutomationCertificate() *pluginsdk.Resource {
 		Delete: resourceAutomationCertificateDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := certificate.ParseCertificateID(id)
+			_, err := parse.CertificateID(id)
 			return err
 		}),
 
@@ -80,43 +81,43 @@ func resourceAutomationCertificate() *pluginsdk.Resource {
 
 func resourceAutomationCertificateCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Automation.CertificateClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for AzureRM Automation Certificate creation.")
 
-	id := certificate.NewCertificateID(subscriptionId, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
+	id := parse.NewCertificateID(client.SubscriptionID, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
 	exportable := d.Get("exportable").(bool)
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_automation_certificate", id.ID())
 		}
 	}
 
 	description := d.Get("description").(string)
 
-	parameters := certificate.CertificateCreateOrUpdateParameters{
-		Name: id.CertificateName,
-		Properties: certificate.CertificateCreateOrUpdateProperties{
+	parameters := automation.CertificateCreateOrUpdateParameters{
+		Name: &id.Name,
+		CertificateCreateOrUpdateProperties: &automation.CertificateCreateOrUpdateProperties{
 			Description:  &description,
 			IsExportable: &exportable,
 		},
 	}
 
 	if v, ok := d.GetOk("base64"); ok {
-		parameters.Properties.Base64Value = v.(string)
+		base64 := v.(string)
+		parameters.CertificateCreateOrUpdateProperties.Base64Value = &base64
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name, parameters); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
 
@@ -130,31 +131,29 @@ func resourceAutomationCertificateRead(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := certificate.ParseCertificateID(d.Id())
+	id, err := parse.CertificateID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving Certificate %q (Automation Account %q / Resource Group %q): %+v", id.Name, id.AutomationAccountName, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.CertificateName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("automation_account_name", id.AutomationAccountName)
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("exportable", props.IsExportable)
-			d.Set("thumbprint", props.Thumbprint)
-			d.Set("description", props.Description)
-		}
+	if props := resp.CertificateProperties; props != nil {
+		d.Set("exportable", props.IsExportable)
+		d.Set("thumbprint", props.Thumbprint)
+		d.Set("description", props.Description)
 	}
 
 	return nil
@@ -165,15 +164,15 @@ func resourceAutomationCertificateDelete(d *pluginsdk.ResourceData, meta interfa
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := certificate.ParseCertificateID(d.Id())
+	id, err := parse.CertificateID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Delete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if !response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("deleting %s: %+v", *id, err)
+		if !utils.ResponseWasNotFound(resp) {
+			return fmt.Errorf("deleting Certificate %q (Automation Account %q / Resource Group %q): %+v", id.Name, id.AutomationAccountName, id.ResourceGroup, err)
 		}
 	}
 

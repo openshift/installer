@@ -1,26 +1,18 @@
 package streamingendpoints
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type StreamingEndpointsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewStreamingEndpointsClientWithBaseURI(api environments.Api) (*StreamingEndpointsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "streamingendpoints", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating StreamingEndpointsClient: %+v", err)
+func NewStreamingEndpointsClientWithBaseURI(endpoint string) StreamingEndpointsClient {
+	return StreamingEndpointsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &StreamingEndpointsClient{
-		Client: client,
-	}, nil
 }

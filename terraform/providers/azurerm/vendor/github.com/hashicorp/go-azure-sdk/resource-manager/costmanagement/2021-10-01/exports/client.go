@@ -1,26 +1,18 @@
 package exports
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type ExportsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewExportsClientWithBaseURI(api environments.Api) (*ExportsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "exports", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating ExportsClient: %+v", err)
+func NewExportsClientWithBaseURI(endpoint string) ExportsClient {
+	return ExportsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &ExportsClient{
-		Client: client,
-	}, nil
 }

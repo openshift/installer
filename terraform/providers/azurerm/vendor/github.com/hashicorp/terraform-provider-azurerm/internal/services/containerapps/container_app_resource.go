@@ -102,7 +102,7 @@ func (r ContainerAppResource) Arguments() map[string]*pluginsdk.Schema {
 
 		"dapr": helpers.ContainerDaprSchema(),
 
-		"identity": commonschema.SystemAssignedUserAssignedIdentityOptional(),
+		"identity": commonschema.SystemOrUserAssignedIdentityOptional(),
 
 		"tags": commonschema.Tags(),
 	}
@@ -177,11 +177,6 @@ func (r ContainerAppResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("reading %s for %s: %+v", *envId, id, err)
 			}
 
-			registries, err := helpers.ExpandContainerAppRegistries(app.Registries)
-			if err != nil {
-				return fmt.Errorf("invalid registry config for %s: %+v", id, err)
-			}
-
 			containerApp := containerapps.ContainerApp{
 				Location: location.Normalize(env.Model.Location),
 				Properties: &containerapps.ContainerAppProperties{
@@ -189,7 +184,7 @@ func (r ContainerAppResource) Create() sdk.ResourceFunc {
 						Ingress:    helpers.ExpandContainerAppIngress(app.Ingress, id.ContainerAppName),
 						Dapr:       helpers.ExpandContainerAppDapr(app.Dapr),
 						Secrets:    helpers.ExpandContainerSecrets(app.Secrets),
-						Registries: registries,
+						Registries: helpers.ExpandContainerAppRegistries(app.Registries),
 					},
 					ManagedEnvironmentId: pointer.To(app.ManagedEnvironmentId),
 					Template:             helpers.ExpandContainerAppTemplate(app.Template, metadata),
@@ -337,7 +332,7 @@ func (r ContainerAppResource) Update() sdk.ResourceFunc {
 			// Delta-updates need the secrets back from the list API, or we'll end up removing them or erroring out.
 			secretsResp, err := client.ListSecrets(ctx, *id)
 			if err != nil || secretsResp.Model == nil {
-				if !response.WasStatusCode(secretsResp.HttpResponse, http.StatusNoContent) {
+				if secretsResp.HttpResponse == nil || secretsResp.HttpResponse.StatusCode != http.StatusNoContent {
 					return fmt.Errorf("retrieving secrets for update for %s: %+v", *id, err)
 				}
 			}
@@ -352,10 +347,8 @@ func (r ContainerAppResource) Update() sdk.ResourceFunc {
 			}
 
 			if metadata.ResourceData.HasChange("registry") {
-				model.Properties.Configuration.Registries, err = helpers.ExpandContainerAppRegistries(state.Registries)
-				if err != nil {
-					return fmt.Errorf("invalid registry config for %s: %+v", id, err)
-				}
+				model.Properties.Configuration.Registries = helpers.ExpandContainerAppRegistries(state.Registries)
+
 			}
 
 			if metadata.ResourceData.HasChange("dapr") {

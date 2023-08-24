@@ -42,19 +42,19 @@ func ParseVirtualHubIPConfigurationID(input string) (*VirtualHubIPConfigurationI
 	id := VirtualHubIPConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualHubName, ok = parsed.Parsed["virtualHubName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualHubName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualHubName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigName, ok = parsed.Parsed["ipConfigName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +73,19 @@ func ParseVirtualHubIPConfigurationIDInsensitively(input string) (*VirtualHubIPC
 	id := VirtualHubIPConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualHubName, ok = parsed.Parsed["virtualHubName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualHubName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualHubName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigName, ok = parsed.Parsed["ipConfigName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

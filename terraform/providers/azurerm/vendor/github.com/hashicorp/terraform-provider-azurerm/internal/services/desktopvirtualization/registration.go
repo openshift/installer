@@ -26,9 +26,7 @@ func (r Registration) WebsiteCategories() []string {
 
 // SupportedDataSources returns the supported Data Sources supported by this Service
 func (r Registration) SupportedDataSources() map[string]*pluginsdk.Resource {
-	return map[string]*pluginsdk.Resource{
-		"azurerm_virtual_desktop_host_pool": dataSourceVirtualDesktopHostPool(),
-	}
+	return map[string]*pluginsdk.Resource{}
 }
 
 // SupportedResources returns the supported Resources supported by this Service

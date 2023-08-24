@@ -1,22 +1,20 @@
 package client
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/storagecache/2023-01-01/caches"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/storagecache/2023-01-01/storagetargets"
+	"github.com/Azure/azure-sdk-for-go/services/storagecache/mgmt/2021-09-01/storagecache" // nolint: staticcheck
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	CachesClient         *caches.CachesClient
-	StorageTargetsClient *storagetargets.StorageTargetsClient
+	CachesClient         *storagecache.CachesClient
+	StorageTargetsClient *storagecache.StorageTargetsClient
 }
 
 func NewClient(options *common.ClientOptions) *Client {
-
-	cachesClient := caches.NewCachesClientWithBaseURI(options.ResourceManagerEndpoint)
+	cachesClient := storagecache.NewCachesClientWithBaseURI(options.ResourceManagerEndpoint, options.SubscriptionId)
 	options.ConfigureClient(&cachesClient.Client, options.ResourceManagerAuthorizer)
 
-	storageTargetsClient := storagetargets.NewStorageTargetsClientWithBaseURI(options.ResourceManagerEndpoint)
+	storageTargetsClient := storagecache.NewStorageTargetsClientWithBaseURI(options.ResourceManagerEndpoint, options.SubscriptionId)
 	options.ConfigureClient(&storageTargetsClient.Client, options.ResourceManagerAuthorizer)
 
 	return &Client{

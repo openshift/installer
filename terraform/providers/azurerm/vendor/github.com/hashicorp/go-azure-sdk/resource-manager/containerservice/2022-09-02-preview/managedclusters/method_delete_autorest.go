@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/polling"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 )
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -44,7 +43,7 @@ func (o DeleteOperationOptions) toQueryString() map[string]interface{} {
 }
 
 // Delete ...
-func (c ManagedClustersClient) Delete(ctx context.Context, id commonids.KubernetesClusterId, options DeleteOperationOptions) (result DeleteOperationResponse, err error) {
+func (c ManagedClustersClient) Delete(ctx context.Context, id ManagedClusterId, options DeleteOperationOptions) (result DeleteOperationResponse, err error) {
 	req, err := c.preparerForDelete(ctx, id, options)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "managedclusters.ManagedClustersClient", "Delete", nil, "Failure preparing request")
@@ -61,7 +60,7 @@ func (c ManagedClustersClient) Delete(ctx context.Context, id commonids.Kubernet
 }
 
 // DeleteThenPoll performs Delete then polls until it's completed
-func (c ManagedClustersClient) DeleteThenPoll(ctx context.Context, id commonids.KubernetesClusterId, options DeleteOperationOptions) error {
+func (c ManagedClustersClient) DeleteThenPoll(ctx context.Context, id ManagedClusterId, options DeleteOperationOptions) error {
 	result, err := c.Delete(ctx, id, options)
 	if err != nil {
 		return fmt.Errorf("performing Delete: %+v", err)
@@ -75,7 +74,7 @@ func (c ManagedClustersClient) DeleteThenPoll(ctx context.Context, id commonids.
 }
 
 // preparerForDelete prepares the Delete request.
-func (c ManagedClustersClient) preparerForDelete(ctx context.Context, id commonids.KubernetesClusterId, options DeleteOperationOptions) (*http.Request, error) {
+func (c ManagedClustersClient) preparerForDelete(ctx context.Context, id ManagedClusterId, options DeleteOperationOptions) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"api-version": defaultApiVersion,
 	}

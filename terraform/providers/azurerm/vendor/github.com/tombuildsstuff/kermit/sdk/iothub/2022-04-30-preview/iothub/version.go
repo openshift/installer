@@ -1,6 +1,6 @@
 package devices
 
-import "github.com/tombuildsstuff/kermit/version"
+import "github.com/Azure/azure-sdk-for-go/version"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,7 +10,7 @@ import "github.com/tombuildsstuff/kermit/version"
 
 // UserAgent returns the UserAgent string to use when sending http.Requests.
 func UserAgent() string {
-	return "tombuildsstuff/kermit/" + Version() + " devices/2022-04-30-preview"
+	return "Azure-SDK-For-Go/" + Version() + " devices/2022-04-30-preview"
 }
 
 // Version returns the semantic version (see http://semver.org) of the client.

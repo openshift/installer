@@ -11,10 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -26,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/keyvault/7.4/keyvault"
 )
 
 func resourceKeyVaultCertificate() *pluginsdk.Resource {
@@ -58,7 +55,12 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 				ValidateFunc: keyVaultValidate.NestedItemName,
 			},
 
-			"key_vault_id": commonschema.ResourceIDReferenceRequiredForceNew(commonids.KeyVaultId{}),
+			"key_vault_id": {
+				Type:         pluginsdk.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: keyVaultValidate.VaultID,
+			},
 
 			"certificate": {
 				Type:     pluginsdk.TypeList,
@@ -123,10 +125,10 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 										Computed: true,
 										ForceNew: true,
 										ValidateFunc: validation.StringInSlice([]string{
-											string(keyvault.JSONWebKeyCurveNameP256),
-											string(keyvault.JSONWebKeyCurveNameP256K),
-											string(keyvault.JSONWebKeyCurveNameP384),
-											string(keyvault.JSONWebKeyCurveNameP521),
+											string(keyvault.P256),
+											string(keyvault.P256K),
+											string(keyvault.P384),
+											string(keyvault.P521),
 										}, false),
 									},
 									"exportable": {
@@ -153,11 +155,11 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 										Required: true,
 										ForceNew: true,
 										ValidateFunc: validation.StringInSlice([]string{
-											string(keyvault.JSONWebKeyTypeEC),
-											string(keyvault.JSONWebKeyTypeECHSM),
-											string(keyvault.JSONWebKeyTypeRSA),
-											string(keyvault.JSONWebKeyTypeRSAHSM),
-											string(keyvault.JSONWebKeyTypeOct),
+											string(keyvault.EC),
+											string(keyvault.ECHSM),
+											string(keyvault.RSA),
+											string(keyvault.RSAHSM),
+											string(keyvault.Oct),
 										}, false),
 									},
 									"reuse_key": {
@@ -184,8 +186,8 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 													Required: true,
 													ForceNew: true,
 													ValidateFunc: validation.StringInSlice([]string{
-														string(keyvault.CertificatePolicyActionAutoRenew),
-														string(keyvault.CertificatePolicyActionEmailContacts),
+														string(keyvault.AutoRenew),
+														string(keyvault.EmailContacts),
 													}, false),
 												},
 											},
@@ -253,15 +255,15 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 										Elem: &pluginsdk.Schema{
 											Type: pluginsdk.TypeString,
 											ValidateFunc: validation.StringInSlice([]string{
-												string(keyvault.KeyUsageTypeCRLSign),
-												string(keyvault.KeyUsageTypeDataEncipherment),
-												string(keyvault.KeyUsageTypeDecipherOnly),
-												string(keyvault.KeyUsageTypeDigitalSignature),
-												string(keyvault.KeyUsageTypeEncipherOnly),
-												string(keyvault.KeyUsageTypeKeyAgreement),
-												string(keyvault.KeyUsageTypeKeyCertSign),
-												string(keyvault.KeyUsageTypeKeyEncipherment),
-												string(keyvault.KeyUsageTypeNonRepudiation),
+												string(keyvault.CRLSign),
+												string(keyvault.DataEncipherment),
+												string(keyvault.DecipherOnly),
+												string(keyvault.DigitalSignature),
+												string(keyvault.EncipherOnly),
+												string(keyvault.KeyAgreement),
+												string(keyvault.KeyCertSign),
+												string(keyvault.KeyEncipherment),
+												string(keyvault.NonRepudiation),
 											}, false),
 										},
 									},
@@ -374,16 +376,6 @@ func resourceKeyVaultCertificate() *pluginsdk.Resource {
 				},
 			},
 
-			"resource_manager_id": {
-				Computed: true,
-				Type:     pluginsdk.TypeString,
-			},
-
-			"resource_manager_versionless_id": {
-				Computed: true,
-				Type:     pluginsdk.TypeString,
-			},
-
 			"version": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
@@ -431,7 +423,7 @@ func resourceKeyVaultCertificateCreate(d *pluginsdk.ResourceData, meta interface
 	defer cancel()
 
 	name := d.Get("name").(string)
-	keyVaultId, err := commonids.ParseKeyVaultID(d.Get("key_vault_id").(string))
+	keyVaultId, err := parse.VaultID(d.Get("key_vault_id").(string))
 	if err != nil {
 		return err
 	}
@@ -566,7 +558,7 @@ func resourceKeyVaultCertificateUpdate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	keyVaultId, err := commonids.ParseKeyVaultID(d.Get("key_vault_id").(string))
+	keyVaultId, err := parse.VaultID(d.Get("key_vault_id").(string))
 	if err != nil {
 		return err
 	}
@@ -648,7 +640,7 @@ func resourceKeyVaultCertificateRead(d *pluginsdk.ResourceData, meta interface{}
 		return nil
 	}
 
-	keyVaultId, err := commonids.ParseKeyVaultID(*keyVaultIdRaw)
+	keyVaultId, err := parse.VaultID(*keyVaultIdRaw)
 	if err != nil {
 		return err
 	}
@@ -689,9 +681,6 @@ func resourceKeyVaultCertificateRead(d *pluginsdk.ResourceData, meta interface{}
 	d.Set("version", id.Version)
 	d.Set("secret_id", cert.Sid)
 	d.Set("versionless_id", id.VersionlessID())
-
-	d.Set("resource_manager_id", parse.NewCertificateID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroupName, keyVaultId.VaultName, id.Name, id.Version).ID())
-	d.Set("resource_manager_versionless_id", parse.NewCertificateVersionlessID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroupName, keyVaultId.VaultName, id.Name).ID())
 
 	if cert.Sid != nil {
 		secretId, err := parse.ParseNestedItemID(*cert.Sid)
@@ -747,14 +736,14 @@ func resourceKeyVaultCertificateDelete(d *pluginsdk.ResourceData, meta interface
 		return fmt.Errorf("Unable to determine the Resource ID for the Key Vault at URL %q", id.KeyVaultBaseUrl)
 	}
 
-	keyVaultId, err := commonids.ParseKeyVaultID(*keyVaultIdRaw)
+	keyVaultId, err := parse.VaultID(*keyVaultIdRaw)
 	if err != nil {
 		return err
 	}
 
-	kv, err := keyVaultsClient.VaultsClient.Get(ctx, *keyVaultId)
+	kv, err := keyVaultsClient.VaultsClient.Get(ctx, keyVaultId.ResourceGroup, keyVaultId.Name)
 	if err != nil {
-		if response.WasNotFound(kv.HttpResponse) {
+		if utils.ResponseWasNotFound(kv.Response) {
 			log.Printf("[DEBUG] Certificate %q Key Vault %q was not found in Key Vault at URI %q - removing from state", id.Name, *keyVaultId, id.KeyVaultBaseUrl)
 			d.SetId("")
 			return nil
@@ -763,7 +752,7 @@ func resourceKeyVaultCertificateDelete(d *pluginsdk.ResourceData, meta interface
 	}
 
 	shouldPurge := meta.(*clients.Client).Features.KeyVault.PurgeSoftDeletedCertsOnDestroy
-	if shouldPurge && kv.Model != nil && utils.NormaliseNilableBool(kv.Model.Properties.EnablePurgeProtection) {
+	if shouldPurge && kv.Properties != nil && utils.NormaliseNilableBool(kv.Properties.EnablePurgeProtection) {
 		log.Printf("[DEBUG] cannot purge certificate %q because vault %q has purge protection enabled", id.Name, keyVaultId.String())
 		shouldPurge = false
 	}
@@ -830,22 +819,22 @@ func expandKeyVaultCertificatePolicy(d *pluginsdk.ResourceData) (*keyvault.Certi
 	keyType := props["key_type"].(string)
 	keySize := props["key_size"].(int)
 
-	if keyType == string(keyvault.JSONWebKeyTypeEC) || keyType == string(keyvault.JSONWebKeyTypeECHSM) {
+	if keyType == string(keyvault.EC) || keyType == string(keyvault.ECHSM) {
 		if curve == "" {
 			return nil, fmt.Errorf("`curve` is required when creating an EC key")
 		}
 		// determine key_size if not specified
 		if keySize == 0 {
 			switch curve {
-			case string(keyvault.JSONWebKeyCurveNameP256), string(keyvault.JSONWebKeyCurveNameP256K):
+			case string(keyvault.P256), string(keyvault.P256K):
 				keySize = 256
-			case string(keyvault.JSONWebKeyCurveNameP384):
+			case string(keyvault.P384):
 				keySize = 384
-			case string(keyvault.JSONWebKeyCurveNameP521):
+			case string(keyvault.P521):
 				keySize = 521
 			}
 		}
-	} else if keyType == string(keyvault.JSONWebKeyTypeRSA) || keyType == string(keyvault.JSONWebKeyTypeRSAHSM) {
+	} else if keyType == string(keyvault.RSA) || keyType == string(keyvault.RSAHSM) {
 		if keySize == 0 {
 			return nil, fmt.Errorf("`key_size` is required when creating an RSA key")
 		}
@@ -869,7 +858,7 @@ func expandKeyVaultCertificatePolicy(d *pluginsdk.ResourceData) (*keyvault.Certi
 			as := v.([]interface{})
 			a := as[0].(map[string]interface{})
 			lifetimeAction.Action = &keyvault.Action{
-				ActionType: keyvault.CertificatePolicyAction(a["action_type"].(string)),
+				ActionType: keyvault.ActionType(a["action_type"].(string)),
 			}
 		}
 

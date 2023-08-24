@@ -5,17 +5,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/healthcareapis/mgmt/2021-11-01/healthcareapis" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	service "github.com/hashicorp/go-azure-sdk/resource-manager/healthcareapis/2022-12-01/resource"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/parse"
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultSuppress "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/suppress"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -37,7 +36,7 @@ func resourceHealthcareService() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := service.ParseServiceID(id)
+			_, err := parse.ServiceID(id)
 			return err
 		}),
 
@@ -56,11 +55,11 @@ func resourceHealthcareService() *pluginsdk.Resource {
 			"kind": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
-				Default:  string(service.KindFhir),
+				Default:  string(healthcareapis.KindFhir),
 				ValidateFunc: validation.StringInSlice([]string{
-					string(service.KindFhir),
-					string(service.KindFhirNegativeRFour),
-					string(service.KindFhirNegativeStuThree),
+					string(healthcareapis.KindFhir),
+					string(healthcareapis.KindFhirR4),
+					string(healthcareapis.KindFhirStu3),
 				}, false),
 			},
 
@@ -68,7 +67,7 @@ func resourceHealthcareService() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeInt,
 				Optional:     true,
 				Default:      1000,
-				ValidateFunc: validation.IntBetween(1, 100000),
+				ValidateFunc: validation.IntBetween(1, 10000),
 			},
 
 			"cosmosdb_key_vault_key_versionless_id": {
@@ -163,7 +162,6 @@ func resourceHealthcareService() *pluginsdk.Resource {
 									"POST",
 									"OPTIONS",
 									"PUT",
-									"PATCH",
 								}, false),
 							},
 							AtLeastOneOf: []string{
@@ -201,7 +199,7 @@ func resourceHealthcareService() *pluginsdk.Resource {
 				Default:  true,
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
@@ -212,16 +210,16 @@ func resourceHealthcareServiceCreateUpdate(d *pluginsdk.ResourceData, meta inter
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := service.NewServiceID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewServiceID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.ServicesGet(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_healthcare_service", id.ID())
 		}
 	}
@@ -231,11 +229,15 @@ func resourceHealthcareServiceCreateUpdate(d *pluginsdk.ResourceData, meta inter
 		return fmt.Errorf("expanding cosmosdb_configuration: %+v", err)
 	}
 
-	healthcareServiceDescription := service.ServicesDescription{
-		Location: location.Normalize(d.Get("location").(string)),
-		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
-		Kind:     service.Kind(d.Get("kind").(string)),
-		Properties: &service.ServicesProperties{
+	location := azure.NormalizeLocation(d.Get("location").(string))
+	t := d.Get("tags").(map[string]interface{})
+	kind := d.Get("kind").(string)
+
+	healthcareServiceDescription := healthcareapis.ServicesDescription{
+		Location: utils.String(location),
+		Tags:     tags.Expand(t),
+		Kind:     healthcareapis.Kind(kind),
+		Properties: &healthcareapis.ServicesProperties{
 			AccessPolicies:              expandAccessPolicyEntries(d),
 			CosmosDbConfiguration:       cosmosDbConfiguration,
 			CorsConfiguration:           expandCorsConfiguration(d),
@@ -245,14 +247,18 @@ func resourceHealthcareServiceCreateUpdate(d *pluginsdk.ResourceData, meta inter
 
 	publicNetworkAccess := d.Get("public_network_access_enabled").(bool)
 	if !publicNetworkAccess {
-		healthcareServiceDescription.Properties.PublicNetworkAccess = pointer.To(service.PublicNetworkAccessDisabled)
+		healthcareServiceDescription.Properties.PublicNetworkAccess = healthcareapis.PublicNetworkAccessDisabled
 	} else {
-		healthcareServiceDescription.Properties.PublicNetworkAccess = pointer.To(service.PublicNetworkAccessEnabled)
+		healthcareServiceDescription.Properties.PublicNetworkAccess = healthcareapis.PublicNetworkAccessEnabled
 	}
 
-	err = client.ServicesCreateOrUpdateThenPoll(ctx, id, healthcareServiceDescription)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, healthcareServiceDescription)
 	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation/update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -264,14 +270,14 @@ func resourceHealthcareServiceRead(d *pluginsdk.ResourceData, meta interface{}) 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := service.ParseServiceID(d.Id())
+	id, err := parse.ServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.ServicesGet(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[WARN] %s was not found - removing from state!", *id)
 			d.SetId("")
 			return nil
@@ -280,51 +286,48 @@ func resourceHealthcareServiceRead(d *pluginsdk.ResourceData, meta interface{}) 
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.ServiceName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if m := resp.Model; m != nil {
-		d.Set("location", location.Normalize(m.Location))
-
-		if kind := m.Kind; string(kind) != "" {
-			d.Set("kind", kind)
-		}
-		if props := m.Properties; props != nil {
-			if err := d.Set("access_policy_object_ids", flattenAccessPolicies(props.AccessPolicies)); err != nil {
-				return fmt.Errorf("setting `access_policy_object_ids`: %+v", err)
-			}
-
-			cosmodDbKeyVaultKeyVersionlessId := ""
-			cosmosDbThroughput := 0
-			if cosmos := props.CosmosDbConfiguration; cosmos != nil {
-				if v := cosmos.OfferThroughput; v != nil {
-					cosmosDbThroughput = int(*v)
-				}
-				if v := cosmos.KeyVaultKeyUri; v != nil {
-					cosmodDbKeyVaultKeyVersionlessId = *v
-				}
-			}
-			d.Set("cosmosdb_key_vault_key_versionless_id", cosmodDbKeyVaultKeyVersionlessId)
-			d.Set("cosmosdb_throughput", cosmosDbThroughput)
-			if pointer.From(props.PublicNetworkAccess) == service.PublicNetworkAccessEnabled {
-				d.Set("public_network_access_enabled", true)
-			} else {
-				d.Set("public_network_access_enabled", false)
-			}
-
-			if err := d.Set("authentication_configuration", flattenAuthentication(props.AuthenticationConfiguration)); err != nil {
-				return fmt.Errorf("setting `authentication_configuration`: %+v", err)
-			}
-
-			if err := d.Set("cors_configuration", flattenCorsConfig(props.CorsConfiguration)); err != nil {
-				return fmt.Errorf("setting `cors_configuration`: %+v", err)
-			}
-		}
-
-		return tags.FlattenAndSet(d, m.Tags)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	if location := resp.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	return nil
+	if kind := resp.Kind; string(kind) != "" {
+		d.Set("kind", kind)
+	}
+	if props := resp.Properties; props != nil {
+		if err := d.Set("access_policy_object_ids", flattenAccessPolicies(props.AccessPolicies)); err != nil {
+			return fmt.Errorf("setting `access_policy_object_ids`: %+v", err)
+		}
+
+		cosmodDbKeyVaultKeyVersionlessId := ""
+		cosmosDbThroughput := 0
+		if cosmos := props.CosmosDbConfiguration; cosmos != nil {
+			if v := cosmos.OfferThroughput; v != nil {
+				cosmosDbThroughput = int(*v)
+			}
+			if v := cosmos.KeyVaultKeyURI; v != nil {
+				cosmodDbKeyVaultKeyVersionlessId = *v
+			}
+		}
+		d.Set("cosmosdb_key_vault_key_versionless_id", cosmodDbKeyVaultKeyVersionlessId)
+		d.Set("cosmosdb_throughput", cosmosDbThroughput)
+		if props.PublicNetworkAccess == healthcareapis.PublicNetworkAccessEnabled {
+			d.Set("public_network_access_enabled", true)
+		} else {
+			d.Set("public_network_access_enabled", false)
+		}
+
+		if err := d.Set("authentication_configuration", flattenAuthentication(props.AuthenticationConfiguration)); err != nil {
+			return fmt.Errorf("setting `authentication_configuration`: %+v", err)
+		}
+
+		if err := d.Set("cors_configuration", flattenCorsConfig(props.CorsConfiguration)); err != nil {
+			return fmt.Errorf("setting `cors_configuration`: %+v", err)
+		}
+	}
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceHealthcareServiceDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -332,35 +335,40 @@ func resourceHealthcareServiceDelete(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := service.ParseServiceID(d.Id())
+	id, err := parse.ServiceID(d.Id())
 	if err != nil {
 		return fmt.Errorf("Parsing Azure Resource ID: %+v", err)
 	}
 
-	err = client.ServicesDeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		return fmt.Errorf("deleting Healthcare Service %q (Resource Group %q): %+v", id.ServiceName, id.ResourceGroupName, err)
+		return fmt.Errorf("deleting Healthcare Service %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deleting Healthcare Service %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
+	}
+
 	return nil
 }
 
-func expandAccessPolicyEntries(d *pluginsdk.ResourceData) *[]service.ServiceAccessPolicyEntry {
+func expandAccessPolicyEntries(d *pluginsdk.ResourceData) *[]healthcareapis.ServiceAccessPolicyEntry {
 	accessPolicyObjectIds := d.Get("access_policy_object_ids").(*pluginsdk.Set).List()
-	svcAccessPolicyArray := make([]service.ServiceAccessPolicyEntry, 0)
+	svcAccessPolicyArray := make([]healthcareapis.ServiceAccessPolicyEntry, 0)
 
 	for _, objectId := range accessPolicyObjectIds {
-		svcAccessPolicyObjectId := service.ServiceAccessPolicyEntry{ObjectId: objectId.(string)}
+		svcAccessPolicyObjectId := healthcareapis.ServiceAccessPolicyEntry{ObjectID: utils.String(objectId.(string))}
 		svcAccessPolicyArray = append(svcAccessPolicyArray, svcAccessPolicyObjectId)
 	}
 
 	return &svcAccessPolicyArray
 }
 
-func expandCorsConfiguration(d *pluginsdk.ResourceData) *service.ServiceCorsConfigurationInfo {
+func expandCorsConfiguration(d *pluginsdk.ResourceData) *healthcareapis.ServiceCorsConfigurationInfo {
 	corsConfigRaw := d.Get("cors_configuration").([]interface{})
 
 	if len(corsConfigRaw) == 0 {
-		return &service.ServiceCorsConfigurationInfo{}
+		return &healthcareapis.ServiceCorsConfigurationInfo{}
 	}
 
 	corsConfigAttr := corsConfigRaw[0].(map[string]interface{})
@@ -368,10 +376,10 @@ func expandCorsConfiguration(d *pluginsdk.ResourceData) *service.ServiceCorsConf
 	allowedOrigins := *utils.ExpandStringSlice(corsConfigAttr["allowed_origins"].(*pluginsdk.Set).List())
 	allowedHeaders := *utils.ExpandStringSlice(corsConfigAttr["allowed_headers"].(*pluginsdk.Set).List())
 	allowedMethods := *utils.ExpandStringSlice(corsConfigAttr["allowed_methods"].([]interface{}))
-	maxAgeInSeconds := int64(corsConfigAttr["max_age_in_seconds"].(int))
+	maxAgeInSeconds := int32(corsConfigAttr["max_age_in_seconds"].(int))
 	allowCredentials := corsConfigAttr["allow_credentials"].(bool)
 
-	cors := &service.ServiceCorsConfigurationInfo{
+	cors := &healthcareapis.ServiceCorsConfigurationInfo{
 		Origins:          &allowedOrigins,
 		Headers:          &allowedHeaders,
 		Methods:          &allowedMethods,
@@ -381,11 +389,11 @@ func expandCorsConfiguration(d *pluginsdk.ResourceData) *service.ServiceCorsConf
 	return cors
 }
 
-func expandAuthentication(d *pluginsdk.ResourceData) *service.ServiceAuthenticationConfigurationInfo {
+func expandAuthentication(d *pluginsdk.ResourceData) *healthcareapis.ServiceAuthenticationConfigurationInfo {
 	authConfigRaw := d.Get("authentication_configuration").([]interface{})
 
 	if len(authConfigRaw) == 0 {
-		return &service.ServiceAuthenticationConfigurationInfo{}
+		return &healthcareapis.ServiceAuthenticationConfigurationInfo{}
 	}
 
 	authConfigAttr := authConfigRaw[0].(map[string]interface{})
@@ -393,7 +401,7 @@ func expandAuthentication(d *pluginsdk.ResourceData) *service.ServiceAuthenticat
 	audience := authConfigAttr["audience"].(string)
 	smartProxyEnabled := authConfigAttr["smart_proxy_enabled"].(bool)
 
-	auth := &service.ServiceAuthenticationConfigurationInfo{
+	auth := &healthcareapis.ServiceAuthenticationConfigurationInfo{
 		Authority:         &authority,
 		Audience:          &audience,
 		SmartProxyEnabled: &smartProxyEnabled,
@@ -401,9 +409,11 @@ func expandAuthentication(d *pluginsdk.ResourceData) *service.ServiceAuthenticat
 	return auth
 }
 
-func expandsCosmosDBConfiguration(d *pluginsdk.ResourceData) (*service.ServiceCosmosDbConfigurationInfo, error) {
-	cosmosdb := &service.ServiceCosmosDbConfigurationInfo{
-		OfferThroughput: pointer.To(int64(d.Get("cosmosdb_throughput").(int))),
+func expandsCosmosDBConfiguration(d *pluginsdk.ResourceData) (*healthcareapis.ServiceCosmosDbConfigurationInfo, error) {
+	throughput := int32(d.Get("cosmosdb_throughput").(int))
+
+	cosmosdb := &healthcareapis.ServiceCosmosDbConfigurationInfo{
+		OfferThroughput: utils.Int32(throughput),
 	}
 
 	if keyVaultKeyIDRaw, ok := d.GetOk("cosmosdb_key_vault_key_versionless_id"); ok {
@@ -411,13 +421,13 @@ func expandsCosmosDBConfiguration(d *pluginsdk.ResourceData) (*service.ServiceCo
 		if err != nil {
 			return nil, fmt.Errorf("could not parse Key Vault Key ID: %+v", err)
 		}
-		cosmosdb.KeyVaultKeyUri = pointer.To(keyVaultKey.ID())
+		cosmosdb.KeyVaultKeyURI = utils.String(keyVaultKey.ID())
 	}
 
 	return cosmosdb, nil
 }
 
-func flattenAccessPolicies(policies *[]service.ServiceAccessPolicyEntry) []string {
+func flattenAccessPolicies(policies *[]healthcareapis.ServiceAccessPolicyEntry) []string {
 	result := make([]string, 0)
 
 	if policies == nil {
@@ -425,14 +435,15 @@ func flattenAccessPolicies(policies *[]service.ServiceAccessPolicyEntry) []strin
 	}
 
 	for _, policy := range *policies {
-		result = append(result, policy.ObjectId)
-
+		if objectId := policy.ObjectID; objectId != nil {
+			result = append(result, *objectId)
+		}
 	}
 
 	return result
 }
 
-func flattenAuthentication(input *service.ServiceAuthenticationConfigurationInfo) []interface{} {
+func flattenAuthentication(input *healthcareapis.ServiceAuthenticationConfigurationInfo) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
@@ -458,7 +469,7 @@ func flattenAuthentication(input *service.ServiceAuthenticationConfigurationInfo
 	}
 }
 
-func flattenCorsConfig(input *service.ServiceCorsConfigurationInfo) []interface{} {
+func flattenCorsConfig(input *healthcareapis.ServiceCorsConfigurationInfo) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}

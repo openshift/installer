@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ScheduledActionId{}
 
 // ScheduledActionId is a struct representing the Resource ID for a Scheduled Action
@@ -36,7 +33,7 @@ func ParseScheduledActionID(input string) (*ScheduledActionId, error) {
 	id := ScheduledActionId{}
 
 	if id.ScheduledActionName, ok = parsed.Parsed["scheduledActionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scheduledActionName", *parsed)
+		return nil, fmt.Errorf("the segment 'scheduledActionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -55,7 +52,7 @@ func ParseScheduledActionIDInsensitively(input string) (*ScheduledActionId, erro
 	id := ScheduledActionId{}
 
 	if id.ScheduledActionName, ok = parsed.Parsed["scheduledActionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scheduledActionName", *parsed)
+		return nil, fmt.Errorf("the segment 'scheduledActionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

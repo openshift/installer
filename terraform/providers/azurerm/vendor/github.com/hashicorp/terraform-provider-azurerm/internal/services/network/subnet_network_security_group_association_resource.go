@@ -5,12 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -31,7 +30,7 @@ func resourceSubnetNetworkSecurityGroupAssociation() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := commonids.ParseSubnetID(id)
+			_, err := parse.SubnetID(id)
 			return err
 		}),
 
@@ -40,14 +39,14 @@ func resourceSubnetNetworkSecurityGroupAssociation() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"network_security_group_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NetworkSecurityGroupID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 		},
 	}
@@ -64,7 +63,7 @@ func resourceSubnetNetworkSecurityGroupAssociationCreate(d *pluginsdk.ResourceDa
 	subnetId := d.Get("subnet_id").(string)
 	networkSecurityGroupId := d.Get("network_security_group_id").(string)
 
-	parsedSubnetId, err := commonids.ParseSubnetID(subnetId)
+	parsedSubnetId, err := parse.SubnetID(subnetId)
 	if err != nil {
 		return err
 	}
@@ -80,10 +79,10 @@ func resourceSubnetNetworkSecurityGroupAssociationCreate(d *pluginsdk.ResourceDa
 	locks.ByName(parsedSubnetId.VirtualNetworkName, VirtualNetworkResourceName)
 	defer locks.UnlockByName(parsedSubnetId.VirtualNetworkName, VirtualNetworkResourceName)
 
-	locks.ByName(parsedSubnetId.SubnetName, SubnetResourceName)
-	defer locks.UnlockByName(parsedSubnetId.SubnetName, SubnetResourceName)
+	locks.ByName(parsedSubnetId.Name, SubnetResourceName)
+	defer locks.UnlockByName(parsedSubnetId.Name, SubnetResourceName)
 
-	subnet, err := client.Get(ctx, parsedSubnetId.ResourceGroupName, parsedSubnetId.VirtualNetworkName, parsedSubnetId.SubnetName, "")
+	subnet, err := client.Get(ctx, parsedSubnetId.ResourceGroup, parsedSubnetId.VirtualNetworkName, parsedSubnetId.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(subnet.Response) {
 			return fmt.Errorf("%s was not found", *parsedSubnetId)
@@ -105,7 +104,7 @@ func resourceSubnetNetworkSecurityGroupAssociationCreate(d *pluginsdk.ResourceDa
 		}
 	}
 
-	future, err := client.CreateOrUpdate(ctx, parsedSubnetId.ResourceGroupName, parsedSubnetId.VirtualNetworkName, parsedSubnetId.SubnetName, subnet)
+	future, err := client.CreateOrUpdate(ctx, parsedSubnetId.ResourceGroup, parsedSubnetId.VirtualNetworkName, parsedSubnetId.Name, subnet)
 	if err != nil {
 		return fmt.Errorf("updating Network Security Group Association for %s: %+v", *parsedSubnetId, err)
 	}
@@ -127,7 +126,7 @@ func resourceSubnetNetworkSecurityGroupAssociationCreate(d *pluginsdk.ResourceDa
 		return fmt.Errorf("waiting for provisioning state of subnet for Network Security Group Association for %s: %+v", *parsedSubnetId, err)
 	}
 
-	vnetId := commonids.NewVirtualNetworkID(parsedSubnetId.SubscriptionId, parsedSubnetId.ResourceGroupName, parsedSubnetId.VirtualNetworkName)
+	vnetId := parse.NewVirtualNetworkID(parsedSubnetId.SubscriptionId, parsedSubnetId.ResourceGroup, parsedSubnetId.VirtualNetworkName)
 	vnetStateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(network.ProvisioningStateUpdating)},
 		Target:     []string{string(network.ProvisioningStateSucceeded)},
@@ -149,12 +148,12 @@ func resourceSubnetNetworkSecurityGroupAssociationRead(d *pluginsdk.ResourceData
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseSubnetID(d.Id())
+	id, err := parse.SubnetID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	resp, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[DEBUG] %s could not be found - removing from state!", *id)
@@ -187,13 +186,13 @@ func resourceSubnetNetworkSecurityGroupAssociationDelete(d *pluginsdk.ResourceDa
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseSubnetID(d.Id())
+	id, err := parse.SubnetID(d.Id())
 	if err != nil {
 		return err
 	}
 
 	// retrieve the subnet
-	read, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	read, err := client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s could not be found - removing from state!", *id)
@@ -225,11 +224,11 @@ func resourceSubnetNetworkSecurityGroupAssociationDelete(d *pluginsdk.ResourceDa
 	locks.ByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 	defer locks.UnlockByName(id.VirtualNetworkName, VirtualNetworkResourceName)
 
-	locks.ByName(id.SubnetName, SubnetResourceName)
-	defer locks.UnlockByName(id.SubnetName, SubnetResourceName)
+	locks.ByName(id.Name, SubnetResourceName)
+	defer locks.UnlockByName(id.Name, SubnetResourceName)
 
 	// then re-retrieve it to ensure we've got the latest state
-	read, err = client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, "")
+	read, err = client.Get(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s could not be found - removing from state!", *id)
@@ -241,7 +240,7 @@ func resourceSubnetNetworkSecurityGroupAssociationDelete(d *pluginsdk.ResourceDa
 
 	read.SubnetPropertiesFormat.NetworkSecurityGroup = nil
 
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroupName, id.VirtualNetworkName, id.SubnetName, read)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.VirtualNetworkName, id.Name, read)
 	if err != nil {
 		return fmt.Errorf("removing Network Security Group Association from %s: %+v", *id, err)
 	}

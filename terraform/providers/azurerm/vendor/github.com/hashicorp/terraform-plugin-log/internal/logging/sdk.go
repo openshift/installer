@@ -13,13 +13,7 @@ func GetSDKRootLogger(ctx context.Context) hclog.Logger {
 	if logger == nil {
 		return nil
 	}
-
-	hclogger, ok := logger.(hclog.Logger)
-	if !ok {
-		return nil
-	}
-
-	return hclogger
+	return logger.(hclog.Logger)
 }
 
 // GetSDKRootLoggerOptions returns the root logger options used for
@@ -86,13 +80,7 @@ func GetSDKSubsystemLogger(ctx context.Context, subsystem string) hclog.Logger {
 	if logger == nil {
 		return nil
 	}
-
-	hclogger, ok := logger.(hclog.Logger)
-	if !ok {
-		return nil
-	}
-
-	return hclogger
+	return logger.(hclog.Logger)
 }
 
 // SetSDKSubsystemLogger sets `logger` as the logger for the named subsystem in

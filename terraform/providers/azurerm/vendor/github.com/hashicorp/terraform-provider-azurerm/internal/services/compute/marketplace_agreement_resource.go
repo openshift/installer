@@ -5,10 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/marketplaceordering/2015-06-01/agreements"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -21,7 +20,7 @@ func resourceMarketplaceAgreement() *pluginsdk.Resource {
 		Read:   resourceMarketplaceAgreementRead,
 		Delete: resourceMarketplaceAgreementDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := agreements.ParsePlanID(id)
+			_, err := parse.PlanID(id)
 			return err
 		}),
 
@@ -73,48 +72,46 @@ func resourceMarketplaceAgreementCreateUpdate(d *pluginsdk.ResourceData, meta in
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	defer cancel()
 
-	id := agreements.NewPlanID(subscriptionId, d.Get("publisher").(string), d.Get("offer").(string), d.Get("plan").(string))
+	id := parse.NewPlanID(subscriptionId, d.Get("publisher").(string), d.Get("offer").(string), d.Get("plan").(string))
 
 	log.Printf("[DEBUG] retrieving %s", id)
 
-	agreementId := agreements.NewOfferPlanID(id.SubscriptionId, id.PublisherId, id.OfferId, id.PlanId)
-	term, err := client.MarketplaceAgreementsGet(ctx, agreementId)
+	term, err := client.Get(ctx, id.AgreementName, id.OfferName, id.Name)
 	if err != nil {
-		if !response.WasNotFound(term.HttpResponse) {
+		if !utils.ResponseWasNotFound(term.Response) {
 			return fmt.Errorf("retrieving %s: %s", id, err)
 		}
 	}
 
 	accepted := false
-	if model := term.Model; model != nil {
-		if props := model.Properties; props != nil {
-			if acc := props.Accepted; acc != nil {
-				accepted = *acc
-			}
+	if props := term.AgreementProperties; props != nil {
+		if acc := props.Accepted; acc != nil {
+			accepted = *acc
 		}
 	}
+
 	if accepted {
+		agreement, err := client.GetAgreement(ctx, id.AgreementName, id.OfferName, id.Name)
+		if err != nil {
+			if !utils.ResponseWasNotFound(agreement.Response) {
+				return fmt.Errorf("retrieving %s: %s", id, err)
+			}
+		}
 		return tf.ImportAsExistsError("azurerm_marketplace_agreement", id.ID())
 	}
 
-	resp, err := client.MarketplaceAgreementsGet(ctx, agreementId)
+	terms, err := client.Get(ctx, id.AgreementName, id.OfferName, id.Name)
 	if err != nil {
 		return fmt.Errorf("retrieving %s: %s", id, err)
 	}
-
-	if resp.Model == nil {
-		return fmt.Errorf("retrieving %s: Model was nil", id)
-	}
-
-	terms := resp.Model
-	if terms.Properties == nil {
+	if terms.AgreementProperties == nil {
 		return fmt.Errorf("retrieving %s: AgreementProperties was nil", id)
 	}
 
-	terms.Properties.Accepted = utils.Bool(true)
+	terms.AgreementProperties.Accepted = utils.Bool(true)
 
 	log.Printf("[DEBUG] Accepting the Marketplace Terms for %s", id)
-	if _, err := client.MarketplaceAgreementsCreate(ctx, agreementId, *terms); err != nil {
+	if _, err := client.Create(ctx, id.AgreementName, id.OfferName, id.Name, terms); err != nil {
 		return fmt.Errorf("accepting Terms for %s: %s", id, err)
 	}
 	log.Printf("[DEBUG] Accepted the Marketplace Terms for %s", id)
@@ -129,37 +126,35 @@ func resourceMarketplaceAgreementRead(d *pluginsdk.ResourceData, meta interface{
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := agreements.ParsePlanID(d.Id())
+	id, err := parse.PlanID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	agreementId := agreements.NewOfferPlanID(id.SubscriptionId, id.PublisherId, id.OfferId, id.PlanId)
-	term, err := client.MarketplaceAgreementsGet(ctx, agreementId)
+	term, err := client.Get(ctx, id.AgreementName, id.OfferName, id.Name)
 	if err != nil {
-		if response.WasNotFound(term.HttpResponse) {
-			log.Printf("[DEBUG] The Marketplace Terms was not found for %s", id)
+		if utils.ResponseWasNotFound(term.Response) {
+			log.Printf("[DEBUG] The Marketplace Terms was not found for Publisher %q / Offer %q / Plan %q", id.AgreementName, id.OfferName, id.Name)
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving the Marketplace Terms for %s: %s", id, err)
+		return fmt.Errorf("retrieving the Marketplace Terms for Publisher %q / Offer %q / Plan %q: %s", id.AgreementName, id.OfferName, id.Name, err)
 	}
 
-	d.Set("publisher", id.PublisherId)
-	d.Set("offer", id.OfferId)
-	d.Set("plan", id.PlanId)
+	d.Set("publisher", id.AgreementName)
+	d.Set("offer", id.OfferName)
+	d.Set("plan", id.Name)
 
-	if model := term.Model; model != nil {
-		if props := model.Properties; props != nil {
-			if accepted := props.Accepted != nil && *props.Accepted; !accepted {
-				// if props.Accepted is not true, the agreement does not exist
-				d.SetId("")
-			}
-			d.Set("license_text_link", props.LicenseTextLink)
-			d.Set("privacy_policy_link", props.PrivacyPolicyLink)
+	if props := term.AgreementProperties; props != nil {
+		if accepted := props.Accepted != nil && *props.Accepted; !accepted {
+			// if props.Accepted is not true, the agreement does not exist
+			d.SetId("")
 		}
+		d.Set("license_text_link", props.LicenseTextLink)
+		d.Set("privacy_policy_link", props.PrivacyPolicyLink)
 	}
+
 	return nil
 }
 
@@ -168,13 +163,13 @@ func resourceMarketplaceAgreementDelete(d *pluginsdk.ResourceData, meta interfac
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := agreements.ParsePlanID(d.Id())
+	id, err := parse.PlanID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err = client.MarketplaceAgreementsCancel(ctx, *id); err != nil {
-		return fmt.Errorf("cancelling agreement for %s: %s", *id, err)
+	if _, err := client.Cancel(ctx, id.AgreementName, id.OfferName, id.Name); err != nil {
+		return fmt.Errorf("cancelling agreement for Publisher %q / Offer %q / Plan %q: %s", id.AgreementName, id.OfferName, id.Name, err)
 	}
 
 	return nil

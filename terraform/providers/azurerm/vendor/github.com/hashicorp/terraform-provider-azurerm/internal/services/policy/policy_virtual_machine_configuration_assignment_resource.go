@@ -6,15 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/guestconfiguration/mgmt/2020-06-25/guestconfiguration" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/guestconfiguration/2020-06-25/guestconfigurationassignments"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	computeParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/policy/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -36,7 +35,7 @@ func resourcePolicyVirtualMachineConfigurationAssignment() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := guestconfigurationassignments.ParseProviders2GuestConfigurationAssignmentID(id)
+			_, err := parse.VirtualMachineConfigurationAssignmentID(id)
 			return err
 		}),
 
@@ -72,10 +71,10 @@ func resourcePolicyVirtualMachineConfigurationAssignmentSchema() map[string]*plu
 						Type:     pluginsdk.TypeString,
 						Optional: true,
 						ValidateFunc: validation.StringInSlice([]string{
-							string(guestconfigurationassignments.AssignmentTypeAudit),
-							string(guestconfigurationassignments.AssignmentTypeDeployAndAutoCorrect),
-							string(guestconfigurationassignments.AssignmentTypeApplyAndAutoCorrect),
-							string(guestconfigurationassignments.AssignmentTypeApplyAndMonitor),
+							string(guestconfiguration.AssignmentTypeAudit),
+							string(guestconfiguration.AssignmentTypeDeployAndAutoCorrect),
+							string(guestconfiguration.AssignmentTypeApplyAndAutoCorrect),
+							string(guestconfiguration.AssignmentTypeApplyAndMonitor),
 						}, false),
 					},
 
@@ -133,24 +132,24 @@ func resourcePolicyVirtualMachineConfigurationAssignmentCreateUpdate(d *pluginsd
 		return err
 	}
 
-	id := guestconfigurationassignments.NewProviders2GuestConfigurationAssignmentID(subscriptionId, vmId.ResourceGroup, vmId.Name, d.Get("name").(string))
+	id := parse.NewVirtualMachineConfigurationAssignmentID(subscriptionId, vmId.ResourceGroup, vmId.Name, d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.GuestConfigurationAssignmentName, id.VirtualMachineName)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for present of existing %s: %+v", id, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_policy_virtual_machine_configuration_assignment", id.ID())
 		}
 	}
 	guestConfiguration := expandGuestConfigurationAssignment(d.Get("configuration").([]interface{}), id.GuestConfigurationAssignmentName)
-	assignment := guestconfigurationassignments.GuestConfigurationAssignment{
+	parameter := guestconfiguration.Assignment{
 		Name:     utils.String(id.GuestConfigurationAssignmentName),
 		Location: utils.String(location.Normalize(d.Get("location").(string))),
-		Properties: &guestconfigurationassignments.GuestConfigurationAssignmentProperties{
+		Properties: &guestconfiguration.AssignmentProperties{
 			GuestConfiguration: guestConfiguration,
 		},
 	}
@@ -160,14 +159,14 @@ func resourcePolicyVirtualMachineConfigurationAssignmentCreateUpdate(d *pluginsd
 	// contentURI to see if it is on a service team owned storage account or not
 	// all built-in guest configuration will always be on a service team owned
 	// storage account
-	if guestConfiguration.ContentUri != nil || *guestConfiguration.ContentUri != "" {
-		if strings.Contains(strings.ToLower(*guestConfiguration.ContentUri), "oaasguestconfig") {
-			assignment.Properties.GuestConfiguration.ContentHash = nil
-			assignment.Properties.GuestConfiguration.ContentUri = nil
+	if guestConfiguration.ContentURI != nil || *guestConfiguration.ContentURI != "" {
+		if strings.Contains(strings.ToLower(*guestConfiguration.ContentURI), "oaasguestconfig") {
+			parameter.Properties.GuestConfiguration.ContentHash = nil
+			parameter.Properties.GuestConfiguration.ContentURI = nil
 		}
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, assignment); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.GuestConfigurationAssignmentName, parameter, id.ResourceGroup, id.VirtualMachineName); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
 
@@ -182,32 +181,29 @@ func resourcePolicyVirtualMachineConfigurationAssignmentRead(d *pluginsdk.Resour
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := guestconfigurationassignments.ParseProviders2GuestConfigurationAssignmentID(d.Id())
+	id, err := parse.VirtualMachineConfigurationAssignmentID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.GuestConfigurationAssignmentName, id.VirtualMachineName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			log.Printf("[INFO] %s does not exist - removing from state", *id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			log.Printf("[INFO] guestConfiguration %q does not exist - removing from state", d.Id())
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	vmId := computeParse.NewVirtualMachineID(subscriptionId, id.ResourceGroupName, id.VirtualMachineName)
+	vmId := computeParse.NewVirtualMachineID(subscriptionId, id.ResourceGroup, id.VirtualMachineName)
 	d.Set("name", id.GuestConfigurationAssignmentName)
 	d.Set("virtual_machine_id", vmId.ID())
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
-
-		if props := model.Properties; props != nil {
-			if err := d.Set("configuration", flattenGuestConfigurationAssignment(props.GuestConfiguration)); err != nil {
-				return fmt.Errorf("setting `configuration`: %+v", err)
-			}
+	if props := resp.Properties; props != nil {
+		if err := d.Set("configuration", flattenGuestConfigurationAssignment(props.GuestConfiguration)); err != nil {
+			return fmt.Errorf("setting `configuration`: %+v", err)
 		}
 	}
 	return nil
@@ -218,32 +214,32 @@ func resourcePolicyVirtualMachineConfigurationAssignmentDelete(d *pluginsdk.Reso
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := guestconfigurationassignments.ParseProviders2GuestConfigurationAssignmentID(d.Id())
+	id, err := parse.VirtualMachineConfigurationAssignmentID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.Delete(ctx, *id); err != nil {
+	if _, err := client.Delete(ctx, id.ResourceGroup, id.GuestConfigurationAssignmentName, id.VirtualMachineName); err != nil {
 		return fmt.Errorf("deleting %s: %+v", id, err)
 	}
 
 	return nil
 }
 
-func expandGuestConfigurationAssignment(input []interface{}, name string) *guestconfigurationassignments.GuestConfigurationNavigation {
+func expandGuestConfigurationAssignment(input []interface{}, name string) *guestconfiguration.Navigation {
 	if len(input) == 0 {
 		return nil
 	}
 	v := input[0].(map[string]interface{})
 
-	result := guestconfigurationassignments.GuestConfigurationNavigation{
+	result := guestconfiguration.Navigation{
 		Name:                   utils.String(name),
 		Version:                utils.String(v["version"].(string)),
 		ConfigurationParameter: expandGuestConfigurationAssignmentConfigurationParameters(v["parameter"].(*pluginsdk.Set).List()),
 	}
 
 	if v, ok := v["assignment_type"]; ok {
-		result.AssignmentType = pointer.To(guestconfigurationassignments.AssignmentType(v.(string)))
+		result.AssignmentType = guestconfiguration.AssignmentType(v.(string))
 	}
 
 	if v, ok := v["content_hash"]; ok {
@@ -251,17 +247,17 @@ func expandGuestConfigurationAssignment(input []interface{}, name string) *guest
 	}
 
 	if v, ok := v["content_uri"]; ok {
-		result.ContentUri = utils.String(v.(string))
+		result.ContentURI = utils.String(v.(string))
 	}
 
 	return &result
 }
 
-func expandGuestConfigurationAssignmentConfigurationParameters(input []interface{}) *[]guestconfigurationassignments.ConfigurationParameter {
-	results := make([]guestconfigurationassignments.ConfigurationParameter, 0)
+func expandGuestConfigurationAssignmentConfigurationParameters(input []interface{}) *[]guestconfiguration.ConfigurationParameter {
+	results := make([]guestconfiguration.ConfigurationParameter, 0)
 	for _, item := range input {
 		v := item.(map[string]interface{})
-		results = append(results, guestconfigurationassignments.ConfigurationParameter{
+		results = append(results, guestconfiguration.ConfigurationParameter{
 			Name:  utils.String(v["name"].(string)),
 			Value: utils.String(v["value"].(string)),
 		})
@@ -269,7 +265,7 @@ func expandGuestConfigurationAssignmentConfigurationParameters(input []interface
 	return &results
 }
 
-func flattenGuestConfigurationAssignment(input *guestconfigurationassignments.GuestConfigurationNavigation) []interface{} {
+func flattenGuestConfigurationAssignment(input *guestconfiguration.Navigation) []interface{} {
 	if input == nil {
 		return make([]interface{}, 0)
 	}
@@ -278,17 +274,17 @@ func flattenGuestConfigurationAssignment(input *guestconfigurationassignments.Gu
 	if input.Version != nil {
 		version = *input.Version
 	}
-	var assignmentType guestconfigurationassignments.AssignmentType
-	if input.AssignmentType != nil {
-		assignmentType = *input.AssignmentType
+	var assignmentType guestconfiguration.AssignmentType
+	if input.AssignmentType != "" {
+		assignmentType = input.AssignmentType
 	}
 	var contentHash string
 	if input.ContentHash != nil {
 		contentHash = *input.ContentHash
 	}
 	var contentUri string
-	if input.ContentUri != nil {
-		contentUri = *input.ContentUri
+	if input.ContentURI != nil {
+		contentUri = *input.ContentURI
 	}
 	return []interface{}{
 		map[string]interface{}{
@@ -301,7 +297,7 @@ func flattenGuestConfigurationAssignment(input *guestconfigurationassignments.Gu
 	}
 }
 
-func flattenGuestConfigurationAssignmentConfigurationParameters(input *[]guestconfigurationassignments.ConfigurationParameter) []interface{} {
+func flattenGuestConfigurationAssignmentConfigurationParameters(input *[]guestconfiguration.ConfigurationParameter) []interface{} {
 	results := make([]interface{}, 0)
 	if input == nil {
 		return results

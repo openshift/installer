@@ -62,7 +62,6 @@ func (r PrivateDNSResolverForwardingRuleResource) Arguments() map[string]*plugin
 		"domain_name": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
-			ForceNew:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
@@ -206,6 +205,8 @@ func (r PrivateDNSResolverForwardingRuleResource) Update() sdk.ResourceFunc {
 					properties.Properties.TargetDnsServers = *targetDnsServersValue
 				}
 			}
+
+			properties.SystemData = nil
 
 			if _, err := client.CreateOrUpdate(ctx, *id, *properties, forwardingrules.CreateOrUpdateOperationOptions{}); err != nil {
 				return fmt.Errorf("updating %s: %+v", *id, err)

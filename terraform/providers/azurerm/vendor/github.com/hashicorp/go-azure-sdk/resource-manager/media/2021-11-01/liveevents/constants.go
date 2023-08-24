@@ -1,10 +1,6 @@
 package liveevents
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -27,19 +23,6 @@ func PossibleValuesForLiveEventEncodingType() []string {
 		string(LiveEventEncodingTypePremiumOneZeroEightZerop),
 		string(LiveEventEncodingTypeStandard),
 	}
-}
-
-func (s *LiveEventEncodingType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLiveEventEncodingType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseLiveEventEncodingType(input string) (*LiveEventEncodingType, error) {
@@ -71,19 +54,6 @@ func PossibleValuesForLiveEventInputProtocol() []string {
 		string(LiveEventInputProtocolFragmentedMPFour),
 		string(LiveEventInputProtocolRTMP),
 	}
-}
-
-func (s *LiveEventInputProtocol) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLiveEventInputProtocol(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseLiveEventInputProtocol(input string) (*LiveEventInputProtocol, error) {
@@ -124,19 +94,6 @@ func PossibleValuesForLiveEventResourceState() []string {
 	}
 }
 
-func (s *LiveEventResourceState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLiveEventResourceState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseLiveEventResourceState(input string) (*LiveEventResourceState, error) {
 	vals := map[string]LiveEventResourceState{
 		"allocating": LiveEventResourceStateAllocating,
@@ -172,19 +129,6 @@ func PossibleValuesForStreamOptionsFlag() []string {
 	}
 }
 
-func (s *StreamOptionsFlag) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStreamOptionsFlag(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseStreamOptionsFlag(input string) (*StreamOptionsFlag, error) {
 	vals := map[string]StreamOptionsFlag{
 		"default":      StreamOptionsFlagDefault,
@@ -214,19 +158,6 @@ func PossibleValuesForStretchMode() []string {
 		string(StretchModeAutoSize),
 		string(StretchModeNone),
 	}
-}
-
-func (s *StretchMode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStretchMode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseStretchMode(input string) (*StretchMode, error) {

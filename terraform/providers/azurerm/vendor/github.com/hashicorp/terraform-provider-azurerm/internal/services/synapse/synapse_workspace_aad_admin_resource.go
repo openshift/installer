@@ -109,11 +109,9 @@ func resourceSynapseWorkspaceAADAdminRead(d *pluginsdk.ResourceData, meta interf
 
 	aadAdmin, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName)
 	if err != nil {
-		if utils.ResponseWasNotFound(aadAdmin.Response) {
-			d.SetId("")
-			return nil
+		if !utils.ResponseWasNotFound(aadAdmin.Response) {
+			return fmt.Errorf("retrieving Synapse Workspace %q AAD Admin (Resource Group %q): %+v", id.WorkspaceName, id.ResourceGroup, err)
 		}
-		return fmt.Errorf("retrieving %q: %+v", id, err)
 	}
 
 	workspaceID := parse.NewWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName)

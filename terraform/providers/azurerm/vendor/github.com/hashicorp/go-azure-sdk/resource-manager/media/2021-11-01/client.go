@@ -1,11 +1,7 @@
 package v2021_11_01
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 import (
-	"fmt"
-
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/accountfilters"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/accounts"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/assetsandassetfilters"
@@ -13,10 +9,9 @@ import (
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/encodings"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/liveevents"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/liveoutputs"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/streamingendpoint"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/streamingendpoints"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/streamingpoliciesandstreaminglocators"
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 )
 
 type Client struct {
@@ -27,74 +22,53 @@ type Client struct {
 	Encodings                             *encodings.EncodingsClient
 	LiveEvents                            *liveevents.LiveEventsClient
 	LiveOutputs                           *liveoutputs.LiveOutputsClient
+	StreamingEndpoint                     *streamingendpoint.StreamingEndpointClient
 	StreamingEndpoints                    *streamingendpoints.StreamingEndpointsClient
 	StreamingPoliciesAndStreamingLocators *streamingpoliciesandstreaminglocators.StreamingPoliciesAndStreamingLocatorsClient
 }
 
-func NewClientWithBaseURI(api environments.Api, configureFunc func(c *resourcemanager.Client)) (*Client, error) {
-	accountFiltersClient, err := accountfilters.NewAccountFiltersClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building AccountFilters client: %+v", err)
-	}
-	configureFunc(accountFiltersClient.Client)
+func NewClientWithBaseURI(endpoint string, configureAuthFunc func(c *autorest.Client)) Client {
 
-	accountsClient, err := accounts.NewAccountsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building Accounts client: %+v", err)
-	}
-	configureFunc(accountsClient.Client)
+	accountFiltersClient := accountfilters.NewAccountFiltersClientWithBaseURI(endpoint)
+	configureAuthFunc(&accountFiltersClient.Client)
 
-	assetsAndAssetFiltersClient, err := assetsandassetfilters.NewAssetsAndAssetFiltersClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building AssetsAndAssetFilters client: %+v", err)
-	}
-	configureFunc(assetsAndAssetFiltersClient.Client)
+	accountsClient := accounts.NewAccountsClientWithBaseURI(endpoint)
+	configureAuthFunc(&accountsClient.Client)
 
-	contentKeyPoliciesClient, err := contentkeypolicies.NewContentKeyPoliciesClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building ContentKeyPolicies client: %+v", err)
-	}
-	configureFunc(contentKeyPoliciesClient.Client)
+	assetsAndAssetFiltersClient := assetsandassetfilters.NewAssetsAndAssetFiltersClientWithBaseURI(endpoint)
+	configureAuthFunc(&assetsAndAssetFiltersClient.Client)
 
-	encodingsClient, err := encodings.NewEncodingsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building Encodings client: %+v", err)
-	}
-	configureFunc(encodingsClient.Client)
+	contentKeyPoliciesClient := contentkeypolicies.NewContentKeyPoliciesClientWithBaseURI(endpoint)
+	configureAuthFunc(&contentKeyPoliciesClient.Client)
 
-	liveEventsClient, err := liveevents.NewLiveEventsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building LiveEvents client: %+v", err)
-	}
-	configureFunc(liveEventsClient.Client)
+	encodingsClient := encodings.NewEncodingsClientWithBaseURI(endpoint)
+	configureAuthFunc(&encodingsClient.Client)
 
-	liveOutputsClient, err := liveoutputs.NewLiveOutputsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building LiveOutputs client: %+v", err)
-	}
-	configureFunc(liveOutputsClient.Client)
+	liveEventsClient := liveevents.NewLiveEventsClientWithBaseURI(endpoint)
+	configureAuthFunc(&liveEventsClient.Client)
 
-	streamingEndpointsClient, err := streamingendpoints.NewStreamingEndpointsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building StreamingEndpoints client: %+v", err)
-	}
-	configureFunc(streamingEndpointsClient.Client)
+	liveOutputsClient := liveoutputs.NewLiveOutputsClientWithBaseURI(endpoint)
+	configureAuthFunc(&liveOutputsClient.Client)
 
-	streamingPoliciesAndStreamingLocatorsClient, err := streamingpoliciesandstreaminglocators.NewStreamingPoliciesAndStreamingLocatorsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building StreamingPoliciesAndStreamingLocators client: %+v", err)
-	}
-	configureFunc(streamingPoliciesAndStreamingLocatorsClient.Client)
+	streamingEndpointClient := streamingendpoint.NewStreamingEndpointClientWithBaseURI(endpoint)
+	configureAuthFunc(&streamingEndpointClient.Client)
 
-	return &Client{
-		AccountFilters:                        accountFiltersClient,
-		Accounts:                              accountsClient,
-		AssetsAndAssetFilters:                 assetsAndAssetFiltersClient,
-		ContentKeyPolicies:                    contentKeyPoliciesClient,
-		Encodings:                             encodingsClient,
-		LiveEvents:                            liveEventsClient,
-		LiveOutputs:                           liveOutputsClient,
-		StreamingEndpoints:                    streamingEndpointsClient,
-		StreamingPoliciesAndStreamingLocators: streamingPoliciesAndStreamingLocatorsClient,
-	}, nil
+	streamingEndpointsClient := streamingendpoints.NewStreamingEndpointsClientWithBaseURI(endpoint)
+	configureAuthFunc(&streamingEndpointsClient.Client)
+
+	streamingPoliciesAndStreamingLocatorsClient := streamingpoliciesandstreaminglocators.NewStreamingPoliciesAndStreamingLocatorsClientWithBaseURI(endpoint)
+	configureAuthFunc(&streamingPoliciesAndStreamingLocatorsClient.Client)
+
+	return Client{
+		AccountFilters:                        &accountFiltersClient,
+		Accounts:                              &accountsClient,
+		AssetsAndAssetFilters:                 &assetsAndAssetFiltersClient,
+		ContentKeyPolicies:                    &contentKeyPoliciesClient,
+		Encodings:                             &encodingsClient,
+		LiveEvents:                            &liveEventsClient,
+		LiveOutputs:                           &liveOutputsClient,
+		StreamingEndpoint:                     &streamingEndpointClient,
+		StreamingEndpoints:                    &streamingEndpointsClient,
+		StreamingPoliciesAndStreamingLocators: &streamingPoliciesAndStreamingLocatorsClient,
+	}
 }

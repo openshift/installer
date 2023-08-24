@@ -1,10 +1,6 @@
 package sessionhost
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -39,19 +35,6 @@ func PossibleValuesForHealthCheckName() []string {
 		string(HealthCheckNameUrlsAccessibleCheck),
 		string(HealthCheckNameWebRTCRedirectorCheck),
 	}
-}
-
-func (s *HealthCheckName) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseHealthCheckName(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseHealthCheckName(input string) (*HealthCheckName, error) {
@@ -93,19 +76,6 @@ func PossibleValuesForHealthCheckResult() []string {
 		string(HealthCheckResultSessionHostShutdown),
 		string(HealthCheckResultUnknown),
 	}
-}
-
-func (s *HealthCheckResult) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseHealthCheckResult(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseHealthCheckResult(input string) (*HealthCheckResult, error) {
@@ -158,19 +128,6 @@ func PossibleValuesForStatus() []string {
 	}
 }
 
-func (s *Status) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseStatus(input string) (*Status, error) {
 	vals := map[string]Status{
 		"available":                   StatusAvailable,
@@ -213,19 +170,6 @@ func PossibleValuesForUpdateState() []string {
 		string(UpdateStateStarted),
 		string(UpdateStateSucceeded),
 	}
-}
-
-func (s *UpdateState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseUpdateState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseUpdateState(input string) (*UpdateState, error) {

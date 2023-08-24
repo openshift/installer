@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package sdk
 
 import (
@@ -87,8 +84,8 @@ func (rw *ResourceWrapper) Resource() (*schema.Resource, error) {
 			}
 			if len(errors) > 0 {
 				out := ""
-				for _, err := range errors {
-					out += err.Error()
+				for _, error := range errors {
+					out += error.Error()
 				}
 				return fmt.Errorf(out)
 			}

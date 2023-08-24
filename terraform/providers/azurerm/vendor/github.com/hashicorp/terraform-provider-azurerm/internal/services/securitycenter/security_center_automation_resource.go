@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -81,7 +80,7 @@ func resourceSecurityCenterAutomation() *pluginsdk.Resource {
 				MinItems: 1,
 				Elem: &pluginsdk.Schema{
 					Type:         pluginsdk.TypeString,
-					ValidateFunc: commonids.ValidateScopeID,
+					ValidateFunc: azure.ValidateResourceID,
 				},
 			},
 

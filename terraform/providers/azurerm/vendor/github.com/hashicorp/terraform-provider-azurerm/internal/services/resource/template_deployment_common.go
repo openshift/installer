@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	providers "github.com/Azure/azure-sdk-for-go/profiles/2017-03-09/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2020-06-01/resources" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-sdk/resource-manager/resources/2022-09-01/providers"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/resource/client"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -191,7 +191,7 @@ func deleteNestedResource(ctx context.Context, resourcesClient *resources.Client
 	return nil
 }
 
-func deleteItemsProvisionedByTemplate(ctx context.Context, client *client.Client, properties resources.DeploymentPropertiesExtended, subscriptionId string) error {
+func deleteItemsProvisionedByTemplate(ctx context.Context, client *client.Client, properties resources.DeploymentPropertiesExtended) error {
 	if properties.Providers == nil {
 		return fmt.Errorf("`properties.Providers` was nil - insufficient data to clean up this Template Deployment")
 	}
@@ -199,11 +199,11 @@ func deleteItemsProvisionedByTemplate(ctx context.Context, client *client.Client
 		return fmt.Errorf("`properties.OutputResources` was nil - insufficient data to clean up this Template Deployment")
 	}
 
-	providersClient := client.ResourceProvidersClient
+	providersClient := client.ProvidersClient
 	resourcesClient := client.ResourcesClient
 
 	log.Printf("[DEBUG] Determining the API Versions used for Resources provisioned in this Template..")
-	resourceProviderApiVersions, err := determineResourceProviderAPIVersionsForResources(ctx, providersClient, *properties.Providers, subscriptionId)
+	resourceProviderApiVersions, err := determineResourceProviderAPIVersionsForResources(ctx, providersClient, *properties.Providers)
 	if err != nil {
 		return fmt.Errorf("determining API Versions for Resource Providers: %+v", err)
 	}
@@ -250,38 +250,34 @@ func deleteItemsProvisionedByTemplate(ctx context.Context, client *client.Client
 	})
 }
 
-func determineResourceProviderAPIVersionsForResources(ctx context.Context, client *providers.ProvidersClient, resourceProviders []resources.Provider, subscriptionId string) (*map[string]string, error) {
+func determineResourceProviderAPIVersionsForResources(ctx context.Context, client *providers.ProvidersClient, providers []resources.Provider) (*map[string]string, error) {
 	resourceProviderApiVersions := make(map[string]string)
 
-	for _, provider := range resourceProviders {
+	for _, provider := range providers {
 		if provider.Namespace == nil {
 			continue
 		}
 
-		providerId := providers.NewSubscriptionProviderID(subscriptionId, *provider.Namespace)
-		providerResp, err := client.Get(ctx, providerId, providers.DefaultGetOperationOptions())
+		resourceProviderName := *provider.Namespace
+		providerResp, err := client.Get(ctx, resourceProviderName, "")
 		if err != nil {
-			return nil, fmt.Errorf("retrieving MetaData for %s: %+v", providerId, err)
+			return nil, fmt.Errorf("retrieving Resource Provider MetaData for %q: %+v", resourceProviderName, err)
 		}
-		resourceTypes := make([]providers.ProviderResourceType, 0)
-		if model := providerResp.Model; model != nil && model.ResourceTypes != nil {
-			resourceTypes = *model.ResourceTypes
-		}
-		if len(resourceTypes) == 0 {
-			return nil, fmt.Errorf("`resourceTypes` was nil/empty for %s", providerId)
+		if providerResp.ResourceTypes == nil {
+			return nil, fmt.Errorf("`resourceTypes` was nil for Resource Provider %q", resourceProviderName)
 		}
 
 		for _, resourceType := range *provider.ResourceTypes {
 			resourceTypeName := *resourceType.ResourceType
-			availableResourceTypes := resourceTypes
+			availableResourceTypes := *providerResp.ResourceTypes
 			apiVersion := findApiVersionForResourceType(resourceTypeName, availableResourceTypes)
 			if apiVersion == nil {
-				return nil, fmt.Errorf("unable to determine API version for Resource Type %q (%s)", resourceTypeName, providerId)
+				return nil, fmt.Errorf("unable to determine API version for Resource Type %q (Resource Provider %q)", resourceTypeName, resourceProviderName)
 			}
 
 			// NOTE: there's an enhancement in that not all RP's necessarily offer everything in every version
 			// but the majority do, so this is likely sufficient for now
-			resourceProviderApiVersions[strings.ToLower(providerId.ProviderName)] = *apiVersion
+			resourceProviderApiVersions[strings.ToLower(resourceProviderName)] = *apiVersion
 			break
 		}
 	}
@@ -291,14 +287,14 @@ func determineResourceProviderAPIVersionsForResources(ctx context.Context, clien
 
 func findApiVersionForResourceType(resourceType string, availableResourceTypes []providers.ProviderResourceType) *string {
 	for _, item := range availableResourceTypes {
-		if item.ResourceType == nil || item.ApiVersions == nil {
+		if item.ResourceType == nil || item.APIVersions == nil {
 			continue
 		}
 
 		isExactMatch := strings.EqualFold(resourceType, *item.ResourceType)
 		isPrefixMatch := strings.HasPrefix(strings.ToLower(resourceType), strings.ToLower(*item.ResourceType))
 		if isExactMatch || isPrefixMatch {
-			apiVersions := *item.ApiVersions
+			apiVersions := *item.APIVersions
 			apiVersion := apiVersions[0]
 			return &apiVersion
 		}

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2022-07-01/encodings"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/media/2021-11-01/encodings"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/media/migration"
@@ -25,8 +25,6 @@ func resourceMediaJob() *pluginsdk.Resource {
 		Read:   resourceMediaJobRead,
 		Update: resourceMediaJobUpdate,
 		Delete: resourceMediaJobDelete,
-
-		DeprecationMessage: azureMediaRetirementMessage,
 
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(30 * time.Minute),
@@ -152,7 +150,7 @@ func resourceMediaJob() *pluginsdk.Resource {
 }
 
 func resourceMediaJobCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Media.V20220701Client.Encodings
+	client := meta.(*clients.Client).Media.V20211101Client.Encodings
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -203,7 +201,7 @@ func resourceMediaJobCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 }
 
 func resourceMediaJobRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Media.V20220701Client.Encodings
+	client := meta.(*clients.Client).Media.V20211101Client.Encodings
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -259,7 +257,7 @@ func resourceMediaJobRead(d *pluginsdk.ResourceData, meta interface{}) error {
 }
 
 func resourceMediaJobUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Media.V20220701Client.Encodings
+	client := meta.(*clients.Client).Media.V20211101Client.Encodings
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -300,7 +298,7 @@ func resourceMediaJobUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 }
 
 func resourceMediaJobDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Media.V20220701Client.Encodings
+	client := meta.(*clients.Client).Media.V20211101Client.Encodings
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 

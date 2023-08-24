@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
+	identity "github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2021-05-01/serverfailover"
@@ -21,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mysql/validate"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -117,20 +117,6 @@ func resourceMysqlFlexibleServer() *pluginsdk.Resource {
 							Optional:     true,
 							ValidateFunc: commonids.ValidateUserAssignedIdentityID,
 						},
-						"geo_backup_key_vault_key_id": {
-							Type:         pluginsdk.TypeString,
-							Optional:     true,
-							ValidateFunc: keyVaultValidate.NestedItemIdWithOptionalVersion,
-							RequiredWith: []string{
-								"identity",
-								"customer_managed_key.0.geo_backup_user_assigned_identity_id",
-							},
-						},
-						"geo_backup_user_assigned_identity_id": {
-							Type:         pluginsdk.TypeString,
-							Optional:     true,
-							ValidateFunc: commonids.ValidateUserAssignedIdentityID,
-						},
 					},
 				},
 			},
@@ -139,7 +125,7 @@ func resourceMysqlFlexibleServer() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: networkValidate.SubnetID,
 			},
 
 			"geo_redundant_backup_enabled": {
@@ -169,7 +155,7 @@ func resourceMysqlFlexibleServer() *pluginsdk.Resource {
 				},
 			},
 
-			"identity": commonschema.UserAssignedIdentityOptional(),
+			"identity": commonschema.SystemAssignedUserAssignedIdentityOptional(),
 
 			"maintenance_window": {
 				Type:     pluginsdk.TypeList,
@@ -483,7 +469,7 @@ func resourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface{}
 		if props := model.Properties; props != nil {
 			d.Set("administrator_login", props.AdministratorLogin)
 			d.Set("zone", props.AvailabilityZone)
-			d.Set("version", string(pointer.From(props.Version)))
+			d.Set("version", props.Version)
 			d.Set("fqdn", props.FullyQualifiedDomainName)
 
 			if network := props.Network; network != nil {
@@ -500,11 +486,11 @@ func resourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface{}
 				return fmt.Errorf("setting `customer_managed_key`: %+v", err)
 			}
 
-			identity, err := flattenFlexibleServerIdentity(model.Identity)
+			id, err := flattenFlexibleServerIdentity(model.Identity)
 			if err != nil {
 				return fmt.Errorf("flattening `identity`: %+v", err)
 			}
-			if err := d.Set("identity", identity); err != nil {
+			if err := d.Set("identity", id); err != nil {
 				return fmt.Errorf("setting `identity`: %+v", err)
 			}
 
@@ -524,7 +510,7 @@ func resourceMysqlFlexibleServerRead(d *pluginsdk.ResourceData, meta interface{}
 			if err := d.Set("high_availability", flattenFlexibleServerHighAvailability(props.HighAvailability)); err != nil {
 				return fmt.Errorf("setting `high_availability`: %+v", err)
 			}
-			d.Set("replication_role", string(pointer.From(props.ReplicationRole)))
+			d.Set("replication_role", props.ReplicationRole)
 			d.Set("replica_capacity", props.ReplicaCapacity)
 		}
 		sku, err := flattenFlexibleServerSku(model.Sku)
@@ -944,23 +930,9 @@ func expandFlexibleServerDataEncryption(input []interface{}) *servers.DataEncryp
 
 	det := servers.DataEncryptionTypeAzureKeyVault
 	dataEncryption := servers.DataEncryption{
-		Type: &det,
-	}
-
-	if keyVaultKeyId := v["key_vault_key_id"].(string); keyVaultKeyId != "" {
-		dataEncryption.PrimaryKeyURI = utils.String(keyVaultKeyId)
-	}
-
-	if primaryUserAssignedIdentityId := v["primary_user_assigned_identity_id"].(string); primaryUserAssignedIdentityId != "" {
-		dataEncryption.PrimaryUserAssignedIdentityId = utils.String(primaryUserAssignedIdentityId)
-	}
-
-	if geoBackupKeyVaultKeyId := v["geo_backup_key_vault_key_id"].(string); geoBackupKeyVaultKeyId != "" {
-		dataEncryption.GeoBackupKeyURI = utils.String(geoBackupKeyVaultKeyId)
-	}
-
-	if geoBackupUserAssignedIdentityId := v["geo_backup_user_assigned_identity_id"].(string); geoBackupUserAssignedIdentityId != "" {
-		dataEncryption.GeoBackupUserAssignedIdentityId = utils.String(geoBackupUserAssignedIdentityId)
+		Type:                          &det,
+		PrimaryKeyURI:                 utils.String(v["key_vault_key_id"].(string)),
+		PrimaryUserAssignedIdentityId: utils.String(v["primary_user_assigned_identity_id"].(string)),
 	}
 
 	return &dataEncryption
@@ -983,29 +955,18 @@ func flattenFlexibleServerDataEncryption(de *servers.DataEncryption) ([]interfac
 		item["primary_user_assigned_identity_id"] = parsed.ID()
 	}
 
-	if de.GeoBackupKeyURI != nil {
-		item["geo_backup_key_vault_key_id"] = *de.GeoBackupKeyURI
-	}
-	if identity := de.GeoBackupUserAssignedIdentityId; identity != nil {
-		parsed, err := commonids.ParseUserAssignedIdentityIDInsensitively(*identity)
-		if err != nil {
-			return nil, fmt.Errorf("parsing %q: %+v", *identity, err)
-		}
-		item["geo_backup_user_assigned_identity_id"] = parsed.ID()
-	}
-
 	return []interface{}{item}, nil
 }
 
 func expandFlexibleServerIdentity(input []interface{}) (*servers.Identity, error) {
 	expanded, err := identity.ExpandUserAssignedMap(input)
-	if err != nil {
+	if err != nil || expanded.Type != identity.TypeUserAssigned {
 		return nil, err
 	}
 
-	identityType := servers.ManagedServiceIdentityType(string(expanded.Type))
+	idUserAssigned := servers.ManagedServiceIdentityTypeUserAssigned
 	out := servers.Identity{
-		Type: &identityType,
+		Type: &idUserAssigned,
 	}
 	if expanded.Type == identity.TypeUserAssigned {
 		ids := make(map[string]interface{})

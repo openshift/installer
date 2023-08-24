@@ -309,9 +309,6 @@ func (m DeploymentResource) Read() sdk.ResourceFunc {
 			client := meta.Client.Nginx.NginxDeployment
 			result, err := client.DeploymentsGet(ctx, *id)
 			if err != nil {
-				if response.WasNotFound(result.HttpResponse) {
-					return meta.MarkAsGone(id)
-				}
 				return fmt.Errorf("retrieving %s: %+v", *id, err)
 			}
 
@@ -391,8 +388,6 @@ func (m DeploymentResource) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: time.Minute * 30,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) error {
-			client := meta.Client.Nginx.NginxDeployment
-
 			id, err := nginxdeployment.ParseNginxDeploymentID(meta.ResourceData.Id())
 			if err != nil {
 				return err
@@ -431,10 +426,14 @@ func (m DeploymentResource) Update() sdk.ResourceFunc {
 				req.Properties.EnableDiagnosticsSupport = pointer.FromBool(model.DiagnoseSupportEnabled)
 			}
 
-			if err := client.DeploymentsUpdateThenPoll(ctx, *id, req); err != nil {
+			res, err := meta.Client.Nginx.NginxDeployment.DeploymentsUpdate(ctx, *id, req)
+			if err != nil {
 				return fmt.Errorf("updating %s: %v", id, err)
 			}
 
+			if err = res.Poller.PollUntilDone(); err != nil {
+				return fmt.Errorf("polling update %s: %v", id, err)
+			}
 			return nil
 		},
 	}
@@ -444,17 +443,20 @@ func (m DeploymentResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) error {
-			client := meta.Client.Nginx.NginxDeployment
 			id, err := nginxdeployment.ParseNginxDeploymentID(meta.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 			meta.Logger.Infof("deleting %s", id)
 
-			if err := client.DeploymentsDeleteThenPoll(ctx, *id); err != nil {
+			client := meta.Client.Nginx.NginxDeployment
+			result, err := client.DeploymentsDelete(ctx, *id)
+			if err != nil {
 				return fmt.Errorf("deleting %s: %v", id, err)
 			}
-
+			if err := result.Poller.PollUntilDone(); err != nil {
+				return fmt.Errorf("waiting delete %s: %v", id, err)
+			}
 			return nil
 		},
 	}

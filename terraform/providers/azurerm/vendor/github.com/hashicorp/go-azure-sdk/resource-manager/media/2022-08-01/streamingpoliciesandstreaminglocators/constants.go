@@ -1,10 +1,6 @@
 package streamingpoliciesandstreaminglocators
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -25,19 +21,6 @@ func PossibleValuesForEncryptionScheme() []string {
 		string(EncryptionSchemeEnvelopeEncryption),
 		string(EncryptionSchemeNoEncryption),
 	}
-}
-
-func (s *EncryptionScheme) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseEncryptionScheme(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseEncryptionScheme(input string) (*EncryptionScheme, error) {
@@ -70,19 +53,6 @@ func PossibleValuesForStreamingLocatorContentKeyType() []string {
 		string(StreamingLocatorContentKeyTypeCommonEncryptionCenc),
 		string(StreamingLocatorContentKeyTypeEnvelopeEncryption),
 	}
-}
-
-func (s *StreamingLocatorContentKeyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStreamingLocatorContentKeyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseStreamingLocatorContentKeyType(input string) (*StreamingLocatorContentKeyType, error) {
@@ -118,19 +88,6 @@ func PossibleValuesForStreamingPolicyStreamingProtocol() []string {
 	}
 }
 
-func (s *StreamingPolicyStreamingProtocol) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStreamingPolicyStreamingProtocol(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseStreamingPolicyStreamingProtocol(input string) (*StreamingPolicyStreamingProtocol, error) {
 	vals := map[string]StreamingPolicyStreamingProtocol{
 		"dash":            StreamingPolicyStreamingProtocolDash,
@@ -161,19 +118,6 @@ func PossibleValuesForTrackPropertyCompareOperation() []string {
 	}
 }
 
-func (s *TrackPropertyCompareOperation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTrackPropertyCompareOperation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseTrackPropertyCompareOperation(input string) (*TrackPropertyCompareOperation, error) {
 	vals := map[string]TrackPropertyCompareOperation{
 		"equal":   TrackPropertyCompareOperationEqual,
@@ -200,19 +144,6 @@ func PossibleValuesForTrackPropertyType() []string {
 		string(TrackPropertyTypeFourCC),
 		string(TrackPropertyTypeUnknown),
 	}
-}
-
-func (s *TrackPropertyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTrackPropertyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseTrackPropertyType(input string) (*TrackPropertyType, error) {

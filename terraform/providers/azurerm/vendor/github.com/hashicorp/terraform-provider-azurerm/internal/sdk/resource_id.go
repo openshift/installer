@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package sdk
 
 import "github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"

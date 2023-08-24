@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/preview/botservice/mgmt/2021-05-01-preview/botservice" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
@@ -16,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/botservice/2021-05-01-preview/botservice"
 )
 
 func resourceBotChannelDirectline() *pluginsdk.Resource {
@@ -257,7 +257,7 @@ func resourceBotChannelDirectlineDelete(d *pluginsdk.ResourceData, meta interfac
 }
 
 func expandDirectlineSites(input []interface{}) *[]botservice.DirectLineSite {
-	sites := make([]botservice.DirectLineSite, 0)
+	sites := make([]botservice.DirectLineSite, len(input))
 
 	for _, element := range input {
 		if element == nil {

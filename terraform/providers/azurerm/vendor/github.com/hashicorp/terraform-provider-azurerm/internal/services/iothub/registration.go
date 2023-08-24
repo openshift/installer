@@ -63,6 +63,5 @@ func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
 		IotHubDeviceUpdateAccountResource{},
 		IotHubDeviceUpdateInstanceResource{},
-		IotHubFileUploadResource{},
 	}
 }

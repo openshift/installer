@@ -1,10 +1,6 @@
 package contentkeypolicies
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -27,19 +23,6 @@ func PossibleValuesForContentKeyPolicyFairPlayRentalAndLeaseKeyType() []string {
 		string(ContentKeyPolicyFairPlayRentalAndLeaseKeyTypeUndefined),
 		string(ContentKeyPolicyFairPlayRentalAndLeaseKeyTypeUnknown),
 	}
-}
-
-func (s *ContentKeyPolicyFairPlayRentalAndLeaseKeyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseContentKeyPolicyFairPlayRentalAndLeaseKeyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseContentKeyPolicyFairPlayRentalAndLeaseKeyType(input string) (*ContentKeyPolicyFairPlayRentalAndLeaseKeyType, error) {
@@ -77,19 +60,6 @@ func PossibleValuesForContentKeyPolicyPlayReadyContentType() []string {
 	}
 }
 
-func (s *ContentKeyPolicyPlayReadyContentType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseContentKeyPolicyPlayReadyContentType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseContentKeyPolicyPlayReadyContentType(input string) (*ContentKeyPolicyPlayReadyContentType, error) {
 	vals := map[string]ContentKeyPolicyPlayReadyContentType{
 		"ultravioletdownload":  ContentKeyPolicyPlayReadyContentTypeUltraVioletDownload,
@@ -120,19 +90,6 @@ func PossibleValuesForContentKeyPolicyPlayReadyLicenseType() []string {
 		string(ContentKeyPolicyPlayReadyLicenseTypePersistent),
 		string(ContentKeyPolicyPlayReadyLicenseTypeUnknown),
 	}
-}
-
-func (s *ContentKeyPolicyPlayReadyLicenseType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseContentKeyPolicyPlayReadyLicenseType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseContentKeyPolicyPlayReadyLicenseType(input string) (*ContentKeyPolicyPlayReadyLicenseType, error) {
@@ -168,19 +125,6 @@ func PossibleValuesForContentKeyPolicyPlayReadyUnknownOutputPassingOption() []st
 	}
 }
 
-func (s *ContentKeyPolicyPlayReadyUnknownOutputPassingOption) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseContentKeyPolicyPlayReadyUnknownOutputPassingOption(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseContentKeyPolicyPlayReadyUnknownOutputPassingOption(input string) (*ContentKeyPolicyPlayReadyUnknownOutputPassingOption, error) {
 	vals := map[string]ContentKeyPolicyPlayReadyUnknownOutputPassingOption{
 		"allowed":                      ContentKeyPolicyPlayReadyUnknownOutputPassingOptionAllowed,
@@ -211,19 +155,6 @@ func PossibleValuesForContentKeyPolicyRestrictionTokenType() []string {
 		string(ContentKeyPolicyRestrictionTokenTypeSwt),
 		string(ContentKeyPolicyRestrictionTokenTypeUnknown),
 	}
-}
-
-func (s *ContentKeyPolicyRestrictionTokenType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseContentKeyPolicyRestrictionTokenType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseContentKeyPolicyRestrictionTokenType(input string) (*ContentKeyPolicyRestrictionTokenType, error) {
@@ -257,19 +188,6 @@ func PossibleValuesForSecurityLevel() []string {
 		string(SecurityLevelSLTwoThousand),
 		string(SecurityLevelUnknown),
 	}
-}
-
-func (s *SecurityLevel) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSecurityLevel(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseSecurityLevel(input string) (*SecurityLevel, error) {

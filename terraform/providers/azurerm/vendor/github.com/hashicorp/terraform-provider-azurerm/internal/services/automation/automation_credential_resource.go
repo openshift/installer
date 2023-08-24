@@ -5,14 +5,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/credential"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceAutomationCredential() *pluginsdk.Resource {
@@ -23,7 +24,7 @@ func resourceAutomationCredential() *pluginsdk.Resource {
 		Delete: resourceAutomationCredentialDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := credential.ParseCredentialID(id)
+			_, err := parse.CredentialID(id)
 			return err
 		}),
 
@@ -71,23 +72,22 @@ func resourceAutomationCredential() *pluginsdk.Resource {
 
 func resourceAutomationCredentialCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Automation.CredentialClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for AzureRM Automation Credential creation.")
 
-	id := credential.NewCredentialID(subscriptionId, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
+	id := parse.NewCredentialID(client.SubscriptionID, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_automation_credential", id.ID())
 		}
 	}
@@ -96,16 +96,16 @@ func resourceAutomationCredentialCreateUpdate(d *pluginsdk.ResourceData, meta in
 	password := d.Get("password").(string)
 	description := d.Get("description").(string)
 
-	parameters := credential.CredentialCreateOrUpdateParameters{
-		Properties: credential.CredentialCreateOrUpdateProperties{
-			UserName:    user,
-			Password:    password,
+	parameters := automation.CredentialCreateOrUpdateParameters{
+		CredentialCreateOrUpdateProperties: &automation.CredentialCreateOrUpdateProperties{
+			UserName:    &user,
+			Password:    &password,
 			Description: &description,
 		},
-		Name: id.CredentialName,
+		Name: &id.Name,
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name, parameters); err != nil {
 		return err
 	}
 
@@ -119,31 +119,28 @@ func resourceAutomationCredentialRead(d *pluginsdk.ResourceData, meta interface{
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := credential.ParseCredentialID(d.Id())
+	id, err := parse.CredentialID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("making Read request on %s: %+v", *id, err)
+		return fmt.Errorf("making Read request on AzureRM Automation Credential '%s': %+v", id.String(), err)
 	}
 
-	d.Set("name", id.CredentialName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("automation_account_name", id.AutomationAccountName)
-
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("username", props.UserName)
-			d.Set("description", props.Description)
-		}
+	if props := resp.CredentialProperties; props != nil {
+		d.Set("username", props.UserName)
 	}
+	d.Set("description", resp.Description)
 
 	return nil
 }
@@ -153,18 +150,18 @@ func resourceAutomationCredentialDelete(d *pluginsdk.ResourceData, meta interfac
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := credential.ParseCredentialID(d.Id())
+	id, err := parse.CredentialID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Delete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp) {
 			return nil
 		}
 
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+		return fmt.Errorf("issuing AzureRM delete request for Automation Credential '%s': %+v", id.String(), err)
 	}
 
 	return nil

@@ -21,13 +21,12 @@ import (
 type SpringCloudConnectorResource struct{}
 
 type SpringCloudConnectorResourceModel struct {
-	Name             string             `tfschema:"name"`
-	SpringCloudId    string             `tfschema:"spring_cloud_id"`
-	TargetResourceId string             `tfschema:"target_resource_id"`
-	ClientType       string             `tfschema:"client_type"`
-	AuthInfo         []AuthInfoModel    `tfschema:"authentication"`
-	VnetSolution     string             `tfschema:"vnet_solution"`
-	SecretStore      []SecretStoreModel `tfschema:"secret_store"`
+	Name             string          `tfschema:"name"`
+	SpringCloudId    string          `tfschema:"spring_cloud_id"`
+	TargetResourceId string          `tfschema:"target_resource_id"`
+	ClientType       string          `tfschema:"client_type"`
+	AuthInfo         []AuthInfoModel `tfschema:"authentication"`
+	VnetSolution     string          `tfschema:"vnet_solution"`
 }
 
 func (r SpringCloudConnectorResource) Arguments() map[string]*schema.Schema {
@@ -47,19 +46,19 @@ func (r SpringCloudConnectorResource) Arguments() map[string]*schema.Schema {
 		},
 
 		"target_resource_id": {
-			Type:         pluginsdk.TypeString,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: azure.ValidateResourceID,
+			Type:     pluginsdk.TypeString,
+			Required: true,
+			ForceNew: true,
+			ValidateFunc: validation.Any(
+				azure.ValidateResourceID,
+			),
 		},
 
 		"client_type": {
 			Type:     pluginsdk.TypeString,
 			Optional: true,
-			// TODO: remove `None` in 4.0, since this is Optional `None` == omitting the field
-			Default: string(servicelinker.ClientTypeNone),
+			Default:  string(servicelinker.ClientTypeNone),
 			ValidateFunc: validation.StringInSlice([]string{
-				// TODO: remove `None` in 4.0, since this is Optional `None` == omitting the field
 				string(servicelinker.ClientTypeNone),
 				string(servicelinker.ClientTypeDotnet),
 				string(servicelinker.ClientTypeJava),
@@ -72,8 +71,6 @@ func (r SpringCloudConnectorResource) Arguments() map[string]*schema.Schema {
 				string(servicelinker.ClientTypeSpringBoot),
 			}, false),
 		},
-
-		"secret_store": secretStoreSchema(),
 
 		"vnet_solution": {
 			Type:     pluginsdk.TypeString,
@@ -139,11 +136,6 @@ func (r SpringCloudConnectorResource) Create() sdk.ResourceFunc {
 				serviceConnectorProperties.TargetService = servicelinker.AzureResource{
 					Id: &model.TargetResourceId,
 				}
-			}
-
-			if model.SecretStore != nil {
-				secretStore := expandSecretStore(model.SecretStore)
-				serviceConnectorProperties.SecretStore = secretStore
 			}
 
 			if model.ClientType != "" {
@@ -215,10 +207,6 @@ func (r SpringCloudConnectorResource) Read() sdk.ResourceFunc {
 					state.VnetSolution = string(*props.VNetSolution.Type)
 				}
 
-				if props.SecretStore != nil {
-					state.SecretStore = flattenSecretStore(*props.SecretStore)
-				}
-
 				return metadata.Encode(&state)
 			}
 			return nil
@@ -276,10 +264,6 @@ func (r SpringCloudConnectorResource) Update() sdk.ResourceFunc {
 					Type: &vnetSolutionType,
 				}
 				linkerProps.VNetSolution = &vnetSolution
-			}
-
-			if d.HasChange("secret_store") {
-				linkerProps.SecretStore = (*links.SecretStore)(expandSecretStore(state.SecretStore))
 			}
 
 			if d.HasChange("authentication") {

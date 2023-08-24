@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = SingleSignOnConfigurationId{}
 
 // SingleSignOnConfigurationId is a struct representing the Resource ID for a Single Sign On Configuration
@@ -42,19 +39,19 @@ func ParseSingleSignOnConfigurationID(input string) (*SingleSignOnConfigurationI
 	id := SingleSignOnConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.MonitorName, ok = parsed.Parsed["monitorName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "monitorName", *parsed)
+		return nil, fmt.Errorf("the segment 'monitorName' was not found in the resource id %q", input)
 	}
 
 	if id.SingleSignOnConfigurationName, ok = parsed.Parsed["singleSignOnConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "singleSignOnConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'singleSignOnConfigurationName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseSingleSignOnConfigurationIDInsensitively(input string) (*SingleSignOnC
 	id := SingleSignOnConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.MonitorName, ok = parsed.Parsed["monitorName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "monitorName", *parsed)
+		return nil, fmt.Errorf("the segment 'monitorName' was not found in the resource id %q", input)
 	}
 
 	if id.SingleSignOnConfigurationName, ok = parsed.Parsed["singleSignOnConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "singleSignOnConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'singleSignOnConfigurationName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

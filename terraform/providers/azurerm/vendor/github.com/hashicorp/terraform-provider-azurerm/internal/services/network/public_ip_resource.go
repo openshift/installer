@@ -148,7 +148,7 @@ func resourcePublicIp() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.PublicIpPrefixID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"ip_tags": {

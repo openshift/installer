@@ -1,86 +1,67 @@
 package client
 
 import (
-	"fmt"
-
 	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2015-10-31/webhook"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/runbook"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2019-06-01/softwareupdateconfiguration"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/certificate"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/connection"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/connectiontype"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/credential"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/dscnodeconfiguration"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/jobschedule"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/module"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/schedule"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/sourcecontrol"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/variable"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/watcher"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/automationaccount"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/hybridrunbookworker"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/hybridrunbookworkergroup"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2022-08-08/dscconfiguration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
 	AccountClient               *automationaccount.AutomationAccountClient
 	AgentRegistrationInfoClient *automation.AgentRegistrationInformationClient
-	CertificateClient           *certificate.CertificateClient
-	ConnectionClient            *connection.ConnectionClient
-	ConnectionTypeClient        *connectiontype.ConnectionTypeClient
-	CredentialClient            *credential.CredentialClient
-	DscConfigurationClient      *dscconfiguration.DscConfigurationClient
-	DscNodeConfigurationClient  *dscnodeconfiguration.DscNodeConfigurationClient
-	JobScheduleClient           *jobschedule.JobScheduleClient
-	ModuleClient                *module.ModuleClient
+	CertificateClient           *automation.CertificateClient
+	ConnectionClient            *automation.ConnectionClient
+	ConnectionTypeClient        *automation.ConnectionTypeClient
+	CredentialClient            *automation.CredentialClient
+	DscConfigurationClient      *automation.DscConfigurationClient
+	DscNodeConfigurationClient  *automation.DscNodeConfigurationClient
+	JobScheduleClient           *automation.JobScheduleClient
+	ModuleClient                *automation.ModuleClient
 	RunbookClient               *runbook.RunbookClient
 	RunbookClientHack           *automation.RunbookClient
 	RunbookDraftClient          *automation.RunbookDraftClient
 	RunBookWgClient             *hybridrunbookworkergroup.HybridRunbookWorkerGroupClient
 	RunbookWorkerClient         *hybridrunbookworker.HybridRunbookWorkerClient
-	ScheduleClient              *schedule.ScheduleClient
-	SoftwareUpdateConfigClient  *softwareupdateconfiguration.SoftwareUpdateConfigurationClient
-	SourceControlClient         *sourcecontrol.SourceControlClient
-	VariableClient              *variable.VariableClient
-	WatcherClient               *watcher.WatcherClient
-	WebhookClient               *webhook.WebhookClient
+	ScheduleClient              *automation.ScheduleClient
+	SoftwareUpdateConfigClient  *automation.SoftwareUpdateConfigurationsClient
+	SourceControlClient         *automation.SourceControlClient
+	VariableClient              *automation.VariableClient
+	WatcherClient               *automation.WatcherClient
+	WebhookClient               *automation.WebhookClient
 }
 
-func NewClient(o *common.ClientOptions) (*Client, error) {
+func NewClient(o *common.ClientOptions) *Client {
 	accountClient := automationaccount.NewAutomationAccountClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&accountClient.Client, o.ResourceManagerAuthorizer)
 
 	agentRegistrationInfoClient := automation.NewAgentRegistrationInformationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&agentRegistrationInfoClient.Client, o.ResourceManagerAuthorizer)
 
-	certificateClient := certificate.NewCertificateClientWithBaseURI(o.ResourceManagerEndpoint)
+	certificateClient := automation.NewCertificateClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&certificateClient.Client, o.ResourceManagerAuthorizer)
 
-	connectionClient := connection.NewConnectionClientWithBaseURI(o.ResourceManagerEndpoint)
+	connectionClient := automation.NewConnectionClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&connectionClient.Client, o.ResourceManagerAuthorizer)
 
-	connectionTypeClient := connectiontype.NewConnectionTypeClientWithBaseURI(o.ResourceManagerEndpoint)
+	connectionTypeClient := automation.NewConnectionTypeClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&connectionTypeClient.Client, o.ResourceManagerAuthorizer)
 
-	credentialClient := credential.NewCredentialClientWithBaseURI(o.ResourceManagerEndpoint)
+	credentialClient := automation.NewCredentialClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&credentialClient.Client, o.ResourceManagerAuthorizer)
 
-	dscConfigurationClient, err := dscconfiguration.NewDscConfigurationClientWithBaseURI(o.Environment.ResourceManager)
-	if err != nil {
-		return nil, fmt.Errorf("build dscConfigurationClient: %+v", err)
-	}
-	o.Configure(dscConfigurationClient.Client, o.Authorizers.ResourceManager)
+	dscConfigurationClient := automation.NewDscConfigurationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&dscConfigurationClient.Client, o.ResourceManagerAuthorizer)
 
-	dscNodeConfigurationClient := dscnodeconfiguration.NewDscNodeConfigurationClientWithBaseURI(o.ResourceManagerEndpoint)
+	dscNodeConfigurationClient := automation.NewDscNodeConfigurationClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&dscNodeConfigurationClient.Client, o.ResourceManagerAuthorizer)
 
-	jobScheduleClient := jobschedule.NewJobScheduleClientWithBaseURI(o.ResourceManagerEndpoint)
+	jobScheduleClient := automation.NewJobScheduleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&jobScheduleClient.Client, o.ResourceManagerAuthorizer)
 
-	moduleClient := module.NewModuleClientWithBaseURI(o.ResourceManagerEndpoint)
+	moduleClient := automation.NewModuleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&moduleClient.Client, o.ResourceManagerAuthorizer)
 
 	runbookClient2 := automation.NewRunbookClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
@@ -98,22 +79,22 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	runbookWorkerClient := hybridrunbookworker.NewHybridRunbookWorkerClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&runbookWorkerClient.Client, o.ResourceManagerAuthorizer)
 
-	sourceCtlClient := sourcecontrol.NewSourceControlClientWithBaseURI(o.ResourceManagerEndpoint)
+	sourceCtlClient := automation.NewSourceControlClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&sourceCtlClient.Client, o.ResourceManagerAuthorizer)
 
-	scheduleClient := schedule.NewScheduleClientWithBaseURI(o.ResourceManagerEndpoint)
+	scheduleClient := automation.NewScheduleClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&scheduleClient.Client, o.ResourceManagerAuthorizer)
 
-	softUpClient := softwareupdateconfiguration.NewSoftwareUpdateConfigurationClientWithBaseURI(o.ResourceManagerEndpoint)
+	softUpClient := automation.NewSoftwareUpdateConfigurationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&softUpClient.Client, o.ResourceManagerAuthorizer)
 
-	variableClient := variable.NewVariableClientWithBaseURI(o.ResourceManagerEndpoint)
+	variableClient := automation.NewVariableClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&variableClient.Client, o.ResourceManagerAuthorizer)
 
-	watcherClient := watcher.NewWatcherClientWithBaseURI(o.ResourceManagerEndpoint)
+	watcherClient := automation.NewWatcherClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&watcherClient.Client, o.ResourceManagerAuthorizer)
 
-	webhookClient := webhook.NewWebhookClientWithBaseURI(o.ResourceManagerEndpoint)
+	webhookClient := automation.NewWebhookClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&webhookClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{
@@ -123,7 +104,7 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 		ConnectionClient:            &connectionClient,
 		ConnectionTypeClient:        &connectionTypeClient,
 		CredentialClient:            &credentialClient,
-		DscConfigurationClient:      dscConfigurationClient,
+		DscConfigurationClient:      &dscConfigurationClient,
 		DscNodeConfigurationClient:  &dscNodeConfigurationClient,
 		JobScheduleClient:           &jobScheduleClient,
 		ModuleClient:                &moduleClient,
@@ -138,5 +119,5 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 		VariableClient:              &variableClient,
 		WatcherClient:               &watcherClient,
 		WebhookClient:               &webhookClient,
-	}, nil
+	}
 }

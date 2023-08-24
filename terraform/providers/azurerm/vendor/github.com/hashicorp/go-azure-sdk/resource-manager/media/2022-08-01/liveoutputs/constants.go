@@ -1,10 +1,6 @@
 package liveoutputs
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -23,19 +19,6 @@ func PossibleValuesForAsyncOperationStatus() []string {
 		string(AsyncOperationStatusInProgress),
 		string(AsyncOperationStatusSucceeded),
 	}
-}
-
-func (s *AsyncOperationStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAsyncOperationStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAsyncOperationStatus(input string) (*AsyncOperationStatus, error) {
@@ -67,19 +50,6 @@ func PossibleValuesForLiveOutputResourceState() []string {
 		string(LiveOutputResourceStateDeleting),
 		string(LiveOutputResourceStateRunning),
 	}
-}
-
-func (s *LiveOutputResourceState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLiveOutputResourceState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseLiveOutputResourceState(input string) (*LiveOutputResourceState, error) {

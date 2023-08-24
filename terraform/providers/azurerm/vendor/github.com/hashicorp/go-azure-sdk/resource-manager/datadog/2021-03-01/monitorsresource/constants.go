@@ -1,10 +1,6 @@
 package monitorsresource
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -21,19 +17,6 @@ func PossibleValuesForLiftrResourceCategories() []string {
 		string(LiftrResourceCategoriesMonitorLogs),
 		string(LiftrResourceCategoriesUnknown),
 	}
-}
-
-func (s *LiftrResourceCategories) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLiftrResourceCategories(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseLiftrResourceCategories(input string) (*LiftrResourceCategories, error) {
@@ -62,19 +45,6 @@ func PossibleValuesForManagedIdentityTypes() []string {
 		string(ManagedIdentityTypesSystemAssigned),
 		string(ManagedIdentityTypesUserAssigned),
 	}
-}
-
-func (s *ManagedIdentityTypes) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseManagedIdentityTypes(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseManagedIdentityTypes(input string) (*ManagedIdentityTypes, error) {
@@ -109,19 +79,6 @@ func PossibleValuesForMarketplaceSubscriptionStatus() []string {
 	}
 }
 
-func (s *MarketplaceSubscriptionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseMarketplaceSubscriptionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseMarketplaceSubscriptionStatus(input string) (*MarketplaceSubscriptionStatus, error) {
 	vals := map[string]MarketplaceSubscriptionStatus{
 		"active":       MarketplaceSubscriptionStatusActive,
@@ -150,19 +107,6 @@ func PossibleValuesForMonitoringStatus() []string {
 		string(MonitoringStatusDisabled),
 		string(MonitoringStatusEnabled),
 	}
-}
-
-func (s *MonitoringStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseMonitoringStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseMonitoringStatus(input string) (*MonitoringStatus, error) {
@@ -205,19 +149,6 @@ func PossibleValuesForProvisioningState() []string {
 		string(ProvisioningStateSucceeded),
 		string(ProvisioningStateUpdating),
 	}
-}
-
-func (s *ProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseProvisioningState(input string) (*ProvisioningState, error) {

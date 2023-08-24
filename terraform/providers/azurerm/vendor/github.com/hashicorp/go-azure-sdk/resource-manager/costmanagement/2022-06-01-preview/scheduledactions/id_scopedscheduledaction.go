@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ScopedScheduledActionId{}
 
 // ScopedScheduledActionId is a struct representing the Resource ID for a Scoped Scheduled Action
@@ -38,11 +35,11 @@ func ParseScopedScheduledActionID(input string) (*ScopedScheduledActionId, error
 	id := ScopedScheduledActionId{}
 
 	if id.Scope, ok = parsed.Parsed["scope"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scope", *parsed)
+		return nil, fmt.Errorf("the segment 'scope' was not found in the resource id %q", input)
 	}
 
 	if id.ScheduledActionName, ok = parsed.Parsed["scheduledActionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scheduledActionName", *parsed)
+		return nil, fmt.Errorf("the segment 'scheduledActionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -61,11 +58,11 @@ func ParseScopedScheduledActionIDInsensitively(input string) (*ScopedScheduledAc
 	id := ScopedScheduledActionId{}
 
 	if id.Scope, ok = parsed.Parsed["scope"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scope", *parsed)
+		return nil, fmt.Errorf("the segment 'scope' was not found in the resource id %q", input)
 	}
 
 	if id.ScheduledActionName, ok = parsed.Parsed["scheduledActionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "scheduledActionName", *parsed)
+		return nil, fmt.Errorf("the segment 'scheduledActionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

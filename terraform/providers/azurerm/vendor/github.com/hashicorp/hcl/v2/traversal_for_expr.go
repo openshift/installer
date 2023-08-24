@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package hcl
 
 // AbsTraversalForExpr attempts to interpret the given expression as
@@ -16,7 +13,7 @@ package hcl
 //
 // In most cases the calling application is interested in the value
 // that results from an expression, but in rarer cases the application
-// needs to see the name of the variable and subsequent
+// needs to see the the name of the variable and subsequent
 // attributes/indexes itself, for example to allow users to give references
 // to the variables themselves rather than to their values. An implementer
 // of this function should at least support attribute and index steps.

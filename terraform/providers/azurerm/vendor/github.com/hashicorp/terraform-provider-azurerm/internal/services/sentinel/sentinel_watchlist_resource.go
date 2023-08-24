@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/securityinsights/2022-11-01/watchlists"
 	commonValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/sentinel/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/sentinel/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	securityinsight "github.com/tombuildsstuff/kermit/sdk/securityinsights/2022-10-01-preview/securityinsights"
 )
 
 type WatchlistResource struct{}
@@ -92,7 +93,7 @@ func (r WatchlistResource) ModelObject() interface{} {
 }
 
 func (r WatchlistResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return watchlists.ValidateWatchlistID
+	return validate.WatchlistID
 }
 
 func (r WatchlistResource) Create() sdk.ResourceFunc {
@@ -111,39 +112,40 @@ func (r WatchlistResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("parsing Log Analytics Workspace ID: %w", err)
 			}
 
-			id := watchlists.NewWatchlistID(workspaceId.SubscriptionId, workspaceId.ResourceGroupName, workspaceId.WorkspaceName, model.Name)
+			id := parse.NewWatchlistID(workspaceId.SubscriptionId, workspaceId.ResourceGroupName, workspaceId.WorkspaceName, model.Name)
 
-			existing, err := client.Get(ctx, id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 			if err != nil {
-				if !response.WasNotFound(existing.HttpResponse) {
+				if !utils.ResponseWasNotFound(existing.Response) {
 					return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 				}
 			}
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			param := watchlists.Watchlist{
-				Properties: &watchlists.WatchlistProperties{
-					DisplayName: model.DisplayName,
+			param := securityinsight.Watchlist{
+				WatchlistProperties: &securityinsight.WatchlistProperties{
+					DisplayName: &model.DisplayName,
 					// The only supported provider for now is "Microsoft"
-					Provider: "Microsoft",
+					Provider: utils.String("Microsoft"),
 
-					ItemsSearchKey: model.ItemSearchKey,
+					ItemsSearchKey: utils.String(model.ItemSearchKey),
 				},
 			}
 
 			if model.Description != "" {
-				param.Properties.Description = &model.Description
+				param.WatchlistProperties.Description = &model.Description
 			}
 			if len(model.Labels) != 0 {
-				param.Properties.Labels = &model.Labels
+				param.WatchlistProperties.Labels = &model.Labels
 			}
 			if model.DefaultDuration != "" {
-				param.Properties.DefaultDuration = &model.DefaultDuration
+				param.WatchlistProperties.DefaultDuration = &model.DefaultDuration
 			}
 
-			if _, err = client.CreateOrUpdate(ctx, id, param); err != nil {
+			_, err = client.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.Name, param)
+			if err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -159,35 +161,43 @@ func (r WatchlistResource) Read() sdk.ResourceFunc {
 
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Sentinel.WatchlistsClient
-			id, err := watchlists.ParseWatchlistID(metadata.ResourceData.Id())
+			id, err := parse.WatchlistID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			resp, err := client.Get(ctx, *id)
+			resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 			if err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
+				if utils.ResponseWasNotFound(resp.Response) {
 					return metadata.MarkAsGone(id)
 				}
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
 
-			watchList := WatchlistModel{
-				Name:                    id.WatchlistAlias,
-				LogAnalyticsWorkspaceId: workspaces.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName).ID(),
+			model := WatchlistModel{
+				Name:                    id.Name,
+				LogAnalyticsWorkspaceId: workspaces.NewWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName).ID(),
 			}
 
-			if model := resp.Model; model != nil {
-				if props := model.Properties; props != nil {
-
-					watchList.DisplayName = props.DisplayName
-					watchList.ItemSearchKey = props.ItemsSearchKey
-					watchList.Description = pointer.From(props.Description)
-					watchList.Labels = pointer.From(props.Labels)
-					watchList.DefaultDuration = pointer.From(props.DefaultDuration)
+			if props := resp.WatchlistProperties; props != nil {
+				if props.DisplayName != nil {
+					model.DisplayName = *props.DisplayName
+				}
+				if props.Description != nil {
+					model.Description = *props.Description
+				}
+				if props.Labels != nil {
+					model.Labels = *props.Labels
+				}
+				if props.DefaultDuration != nil {
+					model.DefaultDuration = *props.DefaultDuration
+				}
+				if props.ItemsSearchKey != nil {
+					model.ItemSearchKey = *props.ItemsSearchKey
 				}
 			}
-			return metadata.Encode(&watchList)
+
+			return metadata.Encode(&model)
 		},
 	}
 }
@@ -198,12 +208,12 @@ func (r WatchlistResource) Delete() sdk.ResourceFunc {
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Sentinel.WatchlistsClient
 
-			id, err := watchlists.ParseWatchlistID(metadata.ResourceData.Id())
+			id, err := parse.WatchlistID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			if _, err := client.Delete(ctx, *id); err != nil {
+			if _, err := client.Delete(ctx, id.ResourceGroup, id.WorkspaceName, id.Name); err != nil {
 				return fmt.Errorf("deleting %s: %+v", id, err)
 			}
 

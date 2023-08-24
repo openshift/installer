@@ -262,7 +262,7 @@ func expandNetAppActiveDirectories(input []interface{}) *[]netappaccounts.Active
 func waitForAccountCreateOrUpdate(ctx context.Context, client *netappaccounts.NetAppAccountsClient, id netappaccounts.NetAppAccountId) error {
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("internal-error: context had no deadline")
+		return fmt.Errorf("context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		ContinuousTargetOccurence: 5,
@@ -290,10 +290,6 @@ func netappAccountStateRefreshFunc(ctx context.Context, client *netappaccounts.N
 			}
 		}
 
-		statusCode := "dropped connection"
-		if res.HttpResponse != nil {
-			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
-		}
-		return res, statusCode, nil
+		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
 	}
 }

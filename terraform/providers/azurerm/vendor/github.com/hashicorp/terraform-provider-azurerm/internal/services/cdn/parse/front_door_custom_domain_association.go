@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -47,7 +44,7 @@ func (id FrontDoorCustomDomainAssociationId) ID() string {
 func FrontDoorCustomDomainAssociationID(input string) (*FrontDoorCustomDomainAssociationId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an FrontDoorCustomDomainAssociation ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := FrontDoorCustomDomainAssociationId{

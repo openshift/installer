@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/maintenance/2022-07-01-preview/publicmaintenanceconfigurations"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -19,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/validate"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
@@ -267,7 +267,7 @@ func resourceMsSqlDatabaseCreateUpdate(d *pluginsdk.ResourceData, meta interface
 	if v, ok := d.GetOk("max_size_gb"); ok {
 		// `max_size_gb` is Computed, so has a value after the first run
 		if createMode != string(sql.CreateModeOnlineSecondary) && createMode != string(sql.CreateModeSecondary) {
-			params.DatabaseProperties.MaxSizeBytes = utils.Int64(int64(v.(int)) * 1073741824)
+			params.DatabaseProperties.MaxSizeBytes = utils.Int64(int64(v.(int) * 1073741824))
 		}
 		// `max_size_gb` only has change if it is configured
 		if d.HasChange("max_size_gb") && (createMode == string(sql.CreateModeOnlineSecondary) || createMode == string(sql.CreateModeSecondary)) {
@@ -444,14 +444,14 @@ func resourceMsSqlDatabaseCreateUpdate(d *pluginsdk.ResourceData, meta interface
 		return nil
 	}
 
-	if d.HasChange("long_term_retention_policy") {
+	if d.HasChange("long_term_retention_policy") && !ledgerEnabled {
 		v := d.Get("long_term_retention_policy")
 		longTermRetentionProps := helper.ExpandLongTermRetentionPolicy(v.([]interface{}))
 		if longTermRetentionProps != nil {
 			longTermRetentionPolicy := sql.LongTermRetentionPolicy{}
 
-			// DataWarehouse SKU's do not support LRP currently
-			if !strings.HasPrefix(skuName.(string), "DW") {
+			// hyper-scale SKU's do not support LRP currently
+			if !strings.HasPrefix(skuName.(string), "HS") && !strings.HasPrefix(skuName.(string), "DW") {
 				longTermRetentionPolicy.BaseLongTermRetentionPolicyProperties = longTermRetentionProps
 			}
 
@@ -472,11 +472,8 @@ func resourceMsSqlDatabaseCreateUpdate(d *pluginsdk.ResourceData, meta interface
 		if backupShortTermPolicyProps != nil {
 			backupShortTermPolicy := sql.BackupShortTermRetentionPolicy{}
 
-			if !strings.HasPrefix(skuName.(string), "DW") {
+			if !strings.HasPrefix(skuName.(string), "HS") && !strings.HasPrefix(skuName.(string), "DW") {
 				backupShortTermPolicy.BackupShortTermRetentionPolicyProperties = backupShortTermPolicyProps
-			}
-			if strings.HasPrefix(skuName.(string), "HS") {
-				backupShortTermPolicy.BackupShortTermRetentionPolicyProperties.DiffBackupIntervalInHours = nil
 			}
 
 			shortTermRetentionFuture, err := shortTermRetentionClient.CreateOrUpdate(ctx, id.ResourceGroup, id.ServerName, id.Name, backupShortTermPolicy)
@@ -578,8 +575,8 @@ func resourceMsSqlDatabaseRead(d *pluginsdk.ResourceData, meta interface{}) erro
 
 	geoBackupPolicy := true
 
-	// DW SKU's do not currently support LRP and do not honour normal SRP operations
-	if !strings.HasPrefix(skuName, "DW") {
+	// Hyper Scale SKU's do not currently support LRP and do not honour normal SRP operations
+	if !strings.HasPrefix(skuName, "HS") && !strings.HasPrefix(skuName, "DW") && !ledgerEnabled {
 		longTermPolicy, err := longTermRetentionClient.Get(ctx, id.ResourceGroup, id.ServerName, id.Name)
 		if err != nil {
 			return fmt.Errorf("retrieving Long Term Retention Policies for %s: %+v", id, err)
@@ -597,7 +594,7 @@ func resourceMsSqlDatabaseRead(d *pluginsdk.ResourceData, meta interface{}) erro
 			return fmt.Errorf("setting `short_term_retention_policy`: %+v", err)
 		}
 	} else {
-		// DW SKUs need the retention policies zeroing for state consistency
+		// HS and DW SKUs need the retention policies zeroing for state consistency
 		zero := make([]interface{}, 0)
 		d.Set("long_term_retention_policy", zero)
 		d.Set("short_term_retention_policy", zero)
@@ -875,7 +872,7 @@ func resourceMsSqlDatabaseSchema() map[string]*pluginsdk.Schema {
 					"storage_account_id": {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
-						ValidateFunc: storageValidate.StorageAccountID,
+						ValidateFunc: azure.ValidateResourceID,
 					},
 				},
 			},

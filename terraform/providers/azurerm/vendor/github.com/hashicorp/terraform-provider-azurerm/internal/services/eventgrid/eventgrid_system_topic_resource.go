@@ -59,7 +59,6 @@ func resourceEventGridSystemTopic() *pluginsdk.Resource {
 
 			"identity": commonschema.SystemOrUserAssignedIdentityOptional(),
 
-			// TODO: remove `_arm` in 4.0. Can we be more descriptive about /what/ this is?
 			"source_arm_resource_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
@@ -74,7 +73,6 @@ func resourceEventGridSystemTopic() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
-			// TODO: remove `_arm` in 4.0. Can we be more descriptive about /what/ this is?
 			"metric_arm_resource_id": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,

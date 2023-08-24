@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = LiveOutputOperationLocationId{}
 
 // LiveOutputOperationLocationId is a struct representing the Resource ID for a Live Output Operation Location
@@ -46,27 +43,27 @@ func ParseLiveOutputOperationLocationID(input string) (*LiveOutputOperationLocat
 	id := LiveOutputOperationLocationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.MediaServiceName, ok = parsed.Parsed["mediaServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "mediaServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'mediaServiceName' was not found in the resource id %q", input)
 	}
 
 	if id.LiveEventName, ok = parsed.Parsed["liveEventName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "liveEventName", *parsed)
+		return nil, fmt.Errorf("the segment 'liveEventName' was not found in the resource id %q", input)
 	}
 
 	if id.LiveOutputName, ok = parsed.Parsed["liveOutputName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "liveOutputName", *parsed)
+		return nil, fmt.Errorf("the segment 'liveOutputName' was not found in the resource id %q", input)
 	}
 
 	if id.OperationId, ok = parsed.Parsed["operationId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "operationId", *parsed)
+		return nil, fmt.Errorf("the segment 'operationId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -85,27 +82,27 @@ func ParseLiveOutputOperationLocationIDInsensitively(input string) (*LiveOutputO
 	id := LiveOutputOperationLocationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.MediaServiceName, ok = parsed.Parsed["mediaServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "mediaServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'mediaServiceName' was not found in the resource id %q", input)
 	}
 
 	if id.LiveEventName, ok = parsed.Parsed["liveEventName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "liveEventName", *parsed)
+		return nil, fmt.Errorf("the segment 'liveEventName' was not found in the resource id %q", input)
 	}
 
 	if id.LiveOutputName, ok = parsed.Parsed["liveOutputName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "liveOutputName", *parsed)
+		return nil, fmt.Errorf("the segment 'liveOutputName' was not found in the resource id %q", input)
 	}
 
 	if id.OperationId, ok = parsed.Parsed["operationId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "operationId", *parsed)
+		return nil, fmt.Errorf("the segment 'operationId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

@@ -8,23 +8,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2021-08-01-preview/containerregistry" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/operation"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/registries"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/replications"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/parse"
 	containerValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/validate"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -45,7 +41,7 @@ func resourceContainerRegistry() *pluginsdk.Resource {
 		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := registries.ParseRegistryID(id)
+			_, err := parse.RegistryID(id)
 			return err
 		}),
 
@@ -65,7 +61,7 @@ func resourceContainerRegistry() *pluginsdk.Resource {
 			geoReplications := d.Get("georeplications").([]interface{})
 			hasGeoReplicationsApplied := hasGeoReplications || len(geoReplications) > 0
 			// if locations have been specified for geo-replication then, the SKU has to be Premium
-			if hasGeoReplicationsApplied && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if hasGeoReplicationsApplied && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR geo-replication can only be applied when using the Premium Sku.")
 			}
 
@@ -83,23 +79,23 @@ func resourceContainerRegistry() *pluginsdk.Resource {
 			}
 
 			quarantinePolicyEnabled := d.Get("quarantine_policy_enabled").(bool)
-			if quarantinePolicyEnabled && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if quarantinePolicyEnabled && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR quarantine policy can only be applied when using the Premium Sku. If you are downgrading from a Premium SKU please unset quarantine_policy_enabled")
 			}
 
 			retentionPolicyEnabled, ok := d.GetOk("retention_policy.0.enabled")
-			if ok && retentionPolicyEnabled.(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if ok && retentionPolicyEnabled.(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR retention policy can only be applied when using the Premium Sku. If you are downgrading from a Premium SKU please set retention_policy {}")
 			}
 
 			trustPolicyEnabled, ok := d.GetOk("trust_policy.0.enabled")
-			if ok && trustPolicyEnabled.(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if ok && trustPolicyEnabled.(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR trust policy can only be applied when using the Premium Sku. If you are downgrading from a Premium SKU please set trust_policy {}")
 			}
 
 			exportPolicyEnabled := d.Get("export_policy_enabled").(bool)
 			if !exportPolicyEnabled {
-				if !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+				if !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 					return fmt.Errorf("ACR export policy can only be disabled when using the Premium Sku. If you are downgrading from a Premium SKU please unset `export_policy_enabled` or set `export_policy_enabled = true`")
 				}
 				if d.Get("public_network_access_enabled").(bool) {
@@ -108,30 +104,30 @@ func resourceContainerRegistry() *pluginsdk.Resource {
 			}
 
 			encryptionEnabled, ok := d.GetOk("encryption.0.enabled")
-			if ok && encryptionEnabled.(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if ok && encryptionEnabled.(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR encryption can only be applied when using the Premium Sku.")
 			}
 
 			// zone redundancy is only available for Premium Sku.
 			zoneRedundancyEnabled, ok := d.GetOk("zone_redundancy_enabled")
-			if ok && zoneRedundancyEnabled.(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if ok && zoneRedundancyEnabled.(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("ACR zone redundancy can only be applied when using the Premium Sku")
 			}
 			for _, loc := range geoReplications {
 				loc := loc.(map[string]interface{})
 				zoneRedundancyEnabled, ok := loc["zone_redundancy_enabled"]
-				if ok && zoneRedundancyEnabled.(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+				if ok && zoneRedundancyEnabled.(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 					return fmt.Errorf("ACR zone redundancy can only be applied when using the Premium Sku")
 				}
 			}
 
 			// anonymous pull is only available for Standard/Premium Sku.
-			if d.Get("anonymous_pull_enabled").(bool) && (!strings.EqualFold(sku, string(registries.SkuNameStandard)) && !strings.EqualFold(sku, string(registries.SkuNamePremium))) {
+			if d.Get("anonymous_pull_enabled").(bool) && (!strings.EqualFold(sku, string(containerregistry.SkuNameStandard)) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium))) {
 				return fmt.Errorf("`anonymous_pull_enabled` can only be applied when using the Standard/Premium Sku")
 			}
 
 			// data endpoint is only available for Premium Sku.
-			if d.Get("data_endpoint_enabled").(bool) && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+			if d.Get("data_endpoint_enabled").(bool) && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 				return fmt.Errorf("`data_endpoint_enabled` can only be applied when using the Premium Sku")
 			}
 
@@ -141,105 +137,121 @@ func resourceContainerRegistry() *pluginsdk.Resource {
 }
 
 func resourceContainerRegistryCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Registries
-	operationClient := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Operation
+	client := meta.(*clients.Client).Containers.RegistriesClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	log.Printf("[INFO] preparing arguments for  Container Registry creation.")
 
-	id := registries.NewRegistryID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewRegistryID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_container_registry", id.ID())
 		}
 	}
 
-	sId := commonids.NewSubscriptionID(subscriptionId)
-	availabilityRequest := operation.RegistryNameCheckRequest{
-		Name: id.RegistryName,
-		Type: "Microsoft.ContainerRegistry/registries",
+	availabilityRequest := containerregistry.RegistryNameCheckRequest{
+		Name: utils.String(id.Name),
+		Type: utils.String("Microsoft.ContainerRegistry/registries"),
 	}
-	resp, err := operationClient.RegistriesCheckNameAvailability(ctx, sId, availabilityRequest)
+	available, err := client.CheckNameAvailability(ctx, availabilityRequest)
 	if err != nil {
-		return fmt.Errorf("checking if the name %q was available: %+v", id.RegistryName, err)
+		return fmt.Errorf("checking if the name %q was available: %+v", id.Name, err)
 	}
 
-	if resp.Model == nil && resp.Model.NameAvailable == nil {
-		return fmt.Errorf("checking name availability for %s: model was nil", id)
+	if !*available.NameAvailable {
+		return fmt.Errorf("the name %q used for the Container Registry needs to be globally unique and isn't available: %s", id.Name, *available.Message)
 	}
 
-	if available := *resp.Model.NameAvailable; !available {
-		return fmt.Errorf("the name %q used for the Container Registry needs to be globally unique and isn't available: %s", id.RegistryName, *resp.Model.Message)
-	}
-
+	location := azure.NormalizeLocation(d.Get("location").(string))
 	sku := d.Get("sku").(string)
+	adminUserEnabled := d.Get("admin_enabled").(bool)
+	t := d.Get("tags").(map[string]interface{})
+	geoReplications := d.Get("georeplications").([]interface{})
 
 	networkRuleSet := expandNetworkRuleSet(d.Get("network_rule_set").([]interface{}))
-	if networkRuleSet != nil && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+	if networkRuleSet != nil && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 		return fmt.Errorf("`network_rule_set_set` can only be specified for a Premium Sku. If you are reverting from a Premium to Basic SKU plese set network_rule_set = []")
 	}
 
-	identity, err := identity.ExpandSystemAndUserAssignedMap(d.Get("identity").([]interface{}))
+	quarantinePolicy := expandQuarantinePolicy(d.Get("quarantine_policy_enabled").(bool))
+
+	retentionPolicyRaw := d.Get("retention_policy").([]interface{})
+	retentionPolicy := expandRetentionPolicy(retentionPolicyRaw)
+
+	trustPolicyRaw := d.Get("trust_policy").([]interface{})
+	trustPolicy := expandTrustPolicy(trustPolicyRaw)
+
+	exportPolicy := expandExportPolicy(d.Get("export_policy_enabled").(bool))
+
+	encryptionRaw := d.Get("encryption").([]interface{})
+	encryption := expandEncryption(encryptionRaw)
+
+	identity, err := expandRegistryIdentity(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
 
-	publicNetworkAccess := registries.PublicNetworkAccessEnabled
+	publicNetworkAccess := containerregistry.PublicNetworkAccessEnabled
 	if !d.Get("public_network_access_enabled").(bool) {
-		publicNetworkAccess = registries.PublicNetworkAccessDisabled
+		publicNetworkAccess = containerregistry.PublicNetworkAccessDisabled
 	}
 
-	zoneRedundancy := registries.ZoneRedundancyDisabled
+	zoneRedundancy := containerregistry.ZoneRedundancyDisabled
 	if d.Get("zone_redundancy_enabled").(bool) {
-		zoneRedundancy = registries.ZoneRedundancyEnabled
+		zoneRedundancy = containerregistry.ZoneRedundancyEnabled
 	}
 
-	parameters := registries.Registry{
-		Location: location.Normalize(d.Get("location").(string)),
-		Sku: registries.Sku{
-			Name: registries.SkuName(sku),
-			Tier: pointer.To(registries.SkuTier(sku)),
+	parameters := containerregistry.Registry{
+		Location: &location,
+		Sku: &containerregistry.Sku{
+			Name: containerregistry.SkuName(sku),
+			Tier: containerregistry.SkuTier(sku),
 		},
 		Identity: identity,
-		Properties: &registries.RegistryProperties{
-			AdminUserEnabled: utils.Bool(d.Get("admin_enabled").(bool)),
-			Encryption:       expandEncryption(d.Get("encryption").([]interface{})),
+		RegistryProperties: &containerregistry.RegistryProperties{
+			AdminUserEnabled: utils.Bool(adminUserEnabled),
+			Encryption:       encryption,
 			NetworkRuleSet:   networkRuleSet,
-			Policies: &registries.Policies{
-				QuarantinePolicy: expandQuarantinePolicy(d.Get("quarantine_policy_enabled").(bool)),
-				RetentionPolicy:  expandRetentionPolicy(d.Get("retention_policy").([]interface{})),
-				TrustPolicy:      expandTrustPolicy(d.Get("trust_policy").([]interface{})),
-				ExportPolicy:     expandExportPolicy(d.Get("export_policy_enabled").(bool)),
+			Policies: &containerregistry.Policies{
+				QuarantinePolicy: quarantinePolicy,
+				RetentionPolicy:  retentionPolicy,
+				TrustPolicy:      trustPolicy,
+				ExportPolicy:     exportPolicy,
 			},
-			PublicNetworkAccess:      &publicNetworkAccess,
-			ZoneRedundancy:           &zoneRedundancy,
+			PublicNetworkAccess:      publicNetworkAccess,
+			ZoneRedundancy:           zoneRedundancy,
 			AnonymousPullEnabled:     utils.Bool(d.Get("anonymous_pull_enabled").(bool)),
 			DataEndpointEnabled:      utils.Bool(d.Get("data_endpoint_enabled").(bool)),
-			NetworkRuleBypassOptions: pointer.To(registries.NetworkRuleBypassOptions(d.Get("network_rule_bypass_option").(string))),
+			NetworkRuleBypassOptions: containerregistry.NetworkRuleBypassOptions(d.Get("network_rule_bypass_option").(string)),
 		},
 
-		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
+		Tags: tags.Expand(t),
 	}
 
-	if err := client.CreateThenPoll(ctx, id, parameters); err != nil {
+	future, err := client.Create(ctx, id.ResourceGroup, id.Name, parameters)
+	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation of %s: %+v", id, err)
+	}
+
 	// the ACR is being created so no previous geo-replication locations
-	var oldGeoReplicationLocations, newGeoReplicationLocations []replications.Replication
-	newGeoReplicationLocations = expandReplications(d.Get("georeplications").([]interface{}))
+	var oldGeoReplicationLocations, newGeoReplicationLocations []containerregistry.Replication
+	newGeoReplicationLocations = expandReplications(geoReplications)
 	// geo replications have been specified
 	if len(newGeoReplicationLocations) > 0 {
-		err = applyGeoReplicationLocations(ctx, meta, id, oldGeoReplicationLocations, newGeoReplicationLocations)
+		err = applyGeoReplicationLocations(ctx, d, meta, id.ResourceGroup, id.Name, oldGeoReplicationLocations, newGeoReplicationLocations)
 		if err != nil {
 			return fmt.Errorf("applying geo replications for %s: %+v", id, err)
 		}
@@ -251,21 +263,24 @@ func resourceContainerRegistryCreate(d *pluginsdk.ResourceData, meta interface{}
 }
 
 func resourceContainerRegistryUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Registries
+	client := meta.(*clients.Client).Containers.RegistriesClient
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	log.Printf("[INFO] preparing arguments for  Container Registry update.")
 
-	id, err := registries.ParseRegistryID(d.Id())
+	id, err := parse.RegistryID(d.Id())
 	if err != nil {
 		return err
 	}
 
 	sku := d.Get("sku").(string)
 	skuChange := d.HasChange("sku")
-	isBasicSku := strings.EqualFold(sku, string(registries.SkuNameBasic))
-	isPremiumSku := strings.EqualFold(sku, string(registries.SkuNamePremium))
-	isStandardSku := strings.EqualFold(sku, string(registries.SkuNameStandard))
+	isBasicSku := strings.EqualFold(sku, string(containerregistry.SkuNameBasic))
+	isPremiumSku := strings.EqualFold(sku, string(containerregistry.SkuNamePremium))
+	isStandardSku := strings.EqualFold(sku, string(containerregistry.SkuNameStandard))
+
+	adminUserEnabled := d.Get("admin_enabled").(bool)
+	t := d.Get("tags").(map[string]interface{})
 
 	oldReplicationsRaw, newReplicationsRaw := d.GetChange("georeplications")
 	hasGeoReplicationsChanges := d.HasChange("georeplications")
@@ -274,7 +289,7 @@ func resourceContainerRegistryUpdate(d *pluginsdk.ResourceData, meta interface{}
 
 	// handle upgrade to Premium SKU first
 	if skuChange && isPremiumSku {
-		if err := applyContainerRegistrySku(d, meta, sku, *id); err != nil {
+		if err := applyContainerRegistrySku(d, meta, sku, id.ResourceGroup, id.Name); err != nil {
 			return fmt.Errorf("applying sku %q for %s: %+v", sku, id, err)
 		}
 	}
@@ -284,34 +299,42 @@ func resourceContainerRegistryUpdate(d *pluginsdk.ResourceData, meta interface{}
 		return fmt.Errorf("`network_rule_set_set` can only be specified for a Premium Sku. If you are reverting from a Premium to Basic SKU plese set network_rule_set = []")
 	}
 
-	publicNetworkAccess := registries.PublicNetworkAccessEnabled
+	quarantinePolicy := expandQuarantinePolicy(d.Get("quarantine_policy_enabled").(bool))
+	retentionPolicy := expandRetentionPolicy(d.Get("retention_policy").([]interface{}))
+	trustPolicy := expandTrustPolicy(d.Get("trust_policy").([]interface{}))
+	exportPolicy := expandExportPolicy(d.Get("export_policy_enabled").(bool))
+
+	publicNetworkAccess := containerregistry.PublicNetworkAccessEnabled
 	if !d.Get("public_network_access_enabled").(bool) {
-		publicNetworkAccess = registries.PublicNetworkAccessDisabled
+		publicNetworkAccess = containerregistry.PublicNetworkAccessDisabled
 	}
 
-	identity, err := identity.ExpandSystemAndUserAssignedMap(d.Get("identity").([]interface{}))
+	identity, err := expandRegistryIdentity(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
 
-	parameters := registries.RegistryUpdateParameters{
-		Properties: &registries.RegistryPropertiesUpdateParameters{
-			AdminUserEnabled: utils.Bool(d.Get("admin_enabled").(bool)),
+	encryptionRaw := d.Get("encryption").([]interface{})
+	encryption := expandEncryption(encryptionRaw)
+
+	parameters := containerregistry.RegistryUpdateParameters{
+		RegistryPropertiesUpdateParameters: &containerregistry.RegistryPropertiesUpdateParameters{
+			AdminUserEnabled: utils.Bool(adminUserEnabled),
 			NetworkRuleSet:   networkRuleSet,
-			Policies: &registries.Policies{
-				QuarantinePolicy: expandQuarantinePolicy(d.Get("quarantine_policy_enabled").(bool)),
-				RetentionPolicy:  expandRetentionPolicy(d.Get("retention_policy").([]interface{})),
-				TrustPolicy:      expandTrustPolicy(d.Get("trust_policy").([]interface{})),
-				ExportPolicy:     expandExportPolicy(d.Get("export_policy_enabled").(bool)),
+			Policies: &containerregistry.Policies{
+				QuarantinePolicy: quarantinePolicy,
+				RetentionPolicy:  retentionPolicy,
+				TrustPolicy:      trustPolicy,
+				ExportPolicy:     exportPolicy,
 			},
-			PublicNetworkAccess:      &publicNetworkAccess,
-			Encryption:               expandEncryption(d.Get("encryption").([]interface{})),
+			PublicNetworkAccess:      publicNetworkAccess,
+			Encryption:               encryption,
 			AnonymousPullEnabled:     utils.Bool(d.Get("anonymous_pull_enabled").(bool)),
 			DataEndpointEnabled:      utils.Bool(d.Get("data_endpoint_enabled").(bool)),
-			NetworkRuleBypassOptions: pointer.To(registries.NetworkRuleBypassOptions(d.Get("network_rule_bypass_option").(string))),
+			NetworkRuleBypassOptions: containerregistry.NetworkRuleBypassOptions(d.Get("network_rule_bypass_option").(string)),
 		},
 		Identity: identity,
-		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
+		Tags:     tags.Expand(t),
 	}
 
 	var hasGeoReplicationLocationsChanges bool
@@ -321,29 +344,34 @@ func resourceContainerRegistryUpdate(d *pluginsdk.ResourceData, meta interface{}
 
 	// geo replication is only supported by Premium Sku
 	hasGeoReplicationsApplied := hasNewGeoReplicationLocations || len(newReplications) > 0
-	if hasGeoReplicationsApplied && !strings.EqualFold(sku, string(registries.SkuNamePremium)) {
+	if hasGeoReplicationsApplied && !strings.EqualFold(sku, string(containerregistry.SkuNamePremium)) {
 		return fmt.Errorf("ACR geo-replication can only be applied when using the Premium Sku.")
 	}
 
 	if hasGeoReplicationsChanges {
-		err := applyGeoReplicationLocations(ctx, meta, *id, expandReplications(oldReplications), expandReplications(newReplications))
+		err := applyGeoReplicationLocations(ctx, d, meta, id.ResourceGroup, id.Name, expandReplications(oldReplications), expandReplications(newReplications))
 		if err != nil {
 			return fmt.Errorf("applying geo replications for %s: %+v", id, err)
 		}
 	} else if hasGeoReplicationLocationsChanges {
-		err := applyGeoReplicationLocations(ctx, meta, *id, expandReplicationsFromLocations(oldGeoReplicationLocations), expandReplicationsFromLocations(newGeoReplicationLocations))
+		err := applyGeoReplicationLocations(ctx, d, meta, id.ResourceGroup, id.Name, expandReplicationsFromLocations(oldGeoReplicationLocations), expandReplicationsFromLocations(newGeoReplicationLocations))
 		if err != nil {
 			return fmt.Errorf("applying geo replications for %s: %+v", id, err)
 		}
 	}
 
-	if err := client.UpdateThenPoll(ctx, *id, parameters); err != nil {
+	future, err := client.Update(ctx, id.ResourceGroup, id.Name, parameters)
+	if err != nil {
 		return fmt.Errorf("updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", id, err)
 	}
 
 	// downgrade to Basic or Standard SKU
 	if skuChange && (isBasicSku || isStandardSku) {
-		if err := applyContainerRegistrySku(d, meta, sku, *id); err != nil {
+		if err := applyContainerRegistrySku(d, meta, sku, id.ResourceGroup, id.Name); err != nil {
 			return fmt.Errorf("applying sku %q for %s: %+v", sku, id, err)
 		}
 	}
@@ -353,38 +381,51 @@ func resourceContainerRegistryUpdate(d *pluginsdk.ResourceData, meta interface{}
 	return resourceContainerRegistryRead(d, meta)
 }
 
-func applyContainerRegistrySku(d *pluginsdk.ResourceData, meta interface{}, sku string, id registries.RegistryId) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Registries
+func applyContainerRegistrySku(d *pluginsdk.ResourceData, meta interface{}, sku string, resourceGroup string, name string) error {
+	client := meta.(*clients.Client).Containers.RegistriesClient
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	parameters := registries.RegistryUpdateParameters{
-		Sku: &registries.Sku{
-			Name: registries.SkuName(sku),
-			Tier: pointer.To(registries.SkuTier(sku)),
+	parameters := containerregistry.RegistryUpdateParameters{
+		Sku: &containerregistry.Sku{
+			Name: containerregistry.SkuName(sku),
+			Tier: containerregistry.SkuTier(sku),
 		},
 	}
 
-	if err := client.UpdateThenPoll(ctx, id, parameters); err != nil {
-		return fmt.Errorf("updating %s: %+v", id, err)
+	future, err := client.Update(ctx, resourceGroup, name, parameters)
+	if err != nil {
+		return fmt.Errorf("updating Container Registry %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of Container Registry %q (Resource Group %q): %+v", name, resourceGroup, err)
 	}
 
 	return nil
 }
 
-func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registryId registries.RegistryId, oldGeoReplications []replications.Replication, newGeoReplications []replications.Replication) error {
-	replicationClient := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Replications
-	log.Printf("[INFO] preparing to apply geo-replications for Container Registry.")
+func applyGeoReplicationLocations(ctx context.Context, d *pluginsdk.ResourceData, meta interface{}, resourceGroup string, name string, oldGeoReplications []containerregistry.Replication, newGeoReplications []containerregistry.Replication) error {
+	replicationClient := meta.(*clients.Client).Containers.ReplicationsClient
+	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
+	defer cancel()
+	log.Printf("[INFO] preparing to apply geo-replications for  Container Registry.")
 
-	oldReplications := map[string]replications.Replication{}
+	oldReplications := map[string]containerregistry.Replication{}
 	for _, replication := range oldGeoReplications {
-		loc := location.Normalize(replication.Location)
+		if replication.Location == nil {
+			continue
+		}
+		loc := azure.NormalizeLocation(*replication.Location)
 		oldReplications[loc] = replication
 	}
 
-	newReplications := map[string]replications.Replication{}
+	newReplications := map[string]containerregistry.Replication{}
 	for _, replication := range newGeoReplications {
-		loc := location.Normalize(replication.Location)
+		if replication.Location == nil {
+			continue
+		}
+		loc := azure.NormalizeLocation(*replication.Location)
 		newReplications[loc] = replication
 	}
 
@@ -393,9 +434,12 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 		if _, ok := newReplications[loc]; ok {
 			continue
 		}
-		id := replications.NewReplicationID(registryId.SubscriptionId, registryId.ResourceGroupName, registryId.RegistryName, loc)
-		if err := replicationClient.DeleteThenPoll(ctx, id); err != nil {
-			return fmt.Errorf("deleting %s: %+v", id, err)
+		future, err := replicationClient.Delete(ctx, resourceGroup, name, loc)
+		if err != nil {
+			return fmt.Errorf("deleting Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
+		}
+		if err = future.WaitForCompletionRef(ctx, replicationClient.Client); err != nil {
+			return fmt.Errorf("waiting for deletion of Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
 		}
 	}
 
@@ -404,9 +448,13 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 		if _, ok := oldReplications[loc]; ok {
 			continue
 		}
-		id := replications.NewReplicationID(registryId.SubscriptionId, registryId.ResourceGroupName, registryId.RegistryName, loc)
-		if err := replicationClient.CreateThenPoll(ctx, id, repl); err != nil {
-			return fmt.Errorf("creating %s: %+v", id, err)
+		future, err := replicationClient.Create(ctx, resourceGroup, name, loc, repl)
+		if err != nil {
+			return fmt.Errorf("creating Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
+		}
+
+		if err = future.WaitForCompletionRef(ctx, replicationClient.Client); err != nil {
+			return fmt.Errorf("waiting for creation of Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
 		}
 	}
 
@@ -426,7 +474,7 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 		)
 		// Since the replications here are all derived from expand function, where we guaranteed
 		// each properties are non-nil. Whilst we are still doing nil check here in case.
-		if oprop, nprop := oldRepl.Properties, newRepl.Properties; oprop != nil && nprop != nil {
+		if oprop, nprop := oldRepl.ReplicationProperties, newRepl.ReplicationProperties; oprop != nil && nprop != nil {
 			// zoneRedundency can't be updated in place
 			if oprop.ZoneRedundancy != nprop.ZoneRedundancy {
 				needUpdate = true
@@ -436,7 +484,7 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 				needUpdate = true
 			}
 		}
-		otag, ntag := *oldRepl.Tags, *newRepl.Tags
+		otag, ntag := oldRepl.Tags, newRepl.Tags
 		if len(otag) != len(ntag) {
 			needUpdate = true
 		} else {
@@ -446,7 +494,7 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 					needUpdate = true
 					break
 				}
-				if ov != nv {
+				if ov != nil && nv != nil && *ov != *nv {
 					needUpdate = true
 					break
 				}
@@ -458,9 +506,12 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 		}
 
 		if needReplace {
-			id := replications.NewReplicationID(registryId.SubscriptionId, registryId.ResourceGroupName, registryId.RegistryName, loc)
-			if err := replicationClient.DeleteThenPoll(ctx, id); err != nil {
-				return fmt.Errorf("deleting %s: %+v", id, err)
+			future, err := replicationClient.Delete(ctx, resourceGroup, name, loc)
+			if err != nil {
+				return fmt.Errorf("deleting Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
+			}
+			if err = future.WaitForCompletionRef(ctx, replicationClient.Client); err != nil {
+				return fmt.Errorf("waiting for deletion of Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
 			}
 
 			// Following can be removed once https://github.com/Azure/azure-rest-api-specs/issues/18934 is resolved. Otherwise, the create right after delete will always fail.
@@ -472,9 +523,9 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 				Pending: []string{"InProgress"},
 				Target:  []string{"NotFound"},
 				Refresh: func() (interface{}, string, error) {
-					resp, err := replicationClient.Get(ctx, id)
+					resp, err := replicationClient.Get(ctx, resourceGroup, name, loc)
 					if err != nil {
-						if response.WasNotFound(resp.HttpResponse) {
+						if utils.ResponseWasNotFound(resp.Response) {
 							return resp, "NotFound", nil
 						}
 
@@ -488,13 +539,17 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 				Timeout:                   time.Until(deadline),
 			}
 			if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-				return fmt.Errorf("additional waiting for deletion of %s: %+v", id, err)
+				return fmt.Errorf("additional waiting for deletion of Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
 			}
 		}
 
-		id := replications.NewReplicationID(registryId.SubscriptionId, registryId.ResourceGroupName, registryId.RegistryName, loc)
-		if err := replicationClient.CreateThenPoll(ctx, id, newRepl); err != nil {
-			return fmt.Errorf("creating/updating %s: %+v", id, err)
+		future, err := replicationClient.Create(ctx, resourceGroup, name, loc, newRepl)
+		if err != nil {
+			return fmt.Errorf("creating/updating Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
+		}
+
+		if err = future.WaitForCompletionRef(ctx, replicationClient.Client); err != nil {
+			return fmt.Errorf("waiting for creation/update of Container Registry Replication %q (Resource Group %q, Location %q): %+v", name, resourceGroup, loc, err)
 		}
 	}
 
@@ -502,115 +557,101 @@ func applyGeoReplicationLocations(ctx context.Context, meta interface{}, registr
 }
 
 func resourceContainerRegistryRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Registries
-	replicationClient := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Replications
+	client := meta.(*clients.Client).Containers.RegistriesClient
+	replicationClient := meta.(*clients.Client).Containers.ReplicationsClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := registries.ParseRegistryID(d.Id())
+	id, err := parse.RegistryID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			log.Printf("[DEBUG] %s was not found", *id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			log.Printf("[DEBUG] Container Registry %q was not found in Resource Group %q", id.Name, id.ResourceGroup)
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("making Read request on Azure Container Registry %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.RegistryName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	loc := ""
+	location := resp.Location
+	if location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
+	}
+	d.Set("admin_enabled", resp.AdminUserEnabled)
+	d.Set("login_server", resp.LoginServer)
+	d.Set("public_network_access_enabled", resp.PublicNetworkAccess == containerregistry.PublicNetworkAccessEnabled)
 
-	if model := resp.Model; model != nil {
-		loc = location.Normalize(model.Location)
-		d.Set("location", loc)
-
-		identity, err := identity.FlattenSystemAndUserAssignedMap(model.Identity)
-		if err != nil {
-			return fmt.Errorf("flattening `identity`: %+v", err)
-		}
-		if err := d.Set("identity", identity); err != nil {
-			return fmt.Errorf("setting `identity`: %+v", err)
-		}
-
-		d.Set("sku", string(pointer.From(model.Sku.Tier)))
-
-		if props := model.Properties; props != nil {
-			d.Set("admin_enabled", props.AdminUserEnabled)
-			d.Set("login_server", props.LoginServer)
-			d.Set("public_network_access_enabled", *props.PublicNetworkAccess == registries.PublicNetworkAccessEnabled)
-
-			networkRuleSet := flattenNetworkRuleSet(props.NetworkRuleSet)
-			if err := d.Set("network_rule_set", networkRuleSet); err != nil {
-				return fmt.Errorf("setting `network_rule_set`: %+v", err)
-			}
-
-			d.Set("quarantine_policy_enabled", flattenQuarantinePolicy(props.Policies))
-			if err := d.Set("retention_policy", flattenRetentionPolicy(props.Policies)); err != nil {
-				return fmt.Errorf("setting `retention_policy`: %+v", err)
-			}
-			if err := d.Set("trust_policy", flattenTrustPolicy(props.Policies)); err != nil {
-				return fmt.Errorf("setting `trust_policy`: %+v", err)
-			}
-			d.Set("export_policy_enabled", flattenExportPolicy(props.Policies))
-			if err := d.Set("encryption", flattenEncryption(props.Encryption)); err != nil {
-				return fmt.Errorf("setting `encryption`: %+v", err)
-			}
-			d.Set("zone_redundancy_enabled", *props.ZoneRedundancy == registries.ZoneRedundancyEnabled)
-			d.Set("anonymous_pull_enabled", props.AnonymousPullEnabled)
-			d.Set("data_endpoint_enabled", props.DataEndpointEnabled)
-			d.Set("network_rule_bypass_option", string(pointer.From(props.NetworkRuleBypassOptions)))
-
-			if *props.AdminUserEnabled {
-				credsResp, errList := client.ListCredentials(ctx, *id)
-				if errList != nil {
-					return fmt.Errorf("retrieving redentials for %s: %s", *id, errList)
-				}
-
-				if credsModel := credsResp.Model; credsModel != nil {
-					d.Set("admin_username", credsModel.Username)
-					for _, v := range *credsModel.Passwords {
-						d.Set("admin_password", v.Value)
-						break
-					}
-				}
-			} else {
-				d.Set("admin_username", "")
-				d.Set("admin_password", "")
-			}
-		}
-
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("flattening `tags`: %+v", err)
-		}
+	networkRuleSet := flattenNetworkRuleSet(resp.NetworkRuleSet)
+	if err := d.Set("network_rule_set", networkRuleSet); err != nil {
+		return fmt.Errorf("setting `network_rule_set`: %+v", err)
 	}
 
-	rId, err := replications.ParseRegistryID(id.ID())
+	identity, _ := flattenRegistryIdentity(resp.Identity)
+	if err := d.Set("identity", identity); err != nil {
+		return fmt.Errorf("setting `identity`: %+v", err)
+	}
+
+	if properties := resp.RegistryProperties; properties != nil {
+		d.Set("quarantine_policy_enabled", flattenQuarantinePolicy(properties.Policies))
+		if err := d.Set("retention_policy", flattenRetentionPolicy(properties.Policies)); err != nil {
+			return fmt.Errorf("setting `retention_policy`: %+v", err)
+		}
+		if err := d.Set("trust_policy", flattenTrustPolicy(properties.Policies)); err != nil {
+			return fmt.Errorf("setting `trust_policy`: %+v", err)
+		}
+		d.Set("export_policy_enabled", flattenExportPolicy(properties.Policies))
+		if err := d.Set("encryption", flattenEncryption(properties.Encryption)); err != nil {
+			return fmt.Errorf("setting `encryption`: %+v", err)
+		}
+		d.Set("zone_redundancy_enabled", properties.ZoneRedundancy == containerregistry.ZoneRedundancyEnabled)
+		d.Set("anonymous_pull_enabled", properties.AnonymousPullEnabled)
+		d.Set("data_endpoint_enabled", properties.DataEndpointEnabled)
+		d.Set("network_rule_bypass_option", string(properties.NetworkRuleBypassOptions))
+	}
+
+	if sku := resp.Sku; sku != nil {
+		d.Set("sku", string(sku.Tier))
+	}
+
+	if *resp.AdminUserEnabled {
+		credsResp, errList := client.ListCredentials(ctx, id.ResourceGroup, id.Name)
+		if errList != nil {
+			return fmt.Errorf("making Read request on Azure Container Registry %s for Credentials: %s", id.Name, errList)
+		}
+
+		d.Set("admin_username", credsResp.Username)
+		for _, v := range *credsResp.Passwords {
+			d.Set("admin_password", v.Value)
+			break
+		}
+	} else {
+		d.Set("admin_username", "")
+		d.Set("admin_password", "")
+	}
+
+	replications, err := replicationClient.List(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		return err
-	}
-	replicationsResp, err := replicationClient.List(ctx, *rId)
-	if err != nil {
-		return fmt.Errorf("retrieving replications for %s: %s", *id, err)
+		return fmt.Errorf("making Read request on Azure Container Registry %s for replications: %s", id.Name, err)
 	}
 
 	geoReplications := make([]interface{}, 0)
-	if replicationsModel := replicationsResp.Model; replicationsModel != nil {
-		for _, value := range *replicationsModel {
-			valueLocation := location.Normalize(value.Location)
-			if valueLocation != loc {
+	for _, value := range replications.Values() {
+		if value.Location != nil {
+			valueLocation := azure.NormalizeLocation(*value.Location)
+			if location != nil && valueLocation != azure.NormalizeLocation(*location) {
 				replication := make(map[string]interface{})
 				replication["location"] = valueLocation
 				replication["tags"] = tags.Flatten(value.Tags)
-				replication["zone_redundancy_enabled"] = *value.Properties.ZoneRedundancy == replications.ZoneRedundancyEnabled
-				replication["regional_endpoint_enabled"] = value.Properties.RegionEndpointEnabled != nil && *value.Properties.RegionEndpointEnabled
+				replication["zone_redundancy_enabled"] = value.ZoneRedundancy == containerregistry.ZoneRedundancyEnabled
+				replication["regional_endpoint_enabled"] = value.RegionEndpointEnabled != nil && *value.RegionEndpointEnabled
 				geoReplications = append(geoReplications, replication)
 			}
 		}
@@ -623,27 +664,32 @@ func resourceContainerRegistryRead(d *pluginsdk.ResourceData, meta interface{}) 
 
 	d.Set("georeplications", geoReplications)
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceContainerRegistryDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.Registries
+	client := meta.(*clients.Client).Containers.RegistriesClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := registries.ParseRegistryID(d.Id())
+	id, err := parse.RegistryID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
+	if err != nil {
+		return fmt.Errorf("deleting Container Registry %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for Container Registry %q (Resource Group %q) to be deleted: %+v", id.Name, id.ResourceGroup, err)
 	}
 
 	return nil
 }
 
-func expandNetworkRuleSet(profiles []interface{}) *registries.NetworkRuleSet {
+func expandNetworkRuleSet(profiles []interface{}) *containerregistry.NetworkRuleSet {
 	if len(profiles) == 0 {
 		return nil
 	}
@@ -651,50 +697,50 @@ func expandNetworkRuleSet(profiles []interface{}) *registries.NetworkRuleSet {
 	profile := profiles[0].(map[string]interface{})
 
 	ipRuleConfigs := profile["ip_rule"].(*pluginsdk.Set).List()
-	ipRules := make([]registries.IPRule, 0)
+	ipRules := make([]containerregistry.IPRule, 0)
 	for _, ipRuleInterface := range ipRuleConfigs {
 		config := ipRuleInterface.(map[string]interface{})
-		newIpRule := registries.IPRule{
-			Action: pointer.To(registries.Action(config["action"].(string))),
-			Value:  config["ip_range"].(string),
+		newIpRule := containerregistry.IPRule{
+			Action:           containerregistry.Action(config["action"].(string)),
+			IPAddressOrRange: utils.String(config["ip_range"].(string)),
 		}
 		ipRules = append(ipRules, newIpRule)
 	}
 
 	networkRuleConfigs := profile["virtual_network"].(*pluginsdk.Set).List()
-	virtualNetworkRules := make([]registries.VirtualNetworkRule, 0)
+	virtualNetworkRules := make([]containerregistry.VirtualNetworkRule, 0)
 	for _, networkRuleInterface := range networkRuleConfigs {
 		config := networkRuleInterface.(map[string]interface{})
-		newVirtualNetworkRule := registries.VirtualNetworkRule{
-			Action: pointer.To(registries.Action(config["action"].(string))),
-			Id:     config["subnet_id"].(string),
+		newVirtualNetworkRule := containerregistry.VirtualNetworkRule{
+			Action:                   containerregistry.Action(config["action"].(string)),
+			VirtualNetworkResourceID: utils.String(config["subnet_id"].(string)),
 		}
 		virtualNetworkRules = append(virtualNetworkRules, newVirtualNetworkRule)
 	}
 
-	networkRuleSet := registries.NetworkRuleSet{
-		DefaultAction:       registries.DefaultAction(profile["default_action"].(string)),
+	networkRuleSet := containerregistry.NetworkRuleSet{
+		DefaultAction:       containerregistry.DefaultAction(profile["default_action"].(string)),
 		IPRules:             &ipRules,
 		VirtualNetworkRules: &virtualNetworkRules,
 	}
 	return &networkRuleSet
 }
 
-func expandQuarantinePolicy(enabled bool) *registries.QuarantinePolicy {
-	quarantinePolicy := registries.QuarantinePolicy{
-		Status: pointer.To(registries.PolicyStatusDisabled),
+func expandQuarantinePolicy(enabled bool) *containerregistry.QuarantinePolicy {
+	quarantinePolicy := containerregistry.QuarantinePolicy{
+		Status: containerregistry.PolicyStatusDisabled,
 	}
 
 	if enabled {
-		quarantinePolicy.Status = pointer.To(registries.PolicyStatusEnabled)
+		quarantinePolicy.Status = containerregistry.PolicyStatusEnabled
 	}
 
 	return &quarantinePolicy
 }
 
-func expandRetentionPolicy(p []interface{}) *registries.RetentionPolicy {
-	retentionPolicy := registries.RetentionPolicy{
-		Status: pointer.To(registries.PolicyStatusDisabled),
+func expandRetentionPolicy(p []interface{}) *containerregistry.RetentionPolicy {
+	retentionPolicy := containerregistry.RetentionPolicy{
+		Status: containerregistry.PolicyStatusDisabled,
 	}
 
 	if len(p) > 0 {
@@ -702,93 +748,113 @@ func expandRetentionPolicy(p []interface{}) *registries.RetentionPolicy {
 		days := int32(v["days"].(int))
 		enabled := v["enabled"].(bool)
 		if enabled {
-			retentionPolicy.Status = pointer.To(registries.PolicyStatusEnabled)
+			retentionPolicy.Status = containerregistry.PolicyStatusEnabled
 		}
-		retentionPolicy.Days = utils.Int64(int64(days))
+		retentionPolicy.Days = utils.Int32(days)
 	}
 
 	return &retentionPolicy
 }
 
-func expandTrustPolicy(p []interface{}) *registries.TrustPolicy {
-	trustPolicy := registries.TrustPolicy{
-		Status: pointer.To(registries.PolicyStatusDisabled),
+func expandTrustPolicy(p []interface{}) *containerregistry.TrustPolicy {
+	trustPolicy := containerregistry.TrustPolicy{
+		Status: containerregistry.PolicyStatusDisabled,
 	}
 
 	if len(p) > 0 {
 		v := p[0].(map[string]interface{})
 		enabled := v["enabled"].(bool)
 		if enabled {
-			trustPolicy.Status = pointer.To(registries.PolicyStatusEnabled)
+			trustPolicy.Status = containerregistry.PolicyStatusEnabled
 		}
-		trustPolicy.Type = pointer.To(registries.TrustPolicyTypeNotary)
+		trustPolicy.Type = containerregistry.TrustPolicyTypeNotary
 	}
 
 	return &trustPolicy
 }
 
-func expandExportPolicy(enabled bool) *registries.ExportPolicy {
-	exportPolicy := registries.ExportPolicy{
-		Status: pointer.To(registries.ExportPolicyStatusDisabled),
+func expandExportPolicy(enabled bool) *containerregistry.ExportPolicy {
+	exportPolicy := containerregistry.ExportPolicy{
+		Status: containerregistry.ExportPolicyStatusDisabled,
 	}
 
 	if enabled {
-		exportPolicy.Status = pointer.To(registries.ExportPolicyStatusEnabled)
+		exportPolicy.Status = containerregistry.ExportPolicyStatusEnabled
 	}
 
 	return &exportPolicy
 }
 
-func expandReplicationsFromLocations(p []interface{}) []replications.Replication {
-	reps := make([]replications.Replication, 0)
+func expandReplicationsFromLocations(p []interface{}) []containerregistry.Replication {
+	replications := make([]containerregistry.Replication, 0)
 	for _, value := range p {
 		location := azure.NormalizeLocation(value)
-		reps = append(reps, replications.Replication{
-			Location: location,
+		replications = append(replications, containerregistry.Replication{
+			Location: &location,
 			Name:     &location,
 		})
 	}
-	return reps
+	return replications
 }
 
-func expandReplications(p []interface{}) []replications.Replication {
-	reps := make([]replications.Replication, 0)
+func expandReplications(p []interface{}) []containerregistry.Replication {
+	replications := make([]containerregistry.Replication, 0)
 	if p == nil {
-		return reps
+		return replications
 	}
 	for _, v := range p {
 		value := v.(map[string]interface{})
 		location := azure.NormalizeLocation(value["location"])
 		tags := tags.Expand(value["tags"].(map[string]interface{}))
-		zoneRedundancy := replications.ZoneRedundancyDisabled
+		zoneRedundancy := containerregistry.ZoneRedundancyDisabled
 		if value["zone_redundancy_enabled"].(bool) {
-			zoneRedundancy = replications.ZoneRedundancyEnabled
+			zoneRedundancy = containerregistry.ZoneRedundancyEnabled
 		}
-		reps = append(reps, replications.Replication{
-			Location: location,
+		replications = append(replications, containerregistry.Replication{
+			Location: &location,
 			Name:     &location,
 			Tags:     tags,
-			Properties: &replications.ReplicationProperties{
-				ZoneRedundancy:        &zoneRedundancy,
+			ReplicationProperties: &containerregistry.ReplicationProperties{
+				ZoneRedundancy:        zoneRedundancy,
 				RegionEndpointEnabled: utils.Bool(value["regional_endpoint_enabled"].(bool)),
 			},
 		})
 	}
-	return reps
+	return replications
 }
 
-func expandEncryption(e []interface{}) *registries.EncryptionProperty {
-	encryptionProperty := registries.EncryptionProperty{
-		Status: pointer.To(registries.EncryptionStatusDisabled),
+func expandRegistryIdentity(input []interface{}) (*containerregistry.IdentityProperties, error) {
+	expanded, err := identity.ExpandSystemAndUserAssignedMap(input)
+	if err != nil {
+		return nil, err
+	}
+
+	out := containerregistry.IdentityProperties{
+		Type: containerregistry.ResourceIdentityType(string(expanded.Type)),
+	}
+	if expanded.Type == identity.TypeUserAssigned || expanded.Type == identity.TypeSystemAssignedUserAssigned {
+		out.UserAssignedIdentities = make(map[string]*containerregistry.UserIdentityProperties)
+		for k := range expanded.IdentityIds {
+			out.UserAssignedIdentities[k] = &containerregistry.UserIdentityProperties{
+				// intentionally empty
+			}
+		}
+	}
+	return &out, nil
+}
+
+func expandEncryption(e []interface{}) *containerregistry.EncryptionProperty {
+	encryptionProperty := containerregistry.EncryptionProperty{
+		Status: containerregistry.EncryptionStatusDisabled,
 	}
 	if len(e) > 0 {
 		v := e[0].(map[string]interface{})
 		enabled := v["enabled"].(bool)
 		if enabled {
-			encryptionProperty.Status = pointer.To(registries.EncryptionStatusEnabled)
+			encryptionProperty.Status = containerregistry.EncryptionStatusEnabled
 			keyId := v["key_vault_key_id"].(string)
 			identityClientId := v["identity_client_id"].(string)
-			encryptionProperty.KeyVaultProperties = &registries.KeyVaultProperties{
+			encryptionProperty.KeyVaultProperties = &containerregistry.KeyVaultProperties{
 				KeyIdentifier: &keyId,
 				Identity:      &identityClientId,
 			}
@@ -798,12 +864,12 @@ func expandEncryption(e []interface{}) *registries.EncryptionProperty {
 	return &encryptionProperty
 }
 
-func flattenEncryption(encryptionProperty *registries.EncryptionProperty) []interface{} {
+func flattenEncryption(encryptionProperty *containerregistry.EncryptionProperty) []interface{} {
 	if encryptionProperty == nil {
 		return nil
 	}
 	encryption := make(map[string]interface{})
-	encryption["enabled"] = strings.EqualFold(string(*encryptionProperty.Status), string(registries.EncryptionStatusEnabled))
+	encryption["enabled"] = strings.EqualFold(string(encryptionProperty.Status), string(containerregistry.EncryptionStatusEnabled))
 	if encryptionProperty.KeyVaultProperties != nil {
 		encryption["key_vault_key_id"] = encryptionProperty.KeyVaultProperties.KeyIdentifier
 		encryption["identity_client_id"] = encryptionProperty.KeyVaultProperties.Identity
@@ -812,7 +878,32 @@ func flattenEncryption(encryptionProperty *registries.EncryptionProperty) []inte
 	return []interface{}{encryption}
 }
 
-func flattenNetworkRuleSet(networkRuleSet *registries.NetworkRuleSet) []interface{} {
+func flattenRegistryIdentity(input *containerregistry.IdentityProperties) (*[]interface{}, error) {
+	var transform *identity.SystemAndUserAssignedMap
+
+	if input != nil {
+		transform = &identity.SystemAndUserAssignedMap{
+			Type:        identity.Type(string(input.Type)),
+			IdentityIds: make(map[string]identity.UserAssignedIdentityDetails),
+		}
+		if input.PrincipalID != nil {
+			transform.PrincipalId = *input.PrincipalID
+		}
+		if input.TenantID != nil {
+			transform.TenantId = *input.TenantID
+		}
+		for k, v := range input.UserAssignedIdentities {
+			transform.IdentityIds[k] = identity.UserAssignedIdentityDetails{
+				ClientId:    v.ClientID,
+				PrincipalId: v.PrincipalID,
+			}
+		}
+	}
+
+	return identity.FlattenSystemAndUserAssignedMap(transform)
+}
+
+func flattenNetworkRuleSet(networkRuleSet *containerregistry.NetworkRuleSet) []interface{} {
 	if networkRuleSet == nil {
 		return []interface{}{}
 	}
@@ -824,14 +915,14 @@ func flattenNetworkRuleSet(networkRuleSet *registries.NetworkRuleSet) []interfac
 	ipRules := make([]interface{}, 0)
 	for _, ipRule := range *networkRuleSet.IPRules {
 		value := make(map[string]interface{})
-		value["action"] = string(*ipRule.Action)
+		value["action"] = string(ipRule.Action)
 
 		// When a /32 CIDR is passed as an ip rule, Azure will drop the /32 leading to the resource wanting to be re-created next run
-		if !strings.Contains(ipRule.Value, "/") {
-			ipRule.Value += "/32"
+		if !strings.Contains(*ipRule.IPAddressOrRange, "/") {
+			*ipRule.IPAddressOrRange += "/32"
 		}
 
-		value["ip_range"] = ipRule.Value
+		value["ip_range"] = ipRule.IPAddressOrRange
 		ipRules = append(ipRules, value)
 	}
 
@@ -842,9 +933,9 @@ func flattenNetworkRuleSet(networkRuleSet *registries.NetworkRuleSet) []interfac
 	if networkRuleSet.VirtualNetworkRules != nil {
 		for _, virtualNetworkRule := range *networkRuleSet.VirtualNetworkRules {
 			value := make(map[string]interface{})
-			value["action"] = string(*virtualNetworkRule.Action)
+			value["action"] = string(virtualNetworkRule.Action)
 
-			value["subnet_id"] = virtualNetworkRule.Id
+			value["subnet_id"] = virtualNetworkRule.VirtualNetworkResourceID
 			virtualNetworkRules = append(virtualNetworkRules, value)
 		}
 	}
@@ -854,15 +945,15 @@ func flattenNetworkRuleSet(networkRuleSet *registries.NetworkRuleSet) []interfac
 	return []interface{}{values}
 }
 
-func flattenQuarantinePolicy(p *registries.Policies) bool {
+func flattenQuarantinePolicy(p *containerregistry.Policies) bool {
 	if p == nil || p.QuarantinePolicy == nil {
 		return false
 	}
 
-	return *p.QuarantinePolicy.Status == registries.PolicyStatusEnabled
+	return p.QuarantinePolicy.Status == containerregistry.PolicyStatusEnabled
 }
 
-func flattenRetentionPolicy(p *registries.Policies) []interface{} {
+func flattenRetentionPolicy(p *containerregistry.Policies) []interface{} {
 	if p == nil || p.RetentionPolicy == nil {
 		return nil
 	}
@@ -870,29 +961,29 @@ func flattenRetentionPolicy(p *registries.Policies) []interface{} {
 	r := *p.RetentionPolicy
 	retentionPolicy := make(map[string]interface{})
 	retentionPolicy["days"] = r.Days
-	enabled := strings.EqualFold(string(*r.Status), string(registries.PolicyStatusEnabled))
+	enabled := strings.EqualFold(string(r.Status), string(containerregistry.PolicyStatusEnabled))
 	retentionPolicy["enabled"] = utils.Bool(enabled)
 	return []interface{}{retentionPolicy}
 }
 
-func flattenTrustPolicy(p *registries.Policies) []interface{} {
+func flattenTrustPolicy(p *containerregistry.Policies) []interface{} {
 	if p == nil || p.TrustPolicy == nil {
 		return nil
 	}
 
 	t := *p.TrustPolicy
 	trustPolicy := make(map[string]interface{})
-	enabled := strings.EqualFold(string(*t.Status), string(registries.PolicyStatusEnabled))
+	enabled := strings.EqualFold(string(t.Status), string(containerregistry.PolicyStatusEnabled))
 	trustPolicy["enabled"] = utils.Bool(enabled)
 	return []interface{}{trustPolicy}
 }
 
-func flattenExportPolicy(p *registries.Policies) bool {
+func flattenExportPolicy(p *containerregistry.Policies) bool {
 	if p == nil || p.ExportPolicy == nil {
 		return false
 	}
 
-	return *p.ExportPolicy.Status == registries.ExportPolicyStatusEnabled
+	return p.ExportPolicy.Status == containerregistry.ExportPolicyStatusEnabled
 }
 
 func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
@@ -912,9 +1003,9 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 			Type:     pluginsdk.TypeString,
 			Required: true,
 			ValidateFunc: validation.StringInSlice([]string{
-				string(registries.SkuNameBasic),
-				string(registries.SkuNameStandard),
-				string(registries.SkuNamePremium),
+				string(containerregistry.SkuNameBasic),
+				string(containerregistry.SkuNameStandard),
+				string(containerregistry.SkuNamePremium),
 			}, false),
 		},
 
@@ -945,7 +1036,7 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 						Optional: true,
 					},
 
-					"tags": commonschema.Tags(),
+					"tags": tags.Schema(),
 				},
 			},
 		},
@@ -1012,10 +1103,10 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 					"default_action": {
 						Type:     pluginsdk.TypeString,
 						Optional: true,
-						Default:  registries.DefaultActionAllow,
+						Default:  containerregistry.DefaultActionAllow,
 						ValidateFunc: validation.StringInSlice([]string{
-							string(registries.DefaultActionAllow),
-							string(registries.DefaultActionDeny),
+							string(containerregistry.DefaultActionAllow),
+							string(containerregistry.DefaultActionDeny),
 						}, false),
 					},
 
@@ -1029,7 +1120,7 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 									Type:     pluginsdk.TypeString,
 									Required: true,
 									ValidateFunc: validation.StringInSlice([]string{
-										string(registries.ActionAllow),
+										string(containerregistry.ActionAllow),
 									}, false),
 								},
 								"ip_range": {
@@ -1051,13 +1142,13 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 									Type:     pluginsdk.TypeString,
 									Required: true,
 									ValidateFunc: validation.StringInSlice([]string{
-										string(registries.ActionAllow),
+										string(containerregistry.ActionAllow),
 									}, false),
 								},
 								"subnet_id": {
 									Type:         pluginsdk.TypeString,
 									Required:     true,
-									ValidateFunc: commonids.ValidateSubnetID,
+									ValidateFunc: azure.ValidateResourceID,
 								},
 							},
 						},
@@ -1138,12 +1229,12 @@ func resourceContainerRegistrySchema() map[string]*pluginsdk.Schema {
 			Type:     pluginsdk.TypeString,
 			Optional: true,
 			ValidateFunc: validation.StringInSlice([]string{
-				string(registries.NetworkRuleBypassOptionsAzureServices),
-				string(registries.NetworkRuleBypassOptionsNone),
+				string(containerregistry.NetworkRuleBypassOptionsAzureServices),
+				string(containerregistry.NetworkRuleBypassOptionsNone),
 			}, false),
-			Default: string(registries.NetworkRuleBypassOptionsAzureServices),
+			Default: string(containerregistry.NetworkRuleBypassOptionsAzureServices),
 		},
 
-		"tags": commonschema.Tags(),
+		"tags": tags.Schema(),
 	}
 }

@@ -26,8 +26,7 @@ var EqualFunc = function.New(&function.Spec{
 			AllowNull:        true,
 		},
 	},
-	Type:         function.StaticReturnType(cty.Bool),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.Bool),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].Equals(args[1]), nil
 	},
@@ -51,8 +50,7 @@ var NotEqualFunc = function.New(&function.Spec{
 			AllowNull:        true,
 		},
 	},
-	Type:         function.StaticReturnType(cty.Bool),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.Bool),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].Equals(args[1]).Not(), nil
 	},
@@ -79,7 +77,6 @@ var CoalesceFunc = function.New(&function.Spec{
 		}
 		return retType, nil
 	},
-	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		for _, argVal := range args {
 			if !argVal.IsKnown() {
@@ -94,10 +91,6 @@ var CoalesceFunc = function.New(&function.Spec{
 		return cty.NilVal, fmt.Errorf("no non-null arguments")
 	},
 })
-
-func refineNonNull(b *cty.RefinementBuilder) *cty.RefinementBuilder {
-	return b.NotNull()
-}
 
 // Equal determines whether the two given values are equal, returning a
 // bool value.

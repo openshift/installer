@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2021-08-01/apimanagement" // nolint: staticcheck
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/apimanagement/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/apimanagement/schemaz"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/apimanagement/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -43,7 +43,7 @@ func resourceApiManagementCustomDomain() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.ApiManagementID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"management": {
@@ -169,11 +169,6 @@ func apiManagementCustomDomainRead(d *pluginsdk.ResourceData, meta interface{}) 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	apimHostNameSuffix, ok := environment.ApiManagement.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine API Management domain suffix for environment %q", environment.Name)
-	}
-
 	id, err := parse.CustomDomainID(d.Id())
 	if err != nil {
 		return err
@@ -195,7 +190,8 @@ func apiManagementCustomDomainRead(d *pluginsdk.ResourceData, meta interface{}) 
 	d.Set("api_management_id", apiMgmtId.ID())
 
 	if resp.ServiceProperties != nil && resp.ServiceProperties.HostnameConfigurations != nil {
-		configs := flattenApiManagementHostnameConfiguration(resp.ServiceProperties.HostnameConfigurations, d, *resp.Name, *apimHostNameSuffix)
+		apimHostNameSuffix := environment.APIManagementHostNameSuffix
+		configs := flattenApiManagementHostnameConfiguration(resp.ServiceProperties.HostnameConfigurations, d, *resp.Name, apimHostNameSuffix)
 		for _, config := range configs {
 			for key, v := range config.(map[string]interface{}) {
 				// lintignore:R001

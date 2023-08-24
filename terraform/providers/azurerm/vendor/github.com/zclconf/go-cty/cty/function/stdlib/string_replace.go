@@ -30,8 +30,7 @@ var ReplaceFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type:         function.StaticReturnType(cty.String),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		str := args[0].AsString()
 		substr := args[1].AsString()
@@ -60,8 +59,7 @@ var RegexReplaceFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type:         function.StaticReturnType(cty.String),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		str := args[0].AsString()
 		substr := args[1].AsString()

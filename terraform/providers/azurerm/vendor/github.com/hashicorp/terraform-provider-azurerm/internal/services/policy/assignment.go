@@ -6,20 +6,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	assignments "github.com/hashicorp/go-azure-sdk/resource-manager/resources/2022-06-01/policyassignments"
+	"github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2021-06-01-preview/policy" // nolint: staticcheck
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/policy/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func convertEnforcementMode(mode bool) *assignments.EnforcementMode {
-	m := assignments.EnforcementModeDoNotEnforce
+func convertEnforcementMode(mode bool) policy.EnforcementMode {
 	if mode {
-		m = assignments.EnforcementModeDefault
+		return policy.EnforcementModeDefault
+	} else {
+		return policy.EnforcementModeDoNotEnforce
 	}
-	return &m
 }
 
-func waitForPolicyAssignmentToStabilize(ctx context.Context, client *assignments.PolicyAssignmentsClient, id assignments.ScopedPolicyAssignmentId, shouldExist bool) error {
+func waitForPolicyAssignmentToStabilize(ctx context.Context, client *policy.AssignmentsClient, id parse.PolicyAssignmentId, shouldExist bool) error {
 	deadline, ok := ctx.Deadline()
 	if !ok {
 		return fmt.Errorf("context was missing a deadline")
@@ -28,16 +29,16 @@ func waitForPolicyAssignmentToStabilize(ctx context.Context, client *assignments
 		Pending: []string{"404"},
 		Target:  []string{"200"},
 		Refresh: func() (interface{}, string, error) {
-			resp, err := client.Get(ctx, id)
+			resp, err := client.Get(ctx, id.Scope, id.Name)
 			if err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
-					return resp, strconv.Itoa(resp.HttpResponse.StatusCode), nil
+				if utils.ResponseWasNotFound(resp.Response) {
+					return resp, strconv.Itoa(resp.StatusCode), nil
 				}
 
-				return nil, strconv.Itoa(resp.HttpResponse.StatusCode), fmt.Errorf("polling for %s: %+v", id, err)
+				return nil, strconv.Itoa(resp.StatusCode), fmt.Errorf("polling for %s: %+v", id, err)
 			}
 
-			return resp, strconv.Itoa(resp.HttpResponse.StatusCode), nil
+			return resp, strconv.Itoa(resp.StatusCode), nil
 		},
 		MinTimeout:                10 * time.Second,
 		ContinuousTargetOccurence: 20,

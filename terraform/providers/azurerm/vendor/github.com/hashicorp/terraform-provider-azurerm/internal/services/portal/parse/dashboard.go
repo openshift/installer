@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -44,7 +41,7 @@ func (id DashboardId) ID() string {
 func DashboardID(input string) (*DashboardId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an Dashboard ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := DashboardId{

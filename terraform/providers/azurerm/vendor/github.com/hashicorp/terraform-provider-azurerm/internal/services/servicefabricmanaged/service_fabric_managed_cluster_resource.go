@@ -64,7 +64,7 @@ type VaultCertificates struct {
 
 type VmSecrets struct {
 	SourceVault  string              `tfschema:"vault_id"`
-	Certificates []VaultCertificates `tfschema:"certificates"`
+	Certificates []VaultCertificates `tfschema:"certificate"`
 }
 
 type NodeType struct {

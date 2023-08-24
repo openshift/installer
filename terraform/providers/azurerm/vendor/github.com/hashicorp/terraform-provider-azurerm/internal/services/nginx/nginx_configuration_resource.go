@@ -102,9 +102,8 @@ func (m ConfigurationResource) Arguments() map[string]*pluginsdk.Schema {
 		},
 
 		"config_file": {
-			Type:         pluginsdk.TypeSet,
-			Optional:     true,
-			AtLeastOneOf: []string{"config_file", "package_data"},
+			Type:     pluginsdk.TypeSet,
+			Required: true,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*pluginsdk.Schema{
 					"content": {
@@ -123,9 +122,8 @@ func (m ConfigurationResource) Arguments() map[string]*pluginsdk.Schema {
 		},
 
 		"protected_file": {
-			Type:         pluginsdk.TypeSet,
-			Optional:     true,
-			RequiredWith: []string{"config_file"},
+			Type:     pluginsdk.TypeSet,
+			Optional: true,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*pluginsdk.Schema{
 					"content": {
@@ -145,11 +143,9 @@ func (m ConfigurationResource) Arguments() map[string]*pluginsdk.Schema {
 		},
 
 		"package_data": {
-			Type:          pluginsdk.TypeString,
-			Optional:      true,
-			ValidateFunc:  validation.StringIsNotEmpty,
-			AtLeastOneOf:  []string{"config_file", "package_data"},
-			ConflictsWith: []string{"protected_file", "config_file"},
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"root_file": {
@@ -200,9 +196,13 @@ func (m ConfigurationResource) Create() sdk.ResourceFunc {
 			}
 
 			req := model.ToSDKModel()
-
-			if err := client.ConfigurationsCreateOrUpdateThenPoll(ctx, id, req); err != nil {
+			future, err := client.ConfigurationsCreateOrUpdate(ctx, id, req)
+			if err != nil {
 				return fmt.Errorf("creating %s: %v", id, err)
+			}
+
+			if err := future.Poller.PollUntilDone(); err != nil {
+				return fmt.Errorf("waiting for creation of %s: %v", id, err)
 			}
 
 			meta.SetID(id)
@@ -223,9 +223,6 @@ func (m ConfigurationResource) Read() sdk.ResourceFunc {
 			client := meta.Client.Nginx.NginxConfiguration
 			result, err := client.ConfigurationsGet(ctx, *id)
 			if err != nil {
-				if response.WasNotFound(result.HttpResponse) {
-					return meta.MarkAsGone(id)
-				}
 				return err
 			}
 
@@ -317,8 +314,13 @@ func (m ConfigurationResource) Update() sdk.ResourceFunc {
 				}
 			}
 
-			if err := client.ConfigurationsCreateOrUpdateThenPoll(ctx, *id, *upd); err != nil {
+			result, err := client.ConfigurationsCreateOrUpdate(ctx, *id, *upd)
+			if err != nil {
 				return fmt.Errorf("updating %s: %v", id, err)
+			}
+
+			if err := result.Poller.PollUntilDone(); err != nil {
+				return fmt.Errorf("waiting update %s: %v", *id, err)
 			}
 
 			return nil
@@ -337,11 +339,13 @@ func (m ConfigurationResource) Delete() sdk.ResourceFunc {
 
 			meta.Logger.Infof("deleting %s", id)
 			client := meta.Client.Nginx.NginxConfiguration
-
-			if err := client.ConfigurationsDeleteThenPoll(ctx, *id); err != nil {
+			result, err := client.ConfigurationsDelete(ctx, *id)
+			if err != nil {
 				return fmt.Errorf("deleting %s: %v", id, err)
 			}
-
+			if err := result.Poller.PollUntilDone(); err != nil {
+				return fmt.Errorf("waiting deleting %s: %v", *id, err)
+			}
 			return nil
 		},
 	}

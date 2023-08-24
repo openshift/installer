@@ -8,27 +8,11 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-const (
-	FxStringPrefixDocker         FxStringPrefix = "DOCKER"
-	FxStringPrefixDotNet         FxStringPrefix = "DOTNET"
-	FxStringPrefixDotNetCore     FxStringPrefix = "DOTNETCORE"
-	FxStringPrefixDotNetIsolated FxStringPrefix = "DOTNET-ISOLATED"
-	FxStringPrefixGo             FxStringPrefix = "GO"
-	FxStringPrefixJava           FxStringPrefix = "JAVA"
-	FxStringPrefixJBoss          FxStringPrefix = "JBOSSEAP"
-	FxStringPrefixNode           FxStringPrefix = "NODE"
-	FxStringPrefixPhp            FxStringPrefix = "PHP"
-	FxStringPrefixPowerShell     FxStringPrefix = "POWERSHELL"
-	FxStringPrefixPython         FxStringPrefix = "PYTHON"
-	FxStringPrefixRuby           FxStringPrefix = "RUBY"
-	FxStringPrefixTomcat         FxStringPrefix = "TOMCAT"
-)
-
-type FxStringPrefix string
-
 var urlSchemes = []string{
 	"https://",
+	"HTTPS://",
 	"http://",
+	"HTTP://",
 }
 
 func decodeApplicationStackLinux(fxString string) ApplicationStackLinux {
@@ -38,17 +22,17 @@ func decodeApplicationStackLinux(fxString string) ApplicationStackLinux {
 		return result
 	}
 
-	switch FxStringPrefix(strings.ToUpper(parts[0])) {
-	case FxStringPrefixDotNetIsolated, FxStringPrefixDotNet, FxStringPrefixDotNetCore:
+	switch strings.ToUpper(parts[0]) {
+	case "DOTNETCORE", "DOTNET":
 		result.NetFrameworkVersion = parts[1]
 
-	case FxStringPrefixGo:
+	case "GO":
 		result.GoVersion = parts[1]
 
-	case FxStringPrefixNode:
+	case "NODE":
 		result.NodeVersion = parts[1]
 
-	case FxStringPrefixJava:
+	case LinuxJavaServerJava:
 		result.JavaServer = LinuxJavaServerJava
 		javaParts := strings.Split(parts[1], "-")
 		if strings.HasPrefix(parts[1], "8") {
@@ -62,7 +46,7 @@ func decodeApplicationStackLinux(fxString string) ApplicationStackLinux {
 		}
 		result.JavaServerVersion = javaParts[0]
 
-	case FxStringPrefixTomcat:
+	case LinuxJavaServerTomcat:
 		result.JavaServer = LinuxJavaServerTomcat
 		javaParts := strings.Split(parts[1], "-")
 		if len(javaParts) == 2 {
@@ -72,7 +56,7 @@ func decodeApplicationStackLinux(fxString string) ApplicationStackLinux {
 			result.JavaVersion = javaVersion
 		}
 
-	case FxStringPrefixJBoss:
+	case LinuxJavaServerJboss:
 		result.JavaServer = LinuxJavaServerJboss
 		javaParts := strings.Split(parts[1], "-")
 		if len(javaParts) == 2 {
@@ -82,14 +66,20 @@ func decodeApplicationStackLinux(fxString string) ApplicationStackLinux {
 			result.JavaVersion = javaVersion
 		}
 
-	case FxStringPrefixPhp:
+	case "PHP":
 		result.PhpVersion = parts[1]
 
-	case FxStringPrefixPython:
+	case "PYTHON":
 		result.PythonVersion = parts[1]
 
-	case FxStringPrefixRuby:
+	case "RUBY":
 		result.RubyVersion = parts[1]
+
+	default: // DOCKER is the expected default here as "custom" images require it
+		if dockerParts := strings.Split(parts[1], ":"); len(dockerParts) == 2 {
+			result.DockerImage = dockerParts[0]
+			result.DockerImageTag = dockerParts[1]
+		}
 	}
 
 	return result
@@ -104,31 +94,31 @@ func EncodeFunctionAppLinuxFxVersion(input []ApplicationStackLinuxFunctionApp) *
 	var appType, appString string
 	switch {
 	case appStack.NodeVersion != "":
-		appType = string(FxStringPrefixNode)
+		appType = "NODE"
 		appString = appStack.NodeVersion
 
 	case appStack.DotNetVersion != "":
 		if appStack.DotNetIsolated {
-			appType = string(FxStringPrefixDotNetIsolated)
+			appType = "DOTNET-ISOLATED"
 		} else {
-			appType = string(FxStringPrefixDotNet)
+			appType = "DOTNET"
 		}
 		appString = appStack.DotNetVersion
 
 	case appStack.PythonVersion != "":
-		appType = string(FxStringPrefixPython)
+		appType = "PYTHON"
 		appString = appStack.PythonVersion
 
 	case appStack.JavaVersion != "":
-		appType = string(FxStringPrefixJava)
+		appType = "JAVA"
 		appString = appStack.JavaVersion
 
 	case appStack.PowerShellCoreVersion != "":
-		appType = string(FxStringPrefixPowerShell)
+		appType = "POWERSHELL"
 		appString = appStack.PowerShellCoreVersion
 
 	case len(appStack.Docker) > 0 && appStack.Docker[0].ImageName != "":
-		appType = string(FxStringPrefixDocker)
+		appType = "DOCKER"
 		dockerCfg := appStack.Docker[0]
 		if dockerCfg.RegistryURL != "" {
 			dockerUrl := dockerCfg.RegistryURL
@@ -158,28 +148,28 @@ func DecodeFunctionAppLinuxFxVersion(input string) ([]ApplicationStackLinuxFunct
 
 	result := make([]ApplicationStackLinuxFunctionApp, 0)
 
-	switch FxStringPrefix(strings.ToUpper(parts[0])) {
-	case FxStringPrefixDotNet:
+	switch strings.ToLower(parts[0]) {
+	case "dotnet":
 		appStack := ApplicationStackLinuxFunctionApp{DotNetVersion: parts[1]}
 		result = append(result, appStack)
 
-	case FxStringPrefixDotNetIsolated:
+	case "dotnet-isolated":
 		appStack := ApplicationStackLinuxFunctionApp{DotNetVersion: parts[1], DotNetIsolated: true}
 		result = append(result, appStack)
 
-	case FxStringPrefixNode:
+	case "node":
 		appStack := ApplicationStackLinuxFunctionApp{NodeVersion: parts[1]}
 		result = append(result, appStack)
 
-	case FxStringPrefixPython:
+	case "python":
 		appStack := ApplicationStackLinuxFunctionApp{PythonVersion: parts[1]}
 		result = append(result, appStack)
 
-	case FxStringPrefixJava:
+	case "java":
 		appStack := ApplicationStackLinuxFunctionApp{JavaVersion: parts[1]}
 		result = append(result, appStack)
 
-	case FxStringPrefixPowerShell:
+	case "powershell":
 		appStack := ApplicationStackLinuxFunctionApp{PowerShellCoreVersion: parts[1]}
 		result = append(result, appStack)
 
@@ -222,7 +212,6 @@ func DecodeFunctionAppDockerFxString(input string, partial ApplicationStackDocke
 
 	return []ApplicationStackDocker{partial}, nil
 }
-
 func JavaLinuxFxStringBuilder(javaMajorVersion, javaServer, javaServerVersion string) (*string, error) {
 	switch javaMajorVersion {
 	case "8":
@@ -281,30 +270,4 @@ func JavaLinuxFxStringBuilder(javaMajorVersion, javaServer, javaServerVersion st
 
 	}
 	return nil, fmt.Errorf("unsupported combination of `java_version`, `java_server`, and `java_server_version`")
-}
-
-func EncodeDockerFxString(image string, registryUrl string) string {
-	template := "DOCKER|%s/%s"
-
-	registryUrl = trimURLScheme(registryUrl)
-
-	return fmt.Sprintf(template, registryUrl, image)
-}
-
-func EncodeDockerFxStringWindows(image string, registryUrl string) string {
-	template := "DOCKER|%s/%s"
-	dockerHubTemplate := "DOCKER|%s"
-
-	registryUrl = trimURLScheme(registryUrl)
-
-	// Windows App Services fail to auth if the index portion of the image ref is `index.docker.io` so it must not be included.
-	if strings.EqualFold(registryUrl, "index.docker.io") {
-		return fmt.Sprintf(dockerHubTemplate, image)
-	}
-
-	return fmt.Sprintf(template, registryUrl, image)
-}
-
-func FxStringHasPrefix(input string, prefix FxStringPrefix) bool {
-	return strings.HasPrefix(strings.ToUpper(input), string(prefix))
 }

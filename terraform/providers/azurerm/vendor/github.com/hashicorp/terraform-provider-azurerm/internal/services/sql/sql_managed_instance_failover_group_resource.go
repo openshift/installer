@@ -325,7 +325,7 @@ func flattenSqlInstanceFailoverGroupPrimaryInstance(input *[]sql.ManagedInstance
 		}
 	}
 
-	managedInstanceId, err := parse.ManagedInstanceIDInsensitively(id)
+	managedInstanceId, err := parse.ManagedInstanceID(id)
 	if err != nil {
 		return "", err
 	}

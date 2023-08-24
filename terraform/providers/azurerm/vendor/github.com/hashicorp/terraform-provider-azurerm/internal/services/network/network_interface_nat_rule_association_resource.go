@@ -6,13 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
-	loadBalancerParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/loadbalancer/parse"
-	loadBalancerValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/loadbalancer/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -30,7 +28,7 @@ func resourceNetworkInterfaceNatRuleAssociation() *pluginsdk.Resource {
 			if _, err := parse.NetworkInterfaceIpConfigurationID(splitId[0]); err != nil {
 				return err
 			}
-			if _, err := loadBalancerParse.LoadBalancerInboundNatRuleID(splitId[1]); err != nil {
+			if _, err := parse.InboundNatRuleID(splitId[1]); err != nil {
 				return err
 			}
 			return nil
@@ -48,7 +46,7 @@ func resourceNetworkInterfaceNatRuleAssociation() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.NetworkInterfaceID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"ip_configuration_name": {
@@ -62,7 +60,7 @@ func resourceNetworkInterfaceNatRuleAssociation() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: loadBalancerValidate.LoadBalancerInboundNatRuleID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 		},
 	}

@@ -161,7 +161,7 @@ func resourceVirtualNetworkGatewaySchema() map[string]*pluginsdk.Schema {
 					"public_ip_address_id": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: validate.PublicIpAddressID,
+						ValidateFunc: azure.ValidateResourceIDOrEmpty,
 					},
 				},
 			},
@@ -383,7 +383,7 @@ func resourceVirtualNetworkGatewaySchema() map[string]*pluginsdk.Schema {
 		"default_local_network_gateway_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
-			ValidateFunc: validate.LocalNetworkGatewayID,
+			ValidateFunc: azure.ValidateResourceIDOrEmpty,
 		},
 
 		"tags": tags.Schema(),
@@ -838,7 +838,7 @@ func flattenVirtualNetworkGatewayBgpPeeringAddresses(input *[]network.IPConfigur
 	for _, e := range *input {
 		var ipConfigName string
 		if e.IpconfigurationID != nil {
-			id, err := parse.VirtualNetworkGatewayIpConfigurationIDInsensitively(*e.IpconfigurationID)
+			id, err := parse.VirtualNetworkGatewayIpConfigurationID(*e.IpconfigurationID)
 			if err != nil {
 				return nil, err
 			}

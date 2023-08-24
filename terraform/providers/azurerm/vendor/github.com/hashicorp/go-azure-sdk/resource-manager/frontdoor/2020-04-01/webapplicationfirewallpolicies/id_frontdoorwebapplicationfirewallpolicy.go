@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = FrontDoorWebApplicationFirewallPolicyId{}
 
 // FrontDoorWebApplicationFirewallPolicyId is a struct representing the Resource ID for a Front Door Web Application Firewall Policy
@@ -40,15 +37,15 @@ func ParseFrontDoorWebApplicationFirewallPolicyID(input string) (*FrontDoorWebAp
 	id := FrontDoorWebApplicationFirewallPolicyId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.FrontDoorWebApplicationFirewallPolicyName, ok = parsed.Parsed["frontDoorWebApplicationFirewallPolicyName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "frontDoorWebApplicationFirewallPolicyName", *parsed)
+		return nil, fmt.Errorf("the segment 'frontDoorWebApplicationFirewallPolicyName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseFrontDoorWebApplicationFirewallPolicyIDInsensitively(input string) (*F
 	id := FrontDoorWebApplicationFirewallPolicyId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.FrontDoorWebApplicationFirewallPolicyName, ok = parsed.Parsed["frontDoorWebApplicationFirewallPolicyName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "frontDoorWebApplicationFirewallPolicyName", *parsed)
+		return nil, fmt.Errorf("the segment 'frontDoorWebApplicationFirewallPolicyName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

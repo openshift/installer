@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = DesktopId{}
 
 // DesktopId is a struct representing the Resource ID for a Desktop
@@ -42,19 +39,19 @@ func ParseDesktopID(input string) (*DesktopId, error) {
 	id := DesktopId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ApplicationGroupName, ok = parsed.Parsed["applicationGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "applicationGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'applicationGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DesktopName, ok = parsed.Parsed["desktopName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "desktopName", *parsed)
+		return nil, fmt.Errorf("the segment 'desktopName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseDesktopIDInsensitively(input string) (*DesktopId, error) {
 	id := DesktopId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ApplicationGroupName, ok = parsed.Parsed["applicationGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "applicationGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'applicationGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DesktopName, ok = parsed.Parsed["desktopName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "desktopName", *parsed)
+		return nil, fmt.Errorf("the segment 'desktopName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

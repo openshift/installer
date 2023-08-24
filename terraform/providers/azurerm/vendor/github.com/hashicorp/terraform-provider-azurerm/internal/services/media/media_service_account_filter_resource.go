@@ -14,9 +14,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-var _ sdk.ResourceWithUpdate = AccountFilterResource{}
-var _ sdk.ResourceWithDeprecationAndNoReplacement = AccountFilterResource{}
-
 type AccountFilterModel struct {
 	Name                     string                  `tfschema:"name"`
 	ResourceGroupName        string                  `tfschema:"resource_group_name"`
@@ -46,10 +43,6 @@ type Condition struct {
 }
 
 type AccountFilterResource struct{}
-
-func (r AccountFilterResource) DeprecationMessage() string {
-	return azureMediaRetirementMessage
-}
 
 func (r AccountFilterResource) Arguments() map[string]*pluginsdk.Schema {
 	return map[string]*pluginsdk.Schema{

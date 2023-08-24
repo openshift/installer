@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/polling"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 )
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -20,7 +19,7 @@ type ResetServicePrincipalProfileOperationResponse struct {
 }
 
 // ResetServicePrincipalProfile ...
-func (c ManagedClustersClient) ResetServicePrincipalProfile(ctx context.Context, id commonids.KubernetesClusterId, input ManagedClusterServicePrincipalProfile) (result ResetServicePrincipalProfileOperationResponse, err error) {
+func (c ManagedClustersClient) ResetServicePrincipalProfile(ctx context.Context, id ManagedClusterId, input ManagedClusterServicePrincipalProfile) (result ResetServicePrincipalProfileOperationResponse, err error) {
 	req, err := c.preparerForResetServicePrincipalProfile(ctx, id, input)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "managedclusters.ManagedClustersClient", "ResetServicePrincipalProfile", nil, "Failure preparing request")
@@ -37,7 +36,7 @@ func (c ManagedClustersClient) ResetServicePrincipalProfile(ctx context.Context,
 }
 
 // ResetServicePrincipalProfileThenPoll performs ResetServicePrincipalProfile then polls until it's completed
-func (c ManagedClustersClient) ResetServicePrincipalProfileThenPoll(ctx context.Context, id commonids.KubernetesClusterId, input ManagedClusterServicePrincipalProfile) error {
+func (c ManagedClustersClient) ResetServicePrincipalProfileThenPoll(ctx context.Context, id ManagedClusterId, input ManagedClusterServicePrincipalProfile) error {
 	result, err := c.ResetServicePrincipalProfile(ctx, id, input)
 	if err != nil {
 		return fmt.Errorf("performing ResetServicePrincipalProfile: %+v", err)
@@ -51,7 +50,7 @@ func (c ManagedClustersClient) ResetServicePrincipalProfileThenPoll(ctx context.
 }
 
 // preparerForResetServicePrincipalProfile prepares the ResetServicePrincipalProfile request.
-func (c ManagedClustersClient) preparerForResetServicePrincipalProfile(ctx context.Context, id commonids.KubernetesClusterId, input ManagedClusterServicePrincipalProfile) (*http.Request, error) {
+func (c ManagedClustersClient) preparerForResetServicePrincipalProfile(ctx context.Context, id ManagedClusterId, input ManagedClusterServicePrincipalProfile) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"api-version": defaultApiVersion,
 	}

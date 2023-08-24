@@ -1,31 +1,28 @@
 package client
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/account"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/dataset"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/share"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/synchronizationsetting"
+	"github.com/Azure/azure-sdk-for-go/services/datashare/mgmt/2019-11-01/datashare" // nolint: staticcheck
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	AccountClient         *account.AccountClient
-	DataSetClient         *dataset.DataSetClient
-	SharesClient          *share.ShareClient
-	SynchronizationClient *synchronizationsetting.SynchronizationSettingClient
+	AccountClient         *datashare.AccountsClient
+	DataSetClient         *datashare.DataSetsClient
+	SharesClient          *datashare.SharesClient
+	SynchronizationClient *datashare.SynchronizationSettingsClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	accountClient := account.NewAccountClientWithBaseURI(o.ResourceManagerEndpoint)
+	accountClient := datashare.NewAccountsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&accountClient.Client, o.ResourceManagerAuthorizer)
 
-	dataSetClient := dataset.NewDataSetClientWithBaseURI(o.ResourceManagerEndpoint)
+	dataSetClient := datashare.NewDataSetsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&dataSetClient.Client, o.ResourceManagerAuthorizer)
 
-	sharesClient := share.NewShareClientWithBaseURI(o.ResourceManagerEndpoint)
+	sharesClient := datashare.NewSharesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&sharesClient.Client, o.ResourceManagerAuthorizer)
 
-	synchronizationSettingsClient := synchronizationsetting.NewSynchronizationSettingClientWithBaseURI(o.ResourceManagerEndpoint)
+	synchronizationSettingsClient := datashare.NewSynchronizationSettingsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&synchronizationSettingsClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{

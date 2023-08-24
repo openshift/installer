@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ReplicationProtectedItemId{}
 
 // ReplicationProtectedItemId is a struct representing the Resource ID for a Replication Protected Item
@@ -46,27 +43,27 @@ func ParseReplicationProtectedItemID(input string) (*ReplicationProtectedItemId,
 	id := ReplicationProtectedItemId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VaultName, ok = parsed.Parsed["vaultName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vaultName", *parsed)
+		return nil, fmt.Errorf("the segment 'vaultName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationFabricName, ok = parsed.Parsed["replicationFabricName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationFabricName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationFabricName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationProtectionContainerName, ok = parsed.Parsed["replicationProtectionContainerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationProtectionContainerName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationProtectionContainerName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationProtectedItemName, ok = parsed.Parsed["replicationProtectedItemName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationProtectedItemName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationProtectedItemName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -85,27 +82,27 @@ func ParseReplicationProtectedItemIDInsensitively(input string) (*ReplicationPro
 	id := ReplicationProtectedItemId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VaultName, ok = parsed.Parsed["vaultName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vaultName", *parsed)
+		return nil, fmt.Errorf("the segment 'vaultName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationFabricName, ok = parsed.Parsed["replicationFabricName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationFabricName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationFabricName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationProtectionContainerName, ok = parsed.Parsed["replicationProtectionContainerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationProtectionContainerName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationProtectionContainerName' was not found in the resource id %q", input)
 	}
 
 	if id.ReplicationProtectedItemName, ok = parsed.Parsed["replicationProtectedItemName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "replicationProtectedItemName", *parsed)
+		return nil, fmt.Errorf("the segment 'replicationProtectedItemName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

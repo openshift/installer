@@ -1,10 +1,6 @@
 package exports
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -31,19 +27,6 @@ func PossibleValuesForExecutionStatus() []string {
 		string(ExecutionStatusQueued),
 		string(ExecutionStatusTimeout),
 	}
-}
-
-func (s *ExecutionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseExecutionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseExecutionStatus(input string) (*ExecutionStatus, error) {
@@ -79,19 +62,6 @@ func PossibleValuesForExecutionType() []string {
 	}
 }
 
-func (s *ExecutionType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseExecutionType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseExecutionType(input string) (*ExecutionType, error) {
 	vals := map[string]ExecutionType{
 		"ondemand":  ExecutionTypeOnDemand,
@@ -122,19 +92,6 @@ func PossibleValuesForExportType() []string {
 	}
 }
 
-func (s *ExportType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseExportType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseExportType(input string) (*ExportType, error) {
 	vals := map[string]ExportType{
 		"actualcost":    ExportTypeActualCost,
@@ -162,19 +119,6 @@ func PossibleValuesForFormatType() []string {
 	}
 }
 
-func (s *FormatType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseFormatType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseFormatType(input string) (*FormatType, error) {
 	vals := map[string]FormatType{
 		"csv": FormatTypeCsv,
@@ -198,19 +142,6 @@ func PossibleValuesForGranularityType() []string {
 	return []string{
 		string(GranularityTypeDaily),
 	}
-}
-
-func (s *GranularityType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseGranularityType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseGranularityType(input string) (*GranularityType, error) {
@@ -244,19 +175,6 @@ func PossibleValuesForRecurrenceType() []string {
 	}
 }
 
-func (s *RecurrenceType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRecurrenceType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseRecurrenceType(input string) (*RecurrenceType, error) {
 	vals := map[string]RecurrenceType{
 		"annually": RecurrenceTypeAnnually,
@@ -285,19 +203,6 @@ func PossibleValuesForStatusType() []string {
 		string(StatusTypeActive),
 		string(StatusTypeInactive),
 	}
-}
-
-func (s *StatusType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseStatusType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseStatusType(input string) (*StatusType, error) {
@@ -334,19 +239,6 @@ func PossibleValuesForTimeframeType() []string {
 		string(TimeframeTypeTheLastMonth),
 		string(TimeframeTypeWeekToDate),
 	}
-}
-
-func (s *TimeframeType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTimeframeType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseTimeframeType(input string) (*TimeframeType, error) {

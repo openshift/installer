@@ -5,17 +5,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2022-02-01/kusto" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/kusto/2022-12-29/dataconnections"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	iotHubParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/parse"
 	iothubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -35,9 +33,9 @@ func resourceKustoIotHubDataConnection() *pluginsdk.Resource {
 		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceIdThen(func(id string) error {
-			_, err := dataconnections.ParseDataConnectionID(id)
+			_, err := parse.DataConnectionID(id)
 			return err
-		}, importDataConnection("IotHub")),
+		}, importDataConnection(kusto.KindBasicDataConnectionKindIotHub)),
 
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(60 * time.Minute),
@@ -107,18 +105,38 @@ func resourceKustoIotHubDataConnection() *pluginsdk.Resource {
 			},
 
 			"data_format": {
-				Type:         pluginsdk.TypeString,
-				ForceNew:     true,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice(dataconnections.PossibleValuesForIotHubDataFormat(), false),
+				Type:     pluginsdk.TypeString,
+				ForceNew: true,
+				Optional: true,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(kusto.IotHubDataFormatAPACHEAVRO),
+					string(kusto.IotHubDataFormatAVRO),
+					string(kusto.IotHubDataFormatCSV),
+					string(kusto.IotHubDataFormatJSON),
+					string(kusto.IotHubDataFormatMULTIJSON),
+					string(kusto.IotHubDataFormatORC),
+					string(kusto.IotHubDataFormatPARQUET),
+					string(kusto.IotHubDataFormatPSV),
+					string(kusto.IotHubDataFormatRAW),
+					string(kusto.IotHubDataFormatSCSV),
+					string(kusto.IotHubDataFormatSINGLEJSON),
+					string(kusto.IotHubDataFormatSOHSV),
+					string(kusto.IotHubDataFormatTSV),
+					string(kusto.IotHubDataFormatTSVE),
+					string(kusto.IotHubDataFormatTXT),
+					string(kusto.IotHubDataFormatW3CLOGFILE),
+				}, false),
 			},
 
 			"database_routing_type": {
-				Type:         pluginsdk.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Default:      string(dataconnections.DatabaseRoutingSingle),
-				ValidateFunc: validation.StringInSlice(dataconnections.PossibleValuesForDatabaseRouting(), false),
+				Type:     pluginsdk.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  string(kusto.DatabaseRoutingSingle),
+				ValidateFunc: validation.StringInSlice([]string{
+					string(kusto.DatabaseRoutingSingle),
+					string(kusto.DatabaseRoutingMulti),
+				}, false),
 			},
 
 			"event_system_properties": {
@@ -154,33 +172,36 @@ func resourceKustoIotHubDataConnectionCreate(d *pluginsdk.ResourceData, meta int
 
 	log.Printf("[INFO] preparing arguments for Azure Kusto Iot Hub Data Connection creation.")
 
-	id := dataconnections.NewDataConnectionID(subscriptionId, d.Get("resource_group_name").(string), d.Get("cluster_name").(string), d.Get("database_name").(string), d.Get("name").(string))
-	resp, err := client.Get(ctx, id)
+	id := parse.NewDataConnectionID(subscriptionId, d.Get("resource_group_name").(string), d.Get("cluster_name").(string), d.Get("database_name").(string), d.Get("name").(string))
+	resp, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
 	if err != nil {
-		if !response.WasNotFound(resp.HttpResponse) {
+		if !utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 		}
 	}
 
-	if !response.WasNotFound(resp.HttpResponse) {
+	if !utils.ResponseWasNotFound(resp.Response) {
 		return tf.ImportAsExistsError("azurerm_kusto_iothub_data_connection", id.ID())
 	}
 
 	iotHubDataConnectionProperties := expandKustoIotHubDataConnectionProperties(d)
 
-	dataConnection := dataconnections.IotHubDataConnection{
-		Location:   utils.String(azure.NormalizeLocation(d.Get("location").(string))),
-		Properties: iotHubDataConnectionProperties,
+	dataConnection := kusto.IotHubDataConnection{
+		Location:                   utils.String(azure.NormalizeLocation(d.Get("location").(string))),
+		IotHubConnectionProperties: iotHubDataConnectionProperties,
 	}
 
 	if databaseRouting, ok := d.GetOk("database_routing_type"); ok {
-		dbRoutingType := dataconnections.DatabaseRouting(databaseRouting.(string))
-		dataConnection.Properties.DatabaseRouting = &dbRoutingType
+		dataConnection.DatabaseRouting = kusto.DatabaseRouting(databaseRouting.(string))
 	}
 
-	err = client.CreateOrUpdateThenPoll(ctx, id, dataConnection)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name, dataConnection)
 	if err != nil {
 		return fmt.Errorf("creating or updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for completion of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -192,42 +213,36 @@ func resourceKustoIotHubDataConnectionRead(d *pluginsdk.ResourceData, meta inter
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dataconnections.ParseDataConnectionID(d.Id())
+	id, err := parse.DataConnectionID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	connectionModel, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(connectionModel.Response) {
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	d.Set("name", id.DataConnectionName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("cluster_name", id.ClusterName)
 	d.Set("database_name", id.DatabaseName)
 
-	if resp.Model != nil {
-		if dataConnection, ok := (*resp.Model).(dataconnections.IotHubDataConnection); ok {
-			d.Set("location", location.NormalizeNilable(dataConnection.Location))
-			if props := dataConnection.Properties; props != nil {
-				iotHubId := ""
-				if parsedIoTHubId, err := iotHubParse.IotHubIDInsensitively(props.IotHubResourceId); err == nil {
-					iotHubId = parsedIoTHubId.ID()
-				}
-				d.Set("iothub_id", iotHubId)
-				d.Set("consumer_group", props.ConsumerGroup)
-				d.Set("table_name", props.TableName)
-				d.Set("mapping_rule_name", props.MappingRuleName)
-				d.Set("data_format", string(pointer.From(props.DataFormat)))
-				d.Set("database_routing_type", string(pointer.From(props.DatabaseRouting)))
-				d.Set("shared_access_policy_name", props.SharedAccessPolicyName)
-				d.Set("event_system_properties", utils.FlattenStringSlice(props.EventSystemProperties))
-			}
+	if dataConnection, ok := connectionModel.Value.(kusto.IotHubDataConnection); ok {
+		d.Set("location", location.NormalizeNilable(dataConnection.Location))
+		if props := dataConnection.IotHubConnectionProperties; props != nil {
+			d.Set("iothub_id", props.IotHubResourceID)
+			d.Set("consumer_group", props.ConsumerGroup)
+			d.Set("table_name", props.TableName)
+			d.Set("mapping_rule_name", props.MappingRuleName)
+			d.Set("data_format", props.DataFormat)
+			d.Set("database_routing_type", props.DatabaseRouting)
+			d.Set("shared_access_policy_name", props.SharedAccessPolicyName)
+			d.Set("event_system_properties", utils.FlattenStringSlice(props.EventSystemProperties))
 		}
 	}
 
@@ -239,24 +254,28 @@ func resourceKustoIotHubDataConnectionDelete(d *pluginsdk.ResourceData, meta int
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dataconnections.ParseDataConnectionID(d.Id())
+	id, err := parse.DataConnectionID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.Name)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for deletion of %s: %+v", id, err)
 	}
 
 	return nil
 }
 
-func expandKustoIotHubDataConnectionProperties(d *pluginsdk.ResourceData) *dataconnections.IotHubConnectionProperties {
-	iotHubDataConnectionProperties := &dataconnections.IotHubConnectionProperties{
-		IotHubResourceId:       d.Get("iothub_id").(string),
-		ConsumerGroup:          d.Get("consumer_group").(string),
-		SharedAccessPolicyName: d.Get("shared_access_policy_name").(string),
+func expandKustoIotHubDataConnectionProperties(d *pluginsdk.ResourceData) *kusto.IotHubConnectionProperties {
+	iotHubDataConnectionProperties := &kusto.IotHubConnectionProperties{
+		IotHubResourceID:       utils.String(d.Get("iothub_id").(string)),
+		ConsumerGroup:          utils.String(d.Get("consumer_group").(string)),
+		SharedAccessPolicyName: utils.String(d.Get("shared_access_policy_name").(string)),
 	}
 
 	if tableName, ok := d.GetOk("table_name"); ok {
@@ -268,8 +287,7 @@ func expandKustoIotHubDataConnectionProperties(d *pluginsdk.ResourceData) *datac
 	}
 
 	if df, ok := d.GetOk("data_format"); ok {
-		dataFormat := dataconnections.IotHubDataFormat(df.(string))
-		iotHubDataConnectionProperties.DataFormat = &dataFormat
+		iotHubDataConnectionProperties.DataFormat = kusto.IotHubDataFormat(df.(string))
 	}
 
 	if eventSystemProperties, ok := d.GetOk("event_system_properties"); ok {

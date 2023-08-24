@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = VirtualNetworkRuleId{}
 
 // VirtualNetworkRuleId is a struct representing the Resource ID for a Virtual Network Rule
@@ -42,19 +39,19 @@ func ParseVirtualNetworkRuleID(input string) (*VirtualNetworkRuleId, error) {
 	id := VirtualNetworkRuleId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ServerName, ok = parsed.Parsed["serverName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "serverName", *parsed)
+		return nil, fmt.Errorf("the segment 'serverName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualNetworkRuleName, ok = parsed.Parsed["virtualNetworkRuleName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualNetworkRuleName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualNetworkRuleName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseVirtualNetworkRuleIDInsensitively(input string) (*VirtualNetworkRuleId
 	id := VirtualNetworkRuleId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ServerName, ok = parsed.Parsed["serverName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "serverName", *parsed)
+		return nil, fmt.Errorf("the segment 'serverName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualNetworkRuleName, ok = parsed.Parsed["virtualNetworkRuleName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualNetworkRuleName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualNetworkRuleName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

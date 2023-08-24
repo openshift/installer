@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -50,7 +47,7 @@ func (id ContainerRegistryTokenPasswordId) ID() string {
 func ContainerRegistryTokenPasswordID(input string) (*ContainerRegistryTokenPasswordId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an ContainerRegistryTokenPassword ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := ContainerRegistryTokenPasswordId{

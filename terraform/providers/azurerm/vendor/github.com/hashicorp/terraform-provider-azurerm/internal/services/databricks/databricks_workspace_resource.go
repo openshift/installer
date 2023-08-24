@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
@@ -21,8 +20,6 @@ import (
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
 	loadBalancerParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/loadbalancer/parse"
-	loadBalancerValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/loadbalancer/validate"
-	machineLearningValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/machinelearning/validate"
 	resourcesParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/resource/parse"
 	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -157,7 +154,7 @@ func resourceDatabricksWorkspace() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: loadBalancerValidate.LoadBalancerBackendAddressPoolID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"custom_parameters": {
@@ -171,7 +168,7 @@ func resourceDatabricksWorkspace() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
 							Optional:     true,
-							ValidateFunc: machineLearningValidate.WorkspaceID,
+							ValidateFunc: azure.ValidateResourceIDOrEmpty,
 							AtLeastOneOf: workspaceCustomParametersString(),
 						},
 
@@ -230,7 +227,7 @@ func resourceDatabricksWorkspace() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
 							Optional:     true,
-							ValidateFunc: commonids.ValidateVirtualNetworkID,
+							ValidateFunc: azure.ValidateResourceIDOrEmpty,
 							AtLeastOneOf: workspaceCustomParametersString(),
 						},
 
@@ -243,7 +240,6 @@ func resourceDatabricksWorkspace() *pluginsdk.Resource {
 							AtLeastOneOf: workspaceCustomParametersString(),
 						},
 
-						// Per Service Team: This field is actually changeable so the ForceNew is no longer required, however we agreed to not change the current behavior for consistency purposes
 						"storage_account_sku_name": {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
@@ -603,7 +599,7 @@ func resourceDatabricksWorkspaceRead(d *pluginsdk.ResourceData, meta interface{}
 			d.Set("sku", sku.Name)
 		}
 
-		managedResourceGroupID, err := resourcesParse.ResourceGroupIDInsensitively(model.Properties.ManagedResourceGroupId)
+		managedResourceGroupID, err := resourcesParse.ResourceGroupID(model.Properties.ManagedResourceGroupId)
 		if err != nil {
 			return err
 		}
@@ -675,7 +671,7 @@ func resourceDatabricksWorkspaceRead(d *pluginsdk.ResourceData, meta interface{}
 		}
 
 		if encryptKeyVaultURI != "" {
-			key, err := keyVaultParse.NewNestedItemID(encryptKeyVaultURI, keyVaultParse.NestedItemTypeKey, encryptKeyName, encryptKeyVersion)
+			key, err := keyVaultParse.NewNestedItemID(encryptKeyVaultURI, "keys", encryptKeyName, encryptKeyVersion)
 			if err == nil {
 				d.Set("managed_services_cmk_key_vault_key_id", key.ID())
 			}
@@ -697,7 +693,7 @@ func resourceDatabricksWorkspaceRead(d *pluginsdk.ResourceData, meta interface{}
 		}
 
 		if encryptDiskKeyVaultURI != "" {
-			key, err := keyVaultParse.NewNestedItemID(encryptDiskKeyVaultURI, keyVaultParse.NestedItemTypeKey, encryptDiskKeyName, encryptDiskKeyVersion)
+			key, err := keyVaultParse.NewNestedItemID(encryptDiskKeyVaultURI, "keys", encryptDiskKeyName, encryptDiskKeyVersion)
 			if err == nil {
 				d.Set("managed_disk_cmk_key_vault_key_id", key.ID())
 			}
@@ -824,7 +820,7 @@ func flattenWorkspaceCustomParameters(input *workspaces.WorkspaceCustomParameter
 		parameters["virtual_network_id"] = v.Value
 	}
 
-	lbId, err := loadBalancerParse.LoadBalancerIDInsensitively(loadBalancerId)
+	lbId, err := loadBalancerParse.LoadBalancerID(loadBalancerId)
 
 	if err == nil {
 		backendId := loadBalancerParse.NewLoadBalancerBackendAddressPoolID(lbId.SubscriptionId, lbId.ResourceGroup, lbId.Name, backendName)

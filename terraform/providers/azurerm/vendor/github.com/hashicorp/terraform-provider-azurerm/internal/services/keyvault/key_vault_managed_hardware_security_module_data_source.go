@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2021-10-01/managedhsms"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -68,7 +67,7 @@ func dataSourceKeyVaultManagedHardwareSecurityModule() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -79,10 +78,11 @@ func dataSourceKeyVaultManagedHardwareSecurityModuleRead(d *pluginsdk.ResourceDa
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := managedhsms.NewManagedHSMID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	resp, err := client.Get(ctx, id)
+	id := parse.NewManagedHSMID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s does not exist", id)
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
@@ -90,34 +90,27 @@ func dataSourceKeyVaultManagedHardwareSecurityModuleRead(d *pluginsdk.ResourceDa
 
 	d.SetId(id.ID())
 
-	d.Set("name", id.ManagedHSMName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
+	skuName := ""
+	if sku := resp.Sku; sku != nil {
+		skuName = string(sku.Name)
+	}
+	d.Set("sku_name", skuName)
 
-		skuName := ""
-		if sku := model.Sku; sku != nil {
-			skuName = string(sku.Name)
+	if props := resp.Properties; props != nil {
+		tenantId := ""
+		if tid := props.TenantID; tid != nil {
+			tenantId = tid.String()
 		}
-		d.Set("sku_name", skuName)
-
-		if props := model.Properties; props != nil {
-			tenantId := ""
-			if props.TenantId != nil {
-				tenantId = *props.TenantId
-			}
-			d.Set("tenant_id", tenantId)
-			d.Set("admin_object_ids", utils.FlattenStringSlice(props.InitialAdminObjectIds))
-			d.Set("hsm_uri", props.HsmUri)
-			d.Set("purge_protection_enabled", props.EnablePurgeProtection)
-			d.Set("soft_delete_retention_days", props.SoftDeleteRetentionInDays)
-		}
-
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
-		}
+		d.Set("tenant_id", tenantId)
+		d.Set("admin_object_ids", utils.FlattenStringSlice(props.InitialAdminObjectIds))
+		d.Set("hsm_uri", props.HsmURI)
+		d.Set("purge_protection_enabled", props.EnablePurgeProtection)
+		d.Set("soft_delete_retention_days", props.SoftDeleteRetentionInDays)
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }

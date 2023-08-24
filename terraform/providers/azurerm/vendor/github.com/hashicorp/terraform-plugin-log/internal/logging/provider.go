@@ -13,12 +13,7 @@ func GetProviderRootLogger(ctx context.Context) hclog.Logger {
 	if logger == nil {
 		return nil
 	}
-
-	hclogger, ok := logger.(hclog.Logger)
-	if !ok {
-		return nil
-	}
-	return hclogger
+	return logger.(hclog.Logger)
 }
 
 // GetProviderRootLoggerOptions returns the root logger options used for
@@ -69,13 +64,7 @@ func GetProviderSubsystemLogger(ctx context.Context, subsystem string) hclog.Log
 	if logger == nil {
 		return nil
 	}
-
-	hclogger, ok := logger.(hclog.Logger)
-	if !ok {
-		return nil
-	}
-
-	return hclogger
+	return logger.(hclog.Logger)
 }
 
 // SetProviderSubsystemLogger sets `logger` as the logger for the named

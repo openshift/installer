@@ -72,7 +72,7 @@ func resourceWebApplicationFirewallPolicy() *pluginsdk.Resource {
 								Schema: map[string]*pluginsdk.Schema{
 									"match_values": {
 										Type:     pluginsdk.TypeList,
-										Optional: true,
+										Required: true,
 										Elem: &pluginsdk.Schema{
 											Type: pluginsdk.TypeString,
 										},
@@ -107,7 +107,6 @@ func resourceWebApplicationFirewallPolicy() *pluginsdk.Resource {
 										Type:     pluginsdk.TypeString,
 										Required: true,
 										ValidateFunc: validation.StringInSlice([]string{
-											string(network.WebApplicationFirewallOperatorAny),
 											string(network.WebApplicationFirewallOperatorIPMatch),
 											string(network.WebApplicationFirewallOperatorGeoMatch),
 											string(network.WebApplicationFirewallOperatorEqual),

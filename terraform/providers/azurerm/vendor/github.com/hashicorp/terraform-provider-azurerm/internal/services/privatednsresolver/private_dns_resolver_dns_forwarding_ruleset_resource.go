@@ -146,6 +146,8 @@ func (r PrivateDNSResolverDnsForwardingRulesetResource) Update() sdk.ResourceFun
 				}
 			}
 
+			properties.SystemData = nil
+
 			if metadata.ResourceData.HasChange("tags") {
 				properties.Tags = &model.Tags
 			}

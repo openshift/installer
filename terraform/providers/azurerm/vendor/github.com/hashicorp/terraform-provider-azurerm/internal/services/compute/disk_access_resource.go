@@ -5,15 +5,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/diskaccesses"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 func resourceDiskAccess() *pluginsdk.Resource {
@@ -24,7 +25,7 @@ func resourceDiskAccess() *pluginsdk.Resource {
 		Delete: resourceDiskAccessDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := diskaccesses.ParseDiskAccessID(id)
+			_, err := parse.DiskAccessID(id)
 			return err
 		}),
 
@@ -42,42 +43,53 @@ func resourceDiskAccess() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
-
 			"location": commonschema.Location(),
 
-			"tags": commonschema.Tags(),
+			"resource_group_name": commonschema.ResourceGroupName(),
+
+			"tags": tags.Schema(),
 		},
 	}
 }
 
 func resourceDiskAccessCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Compute.DiskAccessClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
+	subscriptionid := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := diskaccesses.NewDiskAccessID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	log.Printf("[INFO] preparing arguments for Azure ARM Disk Access creation.")
+
+	id := parse.NewDiskAccessID(subscriptionid, d.Get("resource_group_name").(string), d.Get("name").(string))
+	t := d.Get("tags").(map[string]interface{})
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_disk_access", id.ID())
 		}
 	}
 
-	createDiskAccess := diskaccesses.DiskAccess{
-		Location: location.Normalize(d.Get("location").(string)),
-		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
+	location := azure.NormalizeLocation(d.Get("location").(string))
+
+	createDiskAccess := compute.DiskAccess{
+		Name:     &id.Name,
+		Location: &location,
+		Tags:     tags.Expand(t),
 	}
 
-	if err := client.CreateOrUpdateThenPoll(ctx, id, createDiskAccess); err != nil {
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, createDiskAccess)
+	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for create/update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -90,32 +102,29 @@ func resourceDiskAccessRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := diskaccesses.ParseDiskAccessID(d.Id())
+	id, err := parse.DiskAccessID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			log.Printf("[INFO] %s does not exist - removing from state", *id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			log.Printf("[INFO] Disk Access %q does not exist - removing from state", d.Id())
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("making Read request on Azure Disk Access %s (resource group %s): %s", id.Name, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.DiskAccessName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", resp.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
-		}
+	if location := resp.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceDiskAccessDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -123,13 +132,18 @@ func resourceDiskAccessDelete(d *pluginsdk.ResourceData, meta interface{}) error
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := diskaccesses.ParseDiskAccessID(d.Id())
+	id, err := parse.DiskAccessID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
+	if err != nil {
+		return fmt.Errorf("deleting Disk Access %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for deletion of Disk Access %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
 	return nil

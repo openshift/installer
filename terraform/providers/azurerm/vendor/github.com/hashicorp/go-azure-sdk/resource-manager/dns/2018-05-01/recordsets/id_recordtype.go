@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = RecordTypeId{}
 
 // RecordTypeId is a struct representing the Resource ID for a Record Type
@@ -44,20 +41,20 @@ func ParseRecordTypeID(input string) (*RecordTypeId, error) {
 	id := RecordTypeId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+		return nil, fmt.Errorf("the segment 'dnsZoneName' was not found in the resource id %q", input)
 	}
 
 	if v, ok := parsed.Parsed["recordType"]; true {
 		if !ok {
-			return nil, resourceids.NewSegmentNotSpecifiedError(id, "recordType", *parsed)
+			return nil, fmt.Errorf("the segment 'recordType' was not found in the resource id %q", input)
 		}
 
 		recordType, err := parseRecordType(v)
@@ -68,7 +65,7 @@ func ParseRecordTypeID(input string) (*RecordTypeId, error) {
 	}
 
 	if id.RelativeRecordSetName, ok = parsed.Parsed["relativeRecordSetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "relativeRecordSetName", *parsed)
+		return nil, fmt.Errorf("the segment 'relativeRecordSetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -87,20 +84,20 @@ func ParseRecordTypeIDInsensitively(input string) (*RecordTypeId, error) {
 	id := RecordTypeId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+		return nil, fmt.Errorf("the segment 'dnsZoneName' was not found in the resource id %q", input)
 	}
 
 	if v, ok := parsed.Parsed["recordType"]; true {
 		if !ok {
-			return nil, resourceids.NewSegmentNotSpecifiedError(id, "recordType", *parsed)
+			return nil, fmt.Errorf("the segment 'recordType' was not found in the resource id %q", input)
 		}
 
 		recordType, err := parseRecordType(v)
@@ -111,7 +108,7 @@ func ParseRecordTypeIDInsensitively(input string) (*RecordTypeId, error) {
 	}
 
 	if id.RelativeRecordSetName, ok = parsed.Parsed["relativeRecordSetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "relativeRecordSetName", *parsed)
+		return nil, fmt.Errorf("the segment 'relativeRecordSetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

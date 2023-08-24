@@ -33,8 +33,6 @@ func resourceMediaServicesAccount() *pluginsdk.Resource {
 		Update: resourceMediaServicesAccountCreateUpdate,
 		Delete: resourceMediaServicesAccountDelete,
 
-		DeprecationMessage: azureMediaRetirementMessage,
-
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(30 * time.Minute),
 			Read:   pluginsdk.DefaultTimeout(5 * time.Minute),
@@ -525,7 +523,7 @@ func flattenMediaServicesAccountIdentity(input *accounts.MediaServiceIdentity) (
 }
 
 func expandMediaServicesAccountKeyDelivery(input []interface{}) *accounts.KeyDelivery {
-	if len(input) == 0 || input[0] == nil {
+	if len(input) == 0 {
 		return nil
 	}
 

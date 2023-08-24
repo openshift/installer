@@ -1,26 +1,18 @@
 package checknameavailabilitydisasterrecoveryconfigs
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type CheckNameAvailabilityDisasterRecoveryConfigsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewCheckNameAvailabilityDisasterRecoveryConfigsClientWithBaseURI(api environments.Api) (*CheckNameAvailabilityDisasterRecoveryConfigsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "checknameavailabilitydisasterrecoveryconfigs", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating CheckNameAvailabilityDisasterRecoveryConfigsClient: %+v", err)
+func NewCheckNameAvailabilityDisasterRecoveryConfigsClientWithBaseURI(endpoint string) CheckNameAvailabilityDisasterRecoveryConfigsClient {
+	return CheckNameAvailabilityDisasterRecoveryConfigsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &CheckNameAvailabilityDisasterRecoveryConfigsClient{
-		Client: client,
-	}, nil
 }

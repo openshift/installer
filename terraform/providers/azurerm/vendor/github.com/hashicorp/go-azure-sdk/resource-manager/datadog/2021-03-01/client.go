@@ -1,11 +1,7 @@
 package v2021_03_01
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 import (
-	"fmt"
-
+	"github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/agreements"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/apikey"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/hosts"
@@ -15,8 +11,6 @@ import (
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/refreshsetpasswordlink"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/rules"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/datadog/2021-03-01/singlesignon"
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 )
 
 type Client struct {
@@ -31,70 +25,44 @@ type Client struct {
 	SingleSignOn           *singlesignon.SingleSignOnClient
 }
 
-func NewClientWithBaseURI(api environments.Api, configureFunc func(c *resourcemanager.Client)) (*Client, error) {
-	agreementsClient, err := agreements.NewAgreementsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building Agreements client: %+v", err)
-	}
-	configureFunc(agreementsClient.Client)
+func NewClientWithBaseURI(endpoint string, configureAuthFunc func(c *autorest.Client)) Client {
 
-	apiKeyClient, err := apikey.NewApiKeyClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building ApiKey client: %+v", err)
-	}
-	configureFunc(apiKeyClient.Client)
+	agreementsClient := agreements.NewAgreementsClientWithBaseURI(endpoint)
+	configureAuthFunc(&agreementsClient.Client)
 
-	hostsClient, err := hosts.NewHostsClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building Hosts client: %+v", err)
-	}
-	configureFunc(hostsClient.Client)
+	apiKeyClient := apikey.NewApiKeyClientWithBaseURI(endpoint)
+	configureAuthFunc(&apiKeyClient.Client)
 
-	linkedResourcesClient, err := linkedresources.NewLinkedResourcesClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building LinkedResources client: %+v", err)
-	}
-	configureFunc(linkedResourcesClient.Client)
+	hostsClient := hosts.NewHostsClientWithBaseURI(endpoint)
+	configureAuthFunc(&hostsClient.Client)
 
-	monitoredResourcesClient, err := monitoredresources.NewMonitoredResourcesClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building MonitoredResources client: %+v", err)
-	}
-	configureFunc(monitoredResourcesClient.Client)
+	linkedResourcesClient := linkedresources.NewLinkedResourcesClientWithBaseURI(endpoint)
+	configureAuthFunc(&linkedResourcesClient.Client)
 
-	monitorsResourceClient, err := monitorsresource.NewMonitorsResourceClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building MonitorsResource client: %+v", err)
-	}
-	configureFunc(monitorsResourceClient.Client)
+	monitoredResourcesClient := monitoredresources.NewMonitoredResourcesClientWithBaseURI(endpoint)
+	configureAuthFunc(&monitoredResourcesClient.Client)
 
-	refreshSetPasswordLinkClient, err := refreshsetpasswordlink.NewRefreshSetPasswordLinkClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building RefreshSetPasswordLink client: %+v", err)
-	}
-	configureFunc(refreshSetPasswordLinkClient.Client)
+	monitorsResourceClient := monitorsresource.NewMonitorsResourceClientWithBaseURI(endpoint)
+	configureAuthFunc(&monitorsResourceClient.Client)
 
-	rulesClient, err := rules.NewRulesClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building Rules client: %+v", err)
-	}
-	configureFunc(rulesClient.Client)
+	refreshSetPasswordLinkClient := refreshsetpasswordlink.NewRefreshSetPasswordLinkClientWithBaseURI(endpoint)
+	configureAuthFunc(&refreshSetPasswordLinkClient.Client)
 
-	singleSignOnClient, err := singlesignon.NewSingleSignOnClientWithBaseURI(api)
-	if err != nil {
-		return nil, fmt.Errorf("building SingleSignOn client: %+v", err)
-	}
-	configureFunc(singleSignOnClient.Client)
+	rulesClient := rules.NewRulesClientWithBaseURI(endpoint)
+	configureAuthFunc(&rulesClient.Client)
 
-	return &Client{
-		Agreements:             agreementsClient,
-		ApiKey:                 apiKeyClient,
-		Hosts:                  hostsClient,
-		LinkedResources:        linkedResourcesClient,
-		MonitoredResources:     monitoredResourcesClient,
-		MonitorsResource:       monitorsResourceClient,
-		RefreshSetPasswordLink: refreshSetPasswordLinkClient,
-		Rules:                  rulesClient,
-		SingleSignOn:           singleSignOnClient,
-	}, nil
+	singleSignOnClient := singlesignon.NewSingleSignOnClientWithBaseURI(endpoint)
+	configureAuthFunc(&singleSignOnClient.Client)
+
+	return Client{
+		Agreements:             &agreementsClient,
+		ApiKey:                 &apiKeyClient,
+		Hosts:                  &hostsClient,
+		LinkedResources:        &linkedResourcesClient,
+		MonitoredResources:     &monitoredResourcesClient,
+		MonitorsResource:       &monitorsResourceClient,
+		RefreshSetPasswordLink: &refreshSetPasswordLinkClient,
+		Rules:                  &rulesClient,
+		SingleSignOn:           &singleSignOnClient,
+	}
 }

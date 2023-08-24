@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = PolicySetId{}
 
 // PolicySetId is a struct representing the Resource ID for a Policy Set
@@ -42,19 +39,19 @@ func ParsePolicySetID(input string) (*PolicySetId, error) {
 	id := PolicySetId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.LabName, ok = parsed.Parsed["labName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "labName", *parsed)
+		return nil, fmt.Errorf("the segment 'labName' was not found in the resource id %q", input)
 	}
 
 	if id.PolicySetName, ok = parsed.Parsed["policySetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "policySetName", *parsed)
+		return nil, fmt.Errorf("the segment 'policySetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParsePolicySetIDInsensitively(input string) (*PolicySetId, error) {
 	id := PolicySetId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.LabName, ok = parsed.Parsed["labName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "labName", *parsed)
+		return nil, fmt.Errorf("the segment 'labName' was not found in the resource id %q", input)
 	}
 
 	if id.PolicySetName, ok = parsed.Parsed["policySetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "policySetName", *parsed)
+		return nil, fmt.Errorf("the segment 'policySetName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

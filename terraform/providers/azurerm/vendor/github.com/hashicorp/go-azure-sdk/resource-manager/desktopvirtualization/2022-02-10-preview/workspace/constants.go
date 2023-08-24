@@ -1,10 +1,6 @@
 package workspace
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -25,19 +21,6 @@ func PossibleValuesForPrivateEndpointConnectionProvisioningState() []string {
 		string(PrivateEndpointConnectionProvisioningStateFailed),
 		string(PrivateEndpointConnectionProvisioningStateSucceeded),
 	}
-}
-
-func (s *PrivateEndpointConnectionProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointConnectionProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parsePrivateEndpointConnectionProvisioningState(input string) (*PrivateEndpointConnectionProvisioningState, error) {
@@ -72,19 +55,6 @@ func PossibleValuesForPrivateEndpointServiceConnectionStatus() []string {
 	}
 }
 
-func (s *PrivateEndpointServiceConnectionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointServiceConnectionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointServiceConnectionStatus(input string) (*PrivateEndpointServiceConnectionStatus, error) {
 	vals := map[string]PrivateEndpointServiceConnectionStatus{
 		"approved": PrivateEndpointServiceConnectionStatusApproved,
@@ -112,19 +82,6 @@ func PossibleValuesForPublicNetworkAccess() []string {
 		string(PublicNetworkAccessDisabled),
 		string(PublicNetworkAccessEnabled),
 	}
-}
-
-func (s *PublicNetworkAccess) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePublicNetworkAccess(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parsePublicNetworkAccess(input string) (*PublicNetworkAccess, error) {
@@ -157,19 +114,6 @@ func PossibleValuesForSkuTier() []string {
 		string(SkuTierPremium),
 		string(SkuTierStandard),
 	}
-}
-
-func (s *SkuTier) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSkuTier(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseSkuTier(input string) (*SkuTier, error) {

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -34,7 +33,7 @@ func resourceVirtualNetwork() *pluginsdk.Resource {
 		Update: resourceVirtualNetworkCreateUpdate,
 		Delete: resourceVirtualNetworkDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := commonids.ParseVirtualNetworkID(id)
+			_, err := parse.VirtualNetworkID(id)
 			return err
 		}),
 
@@ -88,7 +87,7 @@ func resourceVirtualNetworkSchema() map[string]*pluginsdk.Schema {
 					"id": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: validate.DdosProtectionPlanID,
+						ValidateFunc: azure.ValidateResourceID,
 					},
 
 					"enable": {
@@ -165,9 +164,9 @@ func resourceVirtualNetworkCreateUpdate(d *pluginsdk.ResourceData, meta interfac
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := commonids.NewVirtualNetworkID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewVirtualNetworkID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, "")
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
@@ -188,7 +187,7 @@ func resourceVirtualNetworkCreateUpdate(d *pluginsdk.ResourceData, meta interfac
 	}
 
 	vnet := network.VirtualNetwork{
-		Name:                           utils.String(id.VirtualNetworkName),
+		Name:                           utils.String(id.Name),
 		ExtendedLocation:               expandEdgeZone(d.Get("edge_zone").(string)),
 		Location:                       utils.String(location),
 		VirtualNetworkPropertiesFormat: vnetProperties,
@@ -217,7 +216,7 @@ func resourceVirtualNetworkCreateUpdate(d *pluginsdk.ResourceData, meta interfac
 	locks.MultipleByName(&networkSecurityGroupNames, networkSecurityGroupResourceName)
 	defer locks.UnlockMultipleByName(&networkSecurityGroupNames, networkSecurityGroupResourceName)
 
-	future, err := client.CreateOrUpdate(ctx, id.ResourceGroupName, id.VirtualNetworkName, vnet)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, vnet)
 	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
@@ -247,12 +246,12 @@ func resourceVirtualNetworkRead(d *pluginsdk.ResourceData, meta interface{}) err
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseVirtualNetworkID(d.Id())
+	id, err := parse.VirtualNetworkID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, "")
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
@@ -261,8 +260,8 @@ func resourceVirtualNetworkRead(d *pluginsdk.ResourceData, meta interface{}) err
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.VirtualNetworkName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
 	d.Set("location", location.NormalizeNilable(resp.Location))
 	d.Set("edge_zone", flattenEdgeZone(resp.ExtendedLocation))
@@ -306,7 +305,7 @@ func resourceVirtualNetworkDelete(d *pluginsdk.ResourceData, meta interface{}) e
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := commonids.ParseVirtualNetworkID(d.Id())
+	id, err := parse.VirtualNetworkID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -319,7 +318,7 @@ func resourceVirtualNetworkDelete(d *pluginsdk.ResourceData, meta interface{}) e
 	locks.MultipleByName(&nsgNames, VirtualNetworkResourceName)
 	defer locks.UnlockMultipleByName(&nsgNames, VirtualNetworkResourceName)
 
-	future, err := client.Delete(ctx, id.ResourceGroupName, id.VirtualNetworkName)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
@@ -535,9 +534,9 @@ func expandAzureRmVirtualNetworkVirtualNetworkSecurityGroupNames(d *pluginsdk.Re
 	return nsgNames, nil
 }
 
-func VirtualNetworkProvisioningStateRefreshFunc(ctx context.Context, client *network.VirtualNetworksClient, id commonids.VirtualNetworkId) pluginsdk.StateRefreshFunc {
+func VirtualNetworkProvisioningStateRefreshFunc(ctx context.Context, client *network.VirtualNetworksClient, id parse.VirtualNetworkId) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		res, err := client.Get(ctx, id.ResourceGroupName, id.VirtualNetworkName, "")
+		res, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 		if err != nil {
 			return nil, "", fmt.Errorf("polling for %s: %+v", id.String(), err)
 		}

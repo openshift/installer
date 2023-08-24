@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ScopedLinkerId{}
 
 // ScopedLinkerId is a struct representing the Resource ID for a Scoped Linker
@@ -38,11 +35,11 @@ func ParseScopedLinkerID(input string) (*ScopedLinkerId, error) {
 	id := ScopedLinkerId{}
 
 	if id.ResourceUri, ok = parsed.Parsed["resourceUri"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceUri", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceUri' was not found in the resource id %q", input)
 	}
 
 	if id.LinkerName, ok = parsed.Parsed["linkerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "linkerName", *parsed)
+		return nil, fmt.Errorf("the segment 'linkerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -61,11 +58,11 @@ func ParseScopedLinkerIDInsensitively(input string) (*ScopedLinkerId, error) {
 	id := ScopedLinkerId{}
 
 	if id.ResourceUri, ok = parsed.Parsed["resourceUri"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceUri", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceUri' was not found in the resource id %q", input)
 	}
 
 	if id.LinkerName, ok = parsed.Parsed["linkerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "linkerName", *parsed)
+		return nil, fmt.Errorf("the segment 'linkerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

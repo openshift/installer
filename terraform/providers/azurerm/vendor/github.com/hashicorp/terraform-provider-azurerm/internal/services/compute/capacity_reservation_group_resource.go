@@ -1,23 +1,24 @@
 package compute
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservationgroups"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 func resourceCapacityReservationGroup() *pluginsdk.Resource {
@@ -35,7 +36,7 @@ func resourceCapacityReservationGroup() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := capacityreservationgroups.ParseCapacityReservationGroupID(id)
+			_, err := parse.CapacityReservationGroupID(id)
 			return err
 		}),
 
@@ -53,7 +54,7 @@ func resourceCapacityReservationGroup() *pluginsdk.Resource {
 
 			"zones": commonschema.ZonesMultipleOptionalForceNew(),
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
@@ -64,19 +65,22 @@ func resourceCapacityReservationGroupCreate(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := capacityreservationgroups.NewCapacityReservationGroupID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	existing, err := client.Get(ctx, id, capacityreservationgroups.DefaultGetOperationOptions())
+	name := d.Get("name").(string)
+	resourceGroup := d.Get("resource_group_name").(string)
+	id := parse.NewCapacityReservationGroupID(subscriptionId, resourceGroup, name)
+	existing, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 	if err != nil {
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return fmt.Errorf("checking for existing %s: %+v", id, err)
 		}
 	}
-	if !response.WasNotFound(existing.HttpResponse) {
+	if !utils.ResponseWasNotFound(existing.Response) {
 		return tf.ImportAsExistsError("azurerm_capacity_reservation_group", id.ID())
 	}
 
-	parameters := capacityreservationgroups.CapacityReservationGroup{
-		Location: location.Normalize(d.Get("location").(string)),
+	parameters := compute.CapacityReservationGroup{
+		Name:     utils.String(name),
+		Location: utils.String(location.Normalize(d.Get("location").(string))),
 		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
@@ -85,7 +89,7 @@ func resourceCapacityReservationGroupCreate(d *pluginsdk.ResourceData, meta inte
 		parameters.Zones = &zones
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, resourceGroup, name, parameters); err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
@@ -98,14 +102,14 @@ func resourceCapacityReservationGroupRead(d *pluginsdk.ResourceData, meta interf
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservationgroups.ParseCapacityReservationGroupID(d.Id())
+	id, err := parse.CapacityReservationGroupID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id, capacityreservationgroups.DefaultGetOperationOptions())
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] %s was not found - removing from state", *id)
 			d.SetId("")
 			return nil
@@ -113,18 +117,11 @@ func resourceCapacityReservationGroupRead(d *pluginsdk.ResourceData, meta interf
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	d.Set("name", id.CapacityReservationGroupName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
-		d.Set("zones", utils.FlattenStringSlice(model.Zones))
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
-		}
-	}
-
-	return nil
+	d.Set("name", resp.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("location", location.NormalizeNilable(resp.Location))
+	d.Set("zones", utils.FlattenStringSlice(resp.Zones))
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceCapacityReservationGroupUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -132,21 +129,20 @@ func resourceCapacityReservationGroupUpdate(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservationgroups.ParseCapacityReservationGroupID(d.Id())
+	id, err := parse.CapacityReservationGroupID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	parameters := capacityreservationgroups.CapacityReservationGroupUpdate{}
+	parameters := compute.CapacityReservationGroupUpdate{}
 
 	if d.HasChange("tags") {
 		parameters.Tags = tags.Expand(d.Get("tags").(map[string]interface{}))
 	}
 
-	if _, err := client.Update(ctx, *id, parameters); err != nil {
+	if _, err := client.Update(ctx, id.ResourceGroup, id.Name, parameters); err != nil {
 		return fmt.Errorf("updating %s: %+v", id, err)
 	}
-
 	return resourceCapacityReservationGroupRead(d, meta)
 }
 
@@ -155,24 +151,18 @@ func resourceCapacityReservationGroupDelete(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservationgroups.ParseCapacityReservationGroupID(d.Id())
+	id, err := parse.CapacityReservationGroupID(d.Id())
 	if err != nil {
 		return err
 	}
 
 	// It takes several seconds to sync the cache of reservations list in Capacity Reservation Group. Delete operation requires the list to be empty, and fails before the cache sync is completed.
 	// Retry the delete operation after a minute as a workaround. Issue is tracked by: https://github.com/Azure/azure-rest-api-specs/issues/18767
-	if _, err := client.Delete(ctx, *id); err != nil {
+	if _, err := client.Delete(ctx, id.ResourceGroup, id.Name); err != nil {
 		stateConf := &pluginsdk.StateChangeConf{
-			Pending: []string{"Deleting"},
-			Target:  []string{"Deleted"},
-			Refresh: func() (interface{}, string, error) {
-				res, err := client.Delete(ctx, *id)
-				if err != nil {
-					return res, "Deleting", nil
-				}
-				return res, "Deleted", nil
-			},
+			Pending:    []string{"Deleting"},
+			Target:     []string{"Deleted"},
+			Refresh:    capacityReservationGroupDeleteRefreshFunc(ctx, client, id.ResourceGroup, id.Name),
 			MinTimeout: 15 * time.Second,
 			Timeout:    1 * time.Minute,
 		}
@@ -183,4 +173,14 @@ func resourceCapacityReservationGroupDelete(d *pluginsdk.ResourceData, meta inte
 	}
 
 	return nil
+}
+
+func capacityReservationGroupDeleteRefreshFunc(ctx context.Context, client *compute.CapacityReservationGroupsClient, resourceGroup string, name string) pluginsdk.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.Delete(ctx, resourceGroup, name)
+		if err != nil {
+			return res, "Deleting", nil
+		}
+		return res, "Deleted", nil
+	}
 }

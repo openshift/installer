@@ -1,10 +1,6 @@
 package budgets
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -19,19 +15,6 @@ func PossibleValuesForBudgetOperatorType() []string {
 	return []string{
 		string(BudgetOperatorTypeIn),
 	}
-}
-
-func (s *BudgetOperatorType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseBudgetOperatorType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseBudgetOperatorType(input string) (*BudgetOperatorType, error) {
@@ -57,19 +40,6 @@ func PossibleValuesForCategoryType() []string {
 	return []string{
 		string(CategoryTypeCost),
 	}
-}
-
-func (s *CategoryType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseCategoryType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseCategoryType(input string) (*CategoryType, error) {
@@ -137,19 +107,6 @@ func PossibleValuesForCultureCode() []string {
 	}
 }
 
-func (s *CultureCode) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseCultureCode(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseCultureCode(input string) (*CultureCode, error) {
 	vals := map[string]CultureCode{
 		"cs-cz": CultureCodeCsNegativecz,
@@ -199,19 +156,6 @@ func PossibleValuesForOperatorType() []string {
 	}
 }
 
-func (s *OperatorType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseOperatorType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseOperatorType(input string) (*OperatorType, error) {
 	vals := map[string]OperatorType{
 		"equalto":              OperatorTypeEqualTo,
@@ -237,19 +181,6 @@ func PossibleValuesForThresholdType() []string {
 	return []string{
 		string(ThresholdTypeActual),
 	}
-}
-
-func (s *ThresholdType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseThresholdType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseThresholdType(input string) (*ThresholdType, error) {
@@ -285,19 +216,6 @@ func PossibleValuesForTimeGrainType() []string {
 		string(TimeGrainTypeMonthly),
 		string(TimeGrainTypeQuarterly),
 	}
-}
-
-func (s *TimeGrainType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTimeGrainType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseTimeGrainType(input string) (*TimeGrainType, error) {

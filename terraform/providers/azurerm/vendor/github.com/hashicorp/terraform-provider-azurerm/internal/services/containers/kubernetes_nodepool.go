@@ -7,16 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/zones"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservationgroups"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/proximityplacementgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2023-04-02-preview/agentpools"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2023-04-02-preview/managedclusters"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2022-09-02-preview/agentpools"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2022-09-02-preview/managedclusters"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/validate"
 	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
@@ -33,18 +31,11 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 		Elem: &pluginsdk.Resource{
 			Schema: func() map[string]*pluginsdk.Schema {
 				s := map[string]*pluginsdk.Schema{
-					// Required and conditionally ForceNew: updating `name` back to name when it's been set to the value
-					// of `temporary_name_for_rotation` during the resizing of the default node pool should be allowed and
-					// not force cluster recreation
+					// Required
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: validate.KubernetesAgentPoolName,
-					},
-
-					"temporary_name_for_rotation": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
+						ForceNew:     true,
 						ValidateFunc: validate.KubernetesAgentPoolName,
 					},
 
@@ -62,6 +53,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"vm_size": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
+						ForceNew:     true,
 						ValidateFunc: validation.StringIsNotEmpty,
 					},
 
@@ -69,7 +61,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
 						ForceNew:     true,
-						ValidateFunc: capacityreservationgroups.ValidateCapacityReservationGroupID,
+						ValidateFunc: computeValidate.CapacityReservationGroupID,
 					},
 
 					"custom_ca_trust_enabled": {
@@ -87,12 +79,14 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"enable_node_public_ip": {
 						Type:     pluginsdk.TypeBool,
 						Optional: true,
+						ForceNew: true,
 					},
 
 					// TODO 4.0: change this from enable_* to *_enabled
 					"enable_host_encryption": {
 						Type:     pluginsdk.TypeBool,
 						Optional: true,
+						ForceNew: true,
 					},
 
 					"kubelet_config": schemaNodePoolKubeletConfig(),
@@ -126,6 +120,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 						Type:     pluginsdk.TypeInt,
 						Optional: true,
 						Computed: true,
+						ForceNew: true,
 					},
 
 					"message_of_the_day": {
@@ -164,12 +159,13 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
 						ForceNew:     true,
-						ValidateFunc: networkValidate.PublicIpPrefixID,
+						ValidateFunc: azure.ValidateResourceID,
 						RequiredWith: []string{"default_node_pool.0.enable_node_public_ip"},
 					},
 
 					"node_taints": {
 						Type:     pluginsdk.TypeList,
+						ForceNew: true,
 						Optional: true,
 						Elem: &pluginsdk.Schema{
 							Type: pluginsdk.TypeString,
@@ -181,6 +177,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"os_disk_size_gb": {
 						Type:         pluginsdk.TypeInt,
 						Optional:     true,
+						ForceNew:     true,
 						Computed:     true,
 						ValidateFunc: validation.IntAtLeast(1),
 					},
@@ -188,6 +185,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"os_disk_type": {
 						Type:     pluginsdk.TypeString,
 						Optional: true,
+						ForceNew: true,
 						Default:  agentpools.OSDiskTypeManaged,
 						ValidateFunc: validation.StringInSlice([]string{
 							string(managedclusters.OSDiskTypeEphemeral),
@@ -198,9 +196,11 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"os_sku": {
 						Type:     pluginsdk.TypeString,
 						Optional: true,
+						ForceNew: true,
 						Computed: true, // defaults to Ubuntu if using Linux
 						ValidateFunc: validation.StringInSlice([]string{
-							string(agentpools.OSSKUAzureLinux),
+							string(agentpools.OSSKUCBLMariner),
+							string(agentpools.OSSKUMariner),
 							string(agentpools.OSSKUUbuntu),
 							string(agentpools.OSSKUWindowsTwoZeroOneNine),
 							string(agentpools.OSSKUWindowsTwoZeroTwoTwo),
@@ -209,6 +209,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 
 					"ultra_ssd_enabled": {
 						Type:     pluginsdk.TypeBool,
+						ForceNew: true,
 						Default:  false,
 						Optional: true,
 					},
@@ -216,7 +217,8 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"vnet_subnet_id": {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
-						ValidateFunc: commonids.ValidateSubnetID,
+						ForceNew:     true,
+						ValidateFunc: azure.ValidateResourceID,
 					},
 					"orchestrator_version": {
 						Type:         pluginsdk.TypeString,
@@ -227,7 +229,8 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"pod_subnet_id": {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
-						ValidateFunc: commonids.ValidateSubnetID,
+						ForceNew:     true,
+						ValidateFunc: networkValidate.SubnetID,
 					},
 					"proximity_placement_group_id": {
 						Type:         pluginsdk.TypeString,
@@ -238,6 +241,7 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 					"only_critical_addons_enabled": {
 						Type:     pluginsdk.TypeBool,
 						Optional: true,
+						ForceNew: true,
 					},
 
 					"scale_down_mode": {
@@ -265,23 +269,11 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 						Computed: true,
 						ValidateFunc: validation.StringInSlice([]string{
 							string(managedclusters.WorkloadRuntimeOCIContainer),
-							string(managedclusters.WorkloadRuntimeKataMshvVMIsolation),
 						}, false),
 					},
 				}
 
-				s["zones"] = commonschema.ZonesMultipleOptional()
-
-				if !features.FourPointOhBeta() {
-					s["os_sku"].ValidateFunc = validation.StringInSlice([]string{
-						string(agentpools.OSSKUAzureLinux),
-						string(agentpools.OSSKUCBLMariner),
-						string(agentpools.OSSKUMariner),
-						string(agentpools.OSSKUUbuntu),
-						string(agentpools.OSSKUWindowsTwoZeroOneNine),
-						string(agentpools.OSSKUWindowsTwoZeroTwoTwo),
-					}, false)
-				}
+				s["zones"] = commonschema.ZonesMultipleOptionalForceNew()
 
 				return s
 			}(),
@@ -290,84 +282,6 @@ func SchemaDefaultNodePool() *pluginsdk.Schema {
 }
 
 func schemaNodePoolKubeletConfig() *pluginsdk.Schema {
-	return &pluginsdk.Schema{
-		Type:     pluginsdk.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem: &pluginsdk.Resource{
-			Schema: map[string]*pluginsdk.Schema{
-				"cpu_manager_policy": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					ValidateFunc: validation.StringInSlice([]string{
-						"none",
-						"static",
-					}, false),
-				},
-
-				"cpu_cfs_quota_enabled": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-				},
-
-				"cpu_cfs_quota_period": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-				},
-
-				"image_gc_high_threshold": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					ValidateFunc: validation.IntBetween(0, 100),
-				},
-
-				"image_gc_low_threshold": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					ValidateFunc: validation.IntBetween(0, 100),
-				},
-
-				"topology_manager_policy": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					ValidateFunc: validation.StringInSlice([]string{
-						"none",
-						"best-effort",
-						"restricted",
-						"single-numa-node",
-					}, false),
-				},
-
-				"allowed_unsafe_sysctls": {
-					Type:     pluginsdk.TypeSet,
-					Optional: true,
-					Elem: &pluginsdk.Schema{
-						Type: pluginsdk.TypeString,
-					},
-				},
-
-				"container_log_max_size_mb": {
-					Type:     pluginsdk.TypeInt,
-					Optional: true,
-				},
-
-				// TODO 4.0: change this to `container_log_max_files`
-				"container_log_max_line": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					ValidateFunc: validation.IntAtLeast(2),
-				},
-
-				"pod_max_pid": {
-					Type:     pluginsdk.TypeInt,
-					Optional: true,
-				},
-			},
-		},
-	}
-}
-
-func schemaNodePoolKubeletConfigForceNew() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
 		Type:     pluginsdk.TypeList,
 		Optional: true,
@@ -457,46 +371,6 @@ func schemaNodePoolKubeletConfigForceNew() *pluginsdk.Schema {
 }
 
 func schemaNodePoolLinuxOSConfig() *pluginsdk.Schema {
-	return &pluginsdk.Schema{
-		Type:     pluginsdk.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem: &pluginsdk.Resource{
-			Schema: map[string]*pluginsdk.Schema{
-				"sysctl_config": schemaNodePoolSysctlConfig(),
-
-				"transparent_huge_page_enabled": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					ValidateFunc: validation.StringInSlice([]string{
-						"always",
-						"madvise",
-						"never",
-					}, false),
-				},
-
-				"transparent_huge_page_defrag": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					ValidateFunc: validation.StringInSlice([]string{
-						"always",
-						"defer",
-						"defer+madvise",
-						"madvise",
-						"never",
-					}, false),
-				},
-
-				"swap_file_size_mb": {
-					Type:     pluginsdk.TypeInt,
-					Optional: true,
-				},
-			},
-		},
-	}
-}
-
-func schemaNodePoolLinuxOSConfigForceNew() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
 		Type:     pluginsdk.TypeList,
 		Optional: true,
@@ -790,7 +664,6 @@ func ConvertDefaultNodePoolToAgentPool(input *[]managedclusters.ManagedClusterAg
 			MinCount:                  defaultCluster.MinCount,
 			EnableAutoScaling:         defaultCluster.EnableAutoScaling,
 			EnableCustomCATrust:       defaultCluster.EnableCustomCATrust,
-			EnableEncryptionAtHost:    defaultCluster.EnableEncryptionAtHost,
 			EnableFIPS:                defaultCluster.EnableFIPS,
 			OrchestratorVersion:       defaultCluster.OrchestratorVersion,
 			ProximityPlacementGroupID: defaultCluster.ProximityPlacementGroupID,
@@ -851,9 +724,6 @@ func ConvertDefaultNodePoolToAgentPool(input *[]managedclusters.ManagedClusterAg
 	}
 	if osTypeNodePool := defaultCluster.OsType; osTypeNodePool != nil {
 		agentpool.Properties.OsType = utils.ToPtr(agentpools.OSType(string(*osTypeNodePool)))
-	}
-	if osSku := defaultCluster.OsSKU; osSku != nil {
-		agentpool.Properties.OsSKU = utils.ToPtr(agentpools.OSSKU(*osSku))
 	}
 	if kubeletDiskTypeNodePool := defaultCluster.KubeletDiskType; kubeletDiskTypeNodePool != nil {
 		agentpool.Properties.KubeletDiskType = utils.ToPtr(agentpools.KubeletDiskType(string(*kubeletDiskTypeNodePool)))
@@ -1310,9 +1180,6 @@ func FlattenDefaultNodePool(input *[]managedclusters.ManagedClusterAgentPoolProf
 
 	name := agentPool.Name
 
-	// we pull this from the config, since the temporary node pool for cycling the system node pool won't exist if the operation is successful
-	temporaryName := d.Get("default_node_pool.0.temporary_name_for_rotation").(string)
-
 	var nodeLabels map[string]string
 	if agentPool.NodeLabels != nil {
 		nodeLabels = make(map[string]string)
@@ -1438,7 +1305,6 @@ func FlattenDefaultNodePool(input *[]managedclusters.ManagedClusterAgentPoolProf
 		"os_sku":                        osSKU,
 		"scale_down_mode":               string(scaleDownMode),
 		"tags":                          tags.Flatten(agentPool.Tags),
-		"temporary_name_for_rotation":   temporaryName,
 		"type":                          agentPoolType,
 		"ultra_ssd_enabled":             enableUltraSSD,
 		"vm_size":                       vmSize,
@@ -1781,7 +1647,6 @@ func flattenClusterNodePoolSysctlConfig(input *managedclusters.SysctlConfig) ([]
 func findDefaultNodePool(input *[]managedclusters.ManagedClusterAgentPoolProfile, d *pluginsdk.ResourceData) (*managedclusters.ManagedClusterAgentPoolProfile, error) {
 	// first try loading this from the Resource Data if possible (e.g. when Created)
 	defaultNodePoolName := d.Get("default_node_pool.0.name")
-	tempNodePoolName := d.Get("default_node_pool.0.temporary_name_for_rotation")
 
 	var agentPool *managedclusters.ManagedClusterAgentPoolProfile
 	if defaultNodePoolName != "" {
@@ -1794,7 +1659,6 @@ func findDefaultNodePool(input *[]managedclusters.ManagedClusterAgentPoolProfile
 		}
 	}
 
-	// fallback to the temp node pool or other system node pools that exist for the cluster
 	if agentPool == nil {
 		// otherwise we need to fall back to the name of the first agent pool
 		for _, v := range *input {
@@ -1803,12 +1667,6 @@ func findDefaultNodePool(input *[]managedclusters.ManagedClusterAgentPoolProfile
 			}
 			if *v.Mode != managedclusters.AgentPoolModeSystem {
 				continue
-			}
-
-			if v.Name == tempNodePoolName {
-				defaultNodePoolName = v.Name
-				agentPool = &v
-				break
 			}
 
 			defaultNodePoolName = v.Name

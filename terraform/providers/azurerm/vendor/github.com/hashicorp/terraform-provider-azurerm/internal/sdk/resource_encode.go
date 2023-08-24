@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package sdk
 
 import (
@@ -127,7 +124,7 @@ func recurse(objType reflect.Type, objVal reflect.Value, fieldName string, debug
 						fieldName := field.Name
 						serialized, err := recurse(nestedType, nestedValue, fieldName, debugLogger)
 						if err != nil {
-							return nil, fmt.Errorf("serializing nested object %q: %+v", sv.Type(), err)
+							return nil, fmt.Errorf("serializing nested object %q: %+v", sv.Type(), exists)
 						}
 						attr[i] = serialized
 					}

@@ -2,7 +2,6 @@ package deploymentscripts
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -105,26 +104,16 @@ func (c DeploymentScriptsClient) preparerForListByResourceGroupWithNextLink(ctx 
 // closes the http.Response Body.
 func (c DeploymentScriptsClient) responderForListByResourceGroup(resp *http.Response) (result ListByResourceGroupOperationResponse, err error) {
 	type page struct {
-		Values   []json.RawMessage `json:"value"`
-		NextLink *string           `json:"nextLink"`
+		Values   []DeploymentScript `json:"value"`
+		NextLink *string            `json:"nextLink"`
 	}
 	var respObj page
 	err = autorest.Respond(
 		resp,
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&respObj),
 		autorest.ByClosing())
 	result.HttpResponse = resp
-	temp := make([]DeploymentScript, 0)
-	for i, v := range respObj.Values {
-		val, err := unmarshalDeploymentScriptImplementation(v)
-		if err != nil {
-			err = fmt.Errorf("unmarshalling item %d for DeploymentScript (%q): %+v", i, v, err)
-			return result, err
-		}
-		temp = append(temp, val)
-	}
-	result.Model = &temp
+	result.Model = &respObj.Values
 	result.nextLink = respObj.NextLink
 	if respObj.NextLink != nil {
 		result.nextPageFunc = func(ctx context.Context, nextLink string) (result ListByResourceGroupOperationResponse, err error) {

@@ -5,11 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/automation/mgmt/2020-01-13-preview/automation" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2020-01-13-preview/connection"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -25,7 +25,7 @@ func resourceAutomationConnectionCertificate() *pluginsdk.Resource {
 		Delete: resourceAutomationConnectionCertificateDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceIdThen(func(id string) error {
-			_, err := connection.ParseConnectionID(id)
+			_, err := parse.ConnectionID(id)
 			return err
 		}, importAutomationConnection("Azure")),
 
@@ -75,44 +75,41 @@ func resourceAutomationConnectionCertificate() *pluginsdk.Resource {
 
 func resourceAutomationConnectionCertificateCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Automation.ConnectionClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for AzureRM Automation Connection creation.")
 
-	id := connection.NewConnectionID(subscriptionId, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
+	id := parse.NewConnectionID(client.SubscriptionID, d.Get("resource_group_name").(string), d.Get("automation_account_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_automation_connection_certificate", id.ID())
 		}
 	}
 
-	fieldDefinitionValues := map[string]string{
-		"AutomationCertificateName": d.Get("automation_certificate_name").(string),
-		"SubscriptionID":            d.Get("subscription_id").(string),
-	}
-
-	parameters := connection.ConnectionCreateOrUpdateParameters{
-		Name: id.ConnectionName,
-		Properties: connection.ConnectionCreateOrUpdateProperties{
+	parameters := automation.ConnectionCreateOrUpdateParameters{
+		Name: &id.Name,
+		ConnectionCreateOrUpdateProperties: &automation.ConnectionCreateOrUpdateProperties{
 			Description: utils.String(d.Get("description").(string)),
-			ConnectionType: connection.ConnectionTypeAssociationProperty{
+			ConnectionType: &automation.ConnectionTypeAssociationProperty{
 				Name: utils.String("Azure"),
 			},
-			FieldDefinitionValues: &fieldDefinitionValues,
+			FieldDefinitionValues: map[string]*string{
+				"AutomationCertificateName": utils.String(d.Get("automation_certificate_name").(string)),
+				"SubscriptionID":            utils.String(d.Get("subscription_id").(string)),
+			},
 		},
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name, parameters); err != nil {
 		return err
 	}
 
@@ -126,39 +123,35 @@ func resourceAutomationConnectionCertificateRead(d *pluginsdk.ResourceData, meta
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := connection.ParseConnectionID(d.Id())
+	id, err := parse.ConnectionID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("read request on %s: %+v", *id, err)
+		return fmt.Errorf("Read request on AzureRM Automation Connection '%s': %+v", id.Name, err)
 	}
 
-	d.Set("name", id.ConnectionName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", resp.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("automation_account_name", id.AutomationAccountName)
+	d.Set("description", resp.Description)
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			if props.FieldDefinitionValues != nil {
-				fieldDefinitionValues := *props.FieldDefinitionValues
-				if v, ok := fieldDefinitionValues["AutomationCertificateName"]; ok {
-					d.Set("automation_certificate_name", v)
-				}
-				if v, ok := fieldDefinitionValues["SubscriptionID"]; ok {
-					d.Set("subscription_id", v)
-				}
-			}
-			d.Set("description", props.Description)
+	if props := resp.ConnectionProperties; props != nil {
+		if v, ok := props.FieldDefinitionValues["AutomationCertificateName"]; ok {
+			d.Set("automation_certificate_name", v)
+		}
+		if v, ok := props.FieldDefinitionValues["SubscriptionID"]; ok {
+			d.Set("subscription_id", v)
 		}
 	}
+
 	return nil
 }
 
@@ -167,18 +160,19 @@ func resourceAutomationConnectionCertificateDelete(d *pluginsdk.ResourceData, me
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := connection.ParseConnectionID(d.Id())
+	id, err := parse.ConnectionID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Delete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.AutomationAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp) {
 			return nil
 		}
 
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+		return fmt.Errorf("deleting Automation Connection '%s': %+v", id.Name, err)
 	}
+
 	return nil
 }

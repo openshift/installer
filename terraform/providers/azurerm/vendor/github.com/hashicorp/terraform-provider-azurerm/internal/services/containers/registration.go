@@ -9,11 +9,6 @@ type Registration struct {
 	autoRegistration
 }
 
-var (
-	_ sdk.TypedServiceRegistration   = Registration{}
-	_ sdk.UntypedServiceRegistration = Registration{}
-)
-
 // Name is the name of this Service
 func (r Registration) Name() string {
 	return "Container Services"
@@ -56,9 +51,7 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	dataSources := []sdk.DataSource{
-		KubernetesNodePoolSnapshotDataSource{},
-	}
+	dataSources := []sdk.DataSource{}
 	dataSources = append(dataSources, r.autoRegistration.DataSources()...)
 	return dataSources
 }
@@ -69,8 +62,6 @@ func (r Registration) Resources() []sdk.Resource {
 		ContainerRegistryTaskScheduleResource{},
 		ContainerRegistryTokenPasswordResource{},
 		ContainerConnectedRegistryResource{},
-		KubernetesClusterExtensionResource{},
-		KubernetesFluxConfigurationResource{},
 	}
 	resources = append(resources, r.autoRegistration.Resources()...)
 	return resources

@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -120,7 +119,7 @@ func resourcePrivateLinkService() *pluginsdk.Resource {
 						"subnet_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: commonids.ValidateSubnetID,
+							ValidateFunc: azure.ValidateResourceID,
 						},
 						"primary": {
 							Type:     pluginsdk.TypeBool,

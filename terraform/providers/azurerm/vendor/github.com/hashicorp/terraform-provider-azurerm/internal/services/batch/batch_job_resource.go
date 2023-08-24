@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	batchDataplane "github.com/Azure/azure-sdk-for-go/services/batch/2020-03-01.11.0/batch"
 	"github.com/Azure/go-autorest/autorest/date"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/batchaccount"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/pool"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-01-01/batchaccount"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-01-01/pool"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	batchDataplane "github.com/tombuildsstuff/kermit/sdk/batch/2022-01.15.0/batch"
 )
 
 type BatchJobResource struct{}

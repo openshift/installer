@@ -2,13 +2,14 @@ package helpers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-03-01/web" // nolint: staticcheck
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
-	"github.com/tombuildsstuff/kermit/sdk/web/2022-09-01/web"
 )
 
 type VirtualApplication struct {
@@ -1241,33 +1242,8 @@ func ExpandAppSettingsForCreate(settings map[string]string) *[]web.NameValuePair
 	return nil
 }
 
-// FilterManagedAppSettings removes app_settings values from the state that are controlled directly be schema properties.
-func FilterManagedAppSettings(input map[string]string) map[string]string {
-	unmanagedSettings := []string{
-		"DOCKER_REGISTRY_SERVER_URL",
-		"DOCKER_REGISTRY_SERVER_USERNAME",
-		"DOCKER_REGISTRY_SERVER_PASSWORD",
-		"DIAGNOSTICS_AZUREBLOBCONTAINERSASURL",
-		"DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS",
-		"WEBSITE_HTTPLOGGING_CONTAINER_URL",
-		"WEBSITE_HTTPLOGGING_RETENTION_DAYS",
-		"WEBSITE_VNET_ROUTE_ALL",
-		"spring.datasource.password",
-		"spring.datasource.url",
-		"spring.datasource.username",
-		"WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
-	}
-
-	for _, v := range unmanagedSettings { //nolint:typecheck
-		delete(input, v)
-	}
-
-	return input
-}
-
-// FilterManagedAppSettingsDeprecated removes app_settings values from the state that are controlled directly be
-// schema properties when the deprecated docker settings are used. This function should be removed in 4.0
-func FilterManagedAppSettingsDeprecated(input map[string]string) map[string]string {
+func FlattenAppSettings(input web.StringDictionary) (map[string]string, *int, error) {
+	maxPingFailures := "WEBSITE_HEALTHCHECK_MAXPINGFAILURES"
 	unmanagedSettings := []string{
 		"DIAGNOSTICS_AZUREBLOBCONTAINERSASURL",
 		"DIAGNOSTICS_AZUREBLOBRETENTIONINDAYS",
@@ -1277,19 +1253,30 @@ func FilterManagedAppSettingsDeprecated(input map[string]string) map[string]stri
 		"spring.datasource.password",
 		"spring.datasource.url",
 		"spring.datasource.username",
-		"WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
+		maxPingFailures,
 	}
 
+	var healthCheckCount *int
+	appSettings := FlattenWebStringDictionary(input)
+	if v, ok := appSettings[maxPingFailures]; ok {
+		h, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, nil, fmt.Errorf("could not convert max ping failures to int")
+		}
+		healthCheckCount = &h
+	}
+
+	// Remove the settings the service adds for legacy reasons.
 	for _, v := range unmanagedSettings { //nolint:typecheck
-		delete(input, v)
+		delete(appSettings, v)
 	}
 
-	return input
+	return appSettings, healthCheckCount, nil
 }
 
 func flattenVirtualApplications(appVirtualApplications *[]web.VirtualApplication) []VirtualApplication {
 	if appVirtualApplications == nil || onlyDefaultVirtualApplication(*appVirtualApplications) {
-		return []VirtualApplication{}
+		return nil
 	}
 
 	var virtualApplications []VirtualApplication
@@ -1361,7 +1348,7 @@ func DisabledLogsConfig() *web.SiteLogsConfig {
 	}
 }
 
-func IsFreeOrSharedServicePlan(inputSKU string) bool {
+func isFreeOrSharedServicePlan(inputSKU string) bool {
 	result := false
 	for _, sku := range freeSkus {
 		if inputSKU == sku {

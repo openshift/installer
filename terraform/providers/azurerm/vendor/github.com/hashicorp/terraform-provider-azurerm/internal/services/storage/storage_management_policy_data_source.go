@@ -94,19 +94,11 @@ func dataSourceStorageManagementPolicy() *pluginsdk.Resource {
 													Type:     pluginsdk.TypeInt,
 													Computed: true,
 												},
-												"tier_to_cool_after_days_since_last_access_time_greater_than": {
-													Type:     pluginsdk.TypeInt,
-													Computed: true,
-												},
-												"auto_tier_to_hot_from_cool_enabled": {
-													Type:     pluginsdk.TypeBool,
-													Computed: true,
-												},
-												"tier_to_cool_after_days_since_creation_greater_than": {
-													Type:     pluginsdk.TypeInt,
-													Computed: true,
-												},
 												"tier_to_archive_after_days_since_modification_greater_than": {
+													Type:     pluginsdk.TypeInt,
+													Computed: true,
+												},
+												"delete_after_days_since_modification_greater_than": {
 													Type:     pluginsdk.TypeInt,
 													Computed: true,
 												},
@@ -118,19 +110,11 @@ func dataSourceStorageManagementPolicy() *pluginsdk.Resource {
 													Type:     pluginsdk.TypeInt,
 													Computed: true,
 												},
-												"tier_to_archive_after_days_since_creation_greater_than": {
-													Type:     pluginsdk.TypeInt,
-													Computed: true,
-												},
-												"delete_after_days_since_modification_greater_than": {
-													Type:     pluginsdk.TypeInt,
-													Computed: true,
-												},
 												"delete_after_days_since_last_access_time_greater_than": {
 													Type:     pluginsdk.TypeInt,
 													Computed: true,
 												},
-												"delete_after_days_since_creation_greater_than": {
+												"tier_to_cool_after_days_since_last_access_time_greater_than": {
 													Type:     pluginsdk.TypeInt,
 													Computed: true,
 												},
@@ -152,6 +136,7 @@ func dataSourceStorageManagementPolicy() *pluginsdk.Resource {
 												},
 												"change_tier_to_cool_after_days_since_creation": {
 													Type:     pluginsdk.TypeInt,
+													Optional: true,
 													Computed: true,
 												},
 												"delete_after_days_since_creation_greater_than": {

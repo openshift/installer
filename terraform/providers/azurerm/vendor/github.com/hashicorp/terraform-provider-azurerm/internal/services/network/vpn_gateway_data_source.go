@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
@@ -157,7 +158,9 @@ func dataSourceVPNGatewayRead(d *pluginsdk.ResourceData, meta interface{}) error
 	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
-			return fmt.Errorf("%s was not found", id)
+			log.Printf("[DEBUG] VPN Gateway %q was not found in Resource Group %q - removing from state", id.Name, id.ResourceGroup)
+			d.SetId("")
+			return nil
 		}
 
 		return fmt.Errorf("Error retrieving VPN Gateway %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)

@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = IotAppId{}
 
 // IotAppId is a struct representing the Resource ID for a Iot App
@@ -40,15 +37,15 @@ func ParseIotAppID(input string) (*IotAppId, error) {
 	id := IotAppId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.IotAppName, ok = parsed.Parsed["iotAppName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iotAppName", *parsed)
+		return nil, fmt.Errorf("the segment 'iotAppName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseIotAppIDInsensitively(input string) (*IotAppId, error) {
 	id := IotAppId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.IotAppName, ok = parsed.Parsed["iotAppName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iotAppName", *parsed)
+		return nil, fmt.Errorf("the segment 'iotAppName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

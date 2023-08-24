@@ -1,10 +1,6 @@
 package redisenterprise
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -21,19 +17,6 @@ func PossibleValuesForAccessKeyType() []string {
 		string(AccessKeyTypePrimary),
 		string(AccessKeyTypeSecondary),
 	}
-}
-
-func (s *AccessKeyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAccessKeyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAccessKeyType(input string) (*AccessKeyType, error) {
@@ -64,19 +47,6 @@ func PossibleValuesForAofFrequency() []string {
 	}
 }
 
-func (s *AofFrequency) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAofFrequency(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseAofFrequency(input string) (*AofFrequency, error) {
 	vals := map[string]AofFrequency{
 		"always": AofFrequencyAlways,
@@ -103,19 +73,6 @@ func PossibleValuesForClusteringPolicy() []string {
 		string(ClusteringPolicyEnterpriseCluster),
 		string(ClusteringPolicyOSSCluster),
 	}
-}
-
-func (s *ClusteringPolicy) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseClusteringPolicy(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseClusteringPolicy(input string) (*ClusteringPolicy, error) {
@@ -158,19 +115,6 @@ func PossibleValuesForEvictionPolicy() []string {
 	}
 }
 
-func (s *EvictionPolicy) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseEvictionPolicy(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseEvictionPolicy(input string) (*EvictionPolicy, error) {
 	vals := map[string]EvictionPolicy{
 		"allkeyslfu":     EvictionPolicyAllKeysLFU,
@@ -211,19 +155,6 @@ func PossibleValuesForLinkState() []string {
 	}
 }
 
-func (s *LinkState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLinkState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseLinkState(input string) (*LinkState, error) {
 	vals := map[string]LinkState{
 		"linkfailed":   LinkStateLinkFailed,
@@ -259,19 +190,6 @@ func PossibleValuesForPrivateEndpointConnectionProvisioningState() []string {
 	}
 }
 
-func (s *PrivateEndpointConnectionProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointConnectionProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointConnectionProvisioningState(input string) (*PrivateEndpointConnectionProvisioningState, error) {
 	vals := map[string]PrivateEndpointConnectionProvisioningState{
 		"creating":  PrivateEndpointConnectionProvisioningStateCreating,
@@ -304,19 +222,6 @@ func PossibleValuesForPrivateEndpointServiceConnectionStatus() []string {
 	}
 }
 
-func (s *PrivateEndpointServiceConnectionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointServiceConnectionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointServiceConnectionStatus(input string) (*PrivateEndpointServiceConnectionStatus, error) {
 	vals := map[string]PrivateEndpointServiceConnectionStatus{
 		"approved": PrivateEndpointServiceConnectionStatusApproved,
@@ -344,19 +249,6 @@ func PossibleValuesForProtocol() []string {
 		string(ProtocolEncrypted),
 		string(ProtocolPlaintext),
 	}
-}
-
-func (s *Protocol) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProtocol(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseProtocol(input string) (*Protocol, error) {
@@ -395,19 +287,6 @@ func PossibleValuesForProvisioningState() []string {
 	}
 }
 
-func (s *ProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseProvisioningState(input string) (*ProvisioningState, error) {
 	vals := map[string]ProvisioningState{
 		"canceled":  ProvisioningStateCanceled,
@@ -440,19 +319,6 @@ func PossibleValuesForRdbFrequency() []string {
 		string(RdbFrequencyOneh),
 		string(RdbFrequencySixh),
 	}
-}
-
-func (s *RdbFrequency) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRdbFrequency(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseRdbFrequency(input string) (*RdbFrequency, error) {
@@ -504,19 +370,6 @@ func PossibleValuesForResourceState() []string {
 	}
 }
 
-func (s *ResourceState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseResourceState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseResourceState(input string) (*ResourceState, error) {
 	vals := map[string]ResourceState{
 		"createfailed":  ResourceStateCreateFailed,
@@ -565,19 +418,6 @@ func PossibleValuesForSkuName() []string {
 	}
 }
 
-func (s *SkuName) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSkuName(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseSkuName(input string) (*SkuName, error) {
 	vals := map[string]SkuName{
 		"enterprise_e50":        SkuNameEnterpriseEFiveZero,
@@ -611,19 +451,6 @@ func PossibleValuesForTlsVersion() []string {
 		string(TlsVersionOnePointTwo),
 		string(TlsVersionOnePointZero),
 	}
-}
-
-func (s *TlsVersion) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseTlsVersion(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseTlsVersion(input string) (*TlsVersion, error) {

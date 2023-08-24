@@ -75,8 +75,7 @@ func resourceStorageAccountNetworkRulesSchema() map[string]*pluginsdk.Schema {
 			Computed:   true,
 			ConfigMode: pluginsdk.SchemaConfigModeAttr,
 			Elem: &pluginsdk.Schema{
-				Type:         pluginsdk.TypeString,
-				ValidateFunc: validate.StorageAccountIpRule,
+				Type: pluginsdk.TypeString,
 			},
 			Set: pluginsdk.HashString,
 		},

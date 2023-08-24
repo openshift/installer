@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -71,7 +72,9 @@ func dataSourceStorageTableEntityRead(d *pluginsdk.ResourceData, meta interface{
 		return fmt.Errorf("retrieving Account %q for Table %q: %s", storageAccountName, tableName, err)
 	}
 	if account == nil {
-		return fmt.Errorf("the parent Storage Account %s was not found", storageAccountName)
+		log.Printf("[WARN] Unable to determine Resource Group for Storage Table %q (Account %s) - assuming removed & removing from state", tableName, storageAccountName)
+		d.SetId("")
+		return nil
 	}
 
 	client, err := storageClient.TableEntityClient(ctx, *account)

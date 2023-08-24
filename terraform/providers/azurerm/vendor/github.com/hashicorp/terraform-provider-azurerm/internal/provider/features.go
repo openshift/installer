@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
@@ -170,6 +167,20 @@ func schemaFeatures(supportLegacyTestSuite bool) *pluginsdk.Schema {
 						Type:     pluginsdk.TypeBool,
 						Optional: true,
 						Default:  !features.FourPointOhBeta(),
+					},
+				},
+			},
+		},
+
+		"network": {
+			Type:     pluginsdk.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &pluginsdk.Resource{
+				Schema: map[string]*pluginsdk.Schema{
+					"relaxed_locking": {
+						Type:     pluginsdk.TypeBool,
+						Required: true,
 					},
 				},
 			},

@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = MongodbDatabaseCollectionId{}
 
 // MongodbDatabaseCollectionId is a struct representing the Resource ID for a Mongodb Database Collection
@@ -44,23 +41,23 @@ func ParseMongodbDatabaseCollectionID(input string) (*MongodbDatabaseCollectionI
 	id := MongodbDatabaseCollectionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.MongodbDatabaseName, ok = parsed.Parsed["mongodbDatabaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "mongodbDatabaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'mongodbDatabaseName' was not found in the resource id %q", input)
 	}
 
 	if id.CollectionName, ok = parsed.Parsed["collectionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "collectionName", *parsed)
+		return nil, fmt.Errorf("the segment 'collectionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -79,23 +76,23 @@ func ParseMongodbDatabaseCollectionIDInsensitively(input string) (*MongodbDataba
 	id := MongodbDatabaseCollectionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.MongodbDatabaseName, ok = parsed.Parsed["mongodbDatabaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "mongodbDatabaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'mongodbDatabaseName' was not found in the resource id %q", input)
 	}
 
 	if id.CollectionName, ok = parsed.Parsed["collectionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "collectionName", *parsed)
+		return nil, fmt.Errorf("the segment 'collectionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

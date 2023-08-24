@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package commonids
 
 import (
@@ -42,19 +39,19 @@ func ParseVMwareSiteMachineID(input string) (*VMwareSiteMachineId, error) {
 	id := VMwareSiteMachineId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VMwareSiteName, ok = parsed.Parsed["vmwareSiteName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vmwareSiteName", *parsed)
+		return nil, fmt.Errorf("the segment 'vmwareSiteName' was not found in the resource id %q", input)
 	}
 
 	if id.MachineName, ok = parsed.Parsed["machineName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "machineName", *parsed)
+		return nil, fmt.Errorf("the segment 'machineName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseVMwareSiteMachineIDInsensitively(input string) (*VMwareSiteMachineId, 
 	id := VMwareSiteMachineId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.VMwareSiteName, ok = parsed.Parsed["vmwareSiteName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "vmwareSiteName", *parsed)
+		return nil, fmt.Errorf("the segment 'vmwareSiteName' was not found in the resource id %q", input)
 	}
 
 	if id.MachineName, ok = parsed.Parsed["machineName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "machineName", *parsed)
+		return nil, fmt.Errorf("the segment 'machineName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

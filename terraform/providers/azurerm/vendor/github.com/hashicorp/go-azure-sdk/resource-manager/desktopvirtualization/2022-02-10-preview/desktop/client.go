@@ -1,26 +1,18 @@
 package desktop
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type DesktopClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewDesktopClientWithBaseURI(api environments.Api) (*DesktopClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "desktop", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating DesktopClient: %+v", err)
+func NewDesktopClientWithBaseURI(endpoint string) DesktopClient {
+	return DesktopClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &DesktopClient{
-		Client: client,
-	}, nil
 }

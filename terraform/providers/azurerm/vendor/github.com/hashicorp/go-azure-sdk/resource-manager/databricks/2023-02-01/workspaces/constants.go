@@ -1,10 +1,6 @@
 package workspaces
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -23,19 +19,6 @@ func PossibleValuesForCustomParameterType() []string {
 		string(CustomParameterTypeObject),
 		string(CustomParameterTypeString),
 	}
-}
-
-func (s *CustomParameterType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseCustomParameterType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseCustomParameterType(input string) (*CustomParameterType, error) {
@@ -65,19 +48,6 @@ func PossibleValuesForEncryptionKeySource() []string {
 	}
 }
 
-func (s *EncryptionKeySource) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseEncryptionKeySource(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseEncryptionKeySource(input string) (*EncryptionKeySource, error) {
 	vals := map[string]EncryptionKeySource{
 		"microsoft.keyvault": EncryptionKeySourceMicrosoftPointKeyvault,
@@ -103,19 +73,6 @@ func PossibleValuesForKeySource() []string {
 		string(KeySourceDefault),
 		string(KeySourceMicrosoftPointKeyvault),
 	}
-}
-
-func (s *KeySource) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseKeySource(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseKeySource(input string) (*KeySource, error) {
@@ -152,19 +109,6 @@ func PossibleValuesForPrivateEndpointConnectionProvisioningState() []string {
 	}
 }
 
-func (s *PrivateEndpointConnectionProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointConnectionProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointConnectionProvisioningState(input string) (*PrivateEndpointConnectionProvisioningState, error) {
 	vals := map[string]PrivateEndpointConnectionProvisioningState{
 		"creating":  PrivateEndpointConnectionProvisioningStateCreating,
@@ -198,19 +142,6 @@ func PossibleValuesForPrivateLinkServiceConnectionStatus() []string {
 		string(PrivateLinkServiceConnectionStatusPending),
 		string(PrivateLinkServiceConnectionStatusRejected),
 	}
-}
-
-func (s *PrivateLinkServiceConnectionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateLinkServiceConnectionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parsePrivateLinkServiceConnectionStatus(input string) (*PrivateLinkServiceConnectionStatus, error) {
@@ -261,19 +192,6 @@ func PossibleValuesForProvisioningState() []string {
 	}
 }
 
-func (s *ProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseProvisioningState(input string) (*ProvisioningState, error) {
 	vals := map[string]ProvisioningState{
 		"accepted":  ProvisioningStateAccepted,
@@ -311,19 +229,6 @@ func PossibleValuesForPublicNetworkAccess() []string {
 	}
 }
 
-func (s *PublicNetworkAccess) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePublicNetworkAccess(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePublicNetworkAccess(input string) (*PublicNetworkAccess, error) {
 	vals := map[string]PublicNetworkAccess{
 		"disabled": PublicNetworkAccessDisabled,
@@ -352,19 +257,6 @@ func PossibleValuesForRequiredNsgRules() []string {
 		string(RequiredNsgRulesNoAzureDatabricksRules),
 		string(RequiredNsgRulesNoAzureServiceRules),
 	}
-}
-
-func (s *RequiredNsgRules) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRequiredNsgRules(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseRequiredNsgRules(input string) (*RequiredNsgRules, error) {

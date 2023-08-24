@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/automationaccount"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/clusters"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/linkedservices"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	validateAuto "github.com/hashicorp/terraform-provider-azurerm/internal/services/automation/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
@@ -42,7 +43,7 @@ func resourceLogAnalyticsLinkedService() *pluginsdk.Resource {
 		CustomizeDiff: pluginsdk.CustomizeDiffShim(func(ctx context.Context, d *pluginsdk.ResourceDiff, v interface{}) error {
 			if d.HasChange("read_access_id") {
 				if readAccessID := d.Get("read_access_id").(string); readAccessID != "" {
-					if _, err := automationaccount.ValidateAutomationAccountID(readAccessID, "read_acces_id"); err != nil {
+					if _, err := validateAuto.AutomationAccountID(readAccessID, "read_acces_id"); err != nil {
 						return fmt.Errorf("'read_access_id' must be an Automation Account resource ID, got %q", readAccessID)
 					}
 				}
@@ -211,9 +212,10 @@ func resourceLogAnalyticsLinkedServiceSchema() map[string]*pluginsdk.Schema {
 		"resource_group_name": azure.SchemaResourceGroupNameDiffSuppress(),
 
 		"workspace_id": {
-			Type:         pluginsdk.TypeString,
-			Required:     true,
-			ValidateFunc: linkedservices.ValidateWorkspaceID,
+			Type:             pluginsdk.TypeString,
+			Required:         true,
+			DiffSuppressFunc: suppress.CaseDifference,
+			ValidateFunc:     azure.ValidateResourceID,
 		},
 
 		"read_access_id": {

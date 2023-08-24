@@ -104,12 +104,12 @@ func resourceCosmosDbTableCreate(d *pluginsdk.ResourceData, meta interface{}) er
 
 	if throughput, hasThroughput := d.GetOk("throughput"); hasThroughput {
 		if throughput != 0 {
-			db.TableCreateUpdateProperties.Options.Throughput = common.ConvertThroughputFromResourceDataLegacy(throughput)
+			db.TableCreateUpdateProperties.Options.Throughput = common.ConvertThroughputFromResourceData(throughput)
 		}
 	}
 
 	if _, hasAutoscaleSettings := d.GetOk("autoscale_settings"); hasAutoscaleSettings {
-		db.TableCreateUpdateProperties.Options.AutoscaleSettings = common.ExpandCosmosDbAutoscaleSettingsLegacy(d)
+		db.TableCreateUpdateProperties.Options.AutoscaleSettings = common.ExpandCosmosDbAutoscaleSettings(d)
 	}
 
 	future, err := client.CreateUpdateTable(ctx, id.ResourceGroup, id.DatabaseAccountName, id.Name, db)
@@ -160,7 +160,7 @@ func resourceCosmosDbTableUpdate(d *pluginsdk.ResourceData, meta interface{}) er
 	}
 
 	if common.HasThroughputChange(d) {
-		throughputParameters := common.ExpandCosmosDBThroughputSettingsUpdateParametersLegacy(d)
+		throughputParameters := common.ExpandCosmosDBThroughputSettingsUpdateParameters(d)
 		throughputFuture, err := client.UpdateTableThroughput(ctx, id.ResourceGroup, id.DatabaseAccountName, id.Name, *throughputParameters)
 		if err != nil {
 			if response.WasNotFound(throughputFuture.Response()) {
@@ -227,7 +227,7 @@ func resourceCosmosDbTableRead(d *pluginsdk.ResourceData, meta interface{}) erro
 				d.Set("autoscale_settings", nil)
 			}
 		} else {
-			common.SetResourceDataThroughputFromResponseLegacy(throughputResp, d)
+			common.SetResourceDataThroughputFromResponse(throughputResp, d)
 		}
 	}
 

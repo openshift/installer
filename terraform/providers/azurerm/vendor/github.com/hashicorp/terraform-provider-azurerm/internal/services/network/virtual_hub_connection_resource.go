@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
@@ -62,7 +61,7 @@ func resourceVirtualHubConnectionSchema() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: commonids.ValidateVirtualNetworkID,
+			ValidateFunc: validate.VirtualNetworkID,
 		},
 
 		"internet_security_enabled": {
@@ -170,13 +169,13 @@ func resourceVirtualHubConnectionCreateOrUpdate(d *pluginsdk.ResourceData, meta 
 	locks.ByName(virtualHubId.Name, virtualHubResourceName)
 	defer locks.UnlockByName(virtualHubId.Name, virtualHubResourceName)
 
-	remoteVirtualNetworkId, err := commonids.ParseVirtualNetworkID(d.Get("remote_virtual_network_id").(string))
+	remoteVirtualNetworkId, err := parse.VirtualNetworkID(d.Get("remote_virtual_network_id").(string))
 	if err != nil {
 		return err
 	}
 
-	locks.ByName(remoteVirtualNetworkId.VirtualNetworkName, VirtualNetworkResourceName)
-	defer locks.UnlockByName(remoteVirtualNetworkId.VirtualNetworkName, VirtualNetworkResourceName)
+	locks.ByName(remoteVirtualNetworkId.Name, VirtualNetworkResourceName)
+	defer locks.UnlockByName(remoteVirtualNetworkId.Name, VirtualNetworkResourceName)
 
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id.ResourceGroup, id.VirtualHubName, id.Name)

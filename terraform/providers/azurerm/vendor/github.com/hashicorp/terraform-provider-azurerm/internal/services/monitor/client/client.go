@@ -1,26 +1,18 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/aad/mgmt/2017-04-01/aad"                                           // nolint: staticcheck
-	"github.com/Azure/azure-sdk-for-go/services/preview/alertsmanagement/mgmt/2019-06-01-preview/alertsmanagement" // nolint: staticcheck
-	classic "github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2021-07-01-preview/insights"          // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/aad/mgmt/2017-04-01/aad"                                               // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/monitor/mgmt/2020-10-01/insights"                                      // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/preview/alertsmanagement/mgmt/2019-06-01-preview/alertsmanagement"     // nolint: staticcheck
+	classic "github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2021-07-01-preview/insights"              // nolint: staticcheck
+	newActionGroupClient "github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2021-09-01-preview/insights" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-sdk/resource-manager/alertsmanagement/2021-08-08/alertprocessingrules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/alertsmanagement/2023-03-01/prometheusrulegroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2016-03-01/logprofiles"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2018-03-01/metricalerts"
-	scheduledqueryrules2018 "github.com/hashicorp/go-azure-sdk/resource-manager/insights/2018-04-16/scheduledqueryrules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2019-10-17-preview/privatelinkscopedresources"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2019-10-17-preview/privatelinkscopesapis"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2020-10-01/activitylogalertsapis"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-04-01/datacollectionendpoints"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-04-01/datacollectionruleassociations"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-04-01/datacollectionrules"
 	diagnosticSettingClient "github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-05-01-preview/diagnosticsettings"
 	diagnosticCategoryClient "github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-05-01-preview/diagnosticsettingscategories"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2021-08-01/scheduledqueryrules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-06-01/datacollectionendpoints"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-06-01/datacollectionruleassociations"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-06-01/datacollectionrules"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2022-10-01/autoscalesettings"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2023-01-01/actiongroupsapis"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2023-04-03/azuremonitorworkspaces"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
@@ -29,7 +21,7 @@ type Client struct {
 	AADDiagnosticSettingsClient *aad.DiagnosticSettingsClient
 
 	// Autoscale Settings
-	AutoscaleSettingsClient *autoscalesettings.AutoScaleSettingsClient
+	AutoscaleSettingsClient *classic.AutoscaleSettingsClient
 
 	// alerts management
 	ActionRulesClient             *alertsmanagement.ActionRulesClient
@@ -37,30 +29,28 @@ type Client struct {
 	SmartDetectorAlertRulesClient *alertsmanagement.SmartDetectorAlertRulesClient
 
 	// Monitor
-	ActionGroupsClient                   *actiongroupsapis.ActionGroupsAPIsClient
+	ActionGroupsClient                   *newActionGroupClient.ActionGroupsClient
 	ActivityLogsClient                   *classic.ActivityLogsClient
-	ActivityLogAlertsClient              *activitylogalertsapis.ActivityLogAlertsAPIsClient
-	AlertPrometheusRuleGroupClient       *prometheusrulegroups.PrometheusRuleGroupsClient
+	ActivityLogAlertsClient              *insights.ActivityLogAlertsClient
 	AlertRulesClient                     *classic.AlertRulesClient
 	DataCollectionEndpointsClient        *datacollectionendpoints.DataCollectionEndpointsClient
 	DataCollectionRuleAssociationsClient *datacollectionruleassociations.DataCollectionRuleAssociationsClient
 	DataCollectionRulesClient            *datacollectionrules.DataCollectionRulesClient
 	DiagnosticSettingsClient             *diagnosticSettingClient.DiagnosticSettingsClient
 	DiagnosticSettingsCategoryClient     *diagnosticCategoryClient.DiagnosticSettingsCategoriesClient
-	LogProfilesClient                    *logprofiles.LogProfilesClient
-	MetricAlertsClient                   *metricalerts.MetricAlertsClient
-	PrivateLinkScopesClient              *privatelinkscopesapis.PrivateLinkScopesAPIsClient
-	PrivateLinkScopedResourcesClient     *privatelinkscopedresources.PrivateLinkScopedResourcesClient
-	ScheduledQueryRulesClient            *scheduledqueryrules2018.ScheduledQueryRulesClient
+	LogProfilesClient                    *classic.LogProfilesClient
+	MetricAlertsClient                   *classic.MetricAlertsClient
+	PrivateLinkScopesClient              *classic.PrivateLinkScopesClient
+	PrivateLinkScopedResourcesClient     *classic.PrivateLinkScopedResourcesClient
+	ScheduledQueryRulesClient            *classic.ScheduledQueryRulesClient
 	ScheduledQueryRulesV2Client          *scheduledqueryrules.ScheduledQueryRulesClient
-	WorkspacesClient                     *azuremonitorworkspaces.AzureMonitorWorkspacesClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
 	AADDiagnosticSettingsClient := aad.NewDiagnosticSettingsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&AADDiagnosticSettingsClient.Client, o.ResourceManagerAuthorizer)
 
-	AutoscaleSettingsClient := autoscalesettings.NewAutoScaleSettingsClientWithBaseURI(o.ResourceManagerEndpoint)
+	AutoscaleSettingsClient := classic.NewAutoscaleSettingsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&AutoscaleSettingsClient.Client, o.ResourceManagerAuthorizer)
 
 	ActionRulesClient := alertsmanagement.NewActionRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
@@ -72,17 +62,14 @@ func NewClient(o *common.ClientOptions) *Client {
 	SmartDetectorAlertRulesClient := alertsmanagement.NewSmartDetectorAlertRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&SmartDetectorAlertRulesClient.Client, o.ResourceManagerAuthorizer)
 
-	ActionGroupsClient := actiongroupsapis.NewActionGroupsAPIsClientWithBaseURI(o.ResourceManagerEndpoint)
+	ActionGroupsClient := newActionGroupClient.NewActionGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ActionGroupsClient.Client, o.ResourceManagerAuthorizer)
 
 	activityLogsClient := classic.NewActivityLogsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&activityLogsClient.Client, o.ResourceManagerAuthorizer)
 
-	ActivityLogAlertsClient := activitylogalertsapis.NewActivityLogAlertsAPIsClientWithBaseURI(o.ResourceManagerEndpoint)
+	ActivityLogAlertsClient := insights.NewActivityLogAlertsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ActivityLogAlertsClient.Client, o.ResourceManagerAuthorizer)
-
-	AlertPrometheusRuleGroupClient := prometheusrulegroups.NewPrometheusRuleGroupsClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&AlertPrometheusRuleGroupClient.Client, o.ResourceManagerAuthorizer)
 
 	AlertRulesClient := classic.NewAlertRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&AlertRulesClient.Client, o.ResourceManagerAuthorizer)
@@ -102,26 +89,23 @@ func NewClient(o *common.ClientOptions) *Client {
 	DiagnosticSettingsCategoryClient := diagnosticCategoryClient.NewDiagnosticSettingsCategoriesClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&DiagnosticSettingsCategoryClient.Client, o.ResourceManagerAuthorizer)
 
-	LogProfilesClient := logprofiles.NewLogProfilesClientWithBaseURI(o.ResourceManagerEndpoint)
+	LogProfilesClient := classic.NewLogProfilesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&LogProfilesClient.Client, o.ResourceManagerAuthorizer)
 
-	MetricAlertsClient := metricalerts.NewMetricAlertsClientWithBaseURI(o.ResourceManagerEndpoint)
+	MetricAlertsClient := classic.NewMetricAlertsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&MetricAlertsClient.Client, o.ResourceManagerAuthorizer)
 
-	PrivateLinkScopesClient := privatelinkscopesapis.NewPrivateLinkScopesAPIsClientWithBaseURI(o.ResourceManagerEndpoint)
+	PrivateLinkScopesClient := classic.NewPrivateLinkScopesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PrivateLinkScopesClient.Client, o.ResourceManagerAuthorizer)
 
-	PrivateLinkScopedResourcesClient := privatelinkscopedresources.NewPrivateLinkScopedResourcesClientWithBaseURI(o.ResourceManagerEndpoint)
+	PrivateLinkScopedResourcesClient := classic.NewPrivateLinkScopedResourcesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&PrivateLinkScopedResourcesClient.Client, o.ResourceManagerAuthorizer)
 
-	ScheduledQueryRulesClient := scheduledqueryrules2018.NewScheduledQueryRulesClientWithBaseURI(o.ResourceManagerEndpoint)
+	ScheduledQueryRulesClient := classic.NewScheduledQueryRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ScheduledQueryRulesClient.Client, o.ResourceManagerAuthorizer)
 
 	ScheduledQueryRulesV2Client := scheduledqueryrules.NewScheduledQueryRulesClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&ScheduledQueryRulesV2Client.Client, o.ResourceManagerAuthorizer)
-
-	WorkspacesClient := azuremonitorworkspaces.NewAzureMonitorWorkspacesClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&WorkspacesClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{
 		AADDiagnosticSettingsClient:          &AADDiagnosticSettingsClient,
@@ -131,7 +115,6 @@ func NewClient(o *common.ClientOptions) *Client {
 		ActionGroupsClient:                   &ActionGroupsClient,
 		ActivityLogsClient:                   &activityLogsClient,
 		ActivityLogAlertsClient:              &ActivityLogAlertsClient,
-		AlertPrometheusRuleGroupClient:       &AlertPrometheusRuleGroupClient,
 		AlertRulesClient:                     &AlertRulesClient,
 		AlertProcessingRulesClient:           &AlertProcessingRulesClient,
 		DataCollectionEndpointsClient:        &DataCollectionEndpointsClient,
@@ -145,6 +128,5 @@ func NewClient(o *common.ClientOptions) *Client {
 		PrivateLinkScopedResourcesClient:     &PrivateLinkScopedResourcesClient,
 		ScheduledQueryRulesClient:            &ScheduledQueryRulesClient,
 		ScheduledQueryRulesV2Client:          &ScheduledQueryRulesV2Client,
-		WorkspacesClient:                     &WorkspacesClient,
 	}
 }

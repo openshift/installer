@@ -1,50 +1,42 @@
 package client
 
 import (
-	"fmt"
-
+	"github.com/Azure/azure-sdk-for-go/services/marketplaceordering/mgmt/2015-06-01/marketplaceordering" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-07-01/skus"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/availabilitysets"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhostgroups"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhosts"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/sshpublickeys"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/virtualmachines"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservationgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservations"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/proximityplacementgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/diskaccesses"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/diskencryptionsets"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/snapshots"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleries"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryapplications"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryapplicationversions"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/marketplaceordering/2015-06-01/agreements"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 type Client struct {
 	AvailabilitySetsClient           *availabilitysets.AvailabilitySetsClient
-	CapacityReservationsClient       *capacityreservations.CapacityReservationsClient
-	CapacityReservationGroupsClient  *capacityreservationgroups.CapacityReservationGroupsClient
+	CapacityReservationsClient       *compute.CapacityReservationsClient
+	CapacityReservationGroupsClient  *compute.CapacityReservationGroupsClient
 	DedicatedHostsClient             *dedicatedhosts.DedicatedHostsClient
 	DedicatedHostGroupsClient        *dedicatedhostgroups.DedicatedHostGroupsClient
 	DisksClient                      *disks.DisksClient
-	DiskAccessClient                 *diskaccesses.DiskAccessesClient
+	DiskAccessClient                 *compute.DiskAccessesClient
 	DiskEncryptionSetsClient         *diskencryptionsets.DiskEncryptionSetsClient
-	GalleriesClient                  *galleries.GalleriesClient
-	GalleryApplicationsClient        *galleryapplications.GalleryApplicationsClient
-	GalleryApplicationVersionsClient *galleryapplicationversions.GalleryApplicationVersionsClient
+	GalleriesClient                  *compute.GalleriesClient
+	GalleryApplicationsClient        *compute.GalleryApplicationsClient
+	GalleryApplicationVersionsClient *compute.GalleryApplicationVersionsClient
 	GalleryImagesClient              *compute.GalleryImagesClient
 	GalleryImageVersionsClient       *compute.GalleryImageVersionsClient
-	ImagesClient                     *images.ImagesClient
-	MarketplaceAgreementsClient      *agreements.AgreementsClient
+	ImagesClient                     *compute.ImagesClient
+	MarketplaceAgreementsClient      *marketplaceordering.MarketplaceAgreementsClient
 	ProximityPlacementGroupsClient   *proximityplacementgroups.ProximityPlacementGroupsClient
 	SkusClient                       *skus.SkusClient
 	SSHPublicKeysClient              *sshpublickeys.SshPublicKeysClient
 	SnapshotsClient                  *snapshots.SnapshotsClient
+	UsageClient                      *compute.UsageClient
 	VirtualMachinesClient            *virtualmachines.VirtualMachinesClient
 	VMExtensionImageClient           *compute.VirtualMachineExtensionImagesClient
 	VMExtensionClient                *compute.VirtualMachineExtensionsClient
@@ -56,14 +48,14 @@ type Client struct {
 	VMImageClient                    *compute.VirtualMachineImagesClient
 }
 
-func NewClient(o *common.ClientOptions) (*Client, error) {
+func NewClient(o *common.ClientOptions) *Client {
 	availabilitySetsClient := availabilitysets.NewAvailabilitySetsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&availabilitySetsClient.Client, o.ResourceManagerAuthorizer)
 
-	capacityReservationsClient := capacityreservations.NewCapacityReservationsClientWithBaseURI(o.ResourceManagerEndpoint)
+	capacityReservationsClient := compute.NewCapacityReservationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&capacityReservationsClient.Client, o.ResourceManagerAuthorizer)
 
-	capacityReservationGroupsClient := capacityreservationgroups.NewCapacityReservationGroupsClientWithBaseURI(o.ResourceManagerEndpoint)
+	capacityReservationGroupsClient := compute.NewCapacityReservationGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&capacityReservationGroupsClient.Client, o.ResourceManagerAuthorizer)
 
 	dedicatedHostsClient := dedicatedhosts.NewDedicatedHostsClientWithBaseURI(o.ResourceManagerEndpoint)
@@ -75,19 +67,19 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	disksClient := disks.NewDisksClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&disksClient.Client, o.ResourceManagerAuthorizer)
 
-	diskAccessClient := diskaccesses.NewDiskAccessesClientWithBaseURI(o.ResourceManagerEndpoint)
+	diskAccessClient := compute.NewDiskAccessesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&diskAccessClient.Client, o.ResourceManagerAuthorizer)
 
 	diskEncryptionSetsClient := diskencryptionsets.NewDiskEncryptionSetsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&diskEncryptionSetsClient.Client, o.ResourceManagerAuthorizer)
 
-	galleriesClient := galleries.NewGalleriesClientWithBaseURI(o.ResourceManagerEndpoint)
+	galleriesClient := compute.NewGalleriesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&galleriesClient.Client, o.ResourceManagerAuthorizer)
 
-	galleryApplicationsClient := galleryapplications.NewGalleryApplicationsClientWithBaseURI(o.ResourceManagerEndpoint)
+	galleryApplicationsClient := compute.NewGalleryApplicationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&galleryApplicationsClient.Client, o.ResourceManagerAuthorizer)
 
-	galleryApplicationVersionsClient := galleryapplicationversions.NewGalleryApplicationVersionsClientWithBaseURI(o.ResourceManagerEndpoint)
+	galleryApplicationVersionsClient := compute.NewGalleryApplicationVersionsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&galleryApplicationVersionsClient.Client, o.ResourceManagerAuthorizer)
 
 	galleryImagesClient := compute.NewGalleryImagesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
@@ -96,14 +88,11 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 	galleryImageVersionsClient := compute.NewGalleryImageVersionsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&galleryImageVersionsClient.Client, o.ResourceManagerAuthorizer)
 
-	imagesClient := images.NewImagesClientWithBaseURI(o.ResourceManagerEndpoint)
+	imagesClient := compute.NewImagesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&imagesClient.Client, o.ResourceManagerAuthorizer)
 
-	marketplaceAgreementsClient, err := agreements.NewAgreementsClientWithBaseURI(o.Environment.ResourceManager)
-	if err != nil {
-		return nil, fmt.Errorf("building MarketplaceAgreementsClient client: %+v", err)
-	}
-	o.Configure(marketplaceAgreementsClient.Client, o.Authorizers.ResourceManager)
+	marketplaceAgreementsClient := marketplaceordering.NewMarketplaceAgreementsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&marketplaceAgreementsClient.Client, o.ResourceManagerAuthorizer)
 
 	proximityPlacementGroupsClient := proximityplacementgroups.NewProximityPlacementGroupsClientWithBaseURI(o.ResourceManagerEndpoint)
 	o.ConfigureClient(&proximityPlacementGroupsClient.Client, o.ResourceManagerAuthorizer)
@@ -162,11 +151,12 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 		GalleryImagesClient:              &galleryImagesClient,
 		GalleryImageVersionsClient:       &galleryImageVersionsClient,
 		ImagesClient:                     &imagesClient,
-		MarketplaceAgreementsClient:      marketplaceAgreementsClient,
+		MarketplaceAgreementsClient:      &marketplaceAgreementsClient,
 		ProximityPlacementGroupsClient:   &proximityPlacementGroupsClient,
 		SkusClient:                       &skusClient,
 		SSHPublicKeysClient:              &sshPublicKeysClient,
 		SnapshotsClient:                  &snapshotsClient,
+		UsageClient:                      &usageClient,
 		VirtualMachinesClient:            &virtualMachinesClient,
 		VMExtensionImageClient:           &vmExtensionImageClient,
 		VMExtensionClient:                &vmExtensionClient,
@@ -174,9 +164,7 @@ func NewClient(o *common.ClientOptions) (*Client, error) {
 		VMScaleSetExtensionsClient:       &vmScaleSetExtensionsClient,
 		VMScaleSetRollingUpgradesClient:  &vmScaleSetRollingUpgradesClient,
 		VMScaleSetVMsClient:              &vmScaleSetVMsClient,
+		VMClient:                         &vmClient,
 		VMImageClient:                    &vmImageClient,
-
-		// NOTE: use `VirtualMachinesClient` instead
-		VMClient: &vmClient,
-	}, nil
+	}
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/hashicorp/go-azure-helpers/polling"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 )
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -20,7 +19,7 @@ type RotateClusterCertificatesOperationResponse struct {
 }
 
 // RotateClusterCertificates ...
-func (c ManagedClustersClient) RotateClusterCertificates(ctx context.Context, id commonids.KubernetesClusterId) (result RotateClusterCertificatesOperationResponse, err error) {
+func (c ManagedClustersClient) RotateClusterCertificates(ctx context.Context, id ManagedClusterId) (result RotateClusterCertificatesOperationResponse, err error) {
 	req, err := c.preparerForRotateClusterCertificates(ctx, id)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "managedclusters.ManagedClustersClient", "RotateClusterCertificates", nil, "Failure preparing request")
@@ -37,7 +36,7 @@ func (c ManagedClustersClient) RotateClusterCertificates(ctx context.Context, id
 }
 
 // RotateClusterCertificatesThenPoll performs RotateClusterCertificates then polls until it's completed
-func (c ManagedClustersClient) RotateClusterCertificatesThenPoll(ctx context.Context, id commonids.KubernetesClusterId) error {
+func (c ManagedClustersClient) RotateClusterCertificatesThenPoll(ctx context.Context, id ManagedClusterId) error {
 	result, err := c.RotateClusterCertificates(ctx, id)
 	if err != nil {
 		return fmt.Errorf("performing RotateClusterCertificates: %+v", err)
@@ -51,7 +50,7 @@ func (c ManagedClustersClient) RotateClusterCertificatesThenPoll(ctx context.Con
 }
 
 // preparerForRotateClusterCertificates prepares the RotateClusterCertificates request.
-func (c ManagedClustersClient) preparerForRotateClusterCertificates(ctx context.Context, id commonids.KubernetesClusterId) (*http.Request, error) {
+func (c ManagedClustersClient) preparerForRotateClusterCertificates(ctx context.Context, id ManagedClusterId) (*http.Request, error) {
 	queryParameters := map[string]interface{}{
 		"api-version": defaultApiVersion,
 	}

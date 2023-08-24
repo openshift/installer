@@ -55,14 +55,11 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{
-		AlertRuleAnomalyDataSource{},
-	}
+	return []sdk.DataSource{}
 }
 
 func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
-		AlertRuleThreatIntelligenceResource{},
 		WatchlistResource{},
 		WatchlistItemResource{},
 		DataConnectorAwsS3Resource{},
@@ -75,9 +72,5 @@ func (r Registration) Resources() []sdk.Resource {
 		LogAnalyticsWorkspaceOnboardResource{},
 		DataConnectorThreatIntelligenceTAXIIResource{},
 		DataConnectorMicrosoftThreatIntelligenceResource{},
-		AlertRuleAnomalyBuiltInResource{},
-		MetadataResource{},
-		AlertRuleAnomalyDuplicateResource{},
-		ThreatIntelligenceIndicator{},
 	}
 }

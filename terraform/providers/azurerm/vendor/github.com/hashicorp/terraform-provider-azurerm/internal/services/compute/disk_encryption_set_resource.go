@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
@@ -355,32 +354,33 @@ func diskEncryptionSetRetrieveKeyVault(ctx context.Context, keyVaultsClient *cli
 		return nil, nil
 	}
 
-	parsedKeyVaultID, err := commonids.ParseKeyVaultID(*keyVaultID)
+	parsedKeyVaultID, err := keyVaultParse.VaultID(*keyVaultID)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := keyVaultsClient.VaultsClient.Get(ctx, *parsedKeyVaultID)
+	resp, err := keyVaultsClient.VaultsClient.Get(ctx, parsedKeyVaultID.ResourceGroup, parsedKeyVaultID.Name)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving %s: %+v", *parsedKeyVaultID, err)
 	}
 
 	purgeProtectionEnabled := false
 	softDeleteEnabled := false
-	if model := resp.Model; model != nil {
-		if model.Properties.EnableSoftDelete != nil {
-			softDeleteEnabled = *model.Properties.EnableSoftDelete
+
+	if props := resp.Properties; props != nil {
+		if props.EnableSoftDelete != nil {
+			softDeleteEnabled = *props.EnableSoftDelete
 		}
 
-		if model.Properties.EnablePurgeProtection != nil {
-			purgeProtectionEnabled = *model.Properties.EnablePurgeProtection
+		if props.EnablePurgeProtection != nil {
+			purgeProtectionEnabled = *props.EnablePurgeProtection
 		}
 	}
 
 	return &diskEncryptionSetKeyVault{
 		keyVaultId:             *keyVaultID,
-		resourceGroupName:      parsedKeyVaultID.ResourceGroupName,
-		keyVaultName:           parsedKeyVaultID.VaultName,
+		resourceGroupName:      parsedKeyVaultID.ResourceGroup,
+		keyVaultName:           parsedKeyVaultID.Name,
 		purgeProtectionEnabled: purgeProtectionEnabled,
 		softDeleteEnabled:      softDeleteEnabled,
 	}, nil

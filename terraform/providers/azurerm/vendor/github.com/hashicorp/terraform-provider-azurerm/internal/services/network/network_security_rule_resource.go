@@ -5,16 +5,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/securityrules"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceNetworkSecurityRule() *pluginsdk.Resource {
@@ -24,7 +23,7 @@ func resourceNetworkSecurityRule() *pluginsdk.Resource {
 		Update: resourceNetworkSecurityRuleCreateUpdate,
 		Delete: resourceNetworkSecurityRuleDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := securityrules.ParseSecurityRuleID(id)
+			_, err := parse.SecurityRuleID(id)
 			return err
 		}),
 
@@ -37,10 +36,9 @@ func resourceNetworkSecurityRule() *pluginsdk.Resource {
 
 		Schema: map[string]*pluginsdk.Schema{
 			"name": {
-				Type:         pluginsdk.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.StringDoesNotContainAny("/\\?%"),
+				Type:     pluginsdk.TypeString,
+				Required: true,
+				ForceNew: true,
 			},
 
 			"resource_group_name": commonschema.ResourceGroupName(),
@@ -61,12 +59,12 @@ func resourceNetworkSecurityRule() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(securityrules.SecurityRuleProtocolAny),
-					string(securityrules.SecurityRuleProtocolTcp),
-					string(securityrules.SecurityRuleProtocolUdp),
-					string(securityrules.SecurityRuleProtocolIcmp),
-					string(securityrules.SecurityRuleProtocolAh),
-					string(securityrules.SecurityRuleProtocolEsp),
+					string(network.SecurityRuleProtocolAsterisk),
+					string(network.SecurityRuleProtocolTCP),
+					string(network.SecurityRuleProtocolUDP),
+					string(network.SecurityRuleProtocolIcmp),
+					string(network.SecurityRuleProtocolAh),
+					string(network.SecurityRuleProtocolEsp),
 				}, false),
 			},
 
@@ -148,8 +146,8 @@ func resourceNetworkSecurityRule() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(securityrules.SecurityRuleAccessAllow),
-					string(securityrules.SecurityRuleAccessDeny),
+					string(network.SecurityRuleAccessAllow),
+					string(network.SecurityRuleAccessDeny),
 				}, false),
 			},
 
@@ -163,8 +161,8 @@ func resourceNetworkSecurityRule() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(securityrules.SecurityRuleDirectionInbound),
-					string(securityrules.SecurityRuleDirectionOutbound),
+					string(network.SecurityRuleDirectionInbound),
+					string(network.SecurityRuleDirectionOutbound),
 				}, false),
 			},
 		},
@@ -177,38 +175,47 @@ func resourceNetworkSecurityRuleCreateUpdate(d *pluginsdk.ResourceData, meta int
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := securityrules.NewSecurityRuleID(subscriptionId, d.Get("resource_group_name").(string), d.Get("network_security_group_name").(string), d.Get("name").(string))
+	id := parse.NewSecurityRuleID(subscriptionId, d.Get("resource_group_name").(string), d.Get("network_security_group_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.NetworkSecurityGroupName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_network_security_rule", id.ID())
 		}
 	}
 
-	rule := securityrules.SecurityRule{
-		Name: &id.SecurityRuleName,
-		Properties: &securityrules.SecurityRulePropertiesFormat{
-			SourcePortRange:          pointer.To(d.Get("source_port_range").(string)),
-			DestinationPortRange:     pointer.To(d.Get("destination_port_range").(string)),
-			SourceAddressPrefix:      pointer.To(d.Get("source_address_prefix").(string)),
-			DestinationAddressPrefix: pointer.To(d.Get("destination_address_prefix").(string)),
-			Priority:                 int64(d.Get("priority").(int)),
-			Access:                   securityrules.SecurityRuleAccess(d.Get("access").(string)),
-			Direction:                securityrules.SecurityRuleDirection(d.Get("direction").(string)),
-			Protocol:                 securityrules.SecurityRuleProtocol(d.Get("protocol").(string)),
+	sourcePortRange := d.Get("source_port_range").(string)
+	destinationPortRange := d.Get("destination_port_range").(string)
+	sourceAddressPrefix := d.Get("source_address_prefix").(string)
+	destinationAddressPrefix := d.Get("destination_address_prefix").(string)
+	priority := int32(d.Get("priority").(int))
+	access := d.Get("access").(string)
+	direction := d.Get("direction").(string)
+	protocol := d.Get("protocol").(string)
+
+	rule := network.SecurityRule{
+		Name: &id.Name,
+		SecurityRulePropertiesFormat: &network.SecurityRulePropertiesFormat{
+			SourcePortRange:          &sourcePortRange,
+			DestinationPortRange:     &destinationPortRange,
+			SourceAddressPrefix:      &sourceAddressPrefix,
+			DestinationAddressPrefix: &destinationAddressPrefix,
+			Priority:                 &priority,
+			Access:                   network.SecurityRuleAccess(access),
+			Direction:                network.SecurityRuleDirection(direction),
+			Protocol:                 network.SecurityRuleProtocol(protocol),
 		},
 	}
 
 	if v, ok := d.GetOk("description"); ok {
 		description := v.(string)
-		rule.Properties.Description = &description
+		rule.SecurityRulePropertiesFormat.Description = &description
 	}
 
 	if r, ok := d.GetOk("source_port_ranges"); ok {
@@ -218,7 +225,7 @@ func resourceNetworkSecurityRuleCreateUpdate(d *pluginsdk.ResourceData, meta int
 			s := v.(string)
 			sourcePortRanges = append(sourcePortRanges, s)
 		}
-		rule.Properties.SourcePortRanges = &sourcePortRanges
+		rule.SecurityRulePropertiesFormat.SourcePortRanges = &sourcePortRanges
 	}
 
 	if r, ok := d.GetOk("destination_port_ranges"); ok {
@@ -228,7 +235,7 @@ func resourceNetworkSecurityRuleCreateUpdate(d *pluginsdk.ResourceData, meta int
 			s := v.(string)
 			destinationPortRanges = append(destinationPortRanges, s)
 		}
-		rule.Properties.DestinationPortRanges = &destinationPortRanges
+		rule.SecurityRulePropertiesFormat.DestinationPortRanges = &destinationPortRanges
 	}
 
 	if r, ok := d.GetOk("source_address_prefixes"); ok {
@@ -238,7 +245,7 @@ func resourceNetworkSecurityRuleCreateUpdate(d *pluginsdk.ResourceData, meta int
 			s := v.(string)
 			sourceAddressPrefixes = append(sourceAddressPrefixes, s)
 		}
-		rule.Properties.SourceAddressPrefixes = &sourceAddressPrefixes
+		rule.SecurityRulePropertiesFormat.SourceAddressPrefixes = &sourceAddressPrefixes
 	}
 
 	if r, ok := d.GetOk("destination_address_prefixes"); ok {
@@ -248,33 +255,38 @@ func resourceNetworkSecurityRuleCreateUpdate(d *pluginsdk.ResourceData, meta int
 			s := v.(string)
 			destinationAddressPrefixes = append(destinationAddressPrefixes, s)
 		}
-		rule.Properties.DestinationAddressPrefixes = &destinationAddressPrefixes
+		rule.SecurityRulePropertiesFormat.DestinationAddressPrefixes = &destinationAddressPrefixes
 	}
 
 	if r, ok := d.GetOk("source_application_security_group_ids"); ok {
-		var sourceApplicationSecurityGroups []securityrules.ApplicationSecurityGroup
+		var sourceApplicationSecurityGroups []network.ApplicationSecurityGroup
 		for _, v := range r.(*pluginsdk.Set).List() {
-			sg := securityrules.ApplicationSecurityGroup{
-				Id: utils.String(v.(string)),
+			sg := network.ApplicationSecurityGroup{
+				ID: utils.String(v.(string)),
 			}
 			sourceApplicationSecurityGroups = append(sourceApplicationSecurityGroups, sg)
 		}
-		rule.Properties.SourceApplicationSecurityGroups = &sourceApplicationSecurityGroups
+		rule.SourceApplicationSecurityGroups = &sourceApplicationSecurityGroups
 	}
 
 	if r, ok := d.GetOk("destination_application_security_group_ids"); ok {
-		var destinationApplicationSecurityGroups []securityrules.ApplicationSecurityGroup
+		var destinationApplicationSecurityGroups []network.ApplicationSecurityGroup
 		for _, v := range r.(*pluginsdk.Set).List() {
-			sg := securityrules.ApplicationSecurityGroup{
-				Id: utils.String(v.(string)),
+			sg := network.ApplicationSecurityGroup{
+				ID: utils.String(v.(string)),
 			}
 			destinationApplicationSecurityGroups = append(destinationApplicationSecurityGroups, sg)
 		}
-		rule.Properties.DestinationApplicationSecurityGroups = &destinationApplicationSecurityGroups
+		rule.DestinationApplicationSecurityGroups = &destinationApplicationSecurityGroups
 	}
 
-	if err := client.CreateOrUpdateThenPoll(ctx, id, rule); err != nil {
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.NetworkSecurityGroupName, id.Name, rule)
+	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for completion of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -287,54 +299,52 @@ func resourceNetworkSecurityRuleRead(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := securityrules.ParseSecurityRuleID(d.Id())
+	id, err := parse.SecurityRuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.NetworkSecurityGroupName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("making Read request on %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.SecurityRuleName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("network_security_group_name", id.NetworkSecurityGroupName)
 
 	// For fixing the case insensitive issue for the NSR protocol in Azure
 	// See: https://github.com/hashicorp/terraform-provider-azurerm/issues/16092
-	protocolMap := map[string]securityrules.SecurityRuleProtocol{}
-	for _, protocol := range securityrules.PossibleValuesForSecurityRuleProtocol() {
-		protocolMap[strings.ToLower(protocol)] = securityrules.SecurityRuleProtocol(protocol)
+	protocolMap := map[string]network.SecurityRuleProtocol{}
+	for _, protocol := range network.PossibleSecurityRuleProtocolValues() {
+		protocolMap[strings.ToLower(string(protocol))] = protocol
 	}
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("description", props.Description)
-			d.Set("protocol", string(protocolMap[strings.ToLower(string(props.Protocol))]))
-			d.Set("destination_address_prefix", props.DestinationAddressPrefix)
-			d.Set("destination_address_prefixes", props.DestinationAddressPrefixes)
-			d.Set("destination_port_range", props.DestinationPortRange)
-			d.Set("destination_port_ranges", props.DestinationPortRanges)
-			d.Set("source_address_prefix", props.SourceAddressPrefix)
-			d.Set("source_address_prefixes", props.SourceAddressPrefixes)
-			d.Set("source_port_range", props.SourcePortRange)
-			d.Set("source_port_ranges", props.SourcePortRanges)
-			d.Set("access", string(props.Access))
-			d.Set("priority", int(props.Priority))
-			d.Set("direction", string(props.Direction))
+	if props := resp.SecurityRulePropertiesFormat; props != nil {
+		d.Set("description", props.Description)
+		d.Set("protocol", string(protocolMap[strings.ToLower(string(props.Protocol))]))
+		d.Set("destination_address_prefix", props.DestinationAddressPrefix)
+		d.Set("destination_address_prefixes", props.DestinationAddressPrefixes)
+		d.Set("destination_port_range", props.DestinationPortRange)
+		d.Set("destination_port_ranges", props.DestinationPortRanges)
+		d.Set("source_address_prefix", props.SourceAddressPrefix)
+		d.Set("source_address_prefixes", props.SourceAddressPrefixes)
+		d.Set("source_port_range", props.SourcePortRange)
+		d.Set("source_port_ranges", props.SourcePortRanges)
+		d.Set("access", string(props.Access))
+		d.Set("priority", int(*props.Priority))
+		d.Set("direction", string(props.Direction))
 
-			if err := d.Set("source_application_security_group_ids", flattenApplicationSecurityGroupIds(props.SourceApplicationSecurityGroups)); err != nil {
-				return fmt.Errorf("setting `source_application_security_group_ids`: %+v", err)
-			}
+		if err := d.Set("source_application_security_group_ids", flattenApplicationSecurityGroupIds(props.SourceApplicationSecurityGroups)); err != nil {
+			return fmt.Errorf("setting `source_application_security_group_ids`: %+v", err)
+		}
 
-			if err := d.Set("destination_application_security_group_ids", flattenApplicationSecurityGroupIds(props.DestinationApplicationSecurityGroups)); err != nil {
-				return fmt.Errorf("setting `source_application_security_group_ids`: %+v", err)
-			}
+		if err := d.Set("destination_application_security_group_ids", flattenApplicationSecurityGroupIds(props.DestinationApplicationSecurityGroups)); err != nil {
+			return fmt.Errorf("setting `source_application_security_group_ids`: %+v", err)
 		}
 	}
 
@@ -346,24 +356,29 @@ func resourceNetworkSecurityRuleDelete(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := securityrules.ParseSecurityRuleID(d.Id())
+	id, err := parse.SecurityRuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err = client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.NetworkSecurityGroupName, id.Name)
+	if err != nil {
+		return fmt.Errorf("Deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
 	}
 
 	return nil
 }
 
-func flattenApplicationSecurityGroupIds(groups *[]securityrules.ApplicationSecurityGroup) []string {
+func flattenApplicationSecurityGroupIds(groups *[]network.ApplicationSecurityGroup) []string {
 	ids := make([]string, 0)
 
 	if groups != nil {
 		for _, v := range *groups {
-			ids = append(ids, *v.Id)
+			ids = append(ids, *v.ID)
 		}
 	}
 

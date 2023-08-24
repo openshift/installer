@@ -5,10 +5,8 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
 
-type Registration struct {
-}
+type Registration struct{}
 
-var _ sdk.TypedServiceRegistrationWithAGitHubLabel = Registration{}
 var _ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
 
 func (r Registration) AssociatedGitHubLabel() string {
@@ -41,16 +39,4 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 		"azurerm_role_assignment": resourceArmRoleAssignment(),
 		"azurerm_role_definition": resourceArmRoleDefinition(),
 	}
-}
-
-func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
-}
-
-func (r Registration) Resources() []sdk.Resource {
-	resources := []sdk.Resource{
-		PimActiveRoleAssignmentResource{},
-		PimEligibleRoleAssignmentResource{},
-	}
-	return resources
 }

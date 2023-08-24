@@ -137,10 +137,9 @@ func (rupp RouteUpdatePropertiesParameters) MarshalJSON() ([]byte, error) {
 	if rupp.OriginGroup != nil {
 		objectMap["originGroup"] = rupp.OriginGroup
 	}
-
-	// OriginPath must be set to nil to be removed
-	objectMap["originPath"] = rupp.OriginPath
-
+	if rupp.OriginPath != nil {
+		objectMap["originPath"] = rupp.OriginPath
+	}
 	if rupp.RuleSets != nil {
 		objectMap["ruleSets"] = rupp.RuleSets
 	}

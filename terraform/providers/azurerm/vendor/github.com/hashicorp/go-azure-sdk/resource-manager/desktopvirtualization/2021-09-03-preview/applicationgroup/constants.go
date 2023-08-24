@@ -1,10 +1,6 @@
 package applicationgroup
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -21,19 +17,6 @@ func PossibleValuesForApplicationGroupType() []string {
 		string(ApplicationGroupTypeDesktop),
 		string(ApplicationGroupTypeRemoteApp),
 	}
-}
-
-func (s *ApplicationGroupType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseApplicationGroupType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseApplicationGroupType(input string) (*ApplicationGroupType, error) {
@@ -70,19 +53,6 @@ func PossibleValuesForOperation() []string {
 	}
 }
 
-func (s *Operation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseOperation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseOperation(input string) (*Operation, error) {
 	vals := map[string]Operation{
 		"complete": OperationComplete,
@@ -116,19 +86,6 @@ func PossibleValuesForSkuTier() []string {
 		string(SkuTierPremium),
 		string(SkuTierStandard),
 	}
-}
-
-func (s *SkuTier) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSkuTier(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseSkuTier(input string) (*SkuTier, error) {

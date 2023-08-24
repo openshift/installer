@@ -184,8 +184,7 @@ func resourceCdnFrontDoorRouteDisableLinkToDefaultDomainRead(d *pluginsdk.Resour
 	existing, err := routeClient.Get(routeCtx, routeId.ResourceGroup, routeId.ProfileName, routeId.AfdEndpointName, routeId.RouteName)
 	if err != nil {
 		if utils.ResponseWasNotFound(existing.Response) {
-			d.SetId("")
-			return nil
+			return fmt.Errorf("creating %s: %s was not found", id, routeId)
 		}
 
 		return fmt.Errorf("retrieving existing %s: %+v", *routeId, err)

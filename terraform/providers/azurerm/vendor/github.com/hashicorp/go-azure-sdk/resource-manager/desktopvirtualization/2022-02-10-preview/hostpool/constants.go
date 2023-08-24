@@ -1,10 +1,6 @@
 package hostpool
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -31,19 +27,6 @@ func PossibleValuesForDayOfWeek() []string {
 		string(DayOfWeekTuesday),
 		string(DayOfWeekWednesday),
 	}
-}
-
-func (s *DayOfWeek) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseDayOfWeek(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseDayOfWeek(input string) (*DayOfWeek, error) {
@@ -81,19 +64,6 @@ func PossibleValuesForHostPoolType() []string {
 	}
 }
 
-func (s *HostPoolType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseHostPoolType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseHostPoolType(input string) (*HostPoolType, error) {
 	vals := map[string]HostPoolType{
 		"byodesktop": HostPoolTypeBYODesktop,
@@ -127,19 +97,6 @@ func PossibleValuesForHostpoolPublicNetworkAccess() []string {
 	}
 }
 
-func (s *HostpoolPublicNetworkAccess) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseHostpoolPublicNetworkAccess(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseHostpoolPublicNetworkAccess(input string) (*HostpoolPublicNetworkAccess, error) {
 	vals := map[string]HostpoolPublicNetworkAccess{
 		"disabled":                   HostpoolPublicNetworkAccessDisabled,
@@ -170,19 +127,6 @@ func PossibleValuesForLoadBalancerType() []string {
 		string(LoadBalancerTypeDepthFirst),
 		string(LoadBalancerTypePersistent),
 	}
-}
-
-func (s *LoadBalancerType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseLoadBalancerType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseLoadBalancerType(input string) (*LoadBalancerType, error) {
@@ -220,19 +164,6 @@ func PossibleValuesForOperation() []string {
 	}
 }
 
-func (s *Operation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseOperation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseOperation(input string) (*Operation, error) {
 	vals := map[string]Operation{
 		"complete": OperationComplete,
@@ -264,19 +195,6 @@ func PossibleValuesForPersonalDesktopAssignmentType() []string {
 	}
 }
 
-func (s *PersonalDesktopAssignmentType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePersonalDesktopAssignmentType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePersonalDesktopAssignmentType(input string) (*PersonalDesktopAssignmentType, error) {
 	vals := map[string]PersonalDesktopAssignmentType{
 		"automatic": PersonalDesktopAssignmentTypeAutomatic,
@@ -305,19 +223,6 @@ func PossibleValuesForPreferredAppGroupType() []string {
 		string(PreferredAppGroupTypeNone),
 		string(PreferredAppGroupTypeRailApplications),
 	}
-}
-
-func (s *PreferredAppGroupType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePreferredAppGroupType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parsePreferredAppGroupType(input string) (*PreferredAppGroupType, error) {
@@ -353,19 +258,6 @@ func PossibleValuesForPrivateEndpointConnectionProvisioningState() []string {
 	}
 }
 
-func (s *PrivateEndpointConnectionProvisioningState) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointConnectionProvisioningState(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointConnectionProvisioningState(input string) (*PrivateEndpointConnectionProvisioningState, error) {
 	vals := map[string]PrivateEndpointConnectionProvisioningState{
 		"creating":  PrivateEndpointConnectionProvisioningStateCreating,
@@ -398,19 +290,6 @@ func PossibleValuesForPrivateEndpointServiceConnectionStatus() []string {
 	}
 }
 
-func (s *PrivateEndpointServiceConnectionStatus) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parsePrivateEndpointServiceConnectionStatus(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parsePrivateEndpointServiceConnectionStatus(input string) (*PrivateEndpointServiceConnectionStatus, error) {
 	vals := map[string]PrivateEndpointServiceConnectionStatus{
 		"approved": PrivateEndpointServiceConnectionStatusApproved,
@@ -440,19 +319,6 @@ func PossibleValuesForRegistrationTokenOperation() []string {
 		string(RegistrationTokenOperationNone),
 		string(RegistrationTokenOperationUpdate),
 	}
-}
-
-func (s *RegistrationTokenOperation) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseRegistrationTokenOperation(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseRegistrationTokenOperation(input string) (*RegistrationTokenOperation, error) {
@@ -488,19 +354,6 @@ func PossibleValuesForSSOSecretType() []string {
 	}
 }
 
-func (s *SSOSecretType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSSOSecretType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseSSOSecretType(input string) (*SSOSecretType, error) {
 	vals := map[string]SSOSecretType{
 		"certificate":           SSOSecretTypeCertificate,
@@ -529,19 +382,6 @@ func PossibleValuesForSessionHostComponentUpdateType() []string {
 		string(SessionHostComponentUpdateTypeDefault),
 		string(SessionHostComponentUpdateTypeScheduled),
 	}
-}
-
-func (s *SessionHostComponentUpdateType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSessionHostComponentUpdateType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseSessionHostComponentUpdateType(input string) (*SessionHostComponentUpdateType, error) {
@@ -574,19 +414,6 @@ func PossibleValuesForSkuTier() []string {
 		string(SkuTierPremium),
 		string(SkuTierStandard),
 	}
-}
-
-func (s *SkuTier) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseSkuTier(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseSkuTier(input string) (*SkuTier, error) {

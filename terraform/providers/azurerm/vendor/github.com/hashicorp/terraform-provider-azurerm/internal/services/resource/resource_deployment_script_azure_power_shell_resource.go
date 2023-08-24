@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/resources/2020-10-01/deploymentscripts"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
@@ -74,14 +73,12 @@ func (r ResourceDeploymentScriptAzurePowerShellResource) Create() sdk.ResourceFu
 				},
 			}
 
-			identityValue, err := identity.ExpandUserAssignedMap(metadata.ResourceData.Get("identity").([]interface{}))
+			identityValue, err := expandManagedServiceIdentityModel(metadata.ResourceData.Get("identity").([]interface{}))
 			if err != nil {
 				return err
 			}
 
-			if identityValue != nil && identityValue.Type != identity.TypeNone {
-				properties.Identity = identityValue
-			}
+			properties.Identity = identityValue
 
 			if model.Arguments != "" {
 				properties.Properties.Arguments = &model.Arguments
@@ -152,7 +149,7 @@ func (r ResourceDeploymentScriptAzurePowerShellResource) Read() sdk.ResourceFunc
 				Location:          location.Normalize(model.Location),
 			}
 
-			identityValue, err := identity.FlattenUserAssignedMap(model.Identity)
+			identityValue, err := flattenManagedServiceIdentityModel(model.Identity)
 			if err != nil {
 				return err
 			}

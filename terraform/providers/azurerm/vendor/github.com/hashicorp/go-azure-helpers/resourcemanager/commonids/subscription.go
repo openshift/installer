@@ -36,7 +36,7 @@ func ParseSubscriptionID(input string) (*SubscriptionId, error) {
 	id := SubscriptionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -55,7 +55,7 @@ func ParseSubscriptionIDInsensitively(input string) (*SubscriptionId, error) {
 	id := SubscriptionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyVaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
-	keyVaultSuppress "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/suppress"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -235,12 +234,11 @@ func resourceAppServiceCertificateSchema() map[string]*pluginsdk.Schema {
 		},
 
 		"key_vault_secret_id": {
-			Type:             pluginsdk.TypeString,
-			Optional:         true,
-			ForceNew:         true,
-			DiffSuppressFunc: keyVaultSuppress.DiffSuppressIgnoreKeyVaultKeyVersion,
-			ValidateFunc:     keyVaultValidate.NestedItemId,
-			ConflictsWith:    []string{"pfx_blob", "password"},
+			Type:          pluginsdk.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			ValidateFunc:  keyVaultValidate.NestedItemId,
+			ConflictsWith: []string{"pfx_blob", "password"},
 		},
 
 		"app_service_plan_id": {

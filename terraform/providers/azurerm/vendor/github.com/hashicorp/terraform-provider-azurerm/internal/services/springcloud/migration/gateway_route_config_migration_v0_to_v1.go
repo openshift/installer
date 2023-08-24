@@ -40,7 +40,7 @@ func (s SpringCloudGatewayRouteConfigV0ToV1) Schema() map[string]*pluginsdk.Sche
 
 		"protocol": {
 			Type:     pluginsdk.TypeString,
-			Optional: true,
+			Required: false,
 		},
 
 		"spring_cloud_app_id": {

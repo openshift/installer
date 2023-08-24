@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = CollectionId{}
 
 // CollectionId is a struct representing the Resource ID for a Collection
@@ -44,23 +41,23 @@ func ParseCollectionID(input string) (*CollectionId, error) {
 	id := CollectionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseName, ok = parsed.Parsed["databaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseName' was not found in the resource id %q", input)
 	}
 
 	if id.CollectionName, ok = parsed.Parsed["collectionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "collectionName", *parsed)
+		return nil, fmt.Errorf("the segment 'collectionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -79,23 +76,23 @@ func ParseCollectionIDInsensitively(input string) (*CollectionId, error) {
 	id := CollectionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseAccountName, ok = parsed.Parsed["databaseAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseAccountName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseAccountName' was not found in the resource id %q", input)
 	}
 
 	if id.DatabaseName, ok = parsed.Parsed["databaseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "databaseName", *parsed)
+		return nil, fmt.Errorf("the segment 'databaseName' was not found in the resource id %q", input)
 	}
 
 	if id.CollectionName, ok = parsed.Parsed["collectionName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "collectionName", *parsed)
+		return nil, fmt.Errorf("the segment 'collectionName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

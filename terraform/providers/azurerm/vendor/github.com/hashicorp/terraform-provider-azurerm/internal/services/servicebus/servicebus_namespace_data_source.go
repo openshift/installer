@@ -76,11 +76,6 @@ func dataSourceServiceBusNamespace() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"endpoint": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
 			"tags": tags.SchemaDataSource(),
 		},
 	}
@@ -114,7 +109,6 @@ func dataSourceServiceBusNamespaceRead(d *pluginsdk.ResourceData, meta interface
 
 		if props := model.Properties; props != nil {
 			d.Set("zone_redundant", props.ZoneRedundant)
-			d.Set("endpoint", props.ServiceBusEndpoint)
 		}
 	}
 

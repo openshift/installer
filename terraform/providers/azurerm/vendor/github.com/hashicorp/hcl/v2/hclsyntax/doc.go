@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // Package hclsyntax contains the parser, AST, etc for HCL's native language,
 // as opposed to the JSON variant.
 //

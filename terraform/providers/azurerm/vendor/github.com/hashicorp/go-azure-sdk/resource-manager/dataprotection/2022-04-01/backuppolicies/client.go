@@ -1,26 +1,18 @@
 package backuppolicies
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type BackupPoliciesClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewBackupPoliciesClientWithBaseURI(api environments.Api) (*BackupPoliciesClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "backuppolicies", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating BackupPoliciesClient: %+v", err)
+func NewBackupPoliciesClientWithBaseURI(endpoint string) BackupPoliciesClient {
+	return BackupPoliciesClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &BackupPoliciesClient{
-		Client: client,
-	}, nil
 }

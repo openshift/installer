@@ -105,7 +105,7 @@ func (r DashboardGrafanaResource) Arguments() map[string]*pluginsdk.Schema {
 			},
 		},
 
-		"identity": commonschema.SystemOrUserAssignedIdentityOptionalForceNew(),
+		"identity": commonschema.SystemAssignedIdentityOptionalForceNew(),
 
 		"public_network_access_enabled": {
 			Type:     pluginsdk.TypeBool,
@@ -287,6 +287,8 @@ func (r DashboardGrafanaResource) Update() sdk.ResourceFunc {
 				properties.Properties.PublicNetworkAccess = &publicNetworkAccess
 			}
 
+			properties.SystemData = nil
+
 			if metadata.ResourceData.HasChange("tags") {
 				properties.Tags = &model.Tags
 			}
@@ -449,16 +451,13 @@ func expandAzureMonitorWorkspaceIntegrationModelArray(inputList []AzureMonitorWo
 }
 
 func expandLegacySystemAndUserAssignedMap(input []interface{}) *identity.LegacySystemAndUserAssignedMap {
-	identityValue, err := identity.ExpandSystemOrUserAssignedMap(input)
+	identityValue, err := identity.ExpandSystemAssigned(input)
 	if err != nil {
 		return nil
 	}
 
 	return &identity.LegacySystemAndUserAssignedMap{
-		Type:        identityValue.Type,
-		PrincipalId: identityValue.PrincipalId,
-		TenantId:    identityValue.TenantId,
-		IdentityIds: identityValue.IdentityIds,
+		Type: identityValue.Type,
 	}
 }
 
@@ -486,16 +485,12 @@ func flattenLegacySystemAndUserAssignedMap(input *identity.LegacySystemAndUserAs
 		return &[]interface{}{}
 	}
 
-	identityValue := &identity.SystemOrUserAssignedMap{
+	identityValue := &identity.SystemAssigned{
 		Type:        input.Type,
 		PrincipalId: input.PrincipalId,
 		TenantId:    input.TenantId,
-		IdentityIds: input.IdentityIds,
 	}
 
-	output, err := identity.FlattenSystemOrUserAssignedMap(identityValue)
-	if err != nil {
-		return &[]interface{}{}
-	}
-	return output
+	output := identity.FlattenSystemAssigned(identityValue)
+	return &output
 }

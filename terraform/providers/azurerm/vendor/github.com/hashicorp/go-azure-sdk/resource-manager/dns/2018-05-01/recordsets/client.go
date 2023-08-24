@@ -1,26 +1,18 @@
 package recordsets
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type RecordSetsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewRecordSetsClientWithBaseURI(api environments.Api) (*RecordSetsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "recordsets", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating RecordSetsClient: %+v", err)
+func NewRecordSetsClientWithBaseURI(endpoint string) RecordSetsClient {
+	return RecordSetsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &RecordSetsClient{
-		Client: client,
-	}, nil
 }

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	sharedKeyWorkspaces "github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
@@ -169,13 +168,14 @@ func resourceLogAnalyticsWorkspaceCustomDiff(ctx context.Context, d *pluginsdk.R
 	// custom diff here because when you link the workspace to a cluster the
 	// cluster changes the sku to LACluster, so we need to ignore the change
 	// if it is LACluster else invoke the ForceNew as before...
-
+	//
+	// NOTE: Since LACluster is not in our enum the value is returned as ""
 	if d.HasChange("sku") {
 		old, new := d.GetChange("sku")
 		log.Printf("[INFO] Log Analytics Workspace SKU: OLD: %q, NEW: %q", old, new)
 		// If the old value is not LACluster(e.g. "") return ForceNew because they are
 		// really changing the sku...
-		if !strings.EqualFold(old.(string), string(workspaces.WorkspaceSkuNameEnumLACluster)) && !strings.EqualFold(old.(string), "") {
+		if !strings.EqualFold(old.(string), "") {
 			d.ForceNew("sku")
 		}
 	}
@@ -222,7 +222,7 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 		if err == nil {
 			if resp.Model != nil && resp.Model.Properties != nil {
 				if azSku := resp.Model.Properties.Sku; azSku != nil {
-					if strings.EqualFold(string(azSku.Name), string(workspaces.WorkspaceSkuNameEnumLACluster)) {
+					if strings.EqualFold(string(azSku.Name), "lacluster") {
 						isLACluster = true
 						log.Printf("[INFO] Log Analytics Workspace %q (Resource Group %q): SKU is linked to Log Analytics cluster", name, resourceGroup)
 					}
@@ -245,7 +245,7 @@ func resourceLogAnalyticsWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta i
 	t := d.Get("tags").(map[string]interface{})
 
 	if isLACluster {
-		sku.Name = workspaces.WorkspaceSkuNameEnumLACluster
+		sku.Name = "lacluster"
 	} else if skuName == "" {
 		// Default value if sku is not defined
 		sku.Name = workspaces.WorkspaceSkuNameEnumPerGBTwoZeroOneEight
@@ -389,7 +389,7 @@ func resourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface
 					}
 				}
 				if capacityReservationLevel := sku.CapacityReservationLevel; capacityReservationLevel != nil {
-					d.Set("reservation_capacity_in_gb_per_day", int64(pointer.From(capacityReservationLevel)))
+					d.Set("reservation_capacity_in_gb_per_day", capacityReservationLevel)
 				}
 			}
 			d.Set("sku", skuName)
@@ -411,7 +411,7 @@ func resourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface
 				// Special case for "Free" tier
 				d.Set("daily_quota_gb", utils.Float(0.5))
 			case props.WorkspaceCapping != nil && props.WorkspaceCapping.DailyQuotaGb != nil:
-				d.Set("daily_quota_gb", props.WorkspaceCapping.DailyQuotaGb)
+				d.Set("daily_quota_gb", *props.WorkspaceCapping.DailyQuotaGb)
 			default:
 				d.Set("daily_quota_gb", utils.Float(-1))
 			}

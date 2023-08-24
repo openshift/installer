@@ -13,8 +13,6 @@ import (
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/availabilitysets"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhostgroups"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2021-11-01/dedicatedhosts"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservationgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/images"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/proximityplacementgroups"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -32,7 +30,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
+	"github.com/tombuildsstuff/kermit/sdk/compute/2022-08-01/compute"
 )
 
 func resourceLinuxVirtualMachine() *pluginsdk.Resource {
@@ -70,7 +68,7 @@ func resourceLinuxVirtualMachine() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: computeValidate.LinuxAdminUsername,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
 			"network_interface_ids": {
@@ -100,7 +98,6 @@ func resourceLinuxVirtualMachine() *pluginsdk.Resource {
 				ForceNew:         true,
 				Sensitive:        true,
 				DiffSuppressFunc: adminPasswordDiffSuppressFunc,
-				ValidateFunc:     computeValidate.LinuxAdminPassword,
 			},
 
 			"admin_ssh_key": SSHKeysSchema(true),
@@ -134,7 +131,7 @@ func resourceLinuxVirtualMachine() *pluginsdk.Resource {
 				// the Compute/VM API is broken and returns the Resource Group name in UPPERCASE
 				// tracked by https://github.com/Azure/azure-rest-api-specs/issues/19424
 				DiffSuppressFunc: suppress.CaseDifference,
-				ValidateFunc:     capacityreservationgroups.ValidateCapacityReservationGroupID,
+				ValidateFunc:     computeValidate.CapacityReservationGroupID,
 				ConflictsWith: []string{
 					"availability_set_id",
 					"proximity_placement_group_id",
@@ -295,7 +292,7 @@ func resourceLinuxVirtualMachine() *pluginsdk.Resource {
 				Optional: true,
 				ForceNew: true,
 				ValidateFunc: validation.Any(
-					images.ValidateImageID,
+					computeValidate.ImageID,
 					computeValidate.SharedImageID,
 					computeValidate.SharedImageVersionID,
 					computeValidate.CommunityGalleryImageID,
@@ -956,6 +953,10 @@ func resourceLinuxVirtualMachineUpdate(d *pluginsdk.ResourceData, meta interface
 	log.Printf("[DEBUG] Retrieving Linux Virtual Machine %q (Resource Group %q)..", id.Name, id.ResourceGroup)
 	existing, err := client.Get(ctx, id.ResourceGroup, id.Name, compute.InstanceViewTypesUserData)
 	if err != nil {
+		if utils.ResponseWasNotFound(existing.Response) {
+			return nil
+		}
+
 		return fmt.Errorf("retrieving Linux Virtual Machine %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 

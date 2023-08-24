@@ -29,22 +29,16 @@ func (r Registration) WebsiteCategories() []string {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{
-		ManagerNetworkGroupDataSource{},
-	}
+	return []sdk.DataSource{}
 }
 
 func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
-		ManagerAdminRuleResource{},
-		ManagerAdminRuleCollectionResource{},
-		ManagerDeploymentResource{},
 		ManagerConnectivityConfigurationResource{},
 		ManagerManagementGroupConnectionResource{},
 		ManagerNetworkGroupResource{},
 		ManagerResource{},
 		ManagerScopeConnectionResource{},
-		ManagerSecurityAdminConfigurationResource{},
 		ManagerStaticMemberResource{},
 		ManagerSubscriptionConnectionResource{},
 		PrivateEndpointApplicationSecurityGroupAssociationResource{},
@@ -76,7 +70,6 @@ func (r Registration) SupportedDataSources() map[string]*pluginsdk.Resource {
 		"azurerm_network_service_tags":                      dataSourceNetworkServiceTags(),
 		"azurerm_subnet":                                    dataSourceSubnet(),
 		"azurerm_virtual_hub":                               dataSourceVirtualHub(),
-		"azurerm_virtual_hub_connection":                    dataSourceVirtualHubConnection(),
 		"azurerm_virtual_hub_route_table":                   dataSourceVirtualHubRouteTable(),
 		"azurerm_virtual_network_gateway":                   dataSourceVirtualNetworkGateway(),
 		"azurerm_virtual_network_gateway_connection":        dataSourceVirtualNetworkGatewayConnection(),
@@ -100,7 +93,6 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 		"azurerm_express_route_circuit":                    resourceExpressRouteCircuit(),
 		"azurerm_express_route_connection":                 resourceExpressRouteConnection(),
 		"azurerm_express_route_gateway":                    resourceExpressRouteGateway(),
-		"azurerm_express_route_port_authorization":         resourceExpressRoutePortAuthorization(),
 		"azurerm_express_route_port":                       resourceArmExpressRoutePort(),
 		"azurerm_ip_group":                                 resourceIpGroup(),
 		"azurerm_ip_group_cidr":                            resourceIpGroupCidr(),

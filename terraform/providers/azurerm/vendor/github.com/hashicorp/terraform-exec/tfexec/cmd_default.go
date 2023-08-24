@@ -5,7 +5,6 @@ package tfexec
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
@@ -41,14 +40,11 @@ func (tf *Terraform) runTerraformCmd(ctx context.Context, cmd *exec.Cmd) error {
 	}
 
 	err = cmd.Start()
-	if ctx.Err() != nil {
-		return cmdErr{
-			err:    err,
-			ctxErr: ctx.Err(),
-		}
+	if err == nil && ctx.Err() != nil {
+		err = ctx.Err()
 	}
 	if err != nil {
-		return err
+		return tf.wrapExitError(ctx, err, "")
 	}
 
 	var errStdout, errStderr error
@@ -70,22 +66,19 @@ func (tf *Terraform) runTerraformCmd(ctx context.Context, cmd *exec.Cmd) error {
 	wg.Wait()
 
 	err = cmd.Wait()
-	if ctx.Err() != nil {
-		return cmdErr{
-			err:    err,
-			ctxErr: ctx.Err(),
-		}
+	if err == nil && ctx.Err() != nil {
+		err = ctx.Err()
 	}
 	if err != nil {
-		return fmt.Errorf("%w\n%s", err, errBuf.String())
+		return tf.wrapExitError(ctx, err, errBuf.String())
 	}
 
 	// Return error if there was an issue reading the std out/err
 	if errStdout != nil && ctx.Err() != nil {
-		return fmt.Errorf("%w\n%s", errStdout, errBuf.String())
+		return tf.wrapExitError(ctx, errStdout, errBuf.String())
 	}
 	if errStderr != nil && ctx.Err() != nil {
-		return fmt.Errorf("%w\n%s", errStderr, errBuf.String())
+		return tf.wrapExitError(ctx, errStderr, errBuf.String())
 	}
 
 	return nil

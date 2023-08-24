@@ -62,7 +62,6 @@ type config struct {
 	VMNetworkingType                        bool              `json:"azure_control_plane_vm_networking_type"`
 	RandomStringPrefix                      string            `json:"random_storage_account_suffix"`
 	VMArchitecture                          string            `json:"azure_vm_architecture"`
-	ManagedBy                               string            `json:"azure_managed_by"`
 	UseMarketplaceImage                     bool              `json:"azure_use_marketplace_image"`
 	MarketplaceImageHasPlan                 bool              `json:"azure_marketplace_image_has_plan"`
 	OSImage                                 `json:",inline"`
@@ -91,7 +90,6 @@ type TFVarsSources struct {
 	HyperVGeneration                string
 	VMArchitecture                  types.Architecture
 	InfrastructureName              string
-	ManagedBy                       string
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -181,7 +179,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		RandomStringPrefix:                      randomStringPrefixFunction(),
 		VMArchitecture:                          vmarch,
 		ExtraTags:                               tags,
-		ManagedBy:                               sources.ManagedBy,
 		UseMarketplaceImage:                     osImage.Publisher != "",
 		MarketplaceImageHasPlan:                 masterConfig.Image.Type != machineapi.AzureImageTypeMarketplaceNoPlan,
 		OSImage:                                 osImage,

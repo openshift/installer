@@ -7,16 +7,16 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/routefilters"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceRouteFilter() *pluginsdk.Resource {
@@ -27,7 +27,7 @@ func resourceRouteFilter() *pluginsdk.Resource {
 		Delete: resourceRouteFilterDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := routefilters.ParseRouteFilterID(id)
+			_, err := parse.RouteFilterID(id)
 			return err
 		}),
 
@@ -67,7 +67,7 @@ func resourceRouteFilter() *pluginsdk.Resource {
 							Type:     pluginsdk.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
-								string(routefilters.AccessAllow),
+								string(network.AccessAllow),
 							}, false),
 						},
 
@@ -92,7 +92,7 @@ func resourceRouteFilter() *pluginsdk.Resource {
 				},
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
@@ -105,34 +105,39 @@ func resourceRouteFilterCreateUpdate(d *pluginsdk.ResourceData, meta interface{}
 
 	log.Printf("[INFO] preparing arguments for Route Filter create/update.")
 
-	id := routefilters.NewRouteFilterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewRouteFilterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	location := azure.NormalizeLocation(d.Get("location").(string))
 	t := d.Get("tags").(map[string]interface{})
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id, routefilters.DefaultGetOperationOptions())
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_route_filter", id.ID())
 		}
 	}
 
-	routeSet := routefilters.RouteFilter{
-		Name:     &id.RouteFilterName,
-		Location: location,
-		Properties: &routefilters.RouteFilterPropertiesFormat{
+	routeSet := network.RouteFilter{
+		Name:     &id.Name,
+		Location: &location,
+		RouteFilterPropertiesFormat: &network.RouteFilterPropertiesFormat{
 			Rules: expandRouteFilterRules(d),
 		},
 		Tags: tags.Expand(t),
 	}
 
-	if err := client.CreateOrUpdateThenPoll(ctx, id, routeSet); err != nil {
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, routeSet)
+	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for completion of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -145,36 +150,33 @@ func resourceRouteFilterRead(d *pluginsdk.ResourceData, meta interface{}) error 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := routefilters.ParseRouteFilterID(d.Id())
+	id, err := parse.RouteFilterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id, routefilters.DefaultGetOperationOptions())
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("retrieving %s: %+v", id, err)
+		return fmt.Errorf("retrieving Route Table %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.RouteFilterName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	if location := resp.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
+	}
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
-
-		if props := model.Properties; props != nil {
-			if err := d.Set("rule", flattenRouteFilterRules(props.Rules)); err != nil {
-				return err
-			}
+	if props := resp.RouteFilterPropertiesFormat; props != nil {
+		if err := d.Set("rule", flattenRouteFilterRules(props.Rules)); err != nil {
+			return err
 		}
-
-		return tags.FlattenAndSet(d, model.Tags)
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceRouteFilterDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -182,31 +184,38 @@ func resourceRouteFilterDelete(d *pluginsdk.ResourceData, meta interface{}) erro
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := routefilters.ParseRouteFilterID(d.Id())
+	id, err := parse.RouteFilterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err = client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name)
+	if err != nil {
+		if !response.WasNotFound(future.Response()) {
+			return fmt.Errorf("deleting Route Filter %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
+		}
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for deletion of Route Filter %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
 	return nil
 }
 
-func expandRouteFilterRules(d *pluginsdk.ResourceData) *[]routefilters.RouteFilterRule {
+func expandRouteFilterRules(d *pluginsdk.ResourceData) *[]network.RouteFilterRule {
 	configs := d.Get("rule").([]interface{})
-	rules := make([]routefilters.RouteFilterRule, 0, len(configs))
+	rules := make([]network.RouteFilterRule, 0, len(configs))
 
 	for _, configRaw := range configs {
 		data := configRaw.(map[string]interface{})
 
-		rule := routefilters.RouteFilterRule{
+		rule := network.RouteFilterRule{
 			Name: utils.String(data["name"].(string)),
-			Properties: &routefilters.RouteFilterRulePropertiesFormat{
-				Access:              routefilters.Access(data["access"].(string)),
-				RouteFilterRuleType: routefilters.RouteFilterRuleType(data["rule_type"].(string)),
-				Communities:         *utils.ExpandStringSlice(data["communities"].([]interface{})),
+			RouteFilterRulePropertiesFormat: &network.RouteFilterRulePropertiesFormat{
+				Access:              network.Access(data["access"].(string)),
+				RouteFilterRuleType: utils.String(data["rule_type"].(string)),
+				Communities:         utils.ExpandStringSlice(data["communities"].([]interface{})),
 			},
 		}
 
@@ -216,7 +225,7 @@ func expandRouteFilterRules(d *pluginsdk.ResourceData) *[]routefilters.RouteFilt
 	return &rules
 }
 
-func flattenRouteFilterRules(input *[]routefilters.RouteFilterRule) []interface{} {
+func flattenRouteFilterRules(input *[]network.RouteFilterRule) []interface{} {
 	results := make([]interface{}, 0)
 
 	if rules := input; rules != nil {
@@ -224,10 +233,10 @@ func flattenRouteFilterRules(input *[]routefilters.RouteFilterRule) []interface{
 			r := make(map[string]interface{})
 
 			r["name"] = *rule.Name
-			if props := rule.Properties; props != nil {
+			if props := rule.RouteFilterRulePropertiesFormat; props != nil {
 				r["access"] = string(props.Access)
-				r["rule_type"] = props.RouteFilterRuleType
-				r["communities"] = props.Communities
+				r["rule_type"] = *props.RouteFilterRuleType
+				r["communities"] = utils.FlattenStringSlice(props.Communities)
 			}
 
 			results = append(results, r)

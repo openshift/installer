@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = RulesEngineId{}
 
 // RulesEngineId is a struct representing the Resource ID for a Rules Engine
@@ -42,19 +39,19 @@ func ParseRulesEngineID(input string) (*RulesEngineId, error) {
 	id := RulesEngineId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.FrontDoorName, ok = parsed.Parsed["frontDoorName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "frontDoorName", *parsed)
+		return nil, fmt.Errorf("the segment 'frontDoorName' was not found in the resource id %q", input)
 	}
 
 	if id.RulesEngineName, ok = parsed.Parsed["rulesEngineName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "rulesEngineName", *parsed)
+		return nil, fmt.Errorf("the segment 'rulesEngineName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseRulesEngineIDInsensitively(input string) (*RulesEngineId, error) {
 	id := RulesEngineId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.FrontDoorName, ok = parsed.Parsed["frontDoorName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "frontDoorName", *parsed)
+		return nil, fmt.Errorf("the segment 'frontDoorName' was not found in the resource id %q", input)
 	}
 
 	if id.RulesEngineName, ok = parsed.Parsed["rulesEngineName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "rulesEngineName", *parsed)
+		return nil, fmt.Errorf("the segment 'rulesEngineName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

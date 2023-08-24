@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/databoxedge/2022-03-01/devices"
+	"github.com/Azure/azure-sdk-for-go/services/databoxedge/mgmt/2020-12-01/databoxedge" // nolint: staticcheck
 )
 
 // DataboxEdgeDeviceSku type
@@ -28,7 +28,7 @@ func DataboxEdgeDeviceSkuName(input string) (*DataboxEdgeDeviceSku, error) {
 	// There is only one possible Tier so always set value to Standard
 	databoxEdgeDeviceSku := DataboxEdgeDeviceSku{
 		Name: skuParts[0],
-		Tier: string(devices.SkuTierStandard),
+		Tier: string(databoxedge.Standard),
 	}
 
 	return &databoxEdgeDeviceSku, nil

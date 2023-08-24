@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ProximityPlacementGroupId{}
 
 // ProximityPlacementGroupId is a struct representing the Resource ID for a Proximity Placement Group
@@ -40,15 +37,15 @@ func ParseProximityPlacementGroupID(input string) (*ProximityPlacementGroupId, e
 	id := ProximityPlacementGroupId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ProximityPlacementGroupName, ok = parsed.Parsed["proximityPlacementGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "proximityPlacementGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'proximityPlacementGroupName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseProximityPlacementGroupIDInsensitively(input string) (*ProximityPlacem
 	id := ProximityPlacementGroupId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.ProximityPlacementGroupName, ok = parsed.Parsed["proximityPlacementGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "proximityPlacementGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'proximityPlacementGroupName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

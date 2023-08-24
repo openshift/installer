@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = OnboardingStateId{}
 
 // OnboardingStateId is a struct representing the Resource ID for a Onboarding State
@@ -42,19 +39,19 @@ func ParseOnboardingStateID(input string) (*OnboardingStateId, error) {
 	id := OnboardingStateId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.WorkspaceName, ok = parsed.Parsed["workspaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workspaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'workspaceName' was not found in the resource id %q", input)
 	}
 
 	if id.OnboardingStateName, ok = parsed.Parsed["onboardingStateName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "onboardingStateName", *parsed)
+		return nil, fmt.Errorf("the segment 'onboardingStateName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseOnboardingStateIDInsensitively(input string) (*OnboardingStateId, erro
 	id := OnboardingStateId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.WorkspaceName, ok = parsed.Parsed["workspaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workspaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'workspaceName' was not found in the resource id %q", input)
 	}
 
 	if id.OnboardingStateName, ok = parsed.Parsed["onboardingStateName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "onboardingStateName", *parsed)
+		return nil, fmt.Errorf("the segment 'onboardingStateName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

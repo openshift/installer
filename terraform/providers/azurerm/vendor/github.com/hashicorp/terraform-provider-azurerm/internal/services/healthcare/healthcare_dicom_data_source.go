@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/healthcareapis/2022-12-01/dicomservices"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/healthcareapis/2022-12-01/workspaces"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/healthcare/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceHealthcareDicomService() *pluginsdk.Resource {
@@ -35,7 +33,7 @@ func dataSourceHealthcareDicomService() *pluginsdk.Resource {
 			"workspace_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: workspaces.ValidateWorkspaceID,
+				ValidateFunc: validate.WorkspaceID,
 			},
 
 			"location": commonschema.LocationComputed(),
@@ -83,7 +81,7 @@ func dataSourceHealthcareDicomService() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -94,44 +92,44 @@ func dataSourceHealthcareApisDicomServiceRead(d *pluginsdk.ResourceData, meta in
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	workspaceId, err := workspaces.ParseWorkspaceID(d.Get("workspace_id").(string))
+	workspaceId, err := parse.WorkspaceID(d.Get("workspace_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing workspace id error: %+v", err)
 	}
 
-	id := dicomservices.NewDicomServiceID(subscriptionId, workspaceId.ResourceGroupName, workspaceId.WorkspaceName, d.Get("name").(string))
-	resp, err := client.Get(ctx, id)
+	id := parse.NewDicomServiceID(subscriptionId, workspaceId.ResourceGroup, workspaceId.Name, d.Get("name").(string))
+	resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("%s was not found", id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			d.SetId("")
+			return nil
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
 
-	d.Set("name", id.WorkspaceName)
+	d.Set("name", id.Name)
 	d.Set("workspace_id", workspaceId.ID())
 
-	if m := resp.Model; m != nil {
-		d.Set("location", location.NormalizeNilable(m.Location))
-
-		if props := m.Properties; props != nil {
-			d.Set("authentication", flattenDicomAuthentication(props.AuthenticationConfiguration))
-			d.Set("private_endpoint", flattenDicomServicePrivateEndpoint(props.PrivateEndpointConnections))
-			d.Set("service_url", props.ServiceUrl)
-		}
-
-		i, err := identity.FlattenLegacySystemAndUserAssignedMap(m.Identity)
-		if err != nil {
-			return fmt.Errorf("flattening `identity`: %+v", err)
-		}
-		if err := d.Set("identity", i); err != nil {
-			return fmt.Errorf("setting `identity`: %+v", err)
-		}
-
-		return tags.FlattenAndSet(d, m.Tags)
-
+	if resp.Location != nil {
+		d.Set("location", location.Normalize(*resp.Location))
 	}
+
+	if props := resp.DicomServiceProperties; props != nil {
+		d.Set("authentication", flattenDicomAuthentication(props.AuthenticationConfiguration))
+		d.Set("private_endpoint", flattenDicomServicePrivateEndpoint(props.PrivateEndpointConnections))
+		d.Set("service_url", props.ServiceURL)
+	}
+
+	identity, _ := flattenDicomManagedIdentity(resp.Identity)
+	if err := d.Set("identity", identity); err != nil {
+		return fmt.Errorf("setting `identity`: %+v", err)
+	}
+
+	if err := tags.FlattenAndSet(d, resp.Tags); err != nil {
+		return err
+	}
+
 	return nil
 }

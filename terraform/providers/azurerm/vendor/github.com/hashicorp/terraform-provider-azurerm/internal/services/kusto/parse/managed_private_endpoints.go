@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -39,7 +36,7 @@ func (id ManagedPrivateEndpointsId) String() string {
 }
 
 func (id ManagedPrivateEndpointsId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Kusto/clusters/%s/managedPrivateEndpoints/%s"
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Kusto/Clusters/%s/ManagedPrivateEndpoints/%s"
 	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.ClusterName, id.ManagedPrivateEndpointName)
 }
 
@@ -47,7 +44,7 @@ func (id ManagedPrivateEndpointsId) ID() string {
 func ManagedPrivateEndpointsID(input string) (*ManagedPrivateEndpointsId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an ManagedPrivateEndpoints ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := ManagedPrivateEndpointsId{
@@ -63,10 +60,10 @@ func ManagedPrivateEndpointsID(input string) (*ManagedPrivateEndpointsId, error)
 		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
 	}
 
-	if resourceId.ClusterName, err = id.PopSegment("clusters"); err != nil {
+	if resourceId.ClusterName, err = id.PopSegment("Clusters"); err != nil {
 		return nil, err
 	}
-	if resourceId.ManagedPrivateEndpointName, err = id.PopSegment("managedPrivateEndpoints"); err != nil {
+	if resourceId.ManagedPrivateEndpointName, err = id.PopSegment("ManagedPrivateEndpoints"); err != nil {
 		return nil, err
 	}
 
@@ -102,27 +99,27 @@ func ManagedPrivateEndpointsIDInsensitively(input string) (*ManagedPrivateEndpoi
 		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
 	}
 
-	// find the correct casing for the 'clusters' segment
-	clustersKey := "clusters"
+	// find the correct casing for the 'Clusters' segment
+	ClustersKey := "Clusters"
 	for key := range id.Path {
-		if strings.EqualFold(key, clustersKey) {
-			clustersKey = key
+		if strings.EqualFold(key, ClustersKey) {
+			ClustersKey = key
 			break
 		}
 	}
-	if resourceId.ClusterName, err = id.PopSegment(clustersKey); err != nil {
+	if resourceId.ClusterName, err = id.PopSegment(ClustersKey); err != nil {
 		return nil, err
 	}
 
-	// find the correct casing for the 'managedPrivateEndpoints' segment
-	managedPrivateEndpointsKey := "managedPrivateEndpoints"
+	// find the correct casing for the 'ManagedPrivateEndpoints' segment
+	ManagedPrivateEndpointsKey := "ManagedPrivateEndpoints"
 	for key := range id.Path {
-		if strings.EqualFold(key, managedPrivateEndpointsKey) {
-			managedPrivateEndpointsKey = key
+		if strings.EqualFold(key, ManagedPrivateEndpointsKey) {
+			ManagedPrivateEndpointsKey = key
 			break
 		}
 	}
-	if resourceId.ManagedPrivateEndpointName, err = id.PopSegment(managedPrivateEndpointsKey); err != nil {
+	if resourceId.ManagedPrivateEndpointName, err = id.PopSegment(ManagedPrivateEndpointsKey); err != nil {
 		return nil, err
 	}
 

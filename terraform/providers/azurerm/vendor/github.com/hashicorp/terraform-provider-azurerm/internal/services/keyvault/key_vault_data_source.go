@@ -2,19 +2,19 @@ package keyvault
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2021-10-01/keyvault" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/keyvault/2021-10-01/vaults"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/set"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceKeyVault() *pluginsdk.Resource {
@@ -135,18 +135,16 @@ func dataSourceKeyVault() *pluginsdk.Resource {
 							Computed: true,
 						},
 						"ip_rules": {
-							Type:     pluginsdk.TypeList,
+							Type:     pluginsdk.TypeSet,
 							Computed: true,
-							Elem: &pluginsdk.Schema{
-								Type: pluginsdk.TypeString,
-							},
+							Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
+							Set:      pluginsdk.HashString,
 						},
 						"virtual_network_subnet_ids": {
-							Type:     pluginsdk.TypeList,
+							Type:     pluginsdk.TypeSet,
 							Computed: true,
-							Elem: &pluginsdk.Schema{
-								Type: pluginsdk.TypeString,
-							},
+							Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
+							Set:      set.HashStringIgnoreCase,
 						},
 					},
 				},
@@ -162,7 +160,7 @@ func dataSourceKeyVault() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -173,24 +171,25 @@ func dataSourceKeyVaultRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := commonids.NewKeyVaultID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
-	resp, err := client.Get(ctx, id)
+	id := parse.NewVaultID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("%s was not found", id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			return fmt.Errorf("KeyVault %s does not exist", id)
 		}
 		return fmt.Errorf("making read request %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
 
-	d.Set("name", id.VaultName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-		props := model.Properties
+	if props := resp.Properties; props != nil {
+		d.Set("tenant_id", props.TenantID.String())
 		d.Set("enabled_for_deployment", props.EnabledForDeployment)
 		d.Set("enabled_for_disk_encryption", props.EnabledForDiskEncryption)
 		d.Set("enabled_for_template_deployment", props.EnabledForTemplateDeployment)
@@ -199,74 +198,66 @@ func dataSourceKeyVaultRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		if v := props.PublicNetworkAccess; v != nil {
 			d.Set("public_network_access_enabled", *v == "Enabled")
 		}
-		d.Set("tenant_id", props.TenantId)
 
-		d.Set("vault_uri", props.VaultUri)
-		if props.VaultUri != nil {
-			meta.(*clients.Client).KeyVault.AddToCache(id, *props.VaultUri)
+		d.Set("vault_uri", props.VaultURI)
+		if props.VaultURI != nil {
+			meta.(*clients.Client).KeyVault.AddToCache(id, *resp.Properties.VaultURI)
 		}
 
-		skuName := ""
-		// the Azure API is inconsistent here, so rewrite this into the casing we expect
-		// TODO: this can be removed when the new base layer is enabled?
-		for _, v := range vaults.PossibleValuesForSkuName() {
-			if strings.EqualFold(v, string(model.Properties.Sku.Name)) {
-				skuName = v
+		if sku := props.Sku; sku != nil {
+			if err := d.Set("sku_name", string(sku.Name)); err != nil {
+				return fmt.Errorf("setting `sku_name` for KeyVault %q: %+v", *resp.Name, err)
 			}
+		} else {
+			return fmt.Errorf("making Read request on KeyVault %q: Unable to retrieve 'sku' value", *resp.Name)
 		}
-		d.Set("sku_name", skuName)
 
 		flattenedPolicies := flattenAccessPolicies(props.AccessPolicies)
 		if err := d.Set("access_policy", flattenedPolicies); err != nil {
-			return fmt.Errorf("setting `access_policy`: %+v", err)
+			return fmt.Errorf("setting `access_policy` for KeyVault %q: %+v", *resp.Name, err)
 		}
 
 		if err := d.Set("network_acls", flattenKeyVaultDataSourceNetworkAcls(props.NetworkAcls)); err != nil {
-			return fmt.Errorf("setting `network_acls`: %+v", err)
-		}
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
+			return fmt.Errorf("setting `network_acls` for KeyVault %q: %+v", *resp.Name, err)
 		}
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
-func flattenKeyVaultDataSourceNetworkAcls(input *vaults.NetworkRuleSet) []interface{} {
-	output := make([]interface{}, 0)
-
-	if input != nil {
-		bypass := ""
-		if input.Bypass != nil {
-			bypass = string(*input.Bypass)
-		}
-
-		defaultAction := ""
-		if input.DefaultAction != nil {
-			defaultAction = string(*input.DefaultAction)
-		}
-
-		ipRules := make([]interface{}, 0)
-		if input.IPRules != nil {
-			for _, v := range *input.IPRules {
-				ipRules = append(ipRules, v.Value)
-			}
-		}
-
-		virtualNetworkRules := make([]interface{}, 0)
-		if input.VirtualNetworkRules != nil {
-			for _, v := range *input.VirtualNetworkRules {
-				virtualNetworkRules = append(virtualNetworkRules, v.Id)
-			}
-		}
-
-		output = append(output, map[string]interface{}{
-			"bypass":                     bypass,
-			"default_action":             defaultAction,
-			"ip_rules":                   ipRules,
-			"virtual_network_subnet_ids": virtualNetworkRules,
-		})
+func flattenKeyVaultDataSourceNetworkAcls(input *keyvault.NetworkRuleSet) []interface{} {
+	if input == nil {
+		return []interface{}{}
 	}
 
-	return output
+	output := make(map[string]interface{})
+
+	output["bypass"] = string(input.Bypass)
+	output["default_action"] = string(input.DefaultAction)
+
+	ipRules := make([]interface{}, 0)
+	if input.IPRules != nil {
+		for _, v := range *input.IPRules {
+			if v.Value == nil {
+				continue
+			}
+
+			ipRules = append(ipRules, *v.Value)
+		}
+	}
+	output["ip_rules"] = pluginsdk.NewSet(pluginsdk.HashString, ipRules)
+
+	virtualNetworkRules := make([]interface{}, 0)
+	if input.VirtualNetworkRules != nil {
+		for _, v := range *input.VirtualNetworkRules {
+			if v.ID == nil {
+				continue
+			}
+
+			virtualNetworkRules = append(virtualNetworkRules, *v.ID)
+		}
+	}
+	output["virtual_network_subnet_ids"] = pluginsdk.NewSet(pluginsdk.HashString, virtualNetworkRules)
+
+	return []interface{}{output}
 }

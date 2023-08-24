@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package commonids
 
 import (
@@ -42,19 +39,19 @@ func ParseHyperVSiteJobID(input string) (*HyperVSiteJobId, error) {
 	id := HyperVSiteJobId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.HyperVSiteName, ok = parsed.Parsed["hyperVSiteName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "hyperVSiteName", *parsed)
+		return nil, fmt.Errorf("the segment 'hyperVSiteName' was not found in the resource id %q", input)
 	}
 
 	if id.JobName, ok = parsed.Parsed["jobName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "jobName", *parsed)
+		return nil, fmt.Errorf("the segment 'jobName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseHyperVSiteJobIDInsensitively(input string) (*HyperVSiteJobId, error) {
 	id := HyperVSiteJobId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.HyperVSiteName, ok = parsed.Parsed["hyperVSiteName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "hyperVSiteName", *parsed)
+		return nil, fmt.Errorf("the segment 'hyperVSiteName' was not found in the resource id %q", input)
 	}
 
 	if id.JobName, ok = parsed.Parsed["jobName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "jobName", *parsed)
+		return nil, fmt.Errorf("the segment 'jobName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

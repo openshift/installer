@@ -1,10 +1,8 @@
 package client
 
 import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/resource-manager/cognitive/2023-05-01/cognitiveservicesaccounts"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/cognitive/2023-05-01/deployments"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/cognitive/2022-10-01/cognitiveservicesaccounts"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/cognitive/2022-10-01/deployments"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
@@ -13,21 +11,15 @@ type Client struct {
 	DeploymentsClient *deployments.DeploymentsClient
 }
 
-func NewClient(o *common.ClientOptions) (*Client, error) {
+func NewClient(o *common.ClientOptions) *Client {
 
-	accountsClient, err := cognitiveservicesaccounts.NewCognitiveServicesAccountsClientWithBaseURI(o.Environment.ResourceManager)
-	if err != nil {
-		return nil, fmt.Errorf("building Accounts client: %+v", err)
-	}
-	o.Configure(accountsClient.Client, o.Authorizers.ResourceManager)
+	accountsClient := cognitiveservicesaccounts.NewCognitiveServicesAccountsClientWithBaseURI(o.ResourceManagerEndpoint)
+	o.ConfigureClient(&accountsClient.Client, o.ResourceManagerAuthorizer)
 
-	deploymentsClient, err := deployments.NewDeploymentsClientWithBaseURI(o.Environment.ResourceManager)
-	if err != nil {
-		return nil, fmt.Errorf("building Deployments client: %+v", err)
-	}
-	o.Configure(deploymentsClient.Client, o.Authorizers.ResourceManager)
+	deploymentsClient := deployments.NewDeploymentsClientWithBaseURI(o.ResourceManagerEndpoint)
+	o.ConfigureClient(&deploymentsClient.Client, o.ResourceManagerAuthorizer)
 	return &Client{
-		AccountsClient:    accountsClient,
-		DeploymentsClient: deploymentsClient,
-	}, nil
+		AccountsClient:    &accountsClient,
+		DeploymentsClient: &deploymentsClient,
+	}
 }

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dnsresolver/2022-07-01/dnsresolvers"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
@@ -56,7 +56,7 @@ func (r PrivateDNSResolverDnsResolverResource) Arguments() map[string]*pluginsdk
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: commonids.ValidateVirtualNetworkID,
+			ValidateFunc: networkValidate.VirtualNetworkID,
 		},
 
 		"tags": commonschema.Tags(),
@@ -133,6 +133,8 @@ func (r PrivateDNSResolverDnsResolverResource) Update() sdk.ResourceFunc {
 			if properties == nil {
 				return fmt.Errorf("retrieving %s: properties was nil", id)
 			}
+
+			properties.SystemData = nil
 
 			if metadata.ResourceData.HasChange("tags") {
 				properties.Tags = &model.Tags

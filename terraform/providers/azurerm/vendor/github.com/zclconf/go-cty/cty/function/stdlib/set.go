@@ -23,8 +23,7 @@ var SetHasElementFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type:         function.StaticReturnType(cty.Bool),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.Bool),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].HasElement(args[1]), nil
 	},
@@ -44,8 +43,7 @@ var SetUnionFunc = function.New(&function.Spec{
 		Type:             cty.Set(cty.DynamicPseudoType),
 		AllowDynamicType: true,
 	},
-	Type:         setOperationReturnType,
-	RefineResult: refineNonNull,
+	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Union(s2)
 	}, true),
@@ -65,8 +63,7 @@ var SetIntersectionFunc = function.New(&function.Spec{
 		Type:             cty.Set(cty.DynamicPseudoType),
 		AllowDynamicType: true,
 	},
-	Type:         setOperationReturnType,
-	RefineResult: refineNonNull,
+	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Intersection(s2)
 	}, false),
@@ -86,8 +83,7 @@ var SetSubtractFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type:         setOperationReturnType,
-	RefineResult: refineNonNull,
+	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.Subtract(s2)
 	}, false),
@@ -107,8 +103,7 @@ var SetSymmetricDifferenceFunc = function.New(&function.Spec{
 		Type:             cty.Set(cty.DynamicPseudoType),
 		AllowDynamicType: true,
 	},
-	Type:         setOperationReturnType,
-	RefineResult: refineNonNull,
+	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
 		return s1.SymmetricDifference(s2)
 	}, false),

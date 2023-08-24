@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/privatedns/2018-09-01/virtualnetworklinks"
@@ -63,7 +62,7 @@ func resourcePrivateDnsZoneVirtualNetworkLink() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: commonids.ValidateVirtualNetworkID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"registration_enabled": {

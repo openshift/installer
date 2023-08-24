@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/appplatform/2023-05-01-preview/appplatform"
+	"github.com/tombuildsstuff/kermit/sdk/appplatform/2022-11-01-preview/appplatform"
 )
 
 func resourceSpringCloudGateway() *pluginsdk.Resource {
@@ -112,29 +112,6 @@ func resourceSpringCloudGateway() *pluginsdk.Resource {
 				},
 			},
 
-			"client_authorization": {
-				Type:     pluginsdk.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem: &pluginsdk.Resource{
-					Schema: map[string]*pluginsdk.Schema{
-						"certificate_ids": {
-							Type:     pluginsdk.TypeList,
-							Optional: true,
-							Elem: &pluginsdk.Schema{
-								Type:         pluginsdk.TypeString,
-								ValidateFunc: validate.SpringCloudCertificateID,
-							},
-						},
-
-						"verification_enabled": {
-							Type:     pluginsdk.TypeBool,
-							Optional: true,
-						},
-					},
-				},
-			},
-
 			"cors": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
@@ -173,15 +150,6 @@ func resourceSpringCloudGateway() *pluginsdk.Resource {
 						},
 
 						"allowed_origins": {
-							Type:     pluginsdk.TypeSet,
-							Optional: true,
-							Elem: &pluginsdk.Schema{
-								Type:         pluginsdk.TypeString,
-								ValidateFunc: validation.StringIsNotEmpty,
-							},
-						},
-
-						"allowed_origin_patterns": {
 							Type:     pluginsdk.TypeSet,
 							Optional: true,
 							Elem: &pluginsdk.Schema{
@@ -347,7 +315,6 @@ func resourceSpringCloudGatewayCreateUpdate(d *pluginsdk.ResourceData, meta inte
 
 	gatewayResource := appplatform.GatewayResource{
 		Properties: &appplatform.GatewayProperties{
-			ClientAuth:            expandGatewayClientAuth(d.Get("client_authorization").([]interface{})),
 			APIMetadataProperties: expandGatewayGatewayAPIMetadataProperties(d.Get("api_metadata").([]interface{})),
 			ApmTypes:              expandGatewayGatewayApmTypes(d.Get("application_performance_monitoring_types").([]interface{})),
 			CorsProperties:        expandGatewayGatewayCorsProperties(d.Get("cors").([]interface{})),
@@ -407,9 +374,6 @@ func resourceSpringCloudGatewayRead(d *pluginsdk.ResourceData, meta interface{})
 		}
 		if err := d.Set("application_performance_monitoring_types", flattenGatewayGatewayApmTypess(props.ApmTypes)); err != nil {
 			return fmt.Errorf("setting `application_performance_monitoring_types`: %+v", err)
-		}
-		if err := d.Set("client_authorization", flattenGatewayClientAuth(props.ClientAuth)); err != nil {
-			return fmt.Errorf("setting `client_authorization`: %+v", err)
 		}
 		if err := d.Set("cors", flattenGatewayGatewayCorsProperties(props.CorsProperties)); err != nil {
 			return fmt.Errorf("setting `cors`: %+v", err)
@@ -473,13 +437,12 @@ func expandGatewayGatewayCorsProperties(input []interface{}) *appplatform.Gatewa
 	}
 	v := input[0].(map[string]interface{})
 	return &appplatform.GatewayCorsProperties{
-		AllowedOrigins:        utils.ExpandStringSlice(v["allowed_origins"].(*pluginsdk.Set).List()),
-		AllowedOriginPatterns: utils.ExpandStringSlice(v["allowed_origin_patterns"].(*pluginsdk.Set).List()),
-		AllowedMethods:        utils.ExpandStringSlice(v["allowed_methods"].(*pluginsdk.Set).List()),
-		AllowedHeaders:        utils.ExpandStringSlice(v["allowed_headers"].(*pluginsdk.Set).List()),
-		MaxAge:                utils.Int32(int32(v["max_age_seconds"].(int))),
-		AllowCredentials:      utils.Bool(v["credentials_allowed"].(bool)),
-		ExposedHeaders:        utils.ExpandStringSlice(v["exposed_headers"].(*pluginsdk.Set).List()),
+		AllowedOrigins:   utils.ExpandStringSlice(v["allowed_origins"].(*pluginsdk.Set).List()),
+		AllowedMethods:   utils.ExpandStringSlice(v["allowed_methods"].(*pluginsdk.Set).List()),
+		AllowedHeaders:   utils.ExpandStringSlice(v["allowed_headers"].(*pluginsdk.Set).List()),
+		MaxAge:           utils.Int32(int32(v["max_age_seconds"].(int))),
+		AllowCredentials: utils.Bool(v["credentials_allowed"].(bool)),
+		ExposedHeaders:   utils.ExpandStringSlice(v["exposed_headers"].(*pluginsdk.Set).List()),
 	}
 }
 
@@ -526,21 +489,6 @@ func expandGatewayGatewayEnvironmentVariables(env map[string]interface{}, secret
 	return &appplatform.GatewayPropertiesEnvironmentVariables{
 		Properties: utils.ExpandMapStringPtrString(env),
 		Secrets:    utils.ExpandMapStringPtrString(secrets),
-	}
-}
-
-func expandGatewayClientAuth(input []interface{}) *appplatform.GatewayPropertiesClientAuth {
-	if len(input) == 0 {
-		return nil
-	}
-	v := input[0].(map[string]interface{})
-	verificationEnabled := appplatform.GatewayCertificateVerificationDisabled
-	if v["verification_enabled"].(bool) {
-		verificationEnabled = appplatform.GatewayCertificateVerificationEnabled
-	}
-	return &appplatform.GatewayPropertiesClientAuth{
-		Certificates:            utils.ExpandStringSlice(v["certificate_ids"].([]interface{})),
-		CertificateVerification: verificationEnabled,
 	}
 }
 
@@ -595,13 +543,12 @@ func flattenGatewayGatewayCorsProperties(input *appplatform.GatewayCorsPropertie
 	}
 	return []interface{}{
 		map[string]interface{}{
-			"credentials_allowed":     allowCredentials,
-			"allowed_headers":         utils.FlattenStringSlice(input.AllowedHeaders),
-			"allowed_methods":         utils.FlattenStringSlice(input.AllowedMethods),
-			"allowed_origins":         utils.FlattenStringSlice(input.AllowedOrigins),
-			"allowed_origin_patterns": utils.FlattenStringSlice(input.AllowedOriginPatterns),
-			"exposed_headers":         utils.FlattenStringSlice(input.ExposedHeaders),
-			"max_age_seconds":         maxAge,
+			"credentials_allowed": allowCredentials,
+			"allowed_headers":     utils.FlattenStringSlice(input.AllowedHeaders),
+			"allowed_methods":     utils.FlattenStringSlice(input.AllowedMethods),
+			"allowed_origins":     utils.FlattenStringSlice(input.AllowedOrigins),
+			"exposed_headers":     utils.FlattenStringSlice(input.ExposedHeaders),
+			"max_age_seconds":     maxAge,
 		},
 	}
 }
@@ -673,25 +620,4 @@ func flattenGatewayGatewayApmTypess(input *[]appplatform.ApmType) []interface{} 
 		out = append(out, string(v))
 	}
 	return out
-}
-
-func flattenGatewayClientAuth(input *appplatform.GatewayPropertiesClientAuth) []interface{} {
-	if input == nil || input.Certificates == nil || len(*input.Certificates) == 0 {
-		return make([]interface{}, 0)
-	}
-	certificateIds := make([]string, 0)
-	if input.Certificates != nil {
-		for _, v := range *input.Certificates {
-			certId, err := parse.SpringCloudCertificateIDInsensitively(v)
-			if err == nil {
-				certificateIds = append(certificateIds, certId.ID())
-			}
-		}
-	}
-	return []interface{}{
-		map[string]interface{}{
-			"certificate_ids":      certificateIds,
-			"verification_enabled": input.CertificateVerification == appplatform.GatewayCertificateVerificationEnabled,
-		},
-	}
 }

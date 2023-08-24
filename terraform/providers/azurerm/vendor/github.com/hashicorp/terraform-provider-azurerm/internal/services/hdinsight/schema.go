@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/hdinsight/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVault "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -787,12 +786,11 @@ func SchemaHDInsightsStorageAccounts() *pluginsdk.Schema {
 					ForceNew:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
-				// TODO: this should become `storage_account_id` in 4.0
 				"storage_resource_id": {
 					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ForceNew:     true,
-					ValidateFunc: storageValidate.StorageAccountID,
+					ValidateFunc: azure.ValidateResourceID,
 				},
 				"is_default": {
 					Type:     pluginsdk.TypeBool,
@@ -812,12 +810,11 @@ func SchemaHDInsightsGen2StorageAccounts() *pluginsdk.Schema {
 		MaxItems: 1,
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
-				// TODO: this should become `storage_account_id` in 4.0
 				"storage_resource_id": {
 					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: storageValidate.StorageAccountID,
+					ValidateFunc: azure.ValidateResourceID,
 				},
 				"filesystem_id": {
 					Type:         pluginsdk.TypeString,
@@ -825,7 +822,6 @@ func SchemaHDInsightsGen2StorageAccounts() *pluginsdk.Schema {
 					ForceNew:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
-				// TODO: this should become `user_assigned_identity_id` in 4.0
 				"managed_identity_resource_id": {
 					Type:         pluginsdk.TypeString,
 					Required:     true,
@@ -926,7 +922,7 @@ func FlattenHDInsightsDiskEncryptionProperties(input hdinsight.DiskEncryptionPro
 	msiResourceId = *input.MsiResourceID
 
 	if keyName != "" || keyVersion != "" {
-		keyVaultKeyIdRaw, err := parse.NewNestedItemID(*input.VaultURI, parse.NestedItemTypeKey, keyName, keyVersion)
+		keyVaultKeyIdRaw, err := parse.NewNestedItemID(*input.VaultURI, "keys", keyName, keyVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -1020,8 +1016,6 @@ type HDInsightNodeDefinition struct {
 	FixedTargetInstanceCount *int32
 	CanAutoScaleByCapacity   bool
 	CanAutoScaleOnSchedule   bool
-	// todo remove in 4.0
-	CanAutoScaleByCapacityDeprecated4PointOh bool
 }
 
 func SchemaHDInsightNodeDefinition(schemaLocation string, definition HDInsightNodeDefinition, required bool) *pluginsdk.Schema {
@@ -1061,14 +1055,14 @@ func SchemaHDInsightNodeDefinition(schemaLocation string, definition HDInsightNo
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
 			ForceNew:     true,
-			ValidateFunc: commonids.ValidateSubnetID,
+			ValidateFunc: azure.ValidateResourceIDOrEmpty,
 		},
 
 		"virtual_network_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
 			ForceNew:     true,
-			ValidateFunc: commonids.ValidateVirtualNetworkID,
+			ValidateFunc: azure.ValidateResourceIDOrEmpty,
 		},
 
 		"script_actions": SchemaHDInsightsScriptActions(),
@@ -1097,37 +1091,6 @@ func SchemaHDInsightNodeDefinition(schemaLocation string, definition HDInsightNo
 					ConflictsWith: []string{
 						fmt.Sprintf("%s.0.autoscale.0.recurrence", schemaLocation),
 					},
-					Elem: &pluginsdk.Resource{
-						Schema: map[string]*pluginsdk.Schema{
-							"min_instance_count": {
-								Type:         pluginsdk.TypeInt,
-								Required:     true,
-								ValidateFunc: countValidation,
-							},
-							"max_instance_count": {
-								Type:         pluginsdk.TypeInt,
-								Required:     true,
-								ValidateFunc: countValidation,
-							},
-						},
-					},
-				}
-				if definition.CanAutoScaleOnSchedule {
-					autoScales["capacity"].ConflictsWith = []string{
-						fmt.Sprintf("%s.0.autoscale.0.recurrence", schemaLocation),
-					}
-				}
-			}
-			// managing `azurerm_hdinsight_interactive_query_cluster` autoscaling through `capacity` doesn't work so we'll deprecate this portion of the schema for 4.0
-			if definition.CanAutoScaleByCapacityDeprecated4PointOh {
-				autoScales["capacity"] = &pluginsdk.Schema{
-					Type:     pluginsdk.TypeList,
-					Optional: true,
-					MaxItems: 1,
-					ConflictsWith: []string{
-						fmt.Sprintf("%s.0.autoscale.0.recurrence", schemaLocation),
-					},
-					Deprecated: "HDInsight interactive query clusters can no longer be configured through `autoscale.0.capacity`. Use `autoscale.0.recurrence` instead.",
 					Elem: &pluginsdk.Resource{
 						Schema: map[string]*pluginsdk.Schema{
 							"min_instance_count": {
@@ -1272,7 +1235,7 @@ func ExpandHDInsightNodeDefinition(name string, input []interface{}, definition 
 			Subnet: utils.String(subnetId),
 		}
 	} else if (virtualNetworkSpecified && !subnetSpecified) || (subnetSpecified && !virtualNetworkSpecified) {
-		return nil, fmt.Errorf("`virtual_network_id` and `subnet_id` must both either be set or empty")
+		return nil, fmt.Errorf("`virtual_network_id` and `subnet_id` must both either be set or empty!")
 	}
 
 	if password != "" {
@@ -1287,7 +1250,7 @@ func ExpandHDInsightNodeDefinition(name string, input []interface{}, definition 
 		}
 
 		if len(sshKeys) == 0 {
-			return nil, fmt.Errorf("either a `password` or `ssh_key` must be specified")
+			return nil, fmt.Errorf("Either a `password` or `ssh_key` must be specified!")
 		}
 
 		role.OsProfile.LinuxOperatingSystemProfile.SSHProfile = &hdinsight.SSHProfile{

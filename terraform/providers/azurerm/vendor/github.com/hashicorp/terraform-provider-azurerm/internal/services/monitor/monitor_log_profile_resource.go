@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2021-07-01-preview/insights" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2016-03-01/logprofiles"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/migration"
-	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -30,7 +29,7 @@ func resourceMonitorLogProfile() *pluginsdk.Resource {
 		Delete: resourceLogProfileDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := logprofiles.ParseLogProfileID(id)
+			_, err := parse.LogProfileID(id)
 			return err
 		}),
 
@@ -56,12 +55,12 @@ func resourceMonitorLogProfile() *pluginsdk.Resource {
 			"storage_account_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				ValidateFunc: storageValidate.StorageAccountID,
+				ValidateFunc: azure.ValidateResourceIDOrEmpty,
 			},
 			"servicebus_rule_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
-				ValidateFunc: azure.ValidateResourceID,
+				ValidateFunc: azure.ValidateResourceIDOrEmpty,
 			},
 			"locations": {
 				Type:     pluginsdk.TypeSet,
@@ -112,17 +111,17 @@ func resourceLogProfileCreateUpdate(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := logprofiles.NewLogProfileID(subscriptionId, d.Get("name").(string))
+	id := parse.NewLogProfileID(subscriptionId, d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing Monitor %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_monitor_log_profile", id.ID())
 		}
 	}
@@ -133,34 +132,34 @@ func resourceLogProfileCreateUpdate(d *pluginsdk.ResourceData, meta interface{})
 	locations := expandLogProfileLocations(d)
 	retentionPolicy := expandAzureRmLogProfileRetentionPolicy(d)
 
-	logProfileProperties := logprofiles.LogProfileProperties{
-		Categories:      categories,
-		Locations:       locations,
-		RetentionPolicy: retentionPolicy,
+	logProfileProperties := &insights.LogProfileProperties{
+		Categories:      &categories,
+		Locations:       &locations,
+		RetentionPolicy: &retentionPolicy,
 	}
 
 	if storageAccountID != "" {
-		logProfileProperties.StorageAccountId = utils.String(storageAccountID)
+		logProfileProperties.StorageAccountID = utils.String(storageAccountID)
 	}
 
 	if serviceBusRuleID != "" {
-		logProfileProperties.ServiceBusRuleId = utils.String(serviceBusRuleID)
+		logProfileProperties.ServiceBusRuleID = utils.String(serviceBusRuleID)
 	}
 
-	parameters := logprofiles.LogProfileResource{
-		Name:       utils.String(id.LogProfileName),
-		Properties: logProfileProperties,
+	parameters := insights.LogProfileResource{
+		Name:                 utils.String(id.Name),
+		LogProfileProperties: logProfileProperties,
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.Name, parameters); err != nil {
 		return fmt.Errorf("creating/updating Monitor %s: %+v", id, err)
 	}
 
-	log.Printf("[DEBUG] Waiting for %s to be provisioned", id)
+	log.Printf("[DEBUG] Waiting for Log Profile %q to be provisioned", id.Name)
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:                   []string{"NotFound"},
 		Target:                    []string{"Available"},
-		Refresh:                   logProfilesCreateRefreshFunc(ctx, client, id),
+		Refresh:                   logProfilesCreateRefreshFunc(ctx, client, id.Name),
 		MinTimeout:                15 * time.Second,
 		ContinuousTargetOccurence: 5,
 	}
@@ -184,27 +183,25 @@ func resourceLogProfileRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := logprofiles.ParseLogProfileID(d.Id())
+	id, err := parse.LogProfileID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			log.Printf("[DEBUG] %s - removing from state!", *id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			log.Printf("[DEBUG] Log Profile %q was not found - removing from state!", id.Name)
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("making Read request on %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.LogProfileName)
-
-	if model := resp.Model; model != nil {
-		props := model.Properties
-		d.Set("storage_account_id", props.StorageAccountId)
-		d.Set("servicebus_rule_id", props.ServiceBusRuleId)
+	d.Set("name", id.Name)
+	if props := resp.LogProfileProperties; props != nil {
+		d.Set("storage_account_id", props.StorageAccountID)
+		d.Set("servicebus_rule_id", props.ServiceBusRuleID)
 		d.Set("categories", props.Categories)
 
 		if err := d.Set("locations", flattenAzureRmLogProfileLocations(props.Locations)); err != nil {
@@ -224,12 +221,12 @@ func resourceLogProfileDelete(d *pluginsdk.ResourceData, meta interface{}) error
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := logprofiles.ParseLogProfileID(d.Id())
+	id, err := parse.LogProfileID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err = client.Delete(ctx, *id); err != nil {
+	if _, err = client.Delete(ctx, id.Name); err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
 
@@ -258,33 +255,44 @@ func expandLogProfileLocations(d *pluginsdk.ResourceData) []string {
 	return locations
 }
 
-func expandAzureRmLogProfileRetentionPolicy(d *pluginsdk.ResourceData) logprofiles.RetentionPolicy {
+func expandAzureRmLogProfileRetentionPolicy(d *pluginsdk.ResourceData) insights.RetentionPolicy {
 	vs := d.Get("retention_policy").([]interface{})
 	v := vs[0].(map[string]interface{})
 
 	enabled := v["enabled"].(bool)
 	days := v["days"].(int)
-	logProfileRetentionPolicy := logprofiles.RetentionPolicy{
-		Enabled: enabled,
-		Days:    int64(days),
+	logProfileRetentionPolicy := insights.RetentionPolicy{
+		Enabled: utils.Bool(enabled),
+		Days:    utils.Int32(int32(days)),
 	}
 
 	return logProfileRetentionPolicy
 }
 
-func flattenAzureRmLogProfileLocations(input []string) []string {
+func flattenAzureRmLogProfileLocations(input *[]string) []string {
 	result := make([]string, 0)
-	for _, location := range input {
-		result = append(result, azure.NormalizeLocation(location))
+	if input != nil {
+		for _, location := range *input {
+			result = append(result, azure.NormalizeLocation(location))
+		}
 	}
+
 	return result
 }
 
-func flattenAzureRmLogProfileRetentionPolicy(input logprofiles.RetentionPolicy) []interface{} {
-	result := make(map[string]interface{})
-	result["enabled"] = input.Enabled
+func flattenAzureRmLogProfileRetentionPolicy(input *insights.RetentionPolicy) []interface{} {
+	if input == nil {
+		return []interface{}{}
+	}
 
-	result["days"] = input.Days
+	result := make(map[string]interface{})
+	if input.Enabled != nil {
+		result["enabled"] = *input.Enabled
+	}
+
+	if input.Days != nil {
+		result["days"] = *input.Days
+	}
 
 	return []interface{}{result}
 }
@@ -303,14 +311,14 @@ func ParseLogProfileNameFromID(id string) (string, error) {
 	return components[6], nil
 }
 
-func logProfilesCreateRefreshFunc(ctx context.Context, client *logprofiles.LogProfilesClient, id logprofiles.LogProfileId) pluginsdk.StateRefreshFunc {
+func logProfilesCreateRefreshFunc(ctx context.Context, client *insights.LogProfilesClient, name string) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		logProfile, err := client.Get(ctx, id)
+		logProfile, err := client.Get(ctx, name)
 		if err != nil {
-			if response.WasNotFound(logProfile.HttpResponse) {
+			if utils.ResponseWasNotFound(logProfile.Response) {
 				return nil, "NotFound", nil
 			}
-			return nil, "", fmt.Errorf("issuing read request in logProfilesCreateRefreshFunc for  %s: %s", id, err)
+			return nil, "", fmt.Errorf("issuing read request in logProfilesCreateRefreshFunc for Log profile %q: %s", name, err)
 		}
 		return "Available", "Available", nil
 	}

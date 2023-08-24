@@ -230,9 +230,6 @@ func (s Server) Read() sdk.ResourceFunc {
 
 			server, err := client.Get(ctx, *id)
 			if err != nil {
-				if response.WasNotFound(server.HttpResponse) {
-					return meta.MarkAsGone(id)
-				}
 				return fmt.Errorf("retrieving %s: %v", id, err)
 			}
 

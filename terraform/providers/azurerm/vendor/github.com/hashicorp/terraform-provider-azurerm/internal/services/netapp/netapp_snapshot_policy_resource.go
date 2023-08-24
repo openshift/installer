@@ -552,10 +552,6 @@ func netappSnapshotPolicyStateRefreshFunc(ctx context.Context, client *snapshotp
 			}
 		}
 
-		statusCode := "dropped connection"
-		if res.HttpResponse != nil {
-			statusCode = strconv.Itoa(res.HttpResponse.StatusCode)
-		}
-		return res, statusCode, nil
+		return res, strconv.Itoa(res.HttpResponse.StatusCode), nil
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
@@ -102,7 +101,7 @@ func dataSourceDevTestLabRead(d *pluginsdk.ResourceData, meta interface{}) error
 		d.Set("location", location.NormalizeNilable(model.Location))
 
 		if props := model.Properties; props != nil {
-			d.Set("storage_type", string(pointer.From(props.LabStorageType)))
+			d.Set("storage_type", props.LabStorageType)
 
 			// Computed fields
 			d.Set("artifacts_storage_account_id", props.ArtifactsStorageAccount)

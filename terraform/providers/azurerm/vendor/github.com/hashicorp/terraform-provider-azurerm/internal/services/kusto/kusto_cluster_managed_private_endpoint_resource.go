@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2022-02-01/kusto" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/kusto/2022-12-29/managedprivateendpoints"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/kusto/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -26,14 +26,13 @@ func resourceKustoClusterManagedPrivateEndpoint() *pluginsdk.Resource {
 		Update: resourceKustoClusterManagedPrivateEndpointCreateUpdate,
 		Delete: resourceKustoClusterManagedPrivateEndpointDelete,
 
-		SchemaVersion: 2,
+		SchemaVersion: 1,
 		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
 			0: migration.KustoManagedPrivateEndpointV0ToV1{},
-			1: migration.KustoManagedPrivateEndpointV1ToV2{},
 		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := managedprivateendpoints.ParseManagedPrivateEndpointID(id)
+			_, err := parse.ManagedPrivateEndpointsID(id)
 			return err
 		}),
 
@@ -97,38 +96,42 @@ func resourceKustoClusterManagedPrivateEndpointCreateUpdate(d *schema.ResourceDa
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := managedprivateendpoints.NewManagedPrivateEndpointID(subscriptionId, d.Get("resource_group_name").(string), d.Get("cluster_name").(string), d.Get("name").(string))
+	id := parse.NewManagedPrivateEndpointsID(subscriptionId, d.Get("resource_group_name").(string), d.Get("cluster_name").(string), d.Get("name").(string))
 	if d.IsNewResource() {
-		managedPrivateEndpoint, err := client.Get(ctx, id)
+		managedPrivateEndpoint, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.ManagedPrivateEndpointName)
 		if err != nil {
-			if !response.WasNotFound(managedPrivateEndpoint.HttpResponse) {
+			if !utils.ResponseWasNotFound(managedPrivateEndpoint.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(managedPrivateEndpoint.HttpResponse) {
+		if !utils.ResponseWasNotFound(managedPrivateEndpoint.Response) {
 			return tf.ImportAsExistsError("azurerm_kusto_cluster_managed_private_endpoint", id.ID())
 		}
 	}
 
-	managedPrivateEndpoint := managedprivateendpoints.ManagedPrivateEndpoint{
-		Properties: &managedprivateendpoints.ManagedPrivateEndpointProperties{
-			PrivateLinkResourceId: d.Get("private_link_resource_id").(string),
-			GroupId:               d.Get("group_id").(string),
+	managedPrivateEndpoint := kusto.ManagedPrivateEndpoint{
+		ManagedPrivateEndpointProperties: &kusto.ManagedPrivateEndpointProperties{
+			PrivateLinkResourceID: utils.String(d.Get("private_link_resource_id").(string)),
+			GroupID:               utils.String(d.Get("group_id").(string)),
 		},
 	}
 
 	if v, ok := d.GetOk("private_link_resource_region"); ok {
-		managedPrivateEndpoint.Properties.PrivateLinkResourceRegion = utils.String(v.(string))
+		managedPrivateEndpoint.PrivateLinkResourceRegion = utils.String(v.(string))
 	}
 
 	if v, ok := d.GetOk("request_message"); ok {
-		managedPrivateEndpoint.Properties.RequestMessage = utils.String(v.(string))
+		managedPrivateEndpoint.RequestMessage = utils.String(v.(string))
 	}
 
-	err := client.CreateOrUpdateThenPoll(ctx, id, managedPrivateEndpoint)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.ClusterName, id.ManagedPrivateEndpointName, managedPrivateEndpoint)
 	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation/update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -140,14 +143,14 @@ func resourceKustoClusterManagedPrivateEndpointRead(d *schema.ResourceData, meta
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := managedprivateendpoints.ParseManagedPrivateEndpointID(d.Id())
+	id, err := parse.ManagedPrivateEndpointsID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.ClusterName, id.ManagedPrivateEndpointName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
@@ -156,22 +159,16 @@ func resourceKustoClusterManagedPrivateEndpointRead(d *schema.ResourceData, meta
 
 	d.Set("name", id.ManagedPrivateEndpointName)
 	d.Set("cluster_name", id.ClusterName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("private_link_resource_id", resp.PrivateLinkResourceID)
+	d.Set("group_id", resp.GroupID)
 
-	if resp.Model != nil {
-		props := resp.Model.Properties
-		if props != nil {
-			d.Set("private_link_resource_id", props.PrivateLinkResourceId)
-			d.Set("group_id", props.GroupId)
+	if resp.PrivateLinkResourceRegion != nil {
+		d.Set("private_link_resource_region", resp.PrivateLinkResourceRegion)
+	}
 
-			if props.PrivateLinkResourceRegion != nil {
-				d.Set("private_link_resource_region", props.PrivateLinkResourceRegion)
-			}
-
-			if props.RequestMessage != nil {
-				d.Set("request_message", props.RequestMessage)
-			}
-		}
+	if resp.RequestMessage != nil {
+		d.Set("request_message", resp.RequestMessage)
 	}
 
 	return nil
@@ -182,14 +179,19 @@ func resourceKustoClusterManagedPrivateEndpointDelete(d *schema.ResourceData, me
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := managedprivateendpoints.ParseManagedPrivateEndpointID(d.Id())
+	id, err := parse.ManagedPrivateEndpointsID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.ClusterName, id.ManagedPrivateEndpointName)
+
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for deletion of %s: %+v", *id, err)
 	}
 
 	return nil

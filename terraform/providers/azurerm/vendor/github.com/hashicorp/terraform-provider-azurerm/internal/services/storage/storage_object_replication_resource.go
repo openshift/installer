@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
@@ -137,11 +136,7 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 	if resp.Model != nil && resp.Model.Value != nil {
 		for _, existing := range *resp.Model.Value {
 			if existing.Name != nil && *existing.Name != "" {
-				if prop := existing.Properties; prop != nil && (
-				// Storage allows either a storage account name (only when allowCrossTenantReplication of the SA is false) or a full resource id (both cases).
-				// We should check for both cases.
-				(prop.SourceAccount == srcAccount.StorageAccountName && prop.DestinationAccount == dstAccount.StorageAccountName) ||
-					(strings.EqualFold(prop.SourceAccount, srcAccount.ID()) && strings.EqualFold(prop.DestinationAccount, dstAccount.ID()))) {
+				if prop := existing.Properties; prop != nil && prop.SourceAccount == srcAccount.StorageAccountName && prop.DestinationAccount == dstAccount.StorageAccountName {
 					srcId.ObjectReplicationPolicyId = *existing.Name
 					dstId.ObjectReplicationPolicyId = *existing.Name
 					return tf.ImportAsExistsError("azurerm_storage_object_replication", parse.NewObjectReplicationID(srcId, dstId).ID())
@@ -152,8 +147,8 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 
 	props := objectreplicationpolicies.ObjectReplicationPolicy{
 		Properties: &objectreplicationpolicies.ObjectReplicationPolicyProperties{
-			SourceAccount:      srcAccount.ID(),
-			DestinationAccount: dstAccount.ID(),
+			SourceAccount:      srcId.StorageAccountName,
+			DestinationAccount: dstId.StorageAccountName,
 			Rules:              expandArmObjectReplicationRuleArray(d.Get("rules").(*pluginsdk.Set).List()),
 		},
 	}
@@ -202,13 +197,10 @@ func resourceStorageObjectReplicationUpdate(d *pluginsdk.ResourceData, meta inte
 		return err
 	}
 
-	srcAccount := objectreplicationpolicies.NewStorageAccountID(id.Src.SubscriptionId, id.Src.ResourceGroupName, id.Src.StorageAccountName)
-	dstAccount := objectreplicationpolicies.NewStorageAccountID(id.Dst.SubscriptionId, id.Dst.ResourceGroupName, id.Dst.StorageAccountName)
-
 	props := objectreplicationpolicies.ObjectReplicationPolicy{
 		Properties: &objectreplicationpolicies.ObjectReplicationPolicyProperties{
-			SourceAccount:      srcAccount.ID(),
-			DestinationAccount: dstAccount.ID(),
+			SourceAccount:      id.Src.StorageAccountName,
+			DestinationAccount: id.Dst.StorageAccountName,
 			Rules:              expandArmObjectReplicationRuleArray(d.Get("rules").(*pluginsdk.Set).List()),
 		},
 	}

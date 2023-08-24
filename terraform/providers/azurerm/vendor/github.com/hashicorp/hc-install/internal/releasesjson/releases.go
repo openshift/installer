@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -69,11 +68,7 @@ func (r *Releases) ListProductVersions(ctx context.Context, productName string) 
 		url.PathEscape(productName))
 	r.logger.Printf("requesting versions from %s", productIndexURL)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, productIndexURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %q: %w", productIndexURL, err)
-	}
-	resp, err := client.Do(req)
+	resp, err := client.Get(productIndexURL)
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +133,7 @@ func (r *Releases) GetProductVersion(ctx context.Context, product string, versio
 		url.PathEscape(version.String()))
 	r.logger.Printf("requesting version from %s", indexURL)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, indexURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %q: %w", indexURL, err)
-	}
-	resp, err := client.Do(req)
+	resp, err := client.Get(indexURL)
 	if err != nil {
 		return nil, err
 	}

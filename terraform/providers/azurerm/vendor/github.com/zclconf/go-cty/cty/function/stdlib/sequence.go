@@ -74,7 +74,6 @@ var ConcatFunc = function.New(&function.Spec{
 		}
 		return cty.Tuple(etys), nil
 	},
-	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		switch {
 		case retType.IsListType():
@@ -144,8 +143,7 @@ var RangeFunc = function.New(&function.Spec{
 		Name: "params",
 		Type: cty.Number,
 	},
-	Type:         function.StaticReturnType(cty.List(cty.Number)),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.List(cty.Number)),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var start, end, step cty.Value
 		switch len(args) {

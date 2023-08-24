@@ -388,7 +388,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := cosmosdb.NewDatabaseAccountNameID("databaseAccountValue")
+id := cosmosdb.NewDatabaseAccountNameID("databaseAccountNameValue")
 
 read, err := client.DatabaseAccountsCheckNameExists(ctx, id)
 if err != nil {

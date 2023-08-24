@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/preview/synapse/2019-06-01-preview/managedvirtualnetwork"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -15,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	managedvirtualnetwork "github.com/tombuildsstuff/kermit/sdk/synapse/2019-06-01-preview/synapse"
 )
 
 func resourceSynapseManagedPrivateEndpoint() *pluginsdk.Resource {
@@ -73,10 +73,6 @@ func resourceSynapseManagedPrivateEndpointCreate(d *pluginsdk.ResourceData, meta
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	environment := meta.(*clients.Client).Account.Environment
-	synapseDomainSuffix, ok := environment.Synapse.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Synapse domain suffix for environment %q", environment.Name)
-	}
 
 	workspaceId, err := parse.WorkspaceID(d.Get("synapse_workspace_id").(string))
 	if err != nil {
@@ -93,7 +89,7 @@ func resourceSynapseManagedPrivateEndpointCreate(d *pluginsdk.ResourceData, meta
 	virtualNetworkName := *workspace.WorkspaceProperties.ManagedVirtualNetwork
 
 	id := parse.NewManagedPrivateEndpointID(workspaceId.SubscriptionId, workspaceId.ResourceGroup, workspaceId.Name, virtualNetworkName, d.Get("name").(string))
-	client, err := synapseClient.ManagedPrivateEndpointsClient(workspaceId.Name, *synapseDomainSuffix)
+	client, err := synapseClient.ManagedPrivateEndpointsClient(workspaceId.Name, environment.SynapseEndpointSuffix)
 	if err != nil {
 		return fmt.Errorf("building Client for %s: %+v", id, err)
 	}
@@ -128,17 +124,13 @@ func resourceSynapseManagedPrivateEndpointRead(d *pluginsdk.ResourceData, meta i
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	environment := meta.(*clients.Client).Account.Environment
-	synapseDomainSuffix, ok := environment.Synapse.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Synapse domain suffix for environment %q", environment.Name)
-	}
 
 	id, err := parse.ManagedPrivateEndpointID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	client, err := synapseClient.ManagedPrivateEndpointsClient(id.WorkspaceName, *synapseDomainSuffix)
+	client, err := synapseClient.ManagedPrivateEndpointsClient(id.WorkspaceName, environment.SynapseEndpointSuffix)
 	if err != nil {
 		return fmt.Errorf("building Client for %s: %v", *id, err)
 	}
@@ -169,17 +161,13 @@ func resourceSynapseManagedPrivateEndpointDelete(d *pluginsdk.ResourceData, meta
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 	environment := meta.(*clients.Client).Account.Environment
-	synapseDomainSuffix, ok := environment.Synapse.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Synapse domain suffix for environment %q", environment.Name)
-	}
 
 	id, err := parse.ManagedPrivateEndpointID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	client, err := synapseClient.ManagedPrivateEndpointsClient(id.WorkspaceName, *synapseDomainSuffix)
+	client, err := synapseClient.ManagedPrivateEndpointsClient(id.WorkspaceName, environment.SynapseEndpointSuffix)
 	if err != nil {
 		return fmt.Errorf("building Client for %s: %v", *id, err)
 	}
