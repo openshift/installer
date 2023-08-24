@@ -3183,10 +3183,36 @@ spec:
                     description: NetworkProjectID specifies which project the network
                       and subnets exist in when they are not in the main ProjectID.
                     type: string
+                  privateDNSZone:
+                    description: PrivateDNSZone Technology Preview. PrivateDNSZone
+                      contains the zone ID and project for a public managed DNS Zone.
+                    properties:
+                      id:
+                        description: ID Technology Preview ID or name of the DNS Zone.
+                        type: string
+                      projectID:
+                        description: ProjectID Technology Preview ProjectID is the
+                          ID or name of the project where the zone exists. An empty
+                          project ID defaults to the gcp project ID.
+                        type: string
+                    type: object
                   projectID:
-                    description: ProjectID is the the project that will be used for
-                      the cluster.
+                    description: ProjectID is the project that will be used for the
+                      cluster.
                     type: string
+                  publicDNSZone:
+                    description: PublicDNSZone Technology Preview. PublicDNSZone contains
+                      the zone ID and project for a public managed DNS Zone.
+                    properties:
+                      id:
+                        description: ID Technology Preview ID or name of the DNS Zone.
+                        type: string
+                      projectID:
+                        description: ProjectID Technology Preview ProjectID is the
+                          ID or name of the project where the zone exists. An empty
+                          project ID defaults to the gcp project ID.
+                        type: string
+                    type: object
                   region:
                     description: Region specifies the GCP region where the cluster
                       will be created.

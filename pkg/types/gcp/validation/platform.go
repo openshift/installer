@@ -131,6 +131,20 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
+	allErrs = append(allErrs, validateInstallTypeWithZones(ic, fldPath)...)
+
+	return allErrs
+}
+
+func validateInstallTypeWithZones(ic *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.Publish == types.InternalPublishingStrategy {
+		if ic.Platform.GCP.PublicDNSZone != nil {
+			return append(allErrs, field.Invalid(fldPath.Child("PublicDNSZone"), ic.GCP.PublicDNSZone, "private install does not allow public dns zone configuration"))
+		}
+	}
+
 	return allErrs
 }
 

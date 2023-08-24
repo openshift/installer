@@ -1,9 +1,22 @@
 package gcp
 
+// DNSZone stores the information to use a managed DNS Zone for GCP installations.
+type DNSZone struct {
+	// ID Technology Preview
+	// ID or name of the DNS Zone.
+	ID string `json:"id,omitempty"`
+
+	// ProjectID Technology Preview
+	// ProjectID is the ID or name of the project where the zone exists. An empty project ID
+	// defaults to the gcp project ID.
+	// +optional
+	ProjectID string `json:"projectID,omitempty"`
+}
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
-	// ProjectID is the the project that will be used for the cluster.
+	// ProjectID is the project that will be used for the cluster.
 	ProjectID string `json:"projectID"`
 
 	// Region specifies the GCP region where the cluster will be created.
@@ -49,6 +62,16 @@ type Platform struct {
 	// feature and requires setting CustomNoUpgrade featureSet with GCPLabelsTags
 	// featureGate enabled or TechPreviewNoUpgrade featureSet to configure tags.
 	UserTags []UserTag `json:"userTags,omitempty"`
+
+	// PrivateDNSZone Technology Preview.
+	// PrivateDNSZone contains the zone ID and project for a public managed DNS Zone.
+	// +optional
+	PrivateDNSZone *DNSZone `json:"privateDNSZone,omitempty"`
+
+	// PublicDNSZone Technology Preview.
+	// PublicDNSZone contains the zone ID and project for a public managed DNS Zone.
+	// +optional
+	PublicDNSZone *DNSZone `json:"publicDNSZone,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

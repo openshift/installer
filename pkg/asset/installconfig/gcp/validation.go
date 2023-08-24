@@ -466,6 +466,38 @@ func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) 
 	return nil
 }
 
+// validateManagedZones validates the public and private managed zones if they exist. A matching zone must be found
+// in order for it to be considered valid.
+func validateManagedZones(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {
+	commonZoneLookup := func(dnsZone, zoneProject, defaultProject string) error {
+		project := zoneProject
+		if project == "" {
+			project = defaultProject
+		}
+
+		if _, err := client.GetDNSZoneByName(context.TODO(), project, dnsZone); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.PublicDNSZone != nil && ic.GCP.PublicDNSZone.ID != "" {
+		if err := commonZoneLookup(ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PublicDNSZone").Child("ID"), ic.GCP.PublicDNSZone.ID, "invalid public managed zone"))
+		}
+	}
+
+	if ic.GCP.PrivateDNSZone != nil && ic.GCP.PrivateDNSZone.ID != "" {
+		if err := commonZoneLookup(ic.GCP.PrivateDNSZone.ID, ic.GCP.PrivateDNSZone.ProjectID, ic.GCP.ProjectID); err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("PrivateDNSZone").Child("ID"), ic.GCP.PrivateDNSZone.ID, "invalid private managed zone"))
+		}
+	}
+
+	return allErrs
+}
+
 // ValidateCredentialMode checks whether the credential mode is
 // compatible with the authentication mode.
 func ValidateCredentialMode(client API, ic *types.InstallConfig) error {
