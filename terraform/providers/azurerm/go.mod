@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/azurerm
 
-go 1.18
+go 1.20
 
 require github.com/hashicorp/terraform-provider-azurerm v1.44.1-0.20230210023348-72f0799cec36 // v3.43.0
 

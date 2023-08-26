@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/aws
 
-go 1.18
+go 1.20
 
 require github.com/hashicorp/terraform-provider-aws v1.60.1-0.20230615210323-24881e9f4460 // v5.4.0
 

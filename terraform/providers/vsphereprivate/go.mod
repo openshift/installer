@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/vsphereprivate
 
-go 1.18
+go 1.20
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
