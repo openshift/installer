@@ -85,7 +85,6 @@ var (
 		},
 	}
 
-	//nolint:varcheck,deadcode
 	agentPXEFilesTarget = target{
 		name: "Agent PXE Files",
 		command: &cobra.Command{

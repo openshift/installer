@@ -28,6 +28,36 @@ func NewEditor(dataDir string) Editor {
 	return &rhcosEditor{workDir: dataDir}
 }
 
+// CreateMinimalISO Creates the minimal iso by removing the rootfs and adding the url
+func CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath string) error {
+	if err := os.Remove(filepath.Join(extractDir, "images/pxeboot/rootfs.img")); err != nil {
+		return err
+	}
+
+	if err := embedInitrdPlaceholders(extractDir); err != nil {
+		log.WithError(err).Warnf("Failed to embed initrd placeholders")
+		return err
+	}
+
+	if err := fixGrubConfig(rootFSURL, extractDir); err != nil {
+		log.WithError(err).Warnf("Failed to edit grub config")
+		return err
+	}
+
+	// ignore isolinux.cfg for ppc64le because it doesn't exist
+	if arch != "ppc64le" {
+		if err := fixIsolinuxConfig(rootFSURL, extractDir); err != nil {
+			log.WithError(err).Warnf("Failed to edit isolinux config")
+			return err
+		}
+	}
+
+	if err := Create(minimalISOPath, extractDir, volumeID); err != nil {
+		return err
+	}
+	return nil
+}
+
 // CreateMinimalISOTemplate Creates the template minimal iso by removing the rootfs and adding the url
 func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, minimalISOPath string) error {
 	extractDir, err := os.MkdirTemp(e.workDir, "isoutil")
@@ -39,33 +69,13 @@ func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, min
 		return err
 	}
 
-	if err = os.Remove(filepath.Join(extractDir, "images/pxeboot/rootfs.img")); err != nil {
-		return err
-	}
-
-	if err = embedInitrdPlaceholders(extractDir); err != nil {
-		log.WithError(err).Warnf("Failed to embed initrd placeholders")
-		return err
-	}
-
-	if err = fixGrubConfig(rootFSURL, extractDir); err != nil {
-		log.WithError(err).Warnf("Failed to edit grub config")
-		return err
-	}
-	// ignore isolinux.cfg for ppc64le because it doesn't exist
-	if arch != "ppc64le" {
-		if err = fixIsolinuxConfig(rootFSURL, extractDir); err != nil {
-			log.WithError(err).Warnf("Failed to edit isolinux config")
-			return err
-		}
-	}
-
 	volumeID, err := VolumeIdentifier(fullISOPath)
 	if err != nil {
 		return err
 	}
 
-	if err = Create(minimalISOPath, extractDir, volumeID); err != nil {
+	err = CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath)
+	if err != nil {
 		return err
 	}
 
