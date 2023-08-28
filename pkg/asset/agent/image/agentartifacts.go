@@ -2,25 +2,35 @@ package image
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+)
+
+const (
+	// bootArtifactsPath is the path where boot files are created.
+	// e.g. initrd, kernel and rootfs
+	bootArtifactsPath = "boot-artifacts"
 )
 
 // AgentArtifacts is an asset that generates all the artifacts that could be used
 // for a subsequent generation of an ISO image or PXE files, starting from the
 // content of the rhcos image enriched with agent specific files.
 type AgentArtifacts struct {
-	CPUArch      string
-	RendezvousIP string
-	TmpPath      string
-	IgnitionByte []byte
-	Kargs        []byte
-	ISOPath      string
+	CPUArch              string
+	RendezvousIP         string
+	TmpPath              string
+	IgnitionByte         []byte
+	Kargs                []byte
+	ISOPath              string
+	BootArtifactsBaseUrl string
 }
 
 // Dependencies returns the assets on which the AgentArtifacts asset depends.
@@ -31,6 +41,7 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 		&BaseIso{},
 		&manifests.AgentManifests{},
 		&mirror.RegistriesConf{},
+		&config.AgentConfig{},
 	}
 }
 
@@ -41,8 +52,9 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	baseIso := &BaseIso{}
 	agentManifests := &manifests.AgentManifests{}
 	registriesConf := &mirror.RegistriesConf{}
+	agentconfig := &config.AgentConfig{}
 
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf)
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf, agentconfig)
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -53,6 +65,7 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	a.IgnitionByte = ignitionByte
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
+	a.BootArtifactsBaseUrl = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
 
 	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
@@ -174,4 +187,27 @@ func (a *AgentArtifacts) Name() string {
 func (a *AgentArtifacts) Files() []*asset.File {
 	// Return empty array because File will never be loaded.
 	return []*asset.File{}
+}
+
+func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
+	os.RemoveAll(bootArtifactsFullPath)
+
+	err := os.Mkdir(bootArtifactsFullPath, 0750)
+	if err != nil {
+		return err
+	}
+
+	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-rootfs.img", arch))
+	rootfsReader, err := os.Open(filepath.Join(agentISOPath, "images", "pxeboot", "rootfs.img"))
+	if err != nil {
+		return err
+	}
+	defer rootfsReader.Close()
+
+	err = copy(agentRootfsimgFile, rootfsReader)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

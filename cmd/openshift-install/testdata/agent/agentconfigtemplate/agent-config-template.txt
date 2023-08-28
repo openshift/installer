@@ -21,7 +21,7 @@ metadata:
   namespace: cluster0
 # All fields are optional
 rendezvousIP: your-node0-ip
-ipxeBaseURL: http://user-specified-pxe-infra.com
+bootArtifactsBaseURL: http://user-specified-pxe-infra.com
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org

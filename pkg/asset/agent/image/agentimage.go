@@ -10,6 +10,9 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/types/external"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,11 +21,14 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	cpuArch      string
-	rendezvousIP string
-	tmpPath      string
-	volumeID     string
-	isoPath      string
+	cpuArch              string
+	rendezvousIP         string
+	tmpPath              string
+	volumeID             string
+	isoPath              string
+	rootFSURL            string
+	bootArtifactsBaseURL string
+	platform             string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -31,24 +37,50 @@ var _ asset.WritableAsset = (*AgentImage)(nil)
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AgentArtifacts{},
+		&manifests.AgentManifests{},
+		&BaseIso{},
 	}
 }
 
 // Generate generates the image file for to ISO asset.
 func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
-	dependencies.Get(agentArtifacts)
+	agentManifests := &manifests.AgentManifests{}
+	baseIso := &BaseIso{}
+	dependencies.Get(agentArtifacts, agentManifests, baseIso)
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
+	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseUrl
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
 		return err
 	}
 	a.volumeID = volumeID
+
+	// a.platform = strings.ToLower(string(agentManifests.AgentClusterInstall.Spec.PlatformType))
+	// temp change
+	a.platform = "external"
+	if a.platform == external.Name {
+		defaultRootFSURL, err := baseIso.getRootFSURL(a.cpuArch)
+		if err != nil {
+			return err
+		}
+
+		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
+		if a.bootArtifactsBaseURL != "" {
+			a.rootFSURL = fmt.Sprintf("%s/%s", a.bootArtifactsBaseURL, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
+			logrus.Debugf("Using custom rootfs URL")
+
+		} else {
+			// we'll default to the URL from the RHCOS streams file
+			a.rootFSURL = defaultRootFSURL
+			logrus.Debugf("Using default rootfs URL")
+		}
+	}
 
 	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
 	if err != nil {
@@ -160,10 +192,28 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)
 
-	err := isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
-	if err != nil {
-		return err
+	var err error
+	// For external platform when the bootArtifactsBaseUrl is specified,
+	// output the rootfs file alongside the minimal ISO
+	if a.platform == external.Name && a.bootArtifactsBaseURL != "" {
+		bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
+		err := extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+		if err != nil {
+			return err
+		}
+		logrus.Infof("RootFS file created in: %s. Upload it at %s", bootArtifactsFullPath, a.rootFSURL)
+		err = isoeditor.CreateMinimalISO(a.tmpPath, a.volumeID, a.rootFSURL, a.cpuArch, agentIsoFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Generate full ISO
+		err = isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
+		if err != nil {
+			return err
+		}
 	}
+	logrus.Infof("Generated ISO at %s", agentIsoFile)
 
 	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
 	if err != nil {
