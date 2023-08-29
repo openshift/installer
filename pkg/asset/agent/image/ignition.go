@@ -241,6 +241,7 @@ func getDefaultEnabledServices() []string {
 	return []string{
 		"agent-interactive-console.service",
 		"agent.service",
+		"agent-restart.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
 		"assisted-service.service",
