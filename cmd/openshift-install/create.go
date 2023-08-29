@@ -26,6 +26,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/cluster"
@@ -111,19 +112,19 @@ var (
 			PostRun: func(_ *cobra.Command, _ []string) {
 				ctx := context.Background()
 
-				cleanup := setupFileHook(rootOpts.dir)
+				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.
-				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
 				if err := waitForBootstrapComplete(ctx, config); err != nil {
-					bundlePath, gatherErr := runGatherBootstrapCmd(rootOpts.dir)
+					bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
 					if gatherErr != nil {
 						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 					}
@@ -148,14 +149,14 @@ var (
 						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
 				} else {
 					logrus.Info("Destroying the bootstrap resources...")
-					err = destroybootstrap.Destroy(rootOpts.dir)
+					err = destroybootstrap.Destroy(command.RootOpts.Dir)
 					if err != nil {
 						logrus.Fatal(err)
 					}
 				}
 				timer.StopTimer("Bootstrap Destroy")
 
-				err = waitForInstallComplete(ctx, config, rootOpts.dir)
+				err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
@@ -283,12 +284,12 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 	return func(cmd *cobra.Command, args []string) {
 		timer.StartTimer(timer.TotalTimeElapsed)
 
-		cleanup := setupFileHook(rootOpts.dir)
+		cleanup := command.SetupFileHook(command.RootOpts.Dir)
 		defer cleanup()
 
-		cluster.InstallDir = rootOpts.dir
+		cluster.InstallDir = command.RootOpts.Dir
 
-		err := runner(rootOpts.dir)
+		err := runner(command.RootOpts.Dir)
 		if err != nil {
 			if strings.Contains(err.Error(), asset.InstallConfigError) {
 				logrus.Error(err)
@@ -303,7 +304,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		switch cmd.Name() {
 		case "cluster", "image", "pxe-files":
 		default:
-			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), rootOpts.dir, targets))
+			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), command.RootOpts.Dir, targets))
 		}
 
 	}
@@ -380,7 +381,7 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	previousErrorSuffix := ""
 	timer.StartTimer("API")
 
-	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
 		checkIfAgentCommand(assetStore)
 	}
 
@@ -424,7 +425,7 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 	timeout := 30 * time.Minute
 
 	// Wait longer for baremetal, VSphere due to length of time it takes to boot
-	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
 		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
 			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name || installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == vsphere.Name {
 				timeout = 60 * time.Minute
@@ -478,7 +479,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	timeout := 40 * time.Minute
 
 	// Wait longer for baremetal, due to length of time it takes to boot
-	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
 		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
 			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
 				timeout = 60 * time.Minute
@@ -632,7 +633,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
-	if err := addRouterCAToClusterCA(ctx, config, rootOpts.dir); err != nil {
+	if err := addRouterCAToClusterCA(ctx, config, command.RootOpts.Dir); err != nil {
 		return err
 	}
 
@@ -641,7 +642,7 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		logrus.Warnf("Cluster does not have a console available: %v", err)
 	}
 
-	return logComplete(rootOpts.dir, consoleURL)
+	return logComplete(command.RootOpts.Dir, consoleURL)
 }
 
 func logTroubleshootingLink() {

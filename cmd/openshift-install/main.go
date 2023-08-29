@@ -12,13 +12,8 @@ import (
 	terminal "golang.org/x/term"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
-)
 
-var (
-	rootOpts struct {
-		dir      string
-		logLevel string
-	}
+	"github.com/openshift/installer/cmd/openshift-install/command"
 )
 
 func main() {
@@ -72,8 +67,8 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors:    true,
 		SilenceUsage:     true,
 	}
-	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
-	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
+	cmd.PersistentFlags().StringVar(&command.RootOpts.Dir, "dir", ".", "assets directory")
+	cmd.PersistentFlags().StringVar(&command.RootOpts.LogLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
 	return cmd
 }
 
@@ -81,12 +76,12 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 	logrus.SetOutput(io.Discard)
 	logrus.SetLevel(logrus.TraceLevel)
 
-	level, err := logrus.ParseLevel(rootOpts.logLevel)
+	level, err := logrus.ParseLevel(command.RootOpts.LogLevel)
 	if err != nil {
 		level = logrus.InfoLevel
 	}
 
-	logrus.AddHook(newFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
+	logrus.AddHook(command.NewFileHookWithNewlineTruncate(os.Stderr, level, &logrus.TextFormatter{
 		// Setting ForceColors is necessary because logrus.TextFormatter determines
 		// whether or not to enable colors by looking at the output of the logger.
 		// In this case, the output is io.Discard, which is not a terminal.

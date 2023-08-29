@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
@@ -48,10 +49,10 @@ func newDestroyClusterCmd() *cobra.Command {
 		Short: "Destroy an OpenShift cluster",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
-			cleanup := setupFileHook(rootOpts.dir)
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			err := runDestroyCmd(rootOpts.dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
+			err := runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -120,11 +121,11 @@ func newDestroyBootstrapCmd() *cobra.Command {
 		Short: "Destroy the bootstrap resources",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			cleanup := setupFileHook(rootOpts.dir)
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
 			timer.StartTimer(timer.TotalTimeElapsed)
-			err := bootstrap.Destroy(rootOpts.dir)
+			err := bootstrap.Destroy(command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
 )
 
@@ -52,6 +53,9 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 		Short: "Wait until the cluster bootstrap is complete",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
+			defer cleanup()
+
 			assetDir := cmd.Flags().Lookup("dir").Value.String()
 			logrus.Debugf("asset directory: %s", assetDir)
 			if len(assetDir) == 0 {
@@ -77,6 +81,9 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 		Short: "Wait until the cluster installation is complete",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
+			defer cleanup()
+
 			assetDir := cmd.Flags().Lookup("dir").Value.String()
 			logrus.Debugf("asset directory: %s", assetDir)
 			if len(assetDir) == 0 {

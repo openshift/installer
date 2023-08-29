@@ -1,4 +1,4 @@
-package main
+package command
 
 import (
 	"io"
@@ -10,6 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/version"
+)
+
+var (
+	// RootOpts holds the log directory and log level configuration.
+	RootOpts struct {
+		Dir      string
+		LogLevel string
+	}
 )
 
 type fileHook struct {
@@ -28,7 +36,8 @@ func newFileHook(file io.Writer, level logrus.Level, formatter logrus.Formatter)
 	}
 }
 
-func newFileHookWithNewlineTruncate(file io.Writer, level logrus.Level, formatter logrus.Formatter) *fileHook {
+// NewFileHookWithNewlineTruncate returns a new FileHook with truncated new lines.
+func NewFileHookWithNewlineTruncate(file io.Writer, level logrus.Level, formatter logrus.Formatter) *fileHook {
 	f := newFileHook(file, level, formatter)
 	f.truncateAtNewLine = true
 	return f
@@ -73,7 +82,8 @@ func (h *fileHook) Fire(entry *logrus.Entry) error {
 	return nil
 }
 
-func setupFileHook(baseDir string) func() {
+// SetupFileHook creates the base log directory and configures logrus options.
+func SetupFileHook(baseDir string) func() {
 	if err := os.MkdirAll(baseDir, 0755); err != nil {
 		logrus.Fatal(errors.Wrap(err, "failed to create base directory for logs"))
 	}
