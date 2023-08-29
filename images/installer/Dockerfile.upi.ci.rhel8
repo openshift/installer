@@ -10,7 +10,7 @@ COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.10:cli as cli
-FROM quay.io/ocp-splat/govc:v0.29.0 as govc
+FROM quay.io/ocp-splat/govc:v0.30.7 as govc
 
 FROM registry.ci.openshift.org/ocp/4.10:base
 COPY --from=cli /usr/bin/oc /bin/oc
