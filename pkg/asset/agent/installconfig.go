@@ -77,6 +77,9 @@ func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.Insta
 
 	warnUnusedConfig(installConfig)
 
+	numMasters, numWorkers := GetReplicaCount(installConfig)
+	logrus.Infof(fmt.Sprintf("Configuration has %d master replicas and %d worker replicas", numMasters, numWorkers))
+
 	if err := a.validateSNOConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
 	}
@@ -387,4 +390,21 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		fieldPath := field.NewPath("BootstrapInPlace", "InstallationDisk")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
 	}
+}
+
+// GetReplicaCount gets the configured master and worker replicas.
+func GetReplicaCount(installConfig *types.InstallConfig) (numMasters, numWorkers int64) {
+	numRequiredMasters := int64(0)
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		numRequiredMasters += *installConfig.ControlPlane.Replicas
+	}
+
+	numRequiredWorkers := int64(0)
+	for _, worker := range installConfig.Compute {
+		if worker.Replicas != nil {
+			numRequiredWorkers += *worker.Replicas
+		}
+	}
+
+	return numRequiredMasters, numRequiredWorkers
 }
