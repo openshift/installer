@@ -205,3 +205,9 @@ variable "aws_preserve_bootstrap_ignition" {
   type        = bool
   description = "The variable that needs to be set to avoid destuction of S3 objects during bootstrap destroy."
 }
+
+variable "aws_master_security_groups" {
+  type        = list(string)
+  description = "(optional) List of additional security group IDs to attach to the master nodes"
+  default     = []
+}

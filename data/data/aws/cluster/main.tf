@@ -42,7 +42,7 @@ module "masters" {
   availability_zones               = var.aws_master_availability_zones
   az_to_subnet_id                  = module.vpc.az_to_private_subnet_id
   instance_count                   = var.master_count
-  master_sg_ids                    = [module.vpc.master_sg_id]
+  master_sg_ids                    = concat([module.vpc.master_sg_id], var.aws_master_security_groups)
   root_volume_iops                 = var.aws_master_root_volume_iops
   root_volume_size                 = var.aws_master_root_volume_size
   root_volume_type                 = var.aws_master_root_volume_type
