@@ -287,7 +287,7 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		agentClusterInstall.Spec.PlatformType = hiveext.ExternalPlatformType
 	case none.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
-		if agentClusterInstall.Spec.Networking.UserManagedNetworking != swag.Bool(true) {
+		if agentClusterInstall.Spec.Networking.UserManagedNetworking == nil || !*agentClusterInstall.Spec.Networking.UserManagedNetworking {
 			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", none.Name)
 			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
 		}
