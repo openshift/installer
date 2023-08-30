@@ -287,6 +287,13 @@ type AzureFailureDomain struct {
 	// If nil, the virtual machine should be deployed to no zone.
 	// +kubebuilder:validation:Required
 	Zone string `json:"zone"`
+
+	// subnet is the name of the network subnet in which the VM will be created.
+	// When omitted, the subnet value from the machine providerSpec template will be used.
+	// +kubebuilder:validation:MaxLength=80
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9_])?$`
+	// +optional
+	Subnet string `json:"subnet,omitempty"`
 }
 
 // GCPFailureDomain configures failure domain information for the GCP platform

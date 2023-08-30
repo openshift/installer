@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -92,7 +93,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		failureDomains = append(failureDomains, domain)
 	}
-	machineSetProvider.Zone = nil
+	machineSetProvider.Zone = ""
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -253,7 +254,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		SecurityProfile:       securityProfile,
 		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
+		Zone:                  to.String(az),
 		Subnet:                subnet,
 		ManagedIdentity:       managedIdentity,
 		Vnet:                  virtualNetwork,
