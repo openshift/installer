@@ -314,11 +314,13 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 		}
 	}
 
+	pageCount := 0
 	for ; zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
 			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
 			continue
 		}
+		pageCount++
 
 		for _, zone := range zonesPage.Values() {
 			if zone.ZoneType == dns.Private {
@@ -350,6 +352,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
 			continue
 		}
+		pageCount++
 
 		for _, zone := range privateZonesPage.Values() {
 			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
@@ -360,6 +363,10 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 				continue
 			}
 		}
+	}
+
+	if pageCount == 0 {
+		logger.Warn("no DNS records found: either they were already deleted or the service principal lacks permissions to list them")
 	}
 
 	return utilerrors.NewAggregate(errs)
