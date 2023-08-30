@@ -92,7 +92,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		failureDomains = append(failureDomains, domain)
 	}
-	machineSetProvider.Zone = nil
+	machineSetProvider.Zone = ""
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -142,9 +142,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool) (*machineapi.AzureMachineProviderSpec, error) {
-	var az *string
+	var az string
 	if len(mpool.Zones) > 0 && azIdx != nil {
-		az = &mpool.Zones[*azIdx]
+		az = mpool.Zones[*azIdx]
 	}
 
 	hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
