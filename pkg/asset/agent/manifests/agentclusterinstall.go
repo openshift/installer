@@ -293,9 +293,9 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 
 	// Set the default value for userManagedNetworking, as would be done by the
 	// mutating webhook in ZTP.
-	switch agentClusterInstall.Spec.PlatformType {
-	case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
-		if agentClusterInstall.Spec.Networking.UserManagedNetworking == nil || !*agentClusterInstall.Spec.Networking.UserManagedNetworking {
+	if agentClusterInstall.Spec.Networking.UserManagedNetworking == nil {
+		switch agentClusterInstall.Spec.PlatformType {
+		case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
 			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", agentClusterInstall.Spec.PlatformType)
 			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
 		}
@@ -409,10 +409,19 @@ func (a *AgentClusterInstall) validateIPAddressAndNetworkType() field.ErrorList 
 func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
 	var allErrs field.ErrorList
 
-	fieldPath := field.NewPath("spec", "platformType")
-
 	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(a.Config.Spec.PlatformType) {
+		fieldPath := field.NewPath("spec", "platformType")
 		allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.PlatformType, agent.SupportedHivePlatforms()))
+	}
+
+	switch a.Config.Spec.PlatformType {
+	case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
+		if a.Config.Spec.Networking.UserManagedNetworking != nil && !*a.Config.Spec.Networking.UserManagedNetworking {
+			fieldPath := field.NewPath("spec", "networking", "userManagedNetworking")
+			allErrs = append(allErrs, field.Forbidden(fieldPath,
+				fmt.Sprintf("%s platform requires user-managed networking",
+					a.Config.Spec.PlatformType)))
+		}
 	}
 	return allErrs
 }
