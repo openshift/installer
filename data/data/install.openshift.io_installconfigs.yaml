@@ -78,6 +78,7 @@ spec:
                   - MachineAPI
                   - Build
                   - DeploymentConfig
+                  - ImageRegistry
                   type: string
                 type: array
               baselineCapabilitySet:
