@@ -3017,6 +3017,14 @@ spec:
                 description: External is the configuration used when installing on
                   an external cloud provider.
                 properties:
+                  cloudControllerManager:
+                    default: ""
+                    description: CloudControllerManager when set to external, this
+                      property will enable an external cloud provider.
+                    enum:
+                    - ""
+                    - External
+                    type: string
                   platformName:
                     default: Unknown
                     description: PlatformName holds the arbitrary string representing
