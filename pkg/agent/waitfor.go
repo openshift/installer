@@ -12,8 +12,6 @@ import (
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
 // cluster installations triggered by the agent installer.
 func WaitForBootstrapComplete(cluster *Cluster) error {
-	start := time.Now()
-	previous := time.Now()
 	timeout := 60 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
@@ -38,15 +36,6 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 				}
 			}
 		}
-
-		current := time.Now()
-		elapsed := current.Sub(previous)
-		elapsedTotal := current.Sub(start)
-		if elapsed >= 1*time.Minute {
-			logrus.Tracef("elapsed: %s, elapsedTotal: %s", elapsed.String(), elapsedTotal.String())
-			previous = current
-		}
-
 	}, 2*time.Second, waitContext.Done())
 
 	waitErr := waitContext.Err()

@@ -22,7 +22,6 @@ type ClusterKubeAPIClient struct {
 
 // NewClusterKubeAPIClient Create a new kube client to interact with the cluster under install.
 func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKubeAPIClient, error) {
-
 	kubeClient := &ClusterKubeAPIClient{}
 
 	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
@@ -45,20 +44,14 @@ func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKube
 }
 
 // IsKubeAPILive Determine if the cluster under install has initailized the kubenertes API.
-func (kube *ClusterKubeAPIClient) IsKubeAPILive() (bool, error) {
-
+func (kube *ClusterKubeAPIClient) IsKubeAPILive() bool {
 	discovery := kube.Client.Discovery()
-	version, err := discovery.ServerVersion()
-	if err != nil {
-		return false, err
-	}
-	logrus.Tracef("cluster API is up and running %s", version)
-	return true, nil
+	_, err := discovery.ServerVersion()
+	return err == nil
 }
 
 // DoesKubeConfigExist Determine if the kubeconfig for the cluster can be used without errors.
 func (kube *ClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
-
 	_, err := clientcmd.LoadFromFile(kube.configPath)
 	if err != nil {
 		return false, errors.Wrap(err, "error loading kubeconfig from file")
@@ -68,12 +61,11 @@ func (kube *ClusterKubeAPIClient) DoesKubeConfigExist() (bool, error) {
 
 // IsBootstrapConfigMapComplete Detemine if the cluster's bootstrap configmap has the status complete.
 func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
-
 	// Get latest version of bootstrap configmap
 	bootstrap, err := kube.Client.CoreV1().ConfigMaps("kube-system").Get(kube.ctx, "bootstrap", v1.GetOptions{})
 
 	if err != nil {
-		logrus.Trace(errors.Wrap(err, "bootstrap configmap not found"))
+		// bootstrap configmap not found
 		return false, nil
 	}
 	// Found a bootstrap configmap need to check its status

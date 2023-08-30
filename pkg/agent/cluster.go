@@ -126,19 +126,13 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		return true, false, nil
 	}
 
-	clusterKubeAPILive, clusterKubeAPIErr := czero.API.Kube.IsKubeAPILive()
-	if clusterKubeAPIErr != nil {
-		logrus.Trace(errors.Wrap(clusterKubeAPIErr, "Bootstrap Kube API is not available"))
-	}
+	clusterKubeAPILive := czero.API.Kube.IsKubeAPILive()
 
-	agentRestAPILive, agentRestAPIErr := czero.API.Rest.IsRestAPILive()
-	if agentRestAPIErr != nil {
-		logrus.Trace(errors.Wrap(agentRestAPIErr, "Agent Rest API is not available"))
-	}
+	agentRestAPILive := czero.API.Rest.IsRestAPILive()
 
 	// Both API's are not available
 	if !agentRestAPILive && !clusterKubeAPILive {
-		logrus.Trace("Current API Status: Agent Rest API: down, Bootstrap Kube API: down")
+		// Current API Status: Agent Rest API: down, Bootstrap Kube API: down
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Agent Rest API never initialized. Bootstrap Kube API never initialized")
 			elapsedSinceInit := time.Since(czero.installHistory.ClusterInitTime)
@@ -207,7 +201,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			czero.clusterInfraEnvID = clusterInfraEnvID
 		}
 
-		logrus.Trace("Getting cluster metadata from Agent Rest API")
+		// Getting cluster metadata from Agent Rest API
 		clusterMetadata, err := czero.GetClusterRestAPIMetadata()
 		if err != nil {
 			return false, false, errors.Wrap(err, "Unable to retrieve cluster metadata from Agent Rest API")
@@ -262,7 +256,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			return false, false, errors.Wrap(err, "Unable to retrieve events about the cluster from the Agent Rest API")
 		}
 		if len(eventList) == 0 {
-			logrus.Trace("No cluster events detected from the Agent Rest API")
+			// No cluster events detected from the Agent Rest API
 		} else {
 			mostRecentEvent := eventList[len(eventList)-1]
 			// Don't print the same status message back to back
@@ -279,7 +273,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	}
 
-	logrus.Trace("cluster bootstrap is not complete")
+	// cluster bootstrap is not complete
 	return false, false, nil
 }
 
@@ -438,7 +432,6 @@ func (czero *Cluster) PrintInstallationComplete() error {
 func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 
 	friendlyStatus := humanFriendlyClusterInstallStatus(*cluster.Status)
-	logrus.Trace(friendlyStatus)
 	// Don't print the same status message back to back
 	if *cluster.Status != czero.installHistory.RestAPIPreviousClusterStatus {
 		logrus.Info(friendlyStatus)
