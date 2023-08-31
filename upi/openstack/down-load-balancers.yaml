@@ -4,19 +4,19 @@
 # openstackcli
 # openstacksdk
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
 
   tasks:
   - name: 'Get an auth token'
-    os_auth:
+    openstack.cloud.auth:
     register: cloud
     when: os_networking_type == "Kuryr"
 
   - name: 'List octavia versions'
-    uri:
+    ansible.builtin.uri:
       method: GET
       headers:
         X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
@@ -25,12 +25,12 @@
     register: octavia_versions
     when: os_networking_type == "Kuryr"
 
-  - set_fact:
+  - ansible.builtin.set_fact:
       versions: "{{ octavia_versions.json.versions | selectattr('id', 'match', 'v2.5') | map(attribute='id') | list }}"
     when: os_networking_type == "Kuryr"
 
   - name: 'List tagged loadbalancers'
-    uri:
+    ansible.builtin.uri:
       method: GET
       headers:
         X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
@@ -44,7 +44,7 @@
   # for each service present on the cluster. Let's make
   # sure to remove the resources generated.
   - name: 'Remove the cluster load balancers'
-    command:
+    ansible.builtin.command:
       cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
     with_items: "{{ lbs_tagged.json.loadbalancers }}"
     when:
@@ -53,7 +53,7 @@
     - '"PENDING" not in item.provisioning_status'
 
   - name: 'List loadbalancers tagged on description'
-    uri:
+    ansible.builtin.uri:
       method: GET
       headers:
         X-Auth-Token: "{{ cloud.ansible_facts.auth_token }}"
@@ -67,7 +67,7 @@
   # for each service present on the cluster. Let's make
   # sure to remove the resources generated.
   - name: 'Remove the cluster load balancers'
-    command:
+    ansible.builtin.command:
       cmd: "openstack loadbalancer delete --cascade {{ item.id }}"
     with_items: "{{ lbs_description.json.loadbalancers }}"
     when:

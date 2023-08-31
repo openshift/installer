@@ -64,9 +64,9 @@ all:
       # An IP address that will be assigned to the API VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
-      os_apiVIP: "{{ os_subnet_range | next_nth_usable(5) }}"
+      os_apiVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(5) }}"
 
       # An IP address that will be assigned to the ingress VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
-      os_ingressVIP: "{{ os_subnet_range | next_nth_usable(7) }}"
+      os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"

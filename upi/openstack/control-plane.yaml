@@ -5,14 +5,14 @@
 # openstacksdk
 # netaddr
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
 
   tasks:
   - name: 'Create the Control Plane ports'
-    os_port:
+    openstack.cloud.port:
       name: "{{ item.1 }}-{{ item.0 }}"
       network: "{{ os_network }}"
       security_groups:
@@ -24,18 +24,18 @@
     register: ports
 
   - name: 'Set Control Plane ports tag'
-    command:
+    ansible.builtin.command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
 
   - name: 'List the Control Plane Trunks'
-    command:
+    ansible.builtin.command:
       cmd: "openstack network trunk list"
     when: os_networking_type == "Kuryr"
     register: control_plane_trunks
 
   - name: 'Create the Control Plane trunks'
-    command:
+    ansible.builtin.command:
       cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_cp_trunk_name }}-{{ item.0 }}"
     with_indexed_items: "{{ ports.results }}"
     when:
@@ -43,13 +43,13 @@
     - "os_cp_trunk_name|string not in control_plane_trunks.stdout"
 
   - name: 'List the Server groups'
-    command:
+    ansible.builtin.command:
       # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
       cmd: "openstack --os-compute-api-version=2.15 server group list -f json -c ID -c Name"
     register: server_group_list
 
   - name: 'Parse the Server group ID from existing'
-    set_fact:
+    ansible.builtin.set_fact:
       server_group_id: "{{ (server_group_list.stdout | from_json | json_query(list_query) | first).ID }}"
     vars:
       list_query: "[?Name=='{{ os_cp_server_group_name }}']"
@@ -57,7 +57,7 @@
     - "os_cp_server_group_name|string in server_group_list.stdout"
 
   - name: 'Create the Control Plane server group'
-    command:
+    ansible.builtin.command:
       # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
       cmd: "openstack --os-compute-api-version=2.15 server group create -f json -c id --policy=soft-anti-affinity {{ os_cp_server_group_name }}"
     register: server_group_created
@@ -65,13 +65,13 @@
     - server_group_id is not defined
 
   - name: 'Parse the Server group ID from creation'
-    set_fact:
+    ansible.builtin.set_fact:
       server_group_id: "{{ (server_group_created.stdout | from_json).id }}"
     when:
     - server_group_id is not defined
 
   - name: 'Create the Control Plane servers'
-    os_server:
+    openstack.cloud.server:
       name: "{{ item.1 }}-{{ item.0 }}"
       image: "{{ os_image_rhcos }}"
       flavor: "{{ os_flavor_master }}"

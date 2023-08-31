@@ -26,10 +26,19 @@ RUN yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glib
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk python3-netaddr unzip jq nmap && \
+    ansible-core unzip jq nmap && \
+    yum erase -y python36 && \
     yum clean all && rm -rf /var/cache/yum/*
 
-RUN python -m pip install yq
+# ansible 2.9 is EOL in September 2023, so we need to install ansible-core and get the collections from source
+# until we have a package available.
+RUN ansible-galaxy collection install openstack.cloud ansible.utils community.general && \
+    mkdir -p /usr/share/ansible/collections/ansible_collections && \
+    cp -r /root/.ansible/collections/ansible_collections/* /usr/share/ansible/collections/ansible_collections/
+
+RUN python3 -m pip install --upgrade pip
+# ansible-core comes with python3.8 but openstacksdk comes with python3.6 so let's install them from pip.
+RUN python3 -m pip install yq openstackclient openstacksdk netaddr
 
 # The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \

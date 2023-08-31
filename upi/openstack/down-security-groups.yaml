@@ -4,18 +4,18 @@
 # openstackclient
 # openstacksdk
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
 
   tasks:
   - name: 'List security groups'
-    command:
+    ansible.builtin.command:
       cmd: "openstack security group list --tags {{ cluster_id_tag }} -f value -c ID"
     register: security_groups
 
   - name: 'Remove the cluster security groups'
-    command:
+    ansible.builtin.command:
       cmd: "openstack security group delete {{ item.1 }}"
     with_indexed_items: "{{ security_groups.stdout_lines }}"

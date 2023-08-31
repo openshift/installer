@@ -5,7 +5,7 @@
 # openstacksdk
 # netaddr
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
