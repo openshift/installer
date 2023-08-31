@@ -158,7 +158,9 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 		}
 
 		if installConfig.Config.Platform.Name() == external.Name {
-			agentClusterInstall.Spec.ExternalSpec.PlatformName = installConfig.Config.Platform.External.PlatformName
+			agentClusterInstall.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
+				PlatformName: installConfig.Config.Platform.External.PlatformName,
+			}
 		}
 
 		if installConfig.Config.Platform.Name() == none.Name || installConfig.Config.Platform.Name() == external.Name {

@@ -155,9 +155,6 @@ type API interface {
 	   V2ListClusters Retrieves the list of OpenShift clusters.*/
 	V2ListClusters(ctx context.Context, params *V2ListClustersParams) (*V2ListClustersOK, error)
 	/*
-	   V2ListFeatureSupportLevels (DEPRECATED) Retrieves the support levels for features for each OpenShift version.*/
-	V2ListFeatureSupportLevels(ctx context.Context, params *V2ListFeatureSupportLevelsParams) (*V2ListFeatureSupportLevelsOK, error)
-	/*
 	   V2ListHosts Retrieves the list of OpenShift hosts that belong the infra-env.*/
 	V2ListHosts(ctx context.Context, params *V2ListHostsParams) (*V2ListHostsOK, error)
 	/*
@@ -1355,31 +1352,6 @@ func (a *Client) V2ListClusters(ctx context.Context, params *V2ListClustersParam
 		return nil, err
 	}
 	return result.(*V2ListClustersOK), nil
-
-}
-
-/*
-V2ListFeatureSupportLevels (DEPRECATED) Retrieves the support levels for features for each OpenShift version.
-*/
-func (a *Client) V2ListFeatureSupportLevels(ctx context.Context, params *V2ListFeatureSupportLevelsParams) (*V2ListFeatureSupportLevelsOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "v2ListFeatureSupportLevels",
-		Method:             "GET",
-		PathPattern:        "/v2/feature-support-levels",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http", "https"},
-		Params:             params,
-		Reader:             &V2ListFeatureSupportLevelsReader{formats: a.formats},
-		AuthInfo:           a.authInfo,
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*V2ListFeatureSupportLevelsOK), nil
 
 }
 
