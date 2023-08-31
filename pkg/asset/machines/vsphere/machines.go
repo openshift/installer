@@ -101,8 +101,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 
-		vsphereMachineProvider = provider.DeepCopy()
-
 		// Apply static IP if configured
 		applyNetworkConfig(host, provider)
 
@@ -124,13 +122,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		}
 		machines = append(machines, machine)
+
+		vsphereMachineProvider = provider.DeepCopy()
 	}
 
 	// when multiple zones are defined, network and workspace are derived from the topology
+	origProv := vsphereMachineProvider.DeepCopy()
 	if len(failureDomains) > 1 {
 		vsphereMachineProvider.Network = machineapi.NetworkSpec{}
 		vsphereMachineProvider.Workspace = &machineapi.Workspace{}
 		vsphereMachineProvider.Template = ""
+	}
+
+	if len(hosts) > 0 {
+		vsphereMachineProvider.Network.Devices = []machineapi.NetworkDeviceSpec{
+			{
+				AddressesFromPools: origProv.Network.Devices[0].AddressesFromPools,
+				Nameservers:        origProv.Network.Devices[0].Nameservers,
+			},
+		}
 	}
 
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
