@@ -157,7 +157,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
-		if installConfig.Config.Platform.Name() == external.Name {
+		if agentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
 			agentClusterInstall.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
 				PlatformName: installConfig.Config.Platform.External.PlatformName,
 			}
