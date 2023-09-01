@@ -42,6 +42,9 @@ func Validate(client API, ic *types.InstallConfig) error {
 
 	allErrs = append(allErrs, validateNetworks(client, ic.Azure, ic.Networking.MachineNetwork, field.NewPath("platform").Child("azure"))...)
 	allErrs = append(allErrs, validateRegion(client, field.NewPath("platform").Child("azure").Child("region"), ic.Azure)...)
+	if ic.Azure.CloudName == aztypes.StackCloud {
+		allErrs = append(allErrs, validateAzureStackDiskType(client, ic)...)
+	}
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud && ic.Azure.ClusterOSImage != "" {
 		StorageEndpointSuffix, err := client.GetStorageEndpointSuffix(context.TODO())
@@ -360,5 +363,41 @@ func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSIma
 	if !strings.HasSuffix(imageParsedURL.Host, StorageEndpointSuffix) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterOSImage"), ClusterOSImage, "clusterOSImage must be in the Azure Stack environment"))
 	}
+	return allErrs
+}
+
+func validateAzureStackDiskType(_ API, installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	supportedTypes := sets.NewString("Premium_LRS", "Standard_LRS")
+	errMsg := fmt.Sprintf("disk format not supported. Must be one of %v", supportedTypes.List())
+
+	defaultDiskType := aztypes.DefaultDiskType
+	if installConfig.Azure.DefaultMachinePlatform != nil &&
+		installConfig.Azure.DefaultMachinePlatform.DiskType != "" {
+		defaultDiskType = installConfig.Azure.DefaultMachinePlatform.DiskType
+	}
+
+	diskType := defaultDiskType
+	if installConfig.ControlPlane != nil &&
+		installConfig.ControlPlane.Platform.Azure != nil &&
+		installConfig.ControlPlane.Platform.Azure.DiskType != "" {
+		diskType = installConfig.ControlPlane.Platform.Azure.DiskType
+	}
+	if !supportedTypes.Has(diskType) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "azure", "OSDisk", "diskType"), diskType, errMsg))
+	}
+
+	for idx, compute := range installConfig.Compute {
+		fieldPath := field.NewPath("compute").Index(idx)
+		diskType := defaultDiskType
+		if compute.Platform.Azure != nil && compute.Platform.Azure.DiskType != "" {
+			diskType = compute.Platform.Azure.DiskType
+		}
+		if !supportedTypes.Has(diskType) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "azure", "OSDisk", "diskType"), diskType, errMsg))
+		}
+	}
+
 	return allErrs
 }
