@@ -159,8 +159,9 @@ func (AWSFailureDomainPlacement) SwaggerDoc() map[string]string {
 }
 
 var map_AzureFailureDomain = map[string]string{
-	"":     "AzureFailureDomain configures failure domain information for the Azure platform.",
-	"zone": "Availability Zone for the virtual machine. If nil, the virtual machine should be deployed to no zone.",
+	"":       "AzureFailureDomain configures failure domain information for the Azure platform.",
+	"zone":   "Availability Zone for the virtual machine. If nil, the virtual machine should be deployed to no zone.",
+	"subnet": "subnet is the name of the network subnet in which the VM will be created. When omitted, the subnet value from the machine providerSpec template will be used.",
 }
 
 func (AzureFailureDomain) SwaggerDoc() map[string]string {
