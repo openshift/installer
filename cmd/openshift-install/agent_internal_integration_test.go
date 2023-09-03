@@ -285,12 +285,12 @@ func byteCompare(ts *testscript.TestScript, neg bool, aData, eData []byte, aFile
 	ts.Logf(aText)
 
 	var sb strings.Builder
-	if err := diff.Text(aFilePath, eFilePath, aText, eText, &sb); err != nil {
+	if err := diff.Text(eFilePath, aFilePath, eText, aText, &sb); err != nil {
 		ts.Check(err)
 	}
 
 	ts.Logf("%s", sb.String())
-	ts.Fatalf("%s and %s differ", aFilePath, eFilePath)
+	ts.Fatalf("%s and %s differ", eFilePath, aFilePath)
 }
 
 func readFileFromISO(isoPath, archiveFile, ignitionFile, nodePath string) ([]byte, error) {
