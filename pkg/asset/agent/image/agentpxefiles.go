@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
@@ -228,7 +229,8 @@ func getKernelArgs(filepath string) (string, error) {
 		return "", err
 	}
 
-	// Get the last 2 kernel params i.e. "ignition.firstboot" and "ignition.platform.id=metal"
-	kernelArgs := strings.SplitN(args.DefaultKernelArgs, " ", 2)[1]
+	// Remove the coreos.liveiso arg
+	liveISOArgMatch := regexp.MustCompile(`coreos\.liveiso=[^ ]+ ?`)
+	kernelArgs := liveISOArgMatch.ReplaceAllString(args.DefaultKernelArgs, "")
 	return kernelArgs, nil
 }
