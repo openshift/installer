@@ -391,6 +391,20 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines a custom image for instance.
+                          properties:
+                            name:
+                              description: Name defines the name of the image.
+                              type: string
+                            project:
+                              description: Project defines the name of the project
+                                containing the image.
+                              type: string
+                          required:
+                          - name
+                          - project
+                          type: object
                         tags:
                           description: Tags defines a set of network tags which will
                             be added to instances in the machineset
@@ -1037,6 +1051,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       tags:
                         description: Tags defines a set of network tags which will
@@ -2270,6 +2298,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       tags:
                         description: Tags defines a set of network tags which will

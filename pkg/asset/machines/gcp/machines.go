@@ -76,6 +76,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	az := mpool.Zones[azIdx]
 	if len(platform.Licenses) > 0 {
 		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
+	} else if mpool.OSImage != nil {
+		osImage = fmt.Sprintf("projects/%s/global/images/%s", mpool.OSImage.Project, mpool.OSImage.Name)
 	}
 	network, subnetwork, err := getNetworks(platform, clusterID, role)
 	if err != nil {
