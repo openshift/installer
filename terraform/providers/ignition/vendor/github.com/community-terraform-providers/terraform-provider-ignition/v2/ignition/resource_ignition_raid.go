@@ -3,7 +3,7 @@ package ignition
 import (
 	"encoding/json"
 
-	"github.com/coreos/ignition/v2/config/v3_1/types"
+	"github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/coreos/vcontext/path"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -62,9 +62,10 @@ func resourceRaidExists(d *schema.ResourceData, meta interface{}) (bool, error) 
 }
 
 func buildRaid(d *schema.ResourceData) (string, error) {
+	level := d.Get("level").(string)
 	raid := &types.Raid{
 		Name:  d.Get("name").(string),
-		Level: d.Get("level").(string),
+		Level: &level,
 	}
 	spares, hasSpares := d.GetOk("spares")
 	if hasSpares {

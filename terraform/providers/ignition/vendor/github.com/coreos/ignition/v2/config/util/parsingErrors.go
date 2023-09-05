@@ -16,7 +16,6 @@ package util
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/coreos/ignition/v2/config/shared/errors"
 
@@ -42,7 +41,6 @@ func HandleParseErrors(rawConfig []byte, to interface{}) (report.Report, error) 
 		node.Marker = tree.MarkerFromIndices(t.Offset, -1)
 	}
 	tree.FixLineColumn(node, rawConfig)
-	fmt.Printf("%+v\n", node.Marker.StartP.Index)
 	r.AddOnError(path.ContextPath{Tag: "json"}, err)
 	r.Correlate(node)
 

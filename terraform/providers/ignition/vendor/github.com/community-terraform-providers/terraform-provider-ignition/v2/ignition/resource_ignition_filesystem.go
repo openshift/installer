@@ -3,7 +3,7 @@ package ignition
 import (
 	"encoding/json"
 
-	"github.com/coreos/ignition/v2/config/v3_1/types"
+	"github.com/coreos/ignition/v2/config/v3_3/types"
 	vcontext_path "github.com/coreos/vcontext/path"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
