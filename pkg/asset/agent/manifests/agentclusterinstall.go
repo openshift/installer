@@ -94,13 +94,19 @@ func (*AgentClusterInstall) Name() string {
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&KubeConfigFile{},
 	}
 }
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	kubeconfig := &KubeConfigFile{}
+	dependencies.Get(installConfig, kubeconfig)
+
+	if kubeconfig.Config != nil {
+		return nil
+	}
 
 	if installConfig.Config != nil {
 		var numberOfWorkers int = 0

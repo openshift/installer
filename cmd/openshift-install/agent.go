@@ -113,7 +113,19 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
+	agentImageAddNodesTarget = target{
+		name: "Agent ISO Image for adding nodes",
+		command: &cobra.Command{
+			Use:   "nodes-image",
+			Short: "Generates a bootable image containing all the information needed to added one or more nodes to an already existing cluster",
+			Args:  cobra.ExactArgs(0),
+		},
+		assets: []asset.WritableAsset{
+			&image.AgentImage{},
+		},
+	}
+
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget, agentImageAddNodesTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {

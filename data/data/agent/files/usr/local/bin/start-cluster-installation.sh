@@ -48,6 +48,12 @@ num_known_hosts() {
 
 while [[ "${total_required_nodes}" != $(num_known_hosts) ]]
 do
+
+    # For some reason the initial role patching doesn't seem to work properly, to be reviewed
+    echo "Patching host..."
+    export HOST_ID=$(curl -s ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts | jq -r '.[].id')
+    curl -X PATCH -d '{"host_role":"worker"}' -H "Content-Type: application/json" ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}
+
     echo "Waiting for hosts to become ready for cluster installation..." 1>&2
     sleep 10
 done
@@ -55,26 +61,32 @@ done
 echo "All ${total_required_nodes} hosts are ready." 1>&2
 clear_issue "${status_issue}"
 
-while [[ "${cluster_status}" != "installed" ]]
-do
-    sleep 5
-    cluster_status=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].status)
-    echo "Cluster status: ${cluster_status}" 1>&2
-    # Start the cluster install, if it transitions back to Ready due to a failure,
-    # then it will be restarted
-    case "${cluster_status}" in
-        "ready")
-            echo "Starting cluster installation..." 1>&2
-            curl -s -S -X POST "${BASE_URL}/clusters/${cluster_id}/actions/install" \
-                -H 'accept: application/json' \
-                -d ''
-            echo "Cluster installation started" 1>&2
-            ;&
-        "installed" | "preparing-for-installation" | "installing")
-            printf '\\e{lightgreen}Cluster installation in progress\\e{reset}' | set_issue "${status_issue}"
-            ;;
-        *)
-            printf '\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s' "${cluster_status}" | set_issue "${status_issue}"
-            ;;
-    esac
-done
+sleep 1m
+
+# Install the host
+echo "Installing host..."
+curl -X POST ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install
+
+# while [[ "${cluster_status}" != "installed" ]]
+# do
+#     sleep 5
+#     cluster_status=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].status)
+#     echo "Cluster status: ${cluster_status}" 1>&2
+#     # Start the cluster install, if it transitions back to Ready due to a failure,
+#     # then it will be restarted
+#     case "${cluster_status}" in
+#         "ready")
+#             echo "Starting cluster installation..." 1>&2
+#             curl -s -S -X POST "${BASE_URL}/clusters/${cluster_id}/actions/install" \
+#                 -H 'accept: application/json' \
+#                 -d ''
+#             echo "Cluster installation started" 1>&2
+#             ;&
+#         "installed" | "preparing-for-installation" | "installing")
+#             printf '\\e{lightgreen}Cluster installation in progress\\e{reset}' | set_issue "${status_issue}"
+#             ;;
+#         *)
+#             printf '\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s' "${cluster_status}" | set_issue "${status_issue}"
+#             ;;
+#     esac
+# done

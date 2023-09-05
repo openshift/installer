@@ -86,6 +86,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&agentconfig.AgentConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+		&manifests.KubeConfigFile{},
 	}
 }
 
@@ -94,7 +95,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	extraManifests := &manifests.ExtraManifests{}
-	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
+	kubeConfig := &manifests.KubeConfigFile{}
+	dependencies.Get(agentManifests, agentConfigAsset, extraManifests, kubeConfig)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -155,9 +157,15 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
-	clusterName := fmt.Sprintf("%s.%s",
-		agentManifests.ClusterDeployment.Spec.ClusterName,
-		agentManifests.ClusterDeployment.Spec.BaseDomain)
+	var clusterName string
+
+	if kubeConfig.Config != nil {
+		clusterName = kubeConfig.Config.Clusters[0].Name
+	} else {
+		clusterName = fmt.Sprintf("%s.%s",
+			agentManifests.ClusterDeployment.Spec.ClusterName,
+			agentManifests.ClusterDeployment.Spec.BaseDomain)
+	}
 
 	agentTemplateData := getTemplateData(
 		clusterName,
@@ -170,16 +178,23 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.AgentClusterInstall,
 		infraEnvID,
 		osImage,
-		infraEnv.Spec.Proxy)
+		infraEnv.Spec.Proxy,
+		agentConfigAsset.Config)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
 		return err
 	}
 
+	apiVipDnsname := ""
+	if kubeConfig.Config != nil {
+		url, _ := url.Parse(kubeConfig.Config.Clusters[0].Cluster.Server)
+		apiVipDnsname = url.Hostname()
+	}
+
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP, apiVipDnsname))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -283,12 +298,25 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
 	osImage *models.OsImage,
-	proxy *v1beta1.Proxy) *agentTemplateData {
+	proxy *v1beta1.Proxy,
+	agentConfig *agent.Config) *agentTemplateData {
+
+	cpAgents := 0
+	wrkAgents := 0
+
+	if agentClusterInstall != nil {
+		cpAgents = agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
+		wrkAgents = agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
+	} else {
+		// Let's assume they are all workers
+		wrkAgents = len(agentConfig.Hosts)
+	}
+
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
-		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ControlPlaneAgents:        cpAgents,
+		WorkerAgents:              wrkAgents,
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              releaseImage,
 		ReleaseImageMirror:        releaseImageMirror,
@@ -301,7 +329,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, apiVipDnsname string) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -316,7 +344,8 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
 	return fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String())
+API_VIP_DNSNAME=%s
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), apiVipDnsname)
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {

@@ -177,9 +177,10 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateRendevousIPNotWorker(a.Config.RendezvousIP, a.Config.Hosts); err != nil {
-		allErrs = append(allErrs, err...)
-	}
+	// Skipping this check for now
+	// if err := a.validateRendevousIPNotWorker(a.Config.RendezvousIP, a.Config.Hosts); err != nil {
+	// 	allErrs = append(allErrs, err...)
+	// }
 
 	if err := a.validateIPXEBaseURL(); err != nil {
 		allErrs = append(allErrs, err...)

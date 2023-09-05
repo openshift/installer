@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
 )
 
 const (
@@ -23,6 +24,7 @@ type AgentImage struct {
 	tmpPath      string
 	volumeID     string
 	isoPath      string
+	kubeconfig   *manifests.KubeConfigFile
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -31,18 +33,21 @@ var _ asset.WritableAsset = (*AgentImage)(nil)
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AgentArtifacts{},
+		&manifests.KubeConfigFile{},
 	}
 }
 
 // Generate generates the image file for to ISO asset.
 func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
-	dependencies.Get(agentArtifacts)
+	kubeconfig := &manifests.KubeConfigFile{}
+	dependencies.Get(agentArtifacts, kubeconfig)
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
+	a.kubeconfig = kubeconfig
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -155,7 +160,11 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
-	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
+	name := fmt.Sprintf(agentISOFilename, a.cpuArch)
+	if a.kubeconfig != nil {
+		name = "workers-" + name
+	}
+	agentIsoFile := filepath.Join(directory, name)
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)

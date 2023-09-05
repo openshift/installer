@@ -42,15 +42,35 @@ func (*AgentPullSecret) Name() string {
 func (*AgentPullSecret) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&KubeConfigFile{},
+		&PlainPullSecret{},
 	}
 }
 
 // Generate generates the AgentPullSecret manifest.
 func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	kubeconfig := &KubeConfigFile{}
+	plainps := &PlainPullSecret{}
 
-	if installConfig.Config != nil {
+	dependencies.Get(installConfig, kubeconfig, plainps)
+
+	if kubeconfig.Config != nil && plainps.File != nil {
+		secret := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      kubeconfig.Config.Clusters[0].Name,
+				Namespace: "cluster0",
+			},
+			StringData: map[string]string{
+				pullSecretKey: string(plainps.File.Data),
+			},
+		}
+		a.Config = secret
+	} else if installConfig.Config != nil {
 		secret := &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
