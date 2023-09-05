@@ -16,7 +16,7 @@ import (
 
 const (
 	// bootArtifactsPath is the path where boot files are created.
-	// e.g. initrd, kernel and rootfs
+	// e.g. initrd, kernel and rootfs.
 	bootArtifactsPath = "boot-artifacts"
 )
 
@@ -30,7 +30,7 @@ type AgentArtifacts struct {
 	IgnitionByte         []byte
 	Kargs                []byte
 	ISOPath              string
-	BootArtifactsBaseUrl string
+	BootArtifactsBaseURL string
 }
 
 // Dependencies returns the assets on which the AgentArtifacts asset depends.
@@ -65,7 +65,9 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	a.IgnitionByte = ignitionByte
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
-	a.BootArtifactsBaseUrl = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+	if agentconfig.Config != nil {
+		a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
+	}
 
 	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
@@ -189,14 +191,17 @@ func (a *AgentArtifacts) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
+func createDir(bootArtifactsFullPath string) error {
 	os.RemoveAll(bootArtifactsFullPath)
 
 	err := os.Mkdir(bootArtifactsFullPath, 0750)
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
 	agentRootfsimgFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-rootfs.img", arch))
 	rootfsReader, err := os.Open(filepath.Join(agentISOPath, "images", "pxeboot", "rootfs.img"))
 	if err != nil {
@@ -204,7 +209,7 @@ func extractRootFS(bootArtifactsFullPath, agentISOPath, arch string) error {
 	}
 	defer rootfsReader.Close()
 
-	err = copy(agentRootfsimgFile, rootfsReader)
+	err = copyfile(agentRootfsimgFile, rootfsReader)
 	if err != nil {
 		return err
 	}

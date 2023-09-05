@@ -9,14 +9,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
-
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -58,7 +56,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	a.imageReader = custom
 	a.cpuArch = agentArtifacts.CPUArch
-	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseUrl
+	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 
 	kernelArgs, err := getKernelArgs(filepath.Join(a.tmpPath, "coreos", "kargs.json"))
 	if err != nil {
@@ -79,13 +77,18 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	defer a.imageReader.Close()
 	bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
 
-	err := extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+	err := createDir(bootArtifactsFullPath)
+	if err != nil {
+		return err
+	}
+
+	err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
 	if err != nil {
 		return err
 	}
 
 	agentInitrdFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-initrd.img", a.cpuArch))
-	err = copy(agentInitrdFile, a.imageReader)
+	err = copyfile(agentInitrdFile, a.imageReader)
 	if err != nil {
 		return err
 	}
@@ -103,12 +106,12 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 			panic(err)
 		}
 		defer gzipReader.Close()
-		err = copy(agentVmlinuzFile, gzipReader)
+		err = copyfile(agentVmlinuzFile, gzipReader)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = copy(agentVmlinuzFile, kernelReader)
+		err = copyfile(agentVmlinuzFile, kernelReader)
 		if err != nil {
 			return err
 		}
@@ -145,7 +148,7 @@ func (a *AgentPXEFiles) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-func copy(filepath string, src io.Reader) error {
+func copyfile(filepath string, src io.Reader) error {
 	output, err := os.Create(filepath)
 	if err != nil {
 		return err
