@@ -65,6 +65,7 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agentconfig.AgentHosts{},
 		&agent.OptionalInstallConfig{},
+		&KubeConfigFile{},
 	}
 }
 
@@ -73,12 +74,27 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
 	agentHosts := &agentconfig.AgentHosts{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(agentHosts, installConfig)
+	kubeconfig := &KubeConfigFile{}
+	dependencies.Get(agentHosts, installConfig, kubeconfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
 	var isNetworkConfigAvailable bool
+
+	mName := getNMStateConfigName(installConfig)
+	mNamespace := getObjectMetaNamespace(installConfig)
+	mLabels := getNMStateConfigLabels(installConfig)
+
+	if kubeconfig.Config != nil {
+		cluster := kubeconfig.Config.Clusters[0]
+
+		mName = cluster.Name
+		mNamespace = "cluster0"
+		mLabels = map[string]string{
+			"infraenvs.agent-install.openshift.io": cluster.Name,
+		}
+	}
 
 	if len(agentHosts.Hosts) == 0 {
 		return nil
@@ -97,9 +113,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 					APIVersion: "agent-install.openshift.io/v1beta1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
-					Namespace: getObjectMetaNamespace(installConfig),
-					Labels:    getNMStateConfigLabels(installConfig),
+					Name:      fmt.Sprintf(mName+"-%d", i),
+					Namespace: mNamespace,
+					Labels:    mLabels,
 				},
 				Spec: aiv1beta1.NMStateConfigSpec{
 					NetConfig: aiv1beta1.NetConfig{
@@ -376,6 +392,10 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 }
 
 func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconfig.AgentHosts) error {
+	if installConfig == nil {
+		return nil
+	}
+
 	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
 	numMasters := int64(0)

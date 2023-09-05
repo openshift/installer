@@ -32,6 +32,7 @@ type AgentImage struct {
 	rootFSURL            string
 	bootArtifactsBaseURL string
 	platform             hiveext.PlatformType
+	kubeconfig           *manifests.KubeConfigFile
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -42,6 +43,7 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 		&AgentArtifacts{},
 		&manifests.AgentManifests{},
 		&BaseIso{},
+		&manifests.KubeConfigFile{},
 	}
 }
 
@@ -50,13 +52,15 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	agentArtifacts := &AgentArtifacts{}
 	agentManifests := &manifests.AgentManifests{}
 	baseIso := &BaseIso{}
-	dependencies.Get(agentArtifacts, agentManifests, baseIso)
+	kubeconfig := &manifests.KubeConfigFile{}
+	dependencies.Get(agentArtifacts, agentManifests, baseIso, kubeconfig)
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
+	a.kubeconfig = kubeconfig
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -64,7 +68,8 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 	a.volumeID = volumeID
 
-	a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
+	// a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
+	a.platform = "BareMetal"
 	if a.platform == hiveext.ExternalPlatformType {
 		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
 		if a.bootArtifactsBaseURL != "" {
@@ -214,7 +219,11 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
-	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
+	name := fmt.Sprintf(agentISOFilename, a.cpuArch)
+	if a.kubeconfig != nil {
+		name = "workers-" + name
+	}
+	agentIsoFile := filepath.Join(directory, name)
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)

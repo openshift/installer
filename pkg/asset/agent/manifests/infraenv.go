@@ -42,6 +42,8 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentConfig{},
+		&KubeConfigFile{},
+		&SSHPublicKey{},
 	}
 }
 
@@ -50,10 +52,39 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	installConfig := &agent.OptionalInstallConfig{}
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(installConfig, agentConfig)
+	kubeconfig := &KubeConfigFile{}
+	sshPublicKey := &SSHPublicKey{}
+	dependencies.Get(installConfig, kubeconfig, agentConfig, sshPublicKey)
 
-	if installConfig.Config != nil {
-		infraEnv := &aiv1beta1.InfraEnv{
+	var infraEnv *aiv1beta1.InfraEnv
+
+	if kubeconfig.Config != nil {
+
+		cluster := kubeconfig.Config.Clusters[0]
+
+		infraEnv = &aiv1beta1.InfraEnv{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cluster.Name,
+				Namespace: "cluster0",
+			},
+			Spec: aiv1beta1.InfraEnvSpec{
+				ClusterRef: &aiv1beta1.ClusterReference{
+					Name:      cluster.Name,
+					Namespace: "cluster0",
+				},
+				SSHAuthorizedKey: strings.Trim(*sshPublicKey.Key, "|\n\t"),
+				PullSecretRef: &corev1.LocalObjectReference{
+					Name: cluster.Name + "-pull-secret",
+				},
+				NMStateConfigLabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"infraenvs.agent-install.openshift.io": cluster.Name,
+					},
+				},
+			},
+		}
+	} else if installConfig.Config != nil {
+		infraEnv = &aiv1beta1.InfraEnv{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getInfraEnvName(installConfig),
 				Namespace: getObjectMetaNamespace(installConfig),
@@ -88,17 +119,18 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 		if agentConfig.Config != nil {
 			infraEnv.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
 		}
-		i.Config = infraEnv
+	}
 
-		infraEnvData, err := yaml.Marshal(infraEnv)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent installer infraEnv")
-		}
+	i.Config = infraEnv
 
-		i.File = &asset.File{
-			Filename: infraEnvFilename,
-			Data:     infraEnvData,
-		}
+	infraEnvData, err := yaml.Marshal(infraEnv)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent installer infraEnv")
+	}
+
+	i.File = &asset.File{
+		Filename: infraEnvFilename,
+		Data:     infraEnvData,
 	}
 
 	return i.finish()

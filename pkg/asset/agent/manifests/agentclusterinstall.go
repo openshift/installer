@@ -127,6 +127,7 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentHosts{},
+		&KubeConfigFile{},
 	}
 }
 
@@ -134,7 +135,12 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
 	agentHosts := &agentconfig.AgentHosts{}
-	dependencies.Get(agentHosts, installConfig)
+	kubeconfig := &KubeConfigFile{}
+	dependencies.Get(agentHosts, installConfig, kubeconfig)
+
+	if kubeconfig.Config != nil {
+		return nil
+	}
 
 	if installConfig.Config != nil {
 		var numberOfWorkers int = 0

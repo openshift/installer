@@ -37,13 +37,19 @@ func (*ClusterDeployment) Name() string {
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&KubeConfigFile{},
 	}
 }
 
 // Generate generates the ClusterDeployment manifest.
 func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	kubeconfig := &KubeConfigFile{}
+	dependencies.Get(installConfig, kubeconfig)
+
+	if kubeconfig.Config != nil {
+		return nil
+	}
 
 	if installConfig.Config != nil {
 		clusterDeployment := &hivev1.ClusterDeployment{
