@@ -253,11 +253,11 @@ replace github.com/terraform-providers/terraform-provider-nutanix => github.com/
 
 replace github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 
-replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230822055104-ba04805cce13
+replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8
 
-replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20230822055104-ba04805cce13
+replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20230831114549-1922eda29cf8
 
-replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20230822055104-ba04805cce13
+replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20230831114549-1922eda29cf8
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2064702
 replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
