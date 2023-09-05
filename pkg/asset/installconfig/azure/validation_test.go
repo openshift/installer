@@ -40,16 +40,18 @@ var (
 	validResourceSkuRegions        = "southeastasia"
 
 	vmCapabilities = map[string]map[string]string{
-		"Standard_D8s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D4s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_A1_v2":   {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
-		"Standard_D2_v4":   {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D4_v4":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D2s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_Dc4_v4":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "CpuArchitectureType": "x64"},
-		"Standard_B4ms":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
-		"Standard_D8ps_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
-		"Standard_D4ps_v5": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
+		"Standard_D8s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_A1_v2":     {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D2_v4":     {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4_v4":     {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D2s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_Dc4_v4":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "CpuArchitectureType": "x64"},
+		"Standard_B4ms":      {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D8ps_v5":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
+		"Standard_D4ps_v5":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
+		"Standard_DC8ads_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SNP"},
+		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
 	instanceTypeSku = func() []*azsku.ResourceSku {
@@ -116,6 +118,26 @@ var (
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_B4ms"
 	}
 
+	validConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	invalidConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_B4ms"
+	}
+
+	invalidConfidentialVMSGXInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8s_v3"
+	}
+
+	validTrustedLaunchInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
+	}
+
+	invalidTrustedLaunchInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8ps_v5"
+	}
+
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
 		ic.MachineNetwork = []types.MachineNetworkEntry{
@@ -144,6 +166,25 @@ var (
 	vmNetworkingTypeAcceleratedControlPlane = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.VMNetworkingType = "Accelerated" }
 	vmNetworkingTypeAcceleratedCompute      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.VMNetworkingType = "Accelerated" }
 	vmNetworkingTypeAcceleratedDefault      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.VMNetworkingType = "Accelerated" }
+
+	securityTypeConfidentialVMDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeConfidentialVMControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeConfidentialVMCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeTrustedLaunchDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
+	securityTypeTrustedLaunchControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
+	securityTypeTrustedLaunchCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -421,6 +462,61 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Unsupported VMNetworkingType in Compute",
 			edits:    editFunctions{invalidVMNetworkingIstanceTypes, vmNetworkingTypeAcceleratedCompute},
 			errorMsg: `compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Supported ConfidentialVM security type",
+			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in control plane",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in control plane",
+			edits:    editFunctions{invalidConfidentialVMSGXInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_DC8s_v3`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in compute",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in compute for SGX instance type",
+			edits:    editFunctions{invalidConfidentialVMSGXInstanceTypes, securityTypeConfidentialVMCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_DC8s_v3`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in default machine platform",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMDefaultMachinePlatform},
+			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms]`,
+		},
+		{
+			name:     "Supported TrustedLaunch security type",
+			edits:    editFunctions{validTrustedLaunchInstanceTypes, securityTypeTrustedLaunchControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in control plane",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D8ps_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in compute",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type for Confindential VM size in compute",
+			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeTrustedLaunchCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_DC8ads_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in default machine platform",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchDefaultMachinePlatform},
+			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_D4ps_v5]`,
 		},
 	}
 
