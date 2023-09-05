@@ -27,6 +27,19 @@ data "ibm_is_subnet" "compute_subnets" {
 }
 
 ############################################
+# Bootstrap ignition config
+############################################
+data "ignition_config" "redirect" {
+  replace {
+    source = "https://${ibm_cos_bucket.bootstrap_ignition.s3_endpoint_direct}/${ibm_cos_bucket.bootstrap_ignition.bucket_name}/${ibm_cos_bucket_object.bootstrap_ignition.key}"
+    http_headers {
+      name  = "Authorization"
+      value = data.ibm_iam_auth_token.iam_token.iam_access_token
+    }
+  }
+}
+
+############################################
 # Bootstrap node
 ############################################
 
@@ -56,16 +69,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   zone = var.control_plane_subnet_zone_list[0]
   keys = []
 
-  # Use custom ignition config that pulls content from COS bucket
-  # TODO: Once support for the httpHeaders field is added to
-  # terraform-provider-ignition, we should use it instead of this template.
-  # https://github.com/community-terraform-providers/terraform-provider-ignition/issues/16
-  user_data = templatefile("${path.module}/templates/bootstrap.ign", {
-    HOSTNAME    = ibm_cos_bucket.bootstrap_ignition.s3_endpoint_direct
-    BUCKET_NAME = ibm_cos_bucket.bootstrap_ignition.bucket_name
-    OBJECT_NAME = ibm_cos_bucket_object.bootstrap_ignition.key
-    IAM_TOKEN   = data.ibm_iam_auth_token.iam_token.iam_access_token
-  })
+  user_data = data.ignition_config.redirect.rendered
 }
 
 ############################################

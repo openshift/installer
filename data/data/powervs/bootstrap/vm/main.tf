@@ -37,6 +37,23 @@ resource "ibm_cos_bucket_object" "ignition" {
 
 data "ibm_iam_auth_token" "iam_token" {}
 
+locals {
+  src = {
+    protocol = var.enable_snat ? "https" : "http"
+    hostname = var.enable_snat ? ibm_cos_bucket.ignition.s3_endpoint_public : var.proxy_server_ip
+  }
+}
+
+data "ignition_config" "redirect" {
+  replace {
+    source = "${local.src.protocol}://${local.src.hostname}/${ibm_cos_bucket.ignition.bucket_name}/${ibm_cos_bucket_object.ignition.key}"
+    http_headers {
+      name  = "Authorization"
+      value = data.ibm_iam_auth_token.iam_token.iam_access_token
+    }
+  }
+}
+
 # Create the bootstrap instance
 resource "ibm_pi_instance" "bootstrap" {
   pi_memory            = var.memory
@@ -49,13 +66,8 @@ resource "ibm_pi_instance" "bootstrap" {
   pi_network {
     network_id = var.dhcp_network_id
   }
-  pi_user_data = base64encode(templatefile("${path.module}/templates/bootstrap.ign", {
-    PROTOCOL    = var.enable_snat ? "https" : "http"
-    HOSTNAME    = var.enable_snat ? ibm_cos_bucket.ignition.s3_endpoint_public : var.proxy_server_ip
-    BUCKET_NAME = ibm_cos_bucket.ignition.bucket_name
-    OBJECT_NAME = ibm_cos_bucket_object.ignition.key
-    IAM_TOKEN   = data.ibm_iam_auth_token.iam_token.iam_access_token
-  }))
+  pi_user_data = base64encode(data.ignition_config.redirect.rendered)
+
   pi_key_pair_name = var.ssh_key_name
   pi_health_status = "WARNING"
 }
