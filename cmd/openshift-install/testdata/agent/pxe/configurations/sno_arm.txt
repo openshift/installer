@@ -13,6 +13,7 @@ exists $WORK/auth/kubeadmin-password
 
 grep 'initrd --name initrd http://user-specified-pxe-infra.com/agent.aarch64-initrd.img' $WORK/pxe/agent.aarch64.ipxe
 grep 'kernel http://user-specified-pxe-infra.com/agent.aarch64-vmlinuz initrd=initrd coreos.live.rootfs_url=http://user-specified-pxe-infra.com/agent.aarch64-rootfs.img .*ignition.firstboot ignition.platform.id=metal' $WORK/pxe/agent.aarch64.ipxe
+! grep 'coreos.liveiso=' $WORK/pxe/agent.aarch64.ipxe
 
 -- install-config.yaml --
 apiVersion: v1
