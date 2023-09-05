@@ -557,7 +557,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.
 	// The cluster-network-operator handles the validation of this field.
 	// Reference: https://github.com/openshift/cluster-network-operator/blob/fc3e0e25b4cfa43e14122bdcdd6d7f2585017d75/pkg/network/cluster_config.go#L45-L52
-	if ic.Platform.Name() == openstacktypes.Name && len(installConfig.Config.ServiceNetwork) == 2 {
+	if ic.Networking != nil && len(ic.Networking.ServiceNetwork) == 2 &&
+		(ic.Platform.Name() == openstacktypes.Name || ic.Platform.Name() == vspheretypes.Name) {
 		// Only configure kernel args for dual-stack clusters.
 		ignIPv6, err := machineconfig.ForDualStackAddresses("master")
 		if err != nil {
