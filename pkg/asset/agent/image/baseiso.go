@@ -74,7 +74,7 @@ func downloadIso(archName string) (string, error) {
 	return "", fmt.Errorf("no ISO found to download for %s", archName)
 }
 
-// Fetch RootFS URL using the rhcos.json
+// Fetch RootFS URL using the rhcos.json.
 func (i *BaseIso) getRootFSURL(archName string) (string, error) {
 	streamArch, err := getStreamArch(archName)
 	if err != nil {
@@ -84,7 +84,6 @@ func (i *BaseIso) getRootFSURL(archName string) (string, error) {
 		if format, ok := artifacts.Formats["pxe"]; ok {
 			rootFSUrl := format.Rootfs.Location
 			return rootFSUrl, nil
-
 		}
 	} else {
 		return "", errors.Wrap(err, "invalid artifact")

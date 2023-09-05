@@ -8,11 +8,12 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/types/external"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,7 +29,7 @@ type AgentImage struct {
 	isoPath              string
 	rootFSURL            string
 	bootArtifactsBaseURL string
-	platform             string
+	platform             hiveext.PlatformType
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -53,7 +54,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	a.rendezvousIP = agentArtifacts.RendezvousIP
 	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
-	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseUrl
+	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 
 	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
@@ -61,24 +62,20 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 	a.volumeID = volumeID
 
-	// a.platform = strings.ToLower(string(agentManifests.AgentClusterInstall.Spec.PlatformType))
-	// temp change
-	a.platform = "external"
-	if a.platform == external.Name {
-		defaultRootFSURL, err := baseIso.getRootFSURL(a.cpuArch)
-		if err != nil {
-			return err
-		}
-
+	a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
+	if a.platform == hiveext.ExternalPlatformType {
 		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
 		if a.bootArtifactsBaseURL != "" {
 			a.rootFSURL = fmt.Sprintf("%s/%s", a.bootArtifactsBaseURL, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
-			logrus.Debugf("Using custom rootfs URL")
-
+			logrus.Debugf("Using custom rootfs URL: %s", a.rootFSURL)
 		} else {
-			// we'll default to the URL from the RHCOS streams file
+			// Default to the URL from the RHCOS streams file
+			defaultRootFSURL, err := baseIso.getRootFSURL(a.cpuArch)
+			if err != nil {
+				return err
+			}
 			a.rootFSURL = defaultRootFSURL
-			logrus.Debugf("Using default rootfs URL")
+			logrus.Debugf("Using default rootfs URL: %s", a.rootFSURL)
 		}
 	}
 
@@ -193,31 +190,42 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	os.Remove(agentIsoFile)
 
 	var err error
-	// For external platform when the bootArtifactsBaseUrl is specified,
+	// For external platform when the bootArtifactsBaseURL is specified,
 	// output the rootfs file alongside the minimal ISO
-	if a.platform == external.Name && a.bootArtifactsBaseURL != "" {
-		bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
-		err := extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
-		if err != nil {
-			return err
+	if a.platform == hiveext.ExternalPlatformType {
+		if a.bootArtifactsBaseURL != "" {
+			bootArtifactsFullPath := filepath.Join(directory, bootArtifactsPath)
+			err := createDir(bootArtifactsFullPath)
+			if err != nil {
+				return err
+			}
+			err = extractRootFS(bootArtifactsFullPath, a.tmpPath, a.cpuArch)
+			if err != nil {
+				return err
+			}
+			logrus.Infof("RootFS file created in: %s. Upload it at %s", bootArtifactsFullPath, a.rootFSURL)
 		}
-		logrus.Infof("RootFS file created in: %s. Upload it at %s", bootArtifactsFullPath, a.rootFSURL)
 		err = isoeditor.CreateMinimalISO(a.tmpPath, a.volumeID, a.rootFSURL, a.cpuArch, agentIsoFile)
 		if err != nil {
 			return err
 		}
+		logrus.Infof("Generated minimal ISO at %s", agentIsoFile)
 	} else {
 		// Generate full ISO
 		err = isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
 		if err != nil {
 			return err
 		}
+		logrus.Infof("Generated ISO at %s", agentIsoFile)
 	}
-	logrus.Infof("Generated ISO at %s", agentIsoFile)
 
 	err = os.WriteFile(filepath.Join(directory, "rendezvousIP"), []byte(a.rendezvousIP), 0o644) //nolint:gosec // no sensitive info
 	if err != nil {
 		return err
+	}
+	// For external platform OCI, add CCM manifests in the openshift directory.
+	if a.platform == hiveext.ExternalPlatformType {
+		logrus.Infof("When using %s oci platform, always make sure CCM manifests were added in the %s directory.", hiveext.ExternalPlatformType, manifests.OpenshiftManifestDir())
 	}
 
 	return nil

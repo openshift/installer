@@ -23,9 +23,9 @@ var (
 
 // AgentConfig reads the agent-config.yaml file.
 type AgentConfig struct {
-	File                 *asset.File
-	Config               *agent.Config
-	Template             string
+	File     *asset.File
+	Config   *agent.Config
+	Template string
 }
 
 var _ asset.WritableAsset = (*AgentConfig)(nil)
@@ -58,7 +58,7 @@ metadata:
   namespace: cluster0
 # All fields are optional
 rendezvousIP: your-node0-ip
-bootArtifactsBaseURL: http://user-specified-pxe-infra.com
+bootArtifactsBaseURL: http://user-specified-infra.com
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org

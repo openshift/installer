@@ -352,7 +352,7 @@ rendezvousIP: 192.168.111.80`,
 apiVersion: v1alpha1
 metadata:
   name: agent-config-cluster0
-  bootArtifactsBaseURL: not-a-valid-url`,
+bootArtifactsBaseURL: not-a-valid-url`,
 
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: bootArtifactsBaseURL: Invalid value: \"not-a-valid-url\": invalid URI \"not-a-valid-url\" (no scheme)",
