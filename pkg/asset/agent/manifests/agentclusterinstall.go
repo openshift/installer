@@ -294,7 +294,7 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 	// Set the default value for userManagedNetworking, as would be done by the
 	// mutating webhook in ZTP.
 	switch agentClusterInstall.Spec.PlatformType {
-	case hiveext.NonePlatformType:
+	case hiveext.NonePlatformType, hiveext.ExternalPlatformType:
 		if agentClusterInstall.Spec.Networking.UserManagedNetworking == nil || !*agentClusterInstall.Spec.Networking.UserManagedNetworking {
 			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", agentClusterInstall.Spec.PlatformType)
 			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
