@@ -50,6 +50,22 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "valid data configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(),
+			},
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      getPullSecretName(getValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -122,7 +138,7 @@ stringData:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-string-data",
@@ -132,7 +148,7 @@ kind: Secret
 metadata:
   name: pull-secret
   namespace: cluster-0`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-secret-key",
@@ -144,7 +160,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson:`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret does not contain any data",
 		},
 		{
 			name: "bad-secret-format",
@@ -156,7 +172,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson: 'foo'`,
-			expectedError: "invalid PullSecret configuration: StringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
+			expectedError: "invalid PullSecret configuration: Data: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
 		},
 		{
 			name:       "file-not-found",
