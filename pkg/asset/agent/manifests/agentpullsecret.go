@@ -112,16 +112,20 @@ func (a *AgentPullSecret) finish() error {
 	}
 
 	// Normalise the JSON formatting so that we can redact the file reliably
-	normal, err := normalizeDockerConfig(a.Config.StringData[pullSecretKey])
+	pullSecretValue := a.GetPullSecretData()
+	normal, err := normalizeDockerConfig(pullSecretValue)
 	if err != nil {
 		return err
 	}
+	a.Config.StringData = map[string]string{}
 	a.Config.StringData[pullSecretKey] = normal
+	a.Config.Data = nil
 
 	secretData, err := yaml.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal agent secret")
 	}
+
 	a.File = &asset.File{
 		Filename: agentPullSecretFilename,
 		Data:     secretData,
@@ -143,11 +147,11 @@ func normalizeDockerConfig(stringData string) (string, error) {
 
 func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 	if err := a.validateSecretIsNotEmpty(); err != nil {
-		return err
+		return field.ErrorList{err}
 	}
 
-	fieldPath := field.NewPath("StringData")
-	dockerConfig := a.Config.StringData[pullSecretKey]
+	fieldPath := field.NewPath("stringData")
+	dockerConfig := a.GetPullSecretData()
 	if err := validate.ImagePullSecret(dockerConfig); err != nil {
 		return field.ErrorList{field.Invalid(fieldPath, dockerConfig, err.Error())}
 	}
@@ -155,31 +159,40 @@ func (a *AgentPullSecret) validatePullSecret() field.ErrorList {
 	return field.ErrorList{}
 }
 
-func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
-	var allErrs field.ErrorList
+func (a *AgentPullSecret) validateSecretIsNotEmpty() *field.Error {
+	fieldPath := field.NewPath("stringData")
 
-	fieldPath := field.NewPath("StringData")
-
-	if len(a.Config.StringData) == 0 {
-		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret is empty"))
-		return allErrs
+	if len(a.Config.StringData) == 0 && len(a.Config.Data) == 0 {
+		return field.Required(fieldPath, "the pull secret is empty")
 	}
 
 	pullSecret, ok := a.Config.StringData[pullSecretKey]
 	if !ok {
-		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret key '.dockerconfigjson' is not defined"))
-		return allErrs
+		pullSecretBytes, ok := a.Config.Data[pullSecretKey]
+		if !ok {
+			return field.Required(fieldPath, "the pull secret key '.dockerconfigjson' is not defined")
+		}
+		pullSecret = string(pullSecretBytes)
+	} else {
+		pullSecretBytes, ok := a.Config.Data[pullSecretKey]
+		if ok && pullSecret != string(pullSecretBytes) {
+			return field.Invalid(fieldPath, pullSecretBytes, "conflicting pull secret keys set in stringdata and data")
+		}
 	}
 
 	if pullSecret == "" {
-		allErrs = append(allErrs, field.Required(fieldPath, "the pull secret does not contain any data"))
-		return allErrs
+		return field.Required(fieldPath, "the pull secret does not contain any data")
 	}
 
-	return allErrs
+	return nil
 }
 
 // GetPullSecretData returns the content of the pull secret.
+// Getting the pull secret from the Data field need not be decoded to string
+// from base64 due to this conversion taking place in the yaml unmarshalling.
 func (a *AgentPullSecret) GetPullSecretData() string {
-	return a.Config.StringData[".dockerconfigjson"]
+	if _, ok := a.Config.StringData[pullSecretKey]; ok {
+		return a.Config.StringData[pullSecretKey]
+	}
+	return string(a.Config.Data[pullSecretKey])
 }
