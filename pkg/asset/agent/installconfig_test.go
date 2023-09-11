@@ -209,7 +209,46 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\"]",
+			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", \"ppc64le\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", \"ppc64le\"]",
+		},
+		{
+			name: "invalid platform.baremetal for architecture ppc64le",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+compute:
+  - architecture: ppc64le
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: ppc64le
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+platform:
+  baremetal:
+    apiVIP: 192.168.122.10
+    ingressVIP: 192.168.122.11
+    hosts:
+    - name: host1
+      bootMACAddress: 52:54:01:aa:aa:a1
+    - name: host2
+      bootMACAddress: 52:54:01:bb:bb:b1
+    - name: host3
+      bootMACAddress: 52:54:01:cc:cc:c1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
 		},
 		{
 			name: "unsupported platformName for external platform",
