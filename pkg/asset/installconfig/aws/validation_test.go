@@ -728,13 +728,13 @@ func TestValidateForProvisioning(t *testing.T) {
 	}, {
 		name:        "internal publish strategy invalid hosted zone",
 		edits:       editFunctions{publishInternal, invalidateHostedZone},
-		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": cannot find hosted zone",
+		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": unable to retrieve hosted zone",
 	}, {
 		name: "external publish strategy valid hosted zone",
 	}, {
 		name:        "external publish strategy invalid hosted zone",
 		edits:       editFunctions{invalidateHostedZone},
-		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": cannot find hosted zone",
+		expectedErr: "aws.hostedZone: Invalid value: \"invalid-hosted-zone\": unable to retrieve hosted zone",
 	}}
 
 	mockCtrl := gomock.NewController(t)
@@ -749,12 +749,12 @@ func TestValidateForProvisioning(t *testing.T) {
 	route53Client.EXPECT().GetBaseDomain("").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
 	route53Client.EXPECT().GetBaseDomain(invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
 
-	route53Client.EXPECT().ValidateZoneRecords(&validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
-	route53Client.EXPECT().ValidateZoneRecords(gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(&validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
 
 	// An invalid hosted zone should provide an error
-	route53Client.EXPECT().GetHostedZone(validHostedZoneName).Return(&validHostedZoneOutput, nil).AnyTimes()
-	route53Client.EXPECT().GetHostedZone(gomock.Not(validHostedZoneName)).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(validHostedZoneName, gomock.Any()).Return(&validHostedZoneOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(gomock.Not(validHostedZoneName), gomock.Any()).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -826,7 +826,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 
 			if test.expectedErr != "" {
 				if test.problematicRecords == nil {
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(nil, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, errors.Errorf(test.expectedErr)).AnyTimes()
 				} else {
 					// mimic the results of what should happen in the internal function passed to
 					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
@@ -837,13 +837,13 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 							returnedProblems = append(returnedProblems, pr)
 						}
 					}
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(returnedProblems, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, errors.Errorf(test.expectedErr)).AnyTimes()
 				}
 			} else {
-				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic).Return(nil, nil).AnyTimes()
+				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, nil).AnyTimes()
 			}
 
-			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic)
+			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic, nil)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {

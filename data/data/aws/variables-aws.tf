@@ -144,6 +144,13 @@ variable "aws_internal_zone" {
   description = "(optional) An existing hosted zone (zone ID) to use for the internal API."
 }
 
+variable "aws_internal_zone_role" {
+  type        = string
+  default     = null
+  description = "(optional) A role to assume when using an existing hosted zone from another account."
+}
+
+
 variable "aws_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"

@@ -9,6 +9,27 @@ locals {
   use_alias = ! local.use_cname
 }
 
+provider "aws" {
+  alias = "private_hosted_zone"
+
+  assume_role {
+    role_arn = var.internal_zone_role
+  }
+
+  region = var.region
+
+  skip_region_validation = true
+
+  endpoints {
+    ec2     = lookup(var.custom_endpoints, "ec2", null)
+    elb     = lookup(var.custom_endpoints, "elasticloadbalancing", null)
+    iam     = lookup(var.custom_endpoints, "iam", null)
+    route53 = lookup(var.custom_endpoints, "route53", null)
+    s3      = lookup(var.custom_endpoints, "s3", null)
+    sts     = lookup(var.custom_endpoints, "sts", null)
+  }
+}
+
 data "aws_route53_zone" "public" {
   count = local.public_endpoints ? 1 : 0
 
@@ -18,6 +39,8 @@ data "aws_route53_zone" "public" {
 }
 
 data "aws_route53_zone" "int" {
+  provider = aws.private_hosted_zone
+
   zone_id = var.internal_zone == null ? aws_route53_zone.new_int[0].id : var.internal_zone
 }
 
@@ -54,7 +77,8 @@ resource "aws_route53_record" "api_external_alias" {
 }
 
 resource "aws_route53_record" "api_internal_alias" {
-  count = local.use_alias ? 1 : 0
+  provider = aws.private_hosted_zone
+  count    = local.use_alias ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -68,7 +92,8 @@ resource "aws_route53_record" "api_internal_alias" {
 }
 
 resource "aws_route53_record" "api_external_internal_zone_alias" {
-  count = local.use_alias ? 1 : 0
+  provider = aws.private_hosted_zone
+  count    = local.use_alias ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
@@ -93,7 +118,8 @@ resource "aws_route53_record" "api_external_cname" {
 }
 
 resource "aws_route53_record" "api_internal_cname" {
-  count = local.use_cname ? 1 : 0
+  provider = aws.private_hosted_zone
+  count    = local.use_cname ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -104,7 +130,8 @@ resource "aws_route53_record" "api_internal_cname" {
 }
 
 resource "aws_route53_record" "api_external_internal_zone_cname" {
-  count = local.use_cname ? 1 : 0
+  provider = aws.private_hosted_zone
+  count    = local.use_cname ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"

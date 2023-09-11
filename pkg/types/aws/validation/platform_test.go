@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -17,6 +18,7 @@ func TestValidatePlatform(t *testing.T) {
 		name     string
 		platform *aws.Platform
 		expected string
+		credMode types.CredentialsMode
 	}{
 		{
 			name: "minimal",
@@ -175,14 +177,42 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			expected: fmt.Sprintf(`^\Qtest-path.userTags: Too many: %d: must have at most %d items`, userTagLimit+1, userTagLimit),
 		},
+		{
+			name: "hosted zone role without hosted zone should error",
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				HostedZoneRole: "test-hosted-zone-role",
+			},
+			expected: `^test-path\.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone$`,
+		},
+		{
+			name:     "valid hosted zone & role should not throw an error",
+			credMode: types.PassthroughCredentialsMode,
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+			},
+		},
+		{
+			name: "hosted zone role without credential mode should error",
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+			},
+			expected: `^test-path\.hostedZoneRole: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
+			err := ValidatePlatform(tc.platform, tc.credMode, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Regexp(t, tc.expected, err)
+				assert.Regexp(t, tc.credMode, err)
 			}
 		})
 	}

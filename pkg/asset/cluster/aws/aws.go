@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
@@ -26,6 +27,7 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 		}},
 		ServiceEndpoints: config.AWS.ServiceEndpoints,
 		ClusterDomain:    config.ClusterDomain(),
+		HostedZoneRole:   config.AWS.HostedZoneRole,
 	}
 }
 
@@ -79,7 +81,8 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 	}
 
 	if zone := installConfig.Config.AWS.HostedZone; zone != "" {
-		route53Client := route53.New(session)
+		r53cfg := awsic.GetR53ClientCfg(session, installConfig.Config.AWS.HostedZoneRole)
+		route53Client := route53.New(session, r53cfg)
 		if _, err := route53Client.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
 			ResourceType: aws.String("hostedzone"),
 			ResourceId:   aws.String(zone),
