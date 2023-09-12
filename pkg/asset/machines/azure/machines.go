@@ -83,16 +83,22 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 	replicas := int32(total)
-	failureDomains := []machinev1.AzureFailureDomain{}
-	sort.Strings(mpool.Zones)
-	for _, zone := range mpool.Zones {
-		domain := machinev1.AzureFailureDomain{
-			Zone: zone,
-		}
 
-		failureDomains = append(failureDomains, domain)
+	failureDomains := []machinev1.AzureFailureDomain{}
+	if len(mpool.Zones) > 1 {
+		sort.Strings(mpool.Zones)
+		for _, zone := range mpool.Zones {
+			domain := machinev1.AzureFailureDomain{
+				Zone: zone,
+			}
+
+			failureDomains = append(failureDomains, domain)
+		}
+		machineSetProvider.Zone = ""
+	} else if len(mpool.Zones) == 1 {
+		machineSetProvider.Zone = mpool.Zones[0]
 	}
-	machineSetProvider.Zone = ""
+
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -118,10 +124,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			Template: machinev1.ControlPlaneMachineSetTemplate{
 				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
 				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
-					FailureDomains: machinev1.FailureDomains{
-						Platform: v1.AzurePlatformType,
-						Azure:    &failureDomains,
-					},
 					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
 						Labels: map[string]string{
 							"machine.openshift.io/cluster-api-cluster":      clusterID,
@@ -138,6 +140,14 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		},
 	}
+
+	if len(failureDomains) > 0 {
+		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = machinev1.FailureDomains{
+			Platform: v1.AzurePlatformType,
+			Azure:    &failureDomains,
+		}
+	}
+
 	return machines, controlPlaneMachineSet, nil
 }
 
