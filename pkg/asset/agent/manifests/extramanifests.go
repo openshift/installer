@@ -59,3 +59,8 @@ func (em *ExtraManifests) Load(f asset.FileFetcher) (found bool, err error) {
 
 	return len(em.FileList) > 0, nil
 }
+
+// OpenshiftManifestDir returns the name of directory to add extra manifests.
+func OpenshiftManifestDir() string {
+	return openshiftManifestDir
+}

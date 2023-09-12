@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -52,15 +53,7 @@ var GetIsoPluggable = downloadIso
 
 // Download the ISO using the URL in rhcos.json
 func downloadIso(archName string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-
-	// Get the ISO to use from rhcos.json
-	st, err := rhcos.FetchCoreOSBuild(ctx)
-	if err != nil {
-		return "", err
-	}
-	streamArch, err := st.GetArchitecture(archName)
+	streamArch, err := getStreamArch(archName)
 	if err != nil {
 		return "", err
 	}
@@ -81,6 +74,24 @@ func downloadIso(archName string) (string, error) {
 	return "", fmt.Errorf("no ISO found to download for %s", archName)
 }
 
+// Fetch RootFS URL using the rhcos.json.
+func (i *BaseIso) getRootFSURL(archName string) (string, error) {
+	streamArch, err := getStreamArch(archName)
+	if err != nil {
+		return "", err
+	}
+	if artifacts, ok := streamArch.Artifacts["metal"]; ok {
+		if format, ok := artifacts.Formats["pxe"]; ok {
+			rootFSUrl := format.Rootfs.Location
+			return rootFSUrl, nil
+		}
+	} else {
+		return "", errors.Wrap(err, "invalid artifact")
+	}
+
+	return "", fmt.Errorf("no RootFSURL found for %s", archName)
+}
+
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
@@ -88,6 +99,20 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 		&agent.OptionalInstallConfig{},
 		&mirror.RegistriesConf{},
 	}
+}
+
+func getStreamArch(archName string) (*stream.Arch, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+	st, err := rhcos.FetchCoreOSBuild(ctx)
+	if err != nil {
+		return nil, err
+	}
+	streamArch, err := st.GetArchitecture(archName)
+	if err != nil {
+		return nil, err
+	}
+	return streamArch, nil
 }
 
 // Generate the baseIso

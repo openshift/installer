@@ -23,10 +23,9 @@ var (
 
 // AgentConfig reads the agent-config.yaml file.
 type AgentConfig struct {
-	File        *asset.File
-	Config      *agent.Config
-	Template    string
-	IPxeBaseURL string
+	File     *asset.File
+	Config   *agent.Config
+	Template string
 }
 
 var _ asset.WritableAsset = (*AgentConfig)(nil)
@@ -59,7 +58,7 @@ metadata:
   namespace: cluster0
 # All fields are optional
 rendezvousIP: your-node0-ip
-ipxeBaseURL: http://user-specified-pxe-infra.com
+bootArtifactsBaseURL: http://user-specified-infra.com
 additionalNTPSources:
 - 0.rhel.pool.ntp.org
 - 1.rhel.pool.ntp.org
@@ -181,7 +180,7 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateIPXEBaseURL(); err != nil {
+	if err := a.validateBootArtifactsBaseURL(); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -318,18 +317,18 @@ func (a *AgentConfig) validateRendevousIPNotWorker(rendezvousIP string, hosts []
 	return allErrs
 }
 
-func (a *AgentConfig) validateIPXEBaseURL() field.ErrorList {
+func (a *AgentConfig) validateBootArtifactsBaseURL() field.ErrorList {
 	var allErrs field.ErrorList
 
-	ipxeBaseURL := field.NewPath("ipxeBaseURL")
+	bootArtifactsBaseURL := field.NewPath("bootArtifactsBaseURL")
 
-	// empty PxeBaseURL is fine
-	if a.Config.IPxeBaseURL == "" {
+	// empty bootArtifactsBaseURL is fine
+	if a.Config.BootArtifactsBaseURL == "" {
 		return nil
 	}
 
-	if err := validate.URI(a.Config.IPxeBaseURL); err != nil {
-		allErrs = append(allErrs, field.Invalid(ipxeBaseURL, a.Config.IPxeBaseURL, err.Error()))
+	if err := validate.URI(a.Config.BootArtifactsBaseURL); err != nil {
+		allErrs = append(allErrs, field.Invalid(bootArtifactsBaseURL, a.Config.BootArtifactsBaseURL, err.Error()))
 	}
 
 	return allErrs

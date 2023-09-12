@@ -66,6 +66,7 @@ type agentTemplateData struct {
 	OSImage                   *models.OsImage
 	Proxy                     *v1beta1.Proxy
 	ConfigImageFiles          string
+	ImageTypeISO              string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -159,6 +160,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.ClusterDeployment.Spec.ClusterName,
 		agentManifests.ClusterDeployment.Spec.BaseDomain)
 
+	imageTypeISO := "full-iso"
+	platform := agentManifests.AgentClusterInstall.Spec.PlatformType
+	if platform == hiveext.ExternalPlatformType {
+		imageTypeISO = "minimal-iso"
+	}
+
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
@@ -170,7 +177,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.AgentClusterInstall,
 		infraEnvID,
 		osImage,
-		infraEnv.Spec.Proxy)
+		infraEnv.Spec.Proxy,
+		imageTypeISO)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -283,7 +291,8 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
 	osImage *models.OsImage,
-	proxy *v1beta1.Proxy) *agentTemplateData {
+	proxy *v1beta1.Proxy,
+	imageTypeISO string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -298,6 +307,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		ClusterName:               name,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
+		ImageTypeISO:              imageTypeISO,
 	}
 }
 

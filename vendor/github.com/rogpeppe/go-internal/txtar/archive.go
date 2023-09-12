@@ -40,32 +40,22 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode/utf8"
+
+	"golang.org/x/tools/txtar"
 )
 
 // An Archive is a collection of files.
-type Archive struct {
-	Comment []byte
-	Files   []File
-}
+type Archive = txtar.Archive
 
 // A File is a single file in an archive.
-type File struct {
-	Name string // name of file ("foo/bar.txt")
-	Data []byte // text content of file
-}
+type File = txtar.File
 
 // Format returns the serialized form of an Archive.
 // It is assumed that the Archive data structure is well-formed:
 // a.Comment and all a.File[i].Data contain no file marker lines,
 // and all a.File[i].Name is non-empty.
 func Format(a *Archive) []byte {
-	var buf bytes.Buffer
-	buf.Write(fixNL(a.Comment))
-	for _, f := range a.Files {
-		fmt.Fprintf(&buf, "-- %s --\n", f.Name)
-		buf.Write(fixNL(f.Data))
-	}
-	return buf.Bytes()
+	return txtar.Format(a)
 }
 
 // ParseFile parses the named file as an archive.
@@ -79,6 +69,9 @@ func ParseFile(file string) (*Archive, error) {
 
 // Parse parses the serialized form of an Archive.
 // The returned Archive holds slices of data.
+//
+// TODO use golang.org/x/tools/txtar.Parse when https://github.com/golang/go/issues/59264
+// is fixed.
 func Parse(data []byte) *Archive {
 	a := new(Archive)
 	var name string
