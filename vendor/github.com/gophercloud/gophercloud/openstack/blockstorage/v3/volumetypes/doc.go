@@ -160,5 +160,61 @@ Example to Remove/Revoke Access to a Volume Type
 	if err != nil {
 		panic(err)
 	}
+
+Example to Create the Encryption of a Volume Type
+
+	  typeID := "7ffaca22-f646-41d4-b79d-d7e4452ef8cc"
+		volumeType, err := volumetypes.CreateEncryption(client, typeID, .CreateEncryptionOpts{
+			KeySize:      256,
+			Provider:    "luks",
+			ControlLocation: "front-end",
+			Cipher:  "aes-xts-plain64",
+		}).Extract()
+		if err != nil{
+			panic(err)
+		}
+		fmt.Println(volumeType)
+
+Example to Delete the Encryption of a Volume Type
+
+		typeID := "7ffaca22-f646-41d4-b79d-d7e4452ef8cc"
+	  encryptionID := ""81e069c6-7394-4856-8df7-3b237ca61f74
+		err := volumetypes.DeleteEncryption(client, typeID, encryptionID).ExtractErr()
+		if err != nil{
+			panic(err)
+		}
+
+Example to Update the Encryption of a Volume Type
+
+	typeID := "7ffaca22-f646-41d4-b79d-d7e4452ef8cc"
+	volumetype, err = volumetypes.UpdateEncryption(client, typeID, volumetypes.UpdateEncryptionOpts{
+		KeySize:      256,
+		Provider:    "luks",
+		ControlLocation: "front-end",
+		Cipher:  "aes-xts-plain64",
+	}).Extract()
+	if err != nil{
+		panic(err)
+	}
+	fmt.Println(volumetype)
+
+Example to Show an Encryption of a Volume Type
+
+	typeID := "7ffaca22-f646-41d4-b79d-d7e4452ef8cc"
+	volumeType, err := volumetypes.GetEncrytpion(client, typeID).Extract()
+	if err != nil{
+		panic(err)
+	}
+	fmt.Println(volumeType)
+
+Example to Show an Encryption Spec of a Volume Type
+
+		typeID := "7ffaca22-f646-41d4-b79d-d7e4452ef8cc"
+	  key := "cipher"
+		volumeType, err := volumetypes.GetEncrytpionSpec(client, typeID).Extract()
+		if err != nil{
+			panic(err)
+		}
+		fmt.Println(volumeType)
 */
 package volumetypes

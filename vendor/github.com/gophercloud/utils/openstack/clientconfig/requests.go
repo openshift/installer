@@ -14,6 +14,7 @@ import (
 	"github.com/gophercloud/utils/gnocchi"
 	"github.com/gophercloud/utils/internal"
 
+	"github.com/hashicorp/go-uuid"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -884,6 +885,10 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 	}
 
 	switch service {
+	case "baremetal":
+		return openstack.NewBareMetalV1(pClient, eo)
+	case "baremetal-introspection":
+		return openstack.NewBareMetalIntrospectionV1(pClient, eo)
 	case "clustering":
 		return openstack.NewClusteringV1(pClient, eo)
 	case "compute":
@@ -918,6 +923,12 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		return openstack.NewKeyManagerV1(pClient, eo)
 	case "load-balancer":
 		return openstack.NewLoadBalancerV2(pClient, eo)
+	case "messaging":
+		clientID, err := uuid.GenerateUUID()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate UUID: %w", err)
+		}
+		return openstack.NewMessagingV2(pClient, clientID, eo)
 	case "network":
 		return openstack.NewNetworkV2(pClient, eo)
 	case "object-store":
@@ -944,6 +955,8 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		default:
 			return nil, fmt.Errorf("invalid volume API version")
 		}
+	case "workflowv2":
+		return openstack.NewWorkflowV2(pClient, eo)
 	}
 
 	return nil, fmt.Errorf("unable to create a service client for %s", service)

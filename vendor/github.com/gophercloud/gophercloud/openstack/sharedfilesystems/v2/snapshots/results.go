@@ -173,3 +173,13 @@ type GetResult struct {
 type UpdateResult struct {
 	commonResult
 }
+
+// ResetStatusResult contains the response error from an ResetStatus request.
+type ResetStatusResult struct {
+	gophercloud.ErrResult
+}
+
+// ForceDeleteResult contains the response error from an ForceDelete request.
+type ForceDeleteResult struct {
+	gophercloud.ErrResult
+}

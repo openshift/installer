@@ -141,3 +141,18 @@ func (r commonResult) Extract() (*Snapshot, error) {
 	err := r.ExtractInto(&s)
 	return s.Snapshot, err
 }
+
+// ResetStatusResult contains the response error from a ResetStatus request.
+type ResetStatusResult struct {
+	gophercloud.ErrResult
+}
+
+// UpdateStatusResult contains the response error from an UpdateStatus request.
+type UpdateStatusResult struct {
+	gophercloud.ErrResult
+}
+
+// ForceDeleteResult contains the response error from a ForceDelete request.
+type ForceDeleteResult struct {
+	gophercloud.ErrResult
+}
