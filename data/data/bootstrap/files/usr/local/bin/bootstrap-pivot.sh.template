@@ -42,25 +42,51 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
   record_service_stage_start "rebase-to-okd-os-image"
 {{if .IsFCOS -}}
   mnt="$(podman image mount "${MACHINE_OS_IMAGE}")"
-{{- if or (.BootstrapInPlace) (eq .Invoker "agent-installer") }}
-  # SNO setup boots into Live ISO which cannot be rebased
-  # https://github.com/coreos/rpm-ostree/issues/4547
-  mkdir /var/mnt/{upper,worker}
-  mount -t overlay overlay -o "lowerdir=/usr:$mnt/usr" /usr
-  mount -t overlay overlay -o "lowerdir=/etc:$mnt/etc,upperdir=/var/mnt/upper,workdir=/var/mnt/worker" /etc
-  systemctl daemon-reload
 
-  # Workaround for SELinux denials when launching crio.service from overlayfs
-  setenforce Permissive
+  # The bootstrap host during SNO installation and the rendezvous host of Agent-based Installer both boot into a Live
+  # ISO which cannot be rebased. Until rpm-ostree supports this live rebase [0], the following workaround will mount the
+  # proper OKD/FCOS Machine OS image over the existing mount at /usr and copy new config files to /etc.
+  # [0] https://github.com/coreos/rpm-ostree/issues/4547
+  if grep -q coreos.liveiso= /proc/cmdline; then
+    mount -t tmpfs -o size=50% none /var/mnt/
+    rsync -aHAXx "$mnt/" /var/mnt/
+    mount -t overlay overlay -o lowerdir=/usr:/var/mnt/usr /usr
+    rsync -rlt --ignore-existing /var/mnt/etc/ /etc/
 
-  systemctl start crio.service
-  # No reboot necessary because SNO setup will reboot system
-{{ else }}
-  pushd "${mnt}/bootstrap"
-    # shellcheck disable=SC1091
-    . ./pre-pivot.sh
-  popd
-{{ end -}}
+    # Agent-based Installer will launch a ephemeral control plane at the rendezvous host which will create and publish
+    # Ignition configs for the other master nodes. These Ignition configs must match what the in-cluster control plane
+    # would generate else machine config operator will fail [0]. Because the rendezvous host is booted with a FCOS Live
+    # ISO without any OKD/FCOS related changes, we have to copy the manifests from OKD Machine OS manually to the
+    # bootstrap manifests folder of the rendezvous host.
+    # [0] https://access.redhat.com/solutions/4970731
+    mkdir -p /var/opt/openshift/manifests
+    cp -av /var/mnt/manifests/*.* /var/opt/openshift/manifests/
+
+    # Load new systemd unit files and configuration such as crio.service after mounting the content of OKD/FCOS Machine
+    # OS over /usr and copying new files to /etc
+    systemctl daemon-reload
+
+    # CoreDNS fails to listen to 127.0.0.53:53 when Agent-based Installer boots its the rendezvous host with a Fedora
+    # CoreOS bootimage because by default FCOS' systemd-resolved already listens to this port. OKD/FCOS disables
+    # resolved's stub listener [0] but the resolved must be restarted for this setting to take effect.
+    # [0] https://github.com/openshift/okd-machine-os/blob/master/overlay.d/99okd/etc/systemd/resolved.conf.d/okd-no-dns-stub.conf
+    systemctl restart systemd-resolved.service
+
+    # Workaround for SELinux denials when launching crio.service from overlayfs
+    setenforce Permissive
+
+    # crio.service is not part of FCOS but of OKD Machine OS. It will loaded after systemctl daemon-reload above but has
+    # to be started manually
+    systemctl start crio.service
+
+    # No reboot necessary because setup will reboot the system automatically
+  else
+    pushd "${mnt}/bootstrap"
+      # shellcheck disable=SC1091
+      . ./pre-pivot.sh
+    popd
+  fi
+  record_service_stage_success
 {{else if .IsSCOS -}}
   chmod 0644 /etc/containers/registries.conf
   rpm-ostree rebase --experimental "ostree-unverified-registry:${MACHINE_OS_IMAGE}"
