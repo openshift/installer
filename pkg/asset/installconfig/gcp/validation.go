@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -45,6 +46,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
+	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 
 	return allErrs.ToAggregate()
 }
@@ -220,8 +222,8 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet CIDR range start %s is outside of the specified machine networks", ip))}
 }
 
-//ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
-//also warns the user if optional services are not enabled.
+// ValidateEnabledServices gets all the enabled services for a project and validate if any of the required services are not enabled.
+// also warns the user if optional services are not enabled.
 func ValidateEnabledServices(ctx context.Context, client API, project string) error {
 	requiredServices := sets.NewString("compute.googleapis.com",
 		"cloudresourcemanager.googleapis.com",
@@ -281,4 +283,77 @@ func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) 
 		return append(allErrs, field.Invalid(fieldPath.Child("region"), ic.GCP.Region, "invalid region"))
 	}
 	return nil
+}
+
+func validateMarketplaceImages(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	const errorMessage string = "could not find the boot image: %v"
+	var err error
+	var defaultImage *compute.Image
+	var defaultOsImage *gcp.OSImage
+
+	if ic.GCP.DefaultMachinePlatform != nil && ic.GCP.DefaultMachinePlatform.OSImage != nil {
+		defaultOsImage = ic.GCP.DefaultMachinePlatform.OSImage
+		defaultImage, err = client.GetImage(context.TODO(), defaultOsImage.Name, defaultOsImage.Project)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "osImage"), *defaultOsImage, fmt.Sprintf(errorMessage, err)))
+		}
+	}
+
+	if ic.ControlPlane != nil {
+		image := defaultImage
+		osImage := defaultOsImage
+		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.OSImage != nil {
+			osImage = ic.ControlPlane.Platform.GCP.OSImage
+			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			}
+		}
+		if image != nil {
+			if errMsg := checkArchitecture(image.Architecture, ic.ControlPlane.Architecture, "controlPlane"); errMsg != "" {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "osImage"), *osImage, errMsg))
+			}
+		}
+	}
+
+	for idx, compute := range ic.Compute {
+		image := defaultImage
+		osImage := defaultOsImage
+		fieldPath := field.NewPath("compute").Index(idx)
+		if compute.Platform.GCP != nil && compute.Platform.GCP.OSImage != nil {
+			osImage = compute.Platform.GCP.OSImage
+			image, err = client.GetImage(context.TODO(), osImage.Name, osImage.Project)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, fmt.Sprintf(errorMessage, err)))
+			}
+		}
+		if image != nil {
+			if errMsg := checkArchitecture(image.Architecture, compute.Architecture, "compute"); errMsg != "" {
+				allErrs = append(allErrs, field.Invalid(fieldPath.Child("platform", "gcp", "osImage"), *osImage, errMsg))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func checkArchitecture(imageArch string, icArch types.Architecture, role string) string {
+	const unspecifiedArch string = "ARCHITECTURE_UNSPECIFIED"
+	// The possible architecture names from image.Architecture are of type string hence we cannot directly obtain the possible values
+	// In the docs the possible values are ARM64, X86_64, and ARCHITECTURE_UNSPECIFIED
+	// There is no simple translation between the architecture values from Google and the architecture names used in the install config so a map is used
+
+	translateArchName := map[string]types.Architecture{
+		"ARM64":  types.ArchitectureARM64,
+		"X86_64": types.ArchitectureAMD64,
+	}
+
+	if imageArch == "" || imageArch == unspecifiedArch {
+		logrus.Warn(fmt.Sprintf("Boot image architecture is unspecified and might not be compatible with %s %s nodes", icArch, role))
+	} else if translateArchName[imageArch] != icArch {
+		return fmt.Sprintf("image architecture %s does not match %s node architecture %s", imageArch, role, icArch)
+	}
+	return ""
 }
