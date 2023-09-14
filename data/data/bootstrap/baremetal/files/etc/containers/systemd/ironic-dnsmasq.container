@@ -11,7 +11,7 @@ ContainerName=dnsmasq
 Image=$IRONIC_IMAGE
 Exec=/bin/rundnsmasq
 Network=host
-AddCapability=NET_ADMIN
+AddCapability=NET_ADMIN NET_RAW NET_BIND_SERVICE
 Volume=ironic.volume:/shared:z
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="DHCP_RANGE=${DHCP_RANGE}"
