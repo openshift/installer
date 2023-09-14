@@ -351,11 +351,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to fetch session")
 		}
 
-		// Default to current subscription if one was not specified
-		if mpool.OSDisk.DiskEncryptionSet != nil && mpool.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
-			mpool.OSDisk.DiskEncryptionSet.SubscriptionID = session.Credentials.SubscriptionID
-		}
-
 		client := icazure.NewClient(session)
 		if len(mpool.Zones) == 0 {
 			azs, err := client.GetAvailabilityZones(context.TODO(), ic.Platform.Azure.Region, mpool.InstanceType)
