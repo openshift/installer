@@ -139,7 +139,7 @@ func TestInfraEnv_Generate(t *testing.T) {
 					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
-					AdditionalTrustBundle: getAdditionalTrustBundle(getAdditionalTrustBundleValidOptionalInstallConfig()),
+					AdditionalTrustBundle: getAdditionalTrustBundleValidOptionalInstallConfig().Config.AdditionalTrustBundle,
 				},
 			},
 		},

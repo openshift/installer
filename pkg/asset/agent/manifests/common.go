@@ -30,10 +30,6 @@ func getProxy(ic *agent.OptionalInstallConfig) *aiv1beta1.Proxy {
 	}
 }
 
-func getAdditionalTrustBundle(ic *agent.OptionalInstallConfig) string {
-	return ic.Config.AdditionalTrustBundle
-}
-
 func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
 	if ic.Config != nil {
 		return ic.Config.Namespace

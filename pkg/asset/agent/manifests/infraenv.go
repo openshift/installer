@@ -81,8 +81,8 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Proxy != nil {
 			infraEnv.Spec.Proxy = getProxy(installConfig)
 		}
-		if installConfig.Config.AdditionalTrustBundle != "" {
-			infraEnv.Spec.AdditionalTrustBundle = getAdditionalTrustBundle(installConfig)
+		if atb := installConfig.Config.AdditionalTrustBundle; atb != "" {
+			infraEnv.Spec.AdditionalTrustBundle = atb
 		}
 
 		if agentConfig.Config != nil {
