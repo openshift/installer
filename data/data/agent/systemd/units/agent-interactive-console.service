@@ -7,7 +7,6 @@ ConditionPathExists=!/etc/assisted/node0
 
 [Service]
 Type=oneshot
-RemainAfterExit=true
 TTYPath=/dev/tty15
 EnvironmentFile=/etc/assisted/agent-installer.env
 Environment=LD_LIBRARY_PATH=/usr/local/bin/
@@ -16,8 +15,8 @@ ExecStartPre=/usr/bin/kill -s SIGRTMIN+21 1
 ExecStartPre=/usr/bin/chvt 15
 ExecStartPre=mkdir -p /var/log/agent
 ExecStart=/usr/local/bin/agent-tui
-ExecStartPost=/usr/bin/chvt 1
-ExecStartPost=/usr/bin/kill -s SIGRTMIN+20 1
+ExecStopPost=/usr/bin/chvt 1
+ExecStopPost=/usr/bin/kill -s SIGRTMIN+20 1
 TimeoutStartSec=0
 StandardInput=tty
 TTYVHangup=yes
