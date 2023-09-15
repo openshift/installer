@@ -24,5 +24,4 @@ TTYVHangup=yes
 TTYVTDisallocate=yes
 
 [Install]
-WantedBy=default.target
-RequiredBy=sshd.service systemd-logind.service getty@tty1.service
+WantedBy=getty@tty1.service
