@@ -189,3 +189,90 @@ func UpdateMetadata(client *gophercloud.ServiceClient, id string, opts UpdateMet
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
+
+// ResetStatusOptsBuilder allows extensions to add additional parameters to the
+// ResetStatus request.
+type ResetStatusOptsBuilder interface {
+	ToSnapshotResetStatusMap() (map[string]interface{}, error)
+}
+
+// ResetStatusOpts contains options for resetting a Snapshot status.
+// For more information about these parameters, please, refer to the Block Storage API V3,
+// Snapshot Actions, ResetStatus snapshot documentation.
+type ResetStatusOpts struct {
+	// Status is a snapshot status to reset to.
+	Status string `json:"status"`
+}
+
+// ToSnapshotResetStatusMap assembles a request body based on the contents of a
+// ResetStatusOpts.
+func (opts ResetStatusOpts) ToSnapshotResetStatusMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "os-reset_status")
+}
+
+// ResetStatus will reset the existing snapshot status. ResetStatusResult contains only the error.
+// To extract it, call the ExtractErr method on the ResetStatusResult.
+func ResetStatus(client *gophercloud.ServiceClient, id string, opts ResetStatusOptsBuilder) (r ResetStatusResult) {
+	b, err := opts.ToSnapshotResetStatusMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	resp, err := client.Post(resetStatusURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// UpdateStatusOptsBuilder allows extensions to add additional parameters to the
+// UpdateStatus request.
+type UpdateStatusOptsBuilder interface {
+	ToSnapshotUpdateStatusMap() (map[string]interface{}, error)
+}
+
+// UpdateStatusOpts contains options for resetting a Snapshot status.
+// For more information about these parameters, please, refer to the Block Storage API V3,
+// Snapshot Actions, UpdateStatus snapshot documentation.
+type UpdateStatusOpts struct {
+	// Status is a snapshot status to update to.
+	Status string `json:"status"`
+	// A progress percentage value for snapshot build progress.
+	Progress string `json:"progress,omitempty"`
+}
+
+// ToSnapshotUpdateStatusMap assembles a request body based on the contents of a
+// UpdateStatusOpts.
+func (opts UpdateStatusOpts) ToSnapshotUpdateStatusMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "os-update_snapshot_status")
+}
+
+// UpdateStatus will reset the existing snapshot status. UpdateStatusResult contains only the error.
+// To extract it, call the ExtractErr method on the UpdateStatusResult.
+func UpdateStatus(client *gophercloud.ServiceClient, id string, opts UpdateStatusOptsBuilder) (r UpdateStatusResult) {
+	b, err := opts.ToSnapshotUpdateStatusMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	resp, err := client.Post(resetStatusURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// ForceDelete will delete the existing snapshot in any state. ForceDeleteResult contains only the error.
+// To extract it, call the ExtractErr method on the ForceDeleteResult.
+func ForceDelete(client *gophercloud.ServiceClient, id string) (r ForceDeleteResult) {
+	b := map[string]interface{}{
+		"os-force_delete": struct{}{},
+	}
+	resp, err := client.Post(forceDeleteURL(client, id), b, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{202},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}

@@ -304,3 +304,108 @@ func RemoveAccess(client *gophercloud.ServiceClient, id string, opts RemoveAcces
 	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
 	return
 }
+
+// CreateEncryptionOptsBuilder allows extensions to add additional parameters to the
+// Create Encryption request.
+type CreateEncryptionOptsBuilder interface {
+	ToEncryptionCreateMap() (map[string]interface{}, error)
+}
+
+// CreateEncryptionOpts contains options for creating an Encryption Type object.
+// This object is passed to the volumetypes.CreateEncryption function.
+// For more information about these parameters,see the Encryption Type object.
+type CreateEncryptionOpts struct {
+	// The size of the encryption key.
+	KeySize int `json:"key_size"`
+	// The class of that provides the encryption support.
+	Provider string `json:"provider" required:"true"`
+	// Notional service where encryption is performed.
+	ControlLocation string `json:"control_location"`
+	// The encryption algorithm or mode.
+	Cipher string `json:"cipher"`
+}
+
+// ToEncryptionCreateMap assembles a request body based on the contents of a
+// CreateEncryptionOpts.
+func (opts CreateEncryptionOpts) ToEncryptionCreateMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "encryption")
+}
+
+// CreateEncryption will creates an Encryption Type object based on the CreateEncryptionOpts.
+// To extract the Encryption Type object from the response, call the Extract method on the
+// EncryptionCreateResult.
+func CreateEncryption(client *gophercloud.ServiceClient, id string, opts CreateEncryptionOptsBuilder) (r CreateEncryptionResult) {
+	b, err := opts.ToEncryptionCreateMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	resp, err := client.Post(createEncryptionURL(client, id), b, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// Delete will delete an encryption type for an existing Volume Type with the provided ID.
+func DeleteEncryption(client *gophercloud.ServiceClient, id, encryptionID string) (r DeleteEncryptionResult) {
+	resp, err := client.Delete(deleteEncryptionURL(client, id, encryptionID), nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// GetEncryption retrieves the encryption type for an existing VolumeType with the provided ID.
+func GetEncryption(client *gophercloud.ServiceClient, id string) (r GetEncryptionResult) {
+	resp, err := client.Get(getEncryptionURL(client, id), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// GetEncryptionSpecs retrieves the encryption type specs for an existing VolumeType with the provided ID.
+func GetEncryptionSpec(client *gophercloud.ServiceClient, id, key string) (r GetEncryptionSpecResult) {
+	resp, err := client.Get(getEncryptionSpecURL(client, id, key), &r.Body, nil)
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
+
+// UpdateEncryptionOptsBuilder allows extensions to add additional parameters to the
+// Update encryption request.
+type UpdateEncryptionOptsBuilder interface {
+	ToUpdateEncryptionMap() (map[string]interface{}, error)
+}
+
+// Update Encryption Opts contains options for creating an Update Encryption Type. This object is passed to
+// the volumetypes.UpdateEncryption function. For more information about these parameters,
+// see the Update Encryption Type object.
+type UpdateEncryptionOpts struct {
+	// The size of the encryption key.
+	KeySize int `json:"key_size"`
+	// The class of that provides the encryption support.
+	Provider string `json:"provider"`
+	// Notional service where encryption is performed.
+	ControlLocation string `json:"control_location"`
+	// The encryption algorithm or mode.
+	Cipher string `json:"cipher"`
+}
+
+// ToEncryptionCreateMap assembles a request body based on the contents of a
+// UpdateEncryptionOpts.
+func (opts UpdateEncryptionOpts) ToUpdateEncryptionMap() (map[string]interface{}, error) {
+	return gophercloud.BuildRequestBody(opts, "encryption")
+}
+
+// Update will update an existing encryption for a Volume Type based on the values in UpdateEncryptionOpts.
+// To extract the UpdateEncryption Type object from the response, call the Extract method on the
+// UpdateEncryptionResult.
+func UpdateEncryption(client *gophercloud.ServiceClient, id, encryptionID string, opts UpdateEncryptionOptsBuilder) (r UpdateEncryptionResult) {
+	b, err := opts.ToUpdateEncryptionMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	resp, err := client.Put(updateEncryptionURL(client, id, encryptionID), b, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200},
+	})
+	_, r.Header, r.Err = gophercloud.ParseResponse(resp, err)
+	return
+}
