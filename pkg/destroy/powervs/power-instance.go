@@ -18,6 +18,25 @@ const (
 func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing virtual Power service instances (%s)", o.InfraID)
 
+	// Get the image id
+	images, err := o.listImages()
+	imageID := ""
+	if err != nil && len(images.list()) > 0 {
+		imageID = images.list()[0].id
+		if len(images.list()) > 1 {
+			o.Logger.Warnf("Expected 1 matching image, found %s. Assuming %s is the correct image", len(images.list()), imageID)
+		}
+	}
+
+	// Get the net id
+	nets, err := o.listDHCPNetworks()
+	netName := ""
+	if err != nil && len(nets.list()) > 0 {
+		netName = nets.list()[0].name
+		if len(nets.list()) > 1 {
+			o.Logger.Warnf("Expected 1 matching network, found %s. Assuming %s is the correct network", len(nets.list()), netName)
+		}
+	}
 	if o.instanceClient == nil {
 		o.Logger.Infof("Skipping deleting Power service instances because no service instance was found")
 		result := []cloudResource{}
@@ -37,7 +56,20 @@ func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 		// https://github.com/IBM-Cloud/power-go-client/blob/master/power/models/p_vm_instance.go
 		if strings.Contains(*instance.ServerName, o.InfraID) {
 			foundOne = true
-			o.Logger.Debugf("listPowerInstances: FOUND: %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status)
+			o.Logger.Debugf("listPowerInstances: FOUND NAME MATCH: %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status)
+		} else if *instance.ImageID == imageID {
+			foundOne = true
+			o.Logger.Debugf("listPowerInstances: FOUND IMAGE MATCH: %s, %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status, imageID)
+		} else {
+			for _, net := range instance.Networks {
+				if netName == net.NetworkName {
+					foundOne = true
+					o.Logger.Debugf("listPowerInstances: FOUND NETWORK MATCH: %s, %s, %s, %s", *instance.PvmInstanceID, *instance.ServerName, *instance.Status, netName)
+				}
+			}
+		}
+
+		if foundOne {
 			result = append(result, cloudResource{
 				key:      *instance.PvmInstanceID,
 				name:     *instance.ServerName,
