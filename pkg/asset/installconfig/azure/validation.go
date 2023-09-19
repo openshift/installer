@@ -162,9 +162,19 @@ func validateFamily(fieldPath *field.Path, instanceType, family string) field.Er
 	windowsVMFamilies := sets.NewString(
 		"standardNVSv4Family",
 	)
+	diskNVMeVMFamilies := sets.NewString(
+		"standardEIBDSv5Family",
+		"standardEIBSv5Family",
+	)
 	allErrs := field.ErrorList{}
 	if windowsVMFamilies.Has(family) {
 		errMsg := fmt.Sprintf("%s is currently only supported on Windows", family)
+		allErrs = append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+	}
+	// FIXME: remove when supported has been added to the provider
+	// https://github.com/hashicorp/terraform-provider-azurerm/issues/22058
+	if diskNVMeVMFamilies.Has(family) {
+		errMsg := fmt.Sprintf("%s is not currently supported but might be in a future release", family)
 		allErrs = append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
 
