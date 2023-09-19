@@ -80,7 +80,7 @@ func tagSharedVPCResources(ctx context.Context, clusterID string, installConfig 
 		return errors.Wrap(err, "could not add tags to subnets")
 	}
 
-	if zone := installConfig.Config.AWS.HostedZone; zone != "" {
+	if zone := installConfig.Config.AWS.HostedZone; zone != "" && installConfig.Config.AWS.UserConfiguredDNS != "Enabled" {
 		r53cfg := awsic.GetR53ClientCfg(session, installConfig.Config.AWS.HostedZoneRole)
 		route53Client := route53.New(session, r53cfg)
 		if _, err := route53Client.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
