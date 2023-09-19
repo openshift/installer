@@ -632,7 +632,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.IngressVIPs), "must specify VIP for ingress, when VIP for API is set"))
 		}
 
-		if len(vips.API) == 1 {
+		if len(vips.API) >= 1 {
 			hasIPv4, hasIPv6, presence, _ := inferIPVersionFromInstallConfig(n)
 
 			apiVIPIPFamily := corev1.IPv4Protocol
@@ -640,12 +640,20 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				apiVIPIPFamily = corev1.IPv6Protocol
 			}
 
-			if hasIPv4 && hasIPv6 && apiVIPIPFamily != presence["machineNetwork"].Primary {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API[0], "VIP for the API must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
+			if hasIPv4 && hasIPv6 {
+				for k, v := range presence {
+					if v.Primary != apiVIPIPFamily {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API[0], fmt.Sprintf("%s primary IP Family and primary IP family for the API VIP should match", k)))
+					}
+				}
 			}
-		} else if len(vips.API) == 2 {
-			if isDualStack, _ := utilsnet.IsDualStackIPStrings(vips.API); !isDualStack {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API, "If two API VIPs are given, one must be an IPv4 address, the other an IPv6"))
+			if len(vips.API) == 2 {
+				if isDualStack, err := utilsnet.IsDualStackIPStrings(vips.API); !isDualStack {
+					if err != nil {
+						allErrs = append(allErrs, field.Invalid(fldPath, vips, err.Error()))
+					}
+					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vips.API, "If two API VIPs are given, one must be an IPv4 address, the other an IPv6"))
+				}
 			}
 		}
 	} else {
@@ -675,7 +683,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 			allErrs = append(allErrs, field.Required(fldPath.Child(fieldNames.APIVIPs), "must specify VIP for API, when VIP for ingress is set"))
 		}
 
-		if len(vips.Ingress) == 1 {
+		if len(vips.Ingress) >= 1 {
 			hasIPv4, hasIPv6, presence, _ := inferIPVersionFromInstallConfig(n)
 
 			ingressVIPIPFamily := corev1.IPv4Protocol
@@ -683,12 +691,20 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				ingressVIPIPFamily = corev1.IPv6Protocol
 			}
 
-			if hasIPv4 && hasIPv6 && ingressVIPIPFamily != presence["machineNetwork"].Primary {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress[0], "VIP for the Ingress must be of the same IP family with machine network's primary IP Family for dual-stack IPv4/IPv6"))
+			if hasIPv4 && hasIPv6 {
+				for k, v := range presence {
+					if v.Primary != ingressVIPIPFamily {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress[0], fmt.Sprintf("%s primary IP Family and primary IP family for the Ingress VIP should match", k)))
+					}
+				}
 			}
-		} else if len(vips.Ingress) == 2 {
-			if isDualStack, _ := utilsnet.IsDualStackIPStrings(vips.Ingress); !isDualStack {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress, "If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6"))
+			if len(vips.Ingress) == 2 {
+				if isDualStack, err := utilsnet.IsDualStackIPStrings(vips.Ingress); !isDualStack {
+					if err != nil {
+						allErrs = append(allErrs, field.Invalid(fldPath, vips, err.Error()))
+					}
+					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vips.Ingress, "If two Ingress VIPs are given, one must be an IPv4 address, the other an IPv6"))
+				}
 			}
 		}
 	} else {
