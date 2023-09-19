@@ -106,6 +106,15 @@ type Platform struct {
 	// during bootstrap destroy.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
+
+	// This field is used to Enable the use of a custom DNS solution when
+	// the DNS provided by the underlying cloud platform cannot be used.
+	// When Enabled, the cloud provided DNS is not configured. The cluster runs
+	// a self-hosted DNS solution for the cluster and the user can use their
+	// own DNS solution post install for external access to the cluster.
+	//
+	// +optional
+	UserConfiguredDNS UserDNSConfiguration `json:"userConfiguredDNS,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -122,6 +131,18 @@ type ServiceEndpoint struct {
 	// +kubebuilder:validation:Pattern=`^https://`
 	URL string `json:"url"`
 }
+
+// UserDNSConfiguration indicates if a customer's DNS solution is in use
+// +kubebuilder:validation:Enum="";Enabled;Disabled
+type UserDNSConfiguration string
+
+const (
+	// UserDNSEnabled indicates that user has pre-configured their own DNS.
+	UserDNSEnabled UserDNSConfiguration = "Enabled"
+	// UserDNSDisabled indicates that user has not pre-configured their own DNS.
+	// Installer would continue to be responsible for configuring the cloud DNS.
+	UserDNSDisabled UserDNSConfiguration = "Disabled"
+)
 
 // IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.
 func IsSecretRegion(region string) bool {

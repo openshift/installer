@@ -58,6 +58,13 @@ func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	if p.UserConfiguredDNS == "" {
+		p.UserConfiguredDNS = aws.UserDNSDisabled
+	}
+	if p.UserConfiguredDNS != aws.UserDNSEnabled && p.UserConfiguredDNS != aws.UserDNSDisabled {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("userConfiguredDNS"), p.UserConfiguredDNS, "can only be empty, Enabled or Disabled"))
+	}
+
 	return allErrs
 }
 
