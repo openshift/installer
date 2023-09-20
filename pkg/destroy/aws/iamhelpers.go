@@ -112,13 +112,24 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
 				response, err := search.client.GetUserWithContext(ctx, &iam.GetUserInput{UserName: aws.String(*user.UserName)})
 				if err != nil {
-					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
-						search.unmatched[*user.Arn] = exists
-					} else {
-						if lastError != nil {
-							search.logger.Debug(lastError)
+
+					var awsErr awserr.Error
+					if errors.As(err, &awsErr) {
+						switch {
+						case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
+							// The role does not exist.
+							// Ignore this IAM Role and do not report this error via lastError.
+							search.unmatched[*user.Arn] = exists
+						case strings.Contains(err.Error(), "AccessDenied"):
+							// Installer does not have access to this IAM role.
+							// Ignore this IAM Role and do not report this error via lastError.
+							search.unmatched[*user.Arn] = exists
+						default:
+							if lastError != nil {
+								search.logger.Debug(lastError)
+							}
+							lastError = errors.Wrapf(err, "get tags for %s", *user.Arn)
 						}
-						lastError = errors.Wrapf(err, "get tags for %s", *user.Arn)
 					}
 				} else {
 					user = response.User
