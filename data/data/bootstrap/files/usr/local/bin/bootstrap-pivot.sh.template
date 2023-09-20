@@ -42,7 +42,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
   record_service_stage_start "rebase-to-okd-os-image"
 {{if .IsFCOS -}}
   mnt="$(podman image mount "${MACHINE_OS_IMAGE}")"
-{{- if .BootstrapInPlace }}
+{{- if or (.BootstrapInPlace) (eq .Invoker "agent-installer") }}
   # SNO setup boots into Live ISO which cannot be rebased
   # https://github.com/coreos/rpm-ostree/issues/4547
   mkdir /var/mnt/{upper,worker}
