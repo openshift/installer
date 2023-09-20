@@ -235,15 +235,6 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		a.Config = agentClusterInstall
 
-		agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
-		}
-
-		a.File = &asset.File{
-			Filename: agentClusterInstallFilename,
-			Data:     agentClusterInstallData,
-		}
 	}
 	return a.finish()
 }
@@ -266,8 +257,6 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		}
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", agentClusterInstallFilename))
 	}
-
-	a.File = agentClusterInstallFile
 
 	agentClusterInstall := &hiveext.AgentClusterInstall{}
 	if err := yaml.UnmarshalStrict(agentClusterInstallFile.Data, agentClusterInstall); err != nil {
@@ -323,6 +312,15 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.Wrapf(err, "invalid PlatformType configured")
 	}
 
+	agentClusterInstallData, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
+	}
+
+	a.File = &asset.File{
+		Filename: agentClusterInstallFilename,
+		Data:     agentClusterInstallData,
+	}
 	return nil
 }
 
