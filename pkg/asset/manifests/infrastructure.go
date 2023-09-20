@@ -221,7 +221,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	case external.Name:
 		config.Spec.PlatformSpec.Type = configv1.ExternalPlatformType
 		config.Spec.PlatformSpec.External = externalinfra.GetInfraPlatformSpec(installConfig)
-		config.Status.PlatformStatus.External = externalinfra.GetInfraPlatformStatus()
+		config.Status.PlatformStatus.External = externalinfra.GetInfraPlatformStatus(installConfig)
 	case none.Name:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:
