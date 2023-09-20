@@ -84,6 +84,13 @@ resource "aws_iam_instance_profile" "bootstrap" {
   name = "${var.cluster_id}-bootstrap-profile"
 
   role = var.aws_master_iam_role_name != "" ? var.aws_master_iam_role_name : aws_iam_role.bootstrap[0].name
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-bootstrap-profile"
+    },
+    local.tags,
+  )
 }
 
 resource "aws_iam_role" "bootstrap" {
