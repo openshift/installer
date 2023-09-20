@@ -74,6 +74,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"networking":{"networkType":"CustomNetworkType","machineNetwork":[{"cidr":"10.10.11.0/24"}],"clusterNetwork":[{"cidr":"192.168.111.0/24","hostPrefix":23}],"serviceNetwork":["172.30.0.0/16"]}}`,
 	})
 
+	installConfigWithCPUPartitioning := getValidOptionalInstallConfig()
+	installConfigWithCPUPartitioning.Config.CPUPartitioning = types.CPUPartitioningAllNodes
+
+	goodCPUPartitioningACI := getGoodACI()
+	goodCPUPartitioningACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"cpuPartitioningMode":"AllNodes"}`,
+	})
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -149,6 +157,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithNetworkOverride,
 			},
 			expectedConfig: goodNetworkOverrideACI,
+		},
+		{
+			name: "valid configuration with CPU Partitioning",
+			dependencies: []asset.Asset{
+				installConfigWithCPUPartitioning,
+			},
+			expectedConfig: goodCPUPartitioningACI,
 		},
 	}
 	for _, tc := range cases {
