@@ -3,7 +3,7 @@
 Description=Pivot bootstrap to the OpenShift Release Image
 Wants=release-image.service
 After=release-image.service
-{{- if .BootstrapInPlace }}
+{{- if or (.BootstrapInPlace) (eq .Invoker "agent-installer") }}
 Before=bootkube.service kubelet.service
 {{ else }}
 Before=bootkube.service
