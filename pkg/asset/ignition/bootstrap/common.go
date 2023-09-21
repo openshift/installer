@@ -89,6 +89,7 @@ type bootstrapTemplateData struct {
 	APIIntServerURL       string
 	FeatureSet            configv1.FeatureSet
 	Invoker               string
+	ClusterDomain         string
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -344,6 +345,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		APIIntServerURL:       apiIntURL,
 		FeatureSet:            installConfig.Config.FeatureSet,
 		Invoker:               openshiftInstallInvoker,
+		ClusterDomain:         installConfig.Config.ClusterDomain(),
 	}
 }
 
