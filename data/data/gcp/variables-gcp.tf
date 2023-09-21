@@ -12,7 +12,7 @@ variable "gcp_network_project_id" {
 variable "gcp_service_account" {
   type        = string
   description = "The service account for authenticating with GCP APIs."
-  default     = ""
+  default     = null
 }
 
 variable "gcp_region" {
