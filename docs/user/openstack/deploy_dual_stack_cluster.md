@@ -20,17 +20,18 @@ Additional prerequisites are listed at the [OpenStack Platform Customization doc
 
 ## Creating Dual-Stack Networks for the cluster
 
-You must create one network and add one IPv4 subnet and another IPv6 subnet with either slaac, stateless or stateful modes. Also,
-you must add the IPv6 subnet to a router. Here is an example:
+You must create one network and add one IPv4 subnet and another IPv6 subnet with either slaac, stateless or stateful modes. Here is an example:
 
 ```sh
 $ openstack network create --project <project-name> --share --external --provider-physical-network <physical-network> --provider-network-type flat dualstack
 $ openstack subnet create --project <project-name> subnet-v4 --subnet-range 192.168.25.0/24 --dhcp --dns-nameserver <nameserver> --network dualstack
 $ openstack subnet create --project <project-name> subnet-v6 --subnet-range fd2e:6f44:5dd8:c956::/64 --dhcp  --network dualstack --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac
-$ openstack router add subnet <router-id> subnet-v6
 ```
 
-Note the example above creates a provider network, but a creation of a tenant network is also supported, which must be connected to a router for external connectivity.
+Given the above example uses a provider network, this network can be added to the router external gateway to enable external connectivity and router advertisements with the following command:
+```sh
+$ openstack router set --external-gateway dualstack <router-id>
+```
 
 ## Creating Dual-Stack API and Ingress VIPs Ports for the cluster
 
