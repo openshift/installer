@@ -99,10 +99,10 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
 		trustBundle := installConfig.Config.AdditionalTrustBundle
-		if trustBundle == "" || !awstypes.IsSecretRegion(installConfig.Config.AWS.Region) {
-			return nil
+		if trustBundle != "" && awstypes.IsSecretRegion(installConfig.Config.AWS.Region) {
+			cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 		}
-		cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
+
 		// Include a non-empty kube config to appease components--such as the kube-apiserver--that
 		// expect there to be a kube config if the cloud-provider-config ConfigMap exists. See
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1926975.
