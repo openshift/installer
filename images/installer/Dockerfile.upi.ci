@@ -2,43 +2,42 @@
 # It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
 # It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
 
-
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS builder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/4.10:cli as cli
-FROM quay.io/ocp-splat/govc:v0.29.0 as govc
+FROM registry.ci.openshift.org/ocp/4.15:cli as cli
+FROM quay.io/ocp-splat/govc:v0.30.7 as govc
 
-FROM registry.ci.openshift.org/ocp/4.10:base
-
+FROM registry.ci.openshift.org/ocp/4.15:base
 COPY --from=cli /usr/bin/oc /bin/oc
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
 
 COPY --from=govc /govc /bin/govc
 
-RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
-RUN sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/azure-cli.repo'
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
+    sh -c 'echo -e "[packages-microsoft-com-prod]\nname=packages-microsoft-com-prod\nbaseurl=https://packages.microsoft.com/rhel/8/prod\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/microsoft-prod.repo' && \
+    sh -c 'echo -e "[google-cloud-cli]\nname=Google Cloud CLI\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
 
-RUN sh -c 'echo -e "[google-cloud-sdk]\nname=Google Cloud SDK\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
-
-RUN yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm -y
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-      azure-cli \
+      azure-cli-2.49.0-1.el8 \
       gettext \
-      google-cloud-sdk \
+      google-cloud-cli \
       gzip \
       jq \
       unzip \
       openssh-clients \
       openssl \
-      PyYAML \
+      python3-pyOpenSSL \
+      python2-pyyaml \
+      python3-pyyaml \
       bind-utils \
-      util-linux && \
+      util-linux \
+      xz && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
     chmod g+w /etc/passwd
@@ -55,14 +54,11 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
   tar --directory=/bin/ -xvf /tmp/aliyun-cli-linux-latest-amd64.tgz && \
   rm -f /tmp/aliyun-cli-linux-latest-amd64.tgz
 
-RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-RUN python get-pip.py 'pip<21.0'
-RUN python -m pip install pyopenssl
-ENV CLOUDSDK_PYTHON=/usr/bin/python3
+# Not packaged, but required by gcloud. See https://cloud.google.com/sdk/crypto
+RUN pip-3 install cryptography
 
-RUN pip3 install --upgrade pip
-RUN python3 -m pip install pyOpenSSL
-RUN python3 -m pip install yq
+ENV CLOUDSDK_PYTHON=/usr/bin/python
+ENV CLOUDSDK_PYTHON_SITEPACKAGES=1
 
 ENV TERRAFORM_VERSION=1.0.11
 RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
