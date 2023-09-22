@@ -820,14 +820,13 @@ func (r *replayingListWatch) Watch(options metav1.ListOptions) (watch.Interface,
 
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
-	return wrapWithReplay(w, r.lastListItem.DeepCopy()), nil
+	return wrapWithReplay(context.TODO(), w, r.lastListItem.DeepCopy()), nil
 }
 
-func wrapWithReplay(w watch.Interface, initialLastEvent *watch.Event) watch.Interface {
+func wrapWithReplay(ctx context.Context, w watch.Interface, initialLastEvent *watch.Event) watch.Interface {
 	fw := &replayingWatch{
 		incoming: w,
 		result:   make(chan watch.Event),
-		closed:   make(chan struct{}),
 	}
 	if initialLastEvent != nil {
 		func() {
@@ -837,18 +836,18 @@ func wrapWithReplay(w watch.Interface, initialLastEvent *watch.Event) watch.Inte
 		}()
 	}
 
-	go fw.watchIncoming()
-	go fw.resendLast()
+	go fw.watchIncoming(ctx)
+	go fw.resendLast(ctx)
 	return fw
 }
 
 type replayingWatch struct {
 	incoming watch.Interface
 	result   chan watch.Event
-	closed   chan struct{}
 
 	lastLock sync.Mutex
 	last     watch.Event
+	stopped  bool
 }
 
 func (r *replayingWatch) ResultChan() <-chan watch.Event {
@@ -856,22 +855,61 @@ func (r *replayingWatch) ResultChan() <-chan watch.Event {
 }
 
 func (r *replayingWatch) Stop() {
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
+
 	r.incoming.Stop()
+	r.stopped = true
+	close(r.result)
 }
 
-func (r *replayingWatch) watchIncoming() {
-	defer close(r.result)
-	defer close(r.closed)
-	for event := range r.incoming.ResultChan() {
-		func() {
-			r.lastLock.Lock()
-			defer r.lastLock.Unlock()
+func (r *replayingWatch) updateLastObservedEvent(event watch.Event) {
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
 
-			r.result <- event
-			r.last = copyWatchEvent(event)
-		}()
+	r.last = copyWatchEvent(event)
+}
+
+var emptyEvent watch.Event
+
+func (r *replayingWatch) Replay(ctx context.Context) (bool, error) {
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
+
+	if r.last == emptyEvent {
+		return false, nil
+	}
+
+	r.sendToResultLocked(ctx, copyWatchEvent(r.last))
+
+	return false, nil
+}
+
+func (r *replayingWatch) sendToResult(ctx context.Context, watchEvent watch.Event) {
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
+
+	r.sendToResultLocked(ctx, watchEvent)
+}
+
+func (r *replayingWatch) sendToResultLocked(ctx context.Context, watchEvent watch.Event) {
+	if r.stopped {
+		return
+	}
+
+	select {
+	case r.result <- watchEvent:
+	case <-ctx.Done():
 	}
 }
+
+func (r *replayingWatch) watchIncoming(ctx context.Context) {
+	for event := range r.incoming.ResultChan() {
+		r.sendToResult(ctx, event)
+		r.updateLastObservedEvent(event)
+	}
+}
+
 func copyWatchEvent(event watch.Event) watch.Event {
 	return watch.Event{
 		Type:   event.Type,
@@ -879,24 +917,8 @@ func copyWatchEvent(event watch.Event) watch.Event {
 	}
 }
 
-func (r *replayingWatch) resendLast() {
-	var emptyEvent watch.Event
-	err := wait.PollUntilContextCancel(context.TODO(), time.Second, false, func(ctx context.Context) (bool, error) {
-		select {
-		case <-r.closed:
-			return true, nil
-		default:
-		}
-		func() {
-			r.lastLock.Lock()
-			defer r.lastLock.Unlock()
-
-			if r.last != emptyEvent {
-				r.result <- copyWatchEvent(r.last)
-			}
-		}()
-		return false, nil
-	})
+func (r *replayingWatch) resendLast(ctx context.Context) {
+	err := wait.PollUntilContextCancel(ctx, time.Second, false, r.Replay)
 	if err != nil {
 		logrus.Debugf("Watcher polling error: %v", err)
 	}
