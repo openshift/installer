@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +28,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	configinformers "github.com/openshift/client-go/config/informers/externalversions"
+	configlisters "github.com/openshift/client-go/config/listers/config/v1"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
@@ -54,6 +59,11 @@ const (
 	exitCodeInfrastructureFailed
 	exitCodeBootstrapFailed
 	exitCodeInstallFailed
+	exitCodeOperatorStabilityFailed
+
+	// coStabilityThreshold is how long a cluster operator must have Progressing=False
+	// in order to be considered stable. Measured in seconds.
+	coStabilityThreshold float64 = 30
 )
 
 // each target is a variable to preserve the order when creating subcommands and still
@@ -501,7 +511,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	defer cancel()
 
 	failing := configv1.ClusterStatusConditionType("Failing")
-	timer.StartTimer("Cluster Operators")
+	timer.StartTimer("Cluster Operators Available")
 	var lastError string
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
@@ -519,7 +529,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) &&
 					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, failing) &&
 					cov1helpers.IsStatusConditionFalse(cv.Status.Conditions, configv1.OperatorProgressing) {
-					timer.StopTimer("Cluster Operators")
+					timer.StopTimer("Cluster Operators Available")
 					return true, nil
 				}
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, failing) {
@@ -549,6 +559,54 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	}
 
 	return errors.Wrap(err, "failed to initialize the cluster")
+}
+
+// waitForStableOperators ensures that each cluster operator is "stable", i.e. the
+// operator has not been in a progressing state for at least a certain duration,
+// 30 seconds by default. Returns an error if any operator does meet this threshold
+// after a deadline, 30 minutes by default.
+func waitForStableOperators(ctx context.Context, config *rest.Config) error {
+	timer.StartTimer("Cluster Operators Stable")
+
+	stabilityCheckDuration := 30 * time.Minute
+	stabilityContext, cancel := context.WithTimeout(ctx, stabilityCheckDuration)
+	defer cancel()
+
+	untilTime := time.Now().Add(stabilityCheckDuration)
+	timezone, _ := untilTime.Zone()
+	logrus.Infof("Waiting up to %v (until %v %s) to ensure each cluster operator has finished progressing...",
+		stabilityCheckDuration, untilTime.Format(time.Kitchen), timezone)
+
+	cc, err := configclient.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to create a config client")
+	}
+	configInformers := configinformers.NewSharedInformerFactory(cc, 0)
+	clusterOperatorInformer := configInformers.Config().V1().ClusterOperators().Informer()
+	clusterOperatorLister := configInformers.Config().V1().ClusterOperators().Lister()
+	configInformers.Start(ctx.Done())
+	if !cache.WaitForCacheSync(ctx.Done(), clusterOperatorInformer.HasSynced) {
+		return fmt.Errorf("informers never started")
+	}
+
+	waitErr := wait.PollUntilContextCancel(stabilityContext, 1*time.Second, true, waitForAllClusterOperators(clusterOperatorLister))
+	if waitErr != nil {
+		logrus.Errorf("Error checking cluster operator Progressing status: %q", waitErr)
+		stableOperators, unstableOperators, err := currentOperatorStability(clusterOperatorLister)
+		if err != nil {
+			logrus.Errorf("Error checking final cluster operator Progressing status: %q", err)
+		}
+		logrus.Debugf("These cluster operators were stable: [%s]", strings.Join(sets.List(stableOperators), ", "))
+		logrus.Errorf("These cluster operators were not stable: [%s]", strings.Join(sets.List(unstableOperators), ", "))
+
+		logrus.Exit(exitCodeOperatorStabilityFailed)
+	}
+
+	timer.StopTimer("Cluster Operators Stable")
+
+	logrus.Info("All cluster operators have completed progressing")
+
+	return nil
 }
 
 // getConsole returns the console URL from the route 'console' in namespace openshift-console
@@ -637,6 +695,10 @@ func waitForInstallComplete(ctx context.Context, config *rest.Config, directory 
 		return err
 	}
 
+	if err := waitForStableOperators(ctx, config); err != nil {
+		return err
+	}
+
 	consoleURL, err := getConsole(ctx, config)
 	if err != nil {
 		logrus.Warnf("Cluster does not have a console available: %v", err)
@@ -656,4 +718,63 @@ func checkIfAgentCommand(assetStore asset.Store) {
 	if agentConfig, err := assetStore.Load(&agentconfig.AgentConfig{}); err == nil && agentConfig != nil {
 		logrus.Warning("An agent configuration was detected but this command is not the agent wait-for command")
 	}
+}
+
+func waitForAllClusterOperators(clusterOperatorLister configlisters.ClusterOperatorLister) func(ctx context.Context) (bool, error) {
+	previouslyStableOperators := sets.Set[string]{}
+
+	return func(ctx context.Context) (bool, error) {
+		stableOperators, unstableOperators, err := currentOperatorStability(clusterOperatorLister)
+		if err != nil {
+			return false, err
+		}
+		if newlyStableOperators := stableOperators.Difference(previouslyStableOperators); len(newlyStableOperators) > 0 {
+			for _, name := range sets.List(newlyStableOperators) {
+				logrus.Debugf("Cluster Operator %s is stable", name)
+			}
+		}
+		if newlyUnstableOperators := previouslyStableOperators.Difference(stableOperators); len(newlyUnstableOperators) > 0 {
+			for _, name := range sets.List(newlyUnstableOperators) {
+				logrus.Debugf("Cluster Operator %s became unstable", name)
+			}
+		}
+		previouslyStableOperators = stableOperators
+
+		if len(unstableOperators) == 0 {
+			return true, nil
+		}
+
+		return false, nil
+	}
+}
+
+func currentOperatorStability(clusterOperatorLister configlisters.ClusterOperatorLister) (sets.Set[string], sets.Set[string], error) {
+	clusterOperators, err := clusterOperatorLister.List(labels.Everything())
+	if err != nil {
+		return nil, nil, err // lister should never fail
+	}
+
+	stableOperators := sets.Set[string]{}
+	unstableOperators := sets.Set[string]{}
+	for _, clusterOperator := range clusterOperators {
+		name := clusterOperator.Name
+		progressing := cov1helpers.FindStatusCondition(clusterOperator.Status.Conditions, configv1.OperatorProgressing)
+		if progressing == nil {
+			logrus.Debugf("Cluster Operator %s progressing == nil", name)
+			unstableOperators.Insert(name)
+			continue
+		}
+		if meetsStabilityThreshold(progressing) {
+			stableOperators.Insert(name)
+		} else {
+			logrus.Debugf("Cluster Operator %s is Progressing=%s LastTransitionTime=%v DurationSinceTransition=%.fs Reason=%s Message=%s", name, progressing.Status, progressing.LastTransitionTime.Time, time.Since(progressing.LastTransitionTime.Time).Seconds(), progressing.Reason, progressing.Message)
+			unstableOperators.Insert(name)
+		}
+	}
+
+	return stableOperators, unstableOperators, nil
+}
+
+func meetsStabilityThreshold(progressing *configv1.ClusterOperatorStatusCondition) bool {
+	return progressing.Status == configv1.ConditionFalse && time.Since(progressing.LastTransitionTime.Time).Seconds() > coStabilityThreshold
 }
