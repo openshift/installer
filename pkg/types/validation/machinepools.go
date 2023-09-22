@@ -141,6 +141,7 @@ func validateGCPMachinePool(platform *types.Platform, p *types.MachinePoolPlatfo
 
 	allErrs = append(allErrs, gcpvalidation.ValidateMachinePool(platform.GCP, p.GCP, f)...)
 	allErrs = append(allErrs, gcpvalidation.ValidateMasterDiskType(pool, f)...)
+	allErrs = append(allErrs, gcpvalidation.ValidateServiceAccount(platform.GCP, pool, f)...)
 
 	return allErrs
 }

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
+	iam "google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	"google.golang.org/api/serviceusage/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -39,6 +40,7 @@ type API interface {
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
+	GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error)
 	GetCredentials() *googleoauth.Credentials
 	GetImage(ctx context.Context, name string, project string) (*compute.Image, error)
 	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
@@ -366,6 +368,24 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 		return nil, errors.Wrap(err, "failed to create service usage service")
 	}
 	return svc, nil
+}
+
+// GetServiceAccount retrieves a service account from a project if it exists.
+func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
+	svc, err := iam.NewService(ctx)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed create IAM service")
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	fullServiceAccountPath := fmt.Sprintf("projects/%s/serviceAccounts/%s", project, serviceAccount)
+	rsp, err := svc.Projects.ServiceAccounts.Get(fullServiceAccountPath).Context(ctx).Do()
+	if err != nil {
+		return "", errors.Wrapf(err, fmt.Sprintf("failed to find resource %s", fullServiceAccountPath))
+	}
+	return rsp.Name, nil
 }
 
 // GetCredentials returns the credentials used to authenticate the GCP session.

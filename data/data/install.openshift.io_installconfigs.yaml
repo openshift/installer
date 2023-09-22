@@ -439,6 +439,13 @@ spec:
                           - Enabled
                           - Disabled
                           type: string
+                        serviceAccount:
+                          description: ServiceAccount is the email of a gcp service
+                            account to be used for shared vpn installations. The provided
+                            service account will be attached to control-plane nodes
+                            in order to provide the permissions required by the cloud
+                            provider in the host project.
+                          type: string
                         tags:
                           description: Tags defines a set of network tags which will
                             be added to instances in the machineset
@@ -1356,6 +1363,13 @@ spec:
                         enum:
                         - Enabled
                         - Disabled
+                        type: string
+                      serviceAccount:
+                        description: ServiceAccount is the email of a gcp service
+                          account to be used for shared vpn installations. The provided
+                          service account will be attached to control-plane nodes
+                          in order to provide the permissions required by the cloud
+                          provider in the host project.
                         type: string
                       tags:
                         description: Tags defines a set of network tags which will
@@ -2902,6 +2916,13 @@ spec:
                         enum:
                         - Enabled
                         - Disabled
+                        type: string
+                      serviceAccount:
+                        description: ServiceAccount is the email of a gcp service
+                          account to be used for shared vpn installations. The provided
+                          service account will be attached to control-plane nodes
+                          in order to provide the permissions required by the cloud
+                          provider in the host project.
                         type: string
                       tags:
                         description: Tags defines a set of network tags which will

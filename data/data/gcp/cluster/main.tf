@@ -84,6 +84,7 @@ module "dns" {
   api_external_lb_ip = module.network.cluster_public_ip
   api_internal_lb_ip = module.network.cluster_ip
   public_endpoints   = local.public_endpoints
+  project_id         = var.gcp_project_id
 }
 
 resource "google_compute_image" "cluster" {
