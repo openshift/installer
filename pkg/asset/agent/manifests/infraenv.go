@@ -142,9 +142,9 @@ func (i *InfraEnv) finish() error {
 		return errors.New("missing configuration or manifest file")
 	}
 
-	// Throw an error if CpuArchitecture isn't x86_64, aarch64, or ""
+	// Throw an error if CpuArchitecture isn't x86_64, aarch64, ppc64le, or ""
 	switch i.Config.Spec.CpuArchitecture {
-	case arch.RpmArch(types.ArchitectureAMD64), arch.RpmArch(types.ArchitectureARM64), "":
+	case arch.RpmArch(types.ArchitectureAMD64), arch.RpmArch(types.ArchitectureARM64), arch.RpmArch(types.ArchitecturePPC64LE), "":
 	default:
 		return errors.Errorf("Config.Spec.CpuArchitecture %s is not supported ", i.Config.Spec.CpuArchitecture)
 	}
