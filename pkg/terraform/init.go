@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/data"
+	"github.com/openshift/installer/pkg/infrastructure"
 	prov "github.com/openshift/installer/pkg/terraform/providers"
 )
 
@@ -110,7 +111,7 @@ func addFileToAllDirectories(name string, data []byte, dir string) error {
 }
 
 // UnpackTerraform unpacks the terraform binary and the specified provider binaries into the specified directory.
-func UnpackTerraform(dir string, stages []Stage) error {
+func UnpackTerraform(dir string, stages []infrastructure.Stage) error {
 	// Unpack the terraform binary.
 	if err := prov.UnpackTerraformBinary(filepath.Join(dir, "bin")); err != nil {
 		return err
@@ -119,7 +120,8 @@ func UnpackTerraform(dir string, stages []Stage) error {
 	// Unpack the providers.
 	providers := sets.NewString()
 	for _, stage := range stages {
-		for _, provider := range stage.Providers() {
+		tfStage := stage.(Stage) // TODO see if we can avoid casting here
+		for _, provider := range tfStage.Providers() {
 			if providers.Has(provider.Name) {
 				continue
 			}

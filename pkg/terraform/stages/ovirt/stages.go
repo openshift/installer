@@ -3,6 +3,7 @@ package ovirt
 import (
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ovirt"
+	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
@@ -22,27 +24,49 @@ const bootstrapSSHPort = 22
 
 var bootstrapSSHPortAsString = strconv.Itoa(22)
 
-// PlatformStages are the stages to run to provision the infrastructure in oVirt.
-var PlatformStages = []terraform.Stage{
-	stages.NewStage(
-		ovirttypes.Name,
-		"image",
-		[]providers.Provider{providers.OVirt},
-		stages.WithNormalBootstrapDestroy(),
-	),
-	stages.NewStage(
-		ovirttypes.Name,
-		"cluster",
-		[]providers.Provider{providers.OVirt},
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
-	stages.NewStage(
-		ovirttypes.Name,
-		"bootstrap",
-		[]providers.Provider{providers.OVirt},
-		stages.WithNormalBootstrapDestroy(),
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
+func InitializeProvider(installDir string) ([]infrastructure.Stage, func() error, error) {
+	terraformDir, err := terraform.Initialize(installDir)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error initializing terraform")
+	}
+
+	// PlatformStages are the stages to run to provision the infrastructure in oVirt.
+	var platformStages = []infrastructure.Stage{
+		stages.NewStage(
+			ovirttypes.Name,
+			"image",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.OVirt},
+			stages.WithNormalBootstrapDestroy(),
+		),
+		stages.NewStage(
+			ovirttypes.Name,
+			"cluster",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.OVirt},
+			stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+		),
+		stages.NewStage(
+			ovirttypes.Name,
+			"bootstrap",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.OVirt},
+			stages.WithNormalBootstrapDestroy(),
+			stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+		),
+	}
+	// It would be nice to not need to repeat this for each platform but at this stage
+	// Perfect is the enemy of good
+	terraform.UnpackTerraform(terraformDir, platformStages)
+
+	cleanup := func() error {
+		return os.RemoveAll(terraformDir)
+	}
+
+	return platformStages, cleanup, nil
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, ic *types.InstallConfig) (bootstrapIP string, sshPort int, controlPlaneIPs []string, returnErr error) {

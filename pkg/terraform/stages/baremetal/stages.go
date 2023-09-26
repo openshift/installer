@@ -8,27 +8,48 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 )
 
-// PlatformStages are the stages to run to provision the infrastructure in
-// Bare Metal.
-var PlatformStages = []terraform.Stage{
-	stages.NewStage(
-		"baremetal",
-		"bootstrap",
-		[]providers.Provider{providers.Ironic, providers.Libvirt},
-		stages.WithNormalBootstrapDestroy(),
-	),
-	stages.NewStage(
-		"baremetal",
-		"masters",
-		[]providers.Provider{providers.Ironic},
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
+func InitializeProvider(installDir string) ([]infrastructure.Stage, func() error, error) {
+	terraformDir, err := terraform.Initialize(installDir)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error initializing terraform")
+	}
+
+	// PlatformStages are the stages to run to provision the infrastructure in
+	// Bare Metal.
+	var platformStages = []infrastructure.Stage{
+		stages.NewStage(
+			"baremetal",
+			"bootstrap",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.Ironic, providers.Libvirt},
+			stages.WithNormalBootstrapDestroy(),
+		),
+		stages.NewStage(
+			"baremetal",
+			"masters",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.Ironic},
+			stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+		),
+	}
+	// It would be nice to not need to repeat this for each platform but at this stage
+	// Perfect is the enemy of good
+	terraform.UnpackTerraform(terraformDir, platformStages)
+
+	cleanup := func() error {
+		return os.RemoveAll(terraformDir)
+	}
+
+	return platformStages, cleanup, nil
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {
