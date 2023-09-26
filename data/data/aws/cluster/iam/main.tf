@@ -8,6 +8,13 @@ resource "aws_iam_instance_profile" "worker" {
   name = "${var.cluster_id}-worker-profile"
 
   role = var.worker_iam_role_name != "" ? var.worker_iam_role_name : aws_iam_role.worker_role[0].name
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-worker-profile"
+    },
+    var.tags,
+  )
 }
 
 resource "aws_iam_role" "worker_role" {

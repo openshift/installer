@@ -13,6 +13,13 @@ resource "aws_iam_instance_profile" "master" {
   name = "${var.cluster_id}-master-profile"
 
   role = var.iam_role_name != "" ? var.iam_role_name : aws_iam_role.master_role[0].name
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-master-profile"
+    },
+    var.tags,
+  )
 }
 
 resource "aws_iam_role" "master_role" {
