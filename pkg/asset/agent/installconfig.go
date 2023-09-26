@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	installConfigFilename = "install-config.yaml"
+	// InstallConfigFilename is the file containing the install-config.
+	InstallConfigFilename = "install-config.yaml"
 )
 
 // OptionalInstallConfig is an InstallConfig where the default is empty, rather
@@ -262,10 +263,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 
 		for i, host := range baremetal.Hosts {
-			if host.Name != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "Name")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.Name))
-			}
 			if host.BMC.Username != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Username")
 				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BMC.Username))
@@ -282,30 +279,10 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "DisableCertificateVerification")
 				logrus.Warnf(fmt.Sprintf("%s: true is ignored", fieldPath))
 			}
-			if host.Role != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "Role")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.Role))
-			}
-			if host.BootMACAddress != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BootMACAddress")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BootMACAddress))
-			}
-			if host.HardwareProfile != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "HardwareProfile")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.HardwareProfile))
-			}
-			if host.RootDeviceHints != nil {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "RootDeviceHints")
-				logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
-			}
 			// The default is UEFI. +kubebuilder:validation:Enum="";UEFI;UEFISecureBoot;legacy. Set from generic install config code
 			if host.BootMode != "UEFI" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BootMode")
 				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BootMode))
-			}
-			if host.NetworkConfig != nil {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "NetworkConfig")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.NetworkConfig))
 			}
 		}
 

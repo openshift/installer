@@ -17,11 +17,11 @@ import (
 )
 
 func TestAgentConfig_LoadedFromDisk(t *testing.T) {
-
 	cases := []struct {
-		name       string
-		data       string
-		fetchError error
+		name          string
+		data          string
+		installConfig string
+		fetchError    error
 
 		expectedError  string
 		expectedFound  bool
@@ -338,6 +338,7 @@ apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0`,
 
+			installConfig:  installConfigNoHosts(),
 			expectedFound:  true,
 			expectedConfig: agentConfig().rendezvousIP(""),
 		},
@@ -349,6 +350,7 @@ metadata:
   name: agent-config-cluster0
 rendezvousIP: not-a-valid-ip`,
 
+			installConfig: installConfigNoHosts(),
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: rendezvousIP: Invalid value: \"not-a-valid-ip\": \"not-a-valid-ip\" is not a valid IP",
 		},
@@ -360,6 +362,7 @@ metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80`,
 
+			installConfig:  installConfigNoHosts(),
 			expectedFound:  true,
 			expectedConfig: agentConfig(),
 		},
@@ -371,6 +374,7 @@ metadata:
   name: agent-config-cluster0
 bootArtifactsBaseURL: not-a-valid-url`,
 
+			installConfig: installConfigNoHosts(),
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: bootArtifactsBaseURL: Invalid value: \"not-a-valid-url\": invalid URI \"not-a-valid-url\" (no scheme)",
 		},
@@ -387,6 +391,7 @@ additionalNTPSources:
   - fd10:39:192:1::1337
   - invalid_pool.ntp.org
 rendezvousIP: 192.168.111.80`,
+			installConfig: installConfigNoHosts(),
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: AdditionalNTPSources[4]: Invalid value: \"invalid_pool.ntp.org\": NTP source is not a valid domain name nor a valid IP",
 		},
@@ -466,7 +471,6 @@ hosts:
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
@@ -476,6 +480,240 @@ hosts:
 					&asset.File{
 						Filename: agentConfigFilename,
 						Data:     []byte(tc.data)},
+					tc.fetchError,
+				)
+			if tc.installConfig != "" {
+				fileFetcher.EXPECT().FetchByName("install-config.yaml").
+					Return(
+						&asset.File{
+							Filename: "install-config.yaml",
+							Data:     []byte(tc.installConfig)},
+						nil,
+					)
+			}
+
+			asset := &AgentConfig{}
+			found, err := asset.Load(fileFetcher)
+			assert.Equal(t, tc.expectedFound, found)
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				if tc.expectedConfig != nil {
+					assert.Equal(t, tc.expectedConfig.build(), asset.Config, "unexpected Config in AgentConfig")
+				}
+			}
+		})
+	}
+}
+
+func TestAgentConfig_InstallConfigHosts(t *testing.T) {
+	cases := []struct {
+		name              string
+		installConfigData string
+		agentConfigData   string
+		fetchError        error
+
+		expectedError  string
+		expectedFound  bool
+		expectedConfig *AgentConfigBuilder
+	}{
+		{
+			name:              "install-config-no-hosts",
+			installConfigData: installConfigNoHosts(),
+			agentConfigData: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80`,
+			expectedFound:  true,
+			expectedConfig: agentConfig(),
+		},
+		{
+			name: "valid-install-config-hosts",
+			installConfigData: `apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  baremetal:
+    apiVIP: 192.168.111.4
+    ingressVIP: 192.168.111.5
+    hosts:
+    - name: host0
+      role: master
+      rootDeviceHints:
+        deviceName: "/dev/sda"
+      bootMACAddress: 00:d4:3f:3b:80:bb
+      networkConfig:
+        interfaces:
+          - name: eth0
+            type: ethernet
+            state: up
+            mac-address: 00:d4:3f:3b:80:bb
+            ipv4:
+              enabled: true
+              address:
+                - ip: 192.168.111.80
+                  prefix-length: 24
+              dhcp: false
+    - name: host1
+      role: worker
+      rootDeviceHints:
+        deviceName: "/dev/sda"
+      bootMACAddress: 00:d4:3f:3b:80:cc
+      networkConfig:
+        interfaces:
+          - name: eth0
+            type: ethernet
+            state: up
+            mac-address: 00:d4:3f:3b:80:cc
+            ipv4:
+              enabled: true
+              address:
+                - ip: 192.168.111.81
+                  prefix-length: 24
+              dhcp: false
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"`,
+
+			agentConfigData: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80`,
+			expectedFound: true,
+			expectedConfig: agentConfig().hosts(
+				agentHost().
+					name("host0").
+					role("master").
+					minimalRootDeviceHints().
+					interfaces(iface("boot", "00:d4:3f:3b:80:bb")).
+					networkConfig(
+						`interfaces:
+                          - name: eth0
+                            type: ethernet
+                            state: up
+                            mac-address: 00:d4:3f:3b:80:bb
+                            ipv4:
+                              enabled: true
+                              address:
+                                - ip: 192.168.111.80
+                                  prefix-length: 24
+                              dhcp: false`),
+				agentHost().
+					name("host1").
+					role("worker").
+					minimalRootDeviceHints().
+					interfaces(iface("boot", "00:d4:3f:3b:80:cc")).
+					networkConfig(
+						`interfaces:
+                          - name: eth0
+                            type: ethernet
+                            state: up
+                            mac-address: 00:d4:3f:3b:80:cc
+                            ipv4:
+                              enabled: true
+                              address:
+                                - ip: 192.168.111.81
+                                  prefix-length: 24
+                              dhcp: false`),
+			),
+		},
+		{
+			name: "install-config-missing-host-name",
+			installConfigData: `apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  baremetal:
+    apiVIP: 192.168.111.4
+    ingressVIP: 192.168.111.5
+    hosts:
+    - bootMACAddress: 00:d4:3f:3b:80:bb
+      rootDeviceHints:
+        deviceName: "/dev/sda"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"`,
+
+			agentConfigData: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80`,
+			expectedFound: false,
+			expectedError: "invalid host definition in install-config.yaml: host name is required",
+		},
+		{
+			name: "install-config-invalid-hint",
+			installConfigData: `apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  baremetal:
+    apiVIP: 192.168.111.4
+    ingressVIP: 192.168.111.5
+    hosts:
+    - name: host0
+      bootMACAddress: 00:d4:3f:3b:80:bb
+      rootDeviceHints:
+        wwnWithExtension: "wwn-with-extension-value"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"`,
+
+			agentConfigData: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80`,
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[0].rootDeviceHints.wwnWithExtension: Forbidden: WWN extensions are not supported in root device hints",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+			fileFetcher.EXPECT().FetchByName(agentConfigFilename).
+				Return(
+					&asset.File{
+						Filename: agentConfigFilename,
+						Data:     []byte(tc.agentConfigData)},
+					tc.fetchError,
+				)
+			fileFetcher.EXPECT().FetchByName("install-config.yaml").
+				Return(
+					&asset.File{
+						Filename: "install-config.yaml",
+						Data:     []byte(tc.installConfigData)},
 					tc.fetchError,
 				)
 
@@ -492,11 +730,10 @@ hosts:
 			}
 		})
 	}
-
 }
 
 // AgentConfigBuilder it's a builder class to make it easier creating agent.Config instance
-// used in the test cases
+// used in the test cases.
 type AgentConfigBuilder struct {
 	agent.Config
 }
@@ -520,7 +757,6 @@ func (acb *AgentConfigBuilder) build() *agent.Config {
 }
 
 func (acb *AgentConfigBuilder) hosts(builders ...*AgentHostBuilder) *AgentConfigBuilder {
-
 	hosts := []agent.Host{}
 	for _, b := range builders {
 		hosts = append(hosts, *b.build())
@@ -541,7 +777,7 @@ func (acb *AgentConfigBuilder) bootArtifactsBaseURL(url string) *AgentConfigBuil
 }
 
 // AgentHostBuilder it's a builder class to make it easier creating agent.Host instances
-// used in the test cases, as part of the agent.Config type
+// used in the test cases, as part of the agent.Config type.
 type AgentHostBuilder struct {
 	agent.Host
 }
@@ -592,7 +828,7 @@ func (ahb *AgentHostBuilder) networkConfig(raw string) *AgentHostBuilder {
 	return ahb
 }
 
-// TODO: Create BaremetalRootDeviceHintsBuilder, for the current tests not required
+// TODO: Create BaremetalRootDeviceHintsBuilder, for the current tests not required.
 func (ahb *AgentHostBuilder) defaultRootDeviceHints() *AgentHostBuilder {
 	falseBool := false
 	ahb.Host.RootDeviceHints = baremetal.RootDeviceHints{
@@ -608,8 +844,15 @@ func (ahb *AgentHostBuilder) defaultRootDeviceHints() *AgentHostBuilder {
 	return ahb
 }
 
+func (ahb *AgentHostBuilder) minimalRootDeviceHints() *AgentHostBuilder {
+	ahb.Host.RootDeviceHints = baremetal.RootDeviceHints{
+		DeviceName: "/dev/sda",
+	}
+	return ahb
+}
+
 // InterfacetBuilder it's a builder class to make it easier creating aiv1beta1.Interface instances
-// used in the test cases, as part of the agent.Config type
+// used in the test cases, as part of the agent.Config type.
 type InterfacetBuilder struct {
 	aiv1beta1.Interface
 }
@@ -625,4 +868,25 @@ func iface(name string, mac string) *InterfacetBuilder {
 
 func (ib *InterfacetBuilder) build() *aiv1beta1.Interface {
 	return &ib.Interface
+}
+
+func installConfigNoHosts() string {
+	return `apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  baremetal:
+    apiVIP: 192.168.111.4
+    ingressVIP: 192.168.111.5
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"`
 }

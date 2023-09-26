@@ -7,12 +7,16 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	agentAsset "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -43,7 +47,6 @@ func (*AgentConfig) Dependencies() []asset.Asset {
 
 // Generate generates the Agent Config manifest.
 func (a *AgentConfig) Generate(dependencies asset.Parents) error {
-
 	// TODO: We are temporarily generating a template of the agent-config.yaml
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#
@@ -103,7 +106,7 @@ hosts:
 	return nil
 }
 
-// PersistToFile writes the agent-config.yaml file to the assets folder
+// PersistToFile writes the agent-config.yaml file to the assets folder.
 func (a *AgentConfig) PersistToFile(directory string) error {
 	templatePath := filepath.Join(directory, agentConfigFilename)
 	templateByte := []byte(a.Template)
@@ -126,7 +129,6 @@ func (a *AgentConfig) Files() []*asset.File {
 
 // Load returns agent config asset from the disk.
 func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
-
 	file, err := f.FetchByName(agentConfigFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -140,12 +142,30 @@ func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", agentConfigFilename)
 	}
 
+	if len(config.Hosts) == 0 {
+		// Use baremetal hosts if defined in install-config
+		installConfig := &agentAsset.OptionalInstallConfig{}
+		found, err := installConfig.Load(f)
+		if err != nil {
+			return false, errors.Wrap(err, "failed to load OptionalInstallConfig")
+		}
+		if found {
+			if installConfig.Config.Platform.Name() == baremetal.Name && len(installConfig.Config.Platform.BareMetal.Hosts) > 0 {
+				logrus.Debugf("using host fields from %s", agentAsset.InstallConfigFilename)
+				if err = a.getInstallConfigDefaults(installConfig.Config.Platform.BareMetal, config); err != nil {
+					return false, errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
+				}
+			}
+		}
+	}
+
 	// Upconvert any deprecated fields
 	if err := conversion.ConvertAgentConfig(config); err != nil {
 		return false, err
 	}
 
 	a.File, a.Config = file, config
+
 	if err = a.finish(); err != nil {
 		return false, err
 	}
@@ -192,7 +212,7 @@ func (a *AgentConfig) validateRendezvousIP() field.ErrorList {
 
 	rendezvousIPPath := field.NewPath("rendezvousIP")
 
-	//empty rendezvous ip is fine
+	// empty rendezvous ip is fine
 	if a.Config.RendezvousIP == "" {
 		return nil
 	}
@@ -209,7 +229,6 @@ func (a *AgentConfig) validateHosts() field.ErrorList {
 
 	macs := make(map[string]bool)
 	for i, host := range a.Config.Hosts {
-
 		hostPath := field.NewPath("Hosts").Index(i)
 
 		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
@@ -332,12 +351,50 @@ func (a *AgentConfig) validateBootArtifactsBaseURL() field.ErrorList {
 	return allErrs
 }
 
+// Add the baremetal hosts defined in install-config to the agent-config.
+func (a *AgentConfig) getInstallConfigDefaults(platform *baremetal.Platform, config *agent.Config) error {
+	for _, icHost := range platform.Hosts {
+		if icHost.Name == "" {
+			return errors.New("host name is required")
+		}
+		if icHost.BootMACAddress == "" {
+			return errors.New("host bootMACAddress is required")
+		}
+
+		host := agent.Host{
+			Hostname: icHost.Name,
+			Role:     icHost.Role,
+		}
+		if icHost.RootDeviceHints != nil {
+			host.RootDeviceHints = *icHost.RootDeviceHints
+		}
+		if icHost.NetworkConfig != nil {
+			contents, err := yaml.JSONToYAML(icHost.NetworkConfig.Raw)
+			if err != nil {
+				return errors.Wrap(err, "failed to unmarshal networkConfig")
+			}
+			host.NetworkConfig.Raw = contents
+		}
+
+		// Create Interfaces field from BootMacAddress
+		hostInterface := &aiv1beta1.Interface{
+			Name:       "boot",
+			MacAddress: icHost.BootMACAddress,
+		}
+		host.Interfaces = append(host.Interfaces, hostInterface)
+
+		config.Hosts = append(config.Hosts, host)
+	}
+
+	return nil
+}
+
 // HostConfigFileMap is a map from a filepath ("<host>/<file>") to file content
 // for hostconfig files.
 type HostConfigFileMap map[string][]byte
 
 // HostConfigFiles returns a map from filename to contents of the files used for
-// host-specific configuration by the agent installer client
+// host-specific configuration by the agent installer client.
 func (a *AgentConfig) HostConfigFiles() (HostConfigFileMap, error) {
 	if a == nil || a.Config == nil {
 		return nil, nil
