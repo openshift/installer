@@ -97,3 +97,17 @@ func Destroy(dir string, platform string, stage Stage, terraformDir string, extr
 		"failed doing terraform destroy",
 	)
 }
+
+func Initialize(installDir string) (string, error) {
+	terraformDir := filepath.Join(installDir, "terraform")
+	if err := os.Mkdir(terraformDir, 0777); err != nil {
+		return "", errors.Wrap(err, "could not create the terraform directory")
+	}
+
+	terraformDirPath, err := filepath.Abs(terraformDir)
+	if err != nil {
+		return "", errors.Wrap(err, "cannot get absolute path of terraform directory")
+	}
+
+	return terraformDirPath, nil
+}

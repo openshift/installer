@@ -1,29 +1,52 @@
 package aws
 
 import (
+	"os"
+
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
-	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
-// PlatformStages are the stages to run to provision the infrastructure in AWS.
-var PlatformStages = []terraform.Stage{
-	stages.NewStage(
-		"aws",
-		"cluster",
-		[]providers.Provider{providers.AWS},
-	),
-	stages.NewStage(
-		"aws",
-		"bootstrap",
-		[]providers.Provider{providers.AWS},
-		stages.WithCustomBootstrapDestroy(customBootstrapDestroy),
-	),
+func InitializeProvider(installDir string) ([]infrastructure.Stage, func() error, error) {
+	terraformDir, err := terraform.Initialize(installDir)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "error initializing terraform")
+	}
+
+	platformStages := []infrastructure.Stage{
+		stages.NewStage(
+			"aws",
+			"cluster",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.AWS},
+		),
+		stages.NewStage(
+			"aws",
+			"bootstrap",
+			installDir,
+			terraformDir,
+			[]providers.Provider{providers.AWS},
+			stages.WithCustomBootstrapDestroy(customBootstrapDestroy),
+		),
+	}
+
+	// It would be nice to not need to repeat this for each platform but at this stage
+	// Perfect is the enemy of good
+	terraform.UnpackTerraform(terraformDir, platformStages)
+
+	cleanup := func() error {
+		return os.RemoveAll(terraformDir)
+	}
+
+	return platformStages, cleanup, nil
 }
 
 func customBootstrapDestroy(s stages.SplitStage, directory string, terraformDir string, varFiles []string) error {
@@ -37,7 +60,7 @@ func customBootstrapDestroy(s stages.SplitStage, directory string, terraformDir 
 	logrus.Debugf("aws bootstrap destroy stage will not refresh terraform state")
 	opts = append(opts, tfexec.Refresh(false))
 	return errors.Wrap(
-		terraform.Destroy(directory, awstypes.Name, s, terraformDir, opts...),
+		terraform.Destroy(directory, aws.Name, s, terraformDir, opts...),
 		"failed to destroy bootstrap",
 	)
 }

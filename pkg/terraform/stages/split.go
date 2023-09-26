@@ -8,7 +8,10 @@ import (
 
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
@@ -23,11 +26,14 @@ type StageOption func(*SplitStage)
 //   - The IP addresses for the bootstrap and control plane VMs will be output from the stage as bootstrap_ip and
 //     control_plane_ips, respectively. Only one stage for the platform should output a particular variable. This will
 //     likely be the same stage that creates the VM.
-func NewStage(platform, name string, providers []providers.Provider, opts ...StageOption) SplitStage {
+func NewStage(platform, name, installDir, terraformDir string, providers []providers.Provider, opts ...StageOption) SplitStage {
 	s := SplitStage{
-		platform:  platform,
-		name:      name,
-		providers: providers,
+		platform:     platform,
+		name:         name,
+		providers:    providers,
+		installDir:   installDir,
+		terraformDir: terraformDir,
+		provision:    normalTerraformProvision,
 	}
 	for _, opt := range opts {
 		opt(&s)
@@ -65,6 +71,9 @@ type SplitStage struct {
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
 	extractHostAddresses ExtractFunc
+	provision            ProvisionFunc
+	terraformDir         string
+	installDir           string
 }
 
 // DestroyFunc is a function for destroying the stage.
@@ -73,9 +82,17 @@ type DestroyFunc func(s SplitStage, directory string, terraformDir string, varFi
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
 
+// Provision is a function for creating cloud resources.
+type ProvisionFunc func(s SplitStage, tfVars, fileList []*asset.File) (*asset.File, *asset.File, error)
+
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
 	return s.name
+}
+
+// Platform implements pkg/terraform/Stage.Platform
+func (s SplitStage) Platform() string {
+	return s.platform
 }
 
 // Providers is the list of providers that are used for the stage.
@@ -99,8 +116,8 @@ func (s SplitStage) DestroyWithBootstrap() bool {
 }
 
 // Destroy implements pkg/terraform/Stage.Destroy
-func (s SplitStage) Destroy(directory string, terraformDir string, varFiles []string) error {
-	return s.destroy(s, directory, terraformDir, varFiles)
+func (s SplitStage) Destroy(directory string, varFiles []string) error {
+	return s.destroy(s, directory, s.terraformDir, varFiles)
 }
 
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
@@ -170,4 +187,70 @@ func normalDestroy(s SplitStage, directory string, terraformDir string, varFiles
 		opts[i] = tfexec.VarFile(varFile)
 	}
 	return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
+}
+
+// Provision implements pkg/infrastructure/Stage.Provision
+func (s SplitStage) Provision(tfvars, fileList []*asset.File) (*asset.File, *asset.File, error) {
+	return s.provision(s, tfvars, fileList)
+}
+
+func normalTerraformProvision(s SplitStage, tfvarsFiles, fileList []*asset.File) (*asset.File, *asset.File, error) {
+	tfvarsOutputs, stateFile, err := applyStage(s, s.terraformDir, tfvarsFiles, fileList)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failure applying terraform for %q stage", s.Name())
+	}
+	return tfvarsOutputs, stateFile, nil
+}
+
+func applyStage(stage terraform.Stage, terraformDir string, tfvarsFiles, fileList []*asset.File) (*asset.File, *asset.File, error) {
+	// Copy the terraform.tfvars to a temp directory which will contain the terraform plan.
+	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to create temp dir for terraform execution")
+	}
+	defer os.RemoveAll(tmpDir)
+
+	var extraOpts []tfexec.ApplyOption
+	for _, file := range tfvarsFiles {
+		if err := os.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0o600); err != nil {
+			return nil, nil, err
+		}
+		extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
+	}
+
+	return applyTerraform(tmpDir, stage, terraformDir, fileList, extraOpts...)
+}
+
+func applyTerraform(tmpDir string, stage terraform.Stage, terraformDir string, fileList []*asset.File, opts ...tfexec.ApplyOption) (*asset.File, *asset.File, error) {
+	timer.StartTimer(stage.Name())
+	defer timer.StopTimer(stage.Name())
+
+	applyErr := terraform.Apply(tmpDir, stage.Platform(), stage, terraformDir, opts...)
+
+	var stateFile *asset.File
+	// Write the state file to the install directory even if the apply failed.
+	if data, err := os.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
+		stateFile = &asset.File{
+			Filename: stage.StateFilename(),
+			Data:     data,
+		}
+	} else if !os.IsNotExist(err) {
+		logrus.Errorf("Failed to read tfstate: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to read tfstate")
+	}
+
+	if applyErr != nil {
+		return nil, nil, errors.Wrap(applyErr, asset.ClusterCreationError)
+	}
+
+	outputs, err := terraform.Outputs(tmpDir, terraformDir)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
+	}
+
+	outputsFile := &asset.File{
+		Filename: stage.OutputsFilename(),
+		Data:     outputs,
+	}
+	return outputsFile, stateFile, nil
 }
