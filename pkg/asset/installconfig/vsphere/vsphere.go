@@ -271,7 +271,7 @@ func getDataStore(ctx context.Context, path string, finder Finder, client *vim25
 	}
 	if len(dataStores) == 1 {
 		logrus.Infof("Defaulting to only available datastore: %s", dataStores[0].InventoryPath)
-		return dataStores[0].Name(), nil
+		return dataStores[0].InventoryPath, nil
 	}
 
 	dataStoreChoices := make([]string, 0, len(dataStores))
