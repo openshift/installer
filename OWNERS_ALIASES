@@ -127,6 +127,7 @@ aliases:
     - Adam0Brien
     - lukewarmtemp
     - yasminvalim
+    - jbtrystram
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -145,6 +146,7 @@ aliases:
     - Adam0Brien
     - lukewarmtemp
     - yasminvalim
+    - jbtrystram
   agent-reviewers:
     - andfasano
     - bfournie
