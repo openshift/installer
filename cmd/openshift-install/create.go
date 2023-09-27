@@ -784,6 +784,7 @@ type replayingListWatch struct {
 
 	lastListItem *watch.Event
 	lastLock     sync.Mutex
+	name         string
 }
 
 func (r *replayingListWatch) List(options metav1.ListOptions) (runtime.Object, error) {
@@ -803,6 +804,11 @@ func (r *replayingListWatch) List(options metav1.ListOptions) (runtime.Object, e
 
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
+	if metadata, err := meta.Accessor(lastItem); err == nil {
+		r.name = metadata.GetName()
+	} else {
+		r.name = err.Error()
+	}
 	r.lastListItem = &watch.Event{
 		Type:   watch.Added,
 		Object: lastItem,
@@ -820,20 +826,17 @@ func (r *replayingListWatch) Watch(options metav1.ListOptions) (watch.Interface,
 
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
-	return wrapWithReplay(context.TODO(), w, r.lastListItem.DeepCopy()), nil
+	return wrapWithReplay(context.TODO(), w, r.name, r.lastListItem.DeepCopy()), nil
 }
 
-func wrapWithReplay(ctx context.Context, w watch.Interface, initialLastEvent *watch.Event) watch.Interface {
+func wrapWithReplay(ctx context.Context, w watch.Interface, name string, initialLastEvent *watch.Event) watch.Interface {
 	fw := &replayingWatch{
+		name:     name,
 		incoming: w,
 		result:   make(chan watch.Event),
 	}
 	if initialLastEvent != nil {
-		func() {
-			fw.lastLock.Lock()
-			defer fw.lastLock.Unlock()
-			fw.last = *initialLastEvent
-		}()
+		fw.updateLastObservedEvent(*initialLastEvent)
 	}
 
 	go fw.watchIncoming(ctx)
@@ -842,6 +845,8 @@ func wrapWithReplay(ctx context.Context, w watch.Interface, initialLastEvent *wa
 }
 
 type replayingWatch struct {
+	name string
+
 	incoming watch.Interface
 	result   chan watch.Event
 
@@ -855,8 +860,10 @@ func (r *replayingWatch) ResultChan() <-chan watch.Event {
 }
 
 func (r *replayingWatch) Stop() {
+	logrus.Debugf("Waiting for Stop lock for Cluster Operator %s", r.name)
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
+	logrus.Debugf("Aquired lock for stop for Cluster Operator %s", r.name)
 
 	r.incoming.Stop()
 	r.stopped = true
@@ -864,8 +871,10 @@ func (r *replayingWatch) Stop() {
 }
 
 func (r *replayingWatch) updateLastObservedEvent(event watch.Event) {
+	logrus.Debugf("Waiting for updateLastObservedEvent lock for Cluster Operator %s", r.name)
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
+	logrus.Debugf("Aquired lock for updateLastObservedEvent for Cluster Operator %s", r.name)
 
 	r.last = copyWatchEvent(event)
 }
@@ -873,10 +882,13 @@ func (r *replayingWatch) updateLastObservedEvent(event watch.Event) {
 var emptyEvent watch.Event
 
 func (r *replayingWatch) Replay(ctx context.Context) (bool, error) {
+	logrus.Debugf("Waiting for Replay lock for Cluster Operator %s", r.name)
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
+	logrus.Debugf("Aquired lock for Replay for Cluster Operator %s", r.name)
 
 	if r.last == emptyEvent {
+		logrus.Debugf("No event to send for Cluster Operator %s", r.name)
 		return false, nil
 	}
 
@@ -886,20 +898,26 @@ func (r *replayingWatch) Replay(ctx context.Context) (bool, error) {
 }
 
 func (r *replayingWatch) sendToResult(ctx context.Context, watchEvent watch.Event) {
+	logrus.Debugf("Waiting for sendToResult lock for Cluster Operator %s", r.name)
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
+	logrus.Debugf("Aquired lock for sendToResult for Cluster Operator %s", r.name)
 
 	r.sendToResultLocked(ctx, watchEvent)
 }
 
 func (r *replayingWatch) sendToResultLocked(ctx context.Context, watchEvent watch.Event) {
 	if r.stopped {
+		logrus.Debugf("sendToResultLocked sees stop request, not sending for Cluster Operator %s", r.name)
 		return
 	}
 
+	logrus.Debugf("sendToResultLocked is about to send to unbuffered channel for Cluster Operator %s", r.name)
 	select {
 	case r.result <- watchEvent:
+		logrus.Debugf("sendToResultLocked sent to unbuffered channel for Cluster Operator %s", r.name)
 	case <-ctx.Done():
+		logrus.Debugf("sendToResultLocked sees closed context Cluster Operator %s", r.name)
 	}
 }
 
@@ -908,6 +926,8 @@ func (r *replayingWatch) watchIncoming(ctx context.Context) {
 		r.sendToResult(ctx, event)
 		r.updateLastObservedEvent(event)
 	}
+
+	logrus.Debugf("Finishing watchIncomfing clusteroperator/%s", r.name)
 }
 
 func copyWatchEvent(event watch.Event) watch.Event {
