@@ -11,8 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
-	"github.com/openshift/installer/pkg/terraform"
-	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	infrastructure "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -44,28 +43,18 @@ func Destroy(dir string) (err error) {
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
 	}
+	tfStages, cleanup, err := infrastructure.ProviderForPlatform(platform, dir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to initialize provider to gather bootstrap")
+	}
+	defer cleanup()
 
 	varFiles := []string{cluster.TfVarsFileName, cluster.TfPlatformVarsFileName}
-	tfStages := platformstages.StagesForPlatform(platform)
+
+	// TODO: encapsulate this in the terraform package
+
 	for _, stage := range tfStages {
-		varFiles = append(varFiles, stage.OutputsFilename())
-	}
-
-	terraformDir := filepath.Join(dir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return errors.Wrap(err, "could not create the terraform directory")
-	}
-
-	terraformDirPath, err := filepath.Abs(terraformDir)
-	if err != nil {
-		return errors.Wrap(err, "could not get absolute path of terraform directory")
-	}
-
-	defer os.RemoveAll(terraformDirPath)
-	terraform.UnpackTerraform(terraformDirPath, tfStages)
-
-	for i := len(tfStages) - 1; i >= 0; i-- {
-		stage := tfStages[i]
+		varFiles = append(varFiles, fmt.Sprintf("%s.tfvars.json", stage.Name()))
 
 		if !stage.DestroyWithBootstrap() {
 			continue
@@ -77,8 +66,8 @@ func Destroy(dir string) (err error) {
 		}
 		defer os.RemoveAll(tempDir)
 
-		stateFilePathInInstallDir := filepath.Join(dir, stage.StateFilename())
-		stateFilePathInTempDir := filepath.Join(tempDir, terraform.StateFilename)
+		stateFilePathInInstallDir := filepath.Join(dir, fmt.Sprintf("terraform.%s.tfstate", stage.Name()))
+		stateFilePathInTempDir := filepath.Join(tempDir, "terraform.tfstate")
 		if err := copy(stateFilePathInInstallDir, stateFilePathInTempDir); err != nil {
 			return errors.Wrap(err, "failed to copy state file to the temporary directory")
 		}
@@ -99,10 +88,9 @@ func Destroy(dir string) (err error) {
 			targetVarFiles = append(targetVarFiles, targetPath)
 		}
 
-		if err := stage.Destroy(tempDir, terraformDirPath, targetVarFiles); err != nil {
+		if err := stage.Destroy(tempDir, targetVarFiles); err != nil {
 			return err
 		}
-
 		if err := copy(stateFilePathInTempDir, stateFilePathInInstallDir); err != nil {
 			return errors.Wrap(err, "failed to copy state file from the temporary directory")
 		}

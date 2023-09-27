@@ -2,12 +2,9 @@ package cluster
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -18,9 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
-	"github.com/openshift/installer/pkg/metrics/timer"
-	"github.com/openshift/installer/pkg/terraform"
-	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	infrastructure "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
@@ -92,20 +87,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		platform = typesazure.StackTerraformName
 	}
 
-	stages := platformstages.StagesForPlatform(platform)
-
-	terraformDir := filepath.Join(InstallDir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return errors.Wrap(err, "could not create the terraform directory")
-	}
-
-	terraformDirPath, err := filepath.Abs(terraformDir)
+	stages, cleanup, err := infrastructure.ProviderForPlatform(platform, InstallDir)
+	defer cleanup()
 	if err != nil {
-		return errors.Wrap(err, "cannot get absolute path of terraform directory")
+		return errors.Wrap(err, "initializing cluster infrastructure provider ")
 	}
-
-	defer os.RemoveAll(terraformDir)
-	terraform.UnpackTerraform(terraformDirPath, stages)
 
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
@@ -129,12 +115,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	for _, stage := range stages {
-		outputs, err := c.applyStage(platform, stage, terraformDirPath, tfvarsFiles)
+		outputs, stateFile, err := stage.Provision(tfvarsFiles, c.FileList) //TODO: make sure c.FileList ends up being used
 		if err != nil {
-			return errors.Wrapf(err, "failure applying terraform for %q stage", stage.Name())
+			errors.Wrapf(err, "provisioning infrastructure in stage %s", stage.Name())
 		}
 		tfvarsFiles = append(tfvarsFiles, outputs)
 		c.FileList = append(c.FileList, outputs)
+		c.FileList = append(c.FileList, stateFile)
 	}
 
 	return nil
@@ -148,6 +135,7 @@ func (c *Cluster) Files() []*asset.File {
 // Load returns error if the tfstate file is already on-disk, because we want to
 // prevent user from accidentally re-launching the cluster.
 func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
+	// TODO: make this less opinionated/coupled to terraform
 	matches, err := filepath.Glob("terraform(.*)?.tfstate")
 	if err != nil {
 		return true, err
@@ -157,56 +145,4 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	return false, nil
-}
-
-func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDir string, tfvarsFiles []*asset.File) (*asset.File, error) {
-	// Copy the terraform.tfvars to a temp directory which will contain the terraform plan.
-	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create temp dir for terraform execution")
-	}
-	defer os.RemoveAll(tmpDir)
-
-	var extraOpts []tfexec.ApplyOption
-	for _, file := range tfvarsFiles {
-		if err := os.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0o600); err != nil {
-			return nil, err
-		}
-		extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
-	}
-
-	return c.applyTerraform(tmpDir, platform, stage, terraformDir, extraOpts...)
-}
-
-func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform.Stage, terraformDir string, opts ...tfexec.ApplyOption) (*asset.File, error) {
-	timer.StartTimer(stage.Name())
-	defer timer.StopTimer(stage.Name())
-
-	applyErr := terraform.Apply(tmpDir, platform, stage, terraformDir, opts...)
-
-	// Write the state file to the install directory even if the apply failed.
-	if data, err := os.ReadFile(filepath.Join(tmpDir, terraform.StateFilename)); err == nil {
-		c.FileList = append(c.FileList, &asset.File{
-			Filename: stage.StateFilename(),
-			Data:     data,
-		})
-	} else if !os.IsNotExist(err) {
-		logrus.Errorf("Failed to read tfstate: %v", err)
-		return nil, errors.Wrap(err, "failed to read tfstate")
-	}
-
-	if applyErr != nil {
-		return nil, errors.Wrap(applyErr, asset.ClusterCreationError)
-	}
-
-	outputs, err := terraform.Outputs(tmpDir, terraformDir)
-	if err != nil {
-		return nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
-	}
-
-	outputsFile := &asset.File{
-		Filename: stage.OutputsFilename(),
-		Data:     outputs,
-	}
-	return outputsFile, nil
 }
