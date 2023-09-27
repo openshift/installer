@@ -56,6 +56,13 @@ type agentClusterInstallOnPremPlatform struct {
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 }
 
+type agentClusterInstallOnPremExternalPlatform struct {
+	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
+	PlatformName string `json:"platformName,omitempty"`
+	// CloudControllerManager when set to external, this property will enable an external cloud provider.
+	CloudControllerManager external.CloudControllerManager `json:"cloudControllerManager,omitempty"`
+}
+
 type agentClusterInstallPlatform struct {
 	// BareMetal is the configuration used when installing on bare metal.
 	// +optional
@@ -63,6 +70,9 @@ type agentClusterInstallPlatform struct {
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *agentClusterInstallOnPremPlatform `json:"vsphere,omitempty"`
+	// External is the configuration used when installing on external cloud provider.
+	// +optional
+	External *agentClusterInstallOnPremExternalPlatform `json:"external,omitempty"`
 }
 
 // Used to generate InstallConfig overrides for Assisted Service to apply
@@ -205,6 +215,14 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			}
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
+		} else if installConfig.Config.Platform.External != nil {
+			icOverridden = true
+			icOverrides.Platform = &agentClusterInstallPlatform{
+				External: &agentClusterInstallOnPremExternalPlatform{
+					PlatformName:           installConfig.Config.External.PlatformName,
+					CloudControllerManager: installConfig.Config.External.CloudControllerManager,
+				},
+			}
 		}
 
 		networkOverridden := setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
@@ -237,7 +255,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to marshal AgentClusterInstall installConfigOverrides")
 			}
 			agentClusterInstall.SetAnnotations(map[string]string{
-				installConfigOverrides: fmt.Sprintf("%s", overrides),
+				installConfigOverrides: string(overrides),
 			})
 		}
 

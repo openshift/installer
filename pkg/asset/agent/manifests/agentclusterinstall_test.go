@@ -13,11 +13,13 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
+	externaltype "github.com/openshift/installer/pkg/types/external"
 )
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
@@ -80,6 +82,48 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodCPUPartitioningACI := getGoodACI()
 	goodCPUPartitioningACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"cpuPartitioningMode":"AllNodes"}`,
+	})
+
+	installConfigWExternalPlatform := getValidOptionalInstallConfig()
+	installConfigWExternalPlatform.Config.Platform = types.Platform{
+		External: &externaltype.Platform{
+			PlatformName:           "external",
+			CloudControllerManager: "",
+		},
+	}
+
+	goodExternalPlatformACI := getGoodACI()
+	goodExternalPlatformACI.Spec.APIVIP = ""
+	goodExternalPlatformACI.Spec.IngressVIP = ""
+	val := true
+	goodExternalPlatformACI.Spec.Networking.UserManagedNetworking = &val
+	goodExternalPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
+	goodExternalPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
+		PlatformName: "external",
+	}
+	goodExternalPlatformACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"platform":{"external":{"platformName":"external"}}}`,
+	})
+
+	installConfigWExternalOCIPlatform := getValidOptionalInstallConfig()
+	installConfigWExternalOCIPlatform.Config.Platform = types.Platform{
+		External: &externaltype.Platform{
+			PlatformName:           string(models.PlatformTypeOci),
+			CloudControllerManager: externaltype.CloudControllerManagerTypeExternal,
+		},
+	}
+
+	goodExternalOCIPlatformACI := getGoodACI()
+	goodExternalOCIPlatformACI.Spec.APIVIP = ""
+	goodExternalOCIPlatformACI.Spec.IngressVIP = ""
+	val = true
+	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
+	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
+	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
+		PlatformName: string(models.PlatformTypeOci),
+	}
+	goodExternalOCIPlatformACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"platform":{"external":{"platformName":"oci","cloudControllerManager":"External"}}}`,
 	})
 
 	cases := []struct {
@@ -164,6 +208,20 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithCPUPartitioning,
 			},
 			expectedConfig: goodCPUPartitioningACI,
+		},
+		{
+			name: "valid configuration external generic platform",
+			dependencies: []asset.Asset{
+				installConfigWExternalPlatform,
+			},
+			expectedConfig: goodExternalPlatformACI,
+		},
+		{
+			name: "valid configuration external OCI platform",
+			dependencies: []asset.Asset{
+				installConfigWExternalOCIPlatform,
+			},
+			expectedConfig: goodExternalOCIPlatformACI,
 		},
 	}
 	for _, tc := range cases {
@@ -267,6 +325,82 @@ spec:
 							"172.30.0.0/16",
 						},
 						NetworkType: "OVNKubernetes",
+					},
+					ProvisionRequirements: hiveext.ProvisionRequirements{
+						ControlPlaneAgents: 3,
+						WorkerAgents:       2,
+					},
+					SSHPublicKey: "ssh-rsa AAAAmyKey",
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid-config-file-external-oci-platform",
+			data: `
+metadata:
+  name: test-agent-cluster-install
+  namespace: cluster0
+spec:
+  platformType: External
+  external:
+    platformName: oci
+  apiVIP: 192.168.111.5
+  ingressVIP: 192.168.111.4
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-v4.14.0
+  networking:
+    machineNetwork:
+    - cidr: 10.10.11.0/24
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    serviceNetwork:
+    - 172.30.0.0/16
+    networkType: OVNKubernetes
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 2
+  sshPublicKey: |
+    ssh-rsa AAAAmyKey`,
+			expectedFound: true,
+			expectedConfig: &hiveext.AgentClusterInstall{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-agent-cluster-install",
+					Namespace: "cluster0",
+				},
+				Spec: hiveext.AgentClusterInstallSpec{
+					APIVIP:       "192.168.111.5",
+					IngressVIP:   "192.168.111.4",
+					PlatformType: hiveext.ExternalPlatformType,
+					ExternalPlatformSpec: &hiveext.ExternalPlatformSpec{
+						PlatformName: string(models.PlatformTypeOci),
+					},
+					ClusterDeploymentRef: corev1.LocalObjectReference{
+						Name: "ostest",
+					},
+					ImageSetRef: &hivev1.ClusterImageSetReference{
+						Name: "openshift-v4.14.0",
+					},
+					Networking: hiveext.Networking{
+						MachineNetwork: []hiveext.MachineNetworkEntry{
+							{
+								CIDR: "10.10.11.0/24",
+							},
+						},
+						ClusterNetwork: []hiveext.ClusterNetworkEntry{
+							{
+								CIDR:       "10.128.0.0/14",
+								HostPrefix: 23,
+							},
+						},
+						ServiceNetwork: []string{
+							"172.30.0.0/16",
+						},
+						NetworkType:           "OVNKubernetes",
+						UserManagedNetworking: func(b bool) *bool { return &b }(true),
 					},
 					ProvisionRequirements: hiveext.ProvisionRequirements{
 						ControlPlaneAgents: 3,
