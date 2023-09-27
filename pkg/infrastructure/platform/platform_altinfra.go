@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/infrastructure/aws"
+
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -18,7 +20,9 @@ func ProviderForPlatform(platform, installDir string) ([]infrastructure.Stage, f
 
 	switch platform {
 	case awstypes.Name:
-		return []infrastructure.Stage{}, nil, nil
+		if stages, cleanup, err = aws.InitializeProvider(installDir); err != nil {
+			return nil, nil, err
+		}
 	default:
 		panic(fmt.Sprintf("unsupported platform %q", platform))
 	}
