@@ -871,6 +871,12 @@ func (r *replayingWatch) Stop() {
 }
 
 func (r *replayingWatch) updateLastObservedEvent(event watch.Event) {
+	switch event.Type {
+	case watch.Bookmark, watch.Error:
+		logrus.Debugf("updateLastObservedEvent ignoring %v, we will continue sending the previous last Cluster Operator %s", event.Type, r.name)
+		return
+	}
+
 	logrus.Debugf("Waiting for updateLastObservedEvent lock for Cluster Operator %s", r.name)
 	r.lastLock.Lock()
 	defer r.lastLock.Unlock()
