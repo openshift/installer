@@ -266,6 +266,21 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: `invalid install-config configuration: Platform.External.PlatformName: Unsupported value: "some-cloud-provider": supported values: "oci"`,
 		},
 		{
+			name: "unsupported CloudControllerManager for external platform",
+			data: `
+apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+platform:
+  external:
+    platformName: oci
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: Platform.External.CloudControllerManager: Invalid value: "": When using external oci platform, Platform.External.CloudControllerManager must be set to External`,
+		},
+		{
 			name: "valid configuration for none platform for sno",
 			data: `
 apiVersion: v1
