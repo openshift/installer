@@ -88,9 +88,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	stages, cleanup, err := infrastructure.ProviderForPlatform(platform, InstallDir)
-	defer cleanup()
 	if err != nil {
 		return errors.Wrap(err, "initializing cluster infrastructure provider ")
+	}
+	if cleanup != nil {
+		defer cleanup()
 	}
 
 	logrus.Infof("Creating infrastructure resources...")
@@ -114,14 +116,22 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		tfvarsFiles = append(tfvarsFiles, file)
 	}
 
+	// initialize to prevent nil pointer dereference
+	// TODO: similar as below, find more generic alternative to tfstate
+	c.FileList = []*asset.File{}
+
 	for _, stage := range stages {
 		outputs, stateFile, err := stage.Provision(tfvarsFiles, c.FileList) //TODO: make sure c.FileList ends up being used
 		if err != nil {
 			errors.Wrapf(err, "provisioning infrastructure in stage %s", stage.Name())
 		}
-		tfvarsFiles = append(tfvarsFiles, outputs)
-		c.FileList = append(c.FileList, outputs)
-		c.FileList = append(c.FileList, stateFile)
+		if outputs != nil {
+			tfvarsFiles = append(tfvarsFiles, outputs)
+			c.FileList = append(c.FileList, outputs)
+		}
+		if stateFile != nil {
+			c.FileList = append(c.FileList, stateFile)
+		}
 	}
 
 	return nil
