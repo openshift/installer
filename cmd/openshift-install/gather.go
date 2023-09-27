@@ -25,7 +25,7 @@ import (
 	serialgather "github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
-	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	"github.com/openshift/installer/pkg/infrastructure/platform"
 
 	_ "github.com/openshift/installer/pkg/gather/aws"
 	_ "github.com/openshift/installer/pkg/gather/azure"
@@ -117,7 +117,13 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 		}
 
-		for _, stage := range platformstages.StagesForPlatform(config.Config.Platform.Name()) {
+		stages, cleanup, err := platform.ProviderForPlatform(config.Config.Platform.Name(), directory)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to initialize provider to gather bootstrap")
+		}
+		defer cleanup()
+
+		for _, stage := range stages {
 			stageBootstrap, stagePort, stageMasters, err := stage.ExtractHostAddresses(directory, config.Config)
 			if err != nil {
 				logrus.Warnf("Failed to extract host addresses: %s", err.Error())
