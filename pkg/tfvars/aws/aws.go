@@ -16,7 +16,7 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
-type config struct {
+type Config struct {
 	AMI                             string            `json:"aws_ami"`
 	AMIRegion                       string            `json:"aws_ami_region"`
 	CustomEndpoints                 map[string]string `json:"custom_endpoints,omitempty"`
@@ -179,7 +179,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
 
-	cfg := &config{
+	cfg := &Config{
 		CustomEndpoints:           endpoints,
 		Region:                    masterConfig.Placement.Region,
 		ExtraTags:                 tags,

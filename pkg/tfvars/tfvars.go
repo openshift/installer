@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type config struct {
+type Config struct {
 	ClusterID          string   `json:"cluster_id,omitempty"`
 	ClusterDomain      string   `json:"cluster_domain,omitempty"`
 	BaseDomain         string   `json:"base_domain,omitempty"`
@@ -38,7 +38,7 @@ func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4
 		return nil, errors.Wrap(err, "failed to write bootstrap ignition")
 	}
 
-	config := &config{
+	config := &Config{
 		ClusterID:             clusterID,
 		ClusterDomain:         strings.TrimSuffix(clusterDomain, "."),
 		BaseDomain:            strings.TrimSuffix(baseDomain, "."),
