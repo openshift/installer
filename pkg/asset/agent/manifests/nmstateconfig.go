@@ -63,7 +63,7 @@ func (*NMStateConfig) Name() string {
 // the asset.
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agentconfig.AgentConfig{},
+		&agentconfig.AgentHosts{},
 		&agent.OptionalInstallConfig{},
 	}
 }
@@ -71,24 +71,24 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
-	agentConfig := &agentconfig.AgentConfig{}
+	agentHosts := &agentconfig.AgentHosts{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(agentConfig, installConfig)
+	dependencies.Get(agentHosts, installConfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
 	var isNetworkConfigAvailable bool
 
-	if agentConfig.Config != nil {
-		if len(agentConfig.Config.Hosts) == 0 {
+	if agentHosts != nil {
+		if len(agentHosts.Hosts) == 0 {
 			return nil
 		}
-		if err := validateHostCount(installConfig.Config, agentConfig); err != nil {
+		if err := validateHostCount(installConfig.Config, agentHosts); err != nil {
 			return err
 		}
 
-		for i, host := range agentConfig.Config.Hosts {
+		for i, host := range agentHosts.Hosts {
 			if host.NetworkConfig.Raw != nil {
 				isNetworkConfigAvailable = true
 
@@ -379,13 +379,13 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	return macInterfaceMap
 }
 
-func validateHostCount(installConfig *types.InstallConfig, agentConfig *agentconfig.AgentConfig) error {
+func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconfig.AgentHosts) error {
 	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
 	numMasters := int64(0)
 	numWorkers := int64(0)
 	// Check for hosts explicitly defined
-	for _, host := range agentConfig.Config.Hosts {
+	for _, host := range agentHosts.Hosts {
 		switch host.Role {
 		case "master":
 			numMasters++
@@ -395,7 +395,7 @@ func validateHostCount(installConfig *types.InstallConfig, agentConfig *agentcon
 	}
 
 	// If role is not defined it will first be assigned as a master
-	for _, host := range agentConfig.Config.Hosts {
+	for _, host := range agentHosts.Hosts {
 		if host.Role == "" {
 			if numMasters < numRequiredMasters {
 				numMasters++

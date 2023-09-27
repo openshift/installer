@@ -85,6 +85,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&tls.AdminKubeConfigSignerCertKey{},
 		&password.KubeadminPassword{},
 		&agentconfig.AgentConfig{},
+		&agentconfig.AgentHosts{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 	}
@@ -94,8 +95,9 @@ func (a *Ignition) Dependencies() []asset.Asset {
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
+	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
-	dependencies.Get(agentManifests, agentConfigAsset, extraManifests)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -209,7 +211,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		config.Storage.Files = append(config.Storage.Files, agentConfigFile)
 	}
 
-	addMacAddressToHostnameMappings(&config, agentConfigAsset)
+	addMacAddressToHostnameMappings(&config, agentHostsAsset)
 
 	err = addStaticNetworkConfig(&config, agentManifests.StaticNetworkConfigs)
 	if err != nil {
@@ -231,7 +233,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addMirrorData(&config, registriesConfig, registryCABundle)
 
-	err = addHostConfig(&config, agentConfigAsset)
+	err = addHostConfig(&config, agentHostsAsset)
 	if err != nil {
 		return err
 	}
@@ -399,11 +401,11 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 // sets the hostname using "hostnamectl set-hostname" when the ISO boots.
 func addMacAddressToHostnameMappings(
 	config *igntypes.Config,
-	agentConfigAsset *agentconfig.AgentConfig) {
-	if agentConfigAsset.Config == nil || len(agentConfigAsset.Config.Hosts) == 0 {
+	agentHostsAsset *agentconfig.AgentHosts) {
+	if len(agentHostsAsset.Hosts) == 0 {
 		return
 	}
-	for _, host := range agentConfigAsset.Config.Hosts {
+	for _, host := range agentHostsAsset.Hosts {
 		if host.Hostname != "" {
 			file := ignition.FileFromBytes(filepath.Join(hostnamesPath,
 				strings.ToLower(filepath.Base(host.Interfaces[0].MacAddress))),
@@ -413,8 +415,8 @@ func addMacAddressToHostnameMappings(
 	}
 }
 
-func addHostConfig(config *igntypes.Config, agentConfig *agentconfig.AgentConfig) error {
-	confs, err := agentConfig.HostConfigFiles()
+func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) error {
+	confs, err := agentHosts.HostConfigFiles()
 	if err != nil {
 		return err
 	}
