@@ -233,6 +233,21 @@ func (mr *MockAPIMockRecorder) GetRegions(ctx, project interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegions", reflect.TypeOf((*MockAPI)(nil).GetRegions), ctx, project)
 }
 
+// GetServiceAccount mocks base method.
+func (m *MockAPI) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServiceAccount", ctx, project, serviceAccount)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServiceAccount indicates an expected call of GetServiceAccount.
+func (mr *MockAPIMockRecorder) GetServiceAccount(ctx, project, serviceAccount interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceAccount", reflect.TypeOf((*MockAPI)(nil).GetServiceAccount), ctx, project, serviceAccount)
+}
+
 // GetSubnetworks mocks base method.
 func (m *MockAPI) GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error) {
 	m.ctrl.T.Helper()

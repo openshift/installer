@@ -42,6 +42,8 @@ var (
 	validPublicZone    = "valid-short-public-zone"
 	invalidPublicZone  = "invalid-short-public-zone"
 	validBaseDomain    = "example.installer.domain."
+	validXpnSA         = "valid-example-sa@gcloud.serviceaccount.com"
+	invalidXpnSA       = "invalid-example-sa@gcloud.serviceaccount.com"
 
 	validPrivateDNSZone = dns.ManagedZone{
 		Name:    validPrivateZone,
@@ -90,6 +92,9 @@ var (
 	removeVPC                = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets            = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
 	invalidClusterName       = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
+	validNetworkProject      = func(ic *types.InstallConfig) { ic.GCP.NetworkProjectID = validProjectName }
+	validateXpnSA            = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = validXpnSA }
+	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
@@ -278,6 +283,17 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.region: Invalid value: \"us-east4\": invalid region",
 		},
+		{
+			name:          "Valid XPN Service Account",
+			edits:         editFunctions{validNetworkProject, validateXpnSA},
+			expectedError: false,
+		},
+		{
+			name:           "Invalid XPN Service Account",
+			edits:          editFunctions{validNetworkProject, invalidateXpnSA},
+			expectedError:  true,
+			expectedErrMsg: "controlPlane.platform.gcp.serviceAccount: Internal error\"",
+		},
 	}
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -330,6 +346,9 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&validPublicDNSZone, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPrivateZone).Return(&validPrivateDNSZone, nil).AnyTimes()
 	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), invalidPublicZone).Return(nil, fmt.Errorf("no matching DNS Zone found")).AnyTimes()
+
+	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, validXpnSA).Return(validXpnSA, nil).AnyTimes()
+	gcpClient.EXPECT().GetServiceAccount(gomock.Any(), validProjectName, invalidXpnSA).Return("", fmt.Errorf("controlPlane.platform.gcp.serviceAccount: Internal error\"")).AnyTimes()
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -739,6 +758,72 @@ func TestValidateMarketplaceImages(t *testing.T) {
 			}
 			if len(tc.expectedWarnMsg) > 0 {
 				assert.Regexp(t, tc.expectedWarnMsg, hook.LastEntry().Message)
+			}
+		})
+	}
+}
+
+func TestValidateServiceAccountPresent(t *testing.T) {
+	cases := []struct {
+		name             string
+		creds            *googleoauth.Credentials
+		serviceAccount   string
+		networkProjectID string
+		expectedError    string
+	}{
+		{
+			name:  "Test no network project ID",
+			creds: &googleoauth.Credentials{},
+		},
+		{
+			name:             "Test network project ID with service account",
+			creds:            &googleoauth.Credentials{},
+			serviceAccount:   "test-service-account",
+			networkProjectID: "test-network-project",
+		},
+		{
+			name:             "Test network project ID service account and creds",
+			creds:            &googleoauth.Credentials{JSON: []byte("{}")},
+			serviceAccount:   "test-service-account",
+			networkProjectID: "test-network-project",
+		},
+		{
+			name:             "Test network project ID no creds",
+			creds:            &googleoauth.Credentials{JSON: nil},
+			networkProjectID: "test-network-project",
+			expectedError:    "controlPlane.platform.gcp.serviceAccount: Required value: service account must be provided when authentication credentials do not provide a service account",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	for _, test := range cases {
+		gcpClient := mock.NewMockAPI(mockCtrl)
+		if test.networkProjectID != "" {
+			gcpClient.EXPECT().GetCredentials().Return(test.creds)
+		}
+
+		t.Run(test.name, func(t *testing.T) {
+			ic := types.InstallConfig{
+				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
+				BaseDomain:      "base-domain",
+				Platform:        types.Platform{GCP: &gcp.Platform{ProjectID: "project-id", NetworkProjectID: test.networkProjectID}},
+				CredentialsMode: types.PassthroughCredentialsMode,
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{
+						GCP: &gcp.MachinePool{
+							ServiceAccount: test.serviceAccount,
+						},
+					},
+				},
+			}
+
+			errorList := validateServiceAccountPresent(gcpClient, &ic)
+			if errorList == nil && test.expectedError == "" {
+				assert.NoError(t, errorList.ToAggregate())
+			} else {
+				assert.Regexp(t, test.expectedError, errorList.ToAggregate())
 			}
 		})
 	}
