@@ -111,6 +111,15 @@ func (m *AgentManifests) GetPullSecretData() string {
 	return m.PullSecret.StringData[".dockerconfigjson"]
 }
 
+// GetExternalPlatformName returns the platform name for the external platform.
+func (m *AgentManifests) GetExternalPlatformName() string {
+	var platformName string
+	if m.AgentClusterInstall.Spec.ExternalPlatformSpec != nil {
+		platformName = m.AgentClusterInstall.Spec.ExternalPlatformSpec.PlatformName
+	}
+	return platformName
+}
+
 func (m *AgentManifests) finish() error {
 	if err := m.validateAgentManifests().ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid agent configuration")
