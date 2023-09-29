@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 )
@@ -42,6 +43,7 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		// &installconfig.PlatformProvisionCheck{},
 		// &quota.PlatformQuotaCheck{},
 		&password.KubeadminPassword{},
+		&capi.CAPIControlPlane{},
 	}
 }
 
@@ -53,7 +55,8 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(clusterID, installConfig)
+	capiControlPlane := &capi.CAPIControlPlane{}
+	parents.Get(clusterID, installConfig, capiControlPlane)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -67,6 +70,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return errors.New("cluster cannot be created with bootstrapInPlace set")
 	}
 
+	capiControlPlane.LocalCP.Stop()
 	panic("not implemented")
 
 	return nil

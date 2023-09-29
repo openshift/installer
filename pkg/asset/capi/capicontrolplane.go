@@ -17,6 +17,7 @@ var (
 // TODO: Add support for existing management cluster.
 type CAPIControlPlane struct {
 	FileList []*asset.File
+	LocalCP  LocalControlPlane
 }
 
 var _ asset.WritableAsset = (*CAPIControlPlane)(nil)
@@ -32,6 +33,7 @@ func (c *CAPIControlPlane) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&LocalControlPlane{},
 	}
 }
 
@@ -43,7 +45,8 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(clusterID, installConfig)
+	localControlPlane := &LocalControlPlane{}
+	parents.Get(clusterID, installConfig, localControlPlane)
 
 	return nil
 }
