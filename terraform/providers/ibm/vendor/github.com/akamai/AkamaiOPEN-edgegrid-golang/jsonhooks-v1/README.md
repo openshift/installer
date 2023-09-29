@@ -1,1 +1,0 @@
-# Akamai JSONHooks
