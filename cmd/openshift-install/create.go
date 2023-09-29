@@ -182,7 +182,77 @@ var (
 		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
+	capiClusterTarget = target{
+		name: "CAPI Cluster",
+		command: &cobra.Command{
+			Use:   "capi-cluster",
+			Short: "Create an OpenShift cluster",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+			PostRun: func(_ *cobra.Command, _ []string) {
+				ctx := context.Background()
+
+				cleanup := setupFileHook(rootOpts.dir)
+				defer cleanup()
+
+				// FIXME: pulling the kubeconfig and metadata out of the root
+				// directory is a bit cludgy when we already have them in memory.
+				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+				if err != nil {
+					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+				}
+
+				timer.StartTimer("Bootstrap Complete")
+				if err := waitForBootstrapComplete(ctx, config); err != nil {
+					bundlePath, gatherErr := runGatherBootstrapCmd(rootOpts.dir)
+					if gatherErr != nil {
+						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
+					}
+					if err := logClusterOperatorConditions(ctx, config); err != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
+					}
+					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
+					logrus.Error(err.Error())
+					if gatherErr == nil {
+						if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+							logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
+						}
+						logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
+					}
+					logrus.Exit(exitCodeBootstrapFailed)
+				}
+				timer.StopTimer("Bootstrap Complete")
+				timer.StartTimer("Bootstrap Destroy")
+
+				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
+						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
+				} else {
+					logrus.Info("Destroying the bootstrap resources...")
+					err = destroybootstrap.Destroy(rootOpts.dir)
+					if err != nil {
+						logrus.Fatal(err)
+					}
+				}
+				timer.StopTimer("Bootstrap Destroy")
+
+				err = waitForInstallComplete(ctx, config, rootOpts.dir)
+				if err != nil {
+					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+					}
+					logTroubleshootingLink()
+					logrus.Error(err)
+					logrus.Exit(exitCodeInstallFailed)
+				}
+				timer.StopTimer(timer.TotalTimeElapsed)
+				timer.LogSummary()
+			},
+		},
+		assets: targetassets.CAPICluster,
+	}
+
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget, capiClusterTarget}
 )
 
 // clusterCreateError defines a custom error type that would help identify where the error occurs
