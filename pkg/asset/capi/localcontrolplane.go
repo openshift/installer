@@ -3,12 +3,11 @@ package capi
 import (
 	"os"
 
-	"gopkg.in/yaml.v2"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/pkg/errors"
 )
 
 // LocalControlPlane creates a local capi control plane
@@ -63,6 +62,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 
 	cfg, err := c.env.Start()
 	if err != nil {
+		spew.Dump("ERROR STARTING")
 		return err
 	}
 
@@ -77,16 +77,12 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	data, err := yaml.Marshal(kc)
-	if err != nil {
-		return errors.Wrap(err, "failed to Marshal kubeconfig")
-	}
 	tmpfile, err := os.CreateTemp("", "installer-kubeconfig")
 	if err != nil {
 		return err
 	}
 
-	if _, err := tmpfile.Write(data); err != nil {
+	if _, err := tmpfile.Write(kc); err != nil {
 		return err
 	}
 	if err := tmpfile.Close(); err != nil {

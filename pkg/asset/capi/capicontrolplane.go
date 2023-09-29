@@ -1,6 +1,10 @@
 package capi
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -47,6 +51,32 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	localControlPlane := &LocalControlPlane{}
 	parents.Get(clusterID, installConfig, localControlPlane)
+
+	c.LocalCP = *localControlPlane
+
+	kcArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
+
+	// CAPI Manager
+	capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
+	capiManCommand := exec.Command(capiManagerPath, kcArg, "-v=10")
+	capiManCommand.Stdout = os.Stdout
+	capiManCommand.Stderr = os.Stderr
+	err = capiManCommand.Run()
+	if err != nil {
+		//expected to fail at the moment, let it flow through so we hit the stop function
+		//return err
+	}
+
+	// AWS CAPI Provider
+	awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
+	command := exec.Command(awsManagerPath, kcArg, "-v=10")
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	err = command.Run()
+	if err != nil {
+		//expected to fail at the moment, let it flow through so we hit the stop function
+		//return err
+	}
 
 	return nil
 }
