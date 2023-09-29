@@ -2,12 +2,12 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -148,7 +148,7 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyDHCPNetworks: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyDHCPNetworks: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyDHCPNetworks: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

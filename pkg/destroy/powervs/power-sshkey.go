@@ -2,12 +2,12 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -38,7 +38,7 @@ func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 
 	sshKeys, err = o.keyClient.GetAll()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list Power sshkeys: %v", err)
+		return nil, fmt.Errorf("failed to list Power sshkeys: %w", err)
 	}
 
 	var sshKey *models.SSHKey
@@ -90,7 +90,7 @@ func (o *ClusterUninstaller) deletePowerSSHKey(item cloudResource) error {
 
 	err = o.keyClient.Delete(item.id)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete Power sshKey %s", item.name)
+		return fmt.Errorf("failed to delete Power sshKey %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Power SSHKey %q", item.name)
@@ -146,7 +146,7 @@ func (o *ClusterUninstaller) destroyPowerSSHKeys() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyPowerSSHKeys: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyPowerSSHKeys: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyPowerSSHKeys: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

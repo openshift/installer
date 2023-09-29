@@ -2,13 +2,13 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -51,7 +51,7 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 	for moreData {
 		sshKeyCollection, detailedResponse, err = o.vpcSvc.ListKeysWithContext(ctx, listKeysOptions)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list Cloud ssh keys: %v and the response is: %s", err, detailedResponse)
+			return nil, fmt.Errorf("failed to list Cloud ssh keys: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, sshKey = range sshKeyCollection.Keys {
@@ -92,7 +92,7 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 		for moreData {
 			sshKeyCollection, detailedResponse, err = o.vpcSvc.ListKeysWithContext(ctx, listKeysOptions)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to list Cloud ssh keys: %v and the response is: %s", err, detailedResponse)
+				return nil, fmt.Errorf("failed to list Cloud ssh keys: %w and the response is: %s", err, detailedResponse)
 			}
 			for _, sshKey = range sshKeyCollection.Keys {
 				o.Logger.Debugf("listCloudSSHKeys: FOUND: %v", *sshKey.Name)
@@ -147,7 +147,7 @@ func (o *ClusterUninstaller) deleteCloudSSHKey(item cloudResource) error {
 
 	_, err = o.vpcSvc.DeleteKeyWithContext(ctx, deleteKeyOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete sshKey %s", item.name)
+		return fmt.Errorf("failed to delete sshKey %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Cloud SSHKey %q", item.name)
@@ -203,7 +203,7 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyCloudSSHKeys: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyCloudSSHKeys: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyCloudSSHKeys: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

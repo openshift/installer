@@ -2,13 +2,13 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -26,7 +26,7 @@ func (o *ClusterUninstaller) listAttachedSubnets(publicGatewayID string) (cloudR
 	options := o.vpcSvc.NewListSubnetsOptions()
 	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list subnets")
+		return nil, fmt.Errorf("failed to list subnets: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -81,7 +81,7 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 
 		publicGatewayCollection, detailedResponse, err = o.vpcSvc.ListPublicGatewaysWithContext(ctx, listPublicGatewaysOptions)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to list publicGateways and the response is: %s", detailedResponse)
+			return nil, fmt.Errorf("failed to list publicGateways and the response is: %s: %w", detailedResponse, err)
 		}
 
 		for _, publicGateway := range publicGatewayCollection.PublicGateways {
@@ -121,7 +121,7 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 		for moreData {
 			publicGatewayCollection, detailedResponse, err = o.vpcSvc.ListPublicGatewaysWithContext(ctx, listPublicGatewaysOptions)
 			if err != nil {
-				return nil, errors.Wrapf(err, "Failed to list publicGateways and the response is: %s", detailedResponse)
+				return nil, fmt.Errorf("failed to list publicGateways and the response is: %s: %w", detailedResponse, err)
 			}
 
 			for _, publicGateway := range publicGatewayCollection.PublicGateways {
@@ -169,14 +169,14 @@ func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 	// Detach gateway from any subnets using it
 	subnets, err := o.listAttachedSubnets(item.id)
 	if err != nil {
-		return errors.Wrapf(err, "failed to list subnets with gateway %s attached", item.name)
+		return fmt.Errorf("failed to list subnets with gateway %s attached: %w", item.name, err)
 	}
 	for _, subnet := range subnets {
 		unsetSubnetPublicGatewayOptions := o.vpcSvc.NewUnsetSubnetPublicGatewayOptions(subnet.id)
 
 		_, err = o.vpcSvc.UnsetSubnetPublicGatewayWithContext(ctx, unsetSubnetPublicGatewayOptions)
 		if err != nil {
-			return errors.Wrapf(err, "failed to detach publicGateway %s from subnet %s", item.name, subnet.id)
+			return fmt.Errorf("failed to detach publicGateway %s from subnet %s: %w", item.name, subnet.id, err)
 		}
 	}
 
@@ -184,7 +184,7 @@ func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 
 	_, err = o.vpcSvc.DeletePublicGatewayWithContext(ctx, deletePublicGatewayOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete publicGateway %s", item.name)
+		return fmt.Errorf("failed to delete publicGateway %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Public Gateway %q", item.name)
@@ -240,7 +240,7 @@ func (o *ClusterUninstaller) destroyPublicGateways() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyPublicGateways: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyPublicGateways: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyPublicGateways: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

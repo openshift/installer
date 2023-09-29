@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -46,13 +45,13 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 
 	dnsMatcher, err := regexp.Compile(fmt.Sprintf(`.*\Q%s.%s\E$`, o.ClusterName, o.BaseDomain))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build DNS records matcher")
+		return nil, fmt.Errorf("failed to build DNS records matcher: %w", err)
 	}
 
 	for moreData {
 		dnsResources, detailedResponse, err := o.dnsRecordsSvc.ListAllDnsRecordsWithContext(ctx, dnsRecordsOptions)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list DNS records: %v and the response is: %s", err, detailedResponse)
+			return nil, fmt.Errorf("failed to list DNS records: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, record := range dnsResources.Result {
@@ -84,7 +83,7 @@ func (o *ClusterUninstaller) listDNSRecords() (cloudResources, error) {
 		for moreData {
 			dnsResources, detailedResponse, err := o.dnsRecordsSvc.ListAllDnsRecordsWithContext(ctx, dnsRecordsOptions)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to list DNS records: %v and the response is: %s", err, detailedResponse)
+				return nil, fmt.Errorf("failed to list DNS records: %w and the response is: %s", err, detailedResponse)
 			}
 			for _, record := range dnsResources.Result {
 				o.Logger.Debugf("listDNSRecords: FOUND: DNS: %v, %v", *record.ID, *record.Name)
@@ -132,7 +131,7 @@ func (o *ClusterUninstaller) destroyDNSRecord(item cloudResource) error {
 
 	_, _, err = o.dnsRecordsSvc.DeleteDnsRecordWithContext(ctx, deleteOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete DNS record %s", item.name)
+		return fmt.Errorf("failed to delete DNS record %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted DNS Record %q", item.name)
@@ -193,7 +192,7 @@ func (o *ClusterUninstaller) destroyDNSRecords() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyDNSRecords: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyDNSRecords: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyDNSRecords: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

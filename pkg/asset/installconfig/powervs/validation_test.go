@@ -617,16 +617,16 @@ func TestSystemPool(t *testing.T) {
 	}
 
 	err := powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeCores)
-	assert.EqualError(t, err, "Not enough cores available (2) for the compute nodes (need 5)")
+	assert.EqualError(t, err, "not enough cores available (2) for the compute nodes (need 5)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerCores)
-	assert.EqualError(t, err, "Not enough cores available (1) for the worker nodes (need 3)")
+	assert.EqualError(t, err, "not enough cores available (1) for the worker nodes (need 3)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeMemory)
-	assert.EqualError(t, err, "Not enough memory available (32) for the compute nodes (need 160)")
+	assert.EqualError(t, err, "not enough memory available (32) for the compute nodes (need 160)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerMemory)
-	assert.EqualError(t, err, "Not enough memory available (32) for the worker nodes (need 96)")
+	assert.EqualError(t, err, "not enough memory available (32) for the worker nodes (need 96)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsGood)
 	assert.Empty(t, err)

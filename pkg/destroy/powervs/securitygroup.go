@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -33,7 +33,7 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	resources, _, err := o.vpcSvc.ListSecurityGroupsWithContext(ctx, options)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list security groups")
+		return nil, fmt.Errorf("failed to list security groups: %w", err)
 	}
 
 	var foundOne = false
@@ -95,7 +95,7 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 
 	_, err = o.vpcSvc.DeleteSecurityGroupWithContext(ctx, deleteOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete security group %s", item.name)
+		return fmt.Errorf("failed to delete security group %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Security Group %q", item.name)
@@ -151,7 +151,7 @@ func (o *ClusterUninstaller) destroySecurityGroups() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyServiceInstances: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroySecurityGroups: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroySecurityGroups: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	gohttp "net/http"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -33,7 +33,7 @@ func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	subnets, detailedResponse, err := o.vpcSvc.ListSubnets(options)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list subnets and the response is: %s", detailedResponse)
+		return nil, fmt.Errorf("failed to list subnets and the response is: %s: %w", detailedResponse, err)
 	}
 
 	var foundOne = false
@@ -94,7 +94,7 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 	deleteOptions := o.vpcSvc.NewDeleteSubnetOptions(item.id)
 	_, err = o.vpcSvc.DeleteSubnetWithContext(ctx, deleteOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete subnet %s", item.name)
+		return fmt.Errorf("failed to delete subnet %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Subnet %q", item.name)
@@ -150,7 +150,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroySubnets: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroySubnets: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroySubnets: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{
