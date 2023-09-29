@@ -34,6 +34,7 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
@@ -192,19 +193,19 @@ var (
 			PostRun: func(_ *cobra.Command, _ []string) {
 				ctx := context.Background()
 
-				cleanup := setupFileHook(rootOpts.dir)
+				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.
-				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
 				if err := waitForBootstrapComplete(ctx, config); err != nil {
-					bundlePath, gatherErr := runGatherBootstrapCmd(rootOpts.dir)
+					bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
 					if gatherErr != nil {
 						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 					}
@@ -229,14 +230,14 @@ var (
 						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
 				} else {
 					logrus.Info("Destroying the bootstrap resources...")
-					err = destroybootstrap.Destroy(rootOpts.dir)
+					err = destroybootstrap.Destroy(command.RootOpts.Dir)
 					if err != nil {
 						logrus.Fatal(err)
 					}
 				}
 				timer.StopTimer("Bootstrap Destroy")
 
-				err = waitForInstallComplete(ctx, config, rootOpts.dir)
+				err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
 				if err != nil {
 					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
@@ -368,6 +369,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		defer cleanup()
 
 		cluster.InstallDir = command.RootOpts.Dir
+		capi.InstallDir = command.RootOpts.Dir
 
 		err := runner(command.RootOpts.Dir)
 		if err != nil {
