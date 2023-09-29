@@ -140,7 +140,7 @@
           ]
         },
         "list": {
-          "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `\"/v1/{name=users/*}/operations\"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+          "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.",
           "flatPath": "v1beta1/operations",
           "httpMethod": "GET",
           "id": "serviceusage.operations.list",
@@ -959,7 +959,7 @@
       }
     }
   },
-  "revision": "20221115",
+  "revision": "20230309",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "AdminQuotaPolicy": {
@@ -1034,11 +1034,13 @@
           "description": "The source syntax of the service.",
           "enum": [
             "SYNTAX_PROTO2",
-            "SYNTAX_PROTO3"
+            "SYNTAX_PROTO3",
+            "SYNTAX_EDITIONS"
           ],
           "enumDescriptions": [
             "Syntax `proto2`.",
-            "Syntax `proto3`."
+            "Syntax `proto3`.",
+            "Syntax `editions`."
           ],
           "type": "string"
         },
@@ -1189,6 +1191,13 @@
           "description": "The number of seconds to wait for the completion of a long running operation. The default is no deadline.",
           "format": "double",
           "type": "number"
+        },
+        "overridesByRequestProtocol": {
+          "additionalProperties": {
+            "$ref": "BackendRule"
+          },
+          "description": "The map between request protocol and the backend address.",
+          "type": "object"
         },
         "pathTranslation": {
           "enum": [
@@ -1776,6 +1785,10 @@
       "description": "Enum type definition.",
       "id": "Enum",
       "properties": {
+        "edition": {
+          "description": "The source edition string, only valid when syntax is SYNTAX_EDITIONS.",
+          "type": "string"
+        },
         "enumvalue": {
           "description": "Enum value definitions.",
           "items": {
@@ -1802,11 +1815,13 @@
           "description": "The source syntax.",
           "enum": [
             "SYNTAX_PROTO2",
-            "SYNTAX_PROTO3"
+            "SYNTAX_PROTO3",
+            "SYNTAX_EDITIONS"
           ],
           "enumDescriptions": [
             "Syntax `proto2`.",
-            "Syntax `proto3`."
+            "Syntax `proto3`.",
+            "Syntax `editions`."
           ],
           "type": "string"
         }
@@ -2750,11 +2765,13 @@
           "description": "The source syntax of this method.",
           "enum": [
             "SYNTAX_PROTO2",
-            "SYNTAX_PROTO3"
+            "SYNTAX_PROTO3",
+            "SYNTAX_EDITIONS"
           ],
           "enumDescriptions": [
             "Syntax `proto2`.",
-            "Syntax `proto3`."
+            "Syntax `proto3`.",
+            "Syntax `editions`."
           ],
           "type": "string"
         }
@@ -3250,6 +3267,10 @@
             "Street View Org."
           ],
           "type": "string"
+        },
+        "protoReferenceDocumentationUri": {
+          "description": "Optional link to proto reference documentation. Example: https://cloud.google.com/pubsub/lite/docs/reference/rpc",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3637,6 +3658,10 @@
       "description": "A protocol buffer message type.",
       "id": "Type",
       "properties": {
+        "edition": {
+          "description": "The source edition string, only valid when syntax is SYNTAX_EDITIONS.",
+          "type": "string"
+        },
         "fields": {
           "description": "The list of fields.",
           "items": {
@@ -3670,11 +3695,13 @@
           "description": "The source syntax.",
           "enum": [
             "SYNTAX_PROTO2",
-            "SYNTAX_PROTO3"
+            "SYNTAX_PROTO3",
+            "SYNTAX_EDITIONS"
           ],
           "enumDescriptions": [
             "Syntax `proto2`.",
-            "Syntax `proto3`."
+            "Syntax `proto3`.",
+            "Syntax `editions`."
           ],
           "type": "string"
         }
