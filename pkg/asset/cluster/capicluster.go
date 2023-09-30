@@ -1,10 +1,17 @@
 package cluster
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/capi"
@@ -68,6 +75,29 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 	if installConfig.Config.BootstrapInPlace != nil {
 		return errors.New("cluster cannot be created with bootstrapInPlace set")
+	}
+
+	client, err := kubernetes.NewForConfig(capiControlPlane.LocalCP.Cfg)
+	if err != nil {
+		return errors.Wrap(err, "creating a Kubernetes client")
+	}
+	ns, _ := client.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
+	for _, n := range ns.Items {
+		spew.Dump(n.Name)
+	}
+	//ocCmd := fmt.Sprintf("oc apply /home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates --kubeconfig %s", capiControlPlane.LocalCP.KubeconfigPath)
+	templatePath := "/home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates/"
+	kcArg := fmt.Sprintf("--kubeconfig=%s", capiControlPlane.LocalCP.KubeconfigPath)
+	//command := exec.Command("oc", "get", "namespace", kcArg)
+	command := exec.Command("oc", "apply", "-f", templatePath, kcArg)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	err = command.Run()
+	spew.Dump(err)
+
+	ns, _ = client.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
+	for _, n := range ns.Items {
+		spew.Dump(n.Name)
 	}
 
 	capiControlPlane.LocalCP.Stop()

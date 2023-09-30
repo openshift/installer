@@ -3,6 +3,7 @@ package capi
 import (
 	"os"
 
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/davecgh/go-spew/spew"
@@ -17,6 +18,7 @@ type LocalControlPlane struct {
 	FileList       []*asset.File
 	env            *envtest.Environment
 	KubeconfigPath string //TODO: move to its own asset
+	Cfg            *rest.Config
 }
 
 var _ asset.WritableAsset = (*LocalControlPlane)(nil)
@@ -42,7 +44,10 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 	parents.Get(clusterID, installConfig)
 
 	c.env = &envtest.Environment{
-		//CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			"/home/padillon/work/capi/crds",
+			"/home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates",
+		},
 		AttachControlPlaneOutput: true,
 	}
 
@@ -60,18 +65,17 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	cfg, err := c.env.Start()
+	c.Cfg, err = c.env.Start()
 	if err != nil {
 		spew.Dump("ERROR STARTING")
 		return err
 	}
 
 	usr := envtest.User{Name: "myuser"}
-	authUsr, err := c.env.AddUser(usr, cfg)
+	authUsr, err := c.env.AddUser(usr, c.Cfg)
 	if err != nil {
 		return err
 	}
-
 	kc, err := authUsr.KubeConfig()
 	if err != nil {
 		return err
