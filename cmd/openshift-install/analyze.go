@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/gather/service"
 )
 
@@ -34,7 +35,7 @@ This command helps users to analyze the reasons for an installation that failed 
 				}
 			}
 			if !filepath.IsAbs(gatherBundle) {
-				gatherBundle = filepath.Join(rootOpts.dir, gatherBundle)
+				gatherBundle = filepath.Join(command.RootOpts.Dir, gatherBundle)
 			}
 			if err := service.AnalyzeGatherBundle(gatherBundle); err != nil {
 				logrus.Fatal(err)
@@ -46,7 +47,7 @@ This command helps users to analyze the reasons for an installation that failed 
 }
 
 func getGatherBundleFromAssetsDirectory() (string, error) {
-	matches, err := filepath.Glob(filepath.Join(rootOpts.dir, "log-bundle-*.tar.gz"))
+	matches, err := filepath.Glob(filepath.Join(command.RootOpts.Dir, "log-bundle-*.tar.gz"))
 	if err != nil {
 		return "", errors.Wrap(err, "could not find gather bundles in assets directory")
 	}

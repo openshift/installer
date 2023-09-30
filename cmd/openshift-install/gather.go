@@ -19,6 +19,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -62,9 +63,9 @@ func newGatherBootstrapCmd() *cobra.Command {
 		Short: "Gather debugging data for a failing-to-bootstrap control plane",
 		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
-			cleanup := setupFileHook(rootOpts.dir)
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
-			bundlePath, err := runGatherBootstrapCmd(rootOpts.dir)
+			bundlePath, err := runGatherBootstrapCmd(command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -99,14 +99,14 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 }
 
 // IsRestAPILive Determine if the Agent Rest API on node zero has initialized
-func (rest *NodeZeroRestClient) IsRestAPILive() (bool, error) {
+func (rest *NodeZeroRestClient) IsRestAPILive() bool {
 	// GET /v2/infraenvs
 	listInfraEnvsParams := installer.NewListInfraEnvsParams()
 	_, err := rest.Client.Installer.ListInfraEnvs(rest.ctx, listInfraEnvsParams)
 	if err != nil {
-		return false, err
+		return false
 	}
-	return true, nil
+	return true
 }
 
 // GetRestAPIServiceBaseURL Return the url of the Agent Rest API on node zero

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
 
@@ -39,10 +40,10 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			timer.StartTimer(timer.TotalTimeElapsed)
 			ctx := context.Background()
 
-			cleanup := setupFileHook(rootOpts.dir)
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 			if err != nil {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
@@ -76,15 +77,15 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			timer.StartTimer(timer.TotalTimeElapsed)
 			ctx := context.Background()
 
-			cleanup := setupFileHook(rootOpts.dir)
+			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 			if err != nil {
 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 			}
 
-			err = waitForInstallComplete(ctx, config, rootOpts.dir)
+			err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
 			if err != nil {
 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
