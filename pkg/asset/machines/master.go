@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
@@ -344,6 +345,80 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			installConfig.Config.ControlPlane.Architecture,
 		)
 		mpool.OSDisk.DiskSizeGB = 1024
+		dataDisks := []machinev1beta1.DataDisk{}
+
+		etcdDataDiskUndefined := true
+		if mpool.EtcdDataDisk != nil {
+			etcdDataDiskUndefined = false
+		}
+		// TODO: move to validation
+		experimentalFlagEtcdDedicatedDisk, err := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_ETCD_DEDICATED"))
+		if err != nil {
+			experimentalFlagEtcdDedicatedDisk = false
+		}
+		if !etcdDataDiskUndefined && !experimentalFlagEtcdDedicatedDisk {
+			return errors.Wrapf(err, "etcdDataDisk is valid only with experimental flag OPENSHIFT_INSTALL_EXPERIMENTAL_ETCD_DEDICATED == true")
+		}
+		// setup dedicated etcd disk when set
+		if experimentalFlagEtcdDedicatedDisk {
+			logrus.Warnf("Using experimental and unsupported Azure Data Disk for etcd (OPENSHIFT_INSTALL_EXPERIMENTAL_ETCD_DEDICATED=true)")
+			if installConfig.Config.ControlPlane.Architecture != types.ArchitectureAMD64 {
+				return errors.Wrapf(err, "unsupported experimental OPENSHIFT_INSTALL_EXPERIMENTAL_ETCD_DEDICATED flag in architecture %v", installConfig.Config.ControlPlane.Architecture)
+			}
+
+			// TODO check the API to choose the "preferred" VM Type and Disk SKU
+			// https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types#regional-availability
+			// azure4 regions / lease pool
+			// https://github.com/openshift/release/blob/master/core-services/prow/02_config/_boskos.yaml#L905-L964
+			if etcdDataDiskUndefined {
+				dataDiskSize := int32(256)
+				etcdDataDiskLunID := int32(0)
+				validRegions := []string{"centralus", "eastus", "eastus2", "westus"}
+				dataDiskType := machinev1beta1.StorageAccountPremiumLRS
+				switch installConfig.Config.Platform.Azure.Region {
+				case "centralus", "eastus", "eastus2", "westus":
+					switch installConfig.Config.Platform.Azure.Region {
+					// unsupport PremiumV2 "westus", "centralus" (limited):
+					case "eastus", "eastus2":
+						dataDiskType = "PremiumV2_LRS"
+						dataDiskSize = int32(16)
+					}
+				default:
+					return errors.Wrapf(err, "%s region is unsupported for OPENSHIFT_INSTALL_EXPERIMENTAL_ETCD_DEDICATED. Choose %v", installConfig.Config.Platform.Azure.Region, validRegions)
+				}
+
+				if mpool.EtcdDataDisk == nil {
+					mpool.EtcdDataDisk = &machinev1beta1.DataDisk{
+						NameSuffix: "etcd",
+						DiskSizeGB: dataDiskSize,
+						ManagedDisk: machinev1beta1.DataDiskManagedDiskParameters{
+							StorageAccountType: dataDiskType,
+						},
+						Lun:            etcdDataDiskLunID,
+						CachingType:    "None",
+						DeletionPolicy: "Delete",
+					}
+				}
+			}
+
+			// TODO: check where is the best practice to enforce this configuration
+			if ic.ControlPlane.Platform.Azure == nil {
+				ic.ControlPlane.Platform.Azure = &azuretypes.MachinePool{
+					EtcdDataDisk: mpool.EtcdDataDisk,
+				}
+			} else if ic.ControlPlane.Platform.Azure.EtcdDataDisk == nil {
+				ic.ControlPlane.Platform.Azure.EtcdDataDisk = mpool.EtcdDataDisk
+			}
+
+			dataDisks = []machinev1beta1.DataDisk{*mpool.EtcdDataDisk}
+			// Decrease the default OS Disk size (it was increased to gain performance on etcd)
+			mpool.OSDisk.DiskSizeGB = powerOfTwoRootVolumeSize
+
+			// Force to use smaller type and 5th gen. Available in the validRegions.
+			// $ az vm list-sizes --location "westus"  | jq '.[]|select(.name=="Standard_D4s_v5")'
+			mpool.InstanceType = "Standard_D4s_v5"
+		}
+
 		if installConfig.Config.Platform.Azure.CloudName == azuretypes.StackCloud {
 			mpool.OSDisk.DiskSizeGB = azuredefaults.AzurestackMinimumDiskSize
 		}
@@ -388,7 +463,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return err
 		}
 		useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery)
+
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", masterUserDataSecretName, capabilities, useImageGallery, dataDisks)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

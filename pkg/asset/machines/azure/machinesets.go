@@ -41,7 +41,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		if int64(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery, []clusterapi.DataDisk{})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}

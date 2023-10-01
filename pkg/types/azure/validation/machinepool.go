@@ -56,6 +56,8 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
+	// TODO add valdiation for Data Disks
+
 	if p.UltraSSDCapability != "" {
 		ultraSSDCapabilities := sets.NewString("Enabled", "Disabled")
 		if !ultraSSDCapabilities.Has(p.UltraSSDCapability) {

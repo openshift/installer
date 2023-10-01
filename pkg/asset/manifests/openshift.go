@@ -3,6 +3,7 @@ package manifests
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -72,6 +73,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
+		&openshift.MachineConfigMountDevice{},
 	}
 }
 
@@ -85,6 +87,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	dependencies.Get(installConfig, kubeadminPassword, clusterID, openshiftInstall, featureGate)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
+	var etcdDiskConfig *machineMountDeviceTemplateData
+
 	switch platform {
 	case awstypes.Name:
 		ssn, err := installConfig.AWS.Session(context.TODO())
@@ -127,6 +131,26 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				Base64encodeRegion:         base64.StdEncoding.EncodeToString([]byte(installConfig.Config.Azure.Region)),
 			},
 		}
+
+		if installConfig.Config.ControlPlane != nil &&
+			installConfig.Config.ControlPlane.Platform.Azure != nil &&
+			installConfig.Config.ControlPlane.Platform.Azure.EtcdDataDisk != nil {
+			mountPath := "/var/lib/etcd"
+			devicePath := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", installConfig.Config.ControlPlane.Platform.Azure.EtcdDataDisk.Lun)
+			etcdDiskConfig = &machineMountDeviceTemplateData{
+				MachineRole:       "master",
+				DeviceName:        strings.TrimPrefix(strings.ReplaceAll(devicePath, "/", "-"), "-"),
+				DevicePath:        devicePath,
+				MountPointName:    strings.TrimPrefix(strings.ReplaceAll(mountPath, "/", "-"), "-"),
+				MountPointPath:    mountPath,
+				FileSystemType:    "xfs",
+				ForceCreateFS:     true,
+				SyncOldData:       true,
+				SyncTestDirExists: mountPath + "/member",
+			}
+			etcdDiskConfig.MachineConfigName = fmt.Sprintf("00-%s-mount-%s", etcdDiskConfig.MachineRole, etcdDiskConfig.MountPointName)
+		}
+
 	case gcptypes.Name:
 		session, err := gcp.GetSession(context.TODO())
 		if err != nil {
@@ -299,6 +323,19 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 				"CloudConfig": string(b),
 			})
 		}
+	}
+
+	if etcdDiskConfig != nil {
+		fileName := fmt.Sprintf("99_openshift-machineconfig_%s.yaml", etcdDiskConfig.MachineConfigName)
+		machineConfigMountDevice := &openshift.MachineConfigMountDevice{}
+		dependencies.Get(machineConfigMountDevice)
+		if len(machineConfigMountDevice.Files()) == 0 {
+			logrus.Fatal(
+				"Unable to load machineconfig template to mount devices.",
+			)
+		}
+		templateFile := machineConfigMountDevice.Files()[0]
+		assetData[fileName] = applyTemplateData(templateFile.Data, etcdDiskConfig)
 	}
 
 	o.FileList = []*asset.File{}
