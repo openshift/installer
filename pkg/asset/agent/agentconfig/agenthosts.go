@@ -23,6 +23,13 @@ var (
 	_ asset.WritableAsset = (*AgentHosts)(nil)
 )
 
+type nmStateInterface struct {
+	Interfaces []struct {
+		MACAddress string `json:"mac-address,omitempty"`
+		Name       string `json:"name,omitempty"`
+	} `yaml:"interfaces,omitempty"`
+}
+
 // AgentHosts generates the hosts information from the AgentConfig and
 // OptionalInstallConfig assets.
 type AgentHosts struct {
@@ -211,14 +218,42 @@ func (a *AgentHosts) getInstallConfigDefaults(platform *baremetal.Platform) erro
 				return errors.Wrap(err, "failed to unmarshal networkConfig")
 			}
 			host.NetworkConfig.Raw = contents
-		}
+			logrus.Warningf("hostNetworkconfig.Raw %s", icHost.NetworkConfig.Raw)
+			logrus.Warningf("contents %s", contents)
 
-		// Create Interfaces field from BootMacAddress
-		hostInterface := &aiv1beta1.Interface{
-			Name:       "boot",
-			MacAddress: icHost.BootMACAddress,
+			// Create interfaces table from NetworkConfig
+			var netInterfaces nmStateInterface
+			err = yaml.Unmarshal(contents, &netInterfaces)
+			if err != nil {
+				return fmt.Errorf("error unmarshalling NMStateConfig: %v", err)
+			}
+
+			var foundBootMac = false
+			for _, intf := range netInterfaces.Interfaces {
+				if intf.Name != "" && intf.MACAddress != "" {
+					hostInterface := &aiv1beta1.Interface{
+						Name:       intf.Name,
+						MacAddress: intf.MACAddress,
+					}
+					host.Interfaces = append(host.Interfaces, hostInterface)
+					if icHost.BootMACAddress == intf.MACAddress {
+						foundBootMac = true
+					}
+				}
+			}
+
+			if !foundBootMac {
+				logrus.Warnf("For host %s, BootMACAddress %s is not in NetworkConfig", icHost.Name, icHost.BootMACAddress)
+			}
 		}
-		host.Interfaces = append(host.Interfaces, hostInterface)
+		if len(host.Interfaces) == 0 {
+			// Create interfaces table from BootMacAddress
+			hostInterface := &aiv1beta1.Interface{
+				Name:       "boot",
+				MacAddress: icHost.BootMACAddress,
+			}
+			host.Interfaces = append(host.Interfaces, hostInterface)
+		}
 
 		a.Hosts = append(a.Hosts, host)
 	}

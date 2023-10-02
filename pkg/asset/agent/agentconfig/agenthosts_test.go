@@ -118,8 +118,8 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getNoHostsAgentConfig(),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("boot", "28:d2:44:b0:bf:01")).networkConfig(installNetworkConfigOne),
-				agentHost().name("test-2").role("worker").interfaces(iface("boot", "28:d2:44:b0:bf:02")).networkConfig(installNetworkConfigTwo)),
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:b0:bf:01")).networkConfig(installNetworkConfigOne),
+				agentHost().name("test-2").role("worker").interfaces(iface("eth0", "28:d2:44:b0:bf:02")).networkConfig(installNetworkConfigTwo)),
 		},
 		{
 			name: "unsupported-device-name-agent-config",
@@ -184,12 +184,21 @@ func TestAgentHosts_Generate(t *testing.T) {
 			expectedConfig: nil,
 		},
 		{
-			name: "duplcate-mac-same-host",
+			name: "duplicate-mac-same-host-agent-config",
 			dependencies: []asset.Asset{
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidInterfaces(),
 			},
 			expectedError:  "invalid Agent Config configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"28:d2:44:d2:b2:1a\": duplicate MAC address found",
+			expectedConfig: nil,
+		},
+		{
+			name: "duplicate-mac-same-host-install-config",
+			dependencies: []asset.Asset{
+				getInstallConfigInvalidInterfaces(),
+				getNoHostsAgentConfig(),
+			},
+			expectedError:  "invalid Install Config configuration: Hosts[0].Interfaces[1].macAddress: Invalid value: \"28:d2:44:b0:bf:01\": duplicate MAC address found",
 			expectedConfig: nil,
 		},
 		{
@@ -415,8 +424,53 @@ func getInstallConfigMultiHost() *agentAsset.OptionalInstallConfig {
 }
 
 func getInstallConfigSameMac() *agentAsset.OptionalInstallConfig {
+	var networkConfigSameMac = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.111.81
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  mac-address: 28:d2:44:b0:bf:01
+  name: eth0
+  state: up
+  type: ethernet
+`
 	a := getInstallConfigMultiHost()
 	a.Config.Platform.BareMetal.Hosts[1].BootMACAddress = "28:d2:44:b0:bf:01"
+	a.Config.Platform.BareMetal.Hosts[1].NetworkConfig = &apiextv1.JSON{
+		Raw: []byte(networkConfigSameMac),
+	}
+	return a
+}
+
+func getInstallConfigInvalidInterfaces() *agentAsset.OptionalInstallConfig {
+	var networkConfigSameMacSameHost = `interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.111.80
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  mac-address: 28:d2:44:b0:bf:01
+  name: eth0
+  state: up
+  type: ethernet
+- ipv4:
+    address:
+    - ip: 192.168.111.81
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  mac-address: 28:d2:44:b0:bf:01
+  name: eth0
+  state: up
+  type: ethernet
+`
+	a := getInstallConfigSingleHost()
+	a.Config.Platform.BareMetal.Hosts[0].NetworkConfig = &apiextv1.JSON{
+		Raw: []byte(networkConfigSameMacSameHost),
+	}
 	return a
 }
 
