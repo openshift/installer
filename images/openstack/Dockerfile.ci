@@ -26,17 +26,19 @@ RUN yum install --setopt=tsflags=nodocs -y gettext make git gzip util-linux glib
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-    ansible-core unzip jq nmap && \
+    python38 unzip jq nmap && \
     yum erase -y python36 && \
     yum clean all && rm -rf /var/cache/yum/*
 
+RUN python3 -m pip install --upgrade pip
+
 # ansible 2.9 is EOL in September 2023, so we need to install ansible-core and get the collections from source
 # until we have a package available.
+RUN python3 -m pip install ansible-core
 RUN ansible-galaxy collection install openstack.cloud ansible.utils community.general && \
     mkdir -p /usr/share/ansible/collections/ansible_collections && \
     cp -r /root/.ansible/collections/ansible_collections/* /usr/share/ansible/collections/ansible_collections/
 
-RUN python3 -m pip install --upgrade pip
 # ansible-core comes with python3.8 but openstacksdk comes with python3.6 so let's install them from pip.
 RUN python3 -m pip install yq openstackclient openstacksdk netaddr
 
