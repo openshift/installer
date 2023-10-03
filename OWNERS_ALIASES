@@ -150,18 +150,12 @@ aliases:
   agent-reviewers:
     - andfasano
     - bfournie
-    - celebdor
-    - dhellmann
-    - lranjbar
     - pawanpinjarkar
     - rwsu
     - zaneb
   agent-approvers:
     - andfasano
     - bfournie
-    - celebdor
-    - dhellmann
-    - lranjbar
     - pawanpinjarkar
     - rwsu
     - zaneb
