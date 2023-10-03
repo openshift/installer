@@ -273,17 +273,15 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 func TestAddHostConfig_Roles(t *testing.T) {
 	cases := []struct {
 		Name                            string
-		agentConfig                     *agentconfig.AgentConfig
+		agentHosts                      *agentconfig.AgentHosts
 		expectedNumberOfHostConfigFiles int
 	}{
 		{
 			Name: "one-host-role-defined",
-			agentConfig: &agentconfig.AgentConfig{
-				Config: &agent.Config{
-					Hosts: []agent.Host{
-						{
-							Role: "master",
-						},
+			agentHosts: &agentconfig.AgentHosts{
+				Hosts: []agent.Host{
+					{
+						Role: "master",
 					},
 				},
 			},
@@ -291,24 +289,22 @@ func TestAddHostConfig_Roles(t *testing.T) {
 		},
 		{
 			Name: "multiple-host-roles-defined",
-			agentConfig: &agentconfig.AgentConfig{
-				Config: &agent.Config{
-					Hosts: []agent.Host{
-						{
-							Role: "master",
-						},
-						{
-							Role: "master",
-						},
-						{
-							Role: "master",
-						},
-						{
-							Role: "worker",
-						},
-						{
-							Role: "worker",
-						},
+			agentHosts: &agentconfig.AgentHosts{
+				Hosts: []agent.Host{
+					{
+						Role: "master",
+					},
+					{
+						Role: "master",
+					},
+					{
+						Role: "master",
+					},
+					{
+						Role: "worker",
+					},
+					{
+						Role: "worker",
 					},
 				},
 			},
@@ -322,7 +318,7 @@ func TestAddHostConfig_Roles(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			config := &igntypes.Config{}
-			err := addHostConfig(config, tc.agentConfig)
+			err := addHostConfig(config, tc.agentHosts)
 			assert.NoError(t, err)
 			assert.Equal(t, len(config.Storage.Files), tc.expectedNumberOfHostConfigFiles)
 			for _, file := range config.Storage.Files {
