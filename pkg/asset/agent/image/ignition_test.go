@@ -643,6 +643,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 				Filename: "/cluster-manifests/agent-config.yaml",
 			},
 		},
+		&agentconfig.AgentHosts{},
 		&manifests.ExtraManifests{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
