@@ -93,7 +93,8 @@ const (
 // TerraformVariables depends on InstallConfig, Manifests,
 // and Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
-	FileList []*asset.File
+	FileList    []*asset.File
+	CachedImage string
 }
 
 var _ asset.WritableAsset = (*TerraformVariables)(nil)
@@ -989,7 +990,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			networkFailureDomainMap[fd.Name] = netObj.Reference().Value
 		}
 
-		data, err = vspheretfvars.TFVars(
+		data, t.CachedImage, err = vspheretfvars.TFVars(
 			vspheretfvars.TFVarsSources{
 				ControlPlaneConfigs:     controlPlaneConfigs,
 				ImageURL:                string(*rhcosImage),

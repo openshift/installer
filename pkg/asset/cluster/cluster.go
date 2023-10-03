@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
+	"github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
@@ -24,6 +25,7 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
+	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
@@ -119,6 +121,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	case typesopenstack.Name:
 		if err := openstack.PreTerraform(); err != nil {
+			return err
+		}
+	case typesvsphere.Name:
+		terraformVariables.Dependencies()
+		if err := vsphere.PreTerraform(terraformVariables.CachedImage, clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	}

@@ -48,7 +48,7 @@ type TFVarsSources struct {
 }
 
 // TFVars generate vSphere-specific Terraform variables
-func TFVars(sources TFVarsSources) ([]byte, error) {
+func TFVars(sources TFVarsSources) ([]byte, string, error) {
 	var err error
 	cachedImage := ""
 
@@ -57,14 +57,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if len(importOvaFailureDomainMap) > 0 {
 		cachedImage, err = cache.DownloadImageFile(sources.ImageURL)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to use cached vsphere image")
+			return nil, "", errors.Wrap(err, "failed to use cached vsphere image")
 		}
 	}
 
 	vcenterZones := convertVCentersToMap(sources.InstallConfig.Config.VSphere.VCenters)
 	datacentersFolders, err := createDatacenterFolderMap(sources.InfraID, sources.InstallConfig.Config.VSphere.FailureDomains)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	cfg := &config{
@@ -83,11 +83,17 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		logrus.Debugf("Applying static IP configs")
 		err = processGuestNetworkConfiguration(cfg, sources)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
 
-	return json.MarshalIndent(cfg, "", "  ")
+	jsonBytes, err := json.MarshalIndent(cfg, "", "  ")
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return jsonBytes, cachedImage, nil
 }
 
 func createFailureDomainMaps(failureDomains []vtypes.FailureDomain, infraID string) (map[string]vtypes.FailureDomain, map[string]vtypes.FailureDomain) {

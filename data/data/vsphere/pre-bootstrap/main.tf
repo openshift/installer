@@ -10,12 +10,14 @@ provider "vsphere" {
   allow_unverified_ssl = false
 }
 
+/*
 provider "vsphereprivate" {
   user                 = var.vsphere_vcenters[local.vcenter_key].user
   password             = var.vsphere_vcenters[local.vcenter_key].password
   vsphere_server       = var.vsphere_vcenters[local.vcenter_key].server
   allow_unverified_ssl = false
 }
+*/
 
 data "vsphere_datacenter" "datacenter" {
   for_each = var.vsphere_failure_domain_map
@@ -51,6 +53,7 @@ data "vsphere_datacenter" "folder_datacenter" {
   name     = each.value.vsphere_datacenter
 }
 
+/*
 resource "vsphere_folder" "folder" {
   for_each = var.vsphere_folders
 
@@ -60,6 +63,7 @@ resource "vsphere_folder" "folder" {
   tags          = [vsphere_tag.tag.id]
 }
 
+/*
 resource "vsphereprivate_import_ova" "import" {
   for_each = var.vsphere_import_ova_failure_domain_map
 
@@ -83,6 +87,9 @@ resource "vsphereprivate_import_ova" "import" {
   depends_on = [vsphere_folder.folder]
 }
 
+*/
+
+/*
 resource "vsphere_tag_category" "category" {
   name        = "openshift-${var.cluster_id}"
   description = "Added by openshift-install do not remove"
@@ -102,3 +109,4 @@ resource "vsphere_tag" "tag" {
   category_id = vsphere_tag_category.category.id
   description = "Added by openshift-install do not remove"
 }
+*/
