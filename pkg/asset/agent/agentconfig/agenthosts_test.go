@@ -91,7 +91,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getAgentConfigSingleHost(),
 			},
-			expectedConfig: agentHosts().hosts(agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a"))),
+			expectedConfig: agentHosts().hosts(agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint()),
 		},
 		{
 			name: "host-from-install-config",
@@ -99,7 +99,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigSingleHost(),
 				getNoHostsAgentConfig(),
 			},
-			expectedConfig: agentHosts().hosts(agentHost().name("test").role("master").interfaces(iface("boot", "28:d2:44:b0:bf:01"))),
+			expectedConfig: agentHosts().hosts(agentHost().name("test").role("master").interfaces(iface("boot", "28:d2:44:b0:bf:01")).deviceHint()),
 		},
 		{
 			name: "multi-host-from-agent-config",
@@ -108,7 +108,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getAgentConfigMultiHost(),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).networkConfig(agentNetworkConfigOne),
+				agentHost().name("test").role("master").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1a")).deviceHint().networkConfig(agentNetworkConfigOne),
 				agentHost().name("test-2").role("worker").interfaces(iface("enp3s1", "28:d2:44:d2:b2:1b")).networkConfig(agentNetworkConfigTwo)),
 		},
 		{
@@ -118,7 +118,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getNoHostsAgentConfig(),
 			},
 			expectedConfig: agentHosts().hosts(
-				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:b0:bf:01")).networkConfig(installNetworkConfigOne),
+				agentHost().name("test").role("master").interfaces(iface("eth0", "28:d2:44:b0:bf:01")).deviceHint().networkConfig(installNetworkConfigOne),
 				agentHost().name("test-2").role("worker").interfaces(iface("eth0", "28:d2:44:b0:bf:02")).networkConfig(installNetworkConfigTwo)),
 		},
 		{
@@ -154,7 +154,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 				getInstallConfigNoHostnameOrRole(),
 				getNoHostsAgentConfig(),
 			},
-			expectedConfig: agentHosts().hosts(agentHost().interfaces(iface("boot", "28:d2:44:b0:bf:01"))),
+			expectedConfig: agentHosts().hosts(agentHost().interfaces(iface("boot", "28:d2:44:b0:bf:01")).deviceHint()),
 		},
 		{
 			name: "host-roles-have-incorrect-values",
@@ -316,6 +316,9 @@ func getAgentConfigSingleHost() *AgentConfig {
 					MacAddress: "28:d2:44:d2:b2:1a",
 				},
 			},
+			RootDeviceHints: baremetal.RootDeviceHints{
+				DeviceName: "/dev/sda",
+			},
 		},
 	}
 	return a
@@ -403,6 +406,9 @@ func getInstallConfigSingleHost() *agentAsset.OptionalInstallConfig {
 			Name:           "test",
 			Role:           "master",
 			BootMACAddress: "28:d2:44:b0:bf:01",
+			RootDeviceHints: &baremetal.RootDeviceHints{
+				DeviceName: "/dev/sda",
+			},
 		},
 	}
 	return a
@@ -568,12 +574,12 @@ func (hb *HostBuilder) networkConfig(raw string) *HostBuilder {
 	return hb
 }
 
-// func (hb *HostBuilder) minimalRootDeviceHints() *HostBuilder {
-//	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
-//		DeviceName: "/dev/sda",
-//	}
-//	return hb
-// }
+func (hb *HostBuilder) deviceHint() *HostBuilder {
+	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
+		DeviceName: "/dev/sda",
+	}
+	return hb
+}
 
 // InterfacetBuilder it's a builder class to make it easier creating aiv1beta1.Interface instances
 // used in the test cases, as part of the agent.Config type.
