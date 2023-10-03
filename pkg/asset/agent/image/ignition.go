@@ -122,7 +122,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
+	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentHostsAsset.Hosts, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
 	}
@@ -512,7 +512,7 @@ func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
 }
 
 // RetrieveRendezvousIP Returns the Rendezvous IP from either AgentConfig or NMStateConfig
-func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
+func RetrieveRendezvousIP(agentConfig *agent.Config, hosts []agent.Host, nmStateConfigs []*v1beta1.NMStateConfig) (string, error) {
 	var err error
 	var rendezvousIP string
 
@@ -521,9 +521,9 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 		logrus.Debug("RendezvousIP from the AgentConfig ", rendezvousIP)
 
 	} else {
-		rendezvousIP, err = manifests.GetNodeZeroIP(agentConfig, nmStateConfigs)
+		rendezvousIP, err = manifests.GetNodeZeroIP(hosts, nmStateConfigs)
 		if err != nil {
-			return "", errors.Wrap(err, "missing rendezvousIP in agent-config, at least one host networkConfig in agent-config, or at least one NMStateConfig manifest")
+			return "", errors.Wrap(err, "missing rendezvousIP in agent-config, at least one host networkConfig, or at least one NMStateConfig manifest")
 		}
 		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	}

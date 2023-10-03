@@ -37,6 +37,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentManifestsAsset := &manifests.AgentManifests{}
 	installConfigAsset := &installconfig.InstallConfig{}
+	agentHostsAsset := &agentconfig.AgentHosts{}
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
@@ -46,6 +47,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
 	agentManifests, manifestError := assetStore.Load(agentManifestsAsset)
 	installConfig, installConfigError := assetStore.Load(installConfigAsset)
+	agentHosts, agentHostsError := assetStore.Load(agentHostsAsset)
 
 	if agentConfigError != nil {
 		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentConfigAsset.Name()))
@@ -56,8 +58,11 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	if installConfigError != nil {
 		logrus.Debug(errors.Wrapf(installConfigError, "failed to load %s", installConfigAsset.Name()))
 	}
-	if agentConfigError != nil || manifestError != nil || installConfigError != nil {
-		return nil, errors.New("failed to load AgentConfig, NMStateConfig, or InstallConfig")
+	if agentHostsError != nil {
+		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentHostsAsset.Name()))
+	}
+	if agentConfigError != nil || manifestError != nil || installConfigError != nil || agentHostsError != nil {
+		return nil, errors.New("failed to load AgentConfig, NMStateConfig, InstallConfig, or AgentHosts")
 	}
 
 	var RendezvousIP string
@@ -65,11 +70,11 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	var emptyNMStateConfigs []*v1beta1.NMStateConfig
 
 	if agentConfig != nil && agentManifests != nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
 	} else if agentConfig == nil && agentManifests != nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(&agent.Config{}, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(&agent.Config{}, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
 	} else if agentConfig != nil && agentManifests == nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, emptyNMStateConfigs)
+		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, emptyNMStateConfigs)
 	} else {
 		return nil, errors.New("both AgentConfig and NMStateConfig are empty")
 	}

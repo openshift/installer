@@ -259,7 +259,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
+			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, tc.agentConfig.Hosts, tc.nmStateConfigs)
 			if tc.expectedError != "" {
 				assert.Regexp(t, tc.expectedError, err.Error())
 			} else {

@@ -25,6 +25,17 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 		expectedConfig *AgentConfigBuilder
 	}{
 		{
+			name: "valid-config-single-node",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+bootArtifactsBaseURL: http://user-specified-pxe-infra.com`,
+			expectedFound:  true,
+			expectedConfig: agentConfig().bootArtifactsBaseURL("http://user-specified-pxe-infra.com"),
+		},
+		{
 			name: "not-yaml",
 			data: `This is not a yaml file`,
 
