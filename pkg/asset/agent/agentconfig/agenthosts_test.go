@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 const (
@@ -222,7 +222,6 @@ func TestAgentHosts_Generate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			parents := asset.Parents{}
 			parents.Add(tc.dependencies...)
 
@@ -242,8 +241,11 @@ func TestAgentHosts_Generate(t *testing.T) {
 }
 
 func getNoHostsInstallConfig() *agentAsset.OptionalInstallConfig {
-	_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
-	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
+	_, newCidr, err1 := net.ParseCIDR("192.168.111.0/24")
+	_, machineNetCidr, err2 := net.ParseCIDR("10.10.11.0/24")
+	if err1 != nil || err2 != nil {
+		return nil
+	}
 
 	return &agentAsset.OptionalInstallConfig{
 		AssetBase: installconfig.AssetBase{
@@ -255,7 +257,7 @@ func getNoHostsInstallConfig() *agentAsset.OptionalInstallConfig {
 				PullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}",
 				ControlPlane: &types.MachinePool{
 					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Replicas: pointer.Int64(3),
 					Platform: types.MachinePoolPlatform{},
 				},
 				Networking: &types.Networking{
@@ -566,28 +568,12 @@ func (hb *HostBuilder) networkConfig(raw string) *HostBuilder {
 	return hb
 }
 
-// TODO: Create BaremetalRootDeviceHintsBuilder, for the current tests not required.
-func (hb *HostBuilder) defaultRootDeviceHints() *HostBuilder {
-	falseBool := false
-	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
-		DeviceName:       "/dev/sda",
-		HCTL:             "hctl-value",
-		Model:            "model-value",
-		Vendor:           "vendor-value",
-		SerialNumber:     "serial-number-value",
-		MinSizeGigabytes: 20,
-		WWN:              "wwn-value",
-		Rotational:       &falseBool,
-	}
-	return hb
-}
-
-func (hb *HostBuilder) minimalRootDeviceHints() *HostBuilder {
-	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
-		DeviceName: "/dev/sda",
-	}
-	return hb
-}
+// func (hb *HostBuilder) minimalRootDeviceHints() *HostBuilder {
+//	hb.Host.RootDeviceHints = baremetal.RootDeviceHints{
+//		DeviceName: "/dev/sda",
+//	}
+//	return hb
+// }
 
 // InterfacetBuilder it's a builder class to make it easier creating aiv1beta1.Interface instances
 // used in the test cases, as part of the agent.Config type.
