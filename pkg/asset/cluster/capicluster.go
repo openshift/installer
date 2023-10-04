@@ -8,13 +8,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
 )
 
@@ -50,6 +49,7 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		// &quota.PlatformQuotaCheck{},
 		&password.KubeadminPassword{},
 		&capi.CAPIControlPlane{},
+		&manifests.ClusterAPI{},
 	}
 }
 
@@ -62,7 +62,11 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	capiControlPlane := &capi.CAPIControlPlane{}
-	parents.Get(clusterID, installConfig, capiControlPlane)
+	capiManifests := &manifests.ClusterAPI{}
+	parents.Get(clusterID, installConfig, capiControlPlane, capiManifests)
+
+	// Only need the objects--not the files.
+	manifests := capiManifests.Manifests
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -84,16 +88,11 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	// Apply the cluster manifests.
-	cluster := &clusterv1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "test-cluster-",
-			Namespace:    "default",
-		},
-	}
-	if err := cl.Create(context.Background(), cluster); err != nil {
-		spew.Dump("CANNOT CREATE CLUSTER", err)
-		return err
+	for _, m := range manifests {
+		if err := cl.Create(context.Background(), m.Object); err != nil {
+			logrus.Errorf("CANNOT CREATE CLUSTER", err)
+			return err
+		}
 	}
 
 	// List all namespaces in the cluster.
