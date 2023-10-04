@@ -264,6 +264,15 @@ func (a *AgentClusterInstall) Files() []*asset.File {
 	return []*asset.File{}
 }
 
+// FIPSEnabled returns whether FIPS is enabled in the cluster configuration.
+func (a *AgentClusterInstall) FIPSEnabled() bool {
+	icOverrides := agentClusterInstallInstallConfigOverrides{}
+	if err := json.Unmarshal([]byte(a.Config.Annotations[installConfigOverrides]), &icOverrides); err == nil {
+		return icOverrides.FIPS
+	}
+	return false
+}
+
 // Load returns agentclusterinstall asset from the disk.
 func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 
