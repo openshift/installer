@@ -55,10 +55,11 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 	c.LocalCP = *localControlPlane
 
 	kcArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
-
+	certDir := c.LocalCP.Env.WebhookInstallOptions.LocalServingCertDir
+	certArg := fmt.Sprintf("--webhook-cert-dir=%s", certDir)
 	// CAPI Manager
 	capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
-	capiManCommand := exec.Command(capiManagerPath, kcArg, "-v=5")
+	capiManCommand := exec.Command(capiManagerPath, kcArg, certArg, "-v=5")
 	capiManCommand.Stdout = os.Stdout
 	capiManCommand.Stderr = os.Stderr
 	err = capiManCommand.Run()
@@ -69,7 +70,7 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 
 	// AWS CAPI Provider
 	awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
-	command := exec.Command(awsManagerPath, kcArg, "-v=5")
+	command := exec.Command(awsManagerPath, kcArg, certArg, "-v=5")
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	err = command.Run()

@@ -19,7 +19,7 @@ import (
 // TODO: Add support for existing management cluster.
 type LocalControlPlane struct {
 	FileList       []*asset.File
-	env            *envtest.Environment
+	Env            *envtest.Environment
 	KubeconfigPath string //TODO: move to its own asset
 	Cfg            *rest.Config
 }
@@ -46,10 +46,9 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)
 
-	c.env = &envtest.Environment{
+	c.Env = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			"/home/padillon/work/capi/crds",
-			"/home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates",
 		},
 		AttachControlPlaneOutput: true,
 	}
@@ -68,21 +67,13 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	c.Cfg, err = c.env.Start()
+	c.Cfg, err = c.Env.Start()
 	if err != nil {
 		spew.Dump("ERROR STARTING")
 		return err
 	}
 
-	usr := envtest.User{Name: "myuser"}
-	authUsr, err := c.env.AddUser(usr, c.Cfg)
-	if err != nil {
-		return err
-	}
-	kc, err := authUsr.KubeConfig()
-	if err != nil {
-		return err
-	}
+	kc := fromEnvTestConfig(c.Cfg)
 
 	tmpfile, err := os.CreateTemp("", "installer-kubeconfig")
 	if err != nil {
@@ -112,7 +103,7 @@ func (c *LocalControlPlane) Load(f asset.FileFetcher) (found bool, err error) {
 }
 
 func (c *LocalControlPlane) Stop() {
-	c.env.Stop()
+	c.Env.Stop()
 }
 
 // fromEnvTestConfig returns a new Kubeconfig in byte form when running in envtest.
