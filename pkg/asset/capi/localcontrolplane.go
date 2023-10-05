@@ -1,9 +1,12 @@
 package capi
 
 import (
+	"fmt"
 	"os"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/davecgh/go-spew/spew"
@@ -110,4 +113,33 @@ func (c *LocalControlPlane) Load(f asset.FileFetcher) (found bool, err error) {
 
 func (c *LocalControlPlane) Stop() {
 	c.env.Stop()
+}
+
+// fromEnvTestConfig returns a new Kubeconfig in byte form when running in envtest.
+func fromEnvTestConfig(cfg *rest.Config) []byte {
+	clusterName := "envtest"
+	contextName := fmt.Sprintf("%s@%s", cfg.Username, clusterName)
+	c := api.Config{
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server:                   cfg.Host,
+				CertificateAuthorityData: cfg.CAData,
+			},
+		},
+		Contexts: map[string]*api.Context{
+			contextName: {
+				Cluster:  clusterName,
+				AuthInfo: cfg.Username,
+			},
+		},
+		AuthInfos: map[string]*api.AuthInfo{
+			cfg.Username: {
+				ClientKeyData:         cfg.KeyData,
+				ClientCertificateData: cfg.CertData,
+			},
+		},
+		CurrentContext: contextName,
+	}
+	data, _ := clientcmd.Write(c)
+	return data
 }
