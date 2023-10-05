@@ -6,6 +6,8 @@ all:
 
       # User-provided values
       os_subnet_range: '10.0.0.0/16'
+      # uncomment for dual stack
+      # os_subnet6_range: 'd2e:6f44:5dd8:c956::/64'
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
