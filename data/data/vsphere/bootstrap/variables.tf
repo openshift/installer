@@ -12,7 +12,3 @@ variable "control_plane_moids" {
   type    = list(string)
   default = []
 }
-
-variable "tags" {
-  type = list(any)
-}

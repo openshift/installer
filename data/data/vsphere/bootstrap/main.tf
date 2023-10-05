@@ -33,6 +33,15 @@ data "vsphere_virtual_machine" "template" {
   datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
 }
 
+data "vsphere_tag_category" "category" {
+  name = "openshift-${var.cluster_id}"
+}
+
+data "vsphere_tag" "tag" {
+  name        = var.cluster_id
+  category_id = data.vsphere_tag_category.category.id
+}
+
 resource "vsphere_virtual_machine" "vm_bootstrap" {
   count = 1
 
@@ -48,7 +57,7 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   annotation                  = local.description
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"
-  tags                        = var.tags
+  tags                        = [data.vsphere_tag.tag.id]
   firmware                    = "efi"
 
   network_interface {
