@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}

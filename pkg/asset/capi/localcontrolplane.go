@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -46,10 +47,18 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)
 
+	// Create a temporary directory to unpack the cluster-api assets
+	// and use it as the working directory for the envtest environment.
+	dir, err := os.MkdirTemp("", "openshift-local-control-plane")
+	if err != nil {
+		return err
+	}
+	if err := data.Unpack(dir, "/cluster-api"); err != nil {
+		return err
+	}
+
 	c.Env = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			"/home/padillon/work/capi/crds",
-		},
+		CRDDirectoryPaths:        []string{dir},
 		AttachControlPlaneOutput: true,
 	}
 
