@@ -26,6 +26,26 @@ copy_terraform_to_mirror() {
   cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
+copy_cluster_api_to_mirror() {
+  TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
+
+  # Clean the mirror, but preserve the README file.
+  rm -rf "${PWD}"/pkg/cluster-api/mirror/*/
+
+  # Copy local terraform providers into data
+  find "${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/" -maxdepth 1 -name "cluster-api-provider-*" -exec bash -c '
+      providerName="$(basename "$1" | cut -d '-' -f 4 | cut -d '.' -f 1)"
+      targetOSArch="$2"
+      dstDir="${PWD}/pkg/cluster-api/mirror/openshift/local/$providerName"
+      mkdir -p "$dstDir"
+      echo "Copying $providerName provider to mirror"
+      cp "$1" "$dstDir/cluster-api-provider-${providerName}_${targetOSArch}"
+    ' shell {} "${TARGET_OS_ARCH}" \;
+
+  mkdir -p "${PWD}/pkg/cluster-api/mirror/cluster-api/"
+  cp "${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/cluster-api" "${PWD}/pkg/cluster-api/mirror/cluster-api/"
+}
+
 minimum_go_version=1.20
 current_go_version=$(go version | cut -d " " -f 3)
 
@@ -37,10 +57,15 @@ fi
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
-make -C terraform all
+# make -C terraform all
 
 # Copy terraform parts to embedded mirror.
-copy_terraform_to_mirror
+# copy_terraform_to_mirror
+
+# build cluster-api binaries before setting environment variables since it messes up make
+make -C cluster-api all
+
+copy_cluster_api_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
