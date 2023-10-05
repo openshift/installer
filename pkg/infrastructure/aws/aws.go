@@ -72,7 +72,6 @@ func (a AWSInfraProvider) ExtractHostAddresses(directory string, ic *types.Insta
 }
 
 func normalAWSDestroy(a AWSInfraProvider, directory string, varFiles []string) error {
-	panic("not implemented")
 	return nil
 }
 
