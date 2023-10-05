@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -128,7 +129,10 @@ func PreTerraform(cachedImage string, clusterID string, installConfig *installco
 		dcFolders, err := dc.Folders(vconn.Context)
 
 		folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
-		if fd.Topology.Folder != "" {
+
+		// we must set the Folder to the infraId somewhere, we will need to remove that.
+		// if we are overwriting folderPath it needs to have a slash (path)
+		if strings.Contains(fd.Topology.Folder, "/") {
 			folderPath = fd.Topology.Folder
 		}
 
