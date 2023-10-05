@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/govc/importx"
@@ -17,6 +18,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/govmomi/vapi/rest"
+	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
@@ -39,6 +41,7 @@ type VCenterConnection struct {
 }
 
 func getVCenterClient(uri, username, password string) (*VCenterConnection, error) {
+	logrus.Infof("In getVCenterClient")
 	ctx := context.Background()
 
 	connection := &VCenterConnection{
@@ -95,6 +98,7 @@ func Metadata(config *installertypes.InstallConfig) *typesvsphere.Metadata {
 }
 
 func PreTerraform(cachedImage string, clusterID string, installConfig *installconfig.InstallConfig) error {
+	logrus.Infof("In PreTerraform")
 	vconn, err := getVCenterClient(
 		installConfig.Config.VSphere.VCenters[0].Server,
 		installConfig.Config.VSphere.VCenters[0].Username,
@@ -105,13 +109,18 @@ func PreTerraform(cachedImage string, clusterID string, installConfig *installco
 	}
 	defer vconn.Logout()
 
-	// before the ova is uploaded we need to create
-	// oh and the folder...
+	categoryId, err := createTagCategory(vconn, clusterID)
+	if err != nil {
+		return err
+	}
+
+	tagId, err := createTag(vconn, clusterID, categoryId)
+
+	if err != nil {
+		return err
+	}
 
 	for _, fd := range installConfig.Config.VSphere.FailureDomains {
-		//createTagCategory(rest)
-		//createTag(rest)
-
 		dc, err := vconn.Finder.Datacenter(vconn.Context, fd.Topology.Datacenter)
 		if err != nil {
 			return err
@@ -121,14 +130,13 @@ func PreTerraform(cachedImage string, clusterID string, installConfig *installco
 		folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
 		if fd.Topology.Folder != "" {
 			folderPath = fd.Topology.Folder
-
 		}
 
 		folder, err := createFolder(folderPath, vconn)
 		if err != nil {
 			return err
 		}
-		err = importRhcosOva(vconn, folder, cachedImage, clusterID, fd)
+		err = importRhcosOva(vconn, folder, cachedImage, clusterID, tagId, string(installConfig.Config.VSphere.DiskType), fd)
 
 		if err != nil {
 			return err
@@ -139,6 +147,7 @@ func PreTerraform(cachedImage string, clusterID string, installConfig *installco
 }
 
 func createFolder(fullpath string, vconn *VCenterConnection) (*object.Folder, error) {
+	logrus.Infof("In createFolder")
 	dir := path.Dir(fullpath)
 	base := path.Base(fullpath)
 
@@ -164,18 +173,40 @@ func createFolder(fullpath string, vconn *VCenterConnection) (*object.Folder, er
 	return folder, err
 }
 
-func createTagCategory(vconn *VCenterConnection, clusterId string, failureDomain typesvsphere.FailureDomain) error {
+func createTagCategory(vconn *VCenterConnection, clusterId string) (string, error) {
+	logrus.Infof("In createTagCategory")
+	categoryName := fmt.Sprintf("openshift-%s", clusterId)
 
-	// why is this file missing from the branch?
-	return nil
+	category := tags.Category{
+		Name:        categoryName,
+		Description: "Added by openshift-install do not remove",
+		Cardinality: "SINGLE",
+		AssociableTypes: []string{
+			"VirtualMachine",
+			"ResourcePool",
+			"Folder",
+			"Datastore",
+			"StoragePod",
+		},
+	}
+
+	return tags.NewManager(vconn.RestClient).CreateCategory(vconn.Context, &category)
 }
 
-func createTag(vconn *VCenterConnection, clusterId string, failureDomain typesvsphere.FailureDomain) error {
+func createTag(vconn *VCenterConnection, clusterId, categoryId string) (string, error) {
+	logrus.Infof("In createTag")
 
-	return nil
+	tag := tags.Tag{
+		Description: "Added by openshift-install do not remove",
+		Name:        clusterId,
+		CategoryID:  categoryId,
+	}
+
+	return tags.NewManager(vconn.RestClient).CreateTag(vconn.Context, &tag)
 }
 
-func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage, clusterId string, failureDomain typesvsphere.FailureDomain) error {
+func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage, clusterId, tagId, diskProvisioningType string, failureDomain typesvsphere.FailureDomain) error {
+	logrus.Infof("In importRhcosOva")
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterId, failureDomain.Region, failureDomain.Zone)
 
 	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: cachedImage}}
@@ -244,21 +275,6 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 		EntityName:     name,
 		NetworkMapping: networkMappings,
 	}
-	/*
-		switch {
-		case "":
-			// Disk provisioning type will be set according to the default storage policy of vsphere.
-		case "thin":
-			cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThin)
-		case "thick":
-			cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeThick)
-		case "eagerZeroedThick":
-			cisp.DiskProvisioning = string(types.OvfCreateImportSpecParamsDiskProvisioningTypeEagerZeroedThick)
-		default:
-			return errors.Errorf("Disk provisioning type %q is not supported.", diskType)
-		}
-
-	*/
 
 	m := ovf.NewManager(vconn.Client.Client)
 	spec, err := m.CreateImportSpec(vconn.Context,
@@ -322,11 +338,16 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 	if err != nil {
 		return errors.Errorf("failed to mark vm as template: %s", err)
 	}
+	err = attachTag(vconn, vm.Reference().Value, tagId)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func findAvailableHostSystems(vconn *VCenterConnection, clusterHostSystems []*object.HostSystem) (*object.HostSystem, error) {
+	logrus.Infof("In findAvailableHostSystems")
 	var hostSystemManagedObject mo.HostSystem
 	for _, hostObj := range clusterHostSystems {
 		err := hostObj.Properties(vconn.Context, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
@@ -371,6 +392,7 @@ func findAvailableHostSystems(vconn *VCenterConnection, clusterHostSystems []*ob
 // resourceVspherePrivateImportOvaCreate and upload functions
 // See: https://github.com/vmware/govmomi/blob/cc10a0758d5b4d4873388bcea417251d1ad03e42/govc/importx/ovf.go#L196-L324
 func upload(ctx context.Context, archive *importx.ArchiveFlag, lease *nfc.Lease, item nfc.FileItem) error {
+	logrus.Infof("In upload")
 	file := item.Path
 
 	f, size, err := archive.Open(file)
@@ -386,22 +408,18 @@ func upload(ctx context.Context, archive *importx.ArchiveFlag, lease *nfc.Lease,
 	return lease.Upload(ctx, item, f, opts)
 }
 
-/*
-func attachTag(rest *rest.Client) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
-	defer cancel()
-	tagManager := tags.NewManager(rest)
+func attachTag(vconn *VCenterConnection, vmMoRefValue, tagId string) error {
+	logrus.Infof("In attachTag")
+	tagManager := tags.NewManager(vconn.RestClient)
 	moRef := types.ManagedObjectReference{
-		Value: d.Id(),
+		Value: vmMoRefValue,
 		Type:  "VirtualMachine",
 	}
 
-	err := tagManager.AttachTag(ctx, d.Get("tag").(string), moRef)
+	err := tagManager.AttachTag(vconn.Context, tagId, moRef)
 
 	if err != nil {
 		return err
 	}
 	return nil
 }
-
-*/
