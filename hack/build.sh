@@ -36,11 +36,15 @@ fi
 
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
-# build terraform binaries before setting environment variables since it messes up make
-make -C terraform all
 
-# Copy terraform parts to embedded mirror.
-copy_terraform_to_mirror
+if ! (echo "${TAGS}" | grep -q 'altinfra')
+then
+  # build terraform binaries before setting environment variables since it messes up make
+  make -C terraform all
+
+  # Copy terraform parts to embedded mirror.
+  copy_terraform_to_mirror
+fi
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
