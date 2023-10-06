@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
@@ -69,7 +70,11 @@ func Destroy(dir string) (err error) {
 		stateFilePathInInstallDir := filepath.Join(dir, fmt.Sprintf("terraform.%s.tfstate", stage.Name()))
 		stateFilePathInTempDir := filepath.Join(tempDir, "terraform.tfstate")
 		if err := copy(stateFilePathInInstallDir, stateFilePathInTempDir); err != nil {
-			return errors.Wrap(err, "failed to copy state file to the temporary directory")
+			if os.IsNotExist(err) {
+				logrus.Errorf("ignoring copying tf state file %s to tmp dir", stateFilePathInInstallDir)
+			} else {
+				return errors.Wrap(err, "failed to copy state file to the temporary directory")
+			}
 		}
 
 		targetVarFiles := make([]string, 0, len(varFiles))
@@ -83,6 +88,10 @@ func Destroy(dir string) (err error) {
 						continue
 					}
 				}
+				if os.IsNotExist(err) {
+					logrus.Errorf("ignoring copying cluster tfvars file %s", filename)
+					continue
+				}
 				return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
 			}
 			targetVarFiles = append(targetVarFiles, targetPath)
@@ -92,7 +101,11 @@ func Destroy(dir string) (err error) {
 			return err
 		}
 		if err := copy(stateFilePathInTempDir, stateFilePathInInstallDir); err != nil {
-			return errors.Wrap(err, "failed to copy state file from the temporary directory")
+			if os.IsNotExist(err) {
+				logrus.Errorf("ignoring copying tf state file %s from tmp dir", stateFilePathInTempDir)
+			} else {
+				return errors.Wrap(err, "failed to copy state file from the temporary directory")
+			}
 		}
 	}
 
