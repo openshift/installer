@@ -70,18 +70,6 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	// Create a temporary directory to unpack the cluster-api binaries.
-	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
-	if err != nil {
-		return err
-	}
-	if err := providers.UnpackClusterAPIBinary(binDir); err != nil {
-		return err
-	}
-	if err := providers.AWS.Extract(binDir); err != nil {
-		return err
-	}
-
 	kubeconfigArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
 
 	//
@@ -107,7 +95,7 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 
 		capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
 		if capiManagerPath == "" {
-			capiManagerPath = fmt.Sprintf("%s/cluster-api", binDir)
+			capiManagerPath = fmt.Sprintf("%s/cluster-api", localControlPlane.BinDir)
 		}
 		cmd := exec.Command(capiManagerPath,
 			kubeconfigArg,
@@ -151,7 +139,7 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 
 		awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
 		if awsManagerPath == "" {
-			awsManagerPath = fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(binDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH)
+			awsManagerPath = fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH)
 		}
 		cmd := exec.Command(awsManagerPath,
 			kubeconfigArg,

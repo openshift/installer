@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	providers "github.com/openshift/installer/pkg/cluster-api"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -27,6 +28,7 @@ import (
 type LocalControlPlane struct {
 	FileList       []*asset.File
 	Env            *envtest.Environment
+	BinDir         string
 	KubeconfigPath string //TODO: move to its own asset
 	Cfg            *rest.Config
 }
@@ -66,17 +68,34 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		AttachControlPlaneOutput: true,
 	}
 
-	etcd := os.Getenv("OPENSHIFT_INSTALL_ETCD")
-	api := os.Getenv("OPENSHIFT_INSTALL_API")
-	kubectl := os.Getenv("OPENSHIFT_INSTALL_KUBECTL")
+	// Create a temporary directory to unpack the cluster-api binaries.
+	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
+	if err != nil {
+		return err
+	}
+	c.BinDir = binDir
+	if err := providers.UnpackClusterAPIBinary(binDir); err != nil {
+		return err
+	}
+	if err := providers.UnpackEnvtestBinaries(binDir); err != nil {
+		return err
+	}
+	if err := providers.AWS.Extract(binDir); err != nil {
+		return err
+	}
 
+	api := os.Getenv("OPENSHIFT_INSTALL_API")
+	if api == "" {
+		api = fmt.Sprintf("%s/kube-apiserver", binDir)
+	}
 	if err := os.Setenv("TEST_ASSET_KUBE_APISERVER", api); err != nil {
 		return err
 	}
-	if err := os.Setenv("TEST_ASSET_ETCD", etcd); err != nil {
-		return err
+	etcd := os.Getenv("OPENSHIFT_INSTALL_ETCD")
+	if etcd == "" {
+		etcd = fmt.Sprintf("%s/etcd", binDir)
 	}
-	if err := os.Setenv("TEST_ASSET_KUBECTL", kubectl); err != nil {
+	if err := os.Setenv("TEST_ASSET_ETCD", etcd); err != nil {
 		return err
 	}
 

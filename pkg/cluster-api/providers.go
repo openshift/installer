@@ -103,3 +103,12 @@ func UnpackClusterAPIBinary(dir string) error {
 	}
 	return unpack("mirror/cluster-api", dir)
 }
+
+// UnpackEnvtestBinaries unpacks the envtest binaries from the embedded data so that it can be run to create the
+// infrastructure for the cluster.
+func UnpackEnvtestBinaries(dir string) error {
+	if err := os.MkdirAll(dir, 0777); err != nil {
+		return err
+	}
+	return unpack("mirror/envtest", dir)
+}

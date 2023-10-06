@@ -46,6 +46,32 @@ copy_cluster_api_to_mirror() {
   cp "${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/cluster-api" "${PWD}/pkg/cluster-api/mirror/cluster-api/"
 }
 
+envtest_k8s_version="1.28.0"
+copy_envtest_bins_to_mirror() {
+  bucket="https://storage.googleapis.com/kubebuilder-tools"
+  envtest_arch=$(go env GOOS)-$(go env GOARCH)
+  tar_file="kubebuilder-tools-${envtest_k8s_version}-${envtest_arch}.tar.gz"
+  # Download the tar.gz in the mirror directory and unpack it.
+  envtest_bin_dir="${PWD}/pkg/cluster-api/mirror/envtest"
+  mkdir -p "${envtest_bin_dir}"
+  # Check if the kube-apiserver exists, if so, try to run it and check the version.
+  if [ -f "${envtest_bin_dir}/kube-apiserver" ]; then
+    version=$("${envtest_bin_dir}/kube-apiserver" --version)
+    if [ "${version}" = "Kubernetes v${envtest_k8s_version}" ]; then
+      echo "envtest binaries already exist and are the correct version @v${envtest_k8s_version}"
+      return
+    fi
+  fi
+  dst="${envtest_bin_dir}/${tar_file}"
+  # Download the tar file if it doesn't exist and unpack it in the mirror directory.
+  echo "Downloading envtest binaries"
+  curl -fL "${bucket}/${tar_file}" -o "${dst}"
+  echo "Copying envtest binaries @v${envtest_k8s_version} to mirror"
+  tar -C "${envtest_bin_dir}" -xzvf "${dst}" --strip-components=2
+  # Cleanup the tar file.
+  rm "${dst}"
+}
+
 minimum_go_version=1.20
 current_go_version=$(go version | cut -d " " -f 3)
 
@@ -66,6 +92,7 @@ MODE="${MODE:-release}"
 # make -C cluster-api all
 
 # copy_cluster_api_to_mirror
+copy_envtest_bins_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
