@@ -68,13 +68,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
 
-	if c.SSHKey != "" {
-		if c.FIPS == true {
-			allErrs = append(allErrs, validateFIPSconfig(c)...)
-		} else {
-			if err := validate.SSHPublicKey(c.SSHKey); err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
-			}
+	if c.FIPS {
+		allErrs = append(allErrs, validateFIPSconfig(c)...)
+	} else if c.SSHKey != "" {
+		if err := validate.SSHPublicKey(c.SSHKey); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
 		}
 	}
 
@@ -990,14 +988,16 @@ func validateIPProxy(proxy string, n *types.Networking, fldPath *field.Path) fie
 // for ssh keys on FIPS.
 func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	sshParsedKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(c.SSHKey))
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("Fatal error trying to parse configured public key: %s", err)))
-	} else {
-		sshKeyType := sshParsedKey.Type()
-		re := regexp.MustCompile(`^ecdsa-sha2-nistp\d{3}$|^ssh-rsa$`)
-		if !re.MatchString(sshKeyType) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
+	if c.SSHKey != "" {
+		sshParsedKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(c.SSHKey))
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("Fatal error trying to parse configured public key: %s", err)))
+		} else {
+			sshKeyType := sshParsedKey.Type()
+			re := regexp.MustCompile(`^ecdsa-sha2-nistp\d{3}$|^ssh-rsa$`)
+			if !re.MatchString(sshKeyType) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
+			}
 		}
 	}
 	return allErrs
