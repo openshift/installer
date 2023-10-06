@@ -8,7 +8,6 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -33,7 +32,7 @@ func GetDNSZone() (*Zone, error) {
 	// TODO(mjturek): Offer private zones (IBM DNS) when deploying a private cluster
 	publicZones, err := client.GetDNSZones(ctx, types.ExternalPublishingStrategy)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not retrieve base domains")
+		return nil, fmt.Errorf("could not retrieve base domains: %w", err)
 	}
 
 	var options []string
@@ -60,12 +59,12 @@ func GetDNSZone() (*Zone, error) {
 			choice := ans.(core.OptionAnswer).Value
 			i := sort.SearchStrings(options, choice)
 			if i == len(publicZones) || options[i] != choice {
-				return errors.Errorf("invalid base domain %q", choice)
+				return fmt.Errorf("invalid base domain %q", choice)
 			}
 			return nil
 		}),
 	); err != nil {
-		return nil, errors.Wrap(err, "failed UserInput")
+		return nil, fmt.Errorf("failed UserInput: %w", err)
 	}
 
 	return optionToZoneMap[zoneChoice], nil

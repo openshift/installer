@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -33,7 +33,7 @@ func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 
 	resources, _, err := o.vpcSvc.ListLoadBalancersWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list load balancers")
+		return nil, fmt.Errorf("failed to list load balancers: %w", err)
 	}
 
 	var foundOne = false
@@ -111,7 +111,7 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 
 	_, err = o.vpcSvc.DeleteLoadBalancerWithContext(ctx, deleteOptions)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete load balancer %s", item.name)
+		return fmt.Errorf("failed to delete load balancer %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Load Balancer %q", item.name)
@@ -167,7 +167,7 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyLoadBalancers: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyLoadBalancers: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyLoadBalancers: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

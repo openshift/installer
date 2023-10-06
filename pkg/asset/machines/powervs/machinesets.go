@@ -4,7 +4,6 @@ package powervs
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -37,7 +36,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	var machinesets []*machineapi.MachineSet
 	provider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create provider")
+		return nil, fmt.Errorf("failed to create provider: %w", err)
 	}
 
 	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)

@@ -2,12 +2,12 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -35,7 +35,7 @@ func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 
 	images, err := o.imageClient.GetAll()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list images")
+		return nil, fmt.Errorf("failed to list images: %w", err)
 	}
 
 	var foundOne = false
@@ -93,7 +93,7 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 
 	err = o.imageClient.Delete(item.id)
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete image %s", item.name)
+		return fmt.Errorf("failed to delete image %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Image %q", item.name)
@@ -152,7 +152,7 @@ func (o *ClusterUninstaller) destroyImages() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyImages: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyImages: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyImages: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{
