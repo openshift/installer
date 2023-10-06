@@ -71,17 +71,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 	platform := installConfig.Config.Platform.Name()
 
-	ns := &v1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: capiGuestsNamespace,
-		},
-	}
-	nsFilename := "00_openshift-cluster-api-guests-ns.yaml"
-	c.Manifests = append(c.Manifests, Manifest{ns, nsFilename})
-
 	cluster := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",

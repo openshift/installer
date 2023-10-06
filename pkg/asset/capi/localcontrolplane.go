@@ -3,6 +3,7 @@ package capi
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	providers "github.com/openshift/installer/pkg/cluster-api"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -106,19 +107,41 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 	}
 
 	kc := fromEnvTestConfig(c.Cfg)
-
-	tmpfile, err := os.CreateTemp("", "installer-kubeconfig")
-	if err != nil {
-		return err
+	{
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		dir := filepath.Join(wd, "/envtest")
+		if err := os.MkdirAll(dir, 0766); err != nil {
+			return err
+		}
+		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
+		if err != nil {
+			return err
+		}
+		if _, err := kf.Write(kc); err != nil {
+			return err
+		}
+		if err := kf.Close(); err != nil {
+			return err
+		}
+		c.KubeconfigPath = kf.Name()
 	}
 
-	if _, err := tmpfile.Write(kc); err != nil {
-		return err
-	}
-	if err := tmpfile.Close(); err != nil {
-		return err
-	}
-	c.KubeconfigPath = tmpfile.Name()
+	// tmpfile, err := os.CreateTemp("", "installer-kubeconfig")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if _, err := tmpfile.Write(kc); err != nil {
+	// 	return err
+	// }
+	// if err := tmpfile.Close(); err != nil {
+	// 	return err
+	// }
+
+	// c.KubeconfigPath = tmpfile.Name()
 	spew.Dump("KUBECONFIG =" + c.KubeconfigPath)
 
 	return nil

@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -93,6 +94,8 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	}
 	manifests = append(manifests, capiMachines.Machines...)
 
+	spew.Dump("MANIFESTS", manifests)
+
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
 	}
@@ -113,6 +116,16 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
+	// Create the namespace for the cluster.
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "openshift-cluster-api-guests",
+		},
+	}
+	if err := cl.Create(context.Background(), ns); err != nil && !apierrors.IsAlreadyExists(err) {
+		return fmt.Errorf("failed to create namespace: %w", err)
+	}
+
 	// Gather the ignition files, and store them in a secret.
 	{
 		masterIgn := string(masterIgnAsset.Files()[0].Data)
@@ -123,7 +136,8 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 		masterSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+				Namespace: ns.Name,
 			},
 			Data: map[string][]byte{
 				"format": []byte("ignition"),
@@ -136,7 +150,8 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 		bootstrapSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+				Namespace: ns.Name,
 			},
 			Data: map[string][]byte{
 				"format": []byte("ignition"),
@@ -150,9 +165,11 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	for _, m := range manifests {
-		if err := cl.Create(context.Background(), m); err != nil {
-			return fmt.Errorf("failed to create manifest: %w", err)
-		}
+		m.SetNamespace(ns.Name)
+		logrus.Infof("Creating manifest %s, namespace=%s name=%s", m.GetObjectKind().GroupVersionKind(), m.GetNamespace(), m.GetName())
+		// if err := cl.Create(context.Background(), m); err != nil {
+		// 	return fmt.Errorf("failed to create manifest: %w", err)
+		// }
 	}
 
 	// List all namespaces in the cluster.
@@ -164,7 +181,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		spew.Dump(n.Name)
 	}
 
-	time.Sleep(10 * time.Minute)
+	time.Sleep(20 * time.Minute)
 
 	capiControlPlane.LocalCP.Stop()
 	panic("not implemented")

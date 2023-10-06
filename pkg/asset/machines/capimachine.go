@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 )
@@ -73,6 +76,8 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 
 	pool := *ic.ControlPlane
 	var err error
+
+	spew.Dump("PLATFORM", ic.Platform.Name())
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -148,6 +153,20 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 		for _, mac := range awsMachines {
 			m.Machines = append(m.Machines, mac)
 		}
+
+		bootstrapMachine, err := aws.AWSMachines(clusterID.InfraID, installConfig.Config.Platform.AWS.Region,
+			subnets,
+			&types.MachinePool{
+				Name:           "bootstrap",
+				Replicas:       pointer.Int64(1),
+				Platform:       pool.Platform,
+				Hyperthreading: pool.Hyperthreading,
+				Architecture:   pool.Architecture,
+			},
+			"bootstrap",
+			installConfig.Config.Platform.AWS.UserTags,
+		)
+		m.Machines = append(m.Machines, bootstrapMachine[0])
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -167,6 +186,8 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		}
 	}
+
+	spew.Dump("RETURNING CAPIMACHINE", m.Machines)
 	return nil
 }
 
