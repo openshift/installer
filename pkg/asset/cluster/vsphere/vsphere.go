@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/url"
@@ -24,6 +25,7 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
 
+	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	installertypes "github.com/openshift/installer/pkg/types"
 	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
@@ -98,8 +100,11 @@ func Metadata(config *installertypes.InstallConfig) *typesvsphere.Metadata {
 	}
 }
 
-func PreTerraform(cachedImage string, clusterID string, installConfig *installconfig.InstallConfig) error {
+func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachines []machinev1beta1.Machine,
+	clusterID string, installConfig *installconfig.InstallConfig) error {
 	logrus.Infof("In PreTerraform")
+
+	vmTemplateMap := make(map[string]*object.VirtualMachine)
 	vconn, err := getVCenterClient(
 		installConfig.Config.VSphere.VCenters[0].Server,
 		installConfig.Config.VSphere.VCenters[0].Username,
@@ -140,11 +145,51 @@ func PreTerraform(cachedImage string, clusterID string, installConfig *installco
 		if err != nil {
 			return err
 		}
-		err = importRhcosOva(vconn, folder, cachedImage, clusterID, tagId, string(installConfig.Config.VSphere.DiskType), fd)
+		vmTemplate, err := importRhcosOva(vconn, folder, cachedImage, clusterID, tagId, string(installConfig.Config.VSphere.DiskType), fd)
+
+		vmTemplateMap[vmTemplate.Name()] = vmTemplate
 
 		if err != nil {
 			return err
 		}
+
+	}
+	encodedMasterIgn := base64.StdEncoding.EncodeToString([]byte(masterIgn))
+	encodedBootstrapIgn := base64.StdEncoding.EncodeToString([]byte(boostrapIgn))
+
+	controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlaneMachines))
+
+	// append another control plane machines for bootstrap...
+	controlPlaneMachines = append(controlPlaneMachines, controlPlaneMachines[0])
+
+	for i, c := range controlPlaneMachines {
+		encodedIgnition := encodedMasterIgn
+		controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+
+		if i == 0 {
+			encodedIgnition = encodedBootstrapIgn
+
+		}
+
+		task, err := clone(vconn, vmTemplateMap[controlPlaneConfigs[i].Template], controlPlaneConfigs[i], encodedIgnition)
+		if err != nil {
+			return err
+		}
+		//err = task.Wait(vconn.Context)
+		taskInfo, err := task.WaitForResult(vconn.Context, nil)
+		if err != nil {
+			return err
+		}
+
+		vmMoRef := taskInfo.Result.(types.ManagedObjectReference)
+		vm := object.NewVirtualMachine(vconn.Client.Client, vmMoRef)
+
+		err = attachTag(vconn, vmMoRef.Value, tagId)
+		if err != nil {
+			return err
+		}
+		vm.PowerOn(vconn.Context)
+
 	}
 
 	return nil
@@ -209,7 +254,7 @@ func createTag(vconn *VCenterConnection, clusterId, categoryId string) (string, 
 	return tags.NewManager(vconn.RestClient).CreateTag(vconn.Context, &tag)
 }
 
-func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage, clusterId, tagId, diskProvisioningType string, failureDomain typesvsphere.FailureDomain) error {
+func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage, clusterId, tagId, diskProvisioningType string, failureDomain typesvsphere.FailureDomain) (*object.VirtualMachine, error) {
 	logrus.Infof("In importRhcosOva")
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterId, failureDomain.Region, failureDomain.Zone)
 
@@ -232,30 +277,30 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 			err = fmt.Errorf("%s, %w", err.Error(), cerr)
 		}
 
-		return errors.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %s", cachedImage, h.Sum(nil), written, err)
+		return nil, errors.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %s", cachedImage, h.Sum(nil), written, err)
 	}
 
 	ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)
 	if err != nil {
-		return errors.Errorf("failed to parse ovf: %s", err)
+		return nil, errors.Errorf("failed to parse ovf: %s", err)
 	}
 
 	// The RHCOS OVA only has one network defined by default
 	// The OVF envelope defines this.  We need a 1:1 mapping
 	// between networks with the OVF and the host
 	if len(ovfEnvelope.Network.Networks) != 1 {
-		return errors.Errorf("Expected the OVA to only have a single network adapter")
+		return nil, errors.Errorf("Expected the OVA to only have a single network adapter")
 	}
 
 	cluster, err := vconn.Finder.ClusterComputeResource(vconn.Context, failureDomain.Topology.ComputeCluster)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	clusterHostSystems, err := cluster.Hosts(vconn.Context)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resourcePool, err := vconn.Finder.ResourcePool(vconn.Context, failureDomain.Topology.ResourcePool)
 
@@ -263,7 +308,7 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 
 	networkRef, err := vconn.Finder.Network(vconn.Context, networkPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	datastore, err := vconn.Finder.Datastore(vconn.Context, failureDomain.Topology.Datastore)
 
@@ -288,32 +333,32 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 		cisp)
 
 	if err != nil {
-		return errors.Errorf("failed to create import spec: %s", err)
+		return nil, errors.Errorf("failed to create import spec: %s", err)
 	}
 	if spec.Error != nil {
-		return errors.New(spec.Error[0].LocalizedMessage)
+		return nil, errors.New(spec.Error[0].LocalizedMessage)
 	}
 
 	hostSystem, err := findAvailableHostSystems(vconn, clusterHostSystems)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	//Creates a new entity in this resource pool.
 	//See VMware vCenter API documentation: Managed Object - ResourcePool - ImportVApp
 	lease, err := resourcePool.ImportVApp(vconn.Context, spec.ImportSpec, folder, hostSystem)
 
 	if err != nil {
-		return errors.Errorf("failed to import vapp: %s", err)
+		return nil, errors.Errorf("failed to import vapp: %s", err)
 	}
 
 	info, err := lease.Wait(vconn.Context, spec.FileItem)
 	if err != nil {
-		return errors.Errorf("failed to lease wait: %s", err)
+		return nil, errors.Errorf("failed to lease wait: %s", err)
 	}
 
 	if err != nil {
-		return errors.Errorf("failed to attach tag to virtual machine: %s", err)
+		return nil, errors.Errorf("failed to attach tag to virtual machine: %s", err)
 	}
 
 	u := lease.StartUpdater(vconn.Context, info)
@@ -324,30 +369,30 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 		// available with the required network and datastore.
 		err = upload(vconn.Context, archive, lease, i)
 		if err != nil {
-			return errors.Errorf("failed to upload: %s", err)
+			return nil, errors.Errorf("failed to upload: %s", err)
 		}
 	}
 
 	err = lease.Complete(vconn.Context)
 	if err != nil {
-		return errors.Errorf("failed to lease complete: %s", err)
+		return nil, errors.Errorf("failed to lease complete: %s", err)
 	}
 
 	vm := object.NewVirtualMachine(vconn.Client.Client, info.Entity)
 	if vm == nil {
-		return fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
+		return nil, fmt.Errorf("error VirtualMachine not found, managed object id: %s", info.Entity.Value)
 	}
 
 	err = vm.MarkAsTemplate(vconn.Context)
 	if err != nil {
-		return errors.Errorf("failed to mark vm as template: %s", err)
+		return nil, errors.Errorf("failed to mark vm as template: %s", err)
 	}
 	err = attachTag(vconn, vm.Reference().Value, tagId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return vm, nil
 }
 
 func findAvailableHostSystems(vconn *VCenterConnection, clusterHostSystems []*object.HostSystem) (*object.HostSystem, error) {
@@ -358,35 +403,11 @@ func findAvailableHostSystems(vconn *VCenterConnection, clusterHostSystems []*ob
 		if err != nil {
 			return nil, err
 		}
-
-		// Skip all hosts that are in maintenance mode.
 		if hostSystemManagedObject.Runtime.InMaintenanceMode {
 			continue
 		}
 
 		return hostObj, nil
-
-		// these checks should not be here, if anything they should be in validation
-
-		/*
-			for _, dsMoRef := range hostSystemManagedObject.Datastore {
-
-				if importOvaParams.Datastore.Reference().Value == dsMoRef.Value {
-					foundDatastore = true
-					break
-				}
-			}
-			for _, nMoRef := range hostSystemManagedObject.Network {
-				if importOvaParams.Network.Reference().Value == nMoRef.Value {
-					foundNetwork = true
-					break
-				}
-			}
-
-			if foundDatastore && foundNetwork {
-				return importOvaParams, nil
-			}
-		*/
 	}
 
 	return nil, errors.New("all hosts unavailable")
@@ -426,4 +447,159 @@ func attachTag(vconn *VCenterConnection, vmMoRefValue, tagId string) error {
 		return err
 	}
 	return nil
+}
+
+const (
+	GuestInfoIgnitionData     = "guestinfo.ignition.config.data"
+	GuestInfoIgnitionEncoding = "guestinfo.ignition.config.data.encoding"
+	GuestInfoHostname         = "guestinfo.hostname"
+
+	// going to ignore for now...
+	GuestInfoNetworkKargs = "guestinfo.afterburn.initrd.network-kargs"
+	StealClock            = "stealclock.enable"
+	ethCardType           = "vmxnet3"
+)
+
+func clone(vconn *VCenterConnection,
+	vmTemplate *object.VirtualMachine,
+	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec,
+	encodedIgnition string) (*object.Task, error) {
+
+	extraConfig := []types.BaseOptionValue{}
+
+	extraConfig = append(extraConfig, &types.OptionValue{
+		Key:   GuestInfoIgnitionEncoding,
+		Value: "base64",
+	})
+	extraConfig = append(extraConfig, &types.OptionValue{
+		Key:   GuestInfoIgnitionData,
+		Value: encodedIgnition,
+	})
+
+	extraConfig = append(extraConfig, &types.OptionValue{
+		Key:   GuestInfoHostname,
+		Value: machineProviderSpec.Name,
+	})
+	extraConfig = append(extraConfig, &types.OptionValue{
+		Key:   StealClock,
+		Value: "TRUE",
+	})
+
+	deviceSpecs := []types.BaseVirtualDeviceConfigSpec{}
+	virtualDeviceList, err := vmTemplate.Device(vconn.Context)
+	if err != nil {
+		return nil, err
+	}
+
+	networkDevices, err := getNetworkDevices(vconn, virtualDeviceList, machineProviderSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	deviceSpecs = append(deviceSpecs, networkDevices...)
+
+	diskSpec, err := getDiskSpec(virtualDeviceList, machineProviderSpec)
+	if err != nil {
+		return nil, err
+	}
+	deviceSpecs = append(deviceSpecs, diskSpec)
+
+	datastore, err := vconn.Finder.Datastore(vconn.Context, machineProviderSpec.Workspace.Datastore)
+	if err != nil {
+		return nil, err
+	}
+	folder, err := vconn.Finder.Folder(vconn.Context, machineProviderSpec.Workspace.Folder)
+	if err != nil {
+		return nil, err
+	}
+	resourcepool, err := vconn.Finder.ResourcePool(vconn.Context, machineProviderSpec.Workspace.ResourcePool)
+
+	spec := types.VirtualMachineCloneSpec{
+		Config: &types.VirtualMachineConfigSpec{
+			//Annotation: s.machine.GetName(),
+			Flags:             newVMFlagInfo(),
+			ExtraConfig:       extraConfig,
+			DeviceChange:      deviceSpecs,
+			NumCPUs:           machineProviderSpec.NumCPUs,
+			NumCoresPerSocket: machineProviderSpec.NumCoresPerSocket,
+			MemoryMB:          machineProviderSpec.MemoryMiB,
+		},
+		Location: types.VirtualMachineRelocateSpec{
+			Datastore: types.NewReference(datastore.Reference()),
+			Folder:    types.NewReference(folder.Reference()),
+			Pool:      types.NewReference(resourcepool.Reference()),
+		},
+		PowerOn: false, // Create powered off machine, for power it on later in "create" procedure
+	}
+
+	return vmTemplate.Clone(vconn.Context, folder, machineProviderSpec.Name, spec)
+}
+
+func getDiskSpec(devices object.VirtualDeviceList, machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec) (types.BaseVirtualDeviceConfigSpec, error) {
+	disks := devices.SelectByType((*types.VirtualDisk)(nil))
+
+	disk := disks[0].(*types.VirtualDisk)
+	cloneCapacityKB := int64(machineProviderSpec.DiskGiB) * 1024 * 1024
+	disk.CapacityInKB = cloneCapacityKB
+
+	return &types.VirtualDeviceConfigSpec{
+		Operation: types.VirtualDeviceConfigSpecOperationEdit,
+		Device:    disk,
+	}, nil
+}
+
+func getNetworkDevices(vconn *VCenterConnection,
+	devices object.VirtualDeviceList,
+	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec) ([]types.BaseVirtualDeviceConfigSpec, error) {
+
+	var networkDevices []types.BaseVirtualDeviceConfigSpec
+	// Remove any existing NICs
+	for _, dev := range devices.SelectByType((*types.VirtualEthernetCard)(nil)) {
+		networkDevices = append(networkDevices, &types.VirtualDeviceConfigSpec{
+			Device:    dev,
+			Operation: types.VirtualDeviceConfigSpecOperationRemove,
+		})
+	}
+
+	resourcepool, err := vconn.Finder.ResourcePool(vconn.Context, machineProviderSpec.Workspace.ResourcePool)
+	if err != nil {
+		return nil, err
+	}
+
+	clusterRef, err := resourcepool.Owner(vconn.Context)
+
+	if err != nil {
+		return nil, err
+	}
+
+	computeCluster := object.NewClusterComputeResource(vconn.Client.Client, clusterRef.Reference())
+
+	for i, netdev := range machineProviderSpec.Network.Devices {
+		networkPath := path.Join(computeCluster.InventoryPath, netdev.NetworkName)
+		networkObject, err := vconn.Finder.Network(vconn.Context, networkPath)
+		backing, err := networkObject.EthernetCardBackingInfo(vconn.Context)
+		if err != nil {
+			return nil, err
+		}
+
+		dev, err := object.EthernetCardTypes().CreateEthernetCard(ethCardType, backing)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create new ethernet card %q for network %q: %w", ethCardType, netdev.NetworkName, err)
+		}
+		nic := dev.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
+		nic.Key = int32(i)
+
+		networkDevices = append(networkDevices, &types.VirtualDeviceConfigSpec{
+			Device:    dev,
+			Operation: types.VirtualDeviceConfigSpecOperationAdd,
+		})
+	}
+	return networkDevices, nil
+}
+
+func newVMFlagInfo() *types.VirtualMachineFlagInfo {
+	diskUUIDEnabled := true
+	return &types.VirtualMachineFlagInfo{
+		DiskUuidEnabled: &diskUUIDEnabled,
+	}
 }

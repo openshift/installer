@@ -124,7 +124,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			return err
 		}
 	case typesvsphere.Name:
-		if err := vsphere.PreTerraform(terraformVariables.CachedImage, clusterID.InfraID, installConfig); err != nil {
+		if err := vsphere.PreTerraform(terraformVariables.CachedImage,
+			terraformVariables.BootstrapIgn,
+			terraformVariables.MasterIgn,
+			terraformVariables.ControlPlaneMachines,
+			clusterID.InfraID, installConfig); err != nil {
 			return err
 		}
 	}

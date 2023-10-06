@@ -93,8 +93,11 @@ const (
 // TerraformVariables depends on InstallConfig, Manifests,
 // and Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
-	FileList    []*asset.File
-	CachedImage string
+	FileList             []*asset.File
+	CachedImage          string
+	BootstrapIgn         string
+	MasterIgn            string
+	ControlPlaneMachines []machinev1beta1.Machine
 }
 
 var _ asset.WritableAsset = (*TerraformVariables)(nil)
@@ -149,6 +152,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to inject installation info")
 	}
+
+	t.BootstrapIgn = bootstrapIgn
+	t.MasterIgn = masterIgn
 
 	var useIPv4, useIPv6 bool
 	for _, network := range installConfig.Config.Networking.ServiceNetwork {
@@ -944,6 +950,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		t.ControlPlaneMachines = controlPlanes
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
 			var clusterMo mo.ClusterComputeResource
