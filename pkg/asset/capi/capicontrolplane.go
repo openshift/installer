@@ -83,6 +83,7 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 			Name:      "AWS Infrastructure Provider",
 			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
 			Manifests: []string{manifestDir + "/aws-infrastructure-components.yaml"},
+			Args:      []string{"--feature-gates=BootstrapFormatIgnition=true"},
 		},
 	}
 
