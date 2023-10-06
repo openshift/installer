@@ -70,4 +70,9 @@ resource "libvirt_domain" "bootstrap" {
       mac    = network_interface.value["mac"]
     }
   }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+  }
 }
