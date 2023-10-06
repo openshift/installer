@@ -147,7 +147,14 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 		}
 		vmTemplate, err := importRhcosOva(vconn, folder, cachedImage, clusterID, tagId, string(installConfig.Config.VSphere.DiskType), fd)
 
-		vmTemplateMap[vmTemplate.Name()] = vmTemplate
+		// This object.VirtualMachine is not fully defined
+		vmName, err := vmTemplate.ObjectName(vconn.Context)
+
+		if err != nil {
+			return err
+		}
+
+		vmTemplateMap[vmName] = vmTemplate
 
 		if err != nil {
 			return err
