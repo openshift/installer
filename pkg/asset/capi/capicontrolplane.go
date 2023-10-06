@@ -133,7 +133,7 @@ func (c *CAPIControlPlane) runController(ctx context.Context, ct *controller) er
 
 	// TODO(vincepri): Check if these args have already been set, and overwrite.
 	ct.Args = append(ct.Args,
-		"-v=5",
+		"-v=2",
 		"--metrics-bind-addr=:0",
 		fmt.Sprintf("--health-addr=%s:%d", host, port),
 		fmt.Sprintf("--kubeconfig=%s", c.LocalCP.KubeconfigPath),

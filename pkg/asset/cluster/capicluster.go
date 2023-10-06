@@ -94,8 +94,6 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	}
 	manifests = append(manifests, capiMachines.Machines...)
 
-	spew.Dump("MANIFESTS", manifests)
-
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
 	}

@@ -56,7 +56,7 @@ func (m *CAPIMachine) Dependencies() []asset.Asset {
 		// PlatformCredsCheck just checks the creds (and asks, if needed)
 		// We do not actually use it in this asset directly, hence
 		// it is put in the dependencies but not fetched in Generate
-		&installconfig.PlatformCredsCheck{},
+		// &installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
 		&machine.Master{},
