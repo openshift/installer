@@ -13,6 +13,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/capi"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -53,6 +55,8 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		&capi.CAPIControlPlane{},
 		&manifests.ClusterAPI{},
 		&machines.CAPIMachine{},
+		&bootstrap.Bootstrap{},
+		&machine.Master{},
 	}
 }
 
@@ -67,7 +71,26 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	capiControlPlane := &capi.CAPIControlPlane{}
 	capiManifests := &manifests.ClusterAPI{}
 	capiMachines := &machines.CAPIMachine{}
-	parents.Get(clusterID, installConfig, capiControlPlane, capiManifests, capiMachines)
+	bootstrapIgnAsset := &bootstrap.Bootstrap{}
+	masterIgnAsset := &machine.Master{}
+
+	parents.Get(
+		clusterID,
+		installConfig,
+		capiControlPlane,
+		capiManifests,
+		capiMachines,
+		bootstrapIgnAsset,
+		masterIgnAsset,
+	)
+
+	masterIgn := string(masterIgnAsset.Files()[0].Data)
+	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+	if err != nil {
+		return errors.Wrap(err, "unable to inject installation info")
+	}
+	_ = masterIgn
+	_ = bootstrapIgn
 
 	// Only need the objects--not the files.
 	manifests := []client.Object{}
