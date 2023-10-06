@@ -971,16 +971,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				return err
 			}
 
-			clusterPath := strings.SplitAfter(controlPlaneConfigs[i].Workspace.ResourcePool, clusterMo.Name)
+			//clusterPath := strings.SplitAfter(controlPlaneConfigs[i].Workspace.ResourcePool, clusterMo.Name)
 
-			networkPath := path.Join(clusterPath[0], controlPlaneConfigs[i].Network.Devices[0].NetworkName)
+			//networkPath := path.Join(clusterPath[0], controlPlaneConfigs[i].Network.Devices[0].NetworkName)
+			/*
+				netObj, err := finder.Network(ctx, networkPath)
+				if err != nil {
 
-			netObj, err := finder.Network(ctx, networkPath)
-			if err != nil {
-				return err
-			}
+					return err
+				}
 
-			controlPlaneConfigs[i].Network.Devices[0].NetworkName = netObj.Reference().Value
+			*/
+
+			//controlPlaneConfigs[i].Network.Devices[0].NetworkName = netObj.Reference().Value
+
 		}
 
 		for _, fd := range installConfig.Config.VSphere.FailureDomains {
