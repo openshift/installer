@@ -125,5 +125,13 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		return nil, nil, err
 	}
 
+	// Create IAM resources.
+	iamInput := &iamInput{
+		clusterID: clusterConfig.ClusterID,
+	}
+	if err := createIAMResources(logger, awsSession, iamInput); err != nil {
+		return nil, nil, err
+	}
+
 	return nil, nil, nil
 }
