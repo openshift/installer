@@ -1062,7 +1062,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 
 		createSTGOutput, err := elbClient.CreateTargetGroup(createSTGInput)
 		if err != nil {
-			fmt.Errorf("error creating target group: %w", err)
+			return fmt.Errorf("error creating target group: %w", err)
 		}
 
 		internalSTGARN = *createSTGOutput.TargetGroups[0].TargetGroupArn
@@ -1105,7 +1105,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 
 	_, err = elbClient.CreateListener(createInternalSListenerInput)
 	if err != nil {
-		fmt.Errorf("error creating listener: %v", err)
+		return fmt.Errorf("error creating listener: %w", err)
 	}
 	l.Infof("Internal Service Listener created: %v", *internalAListenerOutput.Listeners[0].ListenerArn)
 
