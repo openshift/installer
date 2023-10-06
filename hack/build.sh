@@ -91,8 +91,8 @@ MODE="${MODE:-release}"
 # build cluster-api binaries before setting environment variables since it messes up make
 make -C cluster-api all
 
-copy_cluster_api_to_mirror
-copy_envtest_bins_to_mirror
+# copy_cluster_api_to_mirror
+# copy_envtest_bins_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"

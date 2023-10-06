@@ -1,18 +1,21 @@
 package capi
 
 import (
+	"context"
 	"fmt"
+	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/capi/process"
+	"github.com/openshift/installer/pkg/asset/capi/process/addr"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	providers "github.com/openshift/installer/pkg/cluster-api"
 )
@@ -70,97 +73,98 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	kubeconfigArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
-
-	//
-	// CAPI Manager
-	//
-	{
-		spew.Dump("STARTING CAPI")
-		path := manifestDir + "/core-components.yaml"
-		wh := envtest.WebhookInstallOptions{
-			Paths: []string{path},
-		}
-		if err := wh.PrepWithoutInstalling(); err != nil {
-			return err
-		}
-		opts := envtest.CRDInstallOptions{
-			Scheme:         c.LocalCP.Env.Scheme,
-			Paths:          []string{path},
-			WebhookOptions: wh,
-		}
-		if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
-			return err
-		}
-
-		capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
-		if capiManagerPath == "" {
-			capiManagerPath = fmt.Sprintf("%s/cluster-api", localControlPlane.BinDir)
-		}
-		cmd := exec.Command(capiManagerPath,
-			kubeconfigArg,
-			"-v=5",
-			"--health-addr=:0",
-			"--metrics-bind-addr=:0",
-			fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
-			fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
-		)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		go func() {
-			err := cmd.Run()
-			if err != nil {
-				//expected to fail at the moment, let it flow through so we hit the stop function
-				spew.Dump("CAPIRUN", err)
-				// return err
-			}
-		}()
-
+	controllers := []*controller{
+		{
+			Name:      "Cluster API",
+			Path:      fmt.Sprintf("%s/cluster-api", localControlPlane.BinDir),
+			Manifests: []string{manifestDir + "/core-components.yaml"},
+		},
+		{
+			Name:      "AWS Infrastructure Provider",
+			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
+			Manifests: []string{manifestDir + "/aws-infrastructure-components.yaml"},
+		},
 	}
 
-	// AWS CAPI Provider
-	{
-		spew.Dump("STARTING CAPA")
-		path := manifestDir + "/aws-infrastructure-components.yaml"
-		wh := envtest.WebhookInstallOptions{
-			Paths: []string{path},
-		}
-		if err := wh.PrepWithoutInstalling(); err != nil {
-			return err
-		}
-		opts := envtest.CRDInstallOptions{
-			Scheme:         c.LocalCP.Env.Scheme,
-			Paths:          []string{path},
-			WebhookOptions: wh,
-		}
-		if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
-			return err
-		}
+	// Setup signal handler for stopping the subprocesses.
+	ctx := signals.SetupSignalHandler()
 
-		awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
-		if awsManagerPath == "" {
-			awsManagerPath = fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH)
+	// Run the controllers.
+	for _, ct := range controllers {
+		if err := c.runController(ctx, ct); err != nil {
+			return fmt.Errorf("failed to run controller %q: %w", ct.Name, err)
 		}
-		cmd := exec.Command(awsManagerPath,
-			kubeconfigArg,
-			"-v=5",
-			"--health-addr=:0",
-			"--metrics-bind-addr=:0",
-			fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
-			fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
-		)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		go func() {
-			err := cmd.Run()
-			if err != nil {
-				//expected to fail at the moment, let it flow through so we hit the stop function
-				spew.Dump("AWSRUN", err)
-				// return err
-			}
-		}()
 	}
 
+	go func() {
+		// Stop the controllers when the context is cancelled.
+		<-ctx.Done()
+		for _, ct := range controllers {
+			if ct.state != nil {
+				ct.state.Stop()
+			}
+		}
+	}()
+
+	return nil
+}
+
+type controller struct {
+	state *process.State
+
+	Name      string
+	Path      string
+	Manifests []string
+	Args      []string
+}
+
+func (c *CAPIControlPlane) runController(ctx context.Context, ct *controller) error {
+	wh := envtest.WebhookInstallOptions{
+		Paths: ct.Manifests,
+	}
+	if err := wh.PrepWithoutInstalling(); err != nil {
+		return fmt.Errorf("failed to prepare controller %q webhook options: %w", ct.Name, err)
+	}
+	port, host, err := addr.Suggest("")
+	if err != nil {
+		return fmt.Errorf("unable to grab random port for serving health checks on: %w", err)
+	}
+
+	// TODO(vincepri): Check if these args have already been set, and overwrite.
+	ct.Args = append(ct.Args,
+		"-v=5",
+		"--metrics-bind-addr=:0",
+		fmt.Sprintf("--health-addr=%s:%d", host, port),
+		fmt.Sprintf("--kubeconfig=%s", c.LocalCP.KubeconfigPath),
+		fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
+		fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
+	)
+	opts := envtest.CRDInstallOptions{
+		Scheme:         c.LocalCP.Env.Scheme,
+		Paths:          ct.Manifests,
+		WebhookOptions: wh,
+	}
+	if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
+		return fmt.Errorf("failed to install controller %q manifests in local control plane: %w", ct.Name, err)
+	}
+	pr := &process.State{
+		Path: ct.Path,
+		Args: ct.Args,
+		HealthCheck: process.HealthCheck{
+			URL: url.URL{
+				Scheme: "http",
+				Host:   fmt.Sprintf("%s:%d", host, port),
+				Path:   "/healthz",
+			},
+		},
+	}
+	if err := pr.Init(ct.Name); err != nil {
+		return fmt.Errorf("failed to initialize process state for controller %q: %w", ct.Name, err)
+	}
+	if err := pr.Start(ctx, os.Stdout, os.Stderr); err != nil {
+		return fmt.Errorf("failed to start controller %q: %w", ct.Name, err)
+	}
+	ct.state = pr
 	return nil
 }
 
