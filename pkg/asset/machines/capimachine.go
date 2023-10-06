@@ -69,8 +69,6 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 	mign := &machine.Master{}
 	dependencies.Get(clusterID, installConfig, rhcosImage, mign)
 
-	masterUserDataSecretName := "master-user-data"
-
 	ic := installConfig.Config
 
 	pool := *ic.ControlPlane
@@ -142,7 +140,6 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			subnets,
 			&pool,
 			"master",
-			masterUserDataSecretName,
 			installConfig.Config.Platform.AWS.UserTags,
 		)
 		if err != nil {

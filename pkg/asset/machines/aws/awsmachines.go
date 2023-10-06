@@ -4,12 +4,15 @@ package aws
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capi "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -17,7 +20,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func AWSMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string) ([]*capa.AWSMachine, error) {
+func AWSMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role string, userTags map[string]string) ([]client.Object, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
@@ -33,7 +36,7 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 	// 	return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	// }
 
-	var awsMachines []*capa.AWSMachine
+	var result []client.Object
 
 	for idx := int64(0); idx < total; idx++ {
 		//zone := mpool.Zones[int(idx)%len(mpool.Zones)]
@@ -71,8 +74,30 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 			// 	Encrypted: true, // is this configurable? Use KMS?
 			// },
 		}
-		awsMachines = append(awsMachines, awsMachine)
+
+		machine := &capi.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: capiGuestsNamespace,
+				Name:      awsMachine.Name,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
+			},
+			Spec: capi.MachineSpec{
+				ClusterName: clusterID,
+				Bootstrap: capi.Bootstrap{
+					DataSecretName: pointer.String(fmt.Sprintf("%s-%s", clusterID, role)),
+				},
+				InfrastructureRef: v1.ObjectReference{
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					Kind:       "AWSMachine",
+					Name:       awsMachine.Name,
+				},
+			},
+		}
+
+		result = append(result, awsMachine, machine)
 
 	}
-	return awsMachines, nil
+	return result, nil
 }

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -84,14 +86,6 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		masterIgnAsset,
 	)
 
-	masterIgn := string(masterIgnAsset.Files()[0].Data)
-	bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
-	if err != nil {
-		return errors.Wrap(err, "unable to inject installation info")
-	}
-	_ = masterIgn
-	_ = bootstrapIgn
-
 	// Only need the objects--not the files.
 	manifests := []client.Object{}
 	for _, m := range capiManifests.Manifests {
@@ -119,10 +113,45 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
+	// Gather the ignition files, and store them in a secret.
+	{
+		masterIgn := string(masterIgnAsset.Files()[0].Data)
+		bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+		if err != nil {
+			return errors.Wrap(err, "unable to inject installation info")
+		}
+
+		masterSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(masterIgn),
+			},
+		}
+		if err := cl.Create(context.Background(), masterSecret); err != nil {
+			return fmt.Errorf("failed to create master data secret: %w", err)
+		}
+
+		bootstrapSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(bootstrapIgn),
+			},
+		}
+		if err := cl.Create(context.Background(), bootstrapSecret); err != nil {
+			return fmt.Errorf("failed to create bootstrap data secret: %w", err)
+		}
+
+	}
+
 	for _, m := range manifests {
 		if err := cl.Create(context.Background(), m); err != nil {
-			logrus.Errorf("CANNOT CREATE CLUSTER", err)
-			return err
+			return fmt.Errorf("failed to create manifest: %w", err)
 		}
 	}
 
