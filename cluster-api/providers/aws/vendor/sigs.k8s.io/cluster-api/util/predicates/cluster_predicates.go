@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -41,7 +42,7 @@ func ClusterCreateInfraReady(logger logr.Logger) predicate.Funcs {
 				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.Object))
 				return false
 			}
-			log = log.WithValues("namespace", c.Namespace, "cluster", c.Name)
+			log = log.WithValues("Cluster", klog.KObj(c))
 
 			// Only need to trigger a reconcile if the Cluster.Status.InfrastructureReady is true
 			if c.Status.InfrastructureReady {
@@ -70,7 +71,7 @@ func ClusterCreateNotPaused(logger logr.Logger) predicate.Funcs {
 				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.Object))
 				return false
 			}
-			log = log.WithValues("namespace", c.Namespace, "cluster", c.Name)
+			log = log.WithValues("Cluster", klog.KObj(c))
 
 			// Only need to trigger a reconcile if the Cluster.Spec.Paused is false
 			if !c.Spec.Paused {
@@ -99,7 +100,7 @@ func ClusterUpdateInfraReady(logger logr.Logger) predicate.Funcs {
 				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.ObjectOld))
 				return false
 			}
-			log = log.WithValues("namespace", oldCluster.Namespace, "cluster", oldCluster.Name)
+			log = log.WithValues("Cluster", klog.KObj(oldCluster))
 
 			newCluster := e.ObjectNew.(*clusterv1.Cluster)
 
@@ -129,7 +130,7 @@ func ClusterUpdateUnpaused(logger logr.Logger) predicate.Funcs {
 				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.ObjectOld))
 				return false
 			}
-			log = log.WithValues("namespace", oldCluster.Namespace, "cluster", oldCluster.Name)
+			log = log.WithValues("Cluster", klog.KObj(oldCluster))
 
 			newCluster := e.ObjectNew.(*clusterv1.Cluster)
 
@@ -154,13 +155,12 @@ func ClusterUpdateUnpaused(logger logr.Logger) predicate.Funcs {
 // This implements a common requirement for many cluster-api and provider controllers (such as Cluster Infrastructure
 // controllers) to resume reconciliation when the Cluster is unpaused.
 // Example use:
-//  err := controller.Watch(
-//      &source.Kind{Type: &clusterv1.Cluster{}},
-//      &handler.EnqueueRequestsFromMapFunc{
-//          ToRequests: clusterToMachines,
-//      },
-//      predicates.ClusterUnpaused(r.Log),
-//  )
+//
+//	err := controller.Watch(
+//	    source.Kind(cache, &clusterv1.Cluster{}),
+//	    handler.EnqueueRequestsFromMapFunc(clusterToMachines)
+//	    predicates.ClusterUnpaused(r.Log),
+//	)
 func ClusterUnpaused(logger logr.Logger) predicate.Funcs {
 	log := logger.WithValues("predicate", "ClusterUnpaused")
 
@@ -171,13 +171,12 @@ func ClusterUnpaused(logger logr.Logger) predicate.Funcs {
 // ClusterControlPlaneInitialized returns a Predicate that returns true on Update events
 // when ControlPlaneInitializedCondition on a Cluster changes to true.
 // Example use:
-//  err := controller.Watch(
-//      &source.Kind{Type: &clusterv1.Cluster{}},
-//      &handler.EnqueueRequestsFromMapFunc{
-//          ToRequests: clusterToMachines,
-//      },
-//      predicates.ClusterControlPlaneInitialized(r.Log),
-//  )
+//
+//	err := controller.Watch(
+//	    source.Kind(cache, &clusterv1.Cluster{}),
+//	    handler.EnqueueRequestsFromMapFunc(clusterToMachines)
+//	    predicates.ClusterControlPlaneInitialized(r.Log),
+//	)
 func ClusterControlPlaneInitialized(logger logr.Logger) predicate.Funcs {
 	return predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -188,7 +187,7 @@ func ClusterControlPlaneInitialized(logger logr.Logger) predicate.Funcs {
 				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.ObjectOld))
 				return false
 			}
-			log = log.WithValues("namespace", oldCluster.Namespace, "cluster", oldCluster.Name)
+			log = log.WithValues("Cluster", klog.KObj(oldCluster))
 
 			newCluster := e.ObjectNew.(*clusterv1.Cluster)
 
@@ -213,13 +212,12 @@ func ClusterControlPlaneInitialized(logger logr.Logger) predicate.Funcs {
 // This implements a common requirement for some cluster-api and provider controllers (such as Machine Infrastructure
 // controllers) to resume reconciliation when the Cluster is unpaused and when the infrastructure becomes ready.
 // Example use:
-//  err := controller.Watch(
-//      &source.Kind{Type: &clusterv1.Cluster{}},
-//      &handler.EnqueueRequestsFromMapFunc{
-//          ToRequests: clusterToMachines,
-//      },
-//      predicates.ClusterUnpausedAndInfrastructureReady(r.Log),
-//  )
+//
+//	err := controller.Watch(
+//	    source.Kind(cache, &clusterv1.Cluster{}),
+//	    handler.EnqueueRequestsFromMapFunc(clusterToMachines)
+//	    predicates.ClusterUnpausedAndInfrastructureReady(r.Log),
+//	)
 func ClusterUnpausedAndInfrastructureReady(logger logr.Logger) predicate.Funcs {
 	log := logger.WithValues("predicate", "ClusterUnpausedAndInfrastructureReady")
 
@@ -259,7 +257,7 @@ func processIfTopologyManaged(logger logr.Logger, object client.Object) bool {
 		return false
 	}
 
-	log := logger.WithValues("namespace", cluster.Namespace, "cluster", cluster.Name)
+	log := logger.WithValues("Cluster", klog.KObj(cluster))
 
 	if cluster.Spec.Topology != nil {
 		log.V(6).Info("Cluster has topology, allowing further processing")

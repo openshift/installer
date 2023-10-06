@@ -19,15 +19,20 @@ package v1beta1
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"sigs.k8s.io/cluster-api/util/version"
 )
+
+const defaultNodeDeletionTimeout = 10 * time.Second
 
 func (m *Machine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -46,7 +51,7 @@ func (m *Machine) Default() {
 	if m.Labels == nil {
 		m.Labels = make(map[string]string)
 	}
-	m.Labels[ClusterLabelName] = m.Spec.ClusterName
+	m.Labels[ClusterNameLabel] = m.Spec.ClusterName
 
 	if m.Spec.Bootstrap.ConfigRef != nil && m.Spec.Bootstrap.ConfigRef.Namespace == "" {
 		m.Spec.Bootstrap.ConfigRef.Namespace = m.Namespace
@@ -60,44 +65,52 @@ func (m *Machine) Default() {
 		normalizedVersion := "v" + *m.Spec.Version
 		m.Spec.Version = &normalizedVersion
 	}
+
+	if m.Spec.NodeDeletionTimeout == nil {
+		m.Spec.NodeDeletionTimeout = &metav1.Duration{Duration: defaultNodeDeletionTimeout}
+	}
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (m *Machine) ValidateCreate() error {
-	return m.validate(nil)
+func (m *Machine) ValidateCreate() (admission.Warnings, error) {
+	return nil, m.validate(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (m *Machine) ValidateUpdate(old runtime.Object) error {
+func (m *Machine) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	oldM, ok := old.(*Machine)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Machine but got a %T", old))
 	}
-	return m.validate(oldM)
+	return nil, m.validate(oldM)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (m *Machine) ValidateDelete() error {
-	return nil
+func (m *Machine) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
 func (m *Machine) validate(old *Machine) error {
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 	if m.Spec.Bootstrap.ConfigRef == nil && m.Spec.Bootstrap.DataSecretName == nil {
-		allErrs = append(
-			allErrs,
-			field.Required(
-				field.NewPath("spec", "bootstrap", "data"),
-				"expected either spec.bootstrap.dataSecretName or spec.bootstrap.configRef to be populated",
-			),
-		)
+		// MachinePool Machines don't have a bootstrap configRef, so don't require it. The bootstrap config is instead owned by the MachinePool.
+		if !isMachinePoolMachine(m) {
+			allErrs = append(
+				allErrs,
+				field.Required(
+					specPath.Child("bootstrap", "data"),
+					"expected either spec.bootstrap.dataSecretName or spec.bootstrap.configRef to be populated",
+				),
+			)
+		}
 	}
 
 	if m.Spec.Bootstrap.ConfigRef != nil && m.Spec.Bootstrap.ConfigRef.Namespace != m.Namespace {
 		allErrs = append(
 			allErrs,
 			field.Invalid(
-				field.NewPath("spec", "bootstrap", "configRef", "namespace"),
+				specPath.Child("bootstrap", "configRef", "namespace"),
 				m.Spec.Bootstrap.ConfigRef.Namespace,
 				"must match metadata.namespace",
 			),
@@ -108,7 +121,7 @@ func (m *Machine) validate(old *Machine) error {
 		allErrs = append(
 			allErrs,
 			field.Invalid(
-				field.NewPath("spec", "infrastructureRef", "namespace"),
+				specPath.Child("infrastructureRef", "namespace"),
 				m.Spec.InfrastructureRef.Namespace,
 				"must match metadata.namespace",
 			),
@@ -118,13 +131,13 @@ func (m *Machine) validate(old *Machine) error {
 	if old != nil && old.Spec.ClusterName != m.Spec.ClusterName {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "clusterName"), m.Spec.ClusterName, "field is immutable"),
+			field.Forbidden(specPath.Child("clusterName"), "field is immutable"),
 		)
 	}
 
 	if m.Spec.Version != nil {
 		if !version.KubeSemver.MatchString(*m.Spec.Version) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "version"), *m.Spec.Version, "must be a valid semantic version"))
+			allErrs = append(allErrs, field.Invalid(specPath.Child("version"), *m.Spec.Version, "must be a valid semantic version"))
 		}
 	}
 
@@ -132,4 +145,14 @@ func (m *Machine) validate(old *Machine) error {
 		return nil
 	}
 	return apierrors.NewInvalid(GroupVersion.WithKind("Machine").GroupKind(), m.Name, allErrs)
+}
+
+func isMachinePoolMachine(m *Machine) bool {
+	for _, owner := range m.OwnerReferences {
+		if owner.Kind == "MachinePool" {
+			return true
+		}
+	}
+
+	return false
 }

@@ -79,7 +79,6 @@ type KubeadmConfigSpec struct {
 
 	// Format specifies the output format of the bootstrap data
 	// +optional
-	// +kubebuilder:default=cloud-config
 	Format Format `json:"format,omitempty"`
 
 	// Verbosity is the number for the kubeadm log level verbosity.
@@ -98,6 +97,9 @@ type KubeadmConfigSpec struct {
 	//
 	// For more information, refer to https://github.com/kubernetes-sigs/cluster-api/pull/2763#discussion_r397306055.
 	// +optional
+	//
+	// Deprecated: This experimental fix is no longer needed and this field will be removed in a future release.
+	// When removing also remove from staticcheck exclude-rules for SA1019 in golangci.yml
 	UseExperimentalRetryJoin bool `json:"useExperimentalRetryJoin,omitempty"`
 
 	// Ignition contains Ignition specific configuration.
@@ -224,6 +226,10 @@ type File struct {
 	// +optional
 	Encoding Encoding `json:"encoding,omitempty"`
 
+	// Append specifies whether to append Content to existing file if Path exists.
+	// +optional
+	Append bool `json:"append,omitempty"`
+
 	// Content is the actual content of the file.
 	// +optional
 	Content string `json:"content,omitempty"`
@@ -246,6 +252,26 @@ type FileSource struct {
 // The contents of the target Secret's Data field will be presented
 // as files using the keys in the Data field as the file names.
 type SecretFileSource struct {
+	// Name of the secret in the KubeadmBootstrapConfig's namespace to use.
+	Name string `json:"name"`
+
+	// Key is the key in the secret's data map for this value.
+	Key string `json:"key"`
+}
+
+// PasswdSource is a union of all possible external source types for passwd data.
+// Only one field may be populated in any given instance. Developers adding new
+// sources of data for target systems should add them here.
+type PasswdSource struct {
+	// Secret represents a secret that should populate this password.
+	Secret SecretPasswdSource `json:"secret"`
+}
+
+// SecretPasswdSource adapts a Secret into a PasswdSource.
+//
+// The contents of the target Secret's Data field will be presented
+// as passwd using the keys in the Data field as the file names.
+type SecretPasswdSource struct {
 	// Name of the secret in the KubeadmBootstrapConfig's namespace to use.
 	Name string `json:"name"`
 
@@ -281,6 +307,10 @@ type User struct {
 	// Passwd specifies a hashed password for the user
 	// +optional
 	Passwd *string `json:"passwd,omitempty"`
+
+	// PasswdFrom is a referenced source of passwd to populate the passwd.
+	// +optional
+	PasswdFrom *PasswdSource `json:"passwdFrom,omitempty"`
 
 	// PrimaryGroup specifies the primary group for the user
 	// +optional

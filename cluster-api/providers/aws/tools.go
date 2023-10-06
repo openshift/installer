@@ -1,5 +1,5 @@
 package main
 
 import (
-	_ "sigs.k8s.io/cluster-api-provider-aws"
+	_ "sigs.k8s.io/cluster-api-provider-aws/v2"
 )

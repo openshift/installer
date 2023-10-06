@@ -31,7 +31,7 @@ import (
 )
 
 // Get uses the client and reference to get an external, unstructured object.
-func Get(ctx context.Context, c client.Client, ref *corev1.ObjectReference, namespace string) (*unstructured.Unstructured, error) {
+func Get(ctx context.Context, c client.Reader, ref *corev1.ObjectReference, namespace string) (*unstructured.Unstructured, error) {
 	if ref == nil {
 		return nil, errors.Errorf("cannot get object - object reference not set")
 	}
@@ -47,7 +47,7 @@ func Get(ctx context.Context, c client.Client, ref *corev1.ObjectReference, name
 }
 
 // Delete uses the client and reference to delete an external, unstructured object.
-func Delete(ctx context.Context, c client.Client, ref *corev1.ObjectReference) error {
+func Delete(ctx context.Context, c client.Writer, ref *corev1.ObjectReference) error {
 	obj := new(unstructured.Unstructured)
 	obj.SetAPIVersion(ref.APIVersion)
 	obj.SetKind(ref.Kind)
@@ -59,8 +59,8 @@ func Delete(ctx context.Context, c client.Client, ref *corev1.ObjectReference) e
 	return nil
 }
 
-// CloneTemplateInput is the input to CloneTemplate.
-type CloneTemplateInput struct {
+// CreateFromTemplateInput is the input to CreateFromTemplate.
+type CreateFromTemplateInput struct {
 	// Client is the controller runtime client.
 	Client client.Client
 
@@ -86,8 +86,8 @@ type CloneTemplateInput struct {
 	Annotations map[string]string
 }
 
-// CloneTemplate uses the client and the reference to create a new object from the template.
-func CloneTemplate(ctx context.Context, in *CloneTemplateInput) (*corev1.ObjectReference, error) {
+// CreateFromTemplate uses the client and the reference to create a new object from the template.
+func CreateFromTemplate(ctx context.Context, in *CreateFromTemplateInput) (*corev1.ObjectReference, error) {
 	from, err := Get(ctx, in.Client, in.TemplateRef, in.Namespace)
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func GenerateTemplate(in *GenerateTemplateInput) (*unstructured.Unstructured, er
 	for key, value := range in.Labels {
 		labels[key] = value
 	}
-	labels[clusterv1.ClusterLabelName] = in.ClusterName
+	labels[clusterv1.ClusterNameLabel] = in.ClusterName
 	to.SetLabels(labels)
 
 	// Set the owner reference.

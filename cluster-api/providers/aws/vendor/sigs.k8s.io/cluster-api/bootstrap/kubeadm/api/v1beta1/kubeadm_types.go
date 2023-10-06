@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -53,6 +54,12 @@ type InitConfiguration struct {
 	// fails you may set the desired value here.
 	// +optional
 	LocalAPIEndpoint APIEndpoint `json:"localAPIEndpoint,omitempty"`
+
+	// SkipPhases is a list of phases to skip during command execution.
+	// The list of phases can be obtained with the "kubeadm init --help" command.
+	// This option takes effect only on Kubernetes >=1.22.0.
+	// +optional
+	SkipPhases []string `json:"skipPhases,omitempty"`
 
 	// Patches contains options related to applying patches to components deployed by kubeadm during
 	// "kubeadm init". The minimum kubernetes version needed to support Patches is v1.22
@@ -118,9 +125,16 @@ type ClusterConfiguration struct {
 	CertificatesDir string `json:"certificatesDir,omitempty"`
 
 	// ImageRepository sets the container registry to pull images from.
-	// If empty, `k8s.gcr.io` will be used by default; in case of kubernetes version is a CI build (kubernetes version starts with `ci/` or `ci-cross/`)
-	// `gcr.io/k8s-staging-ci-images` will be used as a default for control plane components and for kube-proxy, while `k8s.gcr.io`
-	// will be used for all the other images.
+	// * If not set, the default registry of kubeadm will be used, i.e.
+	//   * registry.k8s.io (new registry): >= v1.22.17, >= v1.23.15, >= v1.24.9, >= v1.25.0
+	//   * k8s.gcr.io (old registry): all older versions
+	//   Please note that when imageRepository is not set we don't allow upgrades to
+	//   versions >= v1.22.0 which use the old registry (k8s.gcr.io). Please use
+	//   a newer patch version with the new registry instead (i.e. >= v1.22.17,
+	//   >= v1.23.15, >= v1.24.9, >= v1.25.0).
+	// * If the version is a CI build (kubernetes version starts with `ci/` or `ci-cross/`)
+	//  `gcr.io/k8s-staging-ci-images` will be used as a default for control plane components
+	//   and for kube-proxy, while `registry.k8s.io` will be used for all the other images.
 	// +optional
 	ImageRepository string `json:"imageRepository,omitempty"`
 
@@ -185,6 +199,7 @@ type ImageMeta struct {
 
 // ClusterStatus contains the cluster status. The ClusterStatus will be stored in the kubeadm-config
 // ConfigMap in the cluster, and then updated by kubeadm when additional control plane instance joins or leaves the cluster.
+//
 // Deprecated: ClusterStatus has been removed from kubeadm v1beta3 API; This type is preserved only to support
 // conversion to older versions of the kubeadm API.
 type ClusterStatus struct {
@@ -208,6 +223,7 @@ type APIEndpoint struct {
 }
 
 // NodeRegistrationOptions holds fields that relate to registering a new control-plane or node to the cluster, either via "kubeadm init" or "kubeadm join".
+// Note: The NodeRegistrationOptions struct has to be kept in sync with the structs in MarshalJSON.
 type NodeRegistrationOptions struct {
 
 	// Name is the `.Metadata.Name` field of the Node API object that will be created in this `kubeadm init` or `kubeadm join` operation.
@@ -222,7 +238,7 @@ type NodeRegistrationOptions struct {
 
 	// Taints specifies the taints the Node API object should be registered with. If this field is unset, i.e. nil, in the `kubeadm init` process
 	// it will be defaulted to []v1.Taint{'node-role.kubernetes.io/master=""'}. If you don't want to taint your control-plane node, set this field to an
-	// empty slice, i.e. `taints: {}` in the YAML file. This field is solely used for Node registration.
+	// empty slice, i.e. `taints: []` in the YAML file. This field is solely used for Node registration.
 	// +optional
 	Taints []corev1.Taint `json:"taints,omitempty"`
 
@@ -235,6 +251,62 @@ type NodeRegistrationOptions struct {
 	// IgnorePreflightErrors provides a slice of pre-flight errors to be ignored when the current node is registered.
 	// +optional
 	IgnorePreflightErrors []string `json:"ignorePreflightErrors,omitempty"`
+
+	// ImagePullPolicy specifies the policy for image pulling
+	// during kubeadm "init" and "join" operations. The value of
+	// this field must be one of "Always", "IfNotPresent" or
+	// "Never". Defaults to "IfNotPresent". This can be used only
+	// with Kubernetes version equal to 1.22 and later.
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	// +optional
+	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+}
+
+// MarshalJSON marshals NodeRegistrationOptions in a way that an empty slice in Taints is preserved.
+// Taints are then rendered as:
+// * nil => omitted from the marshalled JSON
+// * [] => rendered as empty array (`[]`)
+// * [regular-array] => rendered as usual
+// We have to do this as the regular Golang JSON marshalling would just omit
+// the empty slice (xref: https://github.com/golang/go/issues/22480).
+// Note: We can't re-use the original struct as that would lead to an infinite recursion.
+// Note: The structs in this func have to be kept in sync with the NodeRegistrationOptions struct.
+func (n *NodeRegistrationOptions) MarshalJSON() ([]byte, error) {
+	// Marshal an empty Taints slice array without omitempty so it's preserved.
+	if n.Taints != nil && len(n.Taints) == 0 {
+		return json.Marshal(struct {
+			Name                  string            `json:"name,omitempty"`
+			CRISocket             string            `json:"criSocket,omitempty"`
+			Taints                []corev1.Taint    `json:"taints"`
+			KubeletExtraArgs      map[string]string `json:"kubeletExtraArgs,omitempty"`
+			IgnorePreflightErrors []string          `json:"ignorePreflightErrors,omitempty"`
+			ImagePullPolicy       string            `json:"imagePullPolicy,omitempty"`
+		}{
+			Name:                  n.Name,
+			CRISocket:             n.CRISocket,
+			Taints:                n.Taints,
+			KubeletExtraArgs:      n.KubeletExtraArgs,
+			IgnorePreflightErrors: n.IgnorePreflightErrors,
+			ImagePullPolicy:       n.ImagePullPolicy,
+		})
+	}
+
+	// If Taints is nil or not empty we can use omitempty.
+	return json.Marshal(struct {
+		Name                  string            `json:"name,omitempty"`
+		CRISocket             string            `json:"criSocket,omitempty"`
+		Taints                []corev1.Taint    `json:"taints,omitempty"`
+		KubeletExtraArgs      map[string]string `json:"kubeletExtraArgs,omitempty"`
+		IgnorePreflightErrors []string          `json:"ignorePreflightErrors,omitempty"`
+		ImagePullPolicy       string            `json:"imagePullPolicy,omitempty"`
+	}{
+		Name:                  n.Name,
+		CRISocket:             n.CRISocket,
+		Taints:                n.Taints,
+		KubeletExtraArgs:      n.KubeletExtraArgs,
+		IgnorePreflightErrors: n.IgnorePreflightErrors,
+		ImagePullPolicy:       n.ImagePullPolicy,
+	})
 }
 
 // Networking contains elements describing cluster's networking configuration.
@@ -365,6 +437,12 @@ type JoinConfiguration struct {
 	// If nil, no additional control plane instance will be deployed.
 	// +optional
 	ControlPlane *JoinControlPlane `json:"controlPlane,omitempty"`
+
+	// SkipPhases is a list of phases to skip during command execution.
+	// The list of phases can be obtained with the "kubeadm init --help" command.
+	// This option takes effect only on Kubernetes >=1.22.0.
+	// +optional
+	SkipPhases []string `json:"skipPhases,omitempty"`
 
 	// Patches contains options related to applying patches to components deployed by kubeadm during
 	// "kubeadm join". The minimum kubernetes version needed to support Patches is v1.22

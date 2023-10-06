@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"sigs.k8s.io/cluster-api/feature"
 )
@@ -31,6 +32,7 @@ import (
 var (
 	cannotUseWithIgnition                            = fmt.Sprintf("not supported when spec.format is set to %q", Ignition)
 	conflictingFileSourceMsg                         = "only one of content or contentFrom may be specified for a single file"
+	conflictingUserSourceMsg                         = "only one of passwd or passwdFrom may be specified for a single user"
 	kubeadmBootstrapFormatIgnitionFeatureDisabledMsg = "can be set only if the KubeadmBootstrapFormatIgnition feature gate is enabled"
 	missingSecretNameMsg                             = "secret file source must specify non-empty secret name"
 	missingSecretKeyMsg                              = "secret file source must specify non-empty secret key"
@@ -43,27 +45,49 @@ func (c *KubeadmConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-bootstrap-cluster-x-k8s-io-v1beta1-kubeadmconfig,mutating=true,failurePolicy=fail,groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,versions=v1beta1,name=default.kubeadmconfig.bootstrap.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+
+var _ webhook.Defaulter = &KubeadmConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type.
+func (c *KubeadmConfig) Default() {
+	DefaultKubeadmConfigSpec(&c.Spec)
+}
+
+// DefaultKubeadmConfigSpec defaults a KubeadmConfigSpec.
+func DefaultKubeadmConfigSpec(r *KubeadmConfigSpec) {
+	if r.Format == "" {
+		r.Format = CloudConfig
+	}
+	if r.InitConfiguration != nil && r.InitConfiguration.NodeRegistration.ImagePullPolicy == "" {
+		r.InitConfiguration.NodeRegistration.ImagePullPolicy = "IfNotPresent"
+	}
+	if r.JoinConfiguration != nil && r.JoinConfiguration.NodeRegistration.ImagePullPolicy == "" {
+		r.JoinConfiguration.NodeRegistration.ImagePullPolicy = "IfNotPresent"
+	}
+}
+
 // +kubebuilder:webhook:verbs=create;update,path=/validate-bootstrap-cluster-x-k8s-io-v1beta1-kubeadmconfig,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,versions=v1beta1,name=validation.kubeadmconfig.bootstrap.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 var _ webhook.Validator = &KubeadmConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (c *KubeadmConfig) ValidateCreate() error {
-	return c.Spec.validate(c.Name)
+func (c *KubeadmConfig) ValidateCreate() (admission.Warnings, error) {
+	return nil, c.Spec.validate(c.Name)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (c *KubeadmConfig) ValidateUpdate(old runtime.Object) error {
-	return c.Spec.validate(c.Name)
+func (c *KubeadmConfig) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
+	return nil, c.Spec.validate(c.Name)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (c *KubeadmConfig) ValidateDelete() error {
-	return nil
+func (c *KubeadmConfig) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
 func (c *KubeadmConfigSpec) validate(name string) error {
-	allErrs := c.Validate()
+	allErrs := c.Validate(field.NewPath("spec"))
 
 	if len(allErrs) == 0 {
 		return nil
@@ -73,16 +97,17 @@ func (c *KubeadmConfigSpec) validate(name string) error {
 }
 
 // Validate ensures the KubeadmConfigSpec is valid.
-func (c *KubeadmConfigSpec) Validate() field.ErrorList {
+func (c *KubeadmConfigSpec) Validate(pathPrefix *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, c.validateFiles()...)
-	allErrs = append(allErrs, c.validateIgnition()...)
+	allErrs = append(allErrs, c.validateFiles(pathPrefix)...)
+	allErrs = append(allErrs, c.validateUsers(pathPrefix)...)
+	allErrs = append(allErrs, c.validateIgnition(pathPrefix)...)
 
 	return allErrs
 }
 
-func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
+func (c *KubeadmConfigSpec) validateFiles(pathPrefix *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
 	knownPaths := map[string]struct{}{}
@@ -93,7 +118,7 @@ func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					field.NewPath("spec", "files").Index(i),
+					pathPrefix.Child("files").Index(i),
 					file,
 					conflictingFileSourceMsg,
 				),
@@ -106,9 +131,8 @@ func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
 			if file.ContentFrom.Secret.Name == "" {
 				allErrs = append(
 					allErrs,
-					field.Invalid(
-						field.NewPath("spec", "files").Index(i).Child("contentFrom", "secret", "name"),
-						file,
+					field.Required(
+						pathPrefix.Child("files").Index(i).Child("contentFrom", "secret", "name"),
 						missingSecretNameMsg,
 					),
 				)
@@ -116,9 +140,8 @@ func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
 			if file.ContentFrom.Secret.Key == "" {
 				allErrs = append(
 					allErrs,
-					field.Invalid(
-						field.NewPath("spec", "files").Index(i).Child("contentFrom", "secret", "key"),
-						file,
+					field.Required(
+						pathPrefix.Child("files").Index(i).Child("contentFrom", "secret", "key"),
 						missingSecretKeyMsg,
 					),
 				)
@@ -129,7 +152,7 @@ func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					field.NewPath("spec", "files").Index(i).Child("path"),
+					pathPrefix.Child("files").Index(i).Child("path"),
 					file,
 					pathConflictMsg,
 				),
@@ -141,18 +164,61 @@ func (c *KubeadmConfigSpec) validateFiles() field.ErrorList {
 	return allErrs
 }
 
-func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
+func (c *KubeadmConfigSpec) validateUsers(pathPrefix *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+
+	for i := range c.Users {
+		user := c.Users[i]
+		if user.Passwd != nil && user.PasswdFrom != nil {
+			allErrs = append(
+				allErrs,
+				field.Invalid(
+					pathPrefix.Child("users").Index(i),
+					user,
+					conflictingUserSourceMsg,
+				),
+			)
+		}
+		// n.b.: if we ever add types besides Secret as a PasswdFrom
+		// Source, we must add webhook validation here for one of the
+		// sources being non-nil.
+		if user.PasswdFrom != nil {
+			if user.PasswdFrom.Secret.Name == "" {
+				allErrs = append(
+					allErrs,
+					field.Required(
+						pathPrefix.Child("users").Index(i).Child("passwdFrom", "secret", "name"),
+						missingSecretNameMsg,
+					),
+				)
+			}
+			if user.PasswdFrom.Secret.Key == "" {
+				allErrs = append(
+					allErrs,
+					field.Required(
+						pathPrefix.Child("users").Index(i).Child("passwdFrom", "secret", "key"),
+						missingSecretKeyMsg,
+					),
+				)
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func (c *KubeadmConfigSpec) validateIgnition(pathPrefix *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
 	if !feature.Gates.Enabled(feature.KubeadmBootstrapFormatIgnition) {
 		if c.Format == Ignition {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("spec", "format"), kubeadmBootstrapFormatIgnitionFeatureDisabledMsg))
+				pathPrefix.Child("format"), kubeadmBootstrapFormatIgnitionFeatureDisabledMsg))
 		}
 
 		if c.Ignition != nil {
 			allErrs = append(allErrs, field.Forbidden(
-				field.NewPath("spec", "ignition"), kubeadmBootstrapFormatIgnitionFeatureDisabledMsg))
+				pathPrefix.Child("ignition"), kubeadmBootstrapFormatIgnitionFeatureDisabledMsg))
 		}
 
 		return allErrs
@@ -163,7 +229,7 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					field.NewPath("spec", "format"),
+					pathPrefix.Child("format"),
 					c.Format,
 					fmt.Sprintf("must be set to %q if spec.ignition is set", Ignition),
 				),
@@ -178,7 +244,7 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Forbidden(
-					field.NewPath("spec", "users").Index(i).Child("inactive"),
+					pathPrefix.Child("users").Index(i).Child("inactive"),
 					cannotUseWithIgnition,
 				),
 			)
@@ -189,10 +255,22 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(
-				field.NewPath("spec", "useExperimentalRetryJoin"),
+				pathPrefix.Child("useExperimentalRetryJoin"),
 				cannotUseWithIgnition,
 			),
 		)
+	}
+
+	for i, file := range c.Files {
+		if file.Encoding == Gzip || file.Encoding == GzipBase64 {
+			allErrs = append(
+				allErrs,
+				field.Forbidden(
+					pathPrefix.Child("files").Index(i).Child("encoding"),
+					cannotUseWithIgnition,
+				),
+			)
+		}
 	}
 
 	if c.DiskSetup == nil {
@@ -204,7 +282,7 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Invalid(
-					field.NewPath("spec", "diskSetup", "partitions").Index(i).Child("tableType"),
+					pathPrefix.Child("diskSetup", "partitions").Index(i).Child("tableType"),
 					*partition.TableType,
 					fmt.Sprintf(
 						"only partition type %q is supported when spec.format is set to %q",
@@ -221,7 +299,7 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Forbidden(
-					field.NewPath("spec", "diskSetup", "filesystems").Index(i).Child("replaceFS"),
+					pathPrefix.Child("diskSetup", "filesystems").Index(i).Child("replaceFS"),
 					cannotUseWithIgnition,
 				),
 			)
@@ -231,7 +309,7 @@ func (c *KubeadmConfigSpec) validateIgnition() field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Forbidden(
-					field.NewPath("spec", "diskSetup", "filesystems").Index(i).Child("partition"),
+					pathPrefix.Child("diskSetup", "filesystems").Index(i).Child("partition"),
 					cannotUseWithIgnition,
 				),
 			)

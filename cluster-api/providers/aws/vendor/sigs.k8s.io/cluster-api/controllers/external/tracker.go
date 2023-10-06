@@ -17,12 +17,14 @@ limitations under the License.
 package external
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -36,6 +38,7 @@ type ObjectTracker struct {
 	m sync.Map
 
 	Controller controller.Controller
+	Cache      cache.Cache
 }
 
 // Watch uses the controller to issue a Watch only if the object hasn't been seen before.
@@ -54,15 +57,15 @@ func (o *ObjectTracker) Watch(log logr.Logger, obj runtime.Object, handler handl
 	u := &unstructured.Unstructured{}
 	u.SetGroupVersionKind(gvk)
 
-	log.Info("Adding watcher on external object", "GroupVersionKind", gvk.String())
+	log.Info(fmt.Sprintf("Adding watch on external object %q", gvk.String()))
 	err := o.Controller.Watch(
-		&source.Kind{Type: u},
+		source.Kind(o.Cache, u),
 		handler,
 		append(p, predicates.ResourceNotPaused(log))...,
 	)
 	if err != nil {
 		o.m.Delete(key)
-		return errors.Wrapf(err, "failed to add watcher on external object %q", gvk.String())
+		return errors.Wrapf(err, "failed to add watch on external object %q", gvk.String())
 	}
 	return nil
 }

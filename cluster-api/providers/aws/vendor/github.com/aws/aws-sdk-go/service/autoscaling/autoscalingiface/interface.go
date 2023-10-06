@@ -23,37 +23,37 @@ import (
 // can be stubbed out for unit testing your code with the SDK without needing
 // to inject custom request handlers into the SDK's request pipeline.
 //
-//    // myFunc uses an SDK service client to make a request to
-//    // Auto Scaling.
-//    func myFunc(svc autoscalingiface.AutoScalingAPI) bool {
-//        // Make svc.AttachInstances request
-//    }
+//	// myFunc uses an SDK service client to make a request to
+//	// Auto Scaling.
+//	func myFunc(svc autoscalingiface.AutoScalingAPI) bool {
+//	    // Make svc.AttachInstances request
+//	}
 //
-//    func main() {
-//        sess := session.New()
-//        svc := autoscaling.New(sess)
+//	func main() {
+//	    sess := session.New()
+//	    svc := autoscaling.New(sess)
 //
-//        myFunc(svc)
-//    }
+//	    myFunc(svc)
+//	}
 //
 // In your _test.go file:
 //
-//    // Define a mock struct to be used in your unit tests of myFunc.
-//    type mockAutoScalingClient struct {
-//        autoscalingiface.AutoScalingAPI
-//    }
-//    func (m *mockAutoScalingClient) AttachInstances(input *autoscaling.AttachInstancesInput) (*autoscaling.AttachInstancesOutput, error) {
-//        // mock response/functionality
-//    }
+//	// Define a mock struct to be used in your unit tests of myFunc.
+//	type mockAutoScalingClient struct {
+//	    autoscalingiface.AutoScalingAPI
+//	}
+//	func (m *mockAutoScalingClient) AttachInstances(input *autoscaling.AttachInstancesInput) (*autoscaling.AttachInstancesOutput, error) {
+//	    // mock response/functionality
+//	}
 //
-//    func TestMyFunc(t *testing.T) {
-//        // Setup Test
-//        mockSvc := &mockAutoScalingClient{}
+//	func TestMyFunc(t *testing.T) {
+//	    // Setup Test
+//	    mockSvc := &mockAutoScalingClient{}
 //
-//        myfunc(mockSvc)
+//	    myfunc(mockSvc)
 //
-//        // Verify myFunc's functionality
-//    }
+//	    // Verify myFunc's functionality
+//	}
 //
 // It is important to note that this interface will have breaking changes
 // when the service model is updated and adds new API operations, paginators,
@@ -71,6 +71,10 @@ type AutoScalingAPI interface {
 	AttachLoadBalancers(*autoscaling.AttachLoadBalancersInput) (*autoscaling.AttachLoadBalancersOutput, error)
 	AttachLoadBalancersWithContext(aws.Context, *autoscaling.AttachLoadBalancersInput, ...request.Option) (*autoscaling.AttachLoadBalancersOutput, error)
 	AttachLoadBalancersRequest(*autoscaling.AttachLoadBalancersInput) (*request.Request, *autoscaling.AttachLoadBalancersOutput)
+
+	AttachTrafficSources(*autoscaling.AttachTrafficSourcesInput) (*autoscaling.AttachTrafficSourcesOutput, error)
+	AttachTrafficSourcesWithContext(aws.Context, *autoscaling.AttachTrafficSourcesInput, ...request.Option) (*autoscaling.AttachTrafficSourcesOutput, error)
+	AttachTrafficSourcesRequest(*autoscaling.AttachTrafficSourcesInput) (*request.Request, *autoscaling.AttachTrafficSourcesOutput)
 
 	BatchDeleteScheduledAction(*autoscaling.BatchDeleteScheduledActionInput) (*autoscaling.BatchDeleteScheduledActionOutput, error)
 	BatchDeleteScheduledActionWithContext(aws.Context, *autoscaling.BatchDeleteScheduledActionInput, ...request.Option) (*autoscaling.BatchDeleteScheduledActionOutput, error)
@@ -232,6 +236,10 @@ type AutoScalingAPI interface {
 	DescribeTerminationPolicyTypesWithContext(aws.Context, *autoscaling.DescribeTerminationPolicyTypesInput, ...request.Option) (*autoscaling.DescribeTerminationPolicyTypesOutput, error)
 	DescribeTerminationPolicyTypesRequest(*autoscaling.DescribeTerminationPolicyTypesInput) (*request.Request, *autoscaling.DescribeTerminationPolicyTypesOutput)
 
+	DescribeTrafficSources(*autoscaling.DescribeTrafficSourcesInput) (*autoscaling.DescribeTrafficSourcesOutput, error)
+	DescribeTrafficSourcesWithContext(aws.Context, *autoscaling.DescribeTrafficSourcesInput, ...request.Option) (*autoscaling.DescribeTrafficSourcesOutput, error)
+	DescribeTrafficSourcesRequest(*autoscaling.DescribeTrafficSourcesInput) (*request.Request, *autoscaling.DescribeTrafficSourcesOutput)
+
 	DescribeWarmPool(*autoscaling.DescribeWarmPoolInput) (*autoscaling.DescribeWarmPoolOutput, error)
 	DescribeWarmPoolWithContext(aws.Context, *autoscaling.DescribeWarmPoolInput, ...request.Option) (*autoscaling.DescribeWarmPoolOutput, error)
 	DescribeWarmPoolRequest(*autoscaling.DescribeWarmPoolInput) (*request.Request, *autoscaling.DescribeWarmPoolOutput)
@@ -247,6 +255,10 @@ type AutoScalingAPI interface {
 	DetachLoadBalancers(*autoscaling.DetachLoadBalancersInput) (*autoscaling.DetachLoadBalancersOutput, error)
 	DetachLoadBalancersWithContext(aws.Context, *autoscaling.DetachLoadBalancersInput, ...request.Option) (*autoscaling.DetachLoadBalancersOutput, error)
 	DetachLoadBalancersRequest(*autoscaling.DetachLoadBalancersInput) (*request.Request, *autoscaling.DetachLoadBalancersOutput)
+
+	DetachTrafficSources(*autoscaling.DetachTrafficSourcesInput) (*autoscaling.DetachTrafficSourcesOutput, error)
+	DetachTrafficSourcesWithContext(aws.Context, *autoscaling.DetachTrafficSourcesInput, ...request.Option) (*autoscaling.DetachTrafficSourcesOutput, error)
+	DetachTrafficSourcesRequest(*autoscaling.DetachTrafficSourcesInput) (*request.Request, *autoscaling.DetachTrafficSourcesOutput)
 
 	DisableMetricsCollection(*autoscaling.DisableMetricsCollectionInput) (*autoscaling.DisableMetricsCollectionOutput, error)
 	DisableMetricsCollectionWithContext(aws.Context, *autoscaling.DisableMetricsCollectionInput, ...request.Option) (*autoscaling.DisableMetricsCollectionOutput, error)
@@ -299,6 +311,10 @@ type AutoScalingAPI interface {
 	ResumeProcesses(*autoscaling.ScalingProcessQuery) (*autoscaling.ResumeProcessesOutput, error)
 	ResumeProcessesWithContext(aws.Context, *autoscaling.ScalingProcessQuery, ...request.Option) (*autoscaling.ResumeProcessesOutput, error)
 	ResumeProcessesRequest(*autoscaling.ScalingProcessQuery) (*request.Request, *autoscaling.ResumeProcessesOutput)
+
+	RollbackInstanceRefresh(*autoscaling.RollbackInstanceRefreshInput) (*autoscaling.RollbackInstanceRefreshOutput, error)
+	RollbackInstanceRefreshWithContext(aws.Context, *autoscaling.RollbackInstanceRefreshInput, ...request.Option) (*autoscaling.RollbackInstanceRefreshOutput, error)
+	RollbackInstanceRefreshRequest(*autoscaling.RollbackInstanceRefreshInput) (*request.Request, *autoscaling.RollbackInstanceRefreshOutput)
 
 	SetDesiredCapacity(*autoscaling.SetDesiredCapacityInput) (*autoscaling.SetDesiredCapacityOutput, error)
 	SetDesiredCapacityWithContext(aws.Context, *autoscaling.SetDesiredCapacityInput, ...request.Option) (*autoscaling.SetDesiredCapacityOutput, error)

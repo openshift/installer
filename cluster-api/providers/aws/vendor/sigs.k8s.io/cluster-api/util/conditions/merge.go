@@ -44,6 +44,7 @@ type localizedCondition struct {
 //   - P2 - Status=False, Severity=Info
 //   - P3 - Status=True
 //   - P4 - Status=Unknown
+//
 // 3. The group with highest priority is used to determine status, severity and other info of the target condition.
 //
 // Please note that the last operation includes also the task of computing the Reason and the Message for the target
@@ -131,7 +132,7 @@ func (g conditionGroups) Swap(i, j int) {
 	g[i], g[j] = g[j], g[i]
 }
 
-// TopGroup returns the the condition group with the highest mergePriority.
+// TopGroup returns the condition group with the highest mergePriority.
 func (g conditionGroups) TopGroup() *conditionGroup {
 	if len(g) == 0 {
 		return nil
@@ -139,17 +140,17 @@ func (g conditionGroups) TopGroup() *conditionGroup {
 	return &g[0]
 }
 
-// TrueGroup returns the the condition group with status True, if any.
+// TrueGroup returns the condition group with status True, if any.
 func (g conditionGroups) TrueGroup() *conditionGroup {
 	return g.getByStatusAndSeverity(corev1.ConditionTrue, clusterv1.ConditionSeverityNone)
 }
 
-// ErrorGroup returns the the condition group with status False and severity Error, if any.
+// ErrorGroup returns the condition group with status False and severity Error, if any.
 func (g conditionGroups) ErrorGroup() *conditionGroup {
 	return g.getByStatusAndSeverity(corev1.ConditionFalse, clusterv1.ConditionSeverityError)
 }
 
-// WarningGroup returns the the condition group with status False and severity Warning, if any.
+// WarningGroup returns the condition group with status False and severity Warning, if any.
 func (g conditionGroups) WarningGroup() *conditionGroup {
 	return g.getByStatusAndSeverity(corev1.ConditionFalse, clusterv1.ConditionSeverityWarning)
 }

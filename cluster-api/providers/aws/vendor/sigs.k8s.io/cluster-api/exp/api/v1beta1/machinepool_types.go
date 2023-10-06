@@ -49,6 +49,7 @@ type MachinePoolSpec struct {
 	// be ready.
 	// Defaults to 0 (machine instance will be considered available as soon as it
 	// is ready)
+	// NOTE: No logic is implemented for this field and it currently has no behaviour.
 	// +optional
 	MinReadySeconds *int32 `json:"minReadySeconds,omitempty"`
 
@@ -163,6 +164,11 @@ const (
 	// MachinePool infrastructure is scaling down.
 	MachinePoolPhaseScalingDown = MachinePoolPhase("ScalingDown")
 
+	// MachinePoolPhaseScaling is the MachinePool state when the
+	// MachinePool infrastructure is scaling.
+	// This phase value is appropriate to indicate an active state of scaling by an external autoscaler.
+	MachinePoolPhaseScaling = MachinePoolPhase("Scaling")
+
 	// MachinePoolPhaseDeleting is the MachinePool state when a delete
 	// request has been sent to the API Server,
 	// but its infrastructure has not yet been fully deleted.
@@ -192,6 +198,7 @@ func (m *MachinePoolStatus) GetTypedPhase() MachinePoolPhase {
 		MachinePoolPhaseRunning,
 		MachinePoolPhaseScalingUp,
 		MachinePoolPhaseScalingDown,
+		MachinePoolPhaseScaling,
 		MachinePoolPhaseDeleting,
 		MachinePoolPhaseFailed:
 		return phase
@@ -206,6 +213,7 @@ func (m *MachinePoolStatus) GetTypedPhase() MachinePoolPhase {
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.replicas
 // +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.clusterName",description="Cluster"
+// +kubebuilder:printcolumn:name="Desired",type=integer,JSONPath=".spec.replicas",description="Total number of machines desired by this MachinePool",priority=10
 // +kubebuilder:printcolumn:name="Replicas",type="string",JSONPath=".status.replicas",description="MachinePool replicas count"
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="MachinePool status such as Terminating/Pending/Provisioning/Running/Failed etc"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of MachinePool"

@@ -19,7 +19,6 @@ package remote
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -34,7 +33,6 @@ import (
 // ClusterCacheReconciler is responsible for stopping remote cluster caches when
 // the cluster for the remote cache is being deleted.
 type ClusterCacheReconciler struct {
-	Log     logr.Logger
 	Client  client.Client
 	Tracker *ClusterCacheTracker
 
@@ -44,6 +42,7 @@ type ClusterCacheReconciler struct {
 
 func (r *ClusterCacheReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
 	err := ctrl.NewControllerManagedBy(mgr).
+		Named("remote/clustercache").
 		For(&clusterv1.Cluster{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
@@ -74,7 +73,7 @@ func (r *ClusterCacheReconciler) Reconcile(ctx context.Context, req reconcile.Re
 
 	log.V(2).Info("Cluster no longer exists")
 
-	r.Tracker.deleteAccessor(req.NamespacedName)
+	r.Tracker.deleteAccessor(ctx, req.NamespacedName)
 
 	return reconcile.Result{}, nil
 }

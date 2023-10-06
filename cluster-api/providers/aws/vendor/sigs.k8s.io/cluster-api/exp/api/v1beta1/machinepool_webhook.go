@@ -26,8 +26,10 @@ import (
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/version"
 )
 
@@ -48,14 +50,14 @@ func (m *MachinePool) Default() {
 	if m.Labels == nil {
 		m.Labels = make(map[string]string)
 	}
-	m.Labels[clusterv1.ClusterLabelName] = m.Spec.ClusterName
+	m.Labels[clusterv1.ClusterNameLabel] = m.Spec.ClusterName
 
 	if m.Spec.Replicas == nil {
-		m.Spec.Replicas = pointer.Int32Ptr(1)
+		m.Spec.Replicas = pointer.Int32(1)
 	}
 
 	if m.Spec.MinReadySeconds == nil {
-		m.Spec.MinReadySeconds = pointer.Int32Ptr(0)
+		m.Spec.MinReadySeconds = pointer.Int32(0)
 	}
 
 	if m.Spec.Template.Spec.Bootstrap.ConfigRef != nil && m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace == "" {
@@ -74,31 +76,40 @@ func (m *MachinePool) Default() {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (m *MachinePool) ValidateCreate() error {
-	return m.validate(nil)
+func (m *MachinePool) ValidateCreate() (admission.Warnings, error) {
+	return nil, m.validate(nil)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (m *MachinePool) ValidateUpdate(old runtime.Object) error {
+func (m *MachinePool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	oldMP, ok := old.(*MachinePool)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a MachinePool but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a MachinePool but got a %T", old))
 	}
-	return m.validate(oldMP)
+	return nil, m.validate(oldMP)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (m *MachinePool) ValidateDelete() error {
-	return m.validate(nil)
+func (m *MachinePool) ValidateDelete() (admission.Warnings, error) {
+	return nil, m.validate(nil)
 }
 
 func (m *MachinePool) validate(old *MachinePool) error {
+	// NOTE: MachinePool is behind MachinePool feature gate flag; the web hook
+	// must prevent creating new objects when the feature flag is disabled.
+	specPath := field.NewPath("spec")
+	if !feature.Gates.Enabled(feature.MachinePool) {
+		return field.Forbidden(
+			specPath,
+			"can be set only if the MachinePool feature flag is enabled",
+		)
+	}
 	var allErrs field.ErrorList
 	if m.Spec.Template.Spec.Bootstrap.ConfigRef == nil && m.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
 		allErrs = append(
 			allErrs,
 			field.Required(
-				field.NewPath("spec", "template", "spec", "bootstrap", "data"),
+				specPath.Child("template", "spec", "bootstrap", "data"),
 				"expected either spec.bootstrap.dataSecretName or spec.bootstrap.configRef to be populated",
 			),
 		)
@@ -108,7 +119,7 @@ func (m *MachinePool) validate(old *MachinePool) error {
 		allErrs = append(
 			allErrs,
 			field.Invalid(
-				field.NewPath("spec", "template", "spec", "bootstrap", "configRef", "namespace"),
+				specPath.Child("template", "spec", "bootstrap", "configRef", "namespace"),
 				m.Spec.Template.Spec.Bootstrap.ConfigRef.Namespace,
 				"must match metadata.namespace",
 			),
@@ -119,7 +130,7 @@ func (m *MachinePool) validate(old *MachinePool) error {
 		allErrs = append(
 			allErrs,
 			field.Invalid(
-				field.NewPath("spec", "infrastructureRef", "namespace"),
+				specPath.Child("infrastructureRef", "namespace"),
 				m.Spec.Template.Spec.InfrastructureRef.Namespace,
 				"must match metadata.namespace",
 			),
@@ -129,13 +140,15 @@ func (m *MachinePool) validate(old *MachinePool) error {
 	if old != nil && old.Spec.ClusterName != m.Spec.ClusterName {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "clusterName"), m.Spec.ClusterName, "field is immutable"),
+			field.Forbidden(
+				specPath.Child("clusterName"),
+				"field is immutable"),
 		)
 	}
 
 	if m.Spec.Template.Spec.Version != nil {
 		if !version.KubeSemver.MatchString(*m.Spec.Template.Spec.Version) {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "template", "spec", "version"), *m.Spec.Template.Spec.Version, "must be a valid semantic version"))
+			allErrs = append(allErrs, field.Invalid(specPath.Child("template", "spec", "version"), *m.Spec.Template.Spec.Version, "must be a valid semantic version"))
 		}
 	}
 
