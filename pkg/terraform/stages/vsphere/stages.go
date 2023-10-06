@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/terraform/stages"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -20,26 +19,26 @@ import (
 // multiple region and zone vsphere environment.
 var PlatformStages = []terraform.Stage{
 	/*
+			stages.NewStage(
+				"vsphere",
+				"pre-bootstrap",
+				[]providers.Provider{providers.VSphere, providers.VSpherePrivate},
+			),
+
 		stages.NewStage(
 			"vsphere",
-			"pre-bootstrap",
-			[]providers.Provider{providers.VSphere, providers.VSpherePrivate},
+			"bootstrap",
+			[]providers.Provider{providers.VSphere},
+			stages.WithNormalBootstrapDestroy(),
+			stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
 		),
-
+		stages.NewStage(
+			"vsphere",
+			"master",
+			[]providers.Provider{providers.VSphere},
+			stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
+		),
 	*/
-	stages.NewStage(
-		"vsphere",
-		"bootstrap",
-		[]providers.Provider{providers.VSphere},
-		stages.WithNormalBootstrapDestroy(),
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
-	stages.NewStage(
-		"vsphere",
-		"master",
-		[]providers.Provider{providers.VSphere},
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {
