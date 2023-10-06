@@ -166,19 +166,24 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 
 	controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlaneMachines))
 
-	// append another control plane machines for bootstrap...
-	controlPlaneMachines = append(controlPlaneMachines, controlPlaneMachines[0])
+	bootstrap := true
 
-	for i, c := range controlPlaneMachines {
+	for i := 0; i < len(controlPlaneMachines); i++ {
+		vmName := fmt.Sprintf("%s-master-%d", clusterID, i)
+
 		encodedIgnition := encodedMasterIgn
-		controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+		controlPlaneConfigs[i] = controlPlaneMachines[i].Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
 
-		if i == 0 {
-			encodedIgnition = encodedBootstrapIgn
-
+		if bootstrap {
+			if i == 0 {
+				encodedIgnition = encodedBootstrapIgn
+				vmName = fmt.Sprintf("%s-bootstrap", clusterID)
+				bootstrap = false
+				i = -1
+			}
 		}
 
-		task, err := clone(vconn, vmTemplateMap[controlPlaneConfigs[i].Template], controlPlaneConfigs[i], encodedIgnition)
+		task, err := clone(vconn, vmTemplateMap[controlPlaneConfigs[i].Template], controlPlaneConfigs[i], encodedIgnition, vmName)
 		if err != nil {
 			return err
 		}
@@ -195,7 +200,12 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 		if err != nil {
 			return err
 		}
-		vm.PowerOn(vconn.Context)
+		task, err = vm.PowerOn(vconn.Context)
+		if err != nil {
+			return err
+		}
+
+		task.WaitForResult(vconn.Context, nil)
 
 	}
 
@@ -470,7 +480,7 @@ const (
 func clone(vconn *VCenterConnection,
 	vmTemplate *object.VirtualMachine,
 	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec,
-	encodedIgnition string) (*object.Task, error) {
+	encodedIgnition, vmName string) (*object.Task, error) {
 
 	extraConfig := []types.BaseOptionValue{}
 
@@ -485,7 +495,7 @@ func clone(vconn *VCenterConnection,
 
 	extraConfig = append(extraConfig, &types.OptionValue{
 		Key:   GuestInfoHostname,
-		Value: machineProviderSpec.Name,
+		Value: vmName,
 	})
 	extraConfig = append(extraConfig, &types.OptionValue{
 		Key:   StealClock,
@@ -539,7 +549,7 @@ func clone(vconn *VCenterConnection,
 		PowerOn: false, // Create powered off machine, for power it on later in "create" procedure
 	}
 
-	return vmTemplate.Clone(vconn.Context, folder, machineProviderSpec.Name, spec)
+	return vmTemplate.Clone(vconn.Context, folder, vmName, spec)
 }
 
 func getDiskSpec(devices object.VirtualDeviceList, machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec) (types.BaseVirtualDeviceConfigSpec, error) {
