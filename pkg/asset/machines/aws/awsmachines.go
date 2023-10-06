@@ -1,0 +1,78 @@
+// Package aws generates Machine objects for aws.
+package aws
+
+import (
+	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+)
+
+const (
+	capiGuestsNamespace = "openshift-cluster-api-guests"
+)
+
+// Machines returns a list of machines for a machinepool.
+func AWSMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string) ([]*capa.AWSMachine, error) {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
+		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
+	}
+	mpool := pool.Platform.AWS
+
+	total := int64(1)
+	if pool.Replicas != nil {
+		total = *pool.Replicas
+	}
+
+	// tags, err := tagsFromUserTags(clusterID, userTags)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
+	// }
+
+	var awsMachines []*capa.AWSMachine
+
+	for idx := int64(0); idx < total; idx++ {
+		//zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		// subnet, ok := subnets[zone]
+		// if len(subnets) > 0 && !ok {
+		// 	return nil, errors.Errorf("no subnet for zone %s", zone)
+		// }
+
+		awsMachine := &capa.AWSMachine{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				Kind:       "AWSMachine",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: capiGuestsNamespace,
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
+			},
+			Spec: capa.AWSMachineSpec{
+				//failureDomain?
+				Ignition:             &capa.Ignition{Version: "3.2"},
+				UncompressedUserData: pointer.Bool(true),
+				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
+				InstanceType:         mpool.InstanceType,
+				AMI:                  capa.AMIReference{ID: pointer.String(mpool.AMIID)},
+				//Subnet: ?
+				//AdditionalTags: tags,
+			},
+			// RootVolume: capa.Volume{
+			// 	Size:      int64(mpool.EC2RootVolume.Size),
+			// 	Type:      mpool.EC2RootVolume.Type,
+			// 	IOPS:      int64(mpool.EC2RootVolume.IOPS),
+			// 	Encrypted: true, // is this configurable? Use KMS?
+			// },
+		}
+		awsMachines = append(awsMachines, awsMachine)
+
+	}
+	return awsMachines, nil
+}

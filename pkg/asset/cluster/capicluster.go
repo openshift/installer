@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
 )
@@ -51,6 +52,7 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		&password.KubeadminPassword{},
 		&capi.CAPIControlPlane{},
 		&manifests.ClusterAPI{},
+		&machines.CAPIMachine{},
 	}
 }
 
@@ -64,10 +66,15 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	capiControlPlane := &capi.CAPIControlPlane{}
 	capiManifests := &manifests.ClusterAPI{}
-	parents.Get(clusterID, installConfig, capiControlPlane, capiManifests)
+	capiMachines := &machines.CAPIMachine{}
+	parents.Get(clusterID, installConfig, capiControlPlane, capiManifests, capiMachines)
 
 	// Only need the objects--not the files.
-	manifests := capiManifests.Manifests
+	manifests := []client.Object{}
+	for _, m := range capiManifests.Manifests {
+		manifests = append(manifests, m.Object)
+	}
+	manifests = append(manifests, capiMachines.Machines...)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -90,7 +97,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	for _, m := range manifests {
-		if err := cl.Create(context.Background(), m.Object); err != nil {
+		if err := cl.Create(context.Background(), m); err != nil {
 			logrus.Errorf("CANNOT CREATE CLUSTER", err)
 			return err
 		}
