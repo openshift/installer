@@ -903,6 +903,19 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 			return fmt.Errorf("error creating internal load balancer: %w", err)
 		}
 		internalLBARN = *internalLBOutput.LoadBalancers[0].LoadBalancerArn
+		attrInput := &elbv2.ModifyLoadBalancerAttributesInput{
+			LoadBalancerArn: aws.String(internalLBARN),
+			Attributes: []*elbv2.LoadBalancerAttribute{
+				{
+					Key:   aws.String("load_balancing.cross_zone.enabled"),
+					Value: aws.String("true"),
+				},
+			},
+		}
+		_, err = elbClient.ModifyLoadBalancerAttributes(attrInput)
+		if err != nil {
+			return fmt.Errorf("error modifying load balancer attributes: %w", err)
+		}
 		o.LoadBalancers.Internal.ZoneID = *internalLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.Internal.DNSName = *internalLBOutput.LoadBalancers[0].DNSName
 		l.Infof("Internal Load Balancer created: %v", *internalLBOutput.LoadBalancers[0].DNSName)
@@ -1150,6 +1163,19 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 			return fmt.Errorf("error creating external load balancer: %w", err)
 		}
 		externalLBARN = *externalLBOutput.LoadBalancers[0].LoadBalancerArn
+		attrInput := &elbv2.ModifyLoadBalancerAttributesInput{
+			LoadBalancerArn: aws.String(externalLBARN),
+			Attributes: []*elbv2.LoadBalancerAttribute{
+				{
+					Key:   aws.String("load_balancing.cross_zone.enabled"),
+					Value: aws.String("true"),
+				},
+			},
+		}
+		_, err = elbClient.ModifyLoadBalancerAttributes(attrInput)
+		if err != nil {
+			return fmt.Errorf("error modifying load balancer attributes: %w", err)
+		}
 		o.LoadBalancers.External.ZoneID = *externalLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.External.DNSName = *externalLBOutput.LoadBalancers[0].DNSName
 		l.Infof("External Load Balancer created: %v", *externalLBOutput.LoadBalancers[0].DNSName)
