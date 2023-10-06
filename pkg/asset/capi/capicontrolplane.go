@@ -4,11 +4,17 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	providers "github.com/openshift/installer/pkg/cluster-api"
 )
 
 var (
@@ -54,29 +60,117 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 
 	c.LocalCP = *localControlPlane
 
-	kcArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
-	certDir := c.LocalCP.Env.WebhookInstallOptions.LocalServingCertDir
-	certArg := fmt.Sprintf("--webhook-cert-dir=%s", certDir)
-	// CAPI Manager
-	capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
-	capiManCommand := exec.Command(capiManagerPath, kcArg, certArg, "-v=5")
-	capiManCommand.Stdout = os.Stdout
-	capiManCommand.Stderr = os.Stderr
-	err = capiManCommand.Run()
+	// Create a temporary directory to unpack the cluster-api assets
+	// and use it as the working directory for the envtest environment.
+	manifestDir, err := os.MkdirTemp("", "openshift-cluster-api-manifests")
 	if err != nil {
-		//expected to fail at the moment, let it flow through so we hit the stop function
-		//return err
+		return err
+	}
+	if err := data.Unpack(manifestDir, "/cluster-api"); err != nil {
+		return err
+	}
+
+	// Create a temporary directory to unpack the cluster-api binaries.
+	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
+	if err != nil {
+		return err
+	}
+	if err := providers.UnpackClusterAPIBinary(binDir); err != nil {
+		return err
+	}
+	if err := providers.AWS.Extract(binDir); err != nil {
+		return err
+	}
+
+	kubeconfigArg := fmt.Sprintf("--kubeconfig=%s", localControlPlane.KubeconfigPath)
+
+	//
+	// CAPI Manager
+	//
+	{
+		spew.Dump("STARTING CAPI")
+		path := manifestDir + "/core-components.yaml"
+		wh := envtest.WebhookInstallOptions{
+			Paths: []string{path},
+		}
+		if err := wh.PrepWithoutInstalling(); err != nil {
+			return err
+		}
+		opts := envtest.CRDInstallOptions{
+			Scheme:         c.LocalCP.Env.Scheme,
+			Paths:          []string{path},
+			WebhookOptions: wh,
+		}
+		if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
+			return err
+		}
+
+		capiManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_MAN")
+		if capiManagerPath == "" {
+			capiManagerPath = fmt.Sprintf("%s/cluster-api", binDir)
+		}
+		cmd := exec.Command(capiManagerPath,
+			kubeconfigArg,
+			"-v=5",
+			"--health-addr=:0",
+			"--metrics-bind-addr=:0",
+			fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
+			fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
+		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		go func() {
+			err := cmd.Run()
+			if err != nil {
+				//expected to fail at the moment, let it flow through so we hit the stop function
+				spew.Dump("CAPIRUN", err)
+				// return err
+			}
+		}()
+
 	}
 
 	// AWS CAPI Provider
-	awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
-	command := exec.Command(awsManagerPath, kcArg, certArg, "-v=5")
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	err = command.Run()
-	if err != nil {
-		//expected to fail at the moment, let it flow through so we hit the stop function
-		//return err
+	{
+		spew.Dump("STARTING CAPA")
+		path := manifestDir + "/aws-infrastructure-components.yaml"
+		wh := envtest.WebhookInstallOptions{
+			Paths: []string{path},
+		}
+		if err := wh.PrepWithoutInstalling(); err != nil {
+			return err
+		}
+		opts := envtest.CRDInstallOptions{
+			Scheme:         c.LocalCP.Env.Scheme,
+			Paths:          []string{path},
+			WebhookOptions: wh,
+		}
+		if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
+			return err
+		}
+
+		awsManagerPath := os.Getenv("OPENSHIFT_INSTALL_CAPI_AWS")
+		if awsManagerPath == "" {
+			awsManagerPath = fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(binDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH)
+		}
+		cmd := exec.Command(awsManagerPath,
+			kubeconfigArg,
+			"-v=5",
+			"--health-addr=:0",
+			"--metrics-bind-addr=:0",
+			fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
+			fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
+		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		go func() {
+			err := cmd.Run()
+			if err != nil {
+				//expected to fail at the moment, let it flow through so we hit the stop function
+				spew.Dump("AWSRUN", err)
+				// return err
+			}
+		}()
 	}
 
 	return nil

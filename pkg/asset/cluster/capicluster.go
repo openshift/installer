@@ -2,16 +2,15 @@ package cluster
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/capi"
@@ -77,26 +76,32 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return errors.New("cluster cannot be created with bootstrapInPlace set")
 	}
 
-	client, err := kubernetes.NewForConfig(capiControlPlane.LocalCP.Cfg)
+	// Create a new client to interact with the cluster.
+	cl, err := client.New(capiControlPlane.LocalCP.Cfg, client.Options{
+		Scheme: capiControlPlane.LocalCP.Env.Scheme,
+	})
 	if err != nil {
-		return errors.Wrap(err, "creating a Kubernetes client")
+		return err
 	}
-	ns, _ := client.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
-	for _, n := range ns.Items {
-		spew.Dump(n.Name)
-	}
-	//ocCmd := fmt.Sprintf("oc apply /home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates --kubeconfig %s", capiControlPlane.LocalCP.KubeconfigPath)
-	templatePath := "/home/padillon/go/src/github.com/openshift-cloud-team/cluster-api-installer-poc/templates/"
-	kcArg := fmt.Sprintf("--kubeconfig=%s", capiControlPlane.LocalCP.KubeconfigPath)
-	//command := exec.Command("oc", "get", "namespace", kcArg)
-	command := exec.Command("oc", "apply", "-f", templatePath, kcArg)
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-	err = command.Run()
-	spew.Dump(err)
 
-	ns, _ = client.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
-	for _, n := range ns.Items {
+	// Apply the cluster manifests.
+	cluster := &clusterv1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "test-cluster-",
+			Namespace:    "default",
+		},
+	}
+	if err := cl.Create(context.Background(), cluster); err != nil {
+		spew.Dump("CANNOT CREATE CLUSTER", err)
+		return err
+	}
+
+	// List all namespaces in the cluster.
+	namespaceList := &corev1.NamespaceList{}
+	if err := cl.List(context.Background(), namespaceList); err != nil {
+		return err
+	}
+	for _, n := range namespaceList.Items {
 		spew.Dump(n.Name)
 	}
 

@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	capav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
+	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -47,18 +53,16 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)
 
-	// Create a temporary directory to unpack the cluster-api assets
-	// and use it as the working directory for the envtest environment.
-	dir, err := os.MkdirTemp("", "openshift-local-control-plane")
-	if err != nil {
-		return err
-	}
-	if err := data.Unpack(dir, "/cluster-api"); err != nil {
-		return err
-	}
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = clusterv1alpha3.AddToScheme(scheme)
+	_ = clusterv1alpha4.AddToScheme(scheme)
+	_ = clusterv1.AddToScheme(scheme)
+	_ = capav1beta1.AddToScheme(scheme)
+	_ = capav1.AddToScheme(scheme)
 
 	c.Env = &envtest.Environment{
-		CRDDirectoryPaths:        []string{dir},
+		Scheme:                   scheme,
 		AttachControlPlaneOutput: true,
 	}
 
@@ -96,6 +100,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 	c.KubeconfigPath = tmpfile.Name()
+	spew.Dump("KUBECONFIG =" + c.KubeconfigPath)
 
 	return nil
 }

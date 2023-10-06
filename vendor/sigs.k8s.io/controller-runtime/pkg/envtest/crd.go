@@ -376,6 +376,7 @@ func modifyConversionWebhooks(crds []*apiextensionsv1.CustomResourceDefinition, 
 			Group: crds[i].Spec.Group,
 			Kind:  crds[i].Spec.Names.Kind,
 		}]; !ok {
+			crds[i].Spec.Conversion = nil
 			continue
 		}
 		if crds[i].Spec.Conversion == nil {
