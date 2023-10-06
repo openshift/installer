@@ -98,7 +98,21 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 	switch platform {
 	case awstypes.Name:
+		awsCluster := &capa.AWSCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      clusterID.InfraID,
+				Namespace: capiGuestsNamespace,
+			},
+			Spec: capa.AWSClusterSpec{
+				Region: installConfig.Config.Platform.AWS.Region,
+			},
+		}
+		awsClusterFn := "01_aws-cluster.yaml"
+		c.Manifests = append(c.Manifests, Manifest{awsCluster, awsClusterFn})
+
+		cluster.Spec.InfrastructureRef.APIVersion = "infrastructure.cluster.x-k8s.io/v1beta2"
 		cluster.Spec.InfrastructureRef.Kind = "AWSCluster"
+		cluster.Spec.InfrastructureRef.Name = clusterID.InfraID
 
 		id := &capa.AWSClusterControllerIdentity{
 			TypeMeta: metav1.TypeMeta{

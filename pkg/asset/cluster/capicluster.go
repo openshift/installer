@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
@@ -103,6 +104,8 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	for _, n := range namespaceList.Items {
 		spew.Dump(n.Name)
 	}
+
+	time.Sleep(10 * time.Minute)
 
 	capiControlPlane.LocalCP.Stop()
 	panic("not implemented")

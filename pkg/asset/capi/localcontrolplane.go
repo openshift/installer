@@ -65,7 +65,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 
 	c.Env = &envtest.Environment{
 		Scheme:                   scheme,
-		AttachControlPlaneOutput: true,
+		AttachControlPlaneOutput: false,
 	}
 
 	// Create a temporary directory to unpack the cluster-api binaries.
