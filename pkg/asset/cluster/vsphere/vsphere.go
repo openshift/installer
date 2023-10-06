@@ -178,8 +178,6 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 			if i == 0 {
 				encodedIgnition = encodedBootstrapIgn
 				vmName = fmt.Sprintf("%s-bootstrap", clusterID)
-				bootstrap = false
-				i = -1
 			}
 		}
 
@@ -207,6 +205,12 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 
 		task.WaitForResult(vconn.Context, nil)
 
+		if bootstrap {
+			if i == 0 {
+				bootstrap = false
+				i = -1
+			}
+		}
 	}
 
 	return nil
