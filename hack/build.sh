@@ -52,24 +52,19 @@ copy_envtest_bins_to_mirror() {
   envtest_arch=$(go env GOOS)-$(go env GOARCH)
   tar_file="kubebuilder-tools-${envtest_k8s_version}-${envtest_arch}.tar.gz"
   # Download the tar.gz in the mirror directory and unpack it.
-  envtest_bin_dir="${PWD}/pkg/cluster-api/mirror/envtest"
+  envtest_bin_dir="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/envtest"
   mkdir -p "${envtest_bin_dir}"
-  # Check if the kube-apiserver exists, if so, try to run it and check the version.
-  if [ -f "${envtest_bin_dir}/kube-apiserver" ]; then
-    version=$("${envtest_bin_dir}/kube-apiserver" --version)
-    if [ "${version}" = "Kubernetes v${envtest_k8s_version}" ]; then
-      echo "envtest binaries already exist and are the correct version @v${envtest_k8s_version}"
-      return
-    fi
-  fi
-  dst="${envtest_bin_dir}/${tar_file}"
+  mirror_dir="${PWD}/pkg/cluster-api/mirror/envtest/"
+  mkdir -p "${mirror_dir}"
   # Download the tar file if it doesn't exist and unpack it in the mirror directory.
-  echo "Downloading envtest binaries"
-  curl -fL "${bucket}/${tar_file}" -o "${dst}"
-  echo "Copying envtest binaries @v${envtest_k8s_version} to mirror"
-  tar -C "${envtest_bin_dir}" -xzvf "${dst}" --strip-components=2
-  # Cleanup the tar file.
-  rm "${dst}"
+  dst="${envtest_bin_dir}/${tar_file}"
+  if ! [ -f "${envtest_bin_dir}/${tar_file}" ]; then
+    echo "Downloading envtest binaries"
+    curl -fL "${bucket}/${tar_file}" -o "${dst}"
+  fi
+  # Copy the binaries to the mirror directory.
+  echo "Unpacking envtest binaries to mirror"
+  tar -C "${mirror_dir}" -xzf "${dst}" --strip-components=2
 }
 
 minimum_go_version=1.20
@@ -91,8 +86,8 @@ MODE="${MODE:-release}"
 # build cluster-api binaries before setting environment variables since it messes up make
 make -C cluster-api all
 
-# copy_cluster_api_to_mirror
-# copy_envtest_bins_to_mirror
+copy_cluster_api_to_mirror
+copy_envtest_bins_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
