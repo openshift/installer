@@ -20,26 +20,7 @@ var Regions = map[string]Region{
 	"dal": {
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
-		Zones: []string{
-			"dal10",
-			"dal12",
-		},
-	},
-	"eu-de": {
-		Description: "Frankfurt, Germany",
-		VPCRegion:   "eu-de",
-		Zones: []string{
-			"eu-de-1",
-			"eu-de-2",
-		},
-	},
-	"lon": {
-		Description: "London, UK.",
-		VPCRegion:   "eu-gb",
-		Zones: []string{
-			"lon04",
-			"lon06",
-		},
+		Zones:       []string{"dal10"},
 	},
 	"mon": {
 		Description: "Montreal, Canada",
@@ -50,34 +31,6 @@ var Regions = map[string]Region{
 		Description: "Osaka, Japan",
 		VPCRegion:   "jp-osa",
 		Zones:       []string{"osa21"},
-	},
-	"syd": {
-		Description: "Sydney, Australia",
-		VPCRegion:   "au-syd",
-		Zones: []string{
-			"syd04",
-			"syd05",
-		},
-	},
-	"sao": {
-		Description: "São Paulo, Brazil",
-		VPCRegion:   "br-sao",
-		Zones:       []string{"sao01"},
-	},
-	"tor": {
-		Description: "Toronto, Canada",
-		VPCRegion:   "ca-tor",
-		Zones:       []string{"tor01"},
-	},
-	"tok": {
-		Description: "Tokyo, Japan",
-		VPCRegion:   "jp-tok",
-		Zones:       []string{"tok04"},
-	},
-	"us-east": {
-		Description: "Washington DC, USA",
-		VPCRegion:   "us-east",
-		Zones:       []string{"us-east"},
 	},
 }
 
