@@ -157,9 +157,9 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 	for _, m := range manifests {
 		m.SetNamespace(ns.Name)
-		// if err := cl.Create(context.Background(), m); err != nil {
-		// 	return fmt.Errorf("failed to create manifest: %w", err)
-		// }
+		if err := cl.Create(context.Background(), m); err != nil {
+			return fmt.Errorf("failed to create manifest: %w", err)
+		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
