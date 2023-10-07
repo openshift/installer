@@ -406,6 +406,7 @@ func autoConvert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in *v1be
 	out.VersionNumber = (*int64)(unsafe.Pointer(in.VersionNumber))
 	out.AdditionalSecurityGroups = *(*[]apiv1beta2.AWSResourceReference)(unsafe.Pointer(&in.AdditionalSecurityGroups))
 	out.SpotMarketOptions = (*apiv1beta2.SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
+	// WARNING: in.InstanceMetadataOptions requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -536,6 +537,7 @@ func autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *v1
 	out.MinSize = in.MinSize
 	out.MaxSize = in.MaxSize
 	out.AvailabilityZones = *(*[]string)(unsafe.Pointer(&in.AvailabilityZones))
+	// WARNING: in.AvailabilityZoneSubnetType requires manual conversion: does not exist in peer-type
 	out.Subnets = *(*[]apiv1beta2.AWSResourceReference)(unsafe.Pointer(&in.Subnets))
 	out.AdditionalTags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.AdditionalTags))
 	if err := Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(&in.AWSLaunchTemplate, &out.AWSLaunchTemplate, s); err != nil {
@@ -706,6 +708,7 @@ func Convert_v1beta1_AWSManagedMachinePoolSpec_To_v1beta2_AWSManagedMachinePoolS
 func autoConvert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(in *v1beta2.AWSManagedMachinePoolSpec, out *AWSManagedMachinePoolSpec, s conversion.Scope) error {
 	out.EKSNodegroupName = in.EKSNodegroupName
 	out.AvailabilityZones = *(*[]string)(unsafe.Pointer(&in.AvailabilityZones))
+	// WARNING: in.AvailabilityZoneSubnetType requires manual conversion: does not exist in peer-type
 	out.SubnetIDs = *(*[]string)(unsafe.Pointer(&in.SubnetIDs))
 	out.AdditionalTags = *(*apiv1beta2.Tags)(unsafe.Pointer(&in.AdditionalTags))
 	out.RoleAdditionalPolicies = *(*[]string)(unsafe.Pointer(&in.RoleAdditionalPolicies))
