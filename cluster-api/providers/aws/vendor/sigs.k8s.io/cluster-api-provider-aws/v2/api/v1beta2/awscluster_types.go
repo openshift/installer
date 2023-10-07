@@ -239,11 +239,13 @@ type AWSClusterStatus struct {
 type S3Bucket struct {
 	// ControlPlaneIAMInstanceProfile is a name of the IAMInstanceProfile, which will be allowed
 	// to read control-plane node bootstrap data from S3 Bucket.
-	ControlPlaneIAMInstanceProfile string `json:"controlPlaneIAMInstanceProfile"`
+	// +optional
+	ControlPlaneIAMInstanceProfile string `json:"controlPlaneIAMInstanceProfile,omitempty"`
 
 	// NodesIAMInstanceProfiles is a list of IAM instance profiles, which will be allowed to read
 	// worker nodes bootstrap data from S3 Bucket.
-	NodesIAMInstanceProfiles []string `json:"nodesIAMInstanceProfiles"`
+	// +optional
+	NodesIAMInstanceProfiles []string `json:"nodesIAMInstanceProfiles,omitempty"`
 
 	// PresignedURLDuration defines the duration for which presigned URLs are valid.
 	//
