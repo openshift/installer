@@ -3,6 +3,7 @@ package manifests
 import (
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -94,6 +95,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			},
 			Spec: capa.AWSClusterSpec{
 				Region: installConfig.Config.Platform.AWS.Region,
+				S3Bucket: &capa.S3Bucket{
+					Name:                 fmt.Sprintf("openshift-bootstrap-data-%s", clusterID.InfraID),
+					PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
+				},
 			},
 		}
 		awsClusterFn := "01_aws-cluster.yaml"

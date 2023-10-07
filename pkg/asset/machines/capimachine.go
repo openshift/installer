@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/pointer"
@@ -76,8 +75,6 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 
 	pool := *ic.ControlPlane
 	var err error
-
-	spew.Dump("PLATFORM", ic.Platform.Name())
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -154,7 +151,7 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			m.Machines = append(m.Machines, mac)
 		}
 
-		bootstrapMachine, err := aws.AWSMachines(clusterID.InfraID, installConfig.Config.Platform.AWS.Region,
+		bootstrapMachines, err := aws.AWSMachines(clusterID.InfraID, installConfig.Config.Platform.AWS.Region,
 			subnets,
 			&types.MachinePool{
 				Name:           "bootstrap",
@@ -166,7 +163,7 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			"bootstrap",
 			installConfig.Config.Platform.AWS.UserTags,
 		)
-		m.Machines = append(m.Machines, bootstrapMachine[0])
+		m.Machines = append(m.Machines, bootstrapMachines...)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -187,7 +184,6 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	spew.Dump("RETURNING CAPIMACHINE", m.Machines)
 	return nil
 }
 

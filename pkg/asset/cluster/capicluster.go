@@ -131,43 +131,36 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "unable to inject installation info")
 		}
-
-		masterSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
-				Namespace: ns.Name,
+		manifests = append(manifests,
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+					Namespace: ns.Name,
+				},
+				Data: map[string][]byte{
+					"format": []byte("ignition"),
+					"value":  []byte(masterIgn),
+				},
 			},
-			Data: map[string][]byte{
-				"format": []byte("ignition"),
-				"value":  []byte(masterIgn),
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+					Namespace: ns.Name,
+				},
+				Data: map[string][]byte{
+					"format": []byte("ignition"),
+					"value":  []byte(bootstrapIgn),
+				},
 			},
-		}
-		if err := cl.Create(context.Background(), masterSecret); err != nil {
-			return fmt.Errorf("failed to create master data secret: %w", err)
-		}
-
-		bootstrapSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
-				Namespace: ns.Name,
-			},
-			Data: map[string][]byte{
-				"format": []byte("ignition"),
-				"value":  []byte(bootstrapIgn),
-			},
-		}
-		if err := cl.Create(context.Background(), bootstrapSecret); err != nil {
-			return fmt.Errorf("failed to create bootstrap data secret: %w", err)
-		}
-
+		)
 	}
 
 	for _, m := range manifests {
 		m.SetNamespace(ns.Name)
-		logrus.Infof("Creating manifest %s, namespace=%s name=%s", m.GetObjectKind().GroupVersionKind(), m.GetNamespace(), m.GetName())
 		// if err := cl.Create(context.Background(), m); err != nil {
 		// 	return fmt.Errorf("failed to create manifest: %w", err)
 		// }
+		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
 	}
 
 	// List all namespaces in the cluster.

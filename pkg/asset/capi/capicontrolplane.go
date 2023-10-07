@@ -123,7 +123,7 @@ func (c *CAPIControlPlane) runController(ctx context.Context, ct *controller) er
 	wh := envtest.WebhookInstallOptions{
 		Paths: ct.Manifests,
 	}
-	if err := wh.PrepWithoutInstalling(); err != nil {
+	if err := wh.Install(c.LocalCP.Cfg); err != nil {
 		return fmt.Errorf("failed to prepare controller %q webhook options: %w", ct.Name, err)
 	}
 	port, host, err := addr.Suggest("")

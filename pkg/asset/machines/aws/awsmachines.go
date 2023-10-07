@@ -61,9 +61,10 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 				//failureDomain?
 				Ignition:             &capa.Ignition{Version: "3.2"},
 				UncompressedUserData: pointer.Bool(true),
-				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				InstanceType:         mpool.InstanceType,
 				AMI:                  capa.AMIReference{ID: pointer.String(mpool.AMIID)},
+				SSHKeyName:           pointer.String(""),
+				// IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				//Subnet: ?
 				//AdditionalTags: tags,
 			},

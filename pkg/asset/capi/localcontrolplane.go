@@ -129,21 +129,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		c.KubeconfigPath = kf.Name()
 	}
 
-	// tmpfile, err := os.CreateTemp("", "installer-kubeconfig")
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if _, err := tmpfile.Write(kc); err != nil {
-	// 	return err
-	// }
-	// if err := tmpfile.Close(); err != nil {
-	// 	return err
-	// }
-
-	// c.KubeconfigPath = tmpfile.Name()
 	spew.Dump("KUBECONFIG =" + c.KubeconfigPath)
-
 	return nil
 }
 
