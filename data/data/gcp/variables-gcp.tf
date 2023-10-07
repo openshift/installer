@@ -158,3 +158,15 @@ variable "gcp_create_bootstrap_sa" {
   default = false
   description = "Whether a service account should be created to sign the ignition URL."
 }
+
+variable "gcp_user_configured_dns" {
+  type = bool
+  default = false
+  description = "Whether or not the user has selected a custom dns solution."
+}
+
+variable "gcp_lbconfig_contents" {
+  type = string
+  default = ""
+  description = "Contents of the Load Balancer configuration when the user has selected a custom dns solution."
+}

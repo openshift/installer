@@ -13,6 +13,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/lbconfig"
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -193,6 +194,19 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			}
 			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
 		}
+
+		// Create the config map for the custom dns solution
+		if installConfig.Config.GCP.UserConfiguredDNS == gcp.EnabledUserConfiguredDNS {
+			content, err := lbconfig.CreateLBConfigMap("openshift-lbConfigForDNS")
+			if err != nil {
+				return errors.Wrapf(err, "cannot marshal GCP cloud controller UID config map")
+			}
+			i.FileList = append(i.FileList, &asset.File{
+				Filename: lbconfig.ConfigPath,
+				Data:     []byte(content),
+			})
+		}
+
 	case ibmcloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
 		var cisInstanceCRN, dnsInstanceCRN string

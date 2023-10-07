@@ -373,23 +373,32 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
-		name    string
-		records []*dns.ResourceRecordSet
-		err     string
+		name              string
+		userConfiguredDNS gcp.UserConfiguredDNS
+		records           []*dns.ResourceRecordSet
+		err               string
 	}{{
-		name:    "no pre-existing",
-		records: nil,
+		name:              "no pre-existing, no dns configuration",
+		userConfiguredDNS: gcp.DisabledUserConfiguredDNS,
+		records:           nil,
 	}, {
-		name:    "no pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
+		name:              "no pre-existing",
+		userConfiguredDNS: gcp.DisabledUserConfiguredDNS,
+		records:           []*dns.ResourceRecordSet{{Name: "api.another-cluster-name.base-domain."}},
 	}, {
-		name:    "pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+		name:              "pre-existing",
+		userConfiguredDNS: gcp.DisabledUserConfiguredDNS,
+		records:           []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}},
+		err:               `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
 	}, {
-		name:    "pre-existing",
-		records: []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
-		err:     `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+		name:              "pre-existing",
+		userConfiguredDNS: gcp.DisabledUserConfiguredDNS,
+		records:           []*dns.ResourceRecordSet{{Name: "api.cluster-name.base-domain."}, {Name: "api.cluster-name.base-domain."}},
+		err:               `^metadata\.name: Invalid value: "cluster-name": record\(s\) \["api\.cluster-name\.base-domain\."\] already exists in DNS Zone \(project-id/zone-name\) and might be in use by another cluster, please remove it to continue$`,
+	}, {
+		name:              "no pre-existing, dns configuration selected",
+		userConfiguredDNS: gcp.EnabledUserConfiguredDNS,
+		records:           nil,
 	}}
 
 	for _, test := range cases {
@@ -404,7 +413,12 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 			err := ValidatePreExistingPublicDNS(gcpClient, &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{Name: "cluster-name"},
 				BaseDomain: "base-domain",
-				Platform:   types.Platform{GCP: &gcp.Platform{ProjectID: "project-id"}},
+				Platform: types.Platform{
+					GCP: &gcp.Platform{
+						ProjectID:         "project-id",
+						UserConfiguredDNS: test.userConfiguredDNS,
+					},
+				},
 			})
 			if test.err == "" {
 				assert.True(t, err == nil)

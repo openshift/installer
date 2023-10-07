@@ -3,6 +3,13 @@ locals {
 
   public_endpoints = var.gcp_publish_strategy == "External" ? true : false
   external_ip      = local.public_endpoints ? [google_compute_address.bootstrap.address] : []
+
+  // Fill in the templates/placeholders with the internal and external load balancer ip addresses.
+  // In the case that this is an internal install, the public ip address is an empty string
+  lbcontents = var.gcp_user_configured_dns ? replace(replace(var.gcp_lbconfig_contents, "EXTERNAL_IP_PLACEHOLDER", var.cluster_public_ip), "INTERNAL_IP_PLACEHOLDER", var.cluster_ip) : ""
+
+  // rewrite the data above to the ignition file.
+  ignition_contents = var.gcp_user_configured_dns ? replace(var.ignition_bootstrap, "LBCONFIG_PLACEHOLDER", base64encode(local.lbcontents)) : var.ignition_bootstrap
 }
 
 provider "google" {
@@ -21,7 +28,7 @@ resource "google_storage_bucket" "ignition" {
 resource "google_storage_bucket_object" "ignition" {
   bucket  = google_storage_bucket.ignition.name
   name    = "bootstrap.ign"
-  content = var.ignition_bootstrap
+  content = local.ignition_contents
 }
 
 resource "google_service_account" "bootstrap-node-sa" {

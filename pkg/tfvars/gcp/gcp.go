@@ -50,6 +50,8 @@ type config struct {
 	OnHostMaintenance         string            `json:"gcp_master_on_host_maintenance,omitempty"`
 	EnableConfidentialCompute string            `json:"gcp_master_confidential_compute,omitempty"`
 	ExtraLabels               map[string]string `json:"gcp_extra_labels,omitempty"`
+	UserConfiguredDNS         bool              `json:"gcp_user_configured_dns,omitempty"`
+	LBConfigContents          string            `json:"gcp_lbconfig_contents,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -63,6 +65,8 @@ type TFVarsSources struct {
 	PublishStrategy     types.PublishingStrategy
 	PreexistingNetwork  bool
 	InfrastructureName  string
+	UserConfiguredDNS   bool
+	LBConfigContents    string
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -103,6 +107,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		EnableConfidentialCompute: string(masterConfig.ConfidentialCompute),
 		OnHostMaintenance:         string(masterConfig.OnHostMaintenance),
 		ExtraLabels:               labels,
+		UserConfiguredDNS:         sources.UserConfiguredDNS,
+		LBConfigContents:          sources.LBConfigContents,
 	}
 
 	if masterConfig.Disks[0].EncryptionKey != nil {

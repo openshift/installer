@@ -3200,6 +3200,18 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
+                  userConfiguredDNS:
+                    description: UserConfiguredDNS is set to `Enabled` when a user
+                      configured DNS other than the one provided by the cloud is preferred
+                      for this installation. When `Enabled` this custom DNS solution
+                      needs to be configured by the user after cluster installation
+                      is completed. The default value is `Disabled` when the cluster
+                      configured cloud provided DNS solution is used.
+                    enum:
+                    - ""
+                    - Enabled
+                    - Disabled
+                    type: string
                   userLabels:
                     description: userLabels has additional keys and values that the
                       installer will add as labels to all resources that it creates

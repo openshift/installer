@@ -239,6 +239,12 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Er
 		return nil
 	}
 
+	// The public DNS zone will be hosted by user when the user has opted to bring their own DNS solution.
+	if ic.GCP.UserConfiguredDNS == gcp.EnabledUserConfiguredDNS {
+		logrus.Debug("User Configured DNS Enabled, skipping validation of public zone")
+		return nil
+	}
+
 	zone, err := client.GetDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain, true)
 	if err != nil {
 		if IsNotFound(err) {
@@ -253,6 +259,13 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Er
 // matching the name that will be used for this installation.
 func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) *field.Error {
 	if ic.GCP.Network == "" || ic.GCP.NetworkProjectID == "" {
+		return nil
+	}
+
+	// TODO: is this true ???
+	// The private DNS zone will be hosted by user when the user has opted to bring their own DNS solution.
+	if ic.GCP.UserConfiguredDNS == gcp.EnabledUserConfiguredDNS {
+		logrus.Debug("User Configured DNS Enabled, skipping validation of private zone")
 		return nil
 	}
 

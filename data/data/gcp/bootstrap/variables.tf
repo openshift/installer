@@ -9,3 +9,13 @@ variable "master_subnet" {
 variable "compute_image" {
   type = string
 }
+
+variable "cluster_ip" {
+  type = string
+}
+
+variable "cluster_public_ip" {
+  type        = string
+  default     = null
+  description = "IP of the API load balancer; it is null with the internal publishing strategy."
+}

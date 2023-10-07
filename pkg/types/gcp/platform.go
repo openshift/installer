@@ -1,5 +1,16 @@
 package gcp
 
+// UserConfiguredDNS states whether the DNS configuration is user supplied or not.
+type UserConfiguredDNS string
+
+const (
+	// EnabledUserConfiguredDNS states that the DNS configuration is user supplied.
+	EnabledUserConfiguredDNS UserConfiguredDNS = "Enabled"
+
+	// DisabledUserConfiguredDNS states that the DNS configuration is not user supplied.
+	DisabledUserConfiguredDNS UserConfiguredDNS = "Disabled"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -49,6 +60,17 @@ type Platform struct {
 	// feature and requires setting CustomNoUpgrade featureSet with GCPLabelsTags
 	// featureGate enabled or TechPreviewNoUpgrade featureSet to configure tags.
 	UserTags []UserTag `json:"userTags,omitempty"`
+
+	// UserConfiguredDNS is set to `Enabled` when a user
+	// configured DNS other than the one provided by the cloud is
+	// preferred for this installation. When `Enabled` this custom
+	// DNS solution needs to be configured by the user after cluster
+	// installation is completed. The default value is `Disabled` when
+	// the cluster configured cloud provided DNS solution is used.
+	//
+	// +kubebuilder:validation:Enum="";"Enabled";"Disabled"
+	// +optional
+	UserConfiguredDNS UserConfiguredDNS `json:"userConfiguredDNS,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

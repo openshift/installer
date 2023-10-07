@@ -73,6 +73,9 @@ type DestroyFunc func(s SplitStage, directory string, terraformDir string, varFi
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
 
+// ExtractLBConfigFunc is a function for extracting host addresses.
+type ExtractLBConfigFunc func(s SplitStage, directory string, ic *types.InstallConfig) ([]string, []string, error)
+
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
 	return s.name

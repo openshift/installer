@@ -3,7 +3,7 @@ output "cluster_ip" {
 }
 
 output "cluster_public_ip" {
-  value = var.public_endpoints ? google_compute_address.cluster_public_ip[0].address : null
+  value = var.public_endpoints ? google_compute_address.cluster_public_ip[0].address : ""
 }
 
 output "network" {
