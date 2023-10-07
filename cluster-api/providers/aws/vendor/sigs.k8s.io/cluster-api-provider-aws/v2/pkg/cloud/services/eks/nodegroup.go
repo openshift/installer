@@ -81,7 +81,7 @@ func (s *NodegroupService) describeASGs(ng *eks.Nodegroup) (*autoscaling.Group, 
 		},
 	}
 
-	out, err := s.AutoscalingClient.DescribeAutoScalingGroups(input)
+	out, err := s.AutoscalingClient.DescribeAutoScalingGroupsWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return nil, nil
@@ -596,7 +596,7 @@ func (s *NodegroupService) setStatus(ng *eks.Nodegroup) error {
 		for _, asg := range ng.Resources.AutoScalingGroups {
 			req.AutoScalingGroupNames = append(req.AutoScalingGroupNames, asg.Name)
 		}
-		groups, err := s.AutoscalingClient.DescribeAutoScalingGroups(&req)
+		groups, err := s.AutoscalingClient.DescribeAutoScalingGroupsWithContext(context.TODO(), &req)
 		if err != nil {
 			return errors.Wrap(err, "failed to describe AutoScalingGroup for nodegroup")
 		}

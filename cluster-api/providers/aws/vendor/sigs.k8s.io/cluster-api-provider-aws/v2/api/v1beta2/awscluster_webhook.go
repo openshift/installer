@@ -18,6 +18,7 @@ package v1beta2
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -70,6 +71,8 @@ func (r *AWSCluster) ValidateDelete() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
+
+	allErrs = append(allErrs, r.validateGCTasksAnnotation()...)
 
 	oldC, ok := old.(*AWSCluster)
 	if !ok {
@@ -176,6 +179,42 @@ func (r *AWSCluster) Default() {
 	SetObjectDefaults_AWSCluster(r)
 }
 
+func (r *AWSCluster) validateGCTasksAnnotation() field.ErrorList {
+	var allErrs field.ErrorList
+
+	annotations := r.GetAnnotations()
+	if annotations == nil {
+		return nil
+	}
+
+	if gcTasksAnnotationValue := annotations[ExternalResourceGCTasksAnnotation]; gcTasksAnnotationValue != "" {
+		gcTasks := strings.Split(gcTasksAnnotationValue, ",")
+
+		supportedGCTasks := []GCTask{GCTaskLoadBalancer, GCTaskTargetGroup, GCTaskSecurityGroup}
+
+		for _, gcTask := range gcTasks {
+			found := false
+
+			for _, supportedGCTask := range supportedGCTasks {
+				if gcTask == string(supportedGCTask) {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				allErrs = append(allErrs,
+					field.Invalid(field.NewPath("metadata", "annotations"),
+						r.Annotations,
+						fmt.Sprintf("annotation %s contains unsupported GC task %s", ExternalResourceGCTasksAnnotation, gcTask)),
+				)
+			}
+		}
+	}
+
+	return allErrs
+}
+
 func (r *AWSCluster) validateSSHKeyName() field.ErrorList {
 	return validateSSHKeyName(r.Spec.SSHKeyName)
 }
@@ -189,6 +228,14 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 		if subnet.IsIPv6 || subnet.IPv6CidrBlock != "" {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("subnets"), r.Spec.NetworkSpec.Subnets, "IPv6 cannot be used with unmanaged clusters at this time."))
 		}
+	}
+
+	if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPAMPool != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("cidrBlock"), r.Spec.NetworkSpec.VPC.CidrBlock, "cidrBlock and ipamPool cannot be used together"))
+	}
+
+	if r.Spec.NetworkSpec.VPC.IPAMPool != nil && r.Spec.NetworkSpec.VPC.IPAMPool.ID == "" && r.Spec.NetworkSpec.VPC.IPAMPool.Name == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("ipamPool"), r.Spec.NetworkSpec.VPC.IPAMPool, "ipamPool must have either id or name"))
 	}
 
 	for _, rule := range r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules {

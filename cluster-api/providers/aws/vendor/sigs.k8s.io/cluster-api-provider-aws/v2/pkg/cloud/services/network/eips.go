@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -57,7 +58,7 @@ func (s *Service) getOrAllocateAddresses(num int, role string) (eips []string, e
 
 func (s *Service) allocateAddress(role string) (string, error) {
 	tagSpecifications := tags.BuildParamsToTagSpecification(ec2.ResourceTypeElasticIp, s.getEIPTagParams(role))
-	out, err := s.EC2Client.AllocateAddress(&ec2.AllocateAddressInput{
+	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), &ec2.AllocateAddressInput{
 		Domain: aws.String("vpc"),
 		TagSpecifications: []*ec2.TagSpecification{
 			tagSpecifications,
@@ -77,14 +78,14 @@ func (s *Service) describeAddresses(role string) (*ec2.DescribeAddressesOutput, 
 		x = append(x, filter.EC2.ProviderRole(role))
 	}
 
-	return s.EC2Client.DescribeAddresses(&ec2.DescribeAddressesInput{
+	return s.EC2Client.DescribeAddressesWithContext(context.TODO(), &ec2.DescribeAddressesInput{
 		Filters: x,
 	})
 }
 
 func (s *Service) disassociateAddress(ip *ec2.Address) error {
 	err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		_, err := s.EC2Client.DisassociateAddress(&ec2.DisassociateAddressInput{
+		_, err := s.EC2Client.DisassociateAddressWithContext(context.TODO(), &ec2.DisassociateAddressInput{
 			AssociationId: ip.AssociationId,
 		})
 		if err != nil {
@@ -103,7 +104,7 @@ func (s *Service) disassociateAddress(ip *ec2.Address) error {
 }
 
 func (s *Service) releaseAddresses() error {
-	out, err := s.EC2Client.DescribeAddresses(&ec2.DescribeAddressesInput{
+	out, err := s.EC2Client.DescribeAddressesWithContext(context.TODO(), &ec2.DescribeAddressesInput{
 		Filters: []*ec2.Filter{filter.EC2.Cluster(s.scope.Name())},
 	})
 	if err != nil {
@@ -115,7 +116,7 @@ func (s *Service) releaseAddresses() error {
 	for i := range out.Addresses {
 		ip := out.Addresses[i]
 		if ip.AssociationId != nil {
-			if _, err := s.EC2Client.DisassociateAddress(&ec2.DisassociateAddressInput{
+			if _, err := s.EC2Client.DisassociateAddressWithContext(context.TODO(), &ec2.DisassociateAddressInput{
 				AssociationId: ip.AssociationId,
 			}); err != nil {
 				record.Warnf(s.scope.InfraCluster(), "FailedDisassociateEIP", "Failed to disassociate Elastic IP %q: %v", *ip.AllocationId, err)
@@ -124,7 +125,7 @@ func (s *Service) releaseAddresses() error {
 		}
 
 		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			_, err := s.EC2Client.ReleaseAddress(&ec2.ReleaseAddressInput{AllocationId: ip.AllocationId})
+			_, err := s.EC2Client.ReleaseAddressWithContext(context.TODO(), &ec2.ReleaseAddressInput{AllocationId: ip.AllocationId})
 			if err != nil {
 				if ip.AssociationId != nil {
 					if s.disassociateAddress(ip) != nil {

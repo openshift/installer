@@ -118,7 +118,7 @@ func (s *Service) ReconcileCNI(ctx context.Context) error {
 					Labels:    metaLabels,
 				},
 				Spec: amazoncni.ENIConfigSpec{
-					Subnet:         subnet.ID,
+					Subnet:         subnet.GetResourceID(),
 					SecurityGroups: sgs,
 				},
 			}
@@ -130,7 +130,7 @@ func (s *Service) ReconcileCNI(ctx context.Context) error {
 
 		s.scope.Info("Updating ENIConfig", "cluster", klog.KRef(s.scope.Namespace(), s.scope.Name()), "subnet", subnet.ID, "availability-zone", subnet.AvailabilityZone)
 		eniConfig.Spec = amazoncni.ENIConfigSpec{
-			Subnet:         subnet.ID,
+			Subnet:         subnet.GetResourceID(),
 			SecurityGroups: sgs,
 		}
 

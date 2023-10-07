@@ -18,6 +18,7 @@ package ec2
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -116,7 +117,7 @@ func (s *Service) pickArchitectureForInstanceType(instanceType string) (string, 
 	descInstanceTypeInput := &ec2.DescribeInstanceTypesInput{
 		InstanceTypes: []*string{&instanceType},
 	}
-	describeInstanceTypeResult, err := s.EC2Client.DescribeInstanceTypes(descInstanceTypeInput)
+	describeInstanceTypeResult, err := s.EC2Client.DescribeInstanceTypesWithContext(context.TODO(), descInstanceTypeInput)
 	if err != nil {
 		// if call to DescribeInstanceTypes fails due to permissions error, log a warning and return the default architecture.
 		if awserrors.IsPermissionsError(err) {
@@ -200,7 +201,7 @@ func DefaultAMILookup(ec2Client ec2iface.EC2API, ownerID, baseOS, kubernetesVers
 		},
 	}
 
-	out, err := ec2Client.DescribeImages(describeImageInput)
+	out, err := ec2Client.DescribeImagesWithContext(context.TODO(), describeImageInput)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find ami: %q", amiName)
 	}
@@ -294,7 +295,7 @@ func (s *Service) defaultBastionAMILookup() (string, error) {
 	}
 	describeImageInput.Filters = append(describeImageInput.Filters, filter)
 
-	out, err := s.EC2Client.DescribeImages(describeImageInput)
+	out, err := s.EC2Client.DescribeImagesWithContext(context.TODO(), describeImageInput)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to describe images within region: %q", s.scope.Region())
 	}

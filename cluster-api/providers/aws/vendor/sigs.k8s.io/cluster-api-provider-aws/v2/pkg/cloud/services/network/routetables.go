@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -81,8 +82,8 @@ func (s *Service) reconcileRouteTables() error {
 			}
 		}
 
-		if rt, ok := subnetRouteMap[sn.ID]; ok {
-			s.scope.Debug("Subnet is already associated with route table", "subnet-id", sn.ID, "route-table-id", *rt.RouteTableId)
+		if rt, ok := subnetRouteMap[sn.GetResourceID()]; ok {
+			s.scope.Debug("Subnet is already associated with route table", "subnet-id", sn.GetResourceID(), "route-table-id", *rt.RouteTableId)
 			// TODO(vincepri): check that everything is in order, e.g. routes match the subnet type.
 
 			// For managed environments we need to reconcile the routes of our tables if there is a mistmatch.
@@ -123,8 +124,8 @@ func (s *Service) reconcileRouteTables() error {
 		}
 
 		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			if err := s.associateRouteTable(rt, sn.ID); err != nil {
-				s.scope.Error(err, "trying to associate route table", "subnet_id", sn.ID)
+			if err := s.associateRouteTable(rt, sn.GetResourceID()); err != nil {
+				s.scope.Error(err, "trying to associate route table", "subnet_id", sn.GetResourceID())
 				return false, err
 			}
 			return true, nil
@@ -132,7 +133,7 @@ func (s *Service) reconcileRouteTables() error {
 			return err
 		}
 
-		s.scope.Debug("Subnet has been associated with route table", "subnet-id", sn.ID, "route-table-id", rt.ID)
+		s.scope.Debug("Subnet has been associated with route table", "subnet-id", sn.GetResourceID(), "route-table-id", rt.ID)
 		sn.RouteTableID = aws.String(rt.ID)
 	}
 	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition)
@@ -171,7 +172,7 @@ func (s *Service) fixMismatchedRouting(specRoute *ec2.Route, currentRoute *ec2.R
 	}
 	if input != nil {
 		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			if _, err := s.EC2Client.ReplaceRoute(input); err != nil {
+			if _, err := s.EC2Client.ReplaceRouteWithContext(context.TODO(), input); err != nil {
 				return false, err
 			}
 			return true, nil
@@ -225,7 +226,7 @@ func (s *Service) deleteRouteTables() error {
 				continue
 			}
 
-			if _, err := s.EC2Client.DisassociateRouteTable(&ec2.DisassociateRouteTableInput{AssociationId: as.RouteTableAssociationId}); err != nil {
+			if _, err := s.EC2Client.DisassociateRouteTableWithContext(context.TODO(), &ec2.DisassociateRouteTableInput{AssociationId: as.RouteTableAssociationId}); err != nil {
 				record.Warnf(s.scope.InfraCluster(), "FailedDisassociateRouteTable", "Failed to disassociate managed RouteTable %q from Subnet %q: %v", *rt.RouteTableId, *as.SubnetId, err)
 				return errors.Wrapf(err, "failed to disassociate route table %q from subnet %q", *rt.RouteTableId, *as.SubnetId)
 			}
@@ -234,7 +235,7 @@ func (s *Service) deleteRouteTables() error {
 			s.scope.Debug("Deleted association between route table and subnet", "route-table-id", *rt.RouteTableId, "subnet-id", *as.SubnetId)
 		}
 
-		if _, err := s.EC2Client.DeleteRouteTable(&ec2.DeleteRouteTableInput{RouteTableId: rt.RouteTableId}); err != nil {
+		if _, err := s.EC2Client.DeleteRouteTableWithContext(context.TODO(), &ec2.DeleteRouteTableInput{RouteTableId: rt.RouteTableId}); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDeleteRouteTable", "Failed to delete managed RouteTable %q: %v", *rt.RouteTableId, err)
 			return errors.Wrapf(err, "failed to delete route table %q", *rt.RouteTableId)
 		}
@@ -254,7 +255,7 @@ func (s *Service) describeVpcRouteTables() ([]*ec2.RouteTable, error) {
 		filters = append(filters, filter.EC2.Cluster(s.scope.Name()))
 	}
 
-	out, err := s.EC2Client.DescribeRouteTables(&ec2.DescribeRouteTablesInput{
+	out, err := s.EC2Client.DescribeRouteTablesWithContext(context.TODO(), &ec2.DescribeRouteTablesInput{
 		Filters: filters,
 	})
 	if err != nil {
@@ -266,7 +267,7 @@ func (s *Service) describeVpcRouteTables() ([]*ec2.RouteTable, error) {
 }
 
 func (s *Service) createRouteTableWithRoutes(routes []*ec2.Route, isPublic bool, zone string) (*infrav1.RouteTable, error) {
-	out, err := s.EC2Client.CreateRouteTable(&ec2.CreateRouteTableInput{
+	out, err := s.EC2Client.CreateRouteTableWithContext(context.TODO(), &ec2.CreateRouteTableInput{
 		VpcId: aws.String(s.scope.VPC().ID),
 		TagSpecifications: []*ec2.TagSpecification{
 			tags.BuildParamsToTagSpecification(ec2.ResourceTypeRouteTable, s.getRouteTableTagParams(services.TemporaryResourceID, isPublic, zone))},
@@ -281,7 +282,7 @@ func (s *Service) createRouteTableWithRoutes(routes []*ec2.Route, isPublic bool,
 	for i := range routes {
 		route := routes[i]
 		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-			if _, err := s.EC2Client.CreateRoute(&ec2.CreateRouteInput{
+			if _, err := s.EC2Client.CreateRouteWithContext(context.TODO(), &ec2.CreateRouteInput{
 				RouteTableId:                out.RouteTable.RouteTableId,
 				DestinationCidrBlock:        route.DestinationCidrBlock,
 				DestinationIpv6CidrBlock:    route.DestinationIpv6CidrBlock,
@@ -309,7 +310,7 @@ func (s *Service) createRouteTableWithRoutes(routes []*ec2.Route, isPublic bool,
 }
 
 func (s *Service) associateRouteTable(rt *infrav1.RouteTable, subnetID string) error {
-	_, err := s.EC2Client.AssociateRouteTable(&ec2.AssociateRouteTableInput{
+	_, err := s.EC2Client.AssociateRouteTableWithContext(context.TODO(), &ec2.AssociateRouteTableInput{
 		RouteTableId: aws.String(rt.ID),
 		SubnetId:     aws.String(subnetID),
 	})

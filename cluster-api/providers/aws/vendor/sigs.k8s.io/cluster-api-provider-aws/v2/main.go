@@ -49,6 +49,8 @@ import (
 	ekscontrolplanev1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta1"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
 	ekscontrolplanecontrollers "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/controllers"
+	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
+	rosacontrolplanecontrollers "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/controllers"
 	expinfrav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta1"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/exp/controlleridentitycreator"
@@ -77,6 +79,7 @@ func init() {
 	_ = expclusterv1.AddToScheme(scheme)
 	_ = ekscontrolplanev1.AddToScheme(scheme)
 	_ = ekscontrolplanev1beta1.AddToScheme(scheme)
+	_ = rosacontrolplanev1.AddToScheme(scheme)
 	_ = infrav1.AddToScheme(scheme)
 	_ = infrav1beta1.AddToScheme(scheme)
 	_ = expinfrav1beta1.AddToScheme(scheme)
@@ -199,6 +202,28 @@ func main() {
 	setupReconcilersAndWebhooks(ctx, mgr, awsServiceEndpoints, externalResourceGC, alternativeGCStrategy)
 	if feature.Gates.Enabled(feature.EKS) {
 		setupEKSReconcilersAndWebhooks(ctx, mgr, awsServiceEndpoints, externalResourceGC, alternativeGCStrategy, waitInfraPeriod)
+	}
+
+	if feature.Gates.Enabled(feature.ROSA) {
+		setupLog.Debug("enabling ROSA control plane controller")
+		if err := (&rosacontrolplanecontrollers.ROSAControlPlaneReconciler{
+			Client:           mgr.GetClient(),
+			WatchFilterValue: watchFilterValue,
+			WaitInfraPeriod:  waitInfraPeriod,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: pointer.Bool(true)}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ROSAControlPlane")
+			os.Exit(1)
+		}
+
+		setupLog.Debug("enabling ROSA cluster controller")
+		if err := (&controllers.ROSAClusterReconciler{
+			Client:           mgr.GetClient(),
+			Recorder:         mgr.GetEventRecorderFor("rosacluster-controller"),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: pointer.Bool(true)}); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "ROSACluster")
+			os.Exit(1)
+		}
 	}
 
 	// +kubebuilder:scaffold:builder

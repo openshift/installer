@@ -17,6 +17,8 @@ limitations under the License.
 package network
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -33,7 +35,7 @@ func (s *Service) associateSecondaryCidr() error {
 		return nil
 	}
 
-	vpcs, err := s.EC2Client.DescribeVpcs(&ec2.DescribeVpcsInput{
+	vpcs, err := s.EC2Client.DescribeVpcsWithContext(context.TODO(), &ec2.DescribeVpcsInput{
 		VpcIds: []*string{&s.scope.VPC().ID},
 	})
 	if err != nil {
@@ -51,7 +53,7 @@ func (s *Service) associateSecondaryCidr() error {
 		}
 	}
 
-	out, err := s.EC2Client.AssociateVpcCidrBlock(&ec2.AssociateVpcCidrBlockInput{
+	out, err := s.EC2Client.AssociateVpcCidrBlockWithContext(context.TODO(), &ec2.AssociateVpcCidrBlockInput{
 		VpcId:     &s.scope.VPC().ID,
 		CidrBlock: s.scope.SecondaryCidrBlock(),
 	})
@@ -71,7 +73,7 @@ func (s *Service) disassociateSecondaryCidr() error {
 		return nil
 	}
 
-	vpcs, err := s.EC2Client.DescribeVpcs(&ec2.DescribeVpcsInput{
+	vpcs, err := s.EC2Client.DescribeVpcsWithContext(context.TODO(), &ec2.DescribeVpcsInput{
 		VpcIds: []*string{&s.scope.VPC().ID},
 	})
 	if err != nil {
@@ -85,7 +87,7 @@ func (s *Service) disassociateSecondaryCidr() error {
 	existingAssociations := vpcs.Vpcs[0].CidrBlockAssociationSet
 	for _, existing := range existingAssociations {
 		if cmp.Equal(existing.CidrBlock, s.scope.SecondaryCidrBlock()) {
-			if _, err := s.EC2Client.DisassociateVpcCidrBlock(&ec2.DisassociateVpcCidrBlockInput{
+			if _, err := s.EC2Client.DisassociateVpcCidrBlockWithContext(context.TODO(), &ec2.DisassociateVpcCidrBlockInput{
 				AssociationId: existing.AssociationId,
 			}); err != nil {
 				record.Warnf(s.scope.InfraCluster(), "FailedDisassociateSecondaryCidr", "Failed disassociating secondary CIDR with VPC %v", err)

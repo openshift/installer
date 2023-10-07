@@ -43,20 +43,22 @@ func (b *S3Bucket) Validate() []*field.Error {
 			"can be set only if the BootstrapFormatIgnition feature gate is enabled"))
 	}
 
-	if b.ControlPlaneIAMInstanceProfile == "" {
-		errs = append(errs,
-			field.Required(field.NewPath("spec", "s3Bucket", "controlPlaneIAMInstanceProfiles"), "can't be empty"))
-	}
-
-	if len(b.NodesIAMInstanceProfiles) == 0 {
-		errs = append(errs,
-			field.Required(field.NewPath("spec", "s3Bucket", "nodesIAMInstanceProfiles"), "can't be empty"))
-	}
-
-	for i, iamInstanceProfile := range b.NodesIAMInstanceProfiles {
-		if iamInstanceProfile == "" {
+	if b.PresignedURLDuration == nil {
+		if b.ControlPlaneIAMInstanceProfile == "" {
 			errs = append(errs,
-				field.Required(field.NewPath("spec", "s3Bucket", fmt.Sprintf("nodesIAMInstanceProfiles[%d]", i)), "can't be empty"))
+				field.Required(field.NewPath("spec", "s3Bucket", "controlPlaneIAMInstanceProfiles"), "can't be empty"))
+		}
+
+		if len(b.NodesIAMInstanceProfiles) == 0 {
+			errs = append(errs,
+				field.Required(field.NewPath("spec", "s3Bucket", "nodesIAMInstanceProfiles"), "can't be empty"))
+		}
+
+		for i, iamInstanceProfile := range b.NodesIAMInstanceProfiles {
+			if iamInstanceProfile == "" {
+				errs = append(errs,
+					field.Required(field.NewPath("spec", "s3Bucket", fmt.Sprintf("nodesIAMInstanceProfiles[%d]", i)), "can't be empty"))
+			}
 		}
 	}
 

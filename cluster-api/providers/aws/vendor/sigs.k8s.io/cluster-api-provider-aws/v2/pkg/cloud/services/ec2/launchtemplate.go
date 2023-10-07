@@ -17,6 +17,7 @@ limitations under the License.
 package ec2
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"sort"
@@ -333,7 +334,7 @@ func (s *Service) GetLaunchTemplate(launchTemplateName string) (*expinfrav1.AWSL
 		Versions:           aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersions(input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return nil, "", nil
@@ -359,7 +360,7 @@ func (s *Service) GetLaunchTemplateID(launchTemplateName string) (string, error)
 		Versions:           aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersions(input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return "", nil
@@ -412,7 +413,7 @@ func (s *Service) CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID 
 		input.TagSpecifications = append(input.TagSpecifications, spec)
 	}
 
-	result, err := s.EC2Client.CreateLaunchTemplate(input)
+	result, err := s.EC2Client.CreateLaunchTemplateWithContext(context.TODO(), input)
 	if err != nil {
 		return "", err
 	}
@@ -433,7 +434,7 @@ func (s *Service) CreateLaunchTemplateVersion(id string, scope scope.LaunchTempl
 		LaunchTemplateId:   &id,
 	}
 
-	_, err = s.EC2Client.CreateLaunchTemplateVersion(input)
+	_, err = s.EC2Client.CreateLaunchTemplateVersionWithContext(context.TODO(), input)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create launch template version")
 	}
@@ -454,6 +455,20 @@ func (s *Service) createLaunchTemplateData(scope scope.LaunchTemplateScope, imag
 		InstanceType: aws.String(lt.InstanceType),
 		KeyName:      sshKeyNamePtr,
 		UserData:     pointer.String(base64.StdEncoding.EncodeToString(userData)),
+	}
+
+	if lt.InstanceMetadataOptions != nil {
+		data.MetadataOptions = &ec2.LaunchTemplateInstanceMetadataOptionsRequest{
+			HttpEndpoint:         aws.String(string(lt.InstanceMetadataOptions.HTTPEndpoint)),
+			InstanceMetadataTags: aws.String(string(lt.InstanceMetadataOptions.InstanceMetadataTags)),
+		}
+
+		if lt.InstanceMetadataOptions.HTTPTokens != "" {
+			data.MetadataOptions.HttpTokens = aws.String(string(lt.InstanceMetadataOptions.HTTPTokens))
+		}
+		if lt.InstanceMetadataOptions.HTTPPutResponseHopLimit != 0 {
+			data.MetadataOptions.HttpPutResponseHopLimit = aws.Int64(lt.InstanceMetadataOptions.HTTPPutResponseHopLimit)
+		}
 	}
 
 	if len(lt.IamInstanceProfile) > 0 {
@@ -541,7 +556,7 @@ func (s *Service) DeleteLaunchTemplate(id string) error {
 		LaunchTemplateId: aws.String(id),
 	}
 
-	if _, err := s.EC2Client.DeleteLaunchTemplate(input); err != nil {
+	if _, err := s.EC2Client.DeleteLaunchTemplateWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to delete launch template %q", id)
 	}
 
@@ -566,7 +581,7 @@ func (s *Service) PruneLaunchTemplateVersions(id string) error {
 		MaxResults:       aws.Int64(minCountToAllowPrune),
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersions(input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
 	if err != nil {
 		s.scope.Info("", "aerr", err.Error())
 		return err
@@ -590,7 +605,7 @@ func (s *Service) GetLaunchTemplateLatestVersion(id string) (string, error) {
 		Versions:         aws.StringSlice([]string{expinfrav1.LaunchTemplateLatestVersion}),
 	}
 
-	out, err := s.EC2Client.DescribeLaunchTemplateVersions(input)
+	out, err := s.EC2Client.DescribeLaunchTemplateVersionsWithContext(context.TODO(), input)
 	if err != nil {
 		s.scope.Info("", "aerr", err.Error())
 		return "", err
@@ -616,7 +631,7 @@ func (s *Service) deleteLaunchTemplateVersion(id string, version *int64) error {
 		Versions:         aws.StringSlice(versions),
 	}
 
-	_, err := s.EC2Client.DeleteLaunchTemplateVersions(input)
+	_, err := s.EC2Client.DeleteLaunchTemplateVersionsWithContext(context.TODO(), input)
 	if err != nil {
 		return err
 	}
@@ -636,6 +651,21 @@ func (s *Service) SDKToLaunchTemplate(d *ec2.LaunchTemplateVersion) (*expinfrav1
 		InstanceType:  aws.StringValue(v.InstanceType),
 		SSHKeyName:    v.KeyName,
 		VersionNumber: d.VersionNumber,
+	}
+
+	if v.MetadataOptions != nil {
+		i.InstanceMetadataOptions = &infrav1.InstanceMetadataOptions{
+			HTTPPutResponseHopLimit: aws.Int64Value(v.MetadataOptions.HttpPutResponseHopLimit),
+			HTTPTokens:              infrav1.HTTPTokensState(aws.StringValue(v.MetadataOptions.HttpTokens)),
+			HTTPEndpoint:            infrav1.InstanceMetadataEndpointStateEnabled,
+			InstanceMetadataTags:    infrav1.InstanceMetadataEndpointStateDisabled,
+		}
+		if v.MetadataOptions.HttpEndpoint != nil && aws.StringValue(v.MetadataOptions.HttpEndpoint) == "disabled" {
+			i.InstanceMetadataOptions.HTTPEndpoint = infrav1.InstanceMetadataEndpointStateDisabled
+		}
+		if v.MetadataOptions.InstanceMetadataTags != nil && aws.StringValue(v.MetadataOptions.InstanceMetadataTags) == "enabled" {
+			i.InstanceMetadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataEndpointStateEnabled
+		}
 	}
 
 	if v.IamInstanceProfile != nil {
@@ -678,6 +708,9 @@ func (s *Service) LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, inc
 	}
 
 	if incoming.InstanceType != existing.InstanceType {
+		return true, nil
+	}
+	if !cmp.Equal(incoming.InstanceMetadataOptions, existing.InstanceMetadataOptions) {
 		return true, nil
 	}
 
@@ -846,7 +879,7 @@ func (s *Service) getFilteredSecurityGroupIDs(securityGroup infrav1.AWSResourceR
 		filters = append(filters, &ec2.Filter{Name: aws.String(f.Name), Values: aws.StringSlice(f.Values)})
 	}
 
-	sgs, err := s.EC2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{Filters: filters})
+	sgs, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), &ec2.DescribeSecurityGroupsInput{Filters: filters})
 	if err != nil {
 		return nil, err
 	}

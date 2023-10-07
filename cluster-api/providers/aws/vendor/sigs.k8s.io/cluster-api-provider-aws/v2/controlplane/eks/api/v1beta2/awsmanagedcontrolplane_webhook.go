@@ -397,6 +397,21 @@ func (r *AWSManagedControlPlane) validateNetwork() field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId cannot be empty if cidrBlock is set"))
 	}
 
+	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.PoolID != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		poolField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "poolId")
+		allErrs = append(allErrs, field.Invalid(poolField, r.Spec.NetworkSpec.VPC.IPv6.PoolID, "poolId and ipamPool cannot be used together"))
+	}
+
+	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.CidrBlock != "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		cidrBlockField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "cidrBlock")
+		allErrs = append(allErrs, field.Invalid(cidrBlockField, r.Spec.NetworkSpec.VPC.IPv6.CidrBlock, "cidrBlock and ipamPool cannot be used together"))
+	}
+
+	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.ID == "" && r.Spec.NetworkSpec.VPC.IPv6.IPAMPool.Name == "" {
+		ipamPoolField := field.NewPath("spec", "networkSpec", "vpc", "ipv6", "ipamPool")
+		allErrs = append(allErrs, field.Invalid(ipamPoolField, r.Spec.NetworkSpec.VPC.IPv6.IPAMPool, "ipamPool must have either id or name"))
+	}
+
 	return allErrs
 }
 

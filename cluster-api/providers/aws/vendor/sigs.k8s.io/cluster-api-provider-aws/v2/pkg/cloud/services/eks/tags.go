@@ -17,6 +17,7 @@ limitations under the License.
 package eks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -147,7 +148,7 @@ func (s *NodegroupService) reconcileASGTags(ng *eks.Nodegroup) error {
 				Value:             &vCopy,
 			})
 		}
-		_, err = s.AutoscalingClient.CreateOrUpdateTags(input)
+		_, err = s.AutoscalingClient.CreateOrUpdateTagsWithContext(context.TODO(), input)
 		if err != nil {
 			return errors.Wrap(err, "failed to add tags to nodegroup's AutoScalingGroup")
 		}
@@ -165,7 +166,7 @@ func (s *NodegroupService) reconcileASGTags(ng *eks.Nodegroup) error {
 				ResourceType: pointer.String("auto-scaling-group"),
 			})
 		}
-		_, err = s.AutoscalingClient.DeleteTags(input)
+		_, err = s.AutoscalingClient.DeleteTagsWithContext(context.TODO(), input)
 		if err != nil {
 			return errors.Wrap(err, "failed to delete tags to nodegroup's AutoScalingGroup")
 		}

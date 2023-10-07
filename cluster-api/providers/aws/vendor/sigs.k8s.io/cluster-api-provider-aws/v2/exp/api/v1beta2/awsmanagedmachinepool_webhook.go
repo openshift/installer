@@ -244,6 +244,8 @@ func (r *AWSManagedMachinePool) validateImmutable(old *AWSManagedMachinePool) fi
 	appendErrorIfMutated(old.Spec.AMIType, r.Spec.AMIType, "amiType")
 	appendErrorIfMutated(old.Spec.RemoteAccess, r.Spec.RemoteAccess, "remoteAccess")
 	appendErrorIfSetAndMutated(old.Spec.CapacityType, r.Spec.CapacityType, "capacityType")
+	appendErrorIfMutated(old.Spec.AvailabilityZones, r.Spec.AvailabilityZones, "availabilityZones")
+	appendErrorIfMutated(old.Spec.AvailabilityZoneSubnetType, r.Spec.AvailabilityZoneSubnetType, "availabilityZoneSubnetType")
 	if (old.Spec.AWSLaunchTemplate != nil && r.Spec.AWSLaunchTemplate == nil) ||
 		(old.Spec.AWSLaunchTemplate == nil && r.Spec.AWSLaunchTemplate != nil) {
 		allErrs = append(

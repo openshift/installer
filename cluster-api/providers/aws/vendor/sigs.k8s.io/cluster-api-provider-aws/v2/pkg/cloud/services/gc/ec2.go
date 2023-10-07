@@ -80,7 +80,7 @@ func (s *Service) getProviderOwnedSecurityGroups(ctx context.Context) ([]*AWSRes
 	}
 
 	var resources []*AWSResource
-	err := s.ec2Client.DescribeSecurityGroupsPages(input, func(out *ec2.DescribeSecurityGroupsOutput, last bool) bool {
+	err := s.ec2Client.DescribeSecurityGroupsPagesWithContext(context.TODO(), input, func(out *ec2.DescribeSecurityGroupsOutput, last bool) bool {
 		for _, group := range out.SecurityGroups {
 			arn := composeFakeArn(sgService, sgResourcePrefix+*group.GroupId)
 			resource, err := composeAWSResource(arn, converters.TagsToMap(group.Tags))

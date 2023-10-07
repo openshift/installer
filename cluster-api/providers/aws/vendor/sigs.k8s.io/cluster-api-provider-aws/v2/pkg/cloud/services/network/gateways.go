@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -95,7 +96,7 @@ func (s *Service) deleteInternetGateways() error {
 			VpcId:             aws.String(s.scope.VPC().ID),
 		}
 
-		if _, err := s.EC2Client.DetachInternetGateway(detachReq); err != nil {
+		if _, err := s.EC2Client.DetachInternetGatewayWithContext(context.TODO(), detachReq); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDetachInternetGateway", "Failed to detach Internet Gateway %q from VPC %q: %v", *ig.InternetGatewayId, s.scope.VPC().ID, err)
 			return errors.Wrapf(err, "failed to detach internet gateway %q", *ig.InternetGatewayId)
 		}
@@ -107,7 +108,7 @@ func (s *Service) deleteInternetGateways() error {
 			InternetGatewayId: ig.InternetGatewayId,
 		}
 
-		if _, err = s.EC2Client.DeleteInternetGateway(deleteReq); err != nil {
+		if _, err = s.EC2Client.DeleteInternetGatewayWithContext(context.TODO(), deleteReq); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDeleteInternetGateway", "Failed to delete Internet Gateway %q previously attached to VPC %q: %v", *ig.InternetGatewayId, s.scope.VPC().ID, err)
 			return errors.Wrapf(err, "failed to delete internet gateway %q", *ig.InternetGatewayId)
 		}
@@ -120,7 +121,7 @@ func (s *Service) deleteInternetGateways() error {
 }
 
 func (s *Service) createInternetGateway() (*ec2.InternetGateway, error) {
-	ig, err := s.EC2Client.CreateInternetGateway(&ec2.CreateInternetGatewayInput{
+	ig, err := s.EC2Client.CreateInternetGatewayWithContext(context.TODO(), &ec2.CreateInternetGatewayInput{
 		TagSpecifications: []*ec2.TagSpecification{
 			tags.BuildParamsToTagSpecification(ec2.ResourceTypeInternetGateway, s.getGatewayTagParams(services.TemporaryResourceID)),
 		},
@@ -133,7 +134,7 @@ func (s *Service) createInternetGateway() (*ec2.InternetGateway, error) {
 	s.scope.Info("Created Internet gateway for VPC", "internet-gateway-id", *ig.InternetGateway.InternetGatewayId, "vpc-id", s.scope.VPC().ID)
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		if _, err := s.EC2Client.AttachInternetGateway(&ec2.AttachInternetGatewayInput{
+		if _, err := s.EC2Client.AttachInternetGatewayWithContext(context.TODO(), &ec2.AttachInternetGatewayInput{
 			InternetGatewayId: ig.InternetGateway.InternetGatewayId,
 			VpcId:             aws.String(s.scope.VPC().ID),
 		}); err != nil {
@@ -151,7 +152,7 @@ func (s *Service) createInternetGateway() (*ec2.InternetGateway, error) {
 }
 
 func (s *Service) describeVpcInternetGateways() ([]*ec2.InternetGateway, error) {
-	out, err := s.EC2Client.DescribeInternetGateways(&ec2.DescribeInternetGatewaysInput{
+	out, err := s.EC2Client.DescribeInternetGatewaysWithContext(context.TODO(), &ec2.DescribeInternetGatewaysInput{
 		Filters: []*ec2.Filter{
 			filter.EC2.VPCAttachment(s.scope.VPC().ID),
 		},

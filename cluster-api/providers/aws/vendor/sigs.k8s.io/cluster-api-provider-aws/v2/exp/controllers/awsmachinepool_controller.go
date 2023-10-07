@@ -327,7 +327,7 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 
 	err = machinePoolScope.UpdateInstanceStatuses(ctx, asg.Instances)
 	if err != nil {
-		machinePoolScope.Info("Failed updating instances", "instances", asg.Instances)
+		machinePoolScope.Error(err, "failed updating instances", "instances", asg.Instances)
 	}
 
 	return nil
@@ -403,9 +403,16 @@ func (r *AWSMachinePoolReconciler) updatePool(machinePoolScope *scope.MachinePoo
 		"subnets of machinePoolScope", subnetIDs,
 		"subnets of existing asg", existingASG.Subnets)
 	less := func(a, b string) bool { return a < b }
-	subnetChanges := cmp.Diff(subnetIDs, existingASG.Subnets, cmpopts.SortSlices(less)) != ""
+	subnetDiff := cmp.Diff(subnetIDs, existingASG.Subnets, cmpopts.SortSlices(less))
+	if subnetDiff != "" {
+		machinePoolScope.Debug("asg subnet diff detected", "diff", subnetDiff)
+	}
 
-	if asgNeedsUpdates(machinePoolScope, existingASG) || subnetChanges {
+	asgDiff := diffASG(machinePoolScope, existingASG)
+	if asgDiff != "" {
+		machinePoolScope.Debug("asg diff detected", "diff", subnetDiff)
+	}
+	if asgDiff != "" || subnetDiff != "" {
 		machinePoolScope.Info("updating AutoScalingGroup")
 
 		if err := asgSvc.UpdateASG(machinePoolScope); err != nil {
@@ -492,36 +499,37 @@ func (r *AWSMachinePoolReconciler) findASG(machinePoolScope *scope.MachinePoolSc
 	return asg, nil
 }
 
-// asgNeedsUpdates compares incoming AWSMachinePool and compares against existing ASG.
-func asgNeedsUpdates(machinePoolScope *scope.MachinePoolScope, existingASG *expinfrav1.AutoScalingGroup) bool {
+// diffASG compares incoming AWSMachinePool and compares against existing ASG.
+func diffASG(machinePoolScope *scope.MachinePoolScope, existingASG *expinfrav1.AutoScalingGroup) string {
+	detectedMachinePoolSpec := machinePoolScope.MachinePool.Spec.DeepCopy()
+
 	if !scope.ReplicasExternallyManaged(machinePoolScope.MachinePool) {
-		if machinePoolScope.MachinePool.Spec.Replicas != nil {
-			if existingASG.DesiredCapacity == nil || *machinePoolScope.MachinePool.Spec.Replicas != *existingASG.DesiredCapacity {
-				return true
-			}
-		} else if existingASG.DesiredCapacity != nil {
-			return true
+		detectedMachinePoolSpec.Replicas = existingASG.DesiredCapacity
+	}
+	if diff := cmp.Diff(machinePoolScope.MachinePool.Spec, *detectedMachinePoolSpec); diff != "" {
+		return diff
+	}
+
+	detectedAWSMachinePoolSpec := machinePoolScope.AWSMachinePool.Spec.DeepCopy()
+	detectedAWSMachinePoolSpec.MaxSize = existingASG.MaxSize
+	detectedAWSMachinePoolSpec.MinSize = existingASG.MinSize
+	detectedAWSMachinePoolSpec.CapacityRebalance = existingASG.CapacityRebalance
+	{
+		mixedInstancesPolicy := machinePoolScope.AWSMachinePool.Spec.MixedInstancesPolicy
+		// InstancesDistribution is optional, and the default values come from AWS, so
+		// they are not set by the AWSMachinePool defaulting webhook. If InstancesDistribution is
+		// not set, we use the AWS values for the purpose of comparison.
+		if mixedInstancesPolicy != nil && mixedInstancesPolicy.InstancesDistribution == nil {
+			mixedInstancesPolicy = machinePoolScope.AWSMachinePool.Spec.MixedInstancesPolicy.DeepCopy()
+			mixedInstancesPolicy.InstancesDistribution = existingASG.MixedInstancesPolicy.InstancesDistribution
+		}
+
+		if !cmp.Equal(mixedInstancesPolicy, existingASG.MixedInstancesPolicy) {
+			detectedAWSMachinePoolSpec.MixedInstancesPolicy = existingASG.MixedInstancesPolicy
 		}
 	}
 
-	if machinePoolScope.AWSMachinePool.Spec.MaxSize != existingASG.MaxSize {
-		return true
-	}
-
-	if machinePoolScope.AWSMachinePool.Spec.MinSize != existingASG.MinSize {
-		return true
-	}
-
-	if machinePoolScope.AWSMachinePool.Spec.CapacityRebalance != existingASG.CapacityRebalance {
-		return true
-	}
-
-	if !cmp.Equal(machinePoolScope.AWSMachinePool.Spec.MixedInstancesPolicy, existingASG.MixedInstancesPolicy) {
-		machinePoolScope.Info("got a mixed diff here", "incoming", machinePoolScope.AWSMachinePool.Spec.MixedInstancesPolicy, "existing", existingASG.MixedInstancesPolicy)
-		return true
-	}
-
-	return false
+	return cmp.Diff(machinePoolScope.AWSMachinePool.Spec, *detectedAWSMachinePoolSpec)
 }
 
 // getOwnerMachinePool returns the MachinePool object owning the current resource.

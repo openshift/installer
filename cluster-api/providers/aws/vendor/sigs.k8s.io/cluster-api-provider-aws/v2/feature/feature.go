@@ -80,6 +80,11 @@ const (
 	// owner: @skarlso
 	// alpha: v2.0
 	TagUnmanagedNetworkResources featuregate.Feature = "TagUnmanagedNetworkResources"
+
+	// ROSA is used to enable ROSA support
+	// owner: @enxebre
+	// alpha: v2.2
+	ROSA featuregate.Feature = "ROSA"
 )
 
 func init() {
@@ -101,4 +106,5 @@ var defaultCAPAFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	ExternalResourceGC:            {Default: false, PreRelease: featuregate.Alpha},
 	AlternativeGCStrategy:         {Default: false, PreRelease: featuregate.Alpha},
 	TagUnmanagedNetworkResources:  {Default: true, PreRelease: featuregate.Alpha},
+	ROSA:                          {Default: false, PreRelease: featuregate.Alpha},
 }

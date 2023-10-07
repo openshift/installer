@@ -17,6 +17,7 @@ limitations under the License.
 package ec2
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -147,7 +148,7 @@ func (s *Service) describeBastionInstance() (*infrav1.Instance, error) {
 		},
 	}
 
-	out, err := s.EC2Client.DescribeInstances(input)
+	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
 	if err != nil {
 		record.Eventf(s.scope.InfraCluster(), "FailedDescribeBastionHost", "Failed to describe bastion host: %v", err)
 		return nil, errors.Wrap(err, "failed to describe bastion host")
@@ -196,7 +197,7 @@ func (s *Service) getDefaultBastion(instanceType, ami string) (*infrav1.Instance
 
 	i := &infrav1.Instance{
 		Type:       instanceType,
-		SubnetID:   subnet.ID,
+		SubnetID:   subnet.GetResourceID(),
 		ImageID:    ami,
 		SSHKeyName: keyName,
 		UserData:   aws.String(base64.StdEncoding.EncodeToString([]byte(userData))),

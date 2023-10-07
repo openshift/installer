@@ -2754,8 +2754,8 @@ func (c *SecretsManager) ValidateResourcePolicyRequest(input *ValidateResourcePo
 // be logged. For more information, see Logging Secrets Manager events with
 // CloudTrail (https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieve-ct-entries.html).
 //
-// Required permissions: secretsmanager:ValidateResourcePolicy. For more information,
-// see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
+// Required permissions: secretsmanager:ValidateResourcePolicy and secretsmanager:PutResourcePolicy.
+// For more information, see IAM policy actions for Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/reference_iam-permissions.html#reference_iam-permissions_actions)
 // and Authentication and access control in Secrets Manager (https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2963,7 +2963,7 @@ type CreateSecretInput struct {
 	Description *string `type:"string"`
 
 	// Specifies whether to overwrite a secret with the same name in the destination
-	// Region.
+	// Region. By default, secrets aren't overwritten.
 	ForceOverwriteReplicaSecret *bool `type:"boolean"`
 
 	// The ARN, key ID, or alias of the KMS key that Secrets Manager uses to encrypt
@@ -3008,7 +3008,7 @@ type CreateSecretInput struct {
 	// String and GoString methods.
 	//
 	// SecretBinary is automatically base64 encoded/decoded by the SDK.
-	SecretBinary []byte `type:"blob" sensitive:"true"`
+	SecretBinary []byte `min:"1" type:"blob" sensitive:"true"`
 
 	// The text data to encrypt and store in this new version of the secret. We
 	// recommend you use a JSON structure of key/value pairs for your secret value.
@@ -3023,7 +3023,7 @@ type CreateSecretInput struct {
 	// SecretString is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by CreateSecretInput's
 	// String and GoString methods.
-	SecretString *string `type:"string" sensitive:"true"`
+	SecretString *string `min:"1" type:"string" sensitive:"true"`
 
 	// A list of tags to attach to the secret. Each tag is a key and value pair
 	// of strings in a JSON text string, for example:
@@ -3100,6 +3100,12 @@ func (s *CreateSecretInput) Validate() error {
 	}
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.SecretBinary != nil && len(s.SecretBinary) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretBinary", 1))
+	}
+	if s.SecretString != nil && len(*s.SecretString) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretString", 1))
 	}
 	if s.AddReplicaRegions != nil {
 		for i, v := range s.AddReplicaRegions {
@@ -3413,12 +3419,16 @@ type DeleteSecretInput struct {
 
 	// Specifies whether to delete the secret without any recovery window. You can't
 	// use both this parameter and RecoveryWindowInDays in the same call. If you
-	// don't use either, then Secrets Manager defaults to a 30 day recovery window.
+	// don't use either, then by default Secrets Manager uses a 30 day recovery
+	// window.
 	//
 	// Secrets Manager performs the actual deletion with an asynchronous background
 	// process, so there might be a short delay before the secret is permanently
 	// deleted. If you delete a secret and then immediately create a secret with
 	// the same name, use appropriate back off and retry logic.
+	//
+	// If you forcibly delete an already deleted or nonexistent secret, the operation
+	// does not return ResourceNotFoundException.
 	//
 	// Use this parameter with caution. This parameter causes the operation to skip
 	// the normal recovery window before the permanent deletion that Secrets Manager
@@ -3429,8 +3439,8 @@ type DeleteSecretInput struct {
 
 	// The number of days from 7 to 30 that Secrets Manager waits before permanently
 	// deleting the secret. You can't use both this parameter and ForceDeleteWithoutRecovery
-	// in the same call. If you don't use either, then Secrets Manager defaults
-	// to a 30 day recovery window.
+	// in the same call. If you don't use either, then by default Secrets Manager
+	// uses a 30 day recovery window.
 	RecoveryWindowInDays *int64 `type:"long"`
 
 	// The ARN or name of the secret to delete.
@@ -3640,9 +3650,8 @@ type DescribeSecretOutput struct {
 	// The name of the secret.
 	Name *string `min:"1" type:"string"`
 
-	// The next date and time that Secrets Manager will rotate the secret, rounded
-	// to the nearest hour. If the secret isn't configured for rotation, Secrets
-	// Manager returns null.
+	// The next rotation is scheduled to occur on or before this date. If the secret
+	// isn't configured for rotation, Secrets Manager returns null.
 	NextRotationDate *time.Time `type:"timestamp"`
 
 	// The ID of the service that created this secret. For more information, see
@@ -4341,7 +4350,7 @@ type GetSecretValueOutput struct {
 	// String and GoString methods.
 	//
 	// SecretBinary is automatically base64 encoded/decoded by the SDK.
-	SecretBinary []byte `type:"blob" sensitive:"true"`
+	SecretBinary []byte `min:"1" type:"blob" sensitive:"true"`
 
 	// The decrypted secret value, if the secret value was originally provided as
 	// a string or through the Secrets Manager console.
@@ -4352,7 +4361,7 @@ type GetSecretValueOutput struct {
 	// SecretString is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by GetSecretValueOutput's
 	// String and GoString methods.
-	SecretString *string `type:"string" sensitive:"true"`
+	SecretString *string `min:"1" type:"string" sensitive:"true"`
 
 	// The unique identifier of this version of the secret.
 	VersionId *string `min:"32" type:"string"`
@@ -4759,7 +4768,8 @@ type ListSecretVersionIdsInput struct {
 
 	// Specifies whether to include versions of secrets that don't have any staging
 	// labels attached to them. Versions without staging labels are considered deprecated
-	// and are subject to deletion by Secrets Manager.
+	// and are subject to deletion by Secrets Manager. By default, versions without
+	// staging labels aren't included.
 	IncludeDeprecated *bool `type:"boolean"`
 
 	// The number of results to include in the response.
@@ -4915,7 +4925,8 @@ type ListSecretsInput struct {
 	// The filters to apply to the list of secrets.
 	Filters []*Filter `type:"list"`
 
-	// Specifies whether to include secrets scheduled for deletion.
+	// Specifies whether to include secrets scheduled for deletion. By default,
+	// secrets scheduled for deletion aren't included.
 	IncludePlannedDeletion *bool `type:"boolean"`
 
 	// The number of results to include in the response.
@@ -5248,7 +5259,8 @@ type PutResourcePolicyInput struct {
 	_ struct{} `type:"structure"`
 
 	// Specifies whether to block resource-based policies that allow broad access
-	// to the secret, for example those that use a wildcard for the principal.
+	// to the secret, for example those that use a wildcard for the principal. By
+	// default, public policies aren't blocked.
 	BlockPublicPolicy *bool `type:"boolean"`
 
 	// A JSON-formatted string for an Amazon Web Services resource-based policy.
@@ -5410,7 +5422,7 @@ type PutSecretValueInput struct {
 	// String and GoString methods.
 	//
 	// SecretBinary is automatically base64 encoded/decoded by the SDK.
-	SecretBinary []byte `type:"blob" sensitive:"true"`
+	SecretBinary []byte `min:"1" type:"blob" sensitive:"true"`
 
 	// The ARN or name of the secret to add a new version to.
 	//
@@ -5432,7 +5444,7 @@ type PutSecretValueInput struct {
 	// SecretString is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by PutSecretValueInput's
 	// String and GoString methods.
-	SecretString *string `type:"string" sensitive:"true"`
+	SecretString *string `min:"1" type:"string" sensitive:"true"`
 
 	// A list of staging labels to attach to this version of the secret. Secrets
 	// Manager uses staging labels to track versions of a secret through the rotation
@@ -5474,11 +5486,17 @@ func (s *PutSecretValueInput) Validate() error {
 	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 32))
 	}
+	if s.SecretBinary != nil && len(s.SecretBinary) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretBinary", 1))
+	}
 	if s.SecretId == nil {
 		invalidParams.Add(request.NewErrParamRequired("SecretId"))
 	}
 	if s.SecretId != nil && len(*s.SecretId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("SecretId", 1))
+	}
+	if s.SecretString != nil && len(*s.SecretString) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretString", 1))
 	}
 	if s.VersionStages != nil && len(s.VersionStages) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("VersionStages", 1))
@@ -5750,7 +5768,7 @@ type ReplicateSecretToRegionsInput struct {
 	AddReplicaRegions []*ReplicaRegionType `min:"1" type:"list" required:"true"`
 
 	// Specifies whether to overwrite a secret with the same name in the destination
-	// Region.
+	// Region. By default, secrets aren't overwritten.
 	ForceOverwriteReplicaSecret *bool `type:"boolean"`
 
 	// The ARN or name of the secret to replicate.
@@ -6188,8 +6206,7 @@ type RotateSecretInput struct {
 	// of the Lambda rotation function. The test creates an AWSPENDING version of
 	// the secret and then removes it.
 	//
-	// If you don't specify this value, then by default, Secrets Manager rotates
-	// the secret immediately.
+	// By default, Secrets Manager rotates the secret immediately.
 	RotateImmediately *bool `type:"boolean"`
 
 	// For secrets that use a Lambda rotation function to rotate, the ARN of the
@@ -6485,9 +6502,8 @@ type SecretListEntry struct {
 	// in the folder prod.
 	Name *string `min:"1" type:"string"`
 
-	// The next date and time that Secrets Manager will attempt to rotate the secret,
-	// rounded to the nearest hour. This value is null if the secret is not set
-	// up for rotation.
+	// The next rotation is scheduled to occur on or before this date. If the secret
+	// isn't configured for rotation, Secrets Manager returns null.
 	NextRotationDate *time.Time `type:"timestamp"`
 
 	// Returns the name of the service that created the secret.
@@ -7104,7 +7120,7 @@ type UpdateSecretInput struct {
 	// String and GoString methods.
 	//
 	// SecretBinary is automatically base64 encoded/decoded by the SDK.
-	SecretBinary []byte `type:"blob" sensitive:"true"`
+	SecretBinary []byte `min:"1" type:"blob" sensitive:"true"`
 
 	// The ARN or name of the secret.
 	//
@@ -7122,7 +7138,7 @@ type UpdateSecretInput struct {
 	// SecretString is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by UpdateSecretInput's
 	// String and GoString methods.
-	SecretString *string `type:"string" sensitive:"true"`
+	SecretString *string `min:"1" type:"string" sensitive:"true"`
 }
 
 // String returns the string representation.
@@ -7149,11 +7165,17 @@ func (s *UpdateSecretInput) Validate() error {
 	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 32))
 	}
+	if s.SecretBinary != nil && len(s.SecretBinary) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretBinary", 1))
+	}
 	if s.SecretId == nil {
 		invalidParams.Add(request.NewErrParamRequired("SecretId"))
 	}
 	if s.SecretId != nil && len(*s.SecretId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("SecretId", 1))
+	}
+	if s.SecretString != nil && len(*s.SecretString) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SecretString", 1))
 	}
 
 	if invalidParams.Len() > 0 {

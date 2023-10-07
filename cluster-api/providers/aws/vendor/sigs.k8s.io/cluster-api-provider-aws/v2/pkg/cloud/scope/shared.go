@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 )
 
@@ -40,6 +41,7 @@ type placementInput struct {
 	SpecAvailabilityZones   []string
 	ParentAvailabilityZones []string
 	ControlplaneSubnets     infrav1.Subnets
+	SubnetPlacementType     *expinfrav1.AZSubnetType
 }
 
 type subnetsPlacementStratgey interface {
@@ -75,7 +77,7 @@ func (p *defaultSubnetPlacementStrategy) Place(input *placementInput) ([]string,
 
 	if len(input.SpecAvailabilityZones) > 0 {
 		p.logger.Debug("determining subnets to use from the spec availability zones")
-		subnetIDs, err := p.getSubnetsForAZs(input.SpecAvailabilityZones, input.ControlplaneSubnets)
+		subnetIDs, err := p.getSubnetsForAZs(input.SpecAvailabilityZones, input.ControlplaneSubnets, input.SubnetPlacementType)
 		if err != nil {
 			return nil, fmt.Errorf("getting subnets for spec azs: %w", err)
 		}
@@ -85,7 +87,7 @@ func (p *defaultSubnetPlacementStrategy) Place(input *placementInput) ([]string,
 
 	if len(input.ParentAvailabilityZones) > 0 {
 		p.logger.Debug("determining subnets to use from the parents availability zones")
-		subnetIDs, err := p.getSubnetsForAZs(input.ParentAvailabilityZones, input.ControlplaneSubnets)
+		subnetIDs, err := p.getSubnetsForAZs(input.ParentAvailabilityZones, input.ControlplaneSubnets, input.SubnetPlacementType)
 		if err != nil {
 			return nil, fmt.Errorf("getting subnets for parent azs: %w", err)
 		}
@@ -102,11 +104,21 @@ func (p *defaultSubnetPlacementStrategy) Place(input *placementInput) ([]string,
 	return nil, ErrNotPlaced
 }
 
-func (p *defaultSubnetPlacementStrategy) getSubnetsForAZs(azs []string, controlPlaneSubnets infrav1.Subnets) ([]string, error) {
+func (p *defaultSubnetPlacementStrategy) getSubnetsForAZs(azs []string, controlPlaneSubnets infrav1.Subnets, placementType *expinfrav1.AZSubnetType) ([]string, error) {
 	subnetIDs := []string{}
 
 	for _, zone := range azs {
 		subnets := controlPlaneSubnets.FilterByZone(zone)
+		if placementType != nil {
+			switch *placementType {
+			case expinfrav1.AZSubnetTypeAll:
+				// no-op
+			case expinfrav1.AZSubnetTypePublic:
+				subnets = subnets.FilterPublic()
+			case expinfrav1.AZSubnetTypePrivate:
+				subnets = subnets.FilterPrivate()
+			}
+		}
 		if len(subnets) == 0 {
 			return nil, fmt.Errorf("getting subnets for availability zone %s: %w", zone, ErrAZSubnetsNotFound)
 		}

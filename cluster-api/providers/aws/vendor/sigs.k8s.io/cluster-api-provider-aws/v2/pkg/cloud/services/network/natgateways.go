@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -73,11 +74,11 @@ func (s *Service) reconcileNatGateways() error {
 	subnetIDs := []string{}
 
 	for _, sn := range s.scope.Subnets().FilterPublic() {
-		if sn.ID == "" {
+		if sn.GetResourceID() == "" {
 			continue
 		}
 
-		if ngw, ok := existing[sn.ID]; ok {
+		if ngw, ok := existing[sn.GetResourceID()]; ok {
 			if len(ngw.NatGatewayAddresses) > 0 && ngw.NatGatewayAddresses[0].PublicIp != nil {
 				natGatewaysIPs = append(natGatewaysIPs, *ngw.NatGatewayAddresses[0].PublicIp)
 			}
@@ -97,7 +98,7 @@ func (s *Service) reconcileNatGateways() error {
 			continue
 		}
 
-		subnetIDs = append(subnetIDs, sn.ID)
+		subnetIDs = append(subnetIDs, sn.GetResourceID())
 	}
 
 	s.scope.SetNatGatewaysIPs(natGatewaysIPs)
@@ -148,11 +149,11 @@ func (s *Service) deleteNatGateways() error {
 
 	var ngIDs []*ec2.NatGateway
 	for _, sn := range s.scope.Subnets().FilterPublic() {
-		if sn.ID == "" {
+		if sn.GetResourceID() == "" {
 			continue
 		}
 
-		if ngID, ok := existing[sn.ID]; ok {
+		if ngID, ok := existing[sn.GetResourceID()]; ok {
 			ngIDs = append(ngIDs, ngID)
 		}
 	}
@@ -187,7 +188,7 @@ func (s *Service) describeNatGatewaysBySubnet() (map[string]*ec2.NatGateway, err
 
 	gateways := make(map[string]*ec2.NatGateway)
 
-	err := s.EC2Client.DescribeNatGatewaysPages(describeNatGatewayInput,
+	err := s.EC2Client.DescribeNatGatewaysPagesWithContext(context.TODO(), describeNatGatewayInput,
 		func(page *ec2.DescribeNatGatewaysOutput, lastPage bool) bool {
 			for _, r := range page.NatGateways {
 				gateways[*r.SubnetId] = r
@@ -248,7 +249,7 @@ func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error)
 	var err error
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		if out, err = s.EC2Client.CreateNatGateway(&ec2.CreateNatGatewayInput{
+		if out, err = s.EC2Client.CreateNatGatewayWithContext(context.TODO(), &ec2.CreateNatGatewayInput{
 			SubnetId:          aws.String(subnetID),
 			AllocationId:      aws.String(ip),
 			TagSpecifications: []*ec2.TagSpecification{tags.BuildParamsToTagSpecification(ec2.ResourceTypeNatgateway, s.getNatGatewayTagParams(services.TemporaryResourceID))},
@@ -263,7 +264,7 @@ func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error)
 	record.Eventf(s.scope.InfraCluster(), "SuccessfulCreateNATGateway", "Created new NAT Gateway %q", *out.NatGateway.NatGatewayId)
 
 	wReq := &ec2.DescribeNatGatewaysInput{NatGatewayIds: []*string{out.NatGateway.NatGatewayId}}
-	if err := s.EC2Client.WaitUntilNatGatewayAvailable(wReq); err != nil {
+	if err := s.EC2Client.WaitUntilNatGatewayAvailableWithContext(context.TODO(), wReq); err != nil {
 		return nil, errors.Wrapf(err, "failed to wait for nat gateway %q in subnet %q", *out.NatGateway.NatGatewayId, subnetID)
 	}
 
@@ -272,7 +273,7 @@ func (s *Service) createNatGateway(subnetID, ip string) (*ec2.NatGateway, error)
 }
 
 func (s *Service) deleteNatGateway(id string) error {
-	_, err := s.EC2Client.DeleteNatGateway(&ec2.DeleteNatGatewayInput{
+	_, err := s.EC2Client.DeleteNatGatewayWithContext(context.TODO(), &ec2.DeleteNatGatewayInput{
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
@@ -287,7 +288,7 @@ func (s *Service) deleteNatGateway(id string) error {
 	}
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (done bool, err error) {
-		out, err := s.EC2Client.DescribeNatGateways(describeInput)
+		out, err := s.EC2Client.DescribeNatGatewaysWithContext(context.TODO(), describeInput)
 		if err != nil {
 			return false, err
 		}
@@ -318,7 +319,7 @@ func (s *Service) deleteNatGateway(id string) error {
 
 func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error) {
 	if sn.IsPublic {
-		return "", errors.Errorf("cannot get NAT gateway for a public subnet, got id %q", sn.ID)
+		return "", errors.Errorf("cannot get NAT gateway for a public subnet, got id %q", sn.GetResourceID())
 	}
 
 	azGateways := make(map[string][]string)
@@ -334,5 +335,5 @@ func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error)
 		return gws[0], nil
 	}
 
-	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.ID, azGateways)
+	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.GetResourceID(), azGateways)
 }

@@ -17,6 +17,7 @@ limitations under the License.
 package tags
 
 import (
+	"context"
 	"fmt"
 	"sort"
 
@@ -114,7 +115,7 @@ func WithEC2(ec2client ec2iface.EC2API) BuilderOption {
 				Tags:      awsTags,
 			}
 
-			_, err := ec2client.CreateTags(createTagsInput)
+			_, err := ec2client.CreateTagsWithContext(context.TODO(), createTagsInput)
 			return errors.Wrapf(err, "failed to tag resource %q in cluster %q", params.ResourceID, params.ClusterName)
 		}
 	}

@@ -44,6 +44,12 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if dst.Spec.RefreshPreferences != nil && restored.Spec.RefreshPreferences != nil {
 		dst.Spec.RefreshPreferences.Disable = restored.Spec.RefreshPreferences.Disable
 	}
+	if restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions != nil {
+		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions
+	}
+	if restored.Spec.AvailabilityZoneSubnetType != nil {
+		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
+	}
 
 	return nil
 }
@@ -78,6 +84,21 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if err := Convert_v1beta1_AWSManagedMachinePool_To_v1beta2_AWSManagedMachinePool(src, dst, nil); err != nil {
 		return err
 	}
+	// Manually restore data.
+	restored := &infrav1exp.AWSManagedMachinePool{}
+	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
+		return err
+	}
+
+	if restored.Spec.AWSLaunchTemplate != nil {
+		if dst.Spec.AWSLaunchTemplate == nil {
+			dst.Spec.AWSLaunchTemplate = restored.Spec.AWSLaunchTemplate
+		}
+		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions
+	}
+	if restored.Spec.AvailabilityZoneSubnetType != nil {
+		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
+	}
 
 	return nil
 }
@@ -90,7 +111,7 @@ func (r *AWSManagedMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
 		return err
 	}
 
-	return nil
+	return utilconversion.MarshalData(src, r)
 }
 
 // Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec is a conversion function.

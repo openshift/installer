@@ -17,6 +17,7 @@ limitations under the License.
 package asg
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -65,15 +66,27 @@ func (s *Service) SDKToAutoScalingGroup(v *autoscaling.Group) (*expinfrav1.AutoS
 		}
 
 		onDemandAllocationStrategy := aws.StringValue(v.MixedInstancesPolicy.InstancesDistribution.OnDemandAllocationStrategy)
-		if onDemandAllocationStrategy == string(expinfrav1.OnDemandAllocationStrategyPrioritized) {
+		switch onDemandAllocationStrategy {
+		case string(expinfrav1.OnDemandAllocationStrategyPrioritized):
 			i.MixedInstancesPolicy.InstancesDistribution.OnDemandAllocationStrategy = expinfrav1.OnDemandAllocationStrategyPrioritized
+		case string(expinfrav1.OnDemandAllocationStrategyLowestPrice):
+			i.MixedInstancesPolicy.InstancesDistribution.OnDemandAllocationStrategy = expinfrav1.OnDemandAllocationStrategyLowestPrice
+		default:
+			return nil, fmt.Errorf("unsupported on-demand allocation strategy: %s", onDemandAllocationStrategy)
 		}
 
 		spotAllocationStrategy := aws.StringValue(v.MixedInstancesPolicy.InstancesDistribution.SpotAllocationStrategy)
-		if spotAllocationStrategy == string(expinfrav1.SpotAllocationStrategyLowestPrice) {
+		switch spotAllocationStrategy {
+		case string(expinfrav1.SpotAllocationStrategyLowestPrice):
 			i.MixedInstancesPolicy.InstancesDistribution.SpotAllocationStrategy = expinfrav1.SpotAllocationStrategyLowestPrice
-		} else {
+		case string(expinfrav1.SpotAllocationStrategyCapacityOptimized):
 			i.MixedInstancesPolicy.InstancesDistribution.SpotAllocationStrategy = expinfrav1.SpotAllocationStrategyCapacityOptimized
+		case string(expinfrav1.SpotAllocationStrategyCapacityOptimizedPrioritized):
+			i.MixedInstancesPolicy.InstancesDistribution.SpotAllocationStrategy = expinfrav1.SpotAllocationStrategyCapacityOptimizedPrioritized
+		case string(expinfrav1.SpotAllocationStrategyPriceCapacityOptimized):
+			i.MixedInstancesPolicy.InstancesDistribution.SpotAllocationStrategy = expinfrav1.SpotAllocationStrategyPriceCapacityOptimized
+		default:
+			return nil, fmt.Errorf("unsupported spot allocation strategy: %s", spotAllocationStrategy)
 		}
 	}
 
@@ -120,7 +133,7 @@ func (s *Service) ASGIfExists(name *string) (*expinfrav1.AutoScalingGroup, error
 		AutoScalingGroupNames: []*string{name},
 	}
 
-	out, err := s.ASGClient.DescribeAutoScalingGroups(input)
+	out, err := s.ASGClient.DescribeAutoScalingGroupsWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return nil, nil
@@ -227,7 +240,7 @@ func (s *Service) runPool(i *expinfrav1.AutoScalingGroup, launchTemplateID strin
 		input.Tags = BuildTagsFromMap(i.Name, i.Tags)
 	}
 
-	if _, err := s.ASGClient.CreateAutoScalingGroup(input); err != nil {
+	if _, err := s.ASGClient.CreateAutoScalingGroupWithContext(context.TODO(), input); err != nil {
 		return errors.Wrap(err, "failed to create autoscaling group")
 	}
 
@@ -246,7 +259,7 @@ func (s *Service) DeleteASGAndWait(name string) error {
 		AutoScalingGroupNames: aws.StringSlice([]string{name}),
 	}
 
-	if err := s.ASGClient.WaitUntilGroupNotExists(input); err != nil {
+	if err := s.ASGClient.WaitUntilGroupNotExistsWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to wait for ASG %q deletion", name)
 	}
 
@@ -262,7 +275,7 @@ func (s *Service) DeleteASG(name string) error {
 		ForceDelete:          aws.Bool(true),
 	}
 
-	if _, err := s.ASGClient.DeleteAutoScalingGroup(input); err != nil {
+	if _, err := s.ASGClient.DeleteAutoScalingGroupWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to delete ASG %q", name)
 	}
 
@@ -298,7 +311,7 @@ func (s *Service) UpdateASG(scope *scope.MachinePoolScope) error {
 		}
 	}
 
-	if _, err := s.ASGClient.UpdateAutoScalingGroup(input); err != nil {
+	if _, err := s.ASGClient.UpdateAutoScalingGroupWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to update ASG %q", scope.Name())
 	}
 
@@ -308,7 +321,7 @@ func (s *Service) UpdateASG(scope *scope.MachinePoolScope) error {
 // CanStartASGInstanceRefresh will start an ASG instance with refresh.
 func (s *Service) CanStartASGInstanceRefresh(scope *scope.MachinePoolScope) (bool, error) {
 	describeInput := &autoscaling.DescribeInstanceRefreshesInput{AutoScalingGroupName: aws.String(scope.Name())}
-	refreshes, err := s.ASGClient.DescribeInstanceRefreshes(describeInput)
+	refreshes, err := s.ASGClient.DescribeInstanceRefreshesWithContext(context.TODO(), describeInput)
 	if err != nil {
 		return false, err
 	}
@@ -353,7 +366,7 @@ func (s *Service) StartASGInstanceRefresh(scope *scope.MachinePoolScope) error {
 		},
 	}
 
-	if _, err := s.ASGClient.StartInstanceRefresh(input); err != nil {
+	if _, err := s.ASGClient.StartInstanceRefreshWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to start ASG instance refresh %q", scope.Name())
 	}
 
@@ -425,7 +438,7 @@ func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[stri
 
 		createOrUpdateTagsInput.Tags = mapToTags(create, resourceID)
 
-		if _, err := s.ASGClient.CreateOrUpdateTags(createOrUpdateTagsInput); err != nil {
+		if _, err := s.ASGClient.CreateOrUpdateTagsWithContext(context.TODO(), createOrUpdateTagsInput); err != nil {
 			return errors.Wrapf(err, "failed to update tags on AutoScalingGroup %q", *resourceID)
 		}
 	}
@@ -443,7 +456,7 @@ func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[stri
 		}
 
 		// Delete tags in AWS.
-		if _, err := s.ASGClient.DeleteTags(input); err != nil {
+		if _, err := s.ASGClient.DeleteTagsWithContext(context.TODO(), input); err != nil {
 			return errors.Wrapf(err, "failed to delete tags on AutoScalingGroup %q: %v", *resourceID, remove)
 		}
 	}
@@ -456,7 +469,7 @@ func (s *Service) SuspendProcesses(name string, processes []string) error {
 		AutoScalingGroupName: aws.String(name),
 		ScalingProcesses:     aws.StringSlice(processes),
 	}
-	if _, err := s.ASGClient.SuspendProcesses(&input); err != nil {
+	if _, err := s.ASGClient.SuspendProcessesWithContext(context.TODO(), &input); err != nil {
 		return errors.Wrapf(err, "failed to suspend processes for AutoScalingGroup: %q", name)
 	}
 	return nil
@@ -467,7 +480,7 @@ func (s *Service) ResumeProcesses(name string, processes []string) error {
 		AutoScalingGroupName: aws.String(name),
 		ScalingProcesses:     aws.StringSlice(processes),
 	}
-	if _, err := s.ASGClient.ResumeProcesses(&input); err != nil {
+	if _, err := s.ASGClient.ResumeProcessesWithContext(context.TODO(), &input); err != nil {
 		return errors.Wrapf(err, "failed to resume processes for AutoScalingGroup: %q", name)
 	}
 	return nil
@@ -507,7 +520,7 @@ func (s *Service) SubnetIDs(scope *scope.MachinePoolScope) ([]string, error) {
 	}
 
 	if len(inputFilters) > 0 {
-		out, err := s.EC2Client.DescribeSubnets(&ec2.DescribeSubnetsInput{
+		out, err := s.EC2Client.DescribeSubnetsWithContext(context.TODO(), &ec2.DescribeSubnetsInput{
 			Filters: inputFilters,
 		})
 		if err != nil {

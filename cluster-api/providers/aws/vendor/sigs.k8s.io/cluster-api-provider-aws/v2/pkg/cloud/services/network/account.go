@@ -17,6 +17,7 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"sort"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -27,7 +28,7 @@ import (
 )
 
 func (s *Service) getAvailableZones() ([]string, error) {
-	out, err := s.EC2Client.DescribeAvailabilityZones(&ec2.DescribeAvailabilityZonesInput{
+	out, err := s.EC2Client.DescribeAvailabilityZonesWithContext(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
 		Filters: []*ec2.Filter{
 			filter.EC2.Available(),
 			filter.EC2.IgnoreLocalZones(),

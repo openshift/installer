@@ -17,6 +17,7 @@ limitations under the License.
 package securitygroup
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -221,7 +222,7 @@ func (s *Service) describeSecurityGroupOverridesByID() (map[infrav1.SecurityGrou
 		}
 	}
 
-	out, err := s.EC2Client.DescribeSecurityGroups(input)
+	out, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to describe security groups in vpc %q", s.scope.VPC().ID)
 	}
@@ -305,7 +306,7 @@ func (s *Service) deleteSecurityGroup(sg *infrav1.SecurityGroup, typ string) err
 		GroupId: aws.String(sg.ID),
 	}
 
-	if _, err := s.EC2Client.DeleteSecurityGroup(input); awserrors.IsIgnorableSecurityGroupError(err) != nil {
+	if _, err := s.EC2Client.DeleteSecurityGroupWithContext(context.TODO(), input); awserrors.IsIgnorableSecurityGroupError(err) != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedDeleteSecurityGroup", "Failed to delete %s SecurityGroup %q with name %q: %v", typ, sg.ID, sg.Name, err)
 		return errors.Wrapf(err, "failed to delete security group %q with name %q", sg.ID, sg.Name)
 	}
@@ -326,7 +327,7 @@ func (s *Service) describeClusterOwnedSecurityGroups() ([]infrav1.SecurityGroup,
 
 	groups := []infrav1.SecurityGroup{}
 
-	err := s.EC2Client.DescribeSecurityGroupsPages(input, func(out *ec2.DescribeSecurityGroupsOutput, last bool) bool {
+	err := s.EC2Client.DescribeSecurityGroupsPagesWithContext(context.TODO(), input, func(out *ec2.DescribeSecurityGroupsOutput, last bool) bool {
 		for _, group := range out.SecurityGroups {
 			if group != nil {
 				groups = append(groups, makeInfraSecurityGroup(group))
@@ -348,7 +349,7 @@ func (s *Service) describeSecurityGroupsByName() (map[string]infrav1.SecurityGro
 		},
 	}
 
-	out, err := s.EC2Client.DescribeSecurityGroups(input)
+	out, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to describe security groups in vpc %q", s.scope.VPC().ID)
 	}
@@ -372,7 +373,7 @@ func makeInfraSecurityGroup(ec2sg *ec2.SecurityGroup) infrav1.SecurityGroup {
 
 func (s *Service) createSecurityGroup(role infrav1.SecurityGroupRole, input *ec2.SecurityGroup) error {
 	sgTags := s.getSecurityGroupTagParams(aws.StringValue(input.GroupName), services.TemporaryResourceID, role)
-	out, err := s.EC2Client.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
+	out, err := s.EC2Client.CreateSecurityGroupWithContext(context.TODO(), &ec2.CreateSecurityGroupInput{
 		VpcId:       input.VpcId,
 		GroupName:   input.GroupName,
 		Description: aws.String(fmt.Sprintf("Kubernetes cluster %s: %s", s.scope.Name(), role)),
@@ -400,7 +401,7 @@ func (s *Service) authorizeSecurityGroupIngressRules(id string, rules infrav1.In
 		rule := rules[i]
 		input.IpPermissions = append(input.IpPermissions, ingressRuleToSDKType(s.scope, &rule))
 	}
-	if _, err := s.EC2Client.AuthorizeSecurityGroupIngress(input); err != nil {
+	if _, err := s.EC2Client.AuthorizeSecurityGroupIngressWithContext(context.TODO(), input); err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedAuthorizeSecurityGroupIngressRules", "Failed to authorize security group ingress rules %v for SecurityGroup %q: %v", rules, id, err)
 		return errors.Wrapf(err, "failed to authorize security group %q ingress rules: %v", id, rules)
 	}
@@ -416,7 +417,7 @@ func (s *Service) revokeSecurityGroupIngressRules(id string, rules infrav1.Ingre
 		input.IpPermissions = append(input.IpPermissions, ingressRuleToSDKType(s.scope, &rule))
 	}
 
-	if _, err := s.EC2Client.RevokeSecurityGroupIngress(input); err != nil {
+	if _, err := s.EC2Client.RevokeSecurityGroupIngressWithContext(context.TODO(), input); err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedRevokeSecurityGroupIngressRules", "Failed to revoke security group ingress rules %v for SecurityGroup %q: %v", rules, id, err)
 		return errors.Wrapf(err, "failed to revoke security group %q ingress rules: %v", id, rules)
 	}
@@ -428,7 +429,7 @@ func (s *Service) revokeSecurityGroupIngressRules(id string, rules infrav1.Ingre
 func (s *Service) revokeAllSecurityGroupIngressRules(id string) error {
 	describeInput := &ec2.DescribeSecurityGroupsInput{GroupIds: []*string{aws.String(id)}}
 
-	securityGroups, err := s.EC2Client.DescribeSecurityGroups(describeInput)
+	securityGroups, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), describeInput)
 	if err != nil {
 		return err
 	}
@@ -439,7 +440,7 @@ func (s *Service) revokeAllSecurityGroupIngressRules(id string) error {
 				GroupId:       aws.String(id),
 				IpPermissions: sg.IpPermissions,
 			}
-			if _, err := s.EC2Client.RevokeSecurityGroupIngress(revokeInput); err != nil {
+			if _, err := s.EC2Client.RevokeSecurityGroupIngressWithContext(context.TODO(), revokeInput); err != nil {
 				record.Warnf(s.scope.InfraCluster(), "FailedRevokeSecurityGroupIngressRules", "Failed to revoke all security group ingress rules for SecurityGroup %q: %v", *sg.GroupId, err)
 				return err
 			}

@@ -302,6 +302,7 @@ func (m *MachinePoolScope) SubnetIDs(subnetIDs []string) ([]string, error) {
 		SpecAvailabilityZones:   m.AWSMachinePool.Spec.AvailabilityZones,
 		ParentAvailabilityZones: m.MachinePool.Spec.FailureDomains,
 		ControlplaneSubnets:     m.InfraCluster.Subnets(),
+		SubnetPlacementType:     m.AWSMachinePool.Spec.AvailabilityZoneSubnetType,
 	})
 }
 

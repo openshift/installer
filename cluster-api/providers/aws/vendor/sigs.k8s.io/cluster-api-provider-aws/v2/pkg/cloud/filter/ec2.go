@@ -31,6 +31,7 @@ const (
 	filterNameState         = "state"
 	filterNameVpcAttachment = "attachment.vpc-id"
 	filterAvailabilityZone  = "availability-zone"
+	filterNameIPAMPoolID    = "ipam-pool-id"
 )
 
 // EC2 exposes the ec2 sdk related filters.
@@ -85,6 +86,14 @@ func (ec2Filters) ProviderOwned(clusterName string) *ec2.Filter {
 	return &ec2.Filter{
 		Name:   aws.String(fmt.Sprintf("tag:%s", infrav1.ClusterAWSCloudProviderTagKey(clusterName))),
 		Values: aws.StringSlice([]string{string(infrav1.ResourceLifecycleOwned)}),
+	}
+}
+
+// IPAM returns a filter based on the id of the IPAM Pool.
+func (ec2Filters) IPAM(ipamPoolID string) *ec2.Filter {
+	return &ec2.Filter{
+		Name:   aws.String(filterNameIPAMPoolID),
+		Values: aws.StringSlice([]string{ipamPoolID}),
 	}
 }
 

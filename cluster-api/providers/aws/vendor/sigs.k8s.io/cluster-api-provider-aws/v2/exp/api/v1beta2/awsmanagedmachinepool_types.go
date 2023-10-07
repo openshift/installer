@@ -68,6 +68,11 @@ type AWSManagedMachinePoolSpec struct {
 	// AvailabilityZones is an array of availability zones instances can run in
 	AvailabilityZones []string `json:"availabilityZones,omitempty"`
 
+	// AvailabilityZoneSubnetType specifies which type of subnets to use when an availability zone is specified.
+	// +kubebuilder:validation:Enum:=public;private;all
+	// +optional
+	AvailabilityZoneSubnetType *AZSubnetType `json:"availabilityZoneSubnetType,omitempty"`
+
 	// SubnetIDs specifies which subnets are used for the
 	// auto scaling group of this nodegroup
 	// +optional

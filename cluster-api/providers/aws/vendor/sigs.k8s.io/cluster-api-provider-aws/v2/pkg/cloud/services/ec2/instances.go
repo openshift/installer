@@ -17,6 +17,7 @@ limitations under the License.
 package ec2
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"sort"
@@ -51,7 +52,7 @@ func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.
 		},
 	}
 
-	out, err := s.EC2Client.DescribeInstances(input)
+	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return nil, nil
@@ -86,7 +87,7 @@ func (s *Service) InstanceIfExists(id *string) (*infrav1.Instance, error) {
 		InstanceIds: []*string{id},
 	}
 
-	out, err := s.EC2Client.DescribeInstances(input)
+	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		record.Eventf(s.scope.InfraCluster(), "FailedFindInstances", "failed to find instance by providerId %q: %v", *id, err)
@@ -354,7 +355,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 				record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
 				return "", awserrors.NewFailedDependency(errMessage)
 			}
-			return subnets[0].ID, nil
+			return subnets[0].GetResourceID(), nil
 		}
 
 		subnets := s.scope.Subnets().FilterPrivate().FilterByZone(*failureDomain)
@@ -364,7 +365,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
-		return subnets[0].ID, nil
+		return subnets[0].GetResourceID(), nil
 	case scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP:
 		subnets := s.scope.Subnets().FilterPublic()
 		if len(subnets) == 0 {
@@ -372,7 +373,7 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			record.Eventf(scope.AWSMachine, "FailedCreate", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
-		return subnets[0].ID, nil
+		return subnets[0].GetResourceID(), nil
 
 		// TODO(vincepri): Define a tag that would allow to pick a preferred subnet in an AZ when working
 		// with control plane machines.
@@ -384,13 +385,13 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			record.Eventf(s.scope.InfraCluster(), "FailedCreateInstance", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
-		return sns[0].ID, nil
+		return sns[0].GetResourceID(), nil
 	}
 }
 
 // getFilteredSubnets fetches subnets filtered based on the criteria passed.
 func (s *Service) getFilteredSubnets(criteria ...*ec2.Filter) ([]*ec2.Subnet, error) {
-	out, err := s.EC2Client.DescribeSubnets(&ec2.DescribeSubnetsInput{Filters: criteria})
+	out, err := s.EC2Client.DescribeSubnetsWithContext(context.TODO(), &ec2.DescribeSubnetsInput{Filters: criteria})
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +477,7 @@ func (s *Service) TerminateInstance(instanceID string) error {
 		InstanceIds: aws.StringSlice([]string{instanceID}),
 	}
 
-	if _, err := s.EC2Client.TerminateInstances(input); err != nil {
+	if _, err := s.EC2Client.TerminateInstancesWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to terminate instance with id %q", instanceID)
 	}
 
@@ -497,7 +498,7 @@ func (s *Service) TerminateInstanceAndWait(instanceID string) error {
 		InstanceIds: aws.StringSlice([]string{instanceID}),
 	}
 
-	if err := s.EC2Client.WaitUntilInstanceTerminated(input); err != nil {
+	if err := s.EC2Client.WaitUntilInstanceTerminatedWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to wait for instance %q termination", instanceID)
 	}
 
@@ -604,7 +605,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		input.Placement.GroupName = &i.PlacementGroupName
 	}
 
-	out, err := s.EC2Client.RunInstances(input)
+	out, err := s.EC2Client.RunInstancesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run instance")
 	}
@@ -707,7 +708,7 @@ func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[stri
 		}
 
 		// Create/Update tags in AWS.
-		if _, err := s.EC2Client.CreateTags(input); err != nil {
+		if _, err := s.EC2Client.CreateTagsWithContext(context.TODO(), input); err != nil {
 			return errors.Wrapf(err, "failed to create tags for resource %q: %+v", *resourceID, create)
 		}
 	}
@@ -726,7 +727,7 @@ func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[stri
 		}
 
 		// Delete tags in AWS.
-		if _, err := s.EC2Client.DeleteTags(input); err != nil {
+		if _, err := s.EC2Client.DeleteTagsWithContext(context.TODO(), input); err != nil {
 			return errors.Wrapf(err, "failed to delete tags for resource %q: %v", *resourceID, remove)
 		}
 	}
@@ -744,7 +745,7 @@ func (s *Service) getInstanceENIs(instanceID string) ([]*ec2.NetworkInterface, e
 		},
 	}
 
-	output, err := s.EC2Client.DescribeNetworkInterfaces(input)
+	output, err := s.EC2Client.DescribeNetworkInterfacesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -757,7 +758,7 @@ func (s *Service) getImageRootDevice(imageID string) (*string, error) {
 		ImageIds: []*string{aws.String(imageID)},
 	}
 
-	output, err := s.EC2Client.DescribeImages(input)
+	output, err := s.EC2Client.DescribeImagesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -774,7 +775,7 @@ func (s *Service) getImageSnapshotSize(imageID string) (*int64, error) {
 		ImageIds: []*string{aws.String(imageID)},
 	}
 
-	output, err := s.EC2Client.DescribeImages(input)
+	output, err := s.EC2Client.DescribeImagesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -898,7 +899,7 @@ func (s *Service) getNetworkInterfaceSecurityGroups(interfaceID string) ([]strin
 		NetworkInterfaceId: aws.String(interfaceID),
 	}
 
-	output, err := s.EC2Client.DescribeNetworkInterfaceAttribute(input)
+	output, err := s.EC2Client.DescribeNetworkInterfaceAttributeWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -919,7 +920,7 @@ func (s *Service) attachSecurityGroupsToNetworkInterface(groups []string, interf
 		Groups:             aws.StringSlice(groups),
 	}
 
-	if _, err := s.EC2Client.ModifyNetworkInterfaceAttribute(input); err != nil {
+	if _, err := s.EC2Client.ModifyNetworkInterfaceAttributeWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to modify interface %q to have security groups %v", interfaceID, groups)
 	}
 	return nil
@@ -943,7 +944,7 @@ func (s *Service) DetachSecurityGroupsFromNetworkInterface(groups []string, inte
 		Groups:             aws.StringSlice(remainingGroups),
 	}
 
-	if _, err := s.EC2Client.ModifyNetworkInterfaceAttribute(input); err != nil {
+	if _, err := s.EC2Client.ModifyNetworkInterfaceAttributeWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to modify interface %q", interfaceID)
 	}
 	return nil
@@ -980,7 +981,7 @@ func (s *Service) ModifyInstanceMetadataOptions(instanceID string, options *infr
 	}
 
 	s.scope.Info("Updating instance metadata options", "instance id", instanceID, "options", input)
-	if _, err := s.EC2Client.ModifyInstanceMetadataOptions(input); err != nil {
+	if _, err := s.EC2Client.ModifyInstanceMetadataOptionsWithContext(context.TODO(), input); err != nil {
 		return err
 	}
 

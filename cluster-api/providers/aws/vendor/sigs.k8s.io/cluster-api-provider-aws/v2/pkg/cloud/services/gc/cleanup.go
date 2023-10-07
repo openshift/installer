@@ -27,7 +27,6 @@ import (
 	rgapi "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/annotations"
 )
 
@@ -42,14 +41,14 @@ const (
 func (s *Service) ReconcileDelete(ctx context.Context) error {
 	s.scope.Info("reconciling deletion for garbage collection", "cluster", s.scope.InfraClusterName())
 
-	val, found := annotations.Get(s.scope.InfraCluster(), expinfrav1.ExternalResourceGCAnnotation)
+	val, found := annotations.Get(s.scope.InfraCluster(), infrav1.ExternalResourceGCAnnotation)
 	if !found {
 		val = "true"
 	}
 
 	shouldGC, err := strconv.ParseBool(val)
 	if err != nil {
-		return fmt.Errorf("converting value %s of annotation %s to bool: %w", val, expinfrav1.ExternalResourceGCAnnotation, err)
+		return fmt.Errorf("converting value %s of annotation %s to bool: %w", val, infrav1.ExternalResourceGCAnnotation, err)
 	}
 
 	if !shouldGC {
@@ -69,7 +68,25 @@ func (s *Service) deleteResources(ctx context.Context) error {
 		return fmt.Errorf("collecting resources: %w", err)
 	}
 
-	if deleteErr := s.cleanupFuncs.Execute(ctx, resources); deleteErr != nil {
+	cleanupFuncs := s.cleanupFuncs
+
+	if val, found := annotations.Get(s.scope.InfraCluster(), infrav1.ExternalResourceGCTasksAnnotation); found {
+		var gcTaskToFunc = map[infrav1.GCTask]ResourceCleanupFunc{
+			infrav1.GCTaskLoadBalancer:  s.deleteLoadBalancers,
+			infrav1.GCTaskTargetGroup:   s.deleteTargetGroups,
+			infrav1.GCTaskSecurityGroup: s.deleteSecurityGroups,
+		}
+
+		cleanupFuncs = ResourceCleanupFuncs{}
+
+		tasks := strings.Split(val, ",")
+
+		for _, task := range tasks {
+			cleanupFuncs = append(cleanupFuncs, gcTaskToFunc[infrav1.GCTask(task)])
+		}
+	}
+
+	if deleteErr := cleanupFuncs.Execute(ctx, resources); deleteErr != nil {
 		return fmt.Errorf("deleting resources: %w", deleteErr)
 	}
 

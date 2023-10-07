@@ -245,6 +245,15 @@ type S3Bucket struct {
 	// worker nodes bootstrap data from S3 Bucket.
 	NodesIAMInstanceProfiles []string `json:"nodesIAMInstanceProfiles"`
 
+	// PresignedURLDuration defines the duration for which presigned URLs are valid.
+	//
+	// This is used to generate presigned URLs for S3 Bucket objects, which are used by
+	// control-plane and worker nodes to fetch bootstrap data.
+	//
+	// When enabled, the IAM instance profiles specified are not used.
+	// +optional
+	PresignedURLDuration *metav1.Duration `json:"presignedURLDuration,omitempty"`
+
 	// Name defines name of S3 Bucket to be created.
 	// +kubebuilder:validation:MinLength:=3
 	// +kubebuilder:validation:MaxLength:=63

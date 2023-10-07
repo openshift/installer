@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	infrav2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -55,7 +56,54 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 	dst.Status.Network.NatGatewaysIPs = restored.Status.Network.NatGatewaysIPs
 
+	if restored.Spec.NetworkSpec.VPC.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPAMPool == nil {
+			dst.Spec.NetworkSpec.VPC.IPAMPool = &infrav2.IPAMPool{}
+		}
+
+		restoreIPAMPool(restored.Spec.NetworkSpec.VPC.IPAMPool, dst.Spec.NetworkSpec.VPC.IPAMPool)
+	}
+
+	if restored.Spec.NetworkSpec.VPC.IsIPv6Enabled() && restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool == nil {
+			dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool = &infrav2.IPAMPool{}
+		}
+
+		restoreIPAMPool(restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool, dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool)
+	}
+
 	dst.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = restored.Spec.NetworkSpec.AdditionalControlPlaneIngressRules
+
+	if restored.Spec.NetworkSpec.VPC.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPAMPool == nil {
+			dst.Spec.NetworkSpec.VPC.IPAMPool = &infrav2.IPAMPool{}
+		}
+
+		restoreIPAMPool(restored.Spec.NetworkSpec.VPC.IPAMPool, dst.Spec.NetworkSpec.VPC.IPAMPool)
+	}
+
+	if restored.Spec.NetworkSpec.VPC.IsIPv6Enabled() && restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool != nil {
+		if dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool == nil {
+			dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool = &infrav2.IPAMPool{}
+		}
+
+		restoreIPAMPool(restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool, dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool)
+	}
+
+	dst.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = restored.Spec.NetworkSpec.AdditionalControlPlaneIngressRules
+
+	// Restore SubnetSpec.ResourceID field, if any.
+	for _, subnet := range restored.Spec.NetworkSpec.Subnets {
+		if len(subnet.ResourceID) == 0 {
+			continue
+		}
+		for i, dstSubnet := range dst.Spec.NetworkSpec.Subnets {
+			if dstSubnet.ID == subnet.ID {
+				dstSubnet.ResourceID = subnet.ResourceID
+				dstSubnet.DeepCopyInto(&dst.Spec.NetworkSpec.Subnets[i])
+			}
+		}
+	}
 
 	return nil
 }
@@ -67,6 +115,14 @@ func restoreControlPlaneLoadBalancerStatus(restored, dst *infrav2.LoadBalancer) 
 	dst.LoadBalancerType = restored.LoadBalancerType
 	dst.ELBAttributes = restored.ELBAttributes
 	dst.ELBListeners = restored.ELBListeners
+}
+
+// restoreIPAMPool manually restores the ipam pool data.
+// Assumes restored and dst are non-nil.
+func restoreIPAMPool(restored, dst *infrav2.IPAMPool) {
+	dst.ID = restored.ID
+	dst.Name = restored.Name
+	dst.NetmaskLength = restored.NetmaskLength
 }
 
 // restoreControlPlaneLoadBalancer manually restores the control plane loadbalancer data.
@@ -108,4 +164,8 @@ func (r *AWSClusterList) ConvertFrom(srcRaw conversion.Hub) error {
 	src := srcRaw.(*infrav2.AWSClusterList)
 
 	return Convert_v1beta2_AWSClusterList_To_v1beta1_AWSClusterList(src, r, nil)
+}
+
+func Convert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(in *infrav2.SubnetSpec, out *SubnetSpec, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(in, out, s)
 }

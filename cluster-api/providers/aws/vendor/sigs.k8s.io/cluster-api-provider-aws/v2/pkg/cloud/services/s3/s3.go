@@ -137,6 +137,15 @@ func (s *Service) Create(m *scope.MachineScope, data []byte) (string, error) {
 		return "", errors.Wrap(err, "putting object")
 	}
 
+	if exp := s.scope.Bucket().PresignedURLDuration; exp != nil {
+		s.scope.Info("Generating presigned URL", "bucket_name", bucket, "key", key)
+		req, _ := s.S3Client.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		})
+		return req.Presign(exp.Duration)
+	}
+
 	objectURL := &url.URL{
 		Scheme: "s3",
 		Host:   bucket,
@@ -211,6 +220,11 @@ func (s *Service) createBucketIfNotExist(bucketName string) error {
 }
 
 func (s *Service) ensureBucketPolicy(bucketName string) error {
+	if s.scope.Bucket().PresignedURLDuration != nil {
+		// If presigned URL is enabled, we don't need to set bucket policy.
+		return nil
+	}
+
 	bucketPolicy, err := s.bucketPolicy(bucketName)
 	if err != nil {
 		return errors.Wrap(err, "generating Bucket policy")

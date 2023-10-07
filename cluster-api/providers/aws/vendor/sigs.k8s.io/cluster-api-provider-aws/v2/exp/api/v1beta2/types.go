@@ -22,12 +22,6 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
-const (
-	// ExternalResourceGCAnnotation is the name of an annotation that indicates if
-	// external resources should be garbage collected for the cluster.
-	ExternalResourceGCAnnotation = "aws.cluster.x-k8s.io/external-resource-gc"
-)
-
 // EBS can be used to automatically set up EBS volumes when an instance is launched.
 type EBS struct {
 	// Encrypted is whether the volume should be encrypted or not.
@@ -122,6 +116,10 @@ type AWSLaunchTemplate struct {
 
 	// SpotMarketOptions are options for configuring AWSMachinePool instances to be run using AWS Spot instances.
 	SpotMarketOptions *infrav1.SpotMarketOptions `json:"spotMarketOptions,omitempty"`
+
+	// InstanceMetadataOptions defines the behavior for applying metadata to instances.
+	// +optional
+	InstanceMetadataOptions *infrav1.InstanceMetadataOptions `json:"instanceMetadataOptions,omitempty"`
 }
 
 // Overrides are used to override the instance type specified by the launch template with multiple
@@ -137,6 +135,11 @@ var (
 	// OnDemandAllocationStrategyPrioritized uses the order of instance type overrides
 	// for the LaunchTemplate to define the launch priority of each instance type.
 	OnDemandAllocationStrategyPrioritized = OnDemandAllocationStrategy("prioritized")
+
+	// OnDemandAllocationStrategyLowestPrice will make the Auto Scaling group launch
+	// instances using the On-Demand pools with the lowest price, and evenly allocates
+	// your instances across the On-Demand pools that you specify.
+	OnDemandAllocationStrategyLowestPrice = OnDemandAllocationStrategy("lowest-price")
 )
 
 // SpotAllocationStrategy indicates how to allocate instances across Spot Instance pools.
@@ -151,15 +154,25 @@ var (
 	// SpotAllocationStrategyCapacityOptimized will make the Auto Scaling group launch
 	// instances using Spot pools that are optimally chosen based on the available Spot capacity.
 	SpotAllocationStrategyCapacityOptimized = SpotAllocationStrategy("capacity-optimized")
+
+	// SpotAllocationStrategyCapacityOptimizedPrioritized will make the Auto Scaling group launch
+	// instances using Spot pools that are optimally chosen based on the available Spot capacity
+	// while also taking into account the priority order specified by the user for Instance Types.
+	SpotAllocationStrategyCapacityOptimizedPrioritized = SpotAllocationStrategy("capacity-optimized-prioritized")
+
+	// SpotAllocationStrategyPriceCapacityOptimized will make the Auto Scaling group launch
+	// instances using Spot pools that consider both price and available Spot capacity to
+	// provide a balance between cost savings and allocation reliability.
+	SpotAllocationStrategyPriceCapacityOptimized = SpotAllocationStrategy("price-capacity-optimized")
 )
 
 // InstancesDistribution to configure distribution of On-Demand Instances and Spot Instances.
 type InstancesDistribution struct {
-	// +kubebuilder:validation:Enum=prioritized
+	// +kubebuilder:validation:Enum=prioritized;lowest-price
 	// +kubebuilder:default=prioritized
 	OnDemandAllocationStrategy OnDemandAllocationStrategy `json:"onDemandAllocationStrategy,omitempty"`
 
-	// +kubebuilder:validation:Enum=lowest-price;capacity-optimized
+	// +kubebuilder:validation:Enum=lowest-price;capacity-optimized;capacity-optimized-prioritized;price-capacity-optimized
 	// +kubebuilder:default=lowest-price
 	SpotAllocationStrategy SpotAllocationStrategy `json:"spotAllocationStrategy,omitempty"`
 
@@ -202,10 +215,8 @@ type AutoScalingGroup struct {
 // ASGStatus is a status string returned by the autoscaling API.
 type ASGStatus string
 
-var (
-	// ASGStatusDeleteInProgress is the string representing an ASG that is currently deleting.
-	ASGStatusDeleteInProgress = ASGStatus("Delete in progress")
-)
+// ASGStatusDeleteInProgress is the string representing an ASG that is currently deleting.
+var ASGStatusDeleteInProgress = ASGStatus("Delete in progress")
 
 // TaintEffect is the effect for a Kubernetes taint.
 type TaintEffect string
@@ -278,4 +289,21 @@ type UpdateConfig struct {
 	// +kubebuilder:validation:Maximum=100
 	// +kubebuilder:validation:Minimum=1
 	MaxUnavailablePercentage *int `json:"maxUnavailablePercentage,omitempty"`
+}
+
+// AZSubnetType is the type of subnet to use when an availability zone is specified.
+type AZSubnetType string
+
+const (
+	// AZSubnetTypePublic is a public subnet.
+	AZSubnetTypePublic AZSubnetType = "public"
+	// AZSubnetTypePrivate is a private subnet.
+	AZSubnetTypePrivate AZSubnetType = "private"
+	// AZSubnetTypeAll is all subnets in an availability zone.
+	AZSubnetTypeAll AZSubnetType = "all"
+)
+
+// NewAZSubnetType returns a pointer to an AZSubnetType.
+func NewAZSubnetType(t AZSubnetType) *AZSubnetType {
+	return &t
 }

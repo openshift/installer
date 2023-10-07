@@ -17,6 +17,7 @@ limitations under the License.
 package eks
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -45,7 +46,7 @@ func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
 		},
 	}
 
-	output, err := s.EC2Client.DescribeSecurityGroups(input)
+	output, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
 	if err != nil {
 		return fmt.Errorf("describing security groups: %w", err)
 	}
@@ -67,7 +68,7 @@ func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
 		},
 	}
 
-	output, err = s.EC2Client.DescribeSecurityGroups(input)
+	output, err = s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), input)
 	if err != nil || len(output.SecurityGroups) == 0 {
 		return fmt.Errorf("describing EKS cluster security group: %w", err)
 	}
