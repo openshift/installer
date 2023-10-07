@@ -34,6 +34,14 @@ func (s Storage) MergedKeys() map[string]string {
 }
 
 func (s Storage) Validate(c vpath.ContextPath) (r report.Report) {
+	s.validateDirectories(c, &r)
+	s.validateFiles(c, &r)
+	s.validateLinks(c, &r)
+	s.validateFilesystems(c, &r)
+	return
+}
+
+func (s Storage) validateDirectories(c vpath.ContextPath, r *report.Report) {
 	for i, d := range s.Directories {
 		for _, l := range s.Links {
 			if strings.HasPrefix(d.Path, l.Path+"/") {
@@ -41,6 +49,9 @@ func (s Storage) Validate(c vpath.ContextPath) (r report.Report) {
 			}
 		}
 	}
+}
+
+func (s Storage) validateFiles(c vpath.ContextPath, r *report.Report) {
 	for i, f := range s.Files {
 		for _, l := range s.Links {
 			if strings.HasPrefix(f.Path, l.Path+"/") {
@@ -48,6 +59,9 @@ func (s Storage) Validate(c vpath.ContextPath) (r report.Report) {
 			}
 		}
 	}
+}
+
+func (s Storage) validateLinks(c vpath.ContextPath, r *report.Report) {
 	for i, l1 := range s.Links {
 		for _, l2 := range s.Links {
 			if strings.HasPrefix(l1.Path, l2.Path+"/") {
@@ -66,6 +80,32 @@ func (s Storage) Validate(c vpath.ContextPath) (r report.Report) {
 				r.AddOnError(c.Append("links", i), errors.ErrHardLinkToDirectory)
 			}
 		}
+		ownerCheck := func(ok bool, path vpath.ContextPath) {
+			if !ok {
+				r.AddOnWarn(path, errors.ErrHardLinkSpecifiesOwner)
+			}
+		}
+		ownerCheck(l1.User.ID == nil, c.Append("links", i, "user", "id"))
+		ownerCheck(l1.User.Name == nil, c.Append("links", i, "user", "name"))
+		ownerCheck(l1.Group.ID == nil, c.Append("links", i, "group", "id"))
+		ownerCheck(l1.Group.Name == nil, c.Append("links", i, "group", "name"))
 	}
-	return
+}
+
+func (s Storage) validateFilesystems(c vpath.ContextPath, r *report.Report) {
+	disks := make(map[string]Disk)
+	for _, d := range s.Disks {
+		disks[d.Device] = d
+	}
+
+	for i, f := range s.Filesystems {
+		disk, exist := disks[f.Device]
+		if exist {
+			if len(disk.Partitions) > 0 {
+				r.AddOnWarn(c.Append("filesystems", i, "device"), errors.ErrPartitionsOverwritten)
+			} else if !util.IsTrue(f.WipeFilesystem) && util.IsTrue(disk.WipeTable) {
+				r.AddOnWarn(c.Append("filesystems", i, "device"), errors.ErrFilesystemImplicitWipe)
+			}
+		}
+	}
 }
