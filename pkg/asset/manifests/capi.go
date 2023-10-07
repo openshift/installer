@@ -156,25 +156,26 @@ func (c *ClusterAPI) Files() []*asset.File {
 
 // Load returns the openshift asset from disk.
 func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
-	yamlFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.yaml"))
-	if err != nil {
-		return false, errors.Wrap(err, "failed to load *.yaml files")
-	}
-	ymlFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.yml"))
-	if err != nil {
-		return false, errors.Wrap(err, "failed to load *.yml files")
-	}
-	jsonFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.json"))
-	if err != nil {
-		return false, errors.Wrap(err, "failed to load *.json files")
-	}
-	fileList := append(yamlFileList, ymlFileList...)
-	fileList = append(fileList, jsonFileList...)
+	// yamlFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.yaml"))
+	// if err != nil {
+	// 	return false, errors.Wrap(err, "failed to load *.yaml files")
+	// }
+	// ymlFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.yml"))
+	// if err != nil {
+	// 	return false, errors.Wrap(err, "failed to load *.yml files")
+	// }
+	// jsonFileList, err := f.FetchByPattern(filepath.Join(infraManifestDir, "*.json"))
+	// if err != nil {
+	// 	return false, errors.Wrap(err, "failed to load *.json files")
+	// }
+	// fileList := append(yamlFileList, ymlFileList...)
+	// fileList = append(fileList, jsonFileList...)
 
-	for _, file := range fileList {
-		c.FileList = append(c.FileList, file)
-	}
+	// for _, file := range fileList {
+	// 	c.FileList = append(c.FileList, file)
+	// }
 
-	asset.SortFiles(c.FileList)
-	return len(c.FileList) > 0, nil
+	// asset.SortFiles(c.FileList)
+	// return len(c.FileList) > 0, nil
+	return false, nil
 }

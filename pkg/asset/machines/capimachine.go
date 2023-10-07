@@ -198,10 +198,11 @@ func (m *CAPIMachine) Files() []*asset.File {
 
 // Load reads the asset files from disk.
 func (m *CAPIMachine) Load(f asset.FileFetcher) (found bool, err error) {
-	fileList, err := f.FetchByPattern(filepath.Join(infraDirectory, capiMachineFileNamePattern))
-	if err != nil {
-		return true, err
-	}
-	m.FileList = fileList
-	return true, nil
+	// fileList, err := f.FetchByPattern(filepath.Join(infraDirectory, capiMachineFileNamePattern))
+	// if err != nil {
+	// 	return true, err
+	// }
+	// m.FileList = fileList
+	// return true, nil
+	return false, nil
 }
