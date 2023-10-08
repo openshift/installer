@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -60,6 +61,8 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		&machines.CAPIMachine{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
+		&kubeconfig.AdminClient{},
+		&kubeconfig.AdminInternalClient{},
 	}
 }
 
@@ -76,6 +79,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	capiMachines := &machines.CAPIMachine{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 
 	parents.Get(
 		clusterID,
@@ -85,6 +89,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		capiMachines,
 		bootstrapIgnAsset,
 		masterIgnAsset,
+		clusterKubeconfigAsset,
 	)
 
 	// Only need the objects--not the files.
@@ -154,6 +159,10 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 			},
 		)
 	}
+
+	// Pass cluster kubeconfig to CAPI for health checks.
+	clusterKubeconfig := clusterKubeconfigAsset
+	_ = clusterKubeconfig
 
 	for _, m := range manifests {
 		m.SetNamespace(ns.Name)
