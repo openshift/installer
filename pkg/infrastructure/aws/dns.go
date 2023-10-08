@@ -20,6 +20,7 @@ import (
 )
 
 type dnsInput struct {
+	clusterID                   string
 	region                      string
 	baseDomain                  string
 	clusterDomain               string
@@ -37,7 +38,7 @@ func createDNSResources(ctx context.Context, logger *logrus.Logger, session *ses
 		return err
 	}
 
-	privateZoneID, err := dnsInput.CreatePrivateZone(ctx, logger, route53Client, dnsInput.clusterDomain, dnsInput.vpcID)
+	privateZoneID, err := dnsInput.CreatePrivateZone(ctx, logger, route53Client, dnsInput.clusterDomain, dnsInput.vpcID, dnsInput.clusterID)
 	if err != nil {
 		return err
 	}
@@ -97,10 +98,11 @@ func lookupZone(ctx context.Context, client route53iface.Route53API, name string
 	return cleanZoneID(*res.Id), nil
 }
 
-func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, client route53iface.Route53API, name, vpcID string) (string, error) {
+func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, client route53iface.Route53API, name, vpcID, clusterID string) (string, error) {
+	logger := l.WithField("name", name)
 	id, err := lookupZone(ctx, client, name, true)
 	if err == nil {
-		l.Info("Found existing private zone", "name", name, "id", id)
+		logger.Infof("Found existing private zone id %s", id)
 		err := setSOAMinimum(ctx, client, id, name)
 		if err != nil {
 			return "", err
@@ -133,8 +135,22 @@ func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, clie
 	if res == nil {
 		return "", fmt.Errorf("unexpected output from hosted zone creation")
 	}
+
 	id = cleanZoneID(*res.HostedZone.Id)
-	l.Info("Created private zone", "name", name, "id", id)
+	logger = logger.WithField("id", *res.HostedZone.Id)
+	logger.Debugln("Tagging private hosted zone")
+
+	// Tag the hosted zone
+	zoneName := fmt.Sprintf("%s-int", clusterID)
+	if _, err = client.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
+		ResourceType: aws.String("hostedzone"),
+		ResourceId:   aws.String(id),
+		AddTags:      r53Tags(clusterID, zoneName),
+	}); err != nil {
+		return "", fmt.Errorf("failed to tag hosted zone: %w", err)
+	}
+
+	logger.Infoln("Created private zone")
 
 	err = setSOAMinimum(ctx, client, id, name)
 	if err != nil {
@@ -142,6 +158,23 @@ func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, clie
 	}
 
 	return id, nil
+}
+
+func r53Tags(infraID, name string) []*route53.Tag {
+	tags := []*route53.Tag{
+		{
+			Key:   aws.String(clusterTag(infraID)),
+			Value: aws.String(clusterTagValue),
+		},
+	}
+	if len(name) > 0 {
+		tags = append(tags, &route53.Tag{
+			Key:   aws.String("Name"),
+			Value: aws.String(name),
+		})
+	}
+	return tags
+
 }
 
 func setSOAMinimum(ctx context.Context, client route53iface.Route53API, id, name string) error {

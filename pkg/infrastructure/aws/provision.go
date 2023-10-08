@@ -66,6 +66,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create DNS resources.
 	dnsInput := &dnsInput{
+		clusterID:                   clusterConfig.ClusterID,
 		region:                      clusterAWSConfig.Region,
 		baseDomain:                  clusterConfig.BaseDomain,
 		clusterDomain:               clusterConfig.ClusterDomain,
