@@ -198,7 +198,19 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 		if err != nil {
 			return err
 		}
-		task, err = vm.PowerOn(vconn.Context)
+
+		datacenter, err := vconn.Finder.Datacenter(vconn.Context, controlPlaneConfigs[i].Workspace.Datacenter)
+
+		if err != nil {
+			return err
+		}
+
+		task, err = datacenter.PowerOnVM(vconn.Context, []types.ManagedObjectReference{vm.Reference()}, &types.OptionValue{
+			Key:   string(types.ClusterPowerOnVmOptionOverrideAutomationLevel),
+			Value: string(types.DrsBehaviorFullyAutomated),
+		})
+
+		//task, err = vm.PowerOn(vconn.Context)
 		if err != nil {
 			return err
 		}
@@ -472,11 +484,9 @@ const (
 	GuestInfoIgnitionData     = "guestinfo.ignition.config.data"
 	GuestInfoIgnitionEncoding = "guestinfo.ignition.config.data.encoding"
 	GuestInfoHostname         = "guestinfo.hostname"
-
 	// going to ignore for now...
 	GuestInfoNetworkKargs = "guestinfo.afterburn.initrd.network-kargs"
 	StealClock            = "stealclock.enable"
-	ethCardType           = "vmxnet3"
 )
 
 func getExtraConfig(vmName, encodedIgnition string) []types.BaseOptionValue {
@@ -572,13 +582,11 @@ func getDiskSpec(devices object.VirtualDeviceList, machineProviderSpec *machinev
 func getNetworkDevices(vconn *VCenterConnection,
 	devices object.VirtualDeviceList,
 	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec) ([]types.BaseVirtualDeviceConfigSpec, error) {
-
-	nics := devices.SelectByType((*types.VirtualEthernetCard)(nil))
-
-	nic := nics[0].(*types.VirtualVmxnet3)
-
 	var networkDevices []types.BaseVirtualDeviceConfigSpec
 
+	// There currently is only a single vmxnet3 nic in the RHCOS template and IPI
+	// currently only supports a single nic.
+	nic := devices.SelectByType((*types.VirtualEthernetCard)(nil))[0].(*types.VirtualVmxnet3)
 	resourcepool, err := vconn.Finder.ResourcePool(vconn.Context, machineProviderSpec.Workspace.ResourcePool)
 	if err != nil {
 		return nil, err
