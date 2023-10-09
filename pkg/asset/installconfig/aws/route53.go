@@ -6,9 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -153,6 +153,7 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cf
 	if err != nil {
 		return err
 	}
+
 	params := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
@@ -163,18 +164,54 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cf
 		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
 			Action: aws.String("UPSERT"),
 			ResourceRecordSet: &route53.ResourceRecordSet{
-				Name:            aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
-				Type:            aws.String("CNAME"),
-				ResourceRecords: []*route53.ResourceRecord{{Value: aws.String(target)}},
-				TTL:             aws.Int64(600),
+				Name: aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
+				Type: aws.String("A"),
+				AliasTarget: &route53.AliasTarget{
+					DNSName:      aws.String(target),
+					HostedZoneId: aws.String(hostedZoneIdPerRegionNLBMap[ic.AWS.Region]),
+				},
 			},
 		})
 	}
 	svc := route53.New(c.ssn, cfg)
-	resp, err := svc.ChangeResourceRecordSets(params)
-	spew.Dump(resp)
-	if err != nil {
-		return err
+	if _, err := svc.ChangeResourceRecordSets(params); err != nil {
+		return fmt.Errorf("failed to create records for api/api-int: %w", err)
 	}
 	return nil
+}
+
+// See https://docs.aws.amazon.com/general/latest/gr/elb.html#elb_region
+
+var hostedZoneIdPerRegionNLBMap = map[string]string{
+	endpoints.AfSouth1RegionID:     "Z203XCE67M25HM",
+	endpoints.ApEast1RegionID:      "Z12Y7K3UBGUAD1",
+	endpoints.ApNortheast1RegionID: "Z31USIVHYNEOWT",
+	endpoints.ApNortheast2RegionID: "ZIBE1TIR4HY56",
+	endpoints.ApNortheast3RegionID: "Z1GWIQ4HH19I5X",
+	endpoints.ApSouth1RegionID:     "ZVDDRBQ08TROA",
+	endpoints.ApSouth2RegionID:     "Z0711778386UTO08407HT",
+	endpoints.ApSoutheast1RegionID: "ZKVM4W9LS7TM",
+	endpoints.ApSoutheast2RegionID: "ZCT6FZBF4DROD",
+	endpoints.ApSoutheast3RegionID: "Z01971771FYVNCOVWJU1G",
+	endpoints.ApSoutheast4RegionID: "Z01156963G8MIIL7X90IV",
+	endpoints.CaCentral1RegionID:   "Z2EPGBW3API2WT",
+	endpoints.CnNorth1RegionID:     "Z3QFB96KMJ7ED6",
+	endpoints.CnNorthwest1RegionID: "ZQEIKTCZ8352D",
+	endpoints.EuCentral1RegionID:   "Z3F0SRJ5LGBH90",
+	endpoints.EuCentral2RegionID:   "Z02239872DOALSIDCX66S",
+	endpoints.EuNorth1RegionID:     "Z1UDT6IFJ4EJM",
+	endpoints.EuSouth1RegionID:     "Z23146JA1KNAFP",
+	endpoints.EuSouth2RegionID:     "Z1011216NVTVYADP1SSV",
+	endpoints.EuWest1RegionID:      "Z2IFOLAFXWLO4F",
+	endpoints.EuWest2RegionID:      "ZD4D7Y8KGAS4G",
+	endpoints.EuWest3RegionID:      "Z1CMS0P5QUZ6D5",
+	endpoints.MeCentral1RegionID:   "Z00282643NTTLPANJJG2P",
+	endpoints.MeSouth1RegionID:     "Z3QSRYVP46NYYV",
+	endpoints.SaEast1RegionID:      "ZTK26PT1VY4CU",
+	endpoints.UsEast1RegionID:      "Z26RNL4JYFTOTI",
+	endpoints.UsEast2RegionID:      "ZLMOA37VPKANP",
+	endpoints.UsGovEast1RegionID:   "Z1ZSMQQ6Q24QQ8",
+	endpoints.UsGovWest1RegionID:   "ZMG1MZ2THAWF1",
+	endpoints.UsWest1RegionID:      "Z24FKFUX50B4VW",
+	endpoints.UsWest2RegionID:      "Z18D5FSROUN65G",
 }
