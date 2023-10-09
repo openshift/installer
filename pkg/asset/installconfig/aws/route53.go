@@ -167,8 +167,9 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cf
 				Name: aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
 				Type: aws.String("A"),
 				AliasTarget: &route53.AliasTarget{
-					DNSName:      aws.String(target),
-					HostedZoneId: aws.String(hostedZoneIdPerRegionNLBMap[ic.AWS.Region]),
+					DNSName:              aws.String(target),
+					HostedZoneId:         aws.String(hostedZoneIdPerRegionNLBMap[ic.AWS.Region]),
+					EvaluateTargetHealth: aws.Bool(true),
 				},
 			},
 		})
