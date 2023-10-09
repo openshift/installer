@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -145,4 +146,57 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 
 	creds := stscreds.NewCredentials(sess, roleARN)
 	return &aws.Config{Credentials: creds}
+}
+
+func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cfg *aws.Config) error {
+	hzOut, err := c.GetHostedZone(ic.AWS.HostedZone, cfg)
+	if err != nil {
+		return err
+	}
+	zoneId := hzOut.HostedZone.Id
+	apiName := fmt.Sprintf("api.%s.", ic.ClusterDomain())
+	apiIntName := fmt.Sprintf("api-int.%s.", ic.ClusterDomain())
+	params := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{ // Required
+			Changes: []*route53.Change{ // Required
+				{ // Required
+					Action: aws.String("UPSERT"), // Required
+					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
+						Name: aws.String(apiName), // Required
+						Type: aws.String("CNAME"), // Required
+						ResourceRecords: []*route53.ResourceRecord{
+							{ // Required
+								Value: aws.String(target), // Required
+							},
+						},
+						TTL: aws.Int64(600),
+						//Weight:        aws.Int64(weight),
+					},
+				},
+				{ // Required
+					Action: aws.String("UPSERT"), // Required
+					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
+						Name: aws.String(apiIntName), // Required
+						Type: aws.String("CNAME"),    // Required
+						ResourceRecords: []*route53.ResourceRecord{
+							{ // Required
+								Value: aws.String(target), // Required
+							},
+						},
+						TTL: aws.Int64(600),
+						//Weight:        aws.Int64(weight),
+					},
+				},
+			},
+			Comment: aws.String("Sample update."),
+		},
+		HostedZoneId: zoneId, // Required
+	}
+	svc := route53.New(c.ssn, cfg)
+	resp, err := svc.ChangeResourceRecordSets(params)
+	spew.Dump(resp)
+	if err != nil {
+		return err
+	}
+	return nil
 }

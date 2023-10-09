@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -224,6 +225,17 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 		// The endpoint is available in:
 		// awsCluster.Spec.ControlPlaneEndpoint.Host
+		ssn, err := installConfig.AWS.Session(context.TODO())
+		if err != nil {
+			return fmt.Errorf("failed to create session: %w", err)
+		}
+		client := awsconfig.NewClient(ssn)
+		r53cfg := awsconfig.GetR53ClientCfg(ssn, "")
+		//awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
+		err = client.CreateOrUpdateRecord(installConfig.Config, awsCluster.Spec.ControlPlaneEndpoint.Host, r53cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create route53 records: %w", err)
+		}
 	}
 
 	time.Sleep(20 * time.Minute)
