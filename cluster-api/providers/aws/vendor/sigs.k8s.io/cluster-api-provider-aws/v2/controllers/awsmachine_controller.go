@@ -765,7 +765,7 @@ func (r *AWSMachineReconciler) ignitionUserData(scope *scope.MachineScope, objec
 	case 2:
 		ignData := &ignTypes.Config{
 			Ignition: ignTypes.Ignition{
-				Version: ignVersion,
+				Version: semver.String(),
 				Config: ignTypes.IgnitionConfig{
 					Append: []ignTypes.ConfigReference{
 						{
@@ -780,7 +780,7 @@ func (r *AWSMachineReconciler) ignitionUserData(scope *scope.MachineScope, objec
 	case 3:
 		ignData := &ignV3Types.Config{
 			Ignition: ignV3Types.Ignition{
-				Version: ignVersion,
+				Version: semver.String(),
 				Config: ignV3Types.IgnitionConfig{
 					Merge: []ignV3Types.Resource{
 						{
@@ -809,7 +809,7 @@ func getIgnitionVersion(scope *scope.MachineScope) string {
 
 func (r *AWSMachineReconciler) deleteBootstrapData(machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreScope scope.S3Scope) error {
 	_, userDataFormat, err := machineScope.GetRawBootstrapDataWithFormat()
-	if err != nil {
+	if client.IgnoreNotFound(err) != nil {
 		return errors.Wrap(err, "failed to get raw userdata")
 	}
 

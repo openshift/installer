@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -18,9 +19,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/rhcos"
-	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -151,19 +154,51 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			m.Machines = append(m.Machines, mac)
 		}
 
-		bootstrapMachines, err := aws.AWSMachines(clusterID.InfraID, installConfig.Config.Platform.AWS.Region,
-			subnets,
-			&types.MachinePool{
-				Name:           "bootstrap",
-				Replicas:       pointer.Int64(1),
-				Platform:       pool.Platform,
-				Hyperthreading: pool.Hyperthreading,
-				Architecture:   pool.Architecture,
+		bootstrapAWSMachine := &capa.AWSMachine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-%s-bootstrap", clusterID.InfraID, pool.Name),
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
 			},
-			"bootstrap",
-			installConfig.Config.Platform.AWS.UserTags,
-		)
-		m.Machines = append(m.Machines, bootstrapMachines...)
+			Spec: capa.AWSMachineSpec{
+				Ignition:             &capa.Ignition{Version: "3.2"},
+				UncompressedUserData: pointer.Bool(true),
+				InstanceType:         mpool.InstanceType,
+				AMI:                  capa.AMIReference{ID: pointer.String(mpool.AMIID)},
+				SSHKeyName:           pointer.String(""),
+				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID.InfraID),
+				PublicIP:             pointer.Bool(true),
+				RootVolume: &capa.Volume{
+					Size:      int64(mpool.EC2RootVolume.Size),
+					Type:      capa.VolumeTypeGP3,
+					IOPS:      int64(mpool.EC2RootVolume.IOPS),
+					Encrypted: pointer.Bool(true),
+				},
+			},
+		}
+
+		bootstrapMachine := &capi.Machine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: bootstrapAWSMachine.Name,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/control-plane": "",
+				},
+			},
+			Spec: capi.MachineSpec{
+				ClusterName: clusterID.InfraID,
+				Bootstrap: capi.Bootstrap{
+					DataSecretName: pointer.String(fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap")),
+				},
+				InfrastructureRef: v1.ObjectReference{
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					Kind:       "AWSMachine",
+					Name:       bootstrapAWSMachine.Name,
+				},
+			},
+		}
+
+		m.Machines = append(m.Machines, bootstrapAWSMachine, bootstrapMachine)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
