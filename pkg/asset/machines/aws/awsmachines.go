@@ -3,13 +3,16 @@ package aws
 
 import (
 	"fmt"
+	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/pkg/errors"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,19 +34,30 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 		total = *pool.Replicas
 	}
 
-	// tags, err := tagsFromUserTags(clusterID, userTags)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
-	// }
+	tags, err := capaTagsFromUserTags(clusterID, userTags)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
+	}
 
 	var result []client.Object
 
 	for idx := int64(0); idx < total; idx++ {
-		//zone := mpool.Zones[int(idx)%len(mpool.Zones)]
-		// subnet, ok := subnets[zone]
-		// if len(subnets) > 0 && !ok {
-		// 	return nil, errors.Errorf("no subnet for zone %s", zone)
-		// }
+		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		subnetID, ok := subnets[zone]
+		if len(subnets) > 0 && !ok {
+			return nil, errors.Errorf("no subnet for zone %s", zone)
+		}
+		subnet := &capa.AWSResourceReference{}
+		if subnetID == "" {
+			subnet.Filters = []capa.Filter{
+				{
+					Name:   "tag:Name",
+					Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+				},
+			}
+		} else {
+			subnet.ID = pointer.String(subnetID)
+		}
 
 		awsMachine := &capa.AWSMachine{
 			TypeMeta: metav1.TypeMeta{
@@ -58,22 +72,21 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 				},
 			},
 			Spec: capa.AWSMachineSpec{
-				//failureDomain?
 				Ignition:             &capa.Ignition{Version: "3.2"},
 				UncompressedUserData: pointer.Bool(true),
 				InstanceType:         mpool.InstanceType,
 				AMI:                  capa.AMIReference{ID: pointer.String(mpool.AMIID)},
 				SSHKeyName:           pointer.String(""),
 				// IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
-				//Subnet: ?
-				//AdditionalTags: tags,
+				Subnet:         subnet,
+				AdditionalTags: tags,
+				RootVolume: &capa.Volume{
+					Size:      int64(mpool.EC2RootVolume.Size),
+					Type:      capa.VolumeTypeGP3, // TODO(padillon): mpool.EC2RootVolume.Type,
+					IOPS:      int64(mpool.EC2RootVolume.IOPS),
+					Encrypted: pointer.Bool(true), // TODO(padillon): configure
+				},
 			},
-			// RootVolume: capa.Volume{
-			// 	Size:      int64(mpool.EC2RootVolume.Size),
-			// 	Type:      mpool.EC2RootVolume.Type,
-			// 	IOPS:      int64(mpool.EC2RootVolume.IOPS),
-			// 	Encrypted: true, // is this configurable? Use KMS?
-			// },
 		}
 
 		machine := &capi.Machine{
@@ -101,4 +114,28 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 
 	}
 	return result, nil
+}
+
+func capaTagsFromUserTags(clusterID string, usertags map[string]string) (capa.Tags, error) {
+	tags := capa.Tags{}
+	tags[fmt.Sprintf("kubernetes.io/cluster/%s", clusterID)] = "owned"
+
+	forbiddenTags := sets.NewString()
+	for key := range tags {
+		forbiddenTags.Insert(key)
+	}
+
+	userTagKeys := make([]string, 0, len(usertags))
+	for key := range usertags {
+		userTagKeys = append(userTagKeys, key)
+	}
+	sort.Strings(userTagKeys)
+
+	for _, k := range userTagKeys {
+		if forbiddenTags.Has(k) {
+			return nil, fmt.Errorf("user tags may not clobber %s", k)
+		}
+		tags[k] = usertags[k]
+	}
+	return tags, nil
 }
