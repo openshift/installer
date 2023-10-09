@@ -45,6 +45,7 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
     "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
     "guestinfo.ignition.config.data.encoding" = "base64"
     "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
+    "guestinfo.domain"                        = "${var.cluster_domain}"
     "stealclock.enable"                       = "TRUE"
   }
 
