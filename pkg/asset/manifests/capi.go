@@ -73,10 +73,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 
 	cluster := &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
-			Kind:       "Cluster",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiGuestsNamespace,

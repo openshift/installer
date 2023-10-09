@@ -12,6 +12,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -160,9 +162,19 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		)
 	}
 
-	// Pass cluster kubeconfig to CAPI for health checks.
-	clusterKubeconfig := clusterKubeconfigAsset
-	_ = clusterKubeconfig
+	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
+	{
+
+		clusterKubeconfig := clusterKubeconfigAsset.Files()[0].Data
+		manifests = append(manifests,
+			utilkubeconfig.GenerateSecret(&clusterv1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      clusterID.InfraID,
+					Namespace: ns.Name,
+				},
+			}, clusterKubeconfig),
+		)
+	}
 
 	for _, m := range manifests {
 		m.SetNamespace(ns.Name)
