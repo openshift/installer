@@ -707,10 +707,9 @@ func (i *IngressRule) Equals(o *IngressRule) bool {
 	case SecurityGroupProtocolTCP,
 		SecurityGroupProtocolUDP,
 		SecurityGroupProtocolICMP,
-		SecurityGroupProtocolICMPv6,
-		SecurityGroupProtocolESP:
+		SecurityGroupProtocolICMPv6:
 		return i.FromPort == o.FromPort && i.ToPort == o.ToPort
-	case SecurityGroupProtocolAll, SecurityGroupProtocolIPinIP:
+	case SecurityGroupProtocolAll, SecurityGroupProtocolIPinIP, SecurityGroupProtocolESP:
 		// FromPort / ToPort are not applicable
 	}
 

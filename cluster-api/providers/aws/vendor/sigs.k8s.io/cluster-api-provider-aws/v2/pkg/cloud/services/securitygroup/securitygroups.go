@@ -680,7 +680,9 @@ func ingressRuleToSDKType(scope scope.SGScope, i *infrav1.IngressRule) (res *ec2
 			FromPort:   aws.Int64(i.FromPort),
 			ToPort:     aws.Int64(i.ToPort),
 		}
-	case infrav1.SecurityGroupProtocolAll, infrav1.SecurityGroupProtocolIPinIP:
+	case infrav1.SecurityGroupProtocolIPinIP,
+		infrav1.SecurityGroupProtocolESP,
+		infrav1.SecurityGroupProtocolAll:
 		res = &ec2.IpPermission{
 			IpProtocol: aws.String(string(i.Protocol)),
 		}

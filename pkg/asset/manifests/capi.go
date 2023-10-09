@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,6 +83,8 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		},
 	}
 
+	region := installConfig.Config.Platform.AWS.Region
+
 	switch platform {
 	case awstypes.Name:
 		awsCluster := &capa.AWSCluster{
@@ -91,9 +94,160 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			},
 			Spec: capa.AWSClusterSpec{
 				Region: installConfig.Config.Platform.AWS.Region,
+				NetworkSpec: capa.NetworkSpec{
+					VPC: capa.VPCSpec{
+						AvailabilityZoneUsageLimit: pointer.Int(6),
+						AvailabilityZoneSelection:  &capa.AZSelectionSchemeOrdered,
+					},
+					Subnets: capa.Subnets{
+						{
+							ID:               clusterID.InfraID + "-private-" + region + "a",
+							AvailabilityZone: region + "a",
+							CidrBlock:        "10.0.0.0/19",
+						},
+						{
+							ID:               clusterID.InfraID + "-private-" + region + "b",
+							AvailabilityZone: region + "b",
+							CidrBlock:        "10.0.32.0/19",
+						},
+						{
+							ID:               clusterID.InfraID + "-private-" + region + "c",
+							AvailabilityZone: region + "c",
+							CidrBlock:        "10.0.64.0/19",
+						},
+						{
+							ID:               clusterID.InfraID + "-public-" + region + "a",
+							IsPublic:         true,
+							AvailabilityZone: region + "a",
+							CidrBlock:        "10.0.128.0/19",
+						},
+						{
+							ID:               clusterID.InfraID + "-public-" + region + "b",
+							IsPublic:         true,
+							AvailabilityZone: region + "b",
+							CidrBlock:        "10.0.160.0/19",
+						},
+						{
+							ID:               clusterID.InfraID + "-public-" + region + "c",
+							IsPublic:         true,
+							AvailabilityZone: region + "c",
+							CidrBlock:        "10.0.192.0/19",
+						},
+					},
+					CNI: &capa.CNISpec{
+						CNIIngressRules: capa.CNIIngressRules{
+							{
+								Description: "ICMP",
+								Protocol:    capa.SecurityGroupProtocolICMP,
+								FromPort:    -1,
+								ToPort:      -1,
+							},
+							{
+								Description: "Port 9000-9999 for node ports (TCP)",
+								Protocol:    capa.SecurityGroupProtocolTCP,
+								FromPort:    9000,
+								ToPort:      9999,
+							},
+							{
+								Description: "Port 9000-9999 for node ports (UDP)",
+								Protocol:    capa.SecurityGroupProtocolUDP,
+								FromPort:    9000,
+								ToPort:      9999,
+							},
+							{
+								Description: "Port 6441-6442 (TCP)",
+								Protocol:    capa.SecurityGroupProtocolTCP,
+								FromPort:    6441,
+								ToPort:      6442,
+							},
+							{
+								Description: "Port 6081 (UDP)",
+								Protocol:    capa.SecurityGroupProtocolUDP,
+								FromPort:    6081,
+								ToPort:      6081,
+							},
+							{
+								Description: "Port 500 (UDP)",
+								Protocol:    capa.SecurityGroupProtocolUDP,
+								FromPort:    500,
+								ToPort:      500,
+							},
+							{
+								Description: "Port 4789 (UDP)",
+								Protocol:    capa.SecurityGroupProtocolUDP,
+								FromPort:    4789,
+								ToPort:      4789,
+							},
+							{
+								Description: "Port 4500 (UDP)",
+								Protocol:    capa.SecurityGroupProtocolUDP,
+								FromPort:    4500,
+								ToPort:      4500,
+							},
+							{
+								Description: "Port 10257 (TCP)",
+								Protocol:    capa.SecurityGroupProtocolTCP,
+								FromPort:    10257,
+								ToPort:      10257,
+							},
+							{
+								Description: "Port 10259 (TCP)",
+								Protocol:    capa.SecurityGroupProtocolTCP,
+								FromPort:    10259,
+								ToPort:      10259,
+							},
+							{
+								Description: "Port 22 (TCP)",
+								Protocol:    capa.SecurityGroupProtocolTCP,
+								FromPort:    22,
+								ToPort:      22,
+							},
+							{
+								Description: "ESP",
+								Protocol:    capa.SecurityGroupProtocolESP,
+								FromPort:    -1,
+								ToPort:      -1,
+							},
+						},
+					},
+					AdditionalControlPlaneIngressRules: []capa.IngressRule{
+						{
+							Description: "MCS traffic from cluster network",
+							Protocol:    capa.SecurityGroupProtocolTCP,
+							FromPort:    22623,
+							ToPort:      22623,
+							CidrBlocks:  []string{"10.0.0.0/16"},
+						},
+						{
+							Description:              "Kubelet traffic from nodes",
+							Protocol:                 capa.SecurityGroupProtocolTCP,
+							FromPort:                 10250,
+							ToPort:                   10250,
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						},
+						{
+							Description:              "Service node ports (TCP)",
+							Protocol:                 capa.SecurityGroupProtocolTCP,
+							FromPort:                 30000,
+							ToPort:                   32767,
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						},
+						{
+							Description:              "Service node ports (UDP)",
+							Protocol:                 capa.SecurityGroupProtocolUDP,
+							FromPort:                 30000,
+							ToPort:                   32767,
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						},
+					},
+				},
 				S3Bucket: &capa.S3Bucket{
 					Name:                 fmt.Sprintf("openshift-bootstrap-data-%s", clusterID.InfraID),
 					PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
+				},
+				ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+					LoadBalancerType: capa.LoadBalancerTypeNLB,
+					Scheme:           &capa.ELBSchemeInternetFacing,
 				},
 			},
 		}

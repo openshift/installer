@@ -208,19 +208,31 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		// Use exponential backoff to wait for the `LoadBalancerReady` condition on AWSCluster.
 		// The condition, when set to True, guarantees that the load balancer is ready to receive traffic.
 		var awsCluster *capa.AWSCluster
-		if err := wait.ExponentialBackoff(wait.Backoff{}, func() (bool, error) {
+		if err := wait.ExponentialBackoff(wait.Backoff{
+			Duration: time.Second * 10,
+			Factor:   float64(1.5),
+			Steps:    32,
+		}, func() (bool, error) {
+			c := &capa.AWSCluster{}
 			if err := cl.Get(context.Background(), client.ObjectKey{
 				Name:      clusterID.InfraID,
 				Namespace: ns.Name,
-			}, awsCluster); err != nil {
+			}, c); err != nil {
 				if apierrors.IsNotFound(err) {
 					return false, nil
 				}
 				return false, err
 			}
-			return conditions.IsTrue(awsCluster, capa.LoadBalancerReadyCondition), nil
+			awsCluster = c
+			return conditions.IsTrue(c, capa.LoadBalancerReadyCondition), nil
 		}); err != nil {
 			return err
+		}
+		if awsCluster == nil {
+			return errors.New("error occurred during load balancer ready check")
+		}
+		if awsCluster.Spec.ControlPlaneEndpoint.Host == "" {
+			return errors.New("control plane endpoint is not set")
 		}
 
 		// The endpoint is available in:

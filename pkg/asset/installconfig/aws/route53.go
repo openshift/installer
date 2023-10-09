@@ -154,43 +154,22 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cf
 		return err
 	}
 	zoneId := hzOut.HostedZone.Id
-	apiName := fmt.Sprintf("api.%s.", ic.ClusterDomain())
-	apiIntName := fmt.Sprintf("api-int.%s.", ic.ClusterDomain())
 	params := &route53.ChangeResourceRecordSetsInput{
-		ChangeBatch: &route53.ChangeBatch{ // Required
-			Changes: []*route53.Change{ // Required
-				{ // Required
-					Action: aws.String("UPSERT"), // Required
-					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String(apiName), // Required
-						Type: aws.String("CNAME"), // Required
-						ResourceRecords: []*route53.ResourceRecord{
-							{ // Required
-								Value: aws.String(target), // Required
-							},
-						},
-						TTL: aws.Int64(600),
-						//Weight:        aws.Int64(weight),
-					},
-				},
-				{ // Required
-					Action: aws.String("UPSERT"), // Required
-					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String(apiIntName), // Required
-						Type: aws.String("CNAME"),    // Required
-						ResourceRecords: []*route53.ResourceRecord{
-							{ // Required
-								Value: aws.String(target), // Required
-							},
-						},
-						TTL: aws.Int64(600),
-						//Weight:        aws.Int64(weight),
-					},
-				},
-			},
-			Comment: aws.String("Sample update."),
+		ChangeBatch: &route53.ChangeBatch{
+			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
 		},
-		HostedZoneId: zoneId, // Required
+		HostedZoneId: zoneId,
+	}
+	for _, prefix := range []string{"api", "api-int"} {
+		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
+			Action: aws.String("UPSERT"),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name:            aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
+				Type:            aws.String("CNAME"),
+				ResourceRecords: []*route53.ResourceRecord{{Value: aws.String(target)}},
+				TTL:             aws.Int64(600),
+			},
+		})
 	}
 	svc := route53.New(c.ssn, cfg)
 	resp, err := svc.ChangeResourceRecordSets(params)

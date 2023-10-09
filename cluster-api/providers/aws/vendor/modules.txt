@@ -789,7 +789,7 @@ sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/util/version
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.2.4 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231007041838-956251f868af
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.2.4 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231009174729-724b21fbfb8c
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
@@ -939,4 +939,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231007041838-956251f868af
+# sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231009174729-724b21fbfb8c
