@@ -77,15 +77,17 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 				InstanceType:         mpool.InstanceType,
 				AMI:                  capa.AMIReference{ID: pointer.String(mpool.AMIID)},
 				SSHKeyName:           pointer.String(""),
-				// IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
-				Subnet:         subnet,
-				AdditionalTags: tags,
+				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
+				Subnet:               subnet,
+				AdditionalTags:       tags,
 				RootVolume: &capa.Volume{
 					Size:      int64(mpool.EC2RootVolume.Size),
 					Type:      capa.VolumeTypeGP3, // TODO(padillon): mpool.EC2RootVolume.Type,
 					IOPS:      int64(mpool.EC2RootVolume.IOPS),
 					Encrypted: pointer.Bool(true), // TODO(padillon): configure
 				},
+				//Subnet: ?
+				//AdditionalTags: tags,
 			},
 		}
 

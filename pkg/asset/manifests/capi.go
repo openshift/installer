@@ -16,6 +16,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -87,6 +88,12 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 	switch platform {
 	case awstypes.Name:
+
+		// Not sure if this is the best place to create IAM roles.
+		if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
+			return errors.Wrap(err, "failed to create IAM roles")
+		}
+
 		awsCluster := &capa.AWSCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      clusterID.InfraID,
