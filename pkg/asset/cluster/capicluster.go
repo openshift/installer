@@ -162,26 +162,33 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		)
 	}
 
-	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
-	{
-
-		clusterKubeconfig := clusterKubeconfigAsset.Files()[0].Data
-		manifests = append(manifests,
-			utilkubeconfig.GenerateSecret(&clusterv1.Cluster{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      clusterID.InfraID,
-					Namespace: ns.Name,
-				},
-			}, clusterKubeconfig),
-		)
-	}
-
 	for _, m := range manifests {
 		m.SetNamespace(ns.Name)
 		if err := cl.Create(context.Background(), m); err != nil {
 			return fmt.Errorf("failed to create manifest: %w", err)
 		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
+	}
+
+	// Pass cluster kubeconfig and store it in; this is usually the role of a bootstrap provider.
+	{
+
+		clusterKubeconfig := clusterKubeconfigAsset.Files()[0].Data
+
+		key := client.ObjectKey{
+			Name:      clusterID.InfraID,
+			Namespace: ns.Name,
+		}
+		cluster := &clusterv1.Cluster{}
+		if err := cl.Get(context.Background(), key, cluster); err != nil {
+			return err
+		}
+
+		// Create the secret.
+		secret := utilkubeconfig.GenerateSecret(cluster, clusterKubeconfig)
+		if err := cl.Create(context.Background(), secret); err != nil {
+			return err
+		}
 	}
 
 	// List all namespaces in the cluster.
