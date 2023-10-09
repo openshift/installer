@@ -149,16 +149,15 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 }
 
 func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cfg *aws.Config) error {
-	hzOut, err := c.GetHostedZone(ic.AWS.HostedZone, cfg)
+	zone, err := c.GetBaseDomain(ic.BaseDomain)
 	if err != nil {
 		return err
 	}
-	zoneId := hzOut.HostedZone.Id
 	params := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
 		},
-		HostedZoneId: zoneId,
+		HostedZoneId: zone.Id,
 	}
 	for _, prefix := range []string{"api", "api-int"} {
 		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
