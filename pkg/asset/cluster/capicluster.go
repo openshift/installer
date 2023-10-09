@@ -12,7 +12,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -198,6 +201,29 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	}
 	for _, n := range namespaceList.Items {
 		spew.Dump(n.Name)
+	}
+
+	{
+		// Use exponential backoff to wait for the `LoadBalancerReady` condition on AWSCluster.
+		// The condition, when set to True, guarantees that the load balancer is ready to receive traffic.
+		var awsCluster *capa.AWSCluster
+		if err := wait.ExponentialBackoff(wait.Backoff{}, func() (bool, error) {
+			if err := cl.Get(context.Background(), client.ObjectKey{
+				Name:      clusterID.InfraID,
+				Namespace: ns.Name,
+			}, awsCluster); err != nil {
+				if apierrors.IsNotFound(err) {
+					return false, nil
+				}
+				return false, err
+			}
+			return conditions.IsTrue(awsCluster, capa.LoadBalancerReadyCondition), nil
+		}); err != nil {
+			return err
+		}
+
+		// The endpoint is available in:
+		// awsCluster.Spec.ControlPlaneEndpoint.Host
 	}
 
 	time.Sleep(20 * time.Minute)
