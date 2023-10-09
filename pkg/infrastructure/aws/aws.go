@@ -74,11 +74,11 @@ func (a AWSInfraProvider) ExtractHostAddresses(directory string, ic *types.Insta
 	return a.extractHostAddresses(a, directory, ic)
 }
 
-func normalAWSDestroy(a AWSInfraProvider, directory string, varFiles []string) error {
-	//panic("not implemented")
-	logrus.Errorln("Pretending to destroy bootstrap resources...")
-	return nil
-}
+// func normalAWSDestroy(a AWSInfraProvider, directory string, varFiles []string) error {
+// 	//panic("not implemented")
+// 	logrus.Errorln("Pretending to destroy bootstrap resources...")
+// 	return nil
+// }
 
 func normalAWSExtractHostAddresses(a AWSInfraProvider, directory string, ic *types.InstallConfig) (string, int, []string, error) {
 	//panic("not implemented")

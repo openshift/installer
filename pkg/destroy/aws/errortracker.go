@@ -11,12 +11,12 @@ const (
 )
 
 // errorTracker holds a history of errors
-type errorTracker struct {
+type ErrorTracker struct {
 	history map[string]time.Time
 }
 
 // suppressWarning logs errors WARN once every duration and the rest to DEBUG
-func (o *errorTracker) suppressWarning(identifier string, err error, logger logrus.FieldLogger) {
+func (o *ErrorTracker) suppressWarning(identifier string, err error, logger logrus.FieldLogger) {
 	if o.history == nil {
 		o.history = map[string]time.Time{}
 	}

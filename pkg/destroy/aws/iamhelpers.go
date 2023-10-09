@@ -14,31 +14,31 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-type iamRoleSearch struct {
-	client    *iam.IAM
-	filters   []Filter
-	logger    logrus.FieldLogger
-	unmatched map[string]struct{}
+type IamRoleSearch struct {
+	Client    *iam.IAM
+	Filters   []Filter
+	Logger    logrus.FieldLogger
+	Unmatched map[string]struct{}
 }
 
-func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []string, returnErr error) {
-	if search.unmatched == nil {
-		search.unmatched = map[string]struct{}{}
+func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []string, returnErr error) {
+	if search.Unmatched == nil {
+		search.Unmatched = map[string]struct{}{}
 	}
 
 	var lastError error
-	err := search.client.ListRolesPagesWithContext(
+	err := search.Client.ListRolesPagesWithContext(
 		ctx,
 		&iam.ListRolesInput{},
 		func(results *iam.ListRolesOutput, lastPage bool) bool {
-			search.logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
+			search.Logger.Debugf("iterating over a page of %d IAM roles", len(results.Roles))
 			for _, role := range results.Roles {
-				if _, ok := search.unmatched[*role.Arn]; ok {
+				if _, ok := search.Unmatched[*role.Arn]; ok {
 					continue
 				}
 
 				// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
-				response, err := search.client.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: role.RoleName})
+				response, err := search.Client.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: role.RoleName})
 				if err != nil {
 					var awsErr awserr.Error
 					if errors.As(err, &awsErr) {
@@ -47,15 +47,15 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 							// The role does not exist.
 							// Ignore this IAM Role and donot report this error via
 							// lastError
-							search.unmatched[*role.Arn] = exists
+							search.Unmatched[*role.Arn] = exists
 						case strings.Contains(err.Error(), "AccessDenied"):
 							// Installer does not have access to this IAM role
 							// Ignore this IAM Role and donot report this error via
 							// lastError
-							search.unmatched[*role.Arn] = exists
+							search.Unmatched[*role.Arn] = exists
 						default:
 							if lastError != nil {
-								search.logger.Debug(lastError)
+								search.Logger.Debug(lastError)
 							}
 							lastError = errors.Wrapf(err, "get tags for %s", *role.Arn)
 						}
@@ -66,11 +66,11 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 					for _, tag := range role.Tags {
 						tags[*tag.Key] = *tag.Value
 					}
-					if tagMatch(search.filters, tags) {
+					if tagMatch(search.Filters, tags) {
 						arns = append(arns, *role.Arn)
 						names = append(names, *role.RoleName)
 					} else {
-						search.unmatched[*role.Arn] = exists
+						search.Unmatched[*role.Arn] = exists
 					}
 				}
 			}
@@ -158,7 +158,7 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 // findIAMRoles returns the IAM roles for the cluster.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
+func FindIAMRoles(ctx context.Context, search *IamRoleSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
 	logger.Debug("search for IAM roles")
 	resources, _, err := search.find(ctx)
 	if err != nil {

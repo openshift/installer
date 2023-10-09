@@ -23,7 +23,7 @@ import (
 // stage and the second list is the list of resources that are not terminated.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func findEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.String, filters []Filter, logger logrus.FieldLogger) ([]string, []string, error) {
+func FindEC2Instances(ctx context.Context, ec2Client *ec2.EC2, deleted sets.String, filters []Filter, logger logrus.FieldLogger) ([]string, []string, error) {
 	if ec2Client.Config.Region == nil {
 		return nil, nil, errors.New("EC2 client does not have region configured")
 	}

@@ -23,7 +23,7 @@ func (o *ClusterUninstaller) removeSharedTags(
 	ctx context.Context,
 	session *session.Session,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
-	tracker *errorTracker,
+	tracker *ErrorTracker,
 ) error {
 	for _, key := range o.clusterOwnedKeys() {
 		if err := o.removeSharedTag(ctx, session, tagClients, key, tracker); err != nil {
@@ -49,7 +49,7 @@ func (o *ClusterUninstaller) clusterOwnedKeys() []string {
 	return keys
 }
 
-func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *session.Session, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, key string, tracker *errorTracker) error {
+func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *session.Session, tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, key string, tracker *ErrorTracker) error {
 	const sharedValue = "shared"
 
 	request := &resourcegroupstaggingapi.UntagResourcesInput{
@@ -143,10 +143,10 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, session *sessi
 	}
 
 	iamClient := iam.New(session)
-	iamRoleSearch := &iamRoleSearch{
-		client:  iamClient,
-		filters: []Filter{{key: sharedValue}},
-		logger:  o.Logger,
+	iamRoleSearch := &IamRoleSearch{
+		Client:  iamClient,
+		Filters: []Filter{{key: sharedValue}},
+		Logger:  o.Logger,
 	}
 	o.Logger.Debugf("Search for and remove shared tags for IAM roles matching %s: shared", key)
 	if err := wait.PollImmediateUntil(

@@ -158,10 +158,10 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	iamClient := iam.New(awsSession)
-	iamRoleSearch := &iamRoleSearch{
-		client:  iamClient,
-		filters: o.Filters,
-		logger:  o.Logger,
+	iamRoleSearch := &IamRoleSearch{
+		Client:  iamClient,
+		Filters: o.Filters,
+		Logger:  o.Logger,
 	}
 	iamUserSearch := &iamUserSearch{
 		client:  iamClient,
@@ -180,7 +180,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		}
 	}
 
-	tracker := new(errorTracker)
+	tracker := new(ErrorTracker)
 
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
@@ -190,7 +190,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			instancesRunning, instancesNotTerminated, err := findEC2Instances(ctx, ec2Client, deleted, o.Filters, o.Logger)
+			instancesRunning, instancesNotTerminated, err := FindEC2Instances(ctx, ec2Client, deleted, o.Filters, o.Logger)
 			if err != nil {
 				o.Logger.WithError(err).Info("error while finding EC2 instances to delete")
 				if err := ctx.Err(); err != nil {
@@ -205,7 +205,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 				instancesToDelete = instancesNotTerminated
 				lastTerminateTime = time.Now()
 			}
-			newlyDeleted, err := o.deleteResources(ctx, awsSession, instancesToDelete, tracker)
+			newlyDeleted, err := DeleteResources(ctx, awsSession, instancesToDelete, tracker, o.Logger)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -227,7 +227,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			newlyDeleted, loopError := o.deleteResources(ctx, awsSession, resourcesToDelete.UnsortedList(), tracker)
+			newlyDeleted, loopError := DeleteResources(ctx, awsSession, resourcesToDelete.UnsortedList(), tracker, o.Logger)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -273,7 +273,7 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
 	iamClient *iam.IAM,
-	iamRoleSearch *iamRoleSearch,
+	iamRoleSearch *IamRoleSearch,
 	iamUserSearch *iamUserSearch,
 	deleted sets.String,
 ) (sets.String, []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
@@ -283,7 +283,7 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 
 	// Find resources by tag
 	for _, tagClient := range tagClients {
-		resourcesInTagClient, err := o.findResourcesByTag(ctx, tagClient, deleted)
+		resourcesInTagClient, err := FindResourcesByTag(ctx, tagClient, deleted, o.Filters, o.Logger)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -298,7 +298,7 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 	}
 
 	// Find IAM roles
-	iamRoleResources, err := findIAMRoles(ctx, iamRoleSearch, deleted, o.Logger)
+	iamRoleResources, err := FindIAMRoles(ctx, iamRoleSearch, deleted, o.Logger)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -318,14 +318,16 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 //
 //	tagClients - clients of the tagging API to use to search for resources.
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findResourcesByTag(
+func FindResourcesByTag(
 	ctx context.Context,
 	tagClient *resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
 	deleted sets.String,
+	filters []Filter,
+	logger logrus.FieldLogger,
 ) (sets.String, error) {
 	resources := sets.NewString()
-	for _, filter := range o.Filters {
-		o.Logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
+	for _, filter := range filters {
+		logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
 		tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
 		for key, value := range filter {
 			tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
@@ -348,7 +350,7 @@ func (o *ClusterUninstaller) findResourcesByTag(
 		)
 		if err != nil {
 			err = errors.Wrap(err, "get tagged resources")
-			o.Logger.Info(err)
+			logger.Info(err)
 			return resources, err
 		}
 	}
@@ -360,17 +362,17 @@ func (o *ClusterUninstaller) findResourcesByTag(
 //	resources - the resources to be deleted.
 //
 // The first return is the ARNs of the resources that were successfully deleted
-func (o *ClusterUninstaller) deleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *errorTracker) (sets.String, error) {
+func DeleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *ErrorTracker, logger logrus.FieldLogger) (sets.String, error) {
 	deleted := sets.NewString()
 	for _, arnString := range resources {
-		logger := o.Logger.WithField("arn", arnString)
+		l := logger.WithField("arn", arnString)
 		parsedARN, err := arn.Parse(arnString)
 		if err != nil {
-			logger.WithError(err).Debug("could not parse ARN")
+			l.WithError(err).Debug("could not parse ARN")
 			continue
 		}
-		if err := deleteARN(ctx, awsSession, parsedARN, o.Logger); err != nil {
-			tracker.suppressWarning(arnString, err, logger)
+		if err := deleteARN(ctx, awsSession, parsedARN, logger); err != nil {
+			tracker.suppressWarning(arnString, err, l)
 			if err := ctx.Err(); err != nil {
 				return deleted, err
 			}
