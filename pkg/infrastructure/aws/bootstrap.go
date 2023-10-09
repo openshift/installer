@@ -64,6 +64,26 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 		l.Infof("s3 bucket already exists: %v", bucketName)
 	}
 
+	_, err = s3Client.PutBucketTagging(&s3.PutBucketTaggingInput{
+		Bucket: aws.String(bucketName),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String(clusterTag(bootstrapInput.clusterID)),
+					Value: aws.String(clusterTagValue),
+				},
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(bucketName),
+				},
+			},
+		},
+	})
+	if err != nil {
+		l.WithError(err).Debugln("failed to tag s3 bucket")
+		return fmt.Errorf("failed to tag s3 bucket: %w", err)
+	}
+
 	// Upload the bootstrap.ign file to the S3 bucket
 	uploadObjectInput := &s3.PutObjectInput{
 		Bucket: aws.String(bootstrapInput.ignitionBucket),
@@ -77,6 +97,27 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 	}
 
 	l.Infof("Uploaded bootstrap.ign to S3 bucket: %s\n", bootstrapInput.ignitionBucket)
+
+	_, err = s3Client.PutObjectTagging(&s3.PutObjectTaggingInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String("bootstrap.ign"),
+		Tagging: &s3.Tagging{
+			TagSet: []*s3.Tag{
+				{
+					Key:   aws.String(clusterTag(bootstrapInput.clusterID)),
+					Value: aws.String(clusterTagValue),
+				},
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(bucketName),
+				},
+			},
+		},
+	})
+	if err != nil {
+		l.WithError(err).Debugln("failed to tag s3 bucket object")
+		return fmt.Errorf("failed to tag ignition s3 bucket object: %w", err)
+	}
 
 	iamClient := iam.New(session)
 	instanceProfileARN, err := CreateBootstrapInstanceProfile(l, iamClient, bootstrapInput.clusterID)
