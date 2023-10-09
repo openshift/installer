@@ -575,7 +575,7 @@ func getNetworkDevices(vconn *VCenterConnection,
 
 	nics := devices.SelectByType((*types.VirtualEthernetCard)(nil))
 
-	nic := nics[0].(*types.VirtualEthernetCard)
+	nic := nics[0].(*types.VirtualVmxnet3)
 
 	var networkDevices []types.BaseVirtualDeviceConfigSpec
 
