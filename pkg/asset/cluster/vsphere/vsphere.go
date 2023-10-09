@@ -185,7 +185,7 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 		if err != nil {
 			return err
 		}
-		//err = task.Wait(vconn.Context)
+
 		taskInfo, err := task.WaitForResult(vconn.Context, nil)
 		if err != nil {
 			return err
@@ -427,10 +427,8 @@ func findAvailableHostSystems(vconn *VCenterConnection, clusterHostSystems []*ob
 		if hostSystemManagedObject.Runtime.InMaintenanceMode {
 			continue
 		}
-
 		return hostObj, nil
 	}
-
 	return nil, errors.New("all hosts unavailable")
 }
 
@@ -481,30 +479,33 @@ const (
 	ethCardType           = "vmxnet3"
 )
 
+func getExtraConfig(vmName, encodedIgnition string) []types.BaseOptionValue {
+	return []types.BaseOptionValue{
+		&types.OptionValue{
+			Key:   GuestInfoIgnitionEncoding,
+			Value: "base64",
+		},
+		&types.OptionValue{
+			Key:   GuestInfoIgnitionData,
+			Value: encodedIgnition,
+		},
+		&types.OptionValue{
+			Key:   GuestInfoHostname,
+			Value: vmName,
+		},
+		&types.OptionValue{
+			Key:   StealClock,
+			Value: "TRUE",
+		},
+	}
+}
+
 func clone(vconn *VCenterConnection,
 	vmTemplate *object.VirtualMachine,
 	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec,
 	encodedIgnition, vmName string) (*object.Task, error) {
 
-	extraConfig := []types.BaseOptionValue{}
-
-	extraConfig = append(extraConfig, &types.OptionValue{
-		Key:   GuestInfoIgnitionEncoding,
-		Value: "base64",
-	})
-	extraConfig = append(extraConfig, &types.OptionValue{
-		Key:   GuestInfoIgnitionData,
-		Value: encodedIgnition,
-	})
-
-	extraConfig = append(extraConfig, &types.OptionValue{
-		Key:   GuestInfoHostname,
-		Value: vmName,
-	})
-	extraConfig = append(extraConfig, &types.OptionValue{
-		Key:   StealClock,
-		Value: "TRUE",
-	})
+	extraConfig := getExtraConfig(vmName, encodedIgnition)
 
 	deviceSpecs := []types.BaseVirtualDeviceConfigSpec{}
 	virtualDeviceList, err := vmTemplate.Device(vconn.Context)
@@ -537,7 +538,6 @@ func clone(vconn *VCenterConnection,
 
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			//Annotation: s.machine.GetName(),
 			Flags:             newVMFlagInfo(),
 			ExtraConfig:       extraConfig,
 			DeviceChange:      deviceSpecs,
@@ -550,7 +550,7 @@ func clone(vconn *VCenterConnection,
 			Folder:    types.NewReference(folder.Reference()),
 			Pool:      types.NewReference(resourcepool.Reference()),
 		},
-		PowerOn: false, // Create powered off machine, for power it on later in "create" procedure
+		PowerOn: false,
 	}
 
 	return vmTemplate.Clone(vconn.Context, folder, vmName, spec)
@@ -573,54 +573,40 @@ func getNetworkDevices(vconn *VCenterConnection,
 	devices object.VirtualDeviceList,
 	machineProviderSpec *machinev1beta1.VSphereMachineProviderSpec) ([]types.BaseVirtualDeviceConfigSpec, error) {
 
+	nics := devices.SelectByType((*types.VirtualEthernetCard)(nil))
+
+	nic := nics[0].(*types.VirtualEthernetCard)
+
 	var networkDevices []types.BaseVirtualDeviceConfigSpec
-	// Remove any existing NICs
-	for _, dev := range devices.SelectByType((*types.VirtualEthernetCard)(nil)) {
-		networkDevices = append(networkDevices, &types.VirtualDeviceConfigSpec{
-			Device:    dev,
-			Operation: types.VirtualDeviceConfigSpecOperationRemove,
-		})
-	}
 
 	resourcepool, err := vconn.Finder.ResourcePool(vconn.Context, machineProviderSpec.Workspace.ResourcePool)
 	if err != nil {
 		return nil, err
 	}
 
-	clusterRef, err := resourcepool.Owner(vconn.Context)
-
-	if err != nil {
-		return nil, err
-	}
-
-	clusterObjRef, err := vconn.Finder.ObjectReference(vconn.Context, clusterRef.Reference())
+	clusterObjRef, err := resourcepool.Owner(vconn.Context)
 	if err != nil {
 		return nil, err
 	}
 
 	computeCluster := clusterObjRef.(*object.ClusterComputeResource)
-	//computeCluster := object.NewClusterComputeResource(vconn.Client.Client, clusterObjRef.Reference())
 
-	for i, netdev := range machineProviderSpec.Network.Devices {
-		networkPath := path.Join(computeCluster.InventoryPath, netdev.NetworkName)
-		networkObject, err := vconn.Finder.Network(vconn.Context, networkPath)
-		backing, err := networkObject.EthernetCardBackingInfo(vconn.Context)
-		if err != nil {
-			return nil, err
-		}
-
-		dev, err := object.EthernetCardTypes().CreateEthernetCard(ethCardType, backing)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create new ethernet card %q for network %q: %w", ethCardType, netdev.NetworkName, err)
-		}
-		nic := dev.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard()
-		nic.Key = int32(i)
-
-		networkDevices = append(networkDevices, &types.VirtualDeviceConfigSpec{
-			Device:    dev,
-			Operation: types.VirtualDeviceConfigSpecOperationAdd,
-		})
+	netdev := machineProviderSpec.Network.Devices[0]
+	networkPath := path.Join(computeCluster.InventoryPath, netdev.NetworkName)
+	networkObject, err := vconn.Finder.Network(vconn.Context, networkPath)
+	if err != nil {
+		return nil, err
 	}
+	backing, err := networkObject.EthernetCardBackingInfo(vconn.Context)
+	if err != nil {
+		return nil, err
+	}
+	nic.Backing = backing
+
+	networkDevices = append(networkDevices, &types.VirtualDeviceConfigSpec{
+		Device:    nic,
+		Operation: types.VirtualDeviceConfigSpecOperationEdit,
+	})
 	return networkDevices, nil
 }
 
