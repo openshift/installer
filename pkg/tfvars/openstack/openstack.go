@@ -39,7 +39,7 @@ func TFVars(
 		defaultmpool = installConfig.Config.OpenStack.DefaultMachinePlatform
 	)
 
-	networkClient, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, fmt.Errorf("failed to build an OpenStack service client: %w", err)
 	}
@@ -186,7 +186,7 @@ func TFVars(
 	// defaultMachinesPort carries the machine subnets and the network.
 	var defaultMachinesPort *terraformPort
 	if controlPlanePort := installConfig.Config.Platform.OpenStack.ControlPlanePort; controlPlanePort != nil {
-		port, err := portTargetToTerraformPort(networkClient, *controlPlanePort)
+		port, err := portTargetToTerraformPort(conn, *controlPlanePort)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve portTarget :%w", err)
 		}
@@ -290,11 +290,7 @@ func TFVars(
 
 // tagVIPsPort tags a provided Port to allow detach of security group when destroying the cluster.
 func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return err
 	}
@@ -304,7 +300,7 @@ func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
 		FixedIPs:  []ports.FixedIPOpts{{IPAddress: portIP}},
 	}
 
-	allPagesPort, err := ports.List(networkClient, listOpts).AllPages()
+	allPagesPort, err := ports.List(conn, listOpts).AllPages()
 	if err != nil {
 		return err
 	}
@@ -318,7 +314,7 @@ func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
 		return fmt.Errorf("found multiple ports matching network ID %s and Port IP %s, cannot proceed", networkID, portIP)
 	} else if len(allPorts) == 1 {
 		tag := infraID + openstackdefaults.DualStackVIPsPortTag
-		err = attributestags.Add(networkClient, "ports", allPorts[0].ID, tag).ExtractErr()
+		err = attributestags.Add(conn, "ports", allPorts[0].ID, tag).ExtractErr()
 		if err != nil {
 			return err
 		}
@@ -328,7 +324,7 @@ func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints
 func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
-	conn, err := clientconfig.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}

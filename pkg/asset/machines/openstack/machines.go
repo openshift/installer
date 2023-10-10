@@ -364,7 +364,7 @@ func checkNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.C
 	if opts == nil {
 		opts = openstackdefaults.DefaultClientOpts(cloud)
 	}
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := openstackdefaults.NewServiceClient("network", opts)
 	if err != nil {
 		return false, err
 	}

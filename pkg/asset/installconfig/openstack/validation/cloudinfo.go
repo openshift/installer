@@ -82,27 +82,27 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 
 	opts := openstackdefaults.DefaultClientOpts(ic.OpenStack.Cloud)
 
-	ci.clients.networkClient, err = clientconfig.NewServiceClient("network", opts)
+	ci.clients.networkClient, err = openstackdefaults.NewServiceClient("network", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a network client: %w", err)
 	}
 
-	ci.clients.computeClient, err = clientconfig.NewServiceClient("compute", opts)
+	ci.clients.computeClient, err = openstackdefaults.NewServiceClient("compute", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a compute client: %w", err)
 	}
 
-	ci.clients.imageClient, err = clientconfig.NewServiceClient("image", opts)
+	ci.clients.imageClient, err = openstackdefaults.NewServiceClient("image", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an image client: %w", err)
 	}
 
-	ci.clients.identityClient, err = clientconfig.NewServiceClient("identity", opts)
+	ci.clients.identityClient, err = openstackdefaults.NewServiceClient("identity", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an identity client: %w", err)
 	}
 
-	ci.clients.volumeClient, err = clientconfig.NewServiceClient("volume", opts)
+	ci.clients.volumeClient, err = openstackdefaults.NewServiceClient("volume", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a volume client: %w", err)
 	}
