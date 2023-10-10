@@ -116,6 +116,33 @@ func TestInfraEnv_Generate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "AdditionalTrustBundle",
+			dependencies: []asset.Asset{
+				getAdditionalTrustBundleValidOptionalInstallConfig(),
+				getValidAgentConfig(),
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
+					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
+						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					},
+					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName(getValidOptionalInstallConfig()),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+					},
+					AdditionalTrustBundle: getAdditionalTrustBundleValidOptionalInstallConfig().Config.AdditionalTrustBundle,
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
