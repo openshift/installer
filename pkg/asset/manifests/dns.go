@@ -112,23 +112,23 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}
 			config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
 		}
-		if hostedZone := installConfig.Config.AWS.HostedZone; hostedZone == "" {
-			config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
-				fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
-				"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
-			}}
-		} else {
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: hostedZone}
+		// if hostedZone := installConfig.Config.AWS.HostedZone; hostedZone == "" {
+		// 	config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
+		// 		fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
+		// 		"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
+		// 	}}
+		// } else {
+		// 	config.Spec.PrivateZone = &configv1.DNSZone{ID: hostedZone}
 
-			if r := installConfig.Config.AWS.HostedZoneRole; r != "" {
-				config.Spec.Platform = configv1.DNSPlatformSpec{
-					Type: configv1.AWSPlatformType,
-					AWS: &configv1.AWSDNSSpec{
-						PrivateZoneIAMRole: r,
-					},
-				}
-			}
-		}
+		// 	if r := installConfig.Config.AWS.HostedZoneRole; r != "" {
+		// 		config.Spec.Platform = configv1.DNSPlatformSpec{
+		// 			Type: configv1.AWSPlatformType,
+		// 			AWS: &configv1.AWSDNSSpec{
+		// 				PrivateZoneIAMRole: r,
+		// 			},
+		// 		}
+		// 	}
+		// }
 	case azuretypes.Name:
 		dnsConfig, err := installConfig.Azure.DNSConfig()
 		if err != nil {
