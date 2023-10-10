@@ -49,7 +49,6 @@ Now that the Networking resources are pre-created you can deploy OpenShift. Here
 ```yaml
 apiVersion: v1
 baseDomain: mydomain.test
-featureSet: TechPreviewNoUpgrade
 compute:
 - name: worker
   platform:
@@ -92,4 +91,4 @@ platform:
 ```
 There are important things to note:
 
-The subnets under `platform.openstack.controlPlanePort.fixedIPs` can contain both id or name. The same applies to the network `platform.openstack.controlPlanePort.network`. Dual-stack clusters are only supported with `featureSet: TechPreviewNoUpgrade`
+The subnets under `platform.openstack.controlPlanePort.fixedIPs` can contain both id or name. The same applies to the network `platform.openstack.controlPlanePort.network`.
