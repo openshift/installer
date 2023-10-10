@@ -260,6 +260,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 				},
 				ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+					Name:             pointer.String(clusterID.InfraID + "-ext"),
 					LoadBalancerType: capa.LoadBalancerTypeNLB,
 					Scheme:           &capa.ELBSchemeInternetFacing,
 					AdditionalListeners: []*capa.AdditionalListenerSpec{

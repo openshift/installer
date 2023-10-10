@@ -170,13 +170,13 @@ func (s *storeImpl) saveStateFile() error {
 		}
 		data, err := json.MarshalIndent(v.asset, "", "    ")
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to marshal asset with key %q and value of type %+T", k, v.asset)
 		}
 		s.stateFileAssets[k.String()] = json.RawMessage(data)
 	}
 	data, err := json.MarshalIndent(s.stateFileAssets, "", "    ")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to marshal state file assets")
 	}
 
 	path := filepath.Join(s.directory, stateFileName)

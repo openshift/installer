@@ -196,9 +196,13 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		sgFilters = append(sgFilters, cpFilter)
 	}
 
-	securityGroups := []machineapi.AWSResourceReference{{
-		Filters: sgFilters,
-	}}
+	securityGroups := []machineapi.AWSResourceReference{}
+	for _, filter := range sgFilters {
+		securityGroups = append(securityGroups, machineapi.AWSResourceReference{
+			Filters: []machineapi.Filter{filter},
+		})
+	}
+
 	securityGroupsIn := []machineapi.AWSResourceReference{}
 	for _, sgID := range in.securityGroupIDs {
 		sgID := sgID
@@ -295,10 +299,13 @@ func tagsFromUserTags(clusterID string, usertags map[string]string) ([]machineap
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.ControlPlaneMachineSet, clusterID string, publish types.PublishingStrategy) {
-	lbrefs := []machineapi.LoadBalancerReference{{
-		Name: fmt.Sprintf("%s-int", clusterID),
-		Type: machineapi.NetworkLoadBalancerType,
-	}}
+	lbrefs := []machineapi.LoadBalancerReference{
+		// TODO: revert comment this out
+		// {
+		// 	Name: fmt.Sprintf("%s-int", clusterID),
+		// 	Type: machineapi.NetworkLoadBalancerType,
+		// },
+	}
 
 	if publish == types.ExternalPublishingStrategy {
 		lbrefs = append(lbrefs, machineapi.LoadBalancerReference{

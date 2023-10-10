@@ -118,22 +118,19 @@ func PutIAMRoles(clusterID string, ic *installconfig.InstallConfig) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal assume policy")
 	}
-	createRoleInput := &iam.CreateRoleInput{
-		AssumeRolePolicyDocument: aws.String(string(assumePolicyBytes)),
-		Tags:                     []*iam.Tag{clusterOwnedIAMTag},
-	}
 
 	for _, role := range []string{"master", "worker"} {
 		roleName := aws.String(fmt.Sprintf("%s-%s-role", clusterID, role))
-		profileName := aws.String(fmt.Sprintf("%s-%s-profile", clusterID, role))
-		policyName := aws.String(fmt.Sprintf("%s-%s-policy", clusterID, role))
-
-		createRoleInput.RoleName = roleName
 		if _, err := svc.GetRole(&iam.GetRoleInput{RoleName: roleName}); err != nil {
 			if aerr, ok := err.(awserr.Error); ok && aerr.Code() != iam.ErrCodeNoSuchEntityException {
 				return errors.Wrapf(err, "failed to get %s role", role)
 			}
 			// If the role does not exist, create it.
+			createRoleInput := &iam.CreateRoleInput{
+				RoleName:                 roleName,
+				AssumeRolePolicyDocument: aws.String(string(assumePolicyBytes)),
+				Tags:                     []*iam.Tag{clusterOwnedIAMTag},
+			}
 			if _, err := svc.CreateRole(createRoleInput); err != nil {
 				return errors.Wrapf(err, "failed to create %s role", role)
 			}
@@ -144,6 +141,7 @@ func PutIAMRoles(clusterID string, ic *installconfig.InstallConfig) error {
 		}
 
 		// Put the policy inline.
+		policyName := aws.String(fmt.Sprintf("%s-%s-policy", clusterID, role))
 		b, err := json.Marshal(policies[role])
 		if err != nil {
 			return errors.Wrapf(err, "failed to marshal %s policy", role)
@@ -156,7 +154,8 @@ func PutIAMRoles(clusterID string, ic *installconfig.InstallConfig) error {
 			return errors.Wrapf(err, "failed to create inline policy for role %s ", role)
 		}
 
-		if _, err := svc.GetInstanceProfile(&iam.GetInstanceProfileInput{InstanceProfileName: roleName}); err != nil {
+		profileName := aws.String(fmt.Sprintf("%s-%s-profile", clusterID, role))
+		if _, err := svc.GetInstanceProfile(&iam.GetInstanceProfileInput{InstanceProfileName: profileName}); err != nil {
 			if aerr, ok := err.(awserr.Error); ok && aerr.Code() != iam.ErrCodeNoSuchEntityException {
 				return errors.Wrapf(err, "failed to get %s instance profile", role)
 			}

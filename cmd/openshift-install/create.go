@@ -21,10 +21,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientwatch "k8s.io/client-go/tools/watch"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -47,6 +49,7 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 type target struct {
@@ -195,12 +198,27 @@ var (
 
 				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
+				defer capi.Teardown()
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.
 				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+				}
+				metadata, err := cluster.LoadMetadata(command.RootOpts.Dir)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+				envtestCfg, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "envtest", "envtest.kubeconfig"))
+				if err != nil {
+					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+				}
+				envtestClient, err := client.New(envtestCfg, client.Options{
+					Scheme: scheme.Scheme,
+				})
+				if err != nil {
+					logrus.Fatal(errors.Wrap(err, "failed to create a new client for envtest"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
@@ -224,16 +242,13 @@ var (
 				}
 				timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
-
-				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
-					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
-						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
-				} else {
-					logrus.Info("Destroying the bootstrap resources...")
-					err = destroybootstrap.Destroy(command.RootOpts.Dir)
-					if err != nil {
-						logrus.Fatal(err)
-					}
+				if err := envtestClient.Delete(ctx, &clusterv1.Machine{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("%s-bootstrap", metadata.InfraID),
+						Namespace: cluster.ClusterAPINamespace,
+					},
+				}); client.IgnoreNotFound(err) != nil {
+					logrus.Fatal(errors.Wrap(err, "failed to delete bootstrap machine"))
 				}
 				timer.StopTimer("Bootstrap Destroy")
 

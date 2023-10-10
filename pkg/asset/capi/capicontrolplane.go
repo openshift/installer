@@ -23,7 +23,13 @@ import (
 var (
 	// InstallDir is the directory containing install assets.
 	InstallDir string
+
+	ctx, cancel = context.WithCancel(signals.SetupSignalHandler())
 )
+
+func Teardown() {
+	cancel()
+}
 
 // CAPIControlPlane creates a local capi control plane
 // to use as a management cluster.
@@ -83,12 +89,9 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 			Name:      "AWS Infrastructure Provider",
 			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
 			Manifests: []string{manifestDir + "/aws-infrastructure-components.yaml"},
-			Args:      []string{"--feature-gates=BootstrapFormatIgnition=true"},
+			Args:      []string{"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true"},
 		},
 	}
-
-	// Setup signal handler for stopping the subprocesses.
-	ctx := signals.SetupSignalHandler()
 
 	// Run the controllers.
 	for _, ct := range controllers {
@@ -103,6 +106,7 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 		for _, ct := range controllers {
 			if ct.state != nil {
 				ct.state.Stop()
+				logrus.Infof("Stopped local manager: %s", ct.Name)
 			}
 		}
 	}()
