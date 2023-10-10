@@ -469,7 +469,7 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 
 	var zoneName string
 	var zonePath *field.Path
-	var zone *route53.HostedZone
+	// var zone *route53.HostedZone
 
 	allErrs := field.ErrorList{}
 	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
@@ -489,23 +489,23 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 			allErrs = append(allErrs, errs...)
 		}
 
-		zone = zoneOutput.HostedZone
+		// zone = zoneOutput.HostedZone
 	} else {
 		zoneName = ic.BaseDomain
 		zonePath = field.NewPath("baseDomain")
-		baseDomainOutput, err := client.GetBaseDomain(zoneName)
+		_, err := client.GetBaseDomain(zoneName)
 		if err != nil {
 			return field.ErrorList{
 				field.Invalid(zonePath, zoneName, "cannot find base domain"),
 			}.ToAggregate()
 		}
 
-		zone = baseDomainOutput
+		// zone = baseDomainOutput
 	}
 
-	if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
-		allErrs = append(allErrs, errs...)
-	}
+	// if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
+	// 	allErrs = append(allErrs, errs...)
+	// }
 
 	return allErrs.ToAggregate()
 }
