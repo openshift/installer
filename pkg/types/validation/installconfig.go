@@ -265,6 +265,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			// as well as on vSphere
 			allowV6Primary = true
 		case p.OpenStack != nil:
+			allowV6Primary = true
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
 		case p.None != nil:
@@ -535,9 +536,6 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs, fldPath.Child(openstack.Name, newVIPsFields.APIVIPs))...)
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs, fldPath.Child(openstack.Name, newVIPsFields.IngressVIPs))...)
-
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
 			Ingress: platform.OpenStack.IngressVIPs,
