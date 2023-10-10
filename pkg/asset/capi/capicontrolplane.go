@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -24,11 +25,15 @@ var (
 	// InstallDir is the directory containing install assets.
 	InstallDir string
 
+	wg          = &sync.WaitGroup{}
 	ctx, cancel = context.WithCancel(signals.SetupSignalHandler())
 )
 
 func Teardown() {
 	cancel()
+	logrus.Info("Shutting down local Cluster API control plane...")
+	wg.Wait()
+	logrus.Info("Local control plane has completed operations")
 }
 
 // CAPIControlPlane creates a local capi control plane
@@ -98,12 +103,17 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		// Stop the controllers when the context is cancelled.
 		<-ctx.Done()
 		for _, ct := range controllers {
 			if ct.state != nil {
-				ct.state.Stop()
+				if err := ct.state.Stop(); err != nil {
+					logrus.Warnf("Failed to stop local manager: %s: %v", ct.Name, err)
+					continue
+				}
 				logrus.Infof("Stopped local manager: %s", ct.Name)
 			}
 		}

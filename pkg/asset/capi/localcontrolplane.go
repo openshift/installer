@@ -105,11 +105,14 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		// Stop the controllers when the context is cancelled.
 		<-ctx.Done()
 		if err := c.Env.Stop(); err != nil {
-			logrus.Warnf("error stopping envtest: %v", err)
+			logrus.Warnf("failed to stop envtest: %v", err)
+			return
 		}
 		logrus.Info("Stopped local control plane with envtest")
 	}()

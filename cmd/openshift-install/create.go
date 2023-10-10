@@ -190,7 +190,7 @@ var (
 		name: "CAPI Cluster",
 		command: &cobra.Command{
 			Use:   "capi-cluster",
-			Short: "Create an OpenShift cluster",
+			Short: "Create an OpenShift cluster with Cluster API",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRun: func(_ *cobra.Command, _ []string) {
