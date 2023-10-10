@@ -246,6 +246,13 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 							ToPort:                   32767,
 							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
 						},
+						{
+							Description: "SSH everyone",
+							Protocol:    capa.SecurityGroupProtocolTCP,
+							FromPort:    22,
+							ToPort:      22,
+							CidrBlocks:  []string{"0.0.0.0/0"},
+						},
 					},
 				},
 				S3Bucket: &capa.S3Bucket{

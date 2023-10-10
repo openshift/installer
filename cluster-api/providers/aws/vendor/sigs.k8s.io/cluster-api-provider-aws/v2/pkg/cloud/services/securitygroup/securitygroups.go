@@ -620,6 +620,18 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 					IPv6CidrBlocks: ipv6CidrBlocks,
 				},
 			}
+
+			for _, ln := range s.scope.ControlPlaneLoadBalancer().AdditionalListeners {
+				rules = append(rules, infrav1.IngressRule{
+					Description:    fmt.Sprintf("Allow NLB traffic to the control plane instances on port %d.", ln.Port),
+					Protocol:       infrav1.SecurityGroupProtocolTCP,
+					FromPort:       ln.Port,
+					ToPort:         ln.Port,
+					CidrBlocks:     ipv4CidrBlocks,
+					IPv6CidrBlocks: ipv6CidrBlocks,
+				})
+			}
+
 			return rules, nil
 		}
 		return infrav1.IngressRules{}, nil

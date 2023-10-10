@@ -590,6 +590,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*v1beta2.SubnetSpec)(nil), (*SubnetSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_SubnetSpec_To_v1beta1_SubnetSpec(a.(*v1beta2.SubnetSpec), b.(*SubnetSpec), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*v1beta2.VPCSpec)(nil), (*VPCSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_VPCSpec_To_v1beta1_VPCSpec(a.(*v1beta2.VPCSpec), b.(*VPCSpec), scope)
 	}); err != nil {
