@@ -219,11 +219,11 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					},
 					AdditionalControlPlaneIngressRules: []capa.IngressRule{
 						{
-							Description: "MCS traffic from cluster network",
-							Protocol:    capa.SecurityGroupProtocolTCP,
-							FromPort:    22623,
-							ToPort:      22623,
-							CidrBlocks:  []string{"10.0.0.0/16"},
+							Description:              "MCS traffic from cluster network",
+							Protocol:                 capa.SecurityGroupProtocolTCP,
+							FromPort:                 22623,
+							ToPort:                   22623,
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
 						},
 						{
 							Description:              "Kubelet traffic from nodes",
@@ -255,6 +255,12 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
 					LoadBalancerType: capa.LoadBalancerTypeNLB,
 					Scheme:           &capa.ELBSchemeInternetFacing,
+					AdditionalListeners: []*capa.AdditionalListenerSpec{
+						{
+							Port:     22623,
+							Protocol: capa.ELBProtocolTCP,
+						},
+					},
 				},
 			},
 		}

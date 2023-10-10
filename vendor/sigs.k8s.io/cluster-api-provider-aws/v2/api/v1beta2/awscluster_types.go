@@ -208,6 +208,11 @@ type AWSLoadBalancerSpec struct {
 	// +optional
 	AdditionalSecurityGroups []string `json:"additionalSecurityGroups,omitempty"`
 
+	// AdditionalListeners sets the additional listeners for the control plane load balancer.
+	// This is only applicable to Network Load Balancer (NLB) types for the time being.
+	// +optional
+	AdditionalListeners []*AdditionalListenerSpec `json:"additionalListeners,omitempty"`
+
 	// IngressRules sets the ingress rules for the control plane load balancer.
 	// +optional
 	IngressRules []IngressRule `json:"ingressRules,omitempty"`
@@ -224,6 +229,18 @@ type AWSLoadBalancerSpec struct {
 	// PreserveClientIP lets the user control if preservation of client ips must be retained or not.
 	// If this is enabled 6443 will be opened to 0.0.0.0/0.
 	PreserveClientIP bool `json:"preserveClientIP,omitempty"`
+}
+
+// AdditionalListenerSpec defines the desired state of an
+// additional listener on an AWS load balancer.
+type AdditionalListenerSpec struct {
+	// Port sets the port for the additional listener.
+	Port int64 `json:"port"`
+	// Protocol sets the protocol for the additional listener.
+	// Currently only TCP is supported.
+	// +kubebuilder:validation:Enum=TCP
+	// +kubeBuilder:default=TCP
+	Protocol ELBProtocol `json:"protocol"`
 }
 
 // AWSClusterStatus defines the observed state of AWSCluster.

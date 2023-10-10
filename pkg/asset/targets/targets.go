@@ -77,13 +77,13 @@ var (
 
 	// Cluster are the cluster targeted assets.
 	CAPICluster = []asset.WritableAsset{
+		&cluster.Metadata{},
 		&machine.MasterIgnitionCustomizations{},
 		&machine.WorkerIgnitionCustomizations{},
 		&cluster.TerraformVariables{},
 		&kubeconfig.AdminClient{},
 		&password.KubeadminPassword{},
 		&tls.JournalCertKey{},
-		&cluster.Metadata{},
 		&cluster.CAPICluster{},
 	}
 )

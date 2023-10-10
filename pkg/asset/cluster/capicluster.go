@@ -61,6 +61,7 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		// &installconfig.PlatformPermsCheck{},
 		// &installconfig.PlatformProvisionCheck{},
 		// &quota.PlatformQuotaCheck{},
+		&TerraformVariables{},
 		&password.KubeadminPassword{},
 		&capi.CAPIControlPlane{},
 		&manifests.ClusterAPI{},
@@ -85,6 +86,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	capiMachines := &machines.CAPIMachine{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
+	terraformVariables := &TerraformVariables{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 
 	parents.Get(
@@ -96,6 +98,7 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		bootstrapIgnAsset,
 		masterIgnAsset,
 		clusterKubeconfigAsset,
+		terraformVariables,
 	)
 
 	// Only need the objects--not the files.

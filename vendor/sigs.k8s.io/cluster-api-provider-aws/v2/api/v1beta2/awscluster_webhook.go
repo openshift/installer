@@ -58,7 +58,7 @@ func (r *AWSCluster) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.Spec.S3Bucket.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
-	allErrs = append(allErrs, r.validateControlPlaneLBIngressRules()...)
+	allErrs = append(allErrs, r.validateControlPlaneLB()...)
 
 	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
@@ -246,11 +246,18 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 	return allErrs
 }
 
-func (r *AWSCluster) validateControlPlaneLBIngressRules() field.ErrorList {
+func (r *AWSCluster) validateControlPlaneLB() field.ErrorList {
 	var allErrs field.ErrorList
 
 	if r.Spec.ControlPlaneLoadBalancer == nil {
 		return allErrs
+	}
+
+	// Additional listeners are only supported for NLBs.
+	if len(r.Spec.ControlPlaneLoadBalancer.AdditionalListeners) > 0 {
+		if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType != LoadBalancerTypeNLB {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalNetworkListeners"), r.Spec.ControlPlaneLoadBalancer.AdditionalListeners, "additional listeners are only supported for NLB load balancers"))
+		}
 	}
 
 	for _, rule := range r.Spec.ControlPlaneLoadBalancer.IngressRules {

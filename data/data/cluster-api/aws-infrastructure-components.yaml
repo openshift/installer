@@ -1547,6 +1547,29 @@ spec:
                 description: ControlPlaneLoadBalancer is optional configuration for
                   customizing control plane behavior.
                 properties:
+                  additionalListeners:
+                    description: AdditionalListeners sets the additional listeners
+                      for the control plane load balancer. This is only applicable
+                      to Network Load Balancer (NLB) types for the time being.
+                    items:
+                      description: AdditionalListenerSpec defines the desired state
+                        of an additional listener on an AWS load balancer.
+                      properties:
+                        port:
+                          description: Port sets the port for the additional listener.
+                          format: int64
+                          type: integer
+                        protocol:
+                          description: Protocol sets the protocol for the additional
+                            listener. Currently only TCP is supported.
+                          enum:
+                          - TCP
+                          type: string
+                      required:
+                      - port
+                      - protocol
+                      type: object
+                    type: array
                   additionalSecurityGroups:
                     description: AdditionalSecurityGroups sets the security groups
                       used by the load balancer. Expected to be security group IDs
@@ -3518,6 +3541,30 @@ spec:
                         description: ControlPlaneLoadBalancer is optional configuration
                           for customizing control plane behavior.
                         properties:
+                          additionalListeners:
+                            description: AdditionalListeners sets the additional listeners
+                              for the control plane load balancer. This is only applicable
+                              to Network Load Balancer (NLB) types for the time being.
+                            items:
+                              description: AdditionalListenerSpec defines the desired
+                                state of an additional listener on an AWS load balancer.
+                              properties:
+                                port:
+                                  description: Port sets the port for the additional
+                                    listener.
+                                  format: int64
+                                  type: integer
+                                protocol:
+                                  description: Protocol sets the protocol for the
+                                    additional listener. Currently only TCP is supported.
+                                  enum:
+                                  - TCP
+                                  type: string
+                              required:
+                              - port
+                              - protocol
+                              type: object
+                            type: array
                           additionalSecurityGroups:
                             description: AdditionalSecurityGroups sets the security
                               groups used by the load balancer. Expected to be security

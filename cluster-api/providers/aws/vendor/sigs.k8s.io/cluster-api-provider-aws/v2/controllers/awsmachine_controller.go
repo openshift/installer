@@ -969,7 +969,7 @@ func (r *AWSMachineReconciler) deregisterInstanceFromClassicLB(machineScope *sco
 }
 
 func (r *AWSMachineReconciler) deregisterInstanceFromV2LB(machineScope *scope.MachineScope, elbsvc services.ELBInterface, i *infrav1.Instance) error {
-	targetGroupArn, registered, err := elbsvc.IsInstanceRegisteredWithAPIServerLB(i)
+	targetGroupARNs, registered, err := elbsvc.IsInstanceRegisteredWithAPIServerLB(i)
 	if err != nil {
 		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedDetachControlPlaneELB",
 			"Failed to deregister control plane instance %q from load balancer: failed to determine registration status: %v", i.ID, err)
@@ -980,11 +980,13 @@ func (r *AWSMachineReconciler) deregisterInstanceFromV2LB(machineScope *scope.Ma
 		return nil
 	}
 
-	if err := elbsvc.DeregisterInstanceFromAPIServerLB(targetGroupArn, i); err != nil {
-		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedDetachControlPlaneELB",
-			"Failed to deregister control plane instance %q from load balancer: %v", i.ID, err)
-		conditions.MarkFalse(machineScope.AWSMachine, infrav1.ELBAttachedCondition, infrav1.ELBDetachFailedReason, clusterv1.ConditionSeverityError, err.Error())
-		return errors.Wrapf(err, "could not deregister control plane instance %q from load balancer", i.ID)
+	for _, targetGroupArn := range targetGroupARNs {
+		if err := elbsvc.DeregisterInstanceFromAPIServerLB(targetGroupArn, i); err != nil {
+			r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "FailedDetachControlPlaneELB",
+				"Failed to deregister control plane instance %q from load balancer: %v", i.ID, err)
+			conditions.MarkFalse(machineScope.AWSMachine, infrav1.ELBAttachedCondition, infrav1.ELBDetachFailedReason, clusterv1.ConditionSeverityError, err.Error())
+			return errors.Wrapf(err, "could not deregister control plane instance %q from load balancer", i.ID)
+		}
 	}
 
 	r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeNormal, "SuccessfulDetachControlPlaneELB",

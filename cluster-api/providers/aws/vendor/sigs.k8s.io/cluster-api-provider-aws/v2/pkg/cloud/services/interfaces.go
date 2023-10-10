@@ -95,7 +95,7 @@ type ELBInterface interface {
 	DeleteLoadbalancers() error
 	ReconcileLoadbalancers() error
 	IsInstanceRegisteredWithAPIServerELB(i *infrav1.Instance) (bool, error)
-	IsInstanceRegisteredWithAPIServerLB(i *infrav1.Instance) (string, bool, error)
+	IsInstanceRegisteredWithAPIServerLB(i *infrav1.Instance) ([]string, bool, error)
 	DeregisterInstanceFromAPIServerELB(i *infrav1.Instance) error
 	DeregisterInstanceFromAPIServerLB(targetGroupArn string, i *infrav1.Instance) error
 	RegisterInstanceWithAPIServerELB(i *infrav1.Instance) error
