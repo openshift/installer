@@ -178,11 +178,26 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
 
-	securityGroups := []machineapi.AWSResourceReference{{
-		Filters: []machineapi.Filter{{
+	sgFilters := []machineapi.Filter{
+		{
 			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-%s-sg", in.clusterID, in.role)},
-		}},
+			Values: []string{fmt.Sprintf("%s-node", in.clusterID)},
+		},
+		{
+			Name:   "tag:Name",
+			Values: []string{fmt.Sprintf("%s-lb", in.clusterID)},
+		},
+	}
+
+	if in.role == "master" {
+		cpFilter := machineapi.Filter{
+			Name:   "tag:Name",
+			Values: []string{fmt.Sprintf("%s-controlplane", in.clusterID)}}
+		sgFilters = append(sgFilters, cpFilter)
+	}
+
+	securityGroups := []machineapi.AWSResourceReference{{
+		Filters: sgFilters,
 	}}
 	securityGroupsIn := []machineapi.AWSResourceReference{}
 	for _, sgID := range in.securityGroupIDs {
