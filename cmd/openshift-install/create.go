@@ -244,7 +244,7 @@ var (
 				timer.StartTimer("Bootstrap Destroy")
 				if err := envtestClient.Delete(ctx, &clusterv1.Machine{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-bootstrap", metadata.InfraID),
+						Name:      fmt.Sprintf("%s-master-bootstrap", metadata.InfraID),
 						Namespace: cluster.ClusterAPINamespace,
 					},
 				}); client.IgnoreNotFound(err) != nil {
