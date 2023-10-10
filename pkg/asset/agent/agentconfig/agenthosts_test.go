@@ -219,6 +219,15 @@ func TestAgentHosts_Generate(t *testing.T) {
 			expectedError:  "invalid Install Config configuration: Hosts[0].Host: Forbidden: Host test has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host.",
 			expectedConfig: nil,
 		},
+		{
+			name: "host-missing-interface-error",
+			dependencies: []asset.Asset{
+				getInstallConfigSingleHost(),
+				getAgentConfigMissingInterfaces(),
+			},
+			expectedError:  "invalid Agent Config configuration: [Hosts[0].Interfaces: Required value: at least one interface must be defined for each node, Hosts[1].Interfaces: Required value: at least one interface must be defined for each node, Hosts[2].Interfaces: Required value: at least one interface must be defined for each node]",
+			expectedConfig: nil,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -388,6 +397,25 @@ func getAgentConfigInvalidInterfaces() *AgentConfig {
 					MacAddress: "28:d2:44:d2:b2:1a",
 				},
 			},
+		},
+	}
+	return a
+}
+
+func getAgentConfigMissingInterfaces() *AgentConfig {
+	a := getNoHostsAgentConfig()
+	a.Config.Hosts = []agent.Host{
+		{
+			Hostname: "control-0.example.org",
+			Role:     "master",
+		},
+		{
+			Hostname: "control-1.example.org",
+			Role:     "master",
+		},
+		{
+			Hostname: "control-2.example.org",
+			Role:     "master",
 		},
 	}
 	return a
