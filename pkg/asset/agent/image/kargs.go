@@ -37,5 +37,5 @@ func (a *Kargs) KernelCmdLine() []byte {
 	if a.fips {
 		return []byte(" fips=1")
 	}
-	return nil
+	return []byte(" console=ttyS0")
 }
