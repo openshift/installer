@@ -4,7 +4,7 @@ go 1.20
 
 require sigs.k8s.io/cluster-api-provider-aws/v2 v2.2.4
 
-replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231010155739-d3ff48a29613
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231010201625-161c495cabcf
 
 require (
 	github.com/alessio/shellescape v1.4.2 // indirect

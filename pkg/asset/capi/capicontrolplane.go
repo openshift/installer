@@ -36,7 +36,7 @@ func Teardown() {
 // TODO: Add support for existing management cluster.
 type CAPIControlPlane struct {
 	FileList []*asset.File
-	LocalCP  LocalControlPlane
+	LocalCP  LocalControlPlane `json:"-"`
 }
 
 // Name returns the human-friendly name of the asset.

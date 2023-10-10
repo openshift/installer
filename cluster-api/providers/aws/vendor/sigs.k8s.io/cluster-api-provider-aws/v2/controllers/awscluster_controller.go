@@ -224,16 +224,16 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		return err
 	}
 
-	if err := sgService.DeleteSecurityGroups(); err != nil {
-		clusterScope.Error(err, "error deleting security groups")
-		return err
-	}
-
 	if r.ExternalResourceGC {
 		gcSvc := gc.NewService(clusterScope, gc.WithGCStrategy(r.AlternativeGCStrategy))
 		if gcErr := gcSvc.ReconcileDelete(ctx); gcErr != nil {
 			return fmt.Errorf("failed delete reconcile for gc service: %w", gcErr)
 		}
+	}
+
+	if err := sgService.DeleteSecurityGroups(); err != nil {
+		clusterScope.Error(err, "error deleting security groups")
+		return err
 	}
 
 	if err := networkSvc.DeleteNetwork(); err != nil {

@@ -29,11 +29,11 @@ import (
 // TODO: Add support for existing management cluster.
 type LocalControlPlane struct {
 	FileList       []*asset.File
-	Env            *envtest.Environment
-	Client         client.Client
+	Env            *envtest.Environment `json:"-"`
+	Client         client.Client        `json:"-"`
+	Cfg            *rest.Config         `json:"-"`
 	BinDir         string
 	KubeconfigPath string //TODO: move to its own asset
-	Cfg            *rest.Config
 }
 
 // Name returns the human-friendly name of the asset.
