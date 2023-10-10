@@ -36,11 +36,28 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		return err
 	}
 
+	baseInstanceOptions := instanceOptions{
+		amiID:                    controlPlaneInput.amiID,
+		instanceType:             controlPlaneInput.instanceType,
+		userData:                 controlPlaneInput.userData,
+		securityGroupID:          controlPlaneInput.securityGroupID,
+		associatePublicIPAddress: false,
+		volumeType:               controlPlaneInput.volumeType,
+		volumeSize:               controlPlaneInput.volumeSize,
+		volumeIOPS:               controlPlaneInput.volumeIOPS,
+		encrypted:                controlPlaneInput.encrypted,
+		kmsKeyID:                 controlPlaneInput.kmsKeyID,
+		iamInstanceProfileARN:    *instanceProfileARN,
+	}
+
 	for i := 0; i < controlPlaneInput.replicas; i++ {
 		ec2Client := ec2.New(session)
-		instance, err := createEC2Instance(l, ec2Client, controlPlaneInput.amiID, controlPlaneInput.instanceType, controlPlaneInput.subnetIDs[i], controlPlaneInput.userData, controlPlaneInput.securityGroupID,
-			false, controlPlaneInput.clusterID, controlPlaneInput.volumeType, controlPlaneInput.volumeSize, controlPlaneInput.volumeIOPS,
-			controlPlaneInput.encrypted, controlPlaneInput.kmsKeyID, *instanceProfileARN, fmt.Sprintf("master-%v", i))
+
+		options := baseInstanceOptions
+		options.name = fmt.Sprintf("master-%d", i)
+		options.subnetID = controlPlaneInput.subnetIDs[i]
+
+		instance, err := createEC2Instance(l, ec2Client, controlPlaneInput.clusterID, options)
 		if err != nil {
 			return err
 		}

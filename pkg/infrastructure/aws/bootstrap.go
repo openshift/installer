@@ -126,9 +126,22 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 	}
 
 	ec2Client := ec2.New(session)
-	instance, err := createEC2Instance(l, ec2Client, bootstrapInput.amiID, bootstrapInput.instanceType, bootstrapInput.subnetID, bootstrapInput.userData, bootstrapInput.securityGroupID,
-		bootstrapInput.associatePublicIPAddress, bootstrapInput.clusterID, bootstrapInput.volumeType, bootstrapInput.volumeSize, bootstrapInput.volumeIOPS,
-		bootstrapInput.encrypted, bootstrapInput.kmsKeyID, *instanceProfileARN, "bootstrap")
+	bootstrapInstanceOptions := instanceOptions{
+		name:                     "bootstrap",
+		amiID:                    bootstrapInput.amiID,
+		instanceType:             bootstrapInput.instanceType,
+		subnetID:                 bootstrapInput.subnetID,
+		userData:                 bootstrapInput.userData,
+		securityGroupID:          bootstrapInput.securityGroupID,
+		associatePublicIPAddress: bootstrapInput.associatePublicIPAddress,
+		volumeType:               bootstrapInput.volumeType,
+		volumeSize:               bootstrapInput.volumeSize,
+		volumeIOPS:               bootstrapInput.volumeIOPS,
+		encrypted:                bootstrapInput.encrypted,
+		kmsKeyID:                 bootstrapInput.kmsKeyID,
+		iamInstanceProfileARN:    *instanceProfileARN,
+	}
+	instance, err := createEC2Instance(l, ec2Client, bootstrapInput.clusterID, bootstrapInstanceOptions)
 	if err != nil {
 		return err
 	}
@@ -350,17 +363,30 @@ func existingRolePolicy(client iamiface.IAMAPI, roleName, policyName string) (bo
 	return aws.StringValue(result.PolicyName) == policyName, nil
 }
 
-// createEC2Instance creates an EC2 instance and returns its instance ID.
-func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, amiID, instanceType, subnetID, userData, securityGroupID string,
-	associatePublicIPAddress bool, clusterID, volumeType string, volumeSize, volumeIOPS int64,
-	encrypted bool, kmsKeyID, iamInstanceProfileARN, instanceName string) (*ec2.Instance, error) {
+type instanceOptions struct {
+	name                     string
+	amiID                    string
+	instanceType             string
+	subnetID                 string
+	userData                 string
+	securityGroupID          string
+	associatePublicIPAddress bool
+	volumeType               string
+	volumeSize               int64
+	volumeIOPS               int64
+	encrypted                bool
+	kmsKeyID                 string
+	iamInstanceProfileARN    string
+}
 
+// createEC2Instance creates an EC2 instance and returns its instance ID.
+func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, options instanceOptions) (*ec2.Instance, error) {
 	// Check if an instance exists.
 	existingInstances, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("tag:Name"),
-				Values: []*string{aws.String(fmt.Sprintf("%s-%s", clusterID, instanceName))},
+				Values: []*string{aws.String(fmt.Sprintf("%s-%s", clusterID, options.name))},
 			},
 		},
 	})
@@ -375,19 +401,19 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, amiID, instanceType
 
 	// Create a new EC2 instance.
 	runResult, err := ec2Client.RunInstances(&ec2.RunInstancesInput{
-		ImageId:      aws.String(amiID),
-		InstanceType: aws.String(instanceType),
+		ImageId:      aws.String(options.amiID),
+		InstanceType: aws.String(options.instanceType),
 		//SubnetId:     aws.String(subnetID),
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
 			{
 				DeviceIndex: aws.Int64(0),
-				SubnetId:    aws.String(subnetID),
+				SubnetId:    aws.String(options.subnetID),
 				// TODO (alberto): Parameterize this.
-				Groups:                   []*string{aws.String(securityGroupID)},
-				AssociatePublicIpAddress: aws.Bool(associatePublicIPAddress),
+				Groups:                   []*string{aws.String(options.securityGroupID)},
+				AssociatePublicIpAddress: aws.Bool(options.associatePublicIPAddress),
 			},
 		},
-		UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(userData))),
+		UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(options.userData))),
 		// TODO(alberto): create dedicated SGs.
 		// SecurityGroupIds:         []*string{aws.String(securityGroupID)},
 		MinCount: aws.Int64(1),
@@ -398,7 +424,7 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, amiID, instanceType
 				Tags: []*ec2.Tag{
 					{
 						Key:   aws.String("Name"),
-						Value: aws.String(fmt.Sprintf("%s-%s", clusterID, instanceName)),
+						Value: aws.String(fmt.Sprintf("%s-%s", clusterID, options.name)),
 					},
 					{
 						Key:   aws.String(clusterTag(clusterID)),
@@ -411,8 +437,8 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, amiID, instanceType
 			{
 				DeviceName: aws.String("/dev/xvda"),
 				Ebs: &ec2.EbsBlockDevice{
-					VolumeType: aws.String(volumeType),
-					VolumeSize: aws.Int64(volumeSize),
+					VolumeType: aws.String(options.volumeType),
+					VolumeSize: aws.Int64(options.volumeSize),
 					// TODO(alberto): Parameterize this.
 					Encrypted: aws.Bool(false),
 					//Encrypted:  aws.Bool(encrypted),
@@ -422,7 +448,7 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, amiID, instanceType
 			},
 		},
 		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-			Arn: aws.String(iamInstanceProfileARN),
+			Arn: aws.String(options.iamInstanceProfileARN),
 		},
 	})
 	if err != nil {
