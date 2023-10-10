@@ -89,7 +89,122 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
 		},
 		{
-			name: "Required values not set for vsphere platform",
+			name: "ingressVIP missing and deprecated vSphere credentials are present",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    vCenter: test.vcenter.com
+    username: testuser
+    password: testpassword
+    datacenter: testDatacenter
+    defaultDatastore: testDatastore
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+		},
+		{
+			name: "ingressVIP missing and vcenter vSphere credentials are present",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    vcenters: 
+    - server: test.vcenter.com
+      user: testuser
+      password: testpassword
+      datacenters: 
+      - testDatacenter
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+		},
+		{
+			name: "vcenter vSphere credentials are present but failureDomain server does not match",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vcenters: 
+    - server: test.vcenter.com
+      user: testuser
+      password: testpassword
+      datacenters: 
+      - testDatacenter
+    - server: vcenter2.vcenter.com
+      user: testuser
+      password: testpassword
+      datacenters: 
+      - testDatacenter
+    failureDomains:
+    - server: different.vcenter.com
+    - server: vcenter2.vcenter.com
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: Platform.VSphere.failureDomains.Server: Required value: failureDomain server different.vcenter.com must have a corresponding vcenter server defined`,
+		},
+		{
+			name: "All required vSphere fields must be entered if some of them are entered - deprecated fields",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vCenter: test.vcenter.com
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified]`,
+		},
+		{
+			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vcenters: 
+    - server: test.vcenter.com
+      user: testuser
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified]`,
+		},
+		{
+			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",
 			data: `
 apiVersion: v1
 metadata:

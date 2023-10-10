@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -111,6 +112,11 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.External.CloudControllerManager, fmt.Sprintf("When using external %s platform, %s must be set to %s", string(models.PlatformTypeOci), fieldPath, external.CloudControllerManagerTypeExternal)))
 		}
 	}
+
+	if installConfig.Platform.Name() == vsphere.Name {
+		allErrs = append(allErrs, a.validateVSpherePlatform(installConfig)...)
+	}
+
 	return allErrs
 }
 
@@ -166,6 +172,52 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform %s or %s. Found %v", none.Name, external.Name, workers)))
 		}
 	}
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	vspherePlatform := installConfig.Platform.VSphere
+	vcenterServers := map[string]bool{}
+	for _, vcenter := range vspherePlatform.VCenters {
+		vcenterServers[vcenter.Server] = true
+
+		// If any one of the required credential values is entered, then the user is choosing to enter credentials
+		if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
+			// Then check all required credential values are filled
+			if !(vcenter.Server != "" && vcenter.Username != "" && vcenter.Password != "" && len(vcenter.Datacenters) > 0) {
+
+				message := "All credential fields are required if any one is specified"
+				if vcenter.Server == "" {
+					fieldPath := field.NewPath("Platform", "VSphere", "vcenter")
+					allErrs = append(allErrs, field.Required(fieldPath, message))
+				}
+				if vcenter.Username == "" {
+					fieldPath := field.NewPath("Platform", "VSphere", "user")
+					if vspherePlatform.DeprecatedVCenter != "" || vspherePlatform.DeprecatedPassword != "" || vspherePlatform.DeprecatedDatacenter != "" {
+						fieldPath = field.NewPath("Platform", "VSphere", "username")
+					}
+					allErrs = append(allErrs, field.Required(fieldPath, message))
+				}
+				if vcenter.Password == "" {
+					fieldPath := field.NewPath("Platform", "VSphere", "password")
+					allErrs = append(allErrs, field.Required(fieldPath, message))
+				}
+				if len(vcenter.Datacenters) == 0 {
+					fieldPath := field.NewPath("Platform", "VSphere", "datacenter")
+					allErrs = append(allErrs, field.Required(fieldPath, message))
+				}
+			}
+		}
+	}
+
+	for _, failureDomain := range vspherePlatform.FailureDomains {
+		if !vcenterServers[failureDomain.Server] {
+			fieldPath := field.NewPath("Platform", "VSphere", "failureDomains", "Server")
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("failureDomain server %v must have a corresponding vcenter server defined", failureDomain.Server)))
+		}
+	}
+
 	return allErrs
 }
 
@@ -330,38 +382,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	case vsphere.Name:
 		vspherePlatform := installConfig.Platform.VSphere
 
-		if vspherePlatform.DeprecatedVCenter != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "VCenter")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedVCenter))
-		}
-		if vspherePlatform.DeprecatedUsername != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Username")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedUsername))
-		}
-		if vspherePlatform.DeprecatedPassword != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Password")
-			logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
-		}
-		if vspherePlatform.DeprecatedDatacenter != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Datacenter")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedDatacenter))
-		}
-		if vspherePlatform.DeprecatedDefaultDatastore != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "DefaultDatastore")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedDefaultDatastore))
-		}
-		if vspherePlatform.DeprecatedFolder != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Folder")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedFolder))
-		}
-		if vspherePlatform.DeprecatedCluster != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Cluster")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedCluster))
-		}
-		if vspherePlatform.DeprecatedResourcePool != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "ResourcePool")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedResourcePool))
-		}
 		if vspherePlatform.ClusterOSImage != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "ClusterOSImage")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ClusterOSImage))
@@ -370,21 +390,19 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultMachinePlatform")
 			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
 		}
-		if vspherePlatform.DeprecatedNetwork != "" {
-			fieldPath := field.NewPath("Platform", "VSphere", "Network")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedNetwork))
-		}
 		if vspherePlatform.DiskType != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "DiskType")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DiskType))
 		}
-		if len(vspherePlatform.VCenters) > 1 {
-			fieldPath := field.NewPath("Platform", "VSphere", "VCenters")
-			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.VCenters))
+
+		if vspherePlatform.LoadBalancer != nil && !reflect.DeepEqual(*vspherePlatform.LoadBalancer, configv1.VSpherePlatformLoadBalancer{}) {
+			fieldPath := field.NewPath("Platform", "VSphere", "LoadBalancer")
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.LoadBalancer))
 		}
-		if len(vspherePlatform.FailureDomains) > 1 {
-			fieldPath := field.NewPath("Platform", "VSphere", "FailureDomains")
-			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.FailureDomains))
+
+		if len(vspherePlatform.Hosts) > 1 {
+			fieldPath := field.NewPath("Platform", "VSphere", "Hosts")
+			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.Hosts))
 		}
 	}
 	// "External" is the default set from generic install config code
