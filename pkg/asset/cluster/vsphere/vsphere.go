@@ -31,6 +31,15 @@ import (
 	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
 
+const (
+	GuestInfoIgnitionData     = "guestinfo.ignition.config.data"
+	GuestInfoIgnitionEncoding = "guestinfo.ignition.config.data.encoding"
+	GuestInfoHostname         = "guestinfo.hostname"
+	// going to ignore for now...
+	GuestInfoNetworkKargs = "guestinfo.afterburn.initrd.network-kargs"
+	StealClock            = "stealclock.enable"
+)
+
 type VCenterConnection struct {
 	Client     *govmomi.Client
 	Finder     *find.Finder
@@ -127,6 +136,10 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 	}
 
 	for _, fd := range installConfig.Config.VSphere.FailureDomains {
+
+		logrus.Infof("fd.Topology.Datacenter: %s", fd.Topology.Datacenter)
+		logrus.Infof("fd.Topology.ComputeCluster: %s", fd.Topology.ComputeCluster)
+
 		dc, err := vconn.Finder.Datacenter(vconn.Context, fd.Topology.Datacenter)
 		if err != nil {
 			return err
@@ -134,6 +147,7 @@ func PreTerraform(cachedImage, boostrapIgn, masterIgn string, controlPlaneMachin
 		dcFolders, err := dc.Folders(vconn.Context)
 
 		folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
+		logrus.Infof("folderPath: %s", folderPath)
 
 		// we must set the Folder to the infraId somewhere, we will need to remove that.
 		// if we are overwriting folderPath it needs to have a slash (path)
@@ -377,8 +391,7 @@ func importRhcosOva(vconn *VCenterConnection, folder *object.Folder, cachedImage
 	if err != nil {
 		return nil, err
 	}
-	//Creates a new entity in this resource pool.
-	//See VMware vCenter API documentation: Managed Object - ResourcePool - ImportVApp
+
 	lease, err := resourcePool.ImportVApp(vconn.Context, spec.ImportSpec, folder, hostSystem)
 
 	if err != nil {
@@ -480,15 +493,6 @@ func attachTag(vconn *VCenterConnection, vmMoRefValue, tagId string) error {
 	return nil
 }
 
-const (
-	GuestInfoIgnitionData     = "guestinfo.ignition.config.data"
-	GuestInfoIgnitionEncoding = "guestinfo.ignition.config.data.encoding"
-	GuestInfoHostname         = "guestinfo.hostname"
-	// going to ignore for now...
-	GuestInfoNetworkKargs = "guestinfo.afterburn.initrd.network-kargs"
-	StealClock            = "stealclock.enable"
-)
-
 func getExtraConfig(vmName, encodedIgnition string) []types.BaseOptionValue {
 	return []types.BaseOptionValue{
 		&types.OptionValue{
@@ -508,6 +512,8 @@ func getExtraConfig(vmName, encodedIgnition string) []types.BaseOptionValue {
 			Value: "TRUE",
 		},
 	}
+	// don't forget     "guestinfo.domain"                        = "${var.cluster_domain}"
+	// for okd
 }
 
 func clone(vconn *VCenterConnection,
@@ -546,9 +552,12 @@ func clone(vconn *VCenterConnection,
 	}
 	resourcepool, err := vconn.Finder.ResourcePool(vconn.Context, machineProviderSpec.Workspace.ResourcePool)
 
+	diskUuidEnabled := true
 	spec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
-			Flags:             newVMFlagInfo(),
+			Flags: &types.VirtualMachineFlagInfo{
+				DiskUuidEnabled: &diskUuidEnabled,
+			},
 			ExtraConfig:       extraConfig,
 			DeviceChange:      deviceSpecs,
 			NumCPUs:           machineProviderSpec.NumCPUs,
@@ -616,11 +625,4 @@ func getNetworkDevices(vconn *VCenterConnection,
 		Operation: types.VirtualDeviceConfigSpecOperationEdit,
 	})
 	return networkDevices, nil
-}
-
-func newVMFlagInfo() *types.VirtualMachineFlagInfo {
-	diskUUIDEnabled := true
-	return &types.VirtualMachineFlagInfo{
-		DiskUuidEnabled: &diskUUIDEnabled,
-	}
 }
