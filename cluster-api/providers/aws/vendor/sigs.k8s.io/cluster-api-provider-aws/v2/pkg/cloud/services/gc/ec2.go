@@ -28,6 +28,45 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
 )
 
+func (s *Service) deleteEC2Instances(ctx context.Context, resources []*AWSResource) error {
+	for _, resource := range resources {
+		if !s.isEC2InstanceToDelete(resource) {
+			s.scope.Debug("Resource not an EC2 instance for deletion", "arn", resource.ARN.String())
+			continue
+		}
+
+		instanceID := strings.ReplaceAll(resource.ARN.Resource, "instance/", "")
+		if err := s.deleteEC2Instance(ctx, instanceID); err != nil {
+			return fmt.Errorf("deleting EC2 instance %s: %w", instanceID, err)
+		}
+	}
+	s.scope.Debug("Finished processing resources for EC2 instance deletion")
+
+	return nil
+}
+
+func (s *Service) isEC2InstanceToDelete(resource *AWSResource) bool {
+	if !s.isMatchingResource(resource, ec2.ServiceName, "instance") {
+		return false
+	}
+	if eksClusterName := resource.Tags[eksClusterNameTag]; eksClusterName != "" {
+		s.scope.Debug("EC2 instance was created by EKS directly", "arn", resource.ARN.String(), "check", "instance", "cluster_name", eksClusterName)
+		return false
+	}
+	s.scope.Debug("Resource is an EC2 instance to delete", "arn", resource.ARN.String(), "check", "instance")
+	return true
+}
+
+func (s *Service) deleteEC2Instance(ctx context.Context, instanceID string) error {
+	input := ec2.TerminateInstancesInput{
+		InstanceIds: []*string{aws.String(instanceID)},
+	}
+	if _, err := s.ec2Client.TerminateInstancesWithContext(ctx, &input); err != nil {
+		return fmt.Errorf("terminating EC2 instance: %w", err)
+	}
+	return nil
+}
+
 func (s *Service) deleteSecurityGroups(ctx context.Context, resources []*AWSResource) error {
 	for _, resource := range resources {
 		if !s.isSecurityGroupToDelete(resource) {

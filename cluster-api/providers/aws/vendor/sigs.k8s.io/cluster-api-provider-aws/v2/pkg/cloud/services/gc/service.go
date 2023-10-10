@@ -62,6 +62,7 @@ func NewService(clusterScope cloud.ClusterScoper, opts ...ServiceOption) *Servic
 
 func addDefaultCleanupFuncs(s *Service) {
 	s.cleanupFuncs = []ResourceCleanupFunc{
+		s.deleteEC2Instances,
 		s.deleteLoadBalancers,
 		s.deleteTargetGroups,
 		s.deleteSecurityGroups,

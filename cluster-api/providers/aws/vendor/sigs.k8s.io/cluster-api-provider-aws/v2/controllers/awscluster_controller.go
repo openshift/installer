@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -214,40 +215,48 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 		}
 	}
 
+	// In this context we try to delete all the resources that we know about,
+	// and run the garbage collector to delete any resources that were tagged, if enabled.
+	//
+	// The reason the errors are collected and not returned immediately is that we want to
+	// try to delete as many resources as possible, and then return the errors.
+	// Resources like security groups, or load balancers can depende on each other, especially
+	// when external controllers might be using them.
+	allErrs := []error{}
+
+	if err := s3Service.DeleteBucket(); err != nil {
+		allErrs = append(allErrs, errors.Wrapf(err, "error deleting S3 Bucket"))
+	}
+
 	if err := elbsvc.DeleteLoadbalancers(); err != nil {
-		clusterScope.Error(err, "error deleting load balancer")
-		return err
+		allErrs = append(allErrs, errors.Wrapf(err, "error deleting load balancers"))
 	}
 
 	if err := ec2svc.DeleteBastion(); err != nil {
-		clusterScope.Error(err, "error deleting bastion")
-		return err
+		allErrs = append(allErrs, errors.Wrapf(err, "error deleting bastion"))
+	}
+
+	if err := sgService.DeleteSecurityGroups(); err != nil {
+		allErrs = append(allErrs, errors.Wrap(err, "error deleting security groups"))
 	}
 
 	if r.ExternalResourceGC {
 		gcSvc := gc.NewService(clusterScope, gc.WithGCStrategy(r.AlternativeGCStrategy))
 		if gcErr := gcSvc.ReconcileDelete(ctx); gcErr != nil {
-			return fmt.Errorf("failed delete reconcile for gc service: %w", gcErr)
+			allErrs = append(allErrs, fmt.Errorf("failed delete reconcile for gc service: %w", gcErr))
 		}
 	}
 
-	if err := sgService.DeleteSecurityGroups(); err != nil {
-		clusterScope.Error(err, "error deleting security groups")
-		return err
-	}
-
 	if err := networkSvc.DeleteNetwork(); err != nil {
-		clusterScope.Error(err, "error deleting network")
-		return err
+		allErrs = append(allErrs, errors.Wrap(err, "error deleting network"))
 	}
 
-	if err := s3Service.DeleteBucket(); err != nil {
-		return errors.Wrapf(err, "error deleting S3 Bucket")
+	if len(allErrs) > 0 {
+		return kerrors.NewAggregate(allErrs)
 	}
 
 	// Cluster is deleted so remove the finalizer.
 	controllerutil.RemoveFinalizer(clusterScope.AWSCluster, infrav1.ClusterFinalizer)
-
 	return nil
 }
 

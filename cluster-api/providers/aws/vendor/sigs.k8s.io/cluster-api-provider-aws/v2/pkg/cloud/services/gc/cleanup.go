@@ -72,6 +72,7 @@ func (s *Service) deleteResources(ctx context.Context) error {
 
 	if val, found := annotations.Get(s.scope.InfraCluster(), infrav1.ExternalResourceGCTasksAnnotation); found {
 		var gcTaskToFunc = map[infrav1.GCTask]ResourceCleanupFunc{
+			infrav1.GCTaskEC2Instance:   s.deleteEC2Instances,
 			infrav1.GCTaskLoadBalancer:  s.deleteLoadBalancers,
 			infrav1.GCTaskTargetGroup:   s.deleteTargetGroups,
 			infrav1.GCTaskSecurityGroup: s.deleteSecurityGroups,

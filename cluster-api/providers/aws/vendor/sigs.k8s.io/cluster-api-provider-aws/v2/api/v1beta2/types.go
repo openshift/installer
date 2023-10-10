@@ -83,6 +83,9 @@ const (
 type GCTask string
 
 var (
+	// GCTaskEC2Instance defines a task to cleaning up resources for AWS EC2 instances.
+	GCTaskEC2Instance = GCTask("instance")
+
 	// GCTaskLoadBalancer defines a task to cleaning up resources for AWS load balancers.
 	GCTaskLoadBalancer = GCTask("load-balancer")
 
