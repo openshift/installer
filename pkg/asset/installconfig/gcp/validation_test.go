@@ -46,6 +46,15 @@ var (
 	validXpnSA         = "valid-example-sa@gcloud.serviceaccount.com"
 	invalidXpnSA       = "invalid-example-sa@gcloud.serviceaccount.com"
 
+	// #nosec G101
+	fakeCreds = `{
+  "client_id": "fake.apps.googleusercontent.com",
+  "client_secret": "fake-secret",
+  "quota_project_id": "openshift-installer-fake",
+  "refresh_token": "fake_token",
+  "type": "authorized_user"
+}`
+
 	validPrivateDNSZone = dns.ManagedZone{
 		Name:    validPrivateZone,
 		DnsName: fmt.Sprintf("%s.%s", validClusterName, strings.TrimSuffix(validBaseDomain, ".")),
@@ -151,6 +160,8 @@ func validInstallConfig() *types.InstallConfig {
 				GCP: &gcp.MachinePool{},
 			},
 		}},
+		// Setting to manual for testing the ValidateCredentials
+		CredentialsMode: types.ManualCredentialsMode,
 	}
 }
 
@@ -344,7 +355,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	gcpClient.EXPECT().GetSubnetworks(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Not(validRegion)).Return([]*compute.Subnetwork{}, nil).AnyTimes()
 
 	// Return fake credentials when asked
-	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
+	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte(fakeCreds)}).AnyTimes()
 
 	// Expected results for the managed zone tests
 	gcpClient.EXPECT().GetDNSZoneByName(gomock.Any(), gomock.Any(), validPublicZone).Return(&validPublicDNSZone, nil).AnyTimes()
@@ -523,7 +534,7 @@ func TestValidateCredentialMode(t *testing.T) {
 		name:       "missing json without manual creds",
 		creds:      types.PassthroughCredentialsMode,
 		emptyCreds: true,
-		err:        "credentialsMode: Forbidden: environmental authentication is only supported with Manual credentials mode",
+		err:        "credentialsMode: Forbidden: Manual credentials mode needs to be enabled to use environmental authentication",
 	}, {
 		name:       "supplied json with manual creds",
 		creds:      types.ManualCredentialsMode,
@@ -532,6 +543,7 @@ func TestValidateCredentialMode(t *testing.T) {
 		name:       "supplied json without manual creds",
 		creds:      types.PassthroughCredentialsMode,
 		emptyCreds: false,
+		err:        "credentialsMode: Forbidden: environmental authentication is only supported with Manual credentials mode",
 	}}
 
 	mockCtrl := gomock.NewController(t)
@@ -539,11 +551,12 @@ func TestValidateCredentialMode(t *testing.T) {
 
 	// Client where the creds are empty
 	gcpClientEmptyCreds := mock.NewMockAPI(mockCtrl)
-	gcpClientEmptyCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{}).AnyTimes()
+	gcpClientEmptyCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: nil}).AnyTimes()
 
 	// Client that contains creds
+
 	gcpClientWithCreds := mock.NewMockAPI(mockCtrl)
-	gcpClientWithCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte("fake creds")}).AnyTimes()
+	gcpClientWithCreds.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte(fakeCreds)}).AnyTimes()
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -556,13 +569,13 @@ func TestValidateCredentialMode(t *testing.T) {
 
 			var err error
 			if test.emptyCreds {
-				err = ValidateCredentialMode(gcpClientEmptyCreds, &ic)
+				err = ValidateCredentialMode(gcpClientEmptyCreds, &ic).ToAggregate()
 			} else {
-				err = ValidateCredentialMode(gcpClientWithCreds, &ic)
+				err = ValidateCredentialMode(gcpClientWithCreds, &ic).ToAggregate()
 			}
 
 			if test.err == "" {
-				assert.NoError(t, err)
+				assert.Nil(t, err)
 			} else {
 				assert.Regexp(t, test.err, err)
 			}

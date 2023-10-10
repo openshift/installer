@@ -70,9 +70,9 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		err = gcpconfig.ValidateCredentialMode(client, ic.Config)
-		if err != nil {
-			return errors.Wrap(err, "validating credentials")
+		errorList := gcpconfig.ValidateCredentialMode(client, ic.Config)
+		if errorList != nil {
+			return errors.Wrap(errorList.ToAggregate(), "validating credentials")
 		}
 	case ibmcloud.Name:
 		_, err = ibmcloudconfig.NewClient()
