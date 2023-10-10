@@ -610,6 +610,13 @@ func getNetworkDevices(vconn *VCenterConnection,
 	}
 
 	computeCluster := clusterObjRef.(*object.ClusterComputeResource)
+	if computeCluster.InventoryPath == "" {
+		clusterObjRef, err = vconn.Finder.ObjectReference(vconn.Context, clusterObjRef.Reference())
+		if err != nil {
+			return nil, err
+		}
+		computeCluster = clusterObjRef.(*object.ClusterComputeResource)
+	}
 
 	netdev := machineProviderSpec.Network.Devices[0]
 	networkPath := path.Join(computeCluster.InventoryPath, netdev.NetworkName)
