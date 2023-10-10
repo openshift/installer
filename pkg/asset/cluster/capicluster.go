@@ -133,8 +133,6 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return fmt.Errorf("failed to create namespace: %w", err)
 	}
 
-	return nil
-
 	// Gather the ignition files, and store them in a secret.
 	{
 		masterIgn := string(masterIgnAsset.Files()[0].Data)
