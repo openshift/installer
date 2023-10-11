@@ -53,13 +53,14 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create VPC resources.
 	vpcInput := &CreateInfraOptions{
-		Region:       clusterAWSConfig.Region,
-		InfraID:      clusterConfig.ClusterID,
-		Zones:        clusterAWSConfig.MasterAvailabilityZones,
-		BaseDomain:   clusterConfig.BaseDomain,
-		public:       clusterAWSConfig.PublishStrategy == "External",
-		cidrV4Blocks: clusterConfig.MachineV4CIDRs,
-		cidrV6Blocks: clusterConfig.MachineV6CIDRs,
+		Region:         clusterAWSConfig.Region,
+		InfraID:        clusterConfig.ClusterID,
+		Zones:          clusterAWSConfig.MasterAvailabilityZones,
+		BaseDomain:     clusterConfig.BaseDomain,
+		AdditionalTags: clusterAWSConfig.ExtraTags,
+		public:         clusterAWSConfig.PublishStrategy == "External",
+		cidrV4Blocks:   clusterConfig.MachineV4CIDRs,
+		cidrV6Blocks:   clusterConfig.MachineV6CIDRs,
 	}
 	logger := logrus.StandardLogger()
 	if err := createVPCResources(logger, awsSession, vpcInput); err != nil {
@@ -73,6 +74,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		baseDomain:                  clusterConfig.BaseDomain,
 		clusterDomain:               clusterConfig.ClusterDomain,
 		vpcID:                       vpcInput.vpcID,
+		additionalTags:              clusterAWSConfig.ExtraTags,
 		loadBalancerExternalZoneID:  vpcInput.LoadBalancers.External.ZoneID,
 		loadBalancerExternalZoneDNS: vpcInput.LoadBalancers.External.DNSName,
 		loadBalancerInternalZoneID:  vpcInput.LoadBalancers.Internal.ZoneID,
@@ -94,6 +96,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		subnetID:                 vpcInput.publicSubnetIDs[0],
 		securityGroupIDs:         []string{vpcInput.bootstrapSecurityGroupID, vpcInput.masterSecurityGroupID},
 		associatePublicIPAddress: clusterAWSConfig.PublishStrategy == "External",
+		additionalTags:           clusterAWSConfig.ExtraTags,
 		volumeType:               "gp2",
 		volumeSize:               30,
 		volumeIOPS:               0,
@@ -117,6 +120,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		volumeType:      clusterAWSConfig.Type,
 		volumeSize:      clusterAWSConfig.Size,
 		volumeIOPS:      clusterAWSConfig.IOPS,
+		additionalTags:  clusterAWSConfig.ExtraTags,
 		// TODO(alberto): use encrypt input.
 		encrypted: false,
 		kmsKeyID:  clusterAWSConfig.KMSKeyID,

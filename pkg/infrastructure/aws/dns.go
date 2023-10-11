@@ -29,9 +29,20 @@ type dnsInput struct {
 	loadBalancerExternalZoneDNS string
 	loadBalancerInternalZoneID  string
 	loadBalancerInternalZoneDNS string
+	additionalTags              map[string]string
+	additionalR53Tags           []*route53.Tag
 }
 
 func createDNSResources(ctx context.Context, logger *logrus.Logger, session *session.Session, dnsInput *dnsInput) error {
+	dnsInput.additionalR53Tags = make([]*route53.Tag, 0, len(dnsInput.additionalTags))
+	for k, v := range dnsInput.additionalTags {
+		k := k
+		v := v
+		dnsInput.additionalR53Tags = append(dnsInput.additionalR53Tags, &route53.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	route53Client := route53.New(session)
 	publicZoneID, err := dnsInput.LookupPublicZone(ctx, logger, route53Client)
 	if err != nil {
@@ -145,7 +156,7 @@ func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, clie
 	if _, err = client.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
 		ResourceType: aws.String("hostedzone"),
 		ResourceId:   aws.String(id),
-		AddTags:      r53Tags(clusterID, zoneName),
+		AddTags:      append(r53Tags(zoneName), o.additionalR53Tags...),
 	}); err != nil {
 		return "", fmt.Errorf("failed to tag hosted zone: %w", err)
 	}
@@ -160,13 +171,8 @@ func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, clie
 	return id, nil
 }
 
-func r53Tags(infraID, name string) []*route53.Tag {
-	tags := []*route53.Tag{
-		{
-			Key:   aws.String(clusterTag(infraID)),
-			Value: aws.String(clusterTagValue),
-		},
-	}
+func r53Tags(name string) []*route53.Tag {
+	tags := []*route53.Tag{}
 	if len(name) > 0 {
 		tags = append(tags, &route53.Tag{
 			Key:   aws.String("Name"),

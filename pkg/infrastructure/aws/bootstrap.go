@@ -36,10 +36,20 @@ type bootstrapInput struct {
 	encrypted                bool
 	kmsKeyID                 string
 	targetGroupARNs          []string
+	additionalTags           map[string]string
 }
 
 func createBootstrapResources(l *logrus.Logger, session *session.Session, bootstrapInput *bootstrapInput) error {
 	s3Client := s3.New(session)
+	s3Tags := make([]*s3.Tag, 0, len(bootstrapInput.additionalTags))
+	for k, v := range bootstrapInput.additionalTags {
+		k := k
+		v := v
+		s3Tags = append(s3Tags, &s3.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	// Create an S3 bucket for ignition
 	bucketName := fmt.Sprintf("%v-bootstrap", bootstrapInput.clusterID)
 	createBucketInput := &s3.CreateBucketInput{
@@ -67,16 +77,12 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 	_, err = s3Client.PutBucketTagging(&s3.PutBucketTaggingInput{
 		Bucket: aws.String(bucketName),
 		Tagging: &s3.Tagging{
-			TagSet: []*s3.Tag{
-				{
-					Key:   aws.String(clusterTag(bootstrapInput.clusterID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
+			TagSet: append(s3Tags,
+				&s3.Tag{
 					Key:   aws.String("Name"),
 					Value: aws.String(bucketName),
 				},
-			},
+			),
 		},
 	})
 	if err != nil {
@@ -98,20 +104,20 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 
 	l.Infof("Uploaded bootstrap.ign to S3 bucket: %s\n", bootstrapInput.ignitionBucket)
 
+	// S3 Object tagging supports only up to 10 tags
+	// FIXME: make sure that the "owned" tag is not excluded
+	if len(s3Tags) > 9 {
+		l.Infoln("S3 object accepts up to 10 tags so \"owner\" tag might be missing out of the first 9 tags")
+		s3Tags = s3Tags[:9]
+	}
 	_, err = s3Client.PutObjectTagging(&s3.PutObjectTaggingInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String("bootstrap.ign"),
 		Tagging: &s3.Tagging{
-			TagSet: []*s3.Tag{
-				{
-					Key:   aws.String(clusterTag(bootstrapInput.clusterID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(bucketName),
-				},
-			},
+			TagSet: append(s3Tags, &s3.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(bucketName),
+			}),
 		},
 	})
 	if err != nil {
@@ -120,11 +126,20 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 	}
 
 	iamClient := iam.New(session)
-	instanceProfileARN, err := CreateBootstrapInstanceProfile(l, iamClient, bootstrapInput.clusterID)
+	instanceProfileARN, err := CreateBootstrapInstanceProfile(l, iamClient, bootstrapInput.clusterID, bootstrapInput.additionalTags)
 	if err != nil {
 		return err
 	}
 
+	ec2Tags := make([]*ec2.Tag, 0, len(bootstrapInput.additionalTags))
+	for k, v := range bootstrapInput.additionalTags {
+		k := k
+		v := v
+		ec2Tags = append(ec2Tags, &ec2.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	ec2Client := ec2.New(session)
 	bootstrapInstanceOptions := instanceOptions{
 		name:                     "bootstrap",
@@ -140,6 +155,7 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 		encrypted:                bootstrapInput.encrypted,
 		kmsKeyID:                 bootstrapInput.kmsKeyID,
 		iamInstanceProfileARN:    *instanceProfileARN,
+		additionalEC2Tags:        ec2Tags,
 	}
 	instance, err := createEC2Instance(l, ec2Client, bootstrapInput.clusterID, bootstrapInstanceOptions)
 	if err != nil {
@@ -166,7 +182,7 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 	return nil
 }
 
-func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string) (*string, error) {
+func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string, additionalTags map[string]string) (*string, error) {
 	const (
 		assumeRolePolicy = `{
     "Version": "2012-10-17",
@@ -203,6 +219,15 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 }`
 	)
 
+	iamTags := make([]*iam.Tag, 0, len(additionalTags))
+	for k, v := range additionalTags {
+		k := k
+		v := v
+		iamTags = append(iamTags, &iam.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	profileName := fmt.Sprintf("%s-bootstrap-profile", infraID)
 	roleName := fmt.Sprintf("%s-bootstrap-role", infraID)
 	role, err := existingRole(client, roleName)
@@ -214,16 +239,10 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 			AssumeRolePolicyDocument: aws.String(assumeRolePolicy),
 			Path:                     aws.String("/"),
 			RoleName:                 aws.String(roleName),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(roleName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(roleName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create worker role: %w", err)
@@ -240,16 +259,10 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 		result, err := client.CreateInstanceProfile(&iam.CreateInstanceProfileInput{
 			InstanceProfileName: aws.String(profileName),
 			Path:                aws.String("/"),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(profileName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(profileName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create instance profile: %w", err)
@@ -377,6 +390,7 @@ type instanceOptions struct {
 	encrypted                bool
 	kmsKeyID                 string
 	iamInstanceProfileARN    string
+	additionalEC2Tags        []*ec2.Tag
 }
 
 // createEC2Instance creates an EC2 instance and returns its instance ID.
@@ -413,25 +427,11 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 			},
 		},
 		UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(options.userData))),
-		// TODO(alberto): create dedicated SGs.
-		// SecurityGroupIds:         []*string{aws.String(securityGroupID)},
-		MinCount: aws.Int64(1),
-		MaxCount: aws.Int64(1),
-		TagSpecifications: []*ec2.TagSpecification{
-			{
-				ResourceType: aws.String("instance"),
-				Tags: []*ec2.Tag{
-					{
-						Key:   aws.String("Name"),
-						Value: aws.String(fmt.Sprintf("%s-%s", clusterID, options.name)),
-					},
-					{
-						Key:   aws.String(clusterTag(clusterID)),
-						Value: aws.String(clusterTagValue),
-					},
-				},
-			},
-		},
+		// InvalidParameterCombination: Network interfaces and an instance-level security groups may not be specified on the same request
+		// SecurityGroupIds:  aws.StringSlice(options.securityGroupIDs),
+		MinCount:          aws.Int64(1),
+		MaxCount:          aws.Int64(1),
+		TagSpecifications: ec2TagSpecifications("instance", fmt.Sprintf("%s-%s", clusterID, options.name), options.additionalEC2Tags),
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
 				DeviceName: aws.String("/dev/xvda"),

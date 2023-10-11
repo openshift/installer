@@ -11,12 +11,13 @@ import (
 )
 
 type iamInput struct {
-	clusterID string
+	clusterID      string
+	additionalTags map[string]string
 }
 
 func createIAMResources(l *logrus.Logger, session *session.Session, iamInput *iamInput) error {
 	iamClient := iam.New(session)
-	_, err := CreateComputeInstanceProfile(l, iamClient, iamInput.clusterID)
+	_, err := CreateComputeInstanceProfile(l, iamClient, iamInput.clusterID, iamInput.additionalTags)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,7 @@ func createIAMResources(l *logrus.Logger, session *session.Session, iamInput *ia
 	return nil
 }
 
-func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string) (*string, error) {
+func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string, additionalTags map[string]string) (*string, error) {
 	const (
 		assumeRolePolicy = `{
     "Version": "2012-10-17",
@@ -54,6 +55,15 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 }`
 	)
 
+	iamTags := make([]*iam.Tag, 0, len(additionalTags))
+	for k, v := range additionalTags {
+		k := k
+		v := v
+		iamTags = append(iamTags, &iam.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	profileName := fmt.Sprintf("%s-worker-profile", infraID)
 	roleName := fmt.Sprintf("%s-worker-role", infraID)
 	role, err := existingRole(client, roleName)
@@ -65,16 +75,10 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 			AssumeRolePolicyDocument: aws.String(assumeRolePolicy),
 			Path:                     aws.String("/"),
 			RoleName:                 aws.String(roleName),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(roleName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(roleName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create worker role: %w", err)
@@ -91,16 +95,10 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 		result, err := client.CreateInstanceProfile(&iam.CreateInstanceProfileInput{
 			InstanceProfileName: aws.String(profileName),
 			Path:                aws.String("/"),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(profileName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(profileName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create instance profile: %w", err)

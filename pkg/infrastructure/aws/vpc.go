@@ -23,6 +23,16 @@ const duplicatePermissionErrorCode = "InvalidPermission.Duplicate"
 func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInput *CreateInfraOptions) error {
 	ec2Client := ec2.New(session)
 
+	vpcInput.additionalEC2Tags = make([]*ec2.Tag, 0, len(vpcInput.AdditionalTags))
+	for k, v := range vpcInput.AdditionalTags {
+		k := k // workaround Go loopvar reuse
+		v := v //
+		vpcInput.additionalEC2Tags = append(vpcInput.additionalEC2Tags, &ec2.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+
 	vpcID, err := vpcInput.createVPC(logger, ec2Client)
 	if err != nil {
 		return err
@@ -158,7 +168,7 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 	if len(vpcID) == 0 {
 		createResult, err := client.CreateVpc(&ec2.CreateVpcInput{
 			CidrBlock:         aws.String(defaultCIDRBlock),
-			TagSpecifications: o.ec2TagSpecifications("vpc", vpcName),
+			TagSpecifications: ec2TagSpecifications("vpc", vpcName, o.additionalEC2Tags),
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to create VPC: %w", err)
@@ -216,11 +226,11 @@ func (o *CreateInfraOptions) ec2Filters(name string) []*ec2.Filter {
 	return filters
 }
 
-func (o *CreateInfraOptions) ec2TagSpecifications(resourceType, name string) []*ec2.TagSpecification {
+func ec2TagSpecifications(resourceType, name string, additionalTags []*ec2.Tag) []*ec2.TagSpecification {
 	return []*ec2.TagSpecification{
 		{
 			ResourceType: aws.String(resourceType),
-			Tags:         append(ec2Tags(o.InfraID, name), o.additionalEC2Tags...),
+			Tags:         append(ec2Tags(name), additionalTags...),
 		},
 	}
 }
@@ -229,13 +239,8 @@ func clusterTag(infraID string) string {
 	return fmt.Sprintf("kubernetes.io/cluster/%s", infraID)
 }
 
-func ec2Tags(infraID, name string) []*ec2.Tag {
-	tags := []*ec2.Tag{
-		{
-			Key:   aws.String(clusterTag(infraID)),
-			Value: aws.String(clusterTagValue),
-		},
-	}
+func ec2Tags(name string) []*ec2.Tag {
+	tags := []*ec2.Tag{}
 	if len(name) > 0 {
 		tags = append(tags, &ec2.Tag{
 			Key:   aws.String("Name"),
@@ -267,7 +272,7 @@ func (o *CreateInfraOptions) CreateDHCPOptions(l *logrus.Logger, client ec2iface
 					Values: []*string{aws.String("AmazonProvidedDNS")},
 				},
 			},
-			TagSpecifications: o.ec2TagSpecifications("dhcp-options", ""),
+			TagSpecifications: ec2TagSpecifications("dhcp-options", "", o.additionalEC2Tags),
 		})
 		if err != nil {
 			return fmt.Errorf("cannot create dhcp-options: %w", err)
@@ -309,7 +314,7 @@ func (o *CreateInfraOptions) CreateInternetGateway(l *logrus.Logger, client ec2i
 	}
 	if igw == nil {
 		result, err := client.CreateInternetGateway(&ec2.CreateInternetGatewayInput{
-			TagSpecifications: o.ec2TagSpecifications("internet-gateway", fmt.Sprintf("%s-igw", o.InfraID)),
+			TagSpecifications: ec2TagSpecifications("internet-gateway", fmt.Sprintf("%s-igw", o.InfraID), o.additionalEC2Tags),
 		})
 		if err != nil {
 			return "", fmt.Errorf("cannot create internet gateway: %w", err)
@@ -367,7 +372,7 @@ func (o *CreateInfraOptions) createSecurityGroup(l *logrus.Logger, client ec2ifa
 			GroupName:         aws.String(groupName),
 			Description:       aws.String("Created by Openshift Installer"),
 			VpcId:             aws.String(vpcID),
-			TagSpecifications: o.ec2TagSpecifications("security-group", groupName),
+			TagSpecifications: ec2TagSpecifications("security-group", groupName, o.additionalEC2Tags),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create security group %s: %w", groupName, err)
@@ -1066,7 +1071,7 @@ func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2A
 		l.Info("Found existing subnet", "name", name, "id", subnetID)
 		return subnetID, nil
 	}
-	tagSpec := o.ec2TagSpecifications("subnet", name)
+	tagSpec := ec2TagSpecifications("subnet", name, o.additionalEC2Tags)
 	tagSpec[0].Tags = append(tagSpec[0].Tags, &ec2.Tag{
 		Key:   aws.String(scopeTag),
 		Value: aws.String("true"),
@@ -1171,7 +1176,7 @@ func (o *CreateInfraOptions) CreateNATGateway(l *logrus.Logger, client ec2iface.
 	err = retry.OnError(retryBackoff, isRetriable, func() error {
 		_, err = client.CreateTags(&ec2.CreateTagsInput{
 			Resources: []*string{aws.String(allocationID)},
-			Tags:      append(ec2Tags(o.InfraID, fmt.Sprintf("%s-eip-%s", o.InfraID, availabilityZone)), o.additionalEC2Tags...),
+			Tags:      append(ec2Tags(fmt.Sprintf("%s-eip-%s", o.InfraID, availabilityZone)), o.additionalEC2Tags...),
 		})
 		return err
 	})
@@ -1190,7 +1195,7 @@ func (o *CreateInfraOptions) CreateNATGateway(l *logrus.Logger, client ec2iface.
 		gatewayResult, err := client.CreateNatGateway(&ec2.CreateNatGatewayInput{
 			AllocationId:      aws.String(allocationID),
 			SubnetId:          aws.String(publicSubnetID),
-			TagSpecifications: o.ec2TagSpecifications("natgateway", natGatewayName),
+			TagSpecifications: ec2TagSpecifications("natgateway", natGatewayName, o.additionalEC2Tags),
 		})
 		if err != nil {
 			return err
@@ -1364,7 +1369,7 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 func (o *CreateInfraOptions) createRouteTable(l *logrus.Logger, client ec2iface.EC2API, vpcID, name string) (*ec2.RouteTable, error) {
 	result, err := client.CreateRouteTable(&ec2.CreateRouteTableInput{
 		VpcId:             aws.String(vpcID),
-		TagSpecifications: o.ec2TagSpecifications("route-table", name),
+		TagSpecifications: ec2TagSpecifications("route-table", name, o.additionalEC2Tags),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot create route table: %w", err)
@@ -1878,7 +1883,7 @@ func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2ifa
 			VpcId:             aws.String(vpcID),
 			ServiceName:       aws.String(fmt.Sprintf("com.amazonaws.%s.s3", o.Region)),
 			RouteTableIds:     routeTableIds,
-			TagSpecifications: o.ec2TagSpecifications("vpc-endpoint", ""),
+			TagSpecifications: ec2TagSpecifications("vpc-endpoint", "", o.additionalEC2Tags),
 		})
 		if err == nil {
 			l.Info("Created s3 VPC endpoint", "id", aws.StringValue(result.VpcEndpoint.VpcEndpointId))
@@ -1904,7 +1909,7 @@ type CreateInfraOptions struct {
 	BaseDomainPrefix   string
 	Zones              []string
 	OutputFile         string
-	AdditionalTags     []string
+	AdditionalTags     map[string]string
 	EnableProxy        bool
 	SSHKeyFile         string
 	additionalEC2Tags  []*ec2.Tag

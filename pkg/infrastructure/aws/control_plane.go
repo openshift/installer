@@ -27,13 +27,24 @@ type controlPlaneInput struct {
 	kmsKeyID        string
 	targetGroupARNs []string
 	replicas        int
+	additionalTags  map[string]string
 }
 
 func createControlPlaneResources(l *logrus.Logger, session *session.Session, controlPlaneInput *controlPlaneInput) error {
 	iamClient := iam.New(session)
-	instanceProfileARN, err := CreateControlPlaneInstanceProfile(l, iamClient, controlPlaneInput.clusterID)
+	instanceProfileARN, err := CreateControlPlaneInstanceProfile(l, iamClient, controlPlaneInput.clusterID, controlPlaneInput.additionalTags)
 	if err != nil {
 		return err
+	}
+
+	ec2Tags := make([]*ec2.Tag, 0, len(controlPlaneInput.additionalTags))
+	for k, v := range controlPlaneInput.additionalTags {
+		k := k
+		v := v
+		ec2Tags = append(ec2Tags, &ec2.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
 	}
 
 	baseInstanceOptions := instanceOptions{
@@ -48,6 +59,7 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		encrypted:                controlPlaneInput.encrypted,
 		kmsKeyID:                 controlPlaneInput.kmsKeyID,
 		iamInstanceProfileARN:    *instanceProfileARN,
+		additionalEC2Tags:        ec2Tags,
 	}
 
 	for i := 0; i < controlPlaneInput.replicas; i++ {
@@ -83,7 +95,7 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 	return nil
 }
 
-func CreateControlPlaneInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string) (*string, error) {
+func CreateControlPlaneInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infraID string, additionalTags map[string]string) (*string, error) {
 	const (
 		assumeRolePolicy = `{
     "Version": "2012-10-17",
@@ -149,6 +161,15 @@ func CreateControlPlaneInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI,
 }`
 	)
 
+	iamTags := make([]*iam.Tag, 0, len(additionalTags))
+	for k, v := range additionalTags {
+		k := k
+		v := v
+		iamTags = append(iamTags, &iam.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
 	profileName := fmt.Sprintf("%s-master-profile", infraID)
 	roleName := fmt.Sprintf("%s-master-role", infraID)
 	role, err := existingRole(client, roleName)
@@ -160,16 +181,10 @@ func CreateControlPlaneInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI,
 			AssumeRolePolicyDocument: aws.String(assumeRolePolicy),
 			Path:                     aws.String("/"),
 			RoleName:                 aws.String(roleName),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(roleName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(roleName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create worker role: %w", err)
@@ -186,16 +201,10 @@ func CreateControlPlaneInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI,
 		result, err := client.CreateInstanceProfile(&iam.CreateInstanceProfileInput{
 			InstanceProfileName: aws.String(profileName),
 			Path:                aws.String("/"),
-			Tags: []*iam.Tag{
-				{
-					Key:   aws.String(clusterTag(infraID)),
-					Value: aws.String(clusterTagValue),
-				},
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(profileName),
-				},
-			},
+			Tags: append(iamTags, &iam.Tag{
+				Key:   aws.String("Name"),
+				Value: aws.String(profileName),
+			}),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("cannot create instance profile: %w", err)
