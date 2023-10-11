@@ -59,7 +59,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		BaseDomain: clusterConfig.BaseDomain,
 		public:     clusterAWSConfig.PublishStrategy == "External",
 	}
-	logger := logrus.New()
+	logger := logrus.StandardLogger()
 	if err := createVPCResources(logger, awsSession, vpcInput); err != nil {
 		return nil, nil, err
 	}
@@ -82,16 +82,15 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create Bootstrap resources.
 	bootstrapInput := &bootstrapInput{
-		clusterID:       clusterConfig.ClusterID,
-		targetGroupARNs: vpcInput.targetGroupARNs,
-		ignitionBucket:  clusterAWSConfig.IgnitionBucket,
-		ignitionContent: clusterConfig.IgnitionBootstrap,
-		userData:        clusterAWSConfig.BootstrapIgnitionStub,
-		amiID:           clusterAWSConfig.AMI,
-		instanceType:    clusterAWSConfig.BootstrapInstanceType,
-		subnetID:        vpcInput.publicSubnetIDs[0],
-		// TODO(alberto): use granular SG.
-		securityGroupID:          vpcInput.allowAllSecurityGroupID,
+		clusterID:                clusterConfig.ClusterID,
+		targetGroupARNs:          vpcInput.targetGroupARNs,
+		ignitionBucket:           clusterAWSConfig.IgnitionBucket,
+		ignitionContent:          clusterConfig.IgnitionBootstrap,
+		userData:                 clusterAWSConfig.BootstrapIgnitionStub,
+		amiID:                    clusterAWSConfig.AMI,
+		instanceType:             clusterAWSConfig.BootstrapInstanceType,
+		subnetID:                 vpcInput.publicSubnetIDs[0],
+		securityGroupIDs:         []string{vpcInput.bootstrapSecurityGroupID, vpcInput.masterSecurityGroupID},
 		associatePublicIPAddress: clusterAWSConfig.PublishStrategy == "External",
 		volumeType:               "gp2",
 		volumeSize:               30,
@@ -112,8 +111,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		amiID:           clusterAWSConfig.AMI,
 		instanceType:    clusterAWSConfig.MasterInstanceType,
 		subnetIDs:       vpcInput.privateSubnetIDs,
-		// TODO(alberto): use granular SG.
-		securityGroupID: vpcInput.allowAllSecurityGroupID,
+		securityGroupID: vpcInput.masterSecurityGroupID,
 		volumeType:      clusterAWSConfig.Type,
 		volumeSize:      clusterAWSConfig.Size,
 		volumeIOPS:      clusterAWSConfig.IOPS,

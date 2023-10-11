@@ -28,7 +28,7 @@ type bootstrapInput struct {
 	amiID                    string
 	instanceType             string
 	subnetID                 string
-	securityGroupID          string
+	securityGroupIDs         []string
 	associatePublicIPAddress bool
 	volumeType               string
 	volumeSize               int64
@@ -132,7 +132,7 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 		instanceType:             bootstrapInput.instanceType,
 		subnetID:                 bootstrapInput.subnetID,
 		userData:                 bootstrapInput.userData,
-		securityGroupID:          bootstrapInput.securityGroupID,
+		securityGroupIDs:         bootstrapInput.securityGroupIDs,
 		associatePublicIPAddress: bootstrapInput.associatePublicIPAddress,
 		volumeType:               bootstrapInput.volumeType,
 		volumeSize:               bootstrapInput.volumeSize,
@@ -369,7 +369,7 @@ type instanceOptions struct {
 	instanceType             string
 	subnetID                 string
 	userData                 string
-	securityGroupID          string
+	securityGroupIDs         []string
 	associatePublicIPAddress bool
 	volumeType               string
 	volumeSize               int64
@@ -406,10 +406,9 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 		//SubnetId:     aws.String(subnetID),
 		NetworkInterfaces: []*ec2.InstanceNetworkInterfaceSpecification{
 			{
-				DeviceIndex: aws.Int64(0),
-				SubnetId:    aws.String(options.subnetID),
-				// TODO (alberto): Parameterize this.
-				Groups:                   []*string{aws.String(options.securityGroupID)},
+				DeviceIndex:              aws.Int64(0),
+				SubnetId:                 aws.String(options.subnetID),
+				Groups:                   aws.StringSlice(options.securityGroupIDs),
 				AssociatePublicIpAddress: aws.Bool(options.associatePublicIPAddress),
 			},
 		},

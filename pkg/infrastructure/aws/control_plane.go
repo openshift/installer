@@ -40,7 +40,7 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		amiID:                    controlPlaneInput.amiID,
 		instanceType:             controlPlaneInput.instanceType,
 		userData:                 controlPlaneInput.userData,
-		securityGroupID:          controlPlaneInput.securityGroupID,
+		securityGroupIDs:         []string{controlPlaneInput.securityGroupID},
 		associatePublicIPAddress: false,
 		volumeType:               controlPlaneInput.volumeType,
 		volumeSize:               controlPlaneInput.volumeSize,

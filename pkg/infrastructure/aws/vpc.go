@@ -18,6 +18,8 @@ import (
 	"k8s.io/client-go/util/retry"
 )
 
+const duplicatePermissionErrorCode = "InvalidPermission.Duplicate"
+
 func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInput *CreateInfraOptions) error {
 	ec2Client := ec2.New(session)
 
@@ -36,8 +38,39 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 		return err
 	}
 
-	_, err = vpcInput.CreateWorkerSecurityGroup(logger, ec2Client, vpcID)
+	bootstrapSG, err := vpcInput.CreateBootstrapSecurityGroup(logger, ec2Client, vpcID)
 	if err != nil {
+		return err
+	}
+	// FIXME: only use 0.0.0.0/0 if using public endpoints
+	bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, []string{"0.0.0.0/0"})
+	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, bootstrapSG, bootstrapIngressPermissions); err != nil {
+		return err
+	}
+
+	masterSG, err := vpcInput.CreateMasterSecurityGroup(logger, ec2Client, vpcID)
+	if err != nil {
+		return err
+	}
+	//vpcInput.masterSecurityGroupID = aws.StringValue(masterSG.GroupId)
+
+	workerSG, err := vpcInput.CreateWorkerSecurityGroup(logger, ec2Client, vpcID)
+	if err != nil {
+		return err
+	}
+	//vpcInput.workerSecurityGroupID = aws.StringValue(workerSG.GroupId)
+
+	// FIXME: CIDR blocks
+	masterIngressPermissions := DefaultMasterSGIngressRules(vpcInput.masterSecurityGroupID, vpcInput.workerSecurityGroupID, []string{"10.0.0.0/16"})
+	// masterIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.masterSecurityGroupID, []string{})
+	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, masterSG, masterIngressPermissions); err != nil {
+		return err
+	}
+
+	// FIXME: CIDR blocks
+	workerIngressPermissions := DefaultWorkerSGIngressRules(vpcInput.workerSecurityGroupID, vpcInput.masterSecurityGroupID, []string{"10.0.0.0/16"})
+	// workerIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.workerSecurityGroupID, []string{})
+	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, workerSG, workerIngressPermissions); err != nil {
 		return err
 	}
 
@@ -314,27 +347,27 @@ func (o *CreateInfraOptions) existingInternetGateway(client ec2iface.EC2API, nam
 	return nil, nil
 }
 
-func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (string, error) {
+func (o *CreateInfraOptions) createSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string, groupName string) (*ec2.SecurityGroup, error) {
 	backoff := wait.Backoff{
 		Steps:    10,
 		Duration: 3 * time.Second,
 		Factor:   1.0,
 		Jitter:   0.1,
 	}
-	groupName := fmt.Sprintf("%s-worker-sg", o.InfraID)
 	securityGroup, err := o.existingSecurityGroup(client, groupName)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	logger := l.WithField("name", groupName)
 	if securityGroup == nil {
 		result, err := client.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
 			GroupName:         aws.String(groupName),
-			Description:       aws.String("worker security group"),
+			Description:       aws.String("Created by Openshift Installer"),
 			VpcId:             aws.String(vpcID),
 			TagSpecifications: o.ec2TagSpecifications("security-group", groupName),
 		})
 		if err != nil {
-			return "", fmt.Errorf("cannot create worker security group: %w", err)
+			return nil, fmt.Errorf("cannot create security group %s: %w", groupName, err)
 		}
 		var sgResult *ec2.DescribeSecurityGroupsOutput
 		err = retry.OnError(backoff, func(error) bool { return true }, func() error {
@@ -348,81 +381,154 @@ func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client 
 			return nil
 		})
 		if err != nil {
-			return "", fmt.Errorf("cannot find security group that was just created (%s)", aws.StringValue(result.GroupId))
+			return nil, fmt.Errorf("cannot find security group that was just created (%s)", aws.StringValue(result.GroupId))
 		}
 		securityGroup = sgResult.SecurityGroups[0]
-		l.Info("Created security group", "name", groupName, "id", aws.StringValue(securityGroup.GroupId))
+		logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Created security group")
 	} else {
-		l.Info("Found existing security group", "name", groupName, "id", aws.StringValue(securityGroup.GroupId))
+		logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Found existing security group")
+	}
+	return securityGroup, nil
+}
+
+func (o *CreateInfraOptions) CreateBootstrapSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+	groupName := fmt.Sprintf("%s-bootstrap-sg", o.InfraID)
+	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	if err != nil {
+		return nil, err
 	}
 	securityGroupID := aws.StringValue(securityGroup.GroupId)
 	//sgUserID := aws.StringValue(securityGroup.OwnerId)
-	egressPermissions := DefaultWorkerSGEgressRules()
-	ingressPermissions := DefaultWorkerSGIngressRules()
+	egressPermissions := DefaultSGEgressRules(securityGroupID)
+	if err := o.AttachSecurityGroupEgressRules(l, client, securityGroup, egressPermissions); err != nil {
+		return nil, err
+	}
+	o.bootstrapSecurityGroupID = securityGroupID
+	return securityGroup, nil
+}
 
+func (o *CreateInfraOptions) CreateMasterSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+	groupName := fmt.Sprintf("%s-master-sg", o.InfraID)
+	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	if err != nil {
+		return nil, err
+	}
+	securityGroupID := aws.StringValue(securityGroup.GroupId)
+	//sgUserID := aws.StringValue(securityGroup.OwnerId)
+	egressPermissions := DefaultSGEgressRules(securityGroupID)
+	if err := o.AttachSecurityGroupEgressRules(l, client, securityGroup, egressPermissions); err != nil {
+		return nil, err
+	}
+	o.masterSecurityGroupID = securityGroupID
+	return securityGroup, nil
+}
+
+func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+	groupName := fmt.Sprintf("%s-worker-sg", o.InfraID)
+	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	if err != nil {
+		return nil, err
+	}
+	securityGroupID := aws.StringValue(securityGroup.GroupId)
+	//sgUserID := aws.StringValue(securityGroup.OwnerId)
+	egressPermissions := DefaultSGEgressRules(securityGroupID)
+	if err := o.AttachSecurityGroupEgressRules(l, client, securityGroup, egressPermissions); err != nil {
+		return nil, err
+	}
+
+	o.workerSecurityGroupID = securityGroupID
+	return securityGroup, nil
+}
+
+func (o *CreateInfraOptions) AttachSecurityGroupEgressRules(l *logrus.Logger, client ec2iface.EC2API, securityGroup *ec2.SecurityGroup, egressPermissions []*ec2.IpPermission) error {
+	backoff := wait.Backoff{
+		Steps:    10,
+		Duration: 3 * time.Second,
+		Factor:   1.0,
+		Jitter:   0.1,
+	}
 	var egressToAuthorize []*ec2.IpPermission
-	var ingressToAuthorize []*ec2.IpPermission
-
 	for _, permission := range egressPermissions {
 		if !includesPermission(securityGroup.IpPermissionsEgress, permission) {
 			egressToAuthorize = append(egressToAuthorize, permission)
 		}
 	}
+	securityGroupID := aws.StringValue(securityGroup.GroupId)
+	logger := l.WithField("id", securityGroupID)
+	logger.Infoln("Authorizing egress rules on security group")
+	if len(egressToAuthorize) > 0 {
+		err := retry.OnError(backoff, func(error) bool { return true }, func() error {
+			res, err := client.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
+				GroupId:       aws.String(securityGroupID),
+				IpPermissions: egressToAuthorize,
+			})
+			if err != nil {
+				var awsErr awserr.Error
+				// only return error if the permission has not already been set
+				if errors.As(err, &awsErr) && awsErr.Code() == duplicatePermissionErrorCode {
+					return nil
+				}
+				return err
+			}
+			if len(res.SecurityGroupRules) < len(egressToAuthorize) {
+				logger.Debugf("authorized %d egress rules out of %d", len(res.SecurityGroupRules), len(egressToAuthorize))
+				return fmt.Errorf("not all security group ingress permissions applied")
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		logger.Infoln("Authorized egress rules on security group")
+	}
+	return nil
+}
+
+func (o *CreateInfraOptions) AttachSecurityGroupIngressRules(l *logrus.Logger, client ec2iface.EC2API, securityGroup *ec2.SecurityGroup, ingressPermissions []*ec2.IpPermission) error {
+	backoff := wait.Backoff{
+		Steps:    10,
+		Duration: 3 * time.Second,
+		Factor:   1.0,
+		Jitter:   0.1,
+	}
+	var ingressToAuthorize []*ec2.IpPermission
 
 	for _, permission := range ingressPermissions {
+		permission := permission
 		if !includesPermission(securityGroup.IpPermissions, permission) {
 			ingressToAuthorize = append(ingressToAuthorize, permission)
 		}
 	}
-
-	const duplicatePermissionErrorCode = "InvalidPermission.Duplicate"
-	if len(egressToAuthorize) > 0 {
-		err = retry.OnError(backoff, func(error) bool { return true }, func() error {
-			_, err := client.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
-				GroupId:       aws.String(securityGroupID),
-				IpPermissions: egressToAuthorize,
-			})
-			var awsErr awserr.Error
-			if err != nil {
-				if errors.As(err, &awsErr) {
-					// only return an error if the permission has not already been set
-					if awsErr.Code() != duplicatePermissionErrorCode {
-						return fmt.Errorf("cannot apply security group egress permissions: %w", err)
-					}
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return "", err
-		}
-		l.Info("Authorized egress rules on security group", "id", securityGroupID)
-	}
+	securityGroupID := aws.StringValue(securityGroup.GroupId)
+	logger := l.WithField("id", securityGroupID)
+	logger.Infoln("Authorizing ingress rules on security group")
 	if len(ingressToAuthorize) > 0 {
-		err = retry.OnError(backoff, func(error) bool { return true }, func() error {
-			_, err := client.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
+		err := retry.OnError(backoff, func(error) bool { return true }, func() error {
+			res, err := client.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
 				GroupId:       aws.String(securityGroupID),
 				IpPermissions: ingressToAuthorize,
 			})
-			var awsErr awserr.Error
 			if err != nil {
-				if errors.As(err, &awsErr) {
-					// only return an error if the permission has not already been set
-					if awsErr.Code() != duplicatePermissionErrorCode {
-						return fmt.Errorf("cannot apply security group ingress permissions: %w", err)
-					}
+				var awsErr awserr.Error
+				// only return error if the permission has not already been set
+				if errors.As(err, &awsErr) && awsErr.Code() == duplicatePermissionErrorCode {
+					return nil
 				}
+				return err
 			}
-			return nil
+			if len(res.SecurityGroupRules) < len(ingressToAuthorize) {
+				logger.Debugf("authorized %d ingress rules out of %d", len(res.SecurityGroupRules), len(ingressToAuthorize))
+				return fmt.Errorf("not all security group ingress permissions applied")
+			} else {
+				return nil
+			}
 		})
 		if err != nil {
-			return "", err
+			return err
 		}
-		l.Info("Authorized ingress rules on security group", "id", securityGroupID)
 	}
-
-	o.allowAllSecurityGroupID = securityGroupID
-	return securityGroupID, nil
+	logger.Infoln("Authorized ingress rules on security group")
+	return nil
 }
 
 func (o *CreateInfraOptions) existingSecurityGroup(client ec2iface.EC2API, name string) (*ec2.SecurityGroup, error) {
@@ -455,31 +561,488 @@ func samePermission(a, b *ec2.IpPermission) bool {
 	return false
 }
 
-func DefaultWorkerSGEgressRules() []*ec2.IpPermission {
+type sgRuleInput struct {
+	protocol       string
+	cidrBlocks     []string
+	ipv6CidrBlocks []string
+	fromPort       int64
+	toPort         int64
+	self           bool
+	sourceSGID     string
+	description    string
+}
+
+func createSGRule(securityGroupID string, input sgRuleInput) *ec2.IpPermission {
+	rule := &ec2.IpPermission{
+		IpProtocol: aws.String(input.protocol),
+	}
+	if input.protocol != "-1" {
+		rule.FromPort = aws.Int64(input.fromPort)
+		rule.ToPort = aws.Int64(input.toPort)
+	}
+	if len(input.cidrBlocks) > 0 {
+		for _, v := range input.cidrBlocks {
+			v := v
+			rule.IpRanges = append(rule.IpRanges, &ec2.IpRange{CidrIp: aws.String(v)})
+		}
+	}
+	if len(input.ipv6CidrBlocks) > 0 {
+		for _, v := range input.ipv6CidrBlocks {
+			v := v
+			rule.Ipv6Ranges = append(rule.Ipv6Ranges, &ec2.Ipv6Range{CidrIpv6: aws.String(v)})
+		}
+	}
+	if input.self {
+		rule.UserIdGroupPairs = append(rule.UserIdGroupPairs, &ec2.UserIdGroupPair{
+			GroupId: aws.String(securityGroupID),
+		})
+	}
+
+	if input.sourceSGID != "" && input.sourceSGID != securityGroupID {
+		// [OnwerID/]SecurityGroupID
+		if parts := strings.Split(input.sourceSGID, "/"); len(parts) == 1 {
+			rule.UserIdGroupPairs = append(rule.UserIdGroupPairs, &ec2.UserIdGroupPair{
+				GroupId: aws.String(input.sourceSGID),
+			})
+		} else {
+			rule.UserIdGroupPairs = append(rule.UserIdGroupPairs, &ec2.UserIdGroupPair{
+				GroupId: aws.String(parts[0]),
+				UserId:  aws.String(parts[1]),
+			})
+		}
+	}
+
+	description := input.description
+	if description == "" {
+		description = "Created by Openshift Installer"
+	}
+
+	for _, v := range rule.IpRanges {
+		v.Description = aws.String(description)
+	}
+	for _, v := range rule.Ipv6Ranges {
+		v.Description = aws.String(description)
+	}
+	for _, v := range rule.PrefixListIds {
+		v.Description = aws.String(description)
+	}
+	for _, v := range rule.UserIdGroupPairs {
+		v.Description = aws.String(description)
+	}
+
+	return rule
+}
+
+func DefaultSGEgressRules(securityGroupID string) []*ec2.IpPermission {
 	return []*ec2.IpPermission{
-		{
-			IpProtocol: aws.String("-1"),
-			IpRanges: []*ec2.IpRange{
-				{
-					CidrIp: aws.String("0.0.0.0/0"),
-				},
-			},
-		},
+		createSGRule(securityGroupID, sgRuleInput{
+			protocol:   "-1",
+			cidrBlocks: []string{"0.0.0.0/0"},
+			fromPort:   0,
+			toPort:     0,
+		}),
+	}
+}
+
+func DefaultMasterSGIngressRules(masterSGID string, workerSGID string, cidrBlocks []string) []*ec2.IpPermission {
+	return []*ec2.IpPermission{
+		// master mcs
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			cidrBlocks: cidrBlocks,
+			fromPort:   22623,
+			toPort:     22623,
+		}),
+		// master icmp
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "icmp",
+			cidrBlocks: cidrBlocks,
+			fromPort:   -1,
+			toPort:     -1,
+		}),
+		// master ssh
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			cidrBlocks: cidrBlocks,
+			fromPort:   22,
+			toPort:     22,
+		}),
+		// master https
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			cidrBlocks: cidrBlocks,
+			fromPort:   6443,
+			toPort:     6443,
+		}),
+		// master vxlan
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 4789,
+			toPort:   4789,
+			self:     true,
+		}),
+		// master geneve
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 6081,
+			toPort:   6081,
+			self:     true,
+		}),
+		// master ike
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 500,
+			toPort:   500,
+			self:     true,
+		}),
+		// master ike nat_t
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 4500,
+			toPort:   4500,
+			self:     true,
+		}),
+		// master esp
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "50",
+			fromPort: 0,
+			toPort:   0,
+			self:     true,
+		}),
+		// master ovndb
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 6641,
+			toPort:   6642,
+			self:     true,
+		}),
+		// master internal
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 9000,
+			toPort:   9999,
+			self:     true,
+		}),
+		// master internal udp
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 9000,
+			toPort:   9999,
+			self:     true,
+		}),
+		// master kube scheduler
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 10259,
+			toPort:   10259,
+			self:     true,
+		}),
+		// master kube controller manager
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 10257,
+			toPort:   10257,
+			self:     true,
+		}),
+		// master kubelet secure
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 10250,
+			toPort:   10250,
+			self:     true,
+		}),
+		// master etcd
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 2379,
+			toPort:   2380,
+			self:     true,
+		}),
+		// master services tcp
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 30000,
+			toPort:   32767,
+			self:     true,
+		}),
+		// master services udp
+		createSGRule(masterSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 30000,
+			toPort:   32767,
+			self:     true,
+		}),
+		// master vxlan from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   4789,
+			toPort:     4789,
+			sourceSGID: workerSGID,
+		}),
+		// master geneve from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   6081,
+			toPort:     6081,
+			sourceSGID: workerSGID,
+		}),
+		// master ike from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   500,
+			toPort:     500,
+			sourceSGID: workerSGID,
+		}),
+		// master ike nat_t from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   4500,
+			toPort:     4500,
+			sourceSGID: workerSGID,
+		}),
+		// master esp from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "50",
+			fromPort:   0,
+			toPort:     0,
+			sourceSGID: workerSGID,
+		}),
+		// master ovndb from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   6641,
+			toPort:     6642,
+			sourceSGID: workerSGID,
+		}),
+		// master internal from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   9000,
+			toPort:     9999,
+			sourceSGID: workerSGID,
+		}),
+		// master internal udp from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   9000,
+			toPort:     9999,
+			sourceSGID: workerSGID,
+		}),
+		// master kube scheduler from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   10259,
+			toPort:     10259,
+			sourceSGID: workerSGID,
+		}),
+		// master kube controler manager from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   10257,
+			toPort:     10257,
+			sourceSGID: workerSGID,
+		}),
+		// master kubelet secure from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   10250,
+			toPort:     10250,
+			sourceSGID: workerSGID,
+		}),
+		// master services tcp from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   30000,
+			toPort:     32767,
+			sourceSGID: workerSGID,
+		}),
+		// master services udp from worker
+		createSGRule(masterSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   30000,
+			toPort:     32767,
+			sourceSGID: workerSGID,
+		}),
 	}
 }
 
 // DefaultWorkerSGIngressRules
-// TODO(alberto): scope this down to granular perms.
-func DefaultWorkerSGIngressRules() []*ec2.IpPermission {
+func DefaultWorkerSGIngressRules(workerSGID string, masterSGID string, cidrBlocks []string) []*ec2.IpPermission {
 	return []*ec2.IpPermission{
-		{
-			IpProtocol: aws.String("-1"),
-			IpRanges: []*ec2.IpRange{
-				{
-					CidrIp: aws.String("0.0.0.0/0"),
-				},
-			},
-		},
+		// worker icmp
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "icmp",
+			cidrBlocks: cidrBlocks,
+			fromPort:   -1,
+			toPort:     -1,
+		}),
+		// worker vxlan
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 4789,
+			toPort:   4789,
+			self:     true,
+		}),
+		// worker geneve
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 6081,
+			toPort:   6081,
+			self:     true,
+		}),
+		// worker ike
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 500,
+			toPort:   500,
+			self:     true,
+		}),
+		// worker ike nat_t
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 4500,
+			toPort:   4500,
+			self:     true,
+		}),
+		// worker esp
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "50",
+			fromPort: 0,
+			toPort:   0,
+			self:     true,
+		}),
+		// worker internal
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 9000,
+			toPort:   9999,
+			self:     true,
+		}),
+		// worker internal udp
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 9000,
+			toPort:   9999,
+			self:     true,
+		}),
+		// worker kubelet insecure
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 10250,
+			toPort:   10250,
+			self:     true,
+		}),
+		// worker services tcp
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "tcp",
+			fromPort: 30000,
+			toPort:   32767,
+			self:     true,
+		}),
+		// worker services udp
+		createSGRule(workerSGID, sgRuleInput{
+			protocol: "udp",
+			fromPort: 30000,
+			toPort:   32767,
+			self:     true,
+		}),
+		// worker vxlan from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   4789,
+			toPort:     4789,
+			sourceSGID: masterSGID,
+		}),
+		// worker geneve from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   6081,
+			toPort:     6081,
+			sourceSGID: masterSGID,
+		}),
+		// worker ike from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   500,
+			toPort:     500,
+			sourceSGID: masterSGID,
+		}),
+		// worker ike nat_t from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   4500,
+			toPort:     4500,
+			sourceSGID: masterSGID,
+		}),
+		// worker esp from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "50",
+			fromPort:   0,
+			toPort:     0,
+			sourceSGID: masterSGID,
+		}),
+		// worker internal from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   9000,
+			toPort:     9999,
+			sourceSGID: masterSGID,
+		}),
+		// master internal udp from worker
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   9000,
+			toPort:     9999,
+			sourceSGID: masterSGID,
+		}),
+		// worker kubelet insecure from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   10250,
+			toPort:     10250,
+			sourceSGID: masterSGID,
+		}),
+		// worker services tcp from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   30000,
+			toPort:     32767,
+			sourceSGID: masterSGID,
+		}),
+		// worker services udp from master
+		createSGRule(workerSGID, sgRuleInput{
+			protocol:   "udp",
+			fromPort:   30000,
+			toPort:     32767,
+			sourceSGID: masterSGID,
+		}),
+	}
+}
+
+func DefaultAllowAllSGIngressRules(securityGroupID string, cidrBlocks []string) []*ec2.IpPermission {
+	return []*ec2.IpPermission{
+		createSGRule(securityGroupID, sgRuleInput{
+			protocol:   "-1",
+			cidrBlocks: []string{"0.0.0.0/0"},
+		}),
+	}
+}
+func DefaultBootstrapSGIngressRules(securityGroupID string, cidrBlocks []string) []*ec2.IpPermission {
+	return []*ec2.IpPermission{
+		// bootstrap ssh
+		createSGRule(securityGroupID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   22,
+			toPort:     22,
+			cidrBlocks: cidrBlocks,
+		}),
+		// bootstrap journald gateway
+		createSGRule(securityGroupID, sgRuleInput{
+			protocol:   "tcp",
+			fromPort:   19531,
+			toPort:     19531,
+			cidrBlocks: cidrBlocks,
+		}),
 	}
 }
 
@@ -1358,8 +1921,10 @@ type CreateInfraOptions struct {
 			ZoneID  string
 		}
 	}
-	targetGroupARNs         []string
-	allowAllSecurityGroupID string
+	targetGroupARNs          []string
+	bootstrapSecurityGroupID string
+	masterSecurityGroupID    string
+	workerSecurityGroupID    string
 }
 
 // CreateInfraOutput
