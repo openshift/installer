@@ -34,7 +34,7 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 		total = *pool.Replicas
 	}
 
-	tags, err := capaTagsFromUserTags(clusterID, userTags)
+	tags, err := CapaTagsFromUserTags(clusterID, userTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
@@ -118,7 +118,7 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 	return result, nil
 }
 
-func capaTagsFromUserTags(clusterID string, usertags map[string]string) (capa.Tags, error) {
+func CapaTagsFromUserTags(clusterID string, usertags map[string]string) (capa.Tags, error) {
 	tags := capa.Tags{}
 	tags[fmt.Sprintf("kubernetes.io/cluster/%s", clusterID)] = "owned"
 

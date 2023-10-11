@@ -16,7 +16,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/machines/aws"
+	awsmachines "github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -86,11 +86,16 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 	region := installConfig.Config.Platform.AWS.Region
 
+	tags, err := awsmachines.CapaTagsFromUserTags(clusterID.InfraID, installConfig.Config.AWS.UserTags)
+	if err != nil {
+		return errors.Wrap(err, "error in user-provided tags")
+	}
+
 	switch platform {
 	case awstypes.Name:
 
 		// Not sure if this is the best place to create IAM roles.
-		if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
+		if err := awsmachines.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
 			return errors.Wrap(err, "failed to create IAM roles")
 		}
 
@@ -100,7 +105,8 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				Namespace: capiGuestsNamespace,
 			},
 			Spec: capa.AWSClusterSpec{
-				Region: installConfig.Config.Platform.AWS.Region,
+				AdditionalTags: tags,
+				Region:         installConfig.Config.Platform.AWS.Region,
 				NetworkSpec: capa.NetworkSpec{
 					VPC: capa.VPCSpec{
 						AvailabilityZoneUsageLimit: pointer.Int(6),
