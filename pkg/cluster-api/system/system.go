@@ -1,4 +1,4 @@
-package capi
+package system
 
 import (
 	"context"
@@ -10,21 +10,18 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/data"
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/capi/process"
-	"github.com/openshift/installer/pkg/asset/capi/process/addr"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	providers "github.com/openshift/installer/pkg/cluster-api"
+	"github.com/openshift/installer/pkg/cluster-api/system/process"
+	"github.com/openshift/installer/pkg/cluster-api/system/process/addr"
 )
 
 var (
-	// InstallDir is the directory containing install assets.
-	InstallDir string
-
 	wg          = &sync.WaitGroup{}
 	ctx, cancel = context.WithCancel(signals.SetupSignalHandler())
 )
@@ -36,41 +33,26 @@ func Teardown() {
 	logrus.Info("Local control plane has completed operations")
 }
 
-// CAPIControlPlane creates a local capi control plane
+// System creates a local capi control plane
 // to use as a management cluster.
 // TODO: Add support for existing management cluster.
-type CAPIControlPlane struct {
-	FileList []*asset.File
-	LocalCP  LocalControlPlane `json:"-"`
+type System struct {
+	lcp    *localControlPlane
+	Client client.Client
 }
 
 // Name returns the human-friendly name of the asset.
-func (c *CAPIControlPlane) Name() string {
-	return "CAPI Control Plane"
-}
-
-// Dependencies returns the direct dependency for launching
-// the capi control plane.
-func (c *CAPIControlPlane) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&installconfig.ClusterID{},
-		&installconfig.InstallConfig{},
-		&LocalControlPlane{},
-	}
+func (c *System) Name() string {
+	return "Cluster API System"
 }
 
 // Generate launches the cluster and generates the terraform state file on disk.
-func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
-	if InstallDir == "" {
-		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
+func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installconfig.InstallConfig) (err error) {
+	c.lcp = &localControlPlane{}
+	if err := c.lcp.Run(clusterID, installConfig); err != nil {
+		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
-
-	clusterID := &installconfig.ClusterID{}
-	installConfig := &installconfig.InstallConfig{}
-	localControlPlane := &LocalControlPlane{}
-	parents.Get(clusterID, installConfig, localControlPlane)
-
-	c.LocalCP = *localControlPlane
+	c.Client = c.lcp.Client
 
 	// Create a temporary directory to unpack the cluster-api assets
 	// and use it as the working directory for the envtest environment.
@@ -85,12 +67,12 @@ func (c *CAPIControlPlane) Generate(parents asset.Parents) (err error) {
 	controllers := []*controller{
 		{
 			Name:      "Cluster API",
-			Path:      fmt.Sprintf("%s/cluster-api", localControlPlane.BinDir),
+			Path:      fmt.Sprintf("%s/cluster-api", c.lcp.BinDir),
 			Manifests: []string{manifestDir + "/core-components.yaml"},
 		},
 		{
 			Name:      "AWS Infrastructure Provider",
-			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(localControlPlane.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
+			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(c.lcp.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
 			Manifests: []string{manifestDir + "/aws-infrastructure-components.yaml"},
 			Args:      []string{"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true"},
 		},
@@ -131,11 +113,11 @@ type controller struct {
 	Args      []string
 }
 
-func (c *CAPIControlPlane) runController(ctx context.Context, ct *controller) error {
+func (c *System) runController(ctx context.Context, ct *controller) error {
 	wh := envtest.WebhookInstallOptions{
 		Paths: ct.Manifests,
 	}
-	if err := wh.Install(c.LocalCP.Cfg); err != nil {
+	if err := wh.Install(c.lcp.Cfg); err != nil {
 		return fmt.Errorf("failed to prepare controller %q webhook options: %w", ct.Name, err)
 	}
 	port, host, err := addr.Suggest("")
@@ -148,16 +130,16 @@ func (c *CAPIControlPlane) runController(ctx context.Context, ct *controller) er
 		"-v=2",
 		"--metrics-bind-addr=:0",
 		fmt.Sprintf("--health-addr=%s:%d", host, port),
-		fmt.Sprintf("--kubeconfig=%s", c.LocalCP.KubeconfigPath),
+		fmt.Sprintf("--kubeconfig=%s", c.lcp.KubeconfigPath),
 		fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
 		fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
 	)
 	opts := envtest.CRDInstallOptions{
-		Scheme:         c.LocalCP.Env.Scheme,
+		Scheme:         c.lcp.Env.Scheme,
 		Paths:          ct.Manifests,
 		WebhookOptions: wh,
 	}
-	if _, err := envtest.InstallCRDs(c.LocalCP.Cfg, opts); err != nil {
+	if _, err := envtest.InstallCRDs(c.lcp.Cfg, opts); err != nil {
 		return fmt.Errorf("failed to install controller %q manifests in local control plane: %w", ct.Name, err)
 	}
 	pr := &process.State{

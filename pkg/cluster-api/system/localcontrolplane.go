@@ -1,4 +1,4 @@
-package capi
+package system
 
 import (
 	"fmt"
@@ -20,16 +20,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	providers "github.com/openshift/installer/pkg/cluster-api"
 )
 
-// LocalControlPlane creates a local capi control plane
+// localControlPlane creates a local capi control plane
 // to use as a management cluster.
 // TODO: Add support for existing management cluster.
-type LocalControlPlane struct {
-	FileList       []*asset.File
+type localControlPlane struct {
 	Env            *envtest.Environment `json:"-"`
 	Client         client.Client        `json:"-"`
 	Cfg            *rest.Config         `json:"-"`
@@ -38,36 +36,18 @@ type LocalControlPlane struct {
 }
 
 // Name returns the human-friendly name of the asset.
-func (c *LocalControlPlane) Name() string {
+func (c *localControlPlane) Name() string {
 	return "Local Control Plane"
 }
 
-// Dependencies returns the direct dependency for launching
-// the local control plane.
-func (c *LocalControlPlane) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&installconfig.ClusterID{},
-		&installconfig.InstallConfig{},
-	}
-}
-
-// Generate launches the cluster and generates the terraform state file on disk.
-func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
-	clusterID := &installconfig.ClusterID{}
-	installConfig := &installconfig.InstallConfig{}
-	parents.Get(clusterID, installConfig)
-
+// Run launches the local control plane.
+func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfig *installconfig.InstallConfig) error {
 	_ = clientgoscheme.AddToScheme(scheme.Scheme)
 	_ = clusterv1alpha3.AddToScheme(scheme.Scheme)
 	_ = clusterv1alpha4.AddToScheme(scheme.Scheme)
 	_ = clusterv1.AddToScheme(scheme.Scheme)
 	_ = capav1beta1.AddToScheme(scheme.Scheme)
 	_ = capav1.AddToScheme(scheme.Scheme)
-
-	c.Env = &envtest.Environment{
-		Scheme:                   scheme.Scheme,
-		AttachControlPlaneOutput: false,
-	}
 
 	// Create a temporary directory to unpack the cluster-api binaries.
 	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
@@ -85,22 +65,21 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		return err
 	}
 
-	api := os.Getenv("OPENSHIFT_INSTALL_API")
-	if api == "" {
-		api = fmt.Sprintf("%s/kube-apiserver", binDir)
-	}
-	if err := os.Setenv("TEST_ASSET_KUBE_APISERVER", api); err != nil {
-		return err
-	}
-	etcd := os.Getenv("OPENSHIFT_INSTALL_ETCD")
-	if etcd == "" {
-		etcd = fmt.Sprintf("%s/etcd", binDir)
-	}
-	if err := os.Setenv("TEST_ASSET_ETCD", etcd); err != nil {
-		return err
-	}
+	// api := fmt.Sprintf("%s/kube-apiserver", binDir)
+	// if err := os.Setenv("TEST_ASSET_KUBE_APISERVER", api); err != nil {
+	// 	return err
+	// }
+	// etcd := fmt.Sprintf("%s/etcd", binDir)
+	// if err := os.Setenv("TEST_ASSET_ETCD", etcd); err != nil {
+	// 	return err
+	// }
 
 	logrus.Info("Started local control plane with envtest")
+	c.Env = &envtest.Environment{
+		Scheme:                   scheme.Scheme,
+		AttachControlPlaneOutput: false,
+		BinaryAssetsDirectory:    c.BinDir,
+	}
 	c.Cfg, err = c.Env.Start()
 	if err != nil {
 		return err

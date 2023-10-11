@@ -19,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -28,6 +27,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/cluster-api/system"
 )
 
 const (
@@ -65,7 +65,6 @@ func (c *CAPICluster) Dependencies() []asset.Asset {
 		// &installconfig.PlatformProvisionCheck{},
 		// &quota.PlatformQuotaCheck{},
 		&password.KubeadminPassword{},
-		&capi.CAPIControlPlane{},
 		&manifests.ClusterAPI{},
 		&machines.CAPIMachine{},
 		&bootstrap.Bootstrap{},
@@ -83,7 +82,6 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	capiControlPlane := &capi.CAPIControlPlane{}
 	capiManifests := &manifests.ClusterAPI{}
 	capiMachines := &machines.CAPIMachine{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
@@ -93,7 +91,6 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 	parents.Get(
 		clusterID,
 		installConfig,
-		capiControlPlane,
 		capiManifests,
 		capiMachines,
 		bootstrapIgnAsset,
@@ -120,8 +117,14 @@ func (c *CAPICluster) Generate(parents asset.Parents) (err error) {
 		return errors.New("cluster cannot be created with bootstrapInPlace set")
 	}
 
+	// Run the CAPI system.
+	capiSystem := &system.System{}
+	if err := capiSystem.Run(clusterID, installConfig); err != nil {
+		return errors.Wrap(err, "failed to run cluster api system")
+	}
+
 	// Grab the client.
-	cl := capiControlPlane.LocalCP.Client
+	cl := capiSystem.Client
 
 	// Create the namespace for the cluster.
 	ns := &corev1.Namespace{

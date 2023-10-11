@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift/installer/pkg/asset/capi/process/flock"
+	"github.com/openshift/installer/pkg/cluster-api/system/process/flock"
 )
 
 const (

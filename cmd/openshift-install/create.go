@@ -37,12 +37,12 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
-	"github.com/openshift/installer/pkg/asset/capi"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
+	"github.com/openshift/installer/pkg/cluster-api/system"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -198,7 +198,7 @@ var (
 				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
 				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_ENVTEST"); !ok || oi == "" {
-					defer capi.Teardown()
+					defer system.Teardown()
 				}
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
@@ -385,7 +385,6 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		defer cleanup()
 
 		cluster.InstallDir = command.RootOpts.Dir
-		capi.InstallDir = command.RootOpts.Dir
 
 		err := runner(command.RootOpts.Dir)
 		if err != nil {
