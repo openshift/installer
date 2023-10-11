@@ -436,14 +436,13 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_tcp_v6" {
-  count          = length(var.machine_v6_cidrs)
-  direction      = "ingress"
-  ethertype      = "IPv6"
-  protocol       = "tcp"
-  port_range_min = 30000
-  port_range_max = 32767
-  # For OVN LBs the traffic will have the *real* origin source-ip, so anything goes.
-  remote_ip_prefix  = "::/0"
+  count             = length(var.machine_v6_cidrs)
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_ip_prefix  = element(var.machine_v6_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
@@ -461,14 +460,13 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_udp_v6" {
-  count          = length(var.machine_v6_cidrs)
-  direction      = "ingress"
-  ethertype      = "IPv6"
-  protocol       = "udp"
-  port_range_min = 30000
-  port_range_max = 32767
-  # For OVN LBs the traffic will have the *real* origin source-ip, so anything goes.
-  remote_ip_prefix  = "::/0"
+  count             = length(var.machine_v6_cidrs)
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "udp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_ip_prefix  = element(var.machine_v6_cidrs, count.index)
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
