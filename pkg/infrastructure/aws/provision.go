@@ -53,11 +53,13 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create VPC resources.
 	vpcInput := &CreateInfraOptions{
-		Region:     clusterAWSConfig.Region,
-		InfraID:    clusterConfig.ClusterID,
-		Zones:      clusterAWSConfig.MasterAvailabilityZones,
-		BaseDomain: clusterConfig.BaseDomain,
-		public:     clusterAWSConfig.PublishStrategy == "External",
+		Region:       clusterAWSConfig.Region,
+		InfraID:      clusterConfig.ClusterID,
+		Zones:        clusterAWSConfig.MasterAvailabilityZones,
+		BaseDomain:   clusterConfig.BaseDomain,
+		public:       clusterAWSConfig.PublishStrategy == "External",
+		cidrV4Blocks: clusterConfig.MachineV4CIDRs,
+		cidrV6Blocks: clusterConfig.MachineV6CIDRs,
 	}
 	logger := logrus.StandardLogger()
 	if err := createVPCResources(logger, awsSession, vpcInput); err != nil {

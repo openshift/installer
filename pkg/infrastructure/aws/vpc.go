@@ -43,7 +43,13 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 		return err
 	}
 	// FIXME: only use 0.0.0.0/0 if using public endpoints
-	bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, []string{"0.0.0.0/0"})
+	var machineV4Cidrs []string
+	if vpcInput.public {
+		machineV4Cidrs = []string{"0.0.0.0/0"}
+	} else {
+		machineV4Cidrs = vpcInput.cidrV4Blocks
+	}
+	bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, machineV4Cidrs)
 	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, bootstrapSG, bootstrapIngressPermissions); err != nil {
 		return err
 	}
@@ -60,15 +66,13 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 	}
 	//vpcInput.workerSecurityGroupID = aws.StringValue(workerSG.GroupId)
 
-	// FIXME: CIDR blocks
-	masterIngressPermissions := DefaultMasterSGIngressRules(vpcInput.masterSecurityGroupID, vpcInput.workerSecurityGroupID, []string{"10.0.0.0/16"})
+	masterIngressPermissions := DefaultMasterSGIngressRules(vpcInput.masterSecurityGroupID, vpcInput.workerSecurityGroupID, vpcInput.cidrV4Blocks)
 	// masterIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.masterSecurityGroupID, []string{})
 	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, masterSG, masterIngressPermissions); err != nil {
 		return err
 	}
 
-	// FIXME: CIDR blocks
-	workerIngressPermissions := DefaultWorkerSGIngressRules(vpcInput.workerSecurityGroupID, vpcInput.masterSecurityGroupID, []string{"10.0.0.0/16"})
+	workerIngressPermissions := DefaultWorkerSGIngressRules(vpcInput.workerSecurityGroupID, vpcInput.masterSecurityGroupID, vpcInput.cidrV4Blocks)
 	// workerIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.workerSecurityGroupID, []string{})
 	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, workerSG, workerIngressPermissions); err != nil {
 		return err
@@ -145,8 +149,7 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 }
 
 func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API) (string, error) {
-	// TODO(alberto): pass this from input.
-	defaultCIDRBlock := "10.0.0.0/16"
+	defaultCIDRBlock := o.cidrV4Blocks[0]
 	vpcName := fmt.Sprintf("%s-vpc", o.InfraID)
 	vpcID, err := o.existingVPC(client, vpcName)
 	if err != nil {
@@ -1905,6 +1908,8 @@ type CreateInfraOptions struct {
 	EnableProxy        bool
 	SSHKeyFile         string
 	additionalEC2Tags  []*ec2.Tag
+	cidrV4Blocks       []string
+	cidrV6Blocks       []string
 
 	// Additional output for consumers.
 	vpcID            string
