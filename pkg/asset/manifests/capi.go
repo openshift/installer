@@ -38,18 +38,19 @@ type ClusterAPI struct {
 	Manifests []Manifest `json:"-"`
 }
 
+// Manifest is a wrapper for a CAPI manifest.
 type Manifest struct {
 	Object   client.Object
 	filename string
 }
 
-// Name returns a human friendly name for the operator
+// Name returns a human friendly name for the operator.
 func (c *ClusterAPI) Name() string {
 	return "ClusterAPI Manifests"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// ClusterAPI asset
+// ClusterAPI asset.
 func (c *ClusterAPI) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
@@ -88,7 +89,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 	switch platform {
 	case awstypes.Name:
-
 		// Not sure if this is the best place to create IAM roles.
 		if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
 			return errors.Wrap(err, "failed to create IAM roles")
@@ -302,6 +302,8 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		}
 		idFn := "00_aws-cluster-controller-identity-default.yaml"
 		c.Manifests = append(c.Manifests, Manifest{id, idFn})
+	default:
+		return errors.Errorf("unsupported platform %q", platform)
 	}
 
 	clusterFn := "01-capi-cluster.yaml"

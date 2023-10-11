@@ -8,7 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -19,9 +22,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -38,8 +38,7 @@ const (
 )
 
 var (
-	capiMachineFileNamePattern                     = fmt.Sprint(capiMachineFileName, "*")
-	_                          asset.WritableAsset = (*Master)(nil)
+	_ asset.WritableAsset = (*Master)(nil)
 )
 
 // Name returns a human friendly name for the Master Asset.
@@ -48,7 +47,7 @@ func (m *CAPIMachine) Name() string {
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Master asset
+// Master asset.
 func (m *CAPIMachine) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
@@ -147,9 +146,7 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		for _, mac := range awsMachines {
-			m.Machines = append(m.Machines, mac)
-		}
+		m.Machines = append(m.Machines, awsMachines...)
 
 		bootstrapAWSMachine := &capa.AWSMachine{
 			ObjectMeta: metav1.ObjectMeta{

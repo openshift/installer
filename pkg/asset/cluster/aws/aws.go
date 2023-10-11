@@ -9,12 +9,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
-	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
 // Metadata converts an install configuration to AWS metadata.

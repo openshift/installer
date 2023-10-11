@@ -74,7 +74,7 @@ var (
 		&cluster.Cluster{},
 	}
 
-	// Cluster are the cluster targeted assets.
+	// CAPICluster are the cluster targeted assets.
 	CAPICluster = []asset.WritableAsset{
 		&cluster.Metadata{},
 		&machine.MasterIgnitionCustomizations{},

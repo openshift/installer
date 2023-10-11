@@ -33,6 +33,8 @@ func provider(name string) Provider {
 	}
 }
 
+// Mirror is the embedded data for the providers.
+//
 //go:embed mirror/*
 var Mirror embed.FS
 

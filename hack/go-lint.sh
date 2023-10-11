@@ -1,7 +1,7 @@
 #!/bin/sh
 # Example:  ./hack/go-lint.sh installer/... pkg/... tests/smoke
 
-podman run --rm \
+docker run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \

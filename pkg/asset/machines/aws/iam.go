@@ -9,9 +9,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/pkg/errors"
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
+
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 var (
