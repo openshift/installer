@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/openshift/installer/cmd/openshift-install/command"
 	providers "github.com/openshift/installer/pkg/cluster-api"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -123,7 +124,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		if err != nil {
 			return err
 		}
-		dir := filepath.Join(wd, "auth")
+		dir := filepath.Join(command.RootOpts.Dir, "auth")
 		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
 		if err != nil {
 			return err
