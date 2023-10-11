@@ -37,6 +37,7 @@ RUN yum update -y && \
       unzip \
       openssh-clients \
       openssl \
+      powershell \
       python3-pyOpenSSL \
       python2-pyyaml \
       python3-pyyaml \
@@ -90,6 +91,11 @@ RUN mkdir /output && HOME=/output && \
     rm -f $HOME/.curlrc && \
     ibmcloud version && \
     ibmcloud plugin list
+
+# Install VMware plugin for powershell.  Create settings directory /output/.local/share/VMware/PowerCLI
+RUN pwsh -Command 'Install-Module VMware.PowerCLI -Force -Scope AllUsers' && \
+    pwsh -Command 'Install-Module -Name EPS -RequiredVersion 1.0 -Force -Scope AllUsers' && \
+    mkdir -p /output/.local/share/VMware/PowerCLI && chmod -R 777 /output/.local
 
 RUN chown 1000:1000 /output && chmod -R g=u "/output/.bluemix/"
 USER 1000:1000
