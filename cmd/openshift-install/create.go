@@ -211,7 +211,7 @@ var (
 				if err != nil {
 					logrus.Fatal(err)
 				}
-				envtestCfg, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "envtest", "envtest.kubeconfig"))
+				envtestCfg, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "envtest.kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}

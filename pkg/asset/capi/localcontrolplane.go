@@ -123,10 +123,7 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 		if err != nil {
 			return err
 		}
-		dir := filepath.Join(wd, "/envtest")
-		if err := os.MkdirAll(dir, 0766); err != nil {
-			return err
-		}
+		dir := filepath.Join(wd, "auth")
 		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
 		if err != nil {
 			return err
