@@ -33,7 +33,6 @@ type config struct {
 	VPCPermitted          bool   `json:"powervs_vpc_permitted"`
 	VPCGatewayName        string `json:"powervs_vpc_gateway_name"`
 	VPCGatewayAttached    bool   `json:"powervs_vpc_gateway_attached"`
-	CloudConnectionName   string `json:"powervs_ccon_name"`
 	BootstrapMemory       int32  `json:"powervs_bootstrap_memory"`
 	BootstrapProcessors   string `json:"powervs_bootstrap_processors"`
 	MasterMemory          int32  `json:"powervs_master_memory"`
@@ -57,7 +56,6 @@ type TFVarsSources struct {
 	ImageBucketFileName   string
 	NetworkName           string
 	PowerVSResourceGroup  string
-	CloudConnectionName   string
 	CISInstanceCRN        string
 	DNSInstanceCRN        string
 	VPCRegion             string
@@ -123,7 +121,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPCPermitted:          sources.VPCPermitted,
 		VPCGatewayName:        sources.VPCGatewayName,
 		VPCGatewayAttached:    sources.VPCGatewayAttached,
-		CloudConnectionName:   sources.CloudConnectionName,
 		BootstrapMemory:       masterConfig.MemoryGiB,
 		BootstrapProcessors:   processor,
 		MasterMemory:          masterConfig.MemoryGiB,

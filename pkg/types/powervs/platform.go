@@ -54,9 +54,4 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
-
-	// CloudConnctionName is the name of an existing Power VS Cloud connection.
-	// If empty, one is created by the installer.
-	// +optional
-	CloudConnectionName string `json:"cloudConnectionName,omitempty"`
 }

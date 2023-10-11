@@ -161,12 +161,9 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		transitGatewayEnabled := configpowervs.TransitGatewayEnabledZone(ic.Config.Platform.PowerVS.Zone)
 
 		if !transitGatewayEnabled {
-			// Only check that there isn't an existing Cloud connection if we're not re-using one
-			if ic.Config.Platform.PowerVS.CloudConnectionName == "" {
-				err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
-				if err != nil {
-					return fmt.Errorf("failed to meet the prerequisite for Cloud Connections: %w", err)
-				}
+			err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+			if err != nil {
+				return fmt.Errorf("failed to meet the prerequisite for Cloud Connections: %w", err)
 			}
 		}
 
