@@ -71,11 +71,20 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("gcp_marketplace_enabled")
+		stream.WriteBool(object.gcpMarketplaceEnabled)
+		count++
+	}
+	present_ = object.bitmap_&16 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("rosa_enabled")
 		stream.WriteBool(object.rosaEnabled)
 		count++
 	}
-	present_ = object.bitmap_&16 != 0 && object.availableUpgrades != nil
+	present_ = object.bitmap_&32 != 0 && object.availableUpgrades != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -84,7 +93,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		writeStringList(object.availableUpgrades, stream)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -93,7 +102,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.channelGroup)
 		count++
 	}
-	present_ = object.bitmap_&64 != 0
+	present_ = object.bitmap_&128 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -102,7 +111,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.default_)
 		count++
 	}
-	present_ = object.bitmap_&128 != 0
+	present_ = object.bitmap_&256 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,7 +120,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.enabled)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&512 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -120,7 +129,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString((object.endOfLifeTimestamp).Format(time.RFC3339))
 		count++
 	}
-	present_ = object.bitmap_&512 != 0
+	present_ = object.bitmap_&1024 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -129,7 +138,16 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteBool(object.hostedControlPlaneEnabled)
 		count++
 	}
-	present_ = object.bitmap_&1024 != 0
+	present_ = object.bitmap_&2048 != 0 && object.imageOverrides != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("image_overrides")
+		writeImageOverrides(object.imageOverrides, stream)
+		count++
+	}
+	present_ = object.bitmap_&4096 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -138,7 +156,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.rawID)
 		count++
 	}
-	present_ = object.bitmap_&2048 != 0
+	present_ = object.bitmap_&8192 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -181,26 +199,30 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 		case "href":
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
+		case "gcp_marketplace_enabled":
+			value := iterator.ReadBool()
+			object.gcpMarketplaceEnabled = value
+			object.bitmap_ |= 8
 		case "rosa_enabled":
 			value := iterator.ReadBool()
 			object.rosaEnabled = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 16
 		case "available_upgrades":
 			value := readStringList(iterator)
 			object.availableUpgrades = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 32
 		case "channel_group":
 			value := iterator.ReadString()
 			object.channelGroup = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 64
 		case "default":
 			value := iterator.ReadBool()
 			object.default_ = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 128
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = value
-			object.bitmap_ |= 128
+			object.bitmap_ |= 256
 		case "end_of_life_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -208,19 +230,23 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 				iterator.ReportError("", err.Error())
 			}
 			object.endOfLifeTimestamp = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 512
 		case "hosted_control_plane_enabled":
 			value := iterator.ReadBool()
 			object.hostedControlPlaneEnabled = value
-			object.bitmap_ |= 512
+			object.bitmap_ |= 1024
+		case "image_overrides":
+			value := readImageOverrides(iterator)
+			object.imageOverrides = value
+			object.bitmap_ |= 2048
 		case "raw_id":
 			value := iterator.ReadString()
 			object.rawID = value
-			object.bitmap_ |= 1024
+			object.bitmap_ |= 4096
 		case "release_image":
 			value := iterator.ReadString()
 			object.releaseImage = value
-			object.bitmap_ |= 2048
+			object.bitmap_ |= 8192
 		default:
 			iterator.ReadAny()
 		}

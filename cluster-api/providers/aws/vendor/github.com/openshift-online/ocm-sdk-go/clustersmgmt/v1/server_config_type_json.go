@@ -81,6 +81,15 @@ func writeServerConfig(object *ServerConfig, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("server")
 		stream.WriteString(object.server)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("topology")
+		stream.WriteString(string(object.topology))
 	}
 	stream.WriteObjectEnd()
 }
@@ -125,6 +134,11 @@ func readServerConfig(iterator *jsoniter.Iterator) *ServerConfig {
 			value := iterator.ReadString()
 			object.server = value
 			object.bitmap_ |= 16
+		case "topology":
+			text := iterator.ReadString()
+			value := ProvisionShardTopology(text)
+			object.topology = value
+			object.bitmap_ |= 32
 		default:
 			iterator.ReadAny()
 		}

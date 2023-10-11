@@ -40,6 +40,7 @@ type ServerConfig struct {
 	href       string
 	kubeconfig string
 	server     string
+	topology   ProvisionShardTopology
 }
 
 // Kind returns the name of the type of the object.
@@ -102,7 +103,7 @@ func (o *ServerConfig) Empty() bool {
 // Kubeconfig returns the value of the 'kubeconfig' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// The kubeconfig of the server
+// The kubeconfig of the server.
 func (o *ServerConfig) Kubeconfig() string {
 	if o != nil && o.bitmap_&8 != 0 {
 		return o.kubeconfig
@@ -113,7 +114,7 @@ func (o *ServerConfig) Kubeconfig() string {
 // GetKubeconfig returns the value of the 'kubeconfig' attribute and
 // a flag indicating if the attribute has a value.
 //
-// The kubeconfig of the server
+// The kubeconfig of the server.
 func (o *ServerConfig) GetKubeconfig() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
@@ -125,7 +126,7 @@ func (o *ServerConfig) GetKubeconfig() (value string, ok bool) {
 // Server returns the value of the 'server' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// The URL of the server
+// The URL of the server.
 func (o *ServerConfig) Server() string {
 	if o != nil && o.bitmap_&16 != 0 {
 		return o.server
@@ -136,11 +137,34 @@ func (o *ServerConfig) Server() string {
 // GetServer returns the value of the 'server' attribute and
 // a flag indicating if the attribute has a value.
 //
-// The URL of the server
+// The URL of the server.
 func (o *ServerConfig) GetServer() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.server
+	}
+	return
+}
+
+// Topology returns the value of the 'topology' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The topology of a provision shard (Optional).
+func (o *ServerConfig) Topology() ProvisionShardTopology {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.topology
+	}
+	return ProvisionShardTopology("")
+}
+
+// GetTopology returns the value of the 'topology' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The topology of a provision shard (Optional).
+func (o *ServerConfig) GetTopology() (value ProvisionShardTopology, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.topology
 	}
 	return
 }

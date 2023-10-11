@@ -221,6 +221,16 @@ func (c *Client) ProvisionShards() *ProvisionShardsClient {
 	)
 }
 
+// TrustedIPAddresses returns the target 'trusted_ips' resource.
+//
+// Reference to the resource that manages the collection of trusted ip addresses.
+func (c *Client) TrustedIPAddresses() *TrustedIpsClient {
+	return NewTrustedIpsClient(
+		c.transport,
+		path.Join(c.path, "trusted_ip_addresses"),
+	)
+}
+
 // VersionGates returns the target 'version_gates' resource.
 //
 // Reference to version gates.

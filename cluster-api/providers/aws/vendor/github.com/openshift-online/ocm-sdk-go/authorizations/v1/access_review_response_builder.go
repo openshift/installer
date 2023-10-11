@@ -33,6 +33,7 @@ type AccessReviewResponseBuilder struct {
 	resourceType    string
 	subscriptionID  string
 	allowed         bool
+	isOCMInternal   bool
 }
 
 // NewAccessReviewResponse creates a new builder of 'access_review_response' objects.
@@ -80,31 +81,38 @@ func (b *AccessReviewResponseBuilder) ClusterUUID(value string) *AccessReviewRes
 	return b
 }
 
+// IsOCMInternal sets the value of the 'is_OCM_internal' attribute to the given value.
+func (b *AccessReviewResponseBuilder) IsOCMInternal(value bool) *AccessReviewResponseBuilder {
+	b.isOCMInternal = value
+	b.bitmap_ |= 32
+	return b
+}
+
 // OrganizationID sets the value of the 'organization_ID' attribute to the given value.
 func (b *AccessReviewResponseBuilder) OrganizationID(value string) *AccessReviewResponseBuilder {
 	b.organizationID = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 64
 	return b
 }
 
 // Reason sets the value of the 'reason' attribute to the given value.
 func (b *AccessReviewResponseBuilder) Reason(value string) *AccessReviewResponseBuilder {
 	b.reason = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
 // ResourceType sets the value of the 'resource_type' attribute to the given value.
 func (b *AccessReviewResponseBuilder) ResourceType(value string) *AccessReviewResponseBuilder {
 	b.resourceType = value
-	b.bitmap_ |= 128
+	b.bitmap_ |= 256
 	return b
 }
 
 // SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 func (b *AccessReviewResponseBuilder) SubscriptionID(value string) *AccessReviewResponseBuilder {
 	b.subscriptionID = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -119,6 +127,7 @@ func (b *AccessReviewResponseBuilder) Copy(object *AccessReviewResponse) *Access
 	b.allowed = object.allowed
 	b.clusterID = object.clusterID
 	b.clusterUUID = object.clusterUUID
+	b.isOCMInternal = object.isOCMInternal
 	b.organizationID = object.organizationID
 	b.reason = object.reason
 	b.resourceType = object.resourceType
@@ -135,6 +144,7 @@ func (b *AccessReviewResponseBuilder) Build() (object *AccessReviewResponse, err
 	object.allowed = b.allowed
 	object.clusterID = b.clusterID
 	object.clusterUUID = b.clusterUUID
+	object.isOCMInternal = b.isOCMInternal
 	object.organizationID = b.organizationID
 	object.reason = b.reason
 	object.resourceType = b.resourceType

@@ -3,6 +3,72 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+## 0.1.373
+- Update model version to v0.0.325
+  - Add `OrganizationId` to `FeatureReviewRequest` type
+
+## 0.1.372
+- Update model version to v0.0.324
+  - Add `CreatedAt` to `LogEntry` type
+  - Add `CreatedBy` to `LogEntry` type
+
+## 0.1.371
+- Update model version to v0.0.323
+  - Add `GCPMarketplaceEnabled` to `version` type
+
+## 0.1.370
+- Update model version to v0.0.322
+  - Add AdditionalComputeSecurityGroupIds to AWS type
+  - Add AdditionalSecurityGroupIds to AWS Machine Pool type
+  - Add AwsSecurityGroups to VPC type
+
+## 0.1.369
+- Update model version to v0.0.321
+  - Exposes `/api/clusters_mgmt/v1/aws_inquiries/sts_account_roles` in the SDK 
+
+## 0.1.368
+- Update model version v0.0.318
+  - Add `ImageOverrides` to `Version` type
+
+## 0.1.367
+- Windows: Update SSO CA
+- Update model version v0.0.315
+  - Add DisplayName and Description properties to `BillingModelItem`
+
+## 0.1.366
+- Update model version v0.0.314
+  - Add new resources and a type for `BillingModelItem`
+
+## 0.1.365
+- Update model version v0.0.312
+  - Added support for `AddonInstallations` endpoints for `addons_mgmt`.
+  - Updated APIs for `AddonStatus`, `AddonStatusCondition`, `AddonSubOperator` and `AddonVersion`.
+
+## 0.1.364
+- Update model version v0.0.311
+  - Add a new resource to OSL clusters/cluster_log
+
+## 0.1.363
+  - Modify SelfAccessReview to return IsOCMInternal field
+
+## 0.1.362
+  - Redact aws access and secret access keys from debug logs
+
+## 0.1.361
+- Update model version v0.0.309
+  - Modify access review response to include `is_ocm_internal` field.
+  - Add the remainder of cluster-autoscaler parameters.
+
+## 0.1.360
+- Update model version v0.0.307
+  - Move `PrivateHostedZoneID` and `PrivateHostedZoneRoleARN` to `aws_type` resource
+
+## 0.1.359
+- Update model version v0.0.306
+  - Fix upgrade related constants JSON output to align with existing values
+- Update model version v0.0.305
+  - Add `PrivateHostedZoneID` and `PrivateHostedZoneRoleARN` to `cluster_type` resource
+
 ## 0.1.358
 - Update model version v0.0.304
   - Add upgrade related constants also for `NodePoolUpgradePolicy`.

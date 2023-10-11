@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1
 // who's life cycle is controlled by the addon umbrella operator.
 type AddonSubOperator struct {
 	bitmap_           uint32
+	addon             *Addon
 	operatorName      string
 	operatorNamespace string
 	enabled           bool
@@ -35,12 +36,31 @@ func (o *AddonSubOperator) Empty() bool {
 	return o == nil || o.bitmap_ == 0
 }
 
+// Addon returns the value of the 'addon' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *AddonSubOperator) Addon() *Addon {
+	if o != nil && o.bitmap_&1 != 0 {
+		return o.addon
+	}
+	return nil
+}
+
+// GetAddon returns the value of the 'addon' attribute and
+// a flag indicating if the attribute has a value.
+func (o *AddonSubOperator) GetAddon() (value *Addon, ok bool) {
+	ok = o != nil && o.bitmap_&1 != 0
+	if ok {
+		value = o.addon
+	}
+	return
+}
+
 // Enabled returns the value of the 'enabled' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Indicates if the sub operator is enabled for the addon
 func (o *AddonSubOperator) Enabled() bool {
-	if o != nil && o.bitmap_&1 != 0 {
+	if o != nil && o.bitmap_&2 != 0 {
 		return o.enabled
 	}
 	return false
@@ -51,7 +71,7 @@ func (o *AddonSubOperator) Enabled() bool {
 //
 // Indicates if the sub operator is enabled for the addon
 func (o *AddonSubOperator) GetEnabled() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&1 != 0
+	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
 		value = o.enabled
 	}
@@ -63,7 +83,7 @@ func (o *AddonSubOperator) GetEnabled() (value bool, ok bool) {
 //
 // Name of the addon sub operator
 func (o *AddonSubOperator) OperatorName() string {
-	if o != nil && o.bitmap_&2 != 0 {
+	if o != nil && o.bitmap_&4 != 0 {
 		return o.operatorName
 	}
 	return ""
@@ -74,7 +94,7 @@ func (o *AddonSubOperator) OperatorName() string {
 //
 // Name of the addon sub operator
 func (o *AddonSubOperator) GetOperatorName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2 != 0
+	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
 		value = o.operatorName
 	}
@@ -86,7 +106,7 @@ func (o *AddonSubOperator) GetOperatorName() (value string, ok bool) {
 //
 // Namespace of the addon sub operator
 func (o *AddonSubOperator) OperatorNamespace() string {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.operatorNamespace
 	}
 	return ""
@@ -97,7 +117,7 @@ func (o *AddonSubOperator) OperatorNamespace() string {
 //
 // Namespace of the addon sub operator
 func (o *AddonSubOperator) GetOperatorNamespace() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.operatorNamespace
 	}

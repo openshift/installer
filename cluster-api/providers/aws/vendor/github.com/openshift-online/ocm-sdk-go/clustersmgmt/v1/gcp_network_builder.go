@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 type GCPNetworkBuilder struct {
 	bitmap_            uint32
 	vpcName            string
+	vpcProjectID       string
 	computeSubnet      string
 	controlPlaneSubnet string
 }
@@ -46,17 +47,24 @@ func (b *GCPNetworkBuilder) VPCName(value string) *GCPNetworkBuilder {
 	return b
 }
 
+// VPCProjectID sets the value of the 'VPC_project_ID' attribute to the given value.
+func (b *GCPNetworkBuilder) VPCProjectID(value string) *GCPNetworkBuilder {
+	b.vpcProjectID = value
+	b.bitmap_ |= 2
+	return b
+}
+
 // ComputeSubnet sets the value of the 'compute_subnet' attribute to the given value.
 func (b *GCPNetworkBuilder) ComputeSubnet(value string) *GCPNetworkBuilder {
 	b.computeSubnet = value
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
 	return b
 }
 
 // ControlPlaneSubnet sets the value of the 'control_plane_subnet' attribute to the given value.
 func (b *GCPNetworkBuilder) ControlPlaneSubnet(value string) *GCPNetworkBuilder {
 	b.controlPlaneSubnet = value
-	b.bitmap_ |= 4
+	b.bitmap_ |= 8
 	return b
 }
 
@@ -67,6 +75,7 @@ func (b *GCPNetworkBuilder) Copy(object *GCPNetwork) *GCPNetworkBuilder {
 	}
 	b.bitmap_ = object.bitmap_
 	b.vpcName = object.vpcName
+	b.vpcProjectID = object.vpcProjectID
 	b.computeSubnet = object.computeSubnet
 	b.controlPlaneSubnet = object.controlPlaneSubnet
 	return b
@@ -77,6 +86,7 @@ func (b *GCPNetworkBuilder) Build() (object *GCPNetwork, err error) {
 	object = new(GCPNetwork)
 	object.bitmap_ = b.bitmap_
 	object.vpcName = b.vpcName
+	object.vpcProjectID = b.vpcProjectID
 	object.computeSubnet = b.computeSubnet
 	object.controlPlaneSubnet = b.controlPlaneSubnet
 	return

@@ -41,6 +41,7 @@ type AddonStatus struct {
 	addonId          string
 	correlationID    string
 	statusConditions []*AddonStatusCondition
+	version          string
 }
 
 // Kind returns the name of the type of the object.
@@ -165,6 +166,29 @@ func (o *AddonStatus) GetStatusConditions() (value []*AddonStatusCondition, ok b
 	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.statusConditions
+	}
+	return
+}
+
+// Version returns the value of the 'version' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Version of the addon reporting the status
+func (o *AddonStatus) Version() string {
+	if o != nil && o.bitmap_&64 != 0 {
+		return o.version
+	}
+	return ""
+}
+
+// GetVersion returns the value of the 'version' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Version of the addon reporting the status
+func (o *AddonStatus) GetVersion() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&64 != 0
+	if ok {
+		value = o.version
 	}
 	return
 }

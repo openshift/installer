@@ -28,6 +28,7 @@ type ServerConfigBuilder struct {
 	href       string
 	kubeconfig string
 	server     string
+	topology   ProvisionShardTopology
 }
 
 // NewServerConfig creates a new builder of 'server_config' objects.
@@ -74,6 +75,13 @@ func (b *ServerConfigBuilder) Server(value string) *ServerConfigBuilder {
 	return b
 }
 
+// Topology sets the value of the 'topology' attribute to the given value.
+func (b *ServerConfigBuilder) Topology(value ProvisionShardTopology) *ServerConfigBuilder {
+	b.topology = value
+	b.bitmap_ |= 32
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *ServerConfigBuilder) Copy(object *ServerConfig) *ServerConfigBuilder {
 	if object == nil {
@@ -84,6 +92,7 @@ func (b *ServerConfigBuilder) Copy(object *ServerConfig) *ServerConfigBuilder {
 	b.href = object.href
 	b.kubeconfig = object.kubeconfig
 	b.server = object.server
+	b.topology = object.topology
 	return b
 }
 
@@ -95,5 +104,6 @@ func (b *ServerConfigBuilder) Build() (object *ServerConfig, err error) {
 	object.bitmap_ = b.bitmap_
 	object.kubeconfig = b.kubeconfig
 	object.server = b.server
+	object.topology = b.topology
 	return
 }

@@ -52,6 +52,16 @@ func (c *ClusterClient) AddonInquiries() *AddonInquiriesClient {
 	)
 }
 
+// Addons returns the target 'addon_installations' resource.
+//
+// Reference to the installations of addon on a specific cluster
+func (c *ClusterClient) Addons() *AddonInstallationsClient {
+	return NewAddonInstallationsClient(
+		c.transport,
+		path.Join(c.path, "addons"),
+	)
+}
+
 // Status returns the target 'addon_statuses' resource.
 //
 // Reference to the status of addon installation on a specific cluster

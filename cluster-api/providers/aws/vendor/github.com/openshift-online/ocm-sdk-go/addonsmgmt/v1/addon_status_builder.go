@@ -29,6 +29,7 @@ type AddonStatusBuilder struct {
 	addonId          string
 	correlationID    string
 	statusConditions []*AddonStatusConditionBuilder
+	version          string
 }
 
 // NewAddonStatus creates a new builder of 'addon_status' objects.
@@ -83,6 +84,13 @@ func (b *AddonStatusBuilder) StatusConditions(values ...*AddonStatusConditionBui
 	return b
 }
 
+// Version sets the value of the 'version' attribute to the given value.
+func (b *AddonStatusBuilder) Version(value string) *AddonStatusBuilder {
+	b.version = value
+	b.bitmap_ |= 64
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *AddonStatusBuilder) Copy(object *AddonStatus) *AddonStatusBuilder {
 	if object == nil {
@@ -101,6 +109,7 @@ func (b *AddonStatusBuilder) Copy(object *AddonStatus) *AddonStatusBuilder {
 	} else {
 		b.statusConditions = nil
 	}
+	b.version = object.version
 	return b
 }
 
@@ -121,5 +130,6 @@ func (b *AddonStatusBuilder) Build() (object *AddonStatus, err error) {
 			}
 		}
 	}
+	object.version = b.version
 	return
 }

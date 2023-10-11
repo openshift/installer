@@ -33,6 +33,7 @@ type AccessReviewResponse struct {
 	resourceType    string
 	subscriptionID  string
 	allowed         bool
+	isOCMInternal   bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -43,7 +44,7 @@ func (o *AccessReviewResponse) Empty() bool {
 // AccountUsername returns the value of the 'account_username' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Defines the username of the account of which access is being reviewed
+// Defines the username of the account of which access is being reviewed.
 func (o *AccessReviewResponse) AccountUsername() string {
 	if o != nil && o.bitmap_&1 != 0 {
 		return o.accountUsername
@@ -54,7 +55,7 @@ func (o *AccessReviewResponse) AccountUsername() string {
 // GetAccountUsername returns the value of the 'account_username' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Defines the username of the account of which access is being reviewed
+// Defines the username of the account of which access is being reviewed.
 func (o *AccessReviewResponse) GetAccountUsername() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&1 != 0
 	if ok {
@@ -66,7 +67,7 @@ func (o *AccessReviewResponse) GetAccountUsername() (value string, ok bool) {
 // Action returns the value of the 'action' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates the action, one of: [get,list,create,delete,update]
+// Indicates the action, one of: [get,list,create,delete,update].
 func (o *AccessReviewResponse) Action() string {
 	if o != nil && o.bitmap_&2 != 0 {
 		return o.action
@@ -77,7 +78,7 @@ func (o *AccessReviewResponse) Action() string {
 // GetAction returns the value of the 'action' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates the action, one of: [get,list,create,delete,update]
+// Indicates the action, one of: [get,list,create,delete,update].
 func (o *AccessReviewResponse) GetAction() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
@@ -89,7 +90,7 @@ func (o *AccessReviewResponse) GetAction() (value string, ok bool) {
 // Allowed returns the value of the 'allowed' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Defines whether the action on the specified resource type is allowed
+// Defines whether the action on the specified resource type is allowed.
 func (o *AccessReviewResponse) Allowed() bool {
 	if o != nil && o.bitmap_&4 != 0 {
 		return o.allowed
@@ -100,7 +101,7 @@ func (o *AccessReviewResponse) Allowed() bool {
 // GetAllowed returns the value of the 'allowed' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Defines whether the action on the specified resource type is allowed
+// Defines whether the action on the specified resource type is allowed.
 func (o *AccessReviewResponse) GetAllowed() (value bool, ok bool) {
 	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
@@ -112,7 +113,7 @@ func (o *AccessReviewResponse) GetAllowed() (value bool, ok bool) {
 // ClusterID returns the value of the 'cluster_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster (internal id) the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to.
 func (o *AccessReviewResponse) ClusterID() string {
 	if o != nil && o.bitmap_&8 != 0 {
 		return o.clusterID
@@ -123,7 +124,7 @@ func (o *AccessReviewResponse) ClusterID() string {
 // GetClusterID returns the value of the 'cluster_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster (internal id) the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to.
 func (o *AccessReviewResponse) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
@@ -135,7 +136,7 @@ func (o *AccessReviewResponse) GetClusterID() (value string, ok bool) {
 // ClusterUUID returns the value of the 'cluster_UUID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster (external id) the resource type belongs to
+// Indicates which Cluster (external id) the resource type belongs to.
 func (o *AccessReviewResponse) ClusterUUID() string {
 	if o != nil && o.bitmap_&16 != 0 {
 		return o.clusterUUID
@@ -146,7 +147,7 @@ func (o *AccessReviewResponse) ClusterUUID() string {
 // GetClusterUUID returns the value of the 'cluster_UUID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster (external id) the resource type belongs to
+// Indicates which Cluster (external id) the resource type belongs to.
 func (o *AccessReviewResponse) GetClusterUUID() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
@@ -155,12 +156,35 @@ func (o *AccessReviewResponse) GetClusterUUID() (value string, ok bool) {
 	return
 }
 
+// IsOCMInternal returns the value of the 'is_OCM_internal' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Defines whether an account is ocm internal.
+func (o *AccessReviewResponse) IsOCMInternal() bool {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.isOCMInternal
+	}
+	return false
+}
+
+// GetIsOCMInternal returns the value of the 'is_OCM_internal' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Defines whether an account is ocm internal.
+func (o *AccessReviewResponse) GetIsOCMInternal() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.isOCMInternal
+	}
+	return
+}
+
 // OrganizationID returns the value of the 'organization_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Organization the resource type belongs to
+// Indicates which Organization the resource type belongs to.
 func (o *AccessReviewResponse) OrganizationID() string {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.organizationID
 	}
 	return ""
@@ -169,9 +193,9 @@ func (o *AccessReviewResponse) OrganizationID() string {
 // GetOrganizationID returns the value of the 'organization_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Organization the resource type belongs to
+// Indicates which Organization the resource type belongs to.
 func (o *AccessReviewResponse) GetOrganizationID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.organizationID
 	}
@@ -181,9 +205,9 @@ func (o *AccessReviewResponse) GetOrganizationID() (value string, ok bool) {
 // Reason returns the value of the 'reason' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Defines further context for the value in allowed (if applicable)
+// Defines further context for the value in allowed (if applicable).
 func (o *AccessReviewResponse) Reason() string {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.reason
 	}
 	return ""
@@ -192,9 +216,9 @@ func (o *AccessReviewResponse) Reason() string {
 // GetReason returns the value of the 'reason' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Defines further context for the value in allowed (if applicable)
+// Defines further context for the value in allowed (if applicable).
 func (o *AccessReviewResponse) GetReason() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.reason
 	}
@@ -205,9 +229,9 @@ func (o *AccessReviewResponse) GetReason() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Indicates the type of the resource an action would be taken on.
-// See uhc-account-manager/openapi/openapi.yaml for a list of possible values
+// See uhc-account-manager/openapi/openapi.yaml for a list of possible values.
 func (o *AccessReviewResponse) ResourceType() string {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&256 != 0 {
 		return o.resourceType
 	}
 	return ""
@@ -217,9 +241,9 @@ func (o *AccessReviewResponse) ResourceType() string {
 // a flag indicating if the attribute has a value.
 //
 // Indicates the type of the resource an action would be taken on.
-// See uhc-account-manager/openapi/openapi.yaml for a list of possible values
+// See uhc-account-manager/openapi/openapi.yaml for a list of possible values.
 func (o *AccessReviewResponse) GetResourceType() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&256 != 0
 	if ok {
 		value = o.resourceType
 	}
@@ -229,9 +253,9 @@ func (o *AccessReviewResponse) GetResourceType() (value string, ok bool) {
 // SubscriptionID returns the value of the 'subscription_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Subscription the resource type belongs to
+// Indicates which Subscription the resource type belongs to.
 func (o *AccessReviewResponse) SubscriptionID() string {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.subscriptionID
 	}
 	return ""
@@ -240,9 +264,9 @@ func (o *AccessReviewResponse) SubscriptionID() string {
 // GetSubscriptionID returns the value of the 'subscription_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Subscription the resource type belongs to
+// Indicates which Subscription the resource type belongs to.
 func (o *AccessReviewResponse) GetSubscriptionID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.subscriptionID
 	}

@@ -32,6 +32,9 @@ var pathTreeData = `{
             }
           }
         },
+        "billing_models": {
+          "-": null
+        },
         "capabilities": null,
         "cloud_resources": {
           "-": null
@@ -124,6 +127,9 @@ var pathTreeData = `{
             "addon_inquiries": {
               "-": null
             },
+            "addons": {
+              "-": null
+            },
             "status": {
               "-": null
             }
@@ -160,6 +166,7 @@ var pathTreeData = `{
         "aws_inquiries": {
           "machine_types": null,
           "regions": null,
+          "sts_account_roles": null,
           "sts_credential_requests": null,
           "sts_policies": null,
           "vpcs": null
@@ -321,6 +328,9 @@ var pathTreeData = `{
         "provision_shards": {
           "-": null
         },
+        "trusted_ip_addresses": {
+          "-": null
+        },
         "version_gates": {
           "-": null
         },
@@ -371,7 +381,8 @@ var pathTreeData = `{
         "clusters": {
           "-": {
             "cluster_logs": null
-          }
+          },
+          "cluster_logs": null
         }
       }
     },

@@ -117,14 +117,16 @@ const (
 
 // redactFields are removed from log output when dumped.
 var redactFields = map[string]bool{
-	"access_token":  true,
-	"admin":         true,
-	"id_token":      true,
-	"refresh_token": true,
-	"password":      true,
-	"client_secret": true,
-	"kubeconfig":    true,
-	"ssh":           true,
+	"access_token":      true,
+	"admin":             true,
+	"id_token":          true,
+	"refresh_token":     true,
+	"password":          true,
+	"client_secret":     true,
+	"kubeconfig":        true,
+	"ssh":               true,
+	"access_key_id":     true,
+	"secret_access_key": true,
 }
 
 // dumpRequest dumps to the log, in debug level, the details of the given HTTP request.
@@ -244,7 +246,7 @@ func (d *dumpRoundTripper) dumpForm(ctx context.Context, data []byte) {
 		for _, value := range values {
 			var redacted string
 			if redactFields[name] {
-				redacted = "***"
+				redacted = redactionStr
 			} else {
 				redacted = url.QueryEscape(value)
 			}

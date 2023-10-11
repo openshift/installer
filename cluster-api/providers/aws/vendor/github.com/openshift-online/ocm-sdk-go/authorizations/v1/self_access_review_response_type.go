@@ -32,6 +32,7 @@ type SelfAccessReviewResponse struct {
 	resourceType   string
 	subscriptionID string
 	allowed        bool
+	isOCMInternal  bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -42,7 +43,7 @@ func (o *SelfAccessReviewResponse) Empty() bool {
 // Action returns the value of the 'action' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates the action, one of: [get,list,create,delete,update]
+// Indicates the action, one of: [get,list,create,delete,update].
 func (o *SelfAccessReviewResponse) Action() string {
 	if o != nil && o.bitmap_&1 != 0 {
 		return o.action
@@ -53,7 +54,7 @@ func (o *SelfAccessReviewResponse) Action() string {
 // GetAction returns the value of the 'action' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates the action, one of: [get,list,create,delete,update]
+// Indicates the action, one of: [get,list,create,delete,update].
 func (o *SelfAccessReviewResponse) GetAction() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&1 != 0
 	if ok {
@@ -65,7 +66,7 @@ func (o *SelfAccessReviewResponse) GetAction() (value string, ok bool) {
 // Allowed returns the value of the 'allowed' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Defines whether the action on the specified resource type is allowed
+// Defines whether the action on the specified resource type is allowed.
 func (o *SelfAccessReviewResponse) Allowed() bool {
 	if o != nil && o.bitmap_&2 != 0 {
 		return o.allowed
@@ -76,7 +77,7 @@ func (o *SelfAccessReviewResponse) Allowed() bool {
 // GetAllowed returns the value of the 'allowed' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Defines whether the action on the specified resource type is allowed
+// Defines whether the action on the specified resource type is allowed.
 func (o *SelfAccessReviewResponse) GetAllowed() (value bool, ok bool) {
 	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
@@ -88,7 +89,7 @@ func (o *SelfAccessReviewResponse) GetAllowed() (value bool, ok bool) {
 // ClusterID returns the value of the 'cluster_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster (internal id) the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to.
 func (o *SelfAccessReviewResponse) ClusterID() string {
 	if o != nil && o.bitmap_&4 != 0 {
 		return o.clusterID
@@ -99,7 +100,7 @@ func (o *SelfAccessReviewResponse) ClusterID() string {
 // GetClusterID returns the value of the 'cluster_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster (internal id) the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to.
 func (o *SelfAccessReviewResponse) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
@@ -111,7 +112,7 @@ func (o *SelfAccessReviewResponse) GetClusterID() (value string, ok bool) {
 // ClusterUUID returns the value of the 'cluster_UUID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster (external id) the resource type belongs to
+// Indicates which Cluster (external id) the resource type belongs to.
 func (o *SelfAccessReviewResponse) ClusterUUID() string {
 	if o != nil && o.bitmap_&8 != 0 {
 		return o.clusterUUID
@@ -122,7 +123,7 @@ func (o *SelfAccessReviewResponse) ClusterUUID() string {
 // GetClusterUUID returns the value of the 'cluster_UUID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster (external id) the resource type belongs to
+// Indicates which Cluster (external id) the resource type belongs to.
 func (o *SelfAccessReviewResponse) GetClusterUUID() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
@@ -131,12 +132,35 @@ func (o *SelfAccessReviewResponse) GetClusterUUID() (value string, ok bool) {
 	return
 }
 
+// IsOCMInternal returns the value of the 'is_OCM_internal' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Defines whether an account is ocm internal.
+func (o *SelfAccessReviewResponse) IsOCMInternal() bool {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.isOCMInternal
+	}
+	return false
+}
+
+// GetIsOCMInternal returns the value of the 'is_OCM_internal' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Defines whether an account is ocm internal.
+func (o *SelfAccessReviewResponse) GetIsOCMInternal() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.isOCMInternal
+	}
+	return
+}
+
 // OrganizationID returns the value of the 'organization_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Organization the resource type belongs to
+// Indicates which Organization the resource type belongs to.
 func (o *SelfAccessReviewResponse) OrganizationID() string {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.organizationID
 	}
 	return ""
@@ -145,9 +169,9 @@ func (o *SelfAccessReviewResponse) OrganizationID() string {
 // GetOrganizationID returns the value of the 'organization_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Organization the resource type belongs to
+// Indicates which Organization the resource type belongs to.
 func (o *SelfAccessReviewResponse) GetOrganizationID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.organizationID
 	}
@@ -157,9 +181,9 @@ func (o *SelfAccessReviewResponse) GetOrganizationID() (value string, ok bool) {
 // Reason returns the value of the 'reason' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Defines further context for the value in allowed (if applicable)
+// Defines further context for the value in allowed (if applicable).
 func (o *SelfAccessReviewResponse) Reason() string {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.reason
 	}
 	return ""
@@ -168,9 +192,9 @@ func (o *SelfAccessReviewResponse) Reason() string {
 // GetReason returns the value of the 'reason' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Defines further context for the value in allowed (if applicable)
+// Defines further context for the value in allowed (if applicable).
 func (o *SelfAccessReviewResponse) GetReason() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.reason
 	}
@@ -181,9 +205,9 @@ func (o *SelfAccessReviewResponse) GetReason() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Indicates the type of the resource an action would be taken on.
-// See uhc-account-manager/openapi/openapi.yaml for a list of possible values
+// See uhc-account-manager/openapi/openapi.yaml for a list of possible values.
 func (o *SelfAccessReviewResponse) ResourceType() string {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.resourceType
 	}
 	return ""
@@ -193,9 +217,9 @@ func (o *SelfAccessReviewResponse) ResourceType() string {
 // a flag indicating if the attribute has a value.
 //
 // Indicates the type of the resource an action would be taken on.
-// See uhc-account-manager/openapi/openapi.yaml for a list of possible values
+// See uhc-account-manager/openapi/openapi.yaml for a list of possible values.
 func (o *SelfAccessReviewResponse) GetResourceType() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.resourceType
 	}
@@ -205,9 +229,9 @@ func (o *SelfAccessReviewResponse) GetResourceType() (value string, ok bool) {
 // SubscriptionID returns the value of the 'subscription_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Subscription the resource type belongs to
+// Indicates which Subscription the resource type belongs to.
 func (o *SelfAccessReviewResponse) SubscriptionID() string {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&256 != 0 {
 		return o.subscriptionID
 	}
 	return ""
@@ -216,9 +240,9 @@ func (o *SelfAccessReviewResponse) SubscriptionID() string {
 // GetSubscriptionID returns the value of the 'subscription_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Subscription the resource type belongs to
+// Indicates which Subscription the resource type belongs to.
 func (o *SelfAccessReviewResponse) GetSubscriptionID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&256 != 0
 	if ok {
 		value = o.subscriptionID
 	}

@@ -63,6 +63,8 @@ func (c *ClusterLogsClient) Add() *ClusterLogsAddRequest {
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of cluster logs.
+// Use this endpoint to list service logs (including private logs).
+// This endpoint is limited to users who allowed to view private logs.
 func (c *ClusterLogsClient) List() *ClusterLogsListRequest {
 	return &ClusterLogsListRequest{
 		transport: c.transport,

@@ -26,6 +26,7 @@ type FeatureReviewRequest struct {
 	bitmap_         uint32
 	accountUsername string
 	feature         string
+	organizationId  string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -75,6 +76,29 @@ func (o *FeatureReviewRequest) GetFeature() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
 		value = o.feature
+	}
+	return
+}
+
+// OrganizationId returns the value of the 'organization_id' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Defines the organisation id of the account of which access is being reviewed
+func (o *FeatureReviewRequest) OrganizationId() string {
+	if o != nil && o.bitmap_&4 != 0 {
+		return o.organizationId
+	}
+	return ""
+}
+
+// GetOrganizationId returns the value of the 'organization_id' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Defines the organisation id of the account of which access is being reviewed
+func (o *FeatureReviewRequest) GetOrganizationId() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&4 != 0
+	if ok {
+		value = o.organizationId
 	}
 	return
 }

@@ -23,20 +23,23 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // _Amazon Web Services_ specific settings of a cluster.
 type AWS struct {
-	bitmap_                  uint32
-	kmsKeyArn                string
-	sts                      *STS
-	accessKeyID              string
-	accountID                string
-	auditLog                 *AuditLog
-	billingAccountID         string
-	ec2MetadataHttpTokens    Ec2MetadataHttpTokens
-	etcdEncryption           *AwsEtcdEncryption
-	privateLinkConfiguration *PrivateLinkClusterConfiguration
-	secretAccessKey          string
-	subnetIDs                []string
-	tags                     map[string]string
-	privateLink              bool
+	bitmap_                           uint32
+	kmsKeyArn                         string
+	sts                               *STS
+	accessKeyID                       string
+	accountID                         string
+	additionalComputeSecurityGroupIds []string
+	auditLog                          *AuditLog
+	billingAccountID                  string
+	ec2MetadataHttpTokens             Ec2MetadataHttpTokens
+	etcdEncryption                    *AwsEtcdEncryption
+	privateHostedZoneID               string
+	privateHostedZoneRoleARN          string
+	privateLinkConfiguration          *PrivateLinkClusterConfiguration
+	secretAccessKey                   string
+	subnetIDs                         []string
+	tags                              map[string]string
+	privateLink                       bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -136,12 +139,35 @@ func (o *AWS) GetAccountID() (value string, ok bool) {
 	return
 }
 
+// AdditionalComputeSecurityGroupIds returns the value of the 'additional_compute_security_group_ids' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Additional AWS Security Groups to be added to default worker (compute) machine pool.
+func (o *AWS) AdditionalComputeSecurityGroupIds() []string {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.additionalComputeSecurityGroupIds
+	}
+	return nil
+}
+
+// GetAdditionalComputeSecurityGroupIds returns the value of the 'additional_compute_security_group_ids' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Additional AWS Security Groups to be added to default worker (compute) machine pool.
+func (o *AWS) GetAdditionalComputeSecurityGroupIds() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.additionalComputeSecurityGroupIds
+	}
+	return
+}
+
 // AuditLog returns the value of the 'audit_log' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Audit log forwarding configuration
 func (o *AWS) AuditLog() *AuditLog {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.auditLog
 	}
 	return nil
@@ -152,7 +178,7 @@ func (o *AWS) AuditLog() *AuditLog {
 //
 // Audit log forwarding configuration
 func (o *AWS) GetAuditLog() (value *AuditLog, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.auditLog
 	}
@@ -164,7 +190,7 @@ func (o *AWS) GetAuditLog() (value *AuditLog, ok bool) {
 //
 // BillingAccountID is the account used for billing subscriptions purchased via the marketplace
 func (o *AWS) BillingAccountID() string {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.billingAccountID
 	}
 	return ""
@@ -175,7 +201,7 @@ func (o *AWS) BillingAccountID() string {
 //
 // BillingAccountID is the account used for billing subscriptions purchased via the marketplace
 func (o *AWS) GetBillingAccountID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.billingAccountID
 	}
@@ -187,7 +213,7 @@ func (o *AWS) GetBillingAccountID() (value string, ok bool) {
 //
 // Which Ec2MetadataHttpTokens to use for metadata service interaction options for EC2 instances
 func (o *AWS) Ec2MetadataHttpTokens() Ec2MetadataHttpTokens {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.ec2MetadataHttpTokens
 	}
 	return Ec2MetadataHttpTokens("")
@@ -198,7 +224,7 @@ func (o *AWS) Ec2MetadataHttpTokens() Ec2MetadataHttpTokens {
 //
 // Which Ec2MetadataHttpTokens to use for metadata service interaction options for EC2 instances
 func (o *AWS) GetEc2MetadataHttpTokens() (value Ec2MetadataHttpTokens, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.ec2MetadataHttpTokens
 	}
@@ -210,7 +236,7 @@ func (o *AWS) GetEc2MetadataHttpTokens() (value Ec2MetadataHttpTokens, ok bool) 
 //
 // Related etcd encryption configuration
 func (o *AWS) EtcdEncryption() *AwsEtcdEncryption {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&256 != 0 {
 		return o.etcdEncryption
 	}
 	return nil
@@ -221,9 +247,55 @@ func (o *AWS) EtcdEncryption() *AwsEtcdEncryption {
 //
 // Related etcd encryption configuration
 func (o *AWS) GetEtcdEncryption() (value *AwsEtcdEncryption, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&256 != 0
 	if ok {
 		value = o.etcdEncryption
+	}
+	return
+}
+
+// PrivateHostedZoneID returns the value of the 'private_hosted_zone_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// ID of private hosted zone.
+func (o *AWS) PrivateHostedZoneID() string {
+	if o != nil && o.bitmap_&512 != 0 {
+		return o.privateHostedZoneID
+	}
+	return ""
+}
+
+// GetPrivateHostedZoneID returns the value of the 'private_hosted_zone_ID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// ID of private hosted zone.
+func (o *AWS) GetPrivateHostedZoneID() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&512 != 0
+	if ok {
+		value = o.privateHostedZoneID
+	}
+	return
+}
+
+// PrivateHostedZoneRoleARN returns the value of the 'private_hosted_zone_role_ARN' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Role ARN for private hosted zone.
+func (o *AWS) PrivateHostedZoneRoleARN() string {
+	if o != nil && o.bitmap_&1024 != 0 {
+		return o.privateHostedZoneRoleARN
+	}
+	return ""
+}
+
+// GetPrivateHostedZoneRoleARN returns the value of the 'private_hosted_zone_role_ARN' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Role ARN for private hosted zone.
+func (o *AWS) GetPrivateHostedZoneRoleARN() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&1024 != 0
+	if ok {
+		value = o.privateHostedZoneRoleARN
 	}
 	return
 }
@@ -233,7 +305,7 @@ func (o *AWS) GetEtcdEncryption() (value *AwsEtcdEncryption, ok bool) {
 //
 // Sets cluster to be inaccessible externally.
 func (o *AWS) PrivateLink() bool {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.privateLink
 	}
 	return false
@@ -244,7 +316,7 @@ func (o *AWS) PrivateLink() bool {
 //
 // Sets cluster to be inaccessible externally.
 func (o *AWS) GetPrivateLink() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.privateLink
 	}
@@ -256,7 +328,7 @@ func (o *AWS) GetPrivateLink() (value bool, ok bool) {
 //
 // Manages additional configuration for Private Links.
 func (o *AWS) PrivateLinkConfiguration() *PrivateLinkClusterConfiguration {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.privateLinkConfiguration
 	}
 	return nil
@@ -267,7 +339,7 @@ func (o *AWS) PrivateLinkConfiguration() *PrivateLinkClusterConfiguration {
 //
 // Manages additional configuration for Private Links.
 func (o *AWS) GetPrivateLinkConfiguration() (value *PrivateLinkClusterConfiguration, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.privateLinkConfiguration
 	}
@@ -279,7 +351,7 @@ func (o *AWS) GetPrivateLinkConfiguration() (value *PrivateLinkClusterConfigurat
 //
 // AWS secret access key.
 func (o *AWS) SecretAccessKey() string {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.secretAccessKey
 	}
 	return ""
@@ -290,7 +362,7 @@ func (o *AWS) SecretAccessKey() string {
 //
 // AWS secret access key.
 func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.secretAccessKey
 	}
@@ -302,7 +374,7 @@ func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
 //
 // The subnet ids to be used when installing the cluster.
 func (o *AWS) SubnetIDs() []string {
-	if o != nil && o.bitmap_&2048 != 0 {
+	if o != nil && o.bitmap_&16384 != 0 {
 		return o.subnetIDs
 	}
 	return nil
@@ -313,7 +385,7 @@ func (o *AWS) SubnetIDs() []string {
 //
 // The subnet ids to be used when installing the cluster.
 func (o *AWS) GetSubnetIDs() (value []string, ok bool) {
-	ok = o != nil && o.bitmap_&2048 != 0
+	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.subnetIDs
 	}
@@ -325,7 +397,7 @@ func (o *AWS) GetSubnetIDs() (value []string, ok bool) {
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates
 func (o *AWS) Tags() map[string]string {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&32768 != 0 {
 		return o.tags
 	}
 	return nil
@@ -336,7 +408,7 @@ func (o *AWS) Tags() map[string]string {
 //
 // Optional keys and values that the installer will add as tags to all AWS resources it creates
 func (o *AWS) GetTags() (value map[string]string, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&32768 != 0
 	if ok {
 		value = o.tags
 	}

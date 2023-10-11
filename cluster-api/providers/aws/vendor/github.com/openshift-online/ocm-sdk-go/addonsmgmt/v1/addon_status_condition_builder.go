@@ -24,6 +24,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1
 // Representation of an addon status condition type.
 type AddonStatusConditionBuilder struct {
 	bitmap_     uint32
+	message     string
 	reason      string
 	statusType  AddonStatusConditionType
 	statusValue AddonStatusConditionValue
@@ -39,10 +40,17 @@ func (b *AddonStatusConditionBuilder) Empty() bool {
 	return b == nil || b.bitmap_ == 0
 }
 
+// Message sets the value of the 'message' attribute to the given value.
+func (b *AddonStatusConditionBuilder) Message(value string) *AddonStatusConditionBuilder {
+	b.message = value
+	b.bitmap_ |= 1
+	return b
+}
+
 // Reason sets the value of the 'reason' attribute to the given value.
 func (b *AddonStatusConditionBuilder) Reason(value string) *AddonStatusConditionBuilder {
 	b.reason = value
-	b.bitmap_ |= 1
+	b.bitmap_ |= 2
 	return b
 }
 
@@ -51,7 +59,7 @@ func (b *AddonStatusConditionBuilder) Reason(value string) *AddonStatusCondition
 // Representation of an addon status condition type field.
 func (b *AddonStatusConditionBuilder) StatusType(value AddonStatusConditionType) *AddonStatusConditionBuilder {
 	b.statusType = value
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
 	return b
 }
 
@@ -60,7 +68,7 @@ func (b *AddonStatusConditionBuilder) StatusType(value AddonStatusConditionType)
 // Representation of an addon status condition value field.
 func (b *AddonStatusConditionBuilder) StatusValue(value AddonStatusConditionValue) *AddonStatusConditionBuilder {
 	b.statusValue = value
-	b.bitmap_ |= 4
+	b.bitmap_ |= 8
 	return b
 }
 
@@ -70,6 +78,7 @@ func (b *AddonStatusConditionBuilder) Copy(object *AddonStatusCondition) *AddonS
 		return b
 	}
 	b.bitmap_ = object.bitmap_
+	b.message = object.message
 	b.reason = object.reason
 	b.statusType = object.statusType
 	b.statusValue = object.statusValue
@@ -80,6 +89,7 @@ func (b *AddonStatusConditionBuilder) Copy(object *AddonStatusCondition) *AddonS
 func (b *AddonStatusConditionBuilder) Build() (object *AddonStatusCondition, err error) {
 	object = new(AddonStatusCondition)
 	object.bitmap_ = b.bitmap_
+	object.message = b.message
 	object.reason = b.reason
 	object.statusType = b.statusType
 	object.statusValue = b.statusValue

@@ -24,9 +24,11 @@ type UpgradeType string
 
 const (
 	// Upgrade of OSD cluster, which will upgrade the cluster's control plane, and all the node pools.
-	UpgradeTypeOSD UpgradeType = "osd"
+	UpgradeTypeOSD UpgradeType = "OSD"
+	// Upgrade of an AddOn
+	UpgradeTypeAddOn UpgradeType = "ADDON"
 	// Control plane upgrade, relevant only for hosted control plane clusters.
-	UpgradeTypeControlPlane UpgradeType = "control_plane"
+	UpgradeTypeControlPlane UpgradeType = "ControlPlane"
 	// Node pool upgrade, relevant only for hosted control plane clusters.
-	UpgradeTypeNodePool UpgradeType = "node_pool"
+	UpgradeTypeNodePool UpgradeType = "NodePool"
 )

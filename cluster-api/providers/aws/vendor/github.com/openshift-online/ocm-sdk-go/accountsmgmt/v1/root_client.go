@@ -70,6 +70,16 @@ func (c *Client) Accounts() *AccountsClient {
 	)
 }
 
+// BillingModels returns the target 'billing_models' resource.
+//
+// Reference to the resource that manages billing models.
+func (c *Client) BillingModels() *BillingModelsClient {
+	return NewBillingModelsClient(
+		c.transport,
+		path.Join(c.path, "billing_models"),
+	)
+}
+
 // Capabilities returns the target 'capabilities' resource.
 //
 // Reference to the resource that manages the collection of capabilities.

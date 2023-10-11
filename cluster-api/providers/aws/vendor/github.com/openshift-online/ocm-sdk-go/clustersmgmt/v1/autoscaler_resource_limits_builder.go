@@ -22,6 +22,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // AutoscalerResourceLimitsBuilder contains the data and logic needed to build 'autoscaler_resource_limits' objects.
 type AutoscalerResourceLimitsBuilder struct {
 	bitmap_       uint32
+	gpus          []*AutoscalerResourceLimitsGPULimitBuilder
 	cores         *ResourceRangeBuilder
 	maxNodesTotal int
 	memory        *ResourceRangeBuilder
@@ -37,13 +38,21 @@ func (b *AutoscalerResourceLimitsBuilder) Empty() bool {
 	return b == nil || b.bitmap_ == 0
 }
 
+// GPUS sets the value of the 'GPUS' attribute to the given values.
+func (b *AutoscalerResourceLimitsBuilder) GPUS(values ...*AutoscalerResourceLimitsGPULimitBuilder) *AutoscalerResourceLimitsBuilder {
+	b.gpus = make([]*AutoscalerResourceLimitsGPULimitBuilder, len(values))
+	copy(b.gpus, values)
+	b.bitmap_ |= 1
+	return b
+}
+
 // Cores sets the value of the 'cores' attribute to the given value.
 func (b *AutoscalerResourceLimitsBuilder) Cores(value *ResourceRangeBuilder) *AutoscalerResourceLimitsBuilder {
 	b.cores = value
 	if value != nil {
-		b.bitmap_ |= 1
+		b.bitmap_ |= 2
 	} else {
-		b.bitmap_ &^= 1
+		b.bitmap_ &^= 2
 	}
 	return b
 }
@@ -51,7 +60,7 @@ func (b *AutoscalerResourceLimitsBuilder) Cores(value *ResourceRangeBuilder) *Au
 // MaxNodesTotal sets the value of the 'max_nodes_total' attribute to the given value.
 func (b *AutoscalerResourceLimitsBuilder) MaxNodesTotal(value int) *AutoscalerResourceLimitsBuilder {
 	b.maxNodesTotal = value
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
 	return b
 }
 
@@ -59,9 +68,9 @@ func (b *AutoscalerResourceLimitsBuilder) MaxNodesTotal(value int) *AutoscalerRe
 func (b *AutoscalerResourceLimitsBuilder) Memory(value *ResourceRangeBuilder) *AutoscalerResourceLimitsBuilder {
 	b.memory = value
 	if value != nil {
-		b.bitmap_ |= 4
+		b.bitmap_ |= 8
 	} else {
-		b.bitmap_ &^= 4
+		b.bitmap_ &^= 8
 	}
 	return b
 }
@@ -72,6 +81,14 @@ func (b *AutoscalerResourceLimitsBuilder) Copy(object *AutoscalerResourceLimits)
 		return b
 	}
 	b.bitmap_ = object.bitmap_
+	if object.gpus != nil {
+		b.gpus = make([]*AutoscalerResourceLimitsGPULimitBuilder, len(object.gpus))
+		for i, v := range object.gpus {
+			b.gpus[i] = NewAutoscalerResourceLimitsGPULimit().Copy(v)
+		}
+	} else {
+		b.gpus = nil
+	}
 	if object.cores != nil {
 		b.cores = NewResourceRange().Copy(object.cores)
 	} else {
@@ -90,6 +107,15 @@ func (b *AutoscalerResourceLimitsBuilder) Copy(object *AutoscalerResourceLimits)
 func (b *AutoscalerResourceLimitsBuilder) Build() (object *AutoscalerResourceLimits, err error) {
 	object = new(AutoscalerResourceLimits)
 	object.bitmap_ = b.bitmap_
+	if b.gpus != nil {
+		object.gpus = make([]*AutoscalerResourceLimitsGPULimit, len(b.gpus))
+		for i, v := range b.gpus {
+			object.gpus[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	if b.cores != nil {
 		object.cores, err = b.cores.Build()
 		if err != nil {

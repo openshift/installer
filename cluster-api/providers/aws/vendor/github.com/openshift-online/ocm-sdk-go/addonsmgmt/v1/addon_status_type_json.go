@@ -90,6 +90,15 @@ func writeAddonStatus(object *AddonStatus, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("status_conditions")
 		writeAddonStatusConditionList(object.statusConditions, stream)
+		count++
+	}
+	present_ = object.bitmap_&64 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("version")
+		stream.WriteString(object.version)
 	}
 	stream.WriteObjectEnd()
 }
@@ -138,6 +147,10 @@ func readAddonStatus(iterator *jsoniter.Iterator) *AddonStatus {
 			value := readAddonStatusConditionList(iterator)
 			object.statusConditions = value
 			object.bitmap_ |= 32
+		case "version":
+			value := iterator.ReadString()
+			object.version = value
+			object.bitmap_ |= 64
 		default:
 			iterator.ReadAny()
 		}

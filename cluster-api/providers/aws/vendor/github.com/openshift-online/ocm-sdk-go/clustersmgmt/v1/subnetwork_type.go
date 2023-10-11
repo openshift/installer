@@ -24,10 +24,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // AWS subnetwork object to be used while installing a cluster
 type Subnetwork struct {
 	bitmap_          uint32
+	cidrBlock        string
 	availabilityZone string
 	name             string
 	subnetID         string
 	public           bool
+	redHatManaged    bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -35,12 +37,35 @@ func (o *Subnetwork) Empty() bool {
 	return o == nil || o.bitmap_ == 0
 }
 
+// CIDRBlock returns the value of the 'CIDR_block' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The CIDR Block of the subnet.
+func (o *Subnetwork) CIDRBlock() string {
+	if o != nil && o.bitmap_&1 != 0 {
+		return o.cidrBlock
+	}
+	return ""
+}
+
+// GetCIDRBlock returns the value of the 'CIDR_block' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The CIDR Block of the subnet.
+func (o *Subnetwork) GetCIDRBlock() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&1 != 0
+	if ok {
+		value = o.cidrBlock
+	}
+	return
+}
+
 // AvailabilityZone returns the value of the 'availability_zone' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// The availability zone to which the subnet is related
+// The availability zone to which the subnet is related.
 func (o *Subnetwork) AvailabilityZone() string {
-	if o != nil && o.bitmap_&1 != 0 {
+	if o != nil && o.bitmap_&2 != 0 {
 		return o.availabilityZone
 	}
 	return ""
@@ -49,9 +74,9 @@ func (o *Subnetwork) AvailabilityZone() string {
 // GetAvailabilityZone returns the value of the 'availability_zone' attribute and
 // a flag indicating if the attribute has a value.
 //
-// The availability zone to which the subnet is related
+// The availability zone to which the subnet is related.
 func (o *Subnetwork) GetAvailabilityZone() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&1 != 0
+	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
 		value = o.availabilityZone
 	}
@@ -61,9 +86,9 @@ func (o *Subnetwork) GetAvailabilityZone() (value string, ok bool) {
 // Name returns the value of the 'name' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Name of the subnet according to its `Name` tag on AWS
+// Name of the subnet according to its `Name` tag on AWS.
 func (o *Subnetwork) Name() string {
-	if o != nil && o.bitmap_&2 != 0 {
+	if o != nil && o.bitmap_&4 != 0 {
 		return o.name
 	}
 	return ""
@@ -72,9 +97,9 @@ func (o *Subnetwork) Name() string {
 // GetName returns the value of the 'name' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Name of the subnet according to its `Name` tag on AWS
+// Name of the subnet according to its `Name` tag on AWS.
 func (o *Subnetwork) GetName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2 != 0
+	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
 		value = o.name
 	}
@@ -84,9 +109,9 @@ func (o *Subnetwork) GetName() (value string, ok bool) {
 // Public returns the value of the 'public' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Whether it is a public subnet
+// Whether or not it is a public subnet.
 func (o *Subnetwork) Public() bool {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.public
 	}
 	return false
@@ -95,11 +120,34 @@ func (o *Subnetwork) Public() bool {
 // GetPublic returns the value of the 'public' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Whether it is a public subnet
+// Whether or not it is a public subnet.
 func (o *Subnetwork) GetPublic() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.public
+	}
+	return
+}
+
+// RedHatManaged returns the value of the 'red_hat_managed' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// If the resource is RH managed.
+func (o *Subnetwork) RedHatManaged() bool {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.redHatManaged
+	}
+	return false
+}
+
+// GetRedHatManaged returns the value of the 'red_hat_managed' attribute and
+// a flag indicating if the attribute has a value.
+//
+// If the resource is RH managed.
+func (o *Subnetwork) GetRedHatManaged() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.redHatManaged
 	}
 	return
 }
@@ -107,9 +155,9 @@ func (o *Subnetwork) GetPublic() (value bool, ok bool) {
 // SubnetID returns the value of the 'subnet_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// The subnet id to be used while installing a cluster
+// The subnet ID to be used while installing a cluster.
 func (o *Subnetwork) SubnetID() string {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.subnetID
 	}
 	return ""
@@ -118,9 +166,9 @@ func (o *Subnetwork) SubnetID() string {
 // GetSubnetID returns the value of the 'subnet_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// The subnet id to be used while installing a cluster
+// The subnet ID to be used while installing a cluster.
 func (o *Subnetwork) GetSubnetID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.subnetID
 	}

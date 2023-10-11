@@ -23,11 +23,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Description of a cloud provider virtual private cloud.
 type CloudVPC struct {
-	bitmap_    uint32
-	awsSubnets []*Subnetwork
-	id         string
-	name       string
-	subnets    []string
+	bitmap_           uint32
+	awsSecurityGroups []*SecurityGroup
+	awsSubnets        []*Subnetwork
+	cidrBlock         string
+	id                string
+	name              string
+	subnets           []string
+	redHatManaged     bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -35,12 +38,35 @@ func (o *CloudVPC) Empty() bool {
 	return o == nil || o.bitmap_ == 0
 }
 
+// AWSSecurityGroups returns the value of the 'AWS_security_groups' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of AWS security groups with details.
+func (o *CloudVPC) AWSSecurityGroups() []*SecurityGroup {
+	if o != nil && o.bitmap_&1 != 0 {
+		return o.awsSecurityGroups
+	}
+	return nil
+}
+
+// GetAWSSecurityGroups returns the value of the 'AWS_security_groups' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of AWS security groups with details.
+func (o *CloudVPC) GetAWSSecurityGroups() (value []*SecurityGroup, ok bool) {
+	ok = o != nil && o.bitmap_&1 != 0
+	if ok {
+		value = o.awsSecurityGroups
+	}
+	return
+}
+
 // AWSSubnets returns the value of the 'AWS_subnets' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// List of subnetworks
+// List of AWS subnetworks with details.
 func (o *CloudVPC) AWSSubnets() []*Subnetwork {
-	if o != nil && o.bitmap_&1 != 0 {
+	if o != nil && o.bitmap_&2 != 0 {
 		return o.awsSubnets
 	}
 	return nil
@@ -49,11 +75,34 @@ func (o *CloudVPC) AWSSubnets() []*Subnetwork {
 // GetAWSSubnets returns the value of the 'AWS_subnets' attribute and
 // a flag indicating if the attribute has a value.
 //
-// List of subnetworks
+// List of AWS subnetworks with details.
 func (o *CloudVPC) GetAWSSubnets() (value []*Subnetwork, ok bool) {
-	ok = o != nil && o.bitmap_&1 != 0
+	ok = o != nil && o.bitmap_&2 != 0
 	if ok {
 		value = o.awsSubnets
+	}
+	return
+}
+
+// CIDRBlock returns the value of the 'CIDR_block' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// CIDR block of the virtual private cloud.
+func (o *CloudVPC) CIDRBlock() string {
+	if o != nil && o.bitmap_&4 != 0 {
+		return o.cidrBlock
+	}
+	return ""
+}
+
+// GetCIDRBlock returns the value of the 'CIDR_block' attribute and
+// a flag indicating if the attribute has a value.
+//
+// CIDR block of the virtual private cloud.
+func (o *CloudVPC) GetCIDRBlock() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&4 != 0
+	if ok {
+		value = o.cidrBlock
 	}
 	return
 }
@@ -61,9 +110,9 @@ func (o *CloudVPC) GetAWSSubnets() (value []*Subnetwork, ok bool) {
 // ID returns the value of the 'ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// ID of virtual private cloud
+// ID of virtual private cloud.
 func (o *CloudVPC) ID() string {
-	if o != nil && o.bitmap_&2 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.id
 	}
 	return ""
@@ -72,9 +121,9 @@ func (o *CloudVPC) ID() string {
 // GetID returns the value of the 'ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// ID of virtual private cloud
+// ID of virtual private cloud.
 func (o *CloudVPC) GetID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.id
 	}
@@ -84,9 +133,9 @@ func (o *CloudVPC) GetID() (value string, ok bool) {
 // Name returns the value of the 'name' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Name of virtual private cloud according to its `Name` tag on AWS
+// Name of virtual private cloud according to its `Name` tag on AWS.
 func (o *CloudVPC) Name() string {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.name
 	}
 	return ""
@@ -95,11 +144,34 @@ func (o *CloudVPC) Name() string {
 // GetName returns the value of the 'name' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Name of virtual private cloud according to its `Name` tag on AWS
+// Name of virtual private cloud according to its `Name` tag on AWS.
 func (o *CloudVPC) GetName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.name
+	}
+	return
+}
+
+// RedHatManaged returns the value of the 'red_hat_managed' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// If the resource is RH managed.
+func (o *CloudVPC) RedHatManaged() bool {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.redHatManaged
+	}
+	return false
+}
+
+// GetRedHatManaged returns the value of the 'red_hat_managed' attribute and
+// a flag indicating if the attribute has a value.
+//
+// If the resource is RH managed.
+func (o *CloudVPC) GetRedHatManaged() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.redHatManaged
 	}
 	return
 }
@@ -109,7 +181,7 @@ func (o *CloudVPC) GetName() (value string, ok bool) {
 //
 // List of subnets used by the virtual private cloud.
 func (o *CloudVPC) Subnets() []string {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.subnets
 	}
 	return nil
@@ -120,7 +192,7 @@ func (o *CloudVPC) Subnets() []string {
 //
 // List of subnets used by the virtual private cloud.
 func (o *CloudVPC) GetSubnets() (value []string, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.subnets
 	}

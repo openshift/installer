@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1
 // who's life cycle is controlled by the addon umbrella operator.
 type AddonSubOperatorBuilder struct {
 	bitmap_           uint32
+	addon             *AddonBuilder
 	operatorName      string
 	operatorNamespace string
 	enabled           bool
@@ -40,24 +41,37 @@ func (b *AddonSubOperatorBuilder) Empty() bool {
 	return b == nil || b.bitmap_ == 0
 }
 
+// Addon sets the value of the 'addon' attribute to the given value.
+//
+// Representation of an addon that can be installed in a cluster.
+func (b *AddonSubOperatorBuilder) Addon(value *AddonBuilder) *AddonSubOperatorBuilder {
+	b.addon = value
+	if value != nil {
+		b.bitmap_ |= 1
+	} else {
+		b.bitmap_ &^= 1
+	}
+	return b
+}
+
 // Enabled sets the value of the 'enabled' attribute to the given value.
 func (b *AddonSubOperatorBuilder) Enabled(value bool) *AddonSubOperatorBuilder {
 	b.enabled = value
-	b.bitmap_ |= 1
+	b.bitmap_ |= 2
 	return b
 }
 
 // OperatorName sets the value of the 'operator_name' attribute to the given value.
 func (b *AddonSubOperatorBuilder) OperatorName(value string) *AddonSubOperatorBuilder {
 	b.operatorName = value
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
 	return b
 }
 
 // OperatorNamespace sets the value of the 'operator_namespace' attribute to the given value.
 func (b *AddonSubOperatorBuilder) OperatorNamespace(value string) *AddonSubOperatorBuilder {
 	b.operatorNamespace = value
-	b.bitmap_ |= 4
+	b.bitmap_ |= 8
 	return b
 }
 
@@ -67,6 +81,11 @@ func (b *AddonSubOperatorBuilder) Copy(object *AddonSubOperator) *AddonSubOperat
 		return b
 	}
 	b.bitmap_ = object.bitmap_
+	if object.addon != nil {
+		b.addon = NewAddon().Copy(object.addon)
+	} else {
+		b.addon = nil
+	}
 	b.enabled = object.enabled
 	b.operatorName = object.operatorName
 	b.operatorNamespace = object.operatorNamespace
@@ -77,6 +96,12 @@ func (b *AddonSubOperatorBuilder) Copy(object *AddonSubOperator) *AddonSubOperat
 func (b *AddonSubOperatorBuilder) Build() (object *AddonSubOperator, err error) {
 	object = new(AddonSubOperator)
 	object.bitmap_ = b.bitmap_
+	if b.addon != nil {
+		object.addon, err = b.addon.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.enabled = b.enabled
 	object.operatorName = b.operatorName
 	object.operatorNamespace = b.operatorNamespace

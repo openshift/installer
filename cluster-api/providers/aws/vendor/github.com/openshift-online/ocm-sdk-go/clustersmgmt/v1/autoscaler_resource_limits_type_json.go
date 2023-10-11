@@ -42,7 +42,16 @@ func writeAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
-	present_ = object.bitmap_&1 != 0 && object.cores != nil
+	present_ = object.bitmap_&1 != 0 && object.gpus != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("gpus")
+		writeAutoscalerResourceLimitsGPULimitList(object.gpus, stream)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0 && object.cores != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -51,7 +60,7 @@ func writeAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 		writeResourceRange(object.cores, stream)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0
+	present_ = object.bitmap_&4 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -60,7 +69,7 @@ func writeAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 		stream.WriteInt(object.maxNodesTotal)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0 && object.memory != nil
+	present_ = object.bitmap_&8 != 0 && object.memory != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -92,18 +101,22 @@ func readAutoscalerResourceLimits(iterator *jsoniter.Iterator) *AutoscalerResour
 			break
 		}
 		switch field {
+		case "gpus":
+			value := readAutoscalerResourceLimitsGPULimitList(iterator)
+			object.gpus = value
+			object.bitmap_ |= 1
 		case "cores":
 			value := readResourceRange(iterator)
 			object.cores = value
-			object.bitmap_ |= 1
+			object.bitmap_ |= 2
 		case "max_nodes_total":
 			value := iterator.ReadInt()
 			object.maxNodesTotal = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		case "memory":
 			value := readResourceRange(iterator)
 			object.memory = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 8
 		default:
 			iterator.ReadAny()
 		}

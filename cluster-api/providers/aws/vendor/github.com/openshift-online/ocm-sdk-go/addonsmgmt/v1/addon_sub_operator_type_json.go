@@ -42,7 +42,16 @@ func writeAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
-	present_ = object.bitmap_&1 != 0
+	present_ = object.bitmap_&1 != 0 && object.addon != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("addon")
+		writeAddon(object.addon, stream)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -51,7 +60,7 @@ func writeAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
 		stream.WriteBool(object.enabled)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0
+	present_ = object.bitmap_&4 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -60,7 +69,7 @@ func writeAddonSubOperator(object *AddonSubOperator, stream *jsoniter.Stream) {
 		stream.WriteString(object.operatorName)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0
+	present_ = object.bitmap_&8 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -92,18 +101,22 @@ func readAddonSubOperator(iterator *jsoniter.Iterator) *AddonSubOperator {
 			break
 		}
 		switch field {
+		case "addon":
+			value := readAddon(iterator)
+			object.addon = value
+			object.bitmap_ |= 1
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = value
-			object.bitmap_ |= 1
+			object.bitmap_ |= 2
 		case "operator_name":
 			value := iterator.ReadString()
 			object.operatorName = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		case "operator_namespace":
 			value := iterator.ReadString()
 			object.operatorNamespace = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 8
 		default:
 			iterator.ReadAny()
 		}

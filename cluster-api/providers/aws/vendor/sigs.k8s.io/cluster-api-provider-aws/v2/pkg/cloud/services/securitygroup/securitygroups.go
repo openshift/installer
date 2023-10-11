@@ -660,9 +660,18 @@ func (s *Service) getDefaultSecurityGroup(role infrav1.SecurityGroupRole) *ec2.S
 
 func (s *Service) getSecurityGroupTagParams(name, id string, role infrav1.SecurityGroupRole) infrav1.BuildParams {
 	additional := s.scope.AdditionalTags()
+
+	// Handle the cloud provider tag.
+	cloudProviderTag := infrav1.ClusterAWSCloudProviderTagKey(s.scope.Name())
 	if role == infrav1.SecurityGroupLB {
-		additional[infrav1.ClusterAWSCloudProviderTagKey(s.scope.Name())] = string(infrav1.ResourceLifecycleOwned)
+		additional[cloudProviderTag] = string(infrav1.ResourceLifecycleOwned)
+	} else if _, ok := additional[cloudProviderTag]; ok {
+		// If the cloud provider tag is set in more than one security group,
+		// the CCM will not be able to determine which security group to use;
+		// remove the tag from all security groups except the load balancer security group.
+		delete(additional, cloudProviderTag)
 	}
+
 	return infrav1.BuildParams{
 		ClusterName: s.scope.Name(),
 		Lifecycle:   infrav1.ResourceLifecycleOwned,

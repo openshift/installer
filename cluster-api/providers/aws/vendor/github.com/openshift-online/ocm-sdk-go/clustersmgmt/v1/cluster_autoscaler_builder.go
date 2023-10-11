@@ -23,15 +23,19 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Cluster-wide autoscaling configuration.
 type ClusterAutoscalerBuilder struct {
-	bitmap_                   uint32
-	id                        string
-	href                      string
-	logVerbosity              int
-	maxPodGracePeriod         int
-	resourceLimits            *AutoscalerResourceLimitsBuilder
-	scaleDown                 *AutoscalerScaleDownConfigBuilder
-	balanceSimilarNodeGroups  bool
-	skipNodesWithLocalStorage bool
+	bitmap_                     uint32
+	id                          string
+	href                        string
+	balancingIgnoredLabels      []string
+	logVerbosity                int
+	maxNodeProvisionTime        string
+	maxPodGracePeriod           int
+	podPriorityThreshold        int
+	resourceLimits              *AutoscalerResourceLimitsBuilder
+	scaleDown                   *AutoscalerScaleDownConfigBuilder
+	balanceSimilarNodeGroups    bool
+	ignoreDaemonsetsUtilization bool
+	skipNodesWithLocalStorage   bool
 }
 
 // NewClusterAutoscaler creates a new builder of 'cluster_autoscaler' objects.
@@ -71,17 +75,46 @@ func (b *ClusterAutoscalerBuilder) BalanceSimilarNodeGroups(value bool) *Cluster
 	return b
 }
 
+// BalancingIgnoredLabels sets the value of the 'balancing_ignored_labels' attribute to the given values.
+func (b *ClusterAutoscalerBuilder) BalancingIgnoredLabels(values ...string) *ClusterAutoscalerBuilder {
+	b.balancingIgnoredLabels = make([]string, len(values))
+	copy(b.balancingIgnoredLabels, values)
+	b.bitmap_ |= 16
+	return b
+}
+
+// IgnoreDaemonsetsUtilization sets the value of the 'ignore_daemonsets_utilization' attribute to the given value.
+func (b *ClusterAutoscalerBuilder) IgnoreDaemonsetsUtilization(value bool) *ClusterAutoscalerBuilder {
+	b.ignoreDaemonsetsUtilization = value
+	b.bitmap_ |= 32
+	return b
+}
+
 // LogVerbosity sets the value of the 'log_verbosity' attribute to the given value.
 func (b *ClusterAutoscalerBuilder) LogVerbosity(value int) *ClusterAutoscalerBuilder {
 	b.logVerbosity = value
-	b.bitmap_ |= 16
+	b.bitmap_ |= 64
+	return b
+}
+
+// MaxNodeProvisionTime sets the value of the 'max_node_provision_time' attribute to the given value.
+func (b *ClusterAutoscalerBuilder) MaxNodeProvisionTime(value string) *ClusterAutoscalerBuilder {
+	b.maxNodeProvisionTime = value
+	b.bitmap_ |= 128
 	return b
 }
 
 // MaxPodGracePeriod sets the value of the 'max_pod_grace_period' attribute to the given value.
 func (b *ClusterAutoscalerBuilder) MaxPodGracePeriod(value int) *ClusterAutoscalerBuilder {
 	b.maxPodGracePeriod = value
-	b.bitmap_ |= 32
+	b.bitmap_ |= 256
+	return b
+}
+
+// PodPriorityThreshold sets the value of the 'pod_priority_threshold' attribute to the given value.
+func (b *ClusterAutoscalerBuilder) PodPriorityThreshold(value int) *ClusterAutoscalerBuilder {
+	b.podPriorityThreshold = value
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -89,9 +122,9 @@ func (b *ClusterAutoscalerBuilder) MaxPodGracePeriod(value int) *ClusterAutoscal
 func (b *ClusterAutoscalerBuilder) ResourceLimits(value *AutoscalerResourceLimitsBuilder) *ClusterAutoscalerBuilder {
 	b.resourceLimits = value
 	if value != nil {
-		b.bitmap_ |= 64
+		b.bitmap_ |= 1024
 	} else {
-		b.bitmap_ &^= 64
+		b.bitmap_ &^= 1024
 	}
 	return b
 }
@@ -100,9 +133,9 @@ func (b *ClusterAutoscalerBuilder) ResourceLimits(value *AutoscalerResourceLimit
 func (b *ClusterAutoscalerBuilder) ScaleDown(value *AutoscalerScaleDownConfigBuilder) *ClusterAutoscalerBuilder {
 	b.scaleDown = value
 	if value != nil {
-		b.bitmap_ |= 128
+		b.bitmap_ |= 2048
 	} else {
-		b.bitmap_ &^= 128
+		b.bitmap_ &^= 2048
 	}
 	return b
 }
@@ -110,7 +143,7 @@ func (b *ClusterAutoscalerBuilder) ScaleDown(value *AutoscalerScaleDownConfigBui
 // SkipNodesWithLocalStorage sets the value of the 'skip_nodes_with_local_storage' attribute to the given value.
 func (b *ClusterAutoscalerBuilder) SkipNodesWithLocalStorage(value bool) *ClusterAutoscalerBuilder {
 	b.skipNodesWithLocalStorage = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 4096
 	return b
 }
 
@@ -123,8 +156,17 @@ func (b *ClusterAutoscalerBuilder) Copy(object *ClusterAutoscaler) *ClusterAutos
 	b.id = object.id
 	b.href = object.href
 	b.balanceSimilarNodeGroups = object.balanceSimilarNodeGroups
+	if object.balancingIgnoredLabels != nil {
+		b.balancingIgnoredLabels = make([]string, len(object.balancingIgnoredLabels))
+		copy(b.balancingIgnoredLabels, object.balancingIgnoredLabels)
+	} else {
+		b.balancingIgnoredLabels = nil
+	}
+	b.ignoreDaemonsetsUtilization = object.ignoreDaemonsetsUtilization
 	b.logVerbosity = object.logVerbosity
+	b.maxNodeProvisionTime = object.maxNodeProvisionTime
 	b.maxPodGracePeriod = object.maxPodGracePeriod
+	b.podPriorityThreshold = object.podPriorityThreshold
 	if object.resourceLimits != nil {
 		b.resourceLimits = NewAutoscalerResourceLimits().Copy(object.resourceLimits)
 	} else {
@@ -146,8 +188,15 @@ func (b *ClusterAutoscalerBuilder) Build() (object *ClusterAutoscaler, err error
 	object.href = b.href
 	object.bitmap_ = b.bitmap_
 	object.balanceSimilarNodeGroups = b.balanceSimilarNodeGroups
+	if b.balancingIgnoredLabels != nil {
+		object.balancingIgnoredLabels = make([]string, len(b.balancingIgnoredLabels))
+		copy(object.balancingIgnoredLabels, b.balancingIgnoredLabels)
+	}
+	object.ignoreDaemonsetsUtilization = b.ignoreDaemonsetsUtilization
 	object.logVerbosity = b.logVerbosity
+	object.maxNodeProvisionTime = b.maxNodeProvisionTime
 	object.maxPodGracePeriod = b.maxPodGracePeriod
+	object.podPriorityThreshold = b.podPriorityThreshold
 	if b.resourceLimits != nil {
 		object.resourceLimits, err = b.resourceLimits.Build()
 		if err != nil {

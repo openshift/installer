@@ -58,6 +58,15 @@ func writeFeatureReviewRequest(object *FeatureReviewRequest, stream *jsoniter.St
 		}
 		stream.WriteObjectField("feature")
 		stream.WriteString(object.feature)
+		count++
+	}
+	present_ = object.bitmap_&4 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("organization_id")
+		stream.WriteString(object.organizationId)
 	}
 	stream.WriteObjectEnd()
 }
@@ -91,6 +100,10 @@ func readFeatureReviewRequest(iterator *jsoniter.Iterator) *FeatureReviewRequest
 			value := iterator.ReadString()
 			object.feature = value
 			object.bitmap_ |= 2
+		case "organization_id":
+			value := iterator.ReadString()
+			object.organizationId = value
+			object.bitmap_ |= 4
 		default:
 			iterator.ReadAny()
 		}

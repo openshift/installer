@@ -42,6 +42,8 @@ type AddonVersion struct {
 	availableUpgrades        []string
 	channel                  string
 	config                   *AddonConfig
+	metricsFederation        *MetricsFederation
+	monitoringStack          *MonitoringStack
 	parameters               []*AddonParameter
 	pullSecretName           string
 	requirements             []*AddonRequirement
@@ -222,12 +224,58 @@ func (o *AddonVersion) GetEnabled() (value bool, ok bool) {
 	return
 }
 
+// MetricsFederation returns the value of the 'metrics_federation' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Configuration parameters to be injected in the ServiceMonitor used for federation.
+func (o *AddonVersion) MetricsFederation() *MetricsFederation {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.metricsFederation
+	}
+	return nil
+}
+
+// GetMetricsFederation returns the value of the 'metrics_federation' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Configuration parameters to be injected in the ServiceMonitor used for federation.
+func (o *AddonVersion) GetMetricsFederation() (value *MetricsFederation, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.metricsFederation
+	}
+	return
+}
+
+// MonitoringStack returns the value of the 'monitoring_stack' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Configuration parameters which will determine the underlying configuration of the MonitoringStack CR.
+func (o *AddonVersion) MonitoringStack() *MonitoringStack {
+	if o != nil && o.bitmap_&512 != 0 {
+		return o.monitoringStack
+	}
+	return nil
+}
+
+// GetMonitoringStack returns the value of the 'monitoring_stack' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Configuration parameters which will determine the underlying configuration of the MonitoringStack CR.
+func (o *AddonVersion) GetMonitoringStack() (value *MonitoringStack, ok bool) {
+	ok = o != nil && o.bitmap_&512 != 0
+	if ok {
+		value = o.monitoringStack
+	}
+	return
+}
+
 // Parameters returns the value of the 'parameters' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // List of parameters for this addon version.
 func (o *AddonVersion) Parameters() []*AddonParameter {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&1024 != 0 {
 		return o.parameters
 	}
 	return nil
@@ -238,7 +286,7 @@ func (o *AddonVersion) Parameters() []*AddonParameter {
 //
 // List of parameters for this addon version.
 func (o *AddonVersion) GetParameters() (value []*AddonParameter, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&1024 != 0
 	if ok {
 		value = o.parameters
 	}
@@ -250,7 +298,7 @@ func (o *AddonVersion) GetParameters() (value []*AddonParameter, ok bool) {
 //
 // The pull secret name used for this addon version.
 func (o *AddonVersion) PullSecretName() string {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.pullSecretName
 	}
 	return ""
@@ -261,7 +309,7 @@ func (o *AddonVersion) PullSecretName() string {
 //
 // The pull secret name used for this addon version.
 func (o *AddonVersion) GetPullSecretName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.pullSecretName
 	}
@@ -273,7 +321,7 @@ func (o *AddonVersion) GetPullSecretName() (value string, ok bool) {
 //
 // List of requirements for this addon version.
 func (o *AddonVersion) Requirements() []*AddonRequirement {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.requirements
 	}
 	return nil
@@ -284,7 +332,7 @@ func (o *AddonVersion) Requirements() []*AddonRequirement {
 //
 // List of requirements for this addon version.
 func (o *AddonVersion) GetRequirements() (value []*AddonRequirement, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.requirements
 	}
@@ -296,7 +344,7 @@ func (o *AddonVersion) GetRequirements() (value []*AddonRequirement, ok bool) {
 //
 // The catalog source image for this addon version.
 func (o *AddonVersion) SourceImage() string {
-	if o != nil && o.bitmap_&2048 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.sourceImage
 	}
 	return ""
@@ -307,7 +355,7 @@ func (o *AddonVersion) SourceImage() string {
 //
 // The catalog source image for this addon version.
 func (o *AddonVersion) GetSourceImage() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2048 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.sourceImage
 	}
@@ -319,7 +367,7 @@ func (o *AddonVersion) GetSourceImage() (value string, ok bool) {
 //
 // List of sub operators for this addon version.
 func (o *AddonVersion) SubOperators() []*AddonSubOperator {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&16384 != 0 {
 		return o.subOperators
 	}
 	return nil
@@ -330,7 +378,7 @@ func (o *AddonVersion) SubOperators() []*AddonSubOperator {
 //
 // List of sub operators for this addon version.
 func (o *AddonVersion) GetSubOperators() (value []*AddonSubOperator, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.subOperators
 	}

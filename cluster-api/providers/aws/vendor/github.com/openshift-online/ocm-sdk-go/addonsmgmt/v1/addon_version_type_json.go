@@ -110,7 +110,25 @@ func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 		stream.WriteBool(object.enabled)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0 && object.parameters != nil
+	present_ = object.bitmap_&256 != 0 && object.metricsFederation != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("metrics_federation")
+		writeMetricsFederation(object.metricsFederation, stream)
+		count++
+	}
+	present_ = object.bitmap_&512 != 0 && object.monitoringStack != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("monitoring_stack")
+		writeMonitoringStack(object.monitoringStack, stream)
+		count++
+	}
+	present_ = object.bitmap_&1024 != 0 && object.parameters != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -119,7 +137,7 @@ func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 		writeAddonParameterList(object.parameters, stream)
 		count++
 	}
-	present_ = object.bitmap_&512 != 0
+	present_ = object.bitmap_&2048 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -128,7 +146,7 @@ func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 		stream.WriteString(object.pullSecretName)
 		count++
 	}
-	present_ = object.bitmap_&1024 != 0 && object.requirements != nil
+	present_ = object.bitmap_&4096 != 0 && object.requirements != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -137,7 +155,7 @@ func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 		writeAddonRequirementList(object.requirements, stream)
 		count++
 	}
-	present_ = object.bitmap_&2048 != 0
+	present_ = object.bitmap_&8192 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -146,7 +164,7 @@ func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 		stream.WriteString(object.sourceImage)
 		count++
 	}
-	present_ = object.bitmap_&4096 != 0 && object.subOperators != nil
+	present_ = object.bitmap_&16384 != 0 && object.subOperators != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -209,26 +227,34 @@ func readAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			value := iterator.ReadBool()
 			object.enabled = value
 			object.bitmap_ |= 128
+		case "metrics_federation":
+			value := readMetricsFederation(iterator)
+			object.metricsFederation = value
+			object.bitmap_ |= 256
+		case "monitoring_stack":
+			value := readMonitoringStack(iterator)
+			object.monitoringStack = value
+			object.bitmap_ |= 512
 		case "parameters":
 			value := readAddonParameterList(iterator)
 			object.parameters = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 1024
 		case "pull_secret_name":
 			value := iterator.ReadString()
 			object.pullSecretName = value
-			object.bitmap_ |= 512
+			object.bitmap_ |= 2048
 		case "requirements":
 			value := readAddonRequirementList(iterator)
 			object.requirements = value
-			object.bitmap_ |= 1024
+			object.bitmap_ |= 4096
 		case "source_image":
 			value := iterator.ReadString()
 			object.sourceImage = value
-			object.bitmap_ |= 2048
+			object.bitmap_ |= 8192
 		case "sub_operators":
 			value := readAddonSubOperatorList(iterator)
 			object.subOperators = value
-			object.bitmap_ |= 4096
+			object.bitmap_ |= 16384
 		default:
 			iterator.ReadAny()
 		}

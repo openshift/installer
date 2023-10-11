@@ -35,15 +35,19 @@ const ClusterAutoscalerNilKind = "ClusterAutoscalerNil"
 //
 // Cluster-wide autoscaling configuration.
 type ClusterAutoscaler struct {
-	bitmap_                   uint32
-	id                        string
-	href                      string
-	logVerbosity              int
-	maxPodGracePeriod         int
-	resourceLimits            *AutoscalerResourceLimits
-	scaleDown                 *AutoscalerScaleDownConfig
-	balanceSimilarNodeGroups  bool
-	skipNodesWithLocalStorage bool
+	bitmap_                     uint32
+	id                          string
+	href                        string
+	balancingIgnoredLabels      []string
+	logVerbosity                int
+	maxNodeProvisionTime        string
+	maxPodGracePeriod           int
+	podPriorityThreshold        int
+	resourceLimits              *AutoscalerResourceLimits
+	scaleDown                   *AutoscalerScaleDownConfig
+	balanceSimilarNodeGroups    bool
+	ignoreDaemonsetsUtilization bool
+	skipNodesWithLocalStorage   bool
 }
 
 // Kind returns the name of the type of the object.
@@ -134,13 +138,63 @@ func (o *ClusterAutoscaler) GetBalanceSimilarNodeGroups() (value bool, ok bool) 
 	return
 }
 
+// BalancingIgnoredLabels returns the value of the 'balancing_ignored_labels' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// This option specifies labels that cluster autoscaler should ignore when considering node group similarity.
+// For example, if you have nodes with "topology.ebs.csi.aws.com/zone" label, you can add name of this label here
+// to prevent cluster autoscaler from splitting nodes into different node groups based on its value.
+func (o *ClusterAutoscaler) BalancingIgnoredLabels() []string {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.balancingIgnoredLabels
+	}
+	return nil
+}
+
+// GetBalancingIgnoredLabels returns the value of the 'balancing_ignored_labels' attribute and
+// a flag indicating if the attribute has a value.
+//
+// This option specifies labels that cluster autoscaler should ignore when considering node group similarity.
+// For example, if you have nodes with "topology.ebs.csi.aws.com/zone" label, you can add name of this label here
+// to prevent cluster autoscaler from splitting nodes into different node groups based on its value.
+func (o *ClusterAutoscaler) GetBalancingIgnoredLabels() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.balancingIgnoredLabels
+	}
+	return
+}
+
+// IgnoreDaemonsetsUtilization returns the value of the 'ignore_daemonsets_utilization' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Should CA ignore DaemonSet pods when calculating resource utilization for scaling down. false by default.
+func (o *ClusterAutoscaler) IgnoreDaemonsetsUtilization() bool {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.ignoreDaemonsetsUtilization
+	}
+	return false
+}
+
+// GetIgnoreDaemonsetsUtilization returns the value of the 'ignore_daemonsets_utilization' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Should CA ignore DaemonSet pods when calculating resource utilization for scaling down. false by default.
+func (o *ClusterAutoscaler) GetIgnoreDaemonsetsUtilization() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.ignoreDaemonsetsUtilization
+	}
+	return
+}
+
 // LogVerbosity returns the value of the 'log_verbosity' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Sets the autoscaler log level.
 // Default value is 1, level 4 is recommended for DEBUGGING and level 6 will enable almost everything.
 func (o *ClusterAutoscaler) LogVerbosity() int {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.logVerbosity
 	}
 	return 0
@@ -152,9 +206,32 @@ func (o *ClusterAutoscaler) LogVerbosity() int {
 // Sets the autoscaler log level.
 // Default value is 1, level 4 is recommended for DEBUGGING and level 6 will enable almost everything.
 func (o *ClusterAutoscaler) GetLogVerbosity() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.logVerbosity
+	}
+	return
+}
+
+// MaxNodeProvisionTime returns the value of the 'max_node_provision_time' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Maximum time CA waits for node to be provisioned.
+func (o *ClusterAutoscaler) MaxNodeProvisionTime() string {
+	if o != nil && o.bitmap_&128 != 0 {
+		return o.maxNodeProvisionTime
+	}
+	return ""
+}
+
+// GetMaxNodeProvisionTime returns the value of the 'max_node_provision_time' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Maximum time CA waits for node to be provisioned.
+func (o *ClusterAutoscaler) GetMaxNodeProvisionTime() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&128 != 0
+	if ok {
+		value = o.maxNodeProvisionTime
 	}
 	return
 }
@@ -164,7 +241,7 @@ func (o *ClusterAutoscaler) GetLogVerbosity() (value int, ok bool) {
 //
 // Gives pods graceful termination time before scaling down.
 func (o *ClusterAutoscaler) MaxPodGracePeriod() int {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&256 != 0 {
 		return o.maxPodGracePeriod
 	}
 	return 0
@@ -175,9 +252,36 @@ func (o *ClusterAutoscaler) MaxPodGracePeriod() int {
 //
 // Gives pods graceful termination time before scaling down.
 func (o *ClusterAutoscaler) GetMaxPodGracePeriod() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&256 != 0
 	if ok {
 		value = o.maxPodGracePeriod
+	}
+	return
+}
+
+// PodPriorityThreshold returns the value of the 'pod_priority_threshold' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// To allow users to schedule "best-effort" pods, which shouldn't trigger
+// Cluster Autoscaler actions, but only run when there are spare resources available,
+// More info: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#how-does-cluster-autoscaler-work-with-pod-priority-and-preemption.
+func (o *ClusterAutoscaler) PodPriorityThreshold() int {
+	if o != nil && o.bitmap_&512 != 0 {
+		return o.podPriorityThreshold
+	}
+	return 0
+}
+
+// GetPodPriorityThreshold returns the value of the 'pod_priority_threshold' attribute and
+// a flag indicating if the attribute has a value.
+//
+// To allow users to schedule "best-effort" pods, which shouldn't trigger
+// Cluster Autoscaler actions, but only run when there are spare resources available,
+// More info: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#how-does-cluster-autoscaler-work-with-pod-priority-and-preemption.
+func (o *ClusterAutoscaler) GetPodPriorityThreshold() (value int, ok bool) {
+	ok = o != nil && o.bitmap_&512 != 0
+	if ok {
+		value = o.podPriorityThreshold
 	}
 	return
 }
@@ -187,7 +291,7 @@ func (o *ClusterAutoscaler) GetMaxPodGracePeriod() (value int, ok bool) {
 //
 // Constraints of autoscaling resources.
 func (o *ClusterAutoscaler) ResourceLimits() *AutoscalerResourceLimits {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&1024 != 0 {
 		return o.resourceLimits
 	}
 	return nil
@@ -198,7 +302,7 @@ func (o *ClusterAutoscaler) ResourceLimits() *AutoscalerResourceLimits {
 //
 // Constraints of autoscaling resources.
 func (o *ClusterAutoscaler) GetResourceLimits() (value *AutoscalerResourceLimits, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&1024 != 0
 	if ok {
 		value = o.resourceLimits
 	}
@@ -210,7 +314,7 @@ func (o *ClusterAutoscaler) GetResourceLimits() (value *AutoscalerResourceLimits
 //
 // Configuration of scale down operation.
 func (o *ClusterAutoscaler) ScaleDown() *AutoscalerScaleDownConfig {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.scaleDown
 	}
 	return nil
@@ -221,7 +325,7 @@ func (o *ClusterAutoscaler) ScaleDown() *AutoscalerScaleDownConfig {
 //
 // Configuration of scale down operation.
 func (o *ClusterAutoscaler) GetScaleDown() (value *AutoscalerScaleDownConfig, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.scaleDown
 	}
@@ -233,7 +337,7 @@ func (o *ClusterAutoscaler) GetScaleDown() (value *AutoscalerScaleDownConfig, ok
 //
 // Enables/Disables `--skip-nodes-with-local-storage` CA feature flag. If true cluster autoscaler will never delete nodes with pods with local storage, e.g. EmptyDir or HostPath. true by default at autoscaler.
 func (o *ClusterAutoscaler) SkipNodesWithLocalStorage() bool {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.skipNodesWithLocalStorage
 	}
 	return false
@@ -244,7 +348,7 @@ func (o *ClusterAutoscaler) SkipNodesWithLocalStorage() bool {
 //
 // Enables/Disables `--skip-nodes-with-local-storage` CA feature flag. If true cluster autoscaler will never delete nodes with pods with local storage, e.g. EmptyDir or HostPath. true by default at autoscaler.
 func (o *ClusterAutoscaler) GetSkipNodesWithLocalStorage() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.skipNodesWithLocalStorage
 	}

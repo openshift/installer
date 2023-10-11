@@ -74,7 +74,25 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 		stream.WriteBool(object.balanceSimilarNodeGroups)
 		count++
 	}
-	present_ = object.bitmap_&16 != 0
+	present_ = object.bitmap_&16 != 0 && object.balancingIgnoredLabels != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("balancing_ignored_labels")
+		writeStringList(object.balancingIgnoredLabels, stream)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("ignore_daemonsets_utilization")
+		stream.WriteBool(object.ignoreDaemonsetsUtilization)
+		count++
+	}
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -83,7 +101,16 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 		stream.WriteInt(object.logVerbosity)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&128 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("max_node_provision_time")
+		stream.WriteString(object.maxNodeProvisionTime)
+		count++
+	}
+	present_ = object.bitmap_&256 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -92,7 +119,16 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 		stream.WriteInt(object.maxPodGracePeriod)
 		count++
 	}
-	present_ = object.bitmap_&64 != 0 && object.resourceLimits != nil
+	present_ = object.bitmap_&512 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("pod_priority_threshold")
+		stream.WriteInt(object.podPriorityThreshold)
+		count++
+	}
+	present_ = object.bitmap_&1024 != 0 && object.resourceLimits != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -101,7 +137,7 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 		writeAutoscalerResourceLimits(object.resourceLimits, stream)
 		count++
 	}
-	present_ = object.bitmap_&128 != 0 && object.scaleDown != nil
+	present_ = object.bitmap_&2048 != 0 && object.scaleDown != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -110,7 +146,7 @@ func writeClusterAutoscaler(object *ClusterAutoscaler, stream *jsoniter.Stream) 
 		writeAutoscalerScaleDownConfig(object.scaleDown, stream)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&4096 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -157,26 +193,42 @@ func readClusterAutoscaler(iterator *jsoniter.Iterator) *ClusterAutoscaler {
 			value := iterator.ReadBool()
 			object.balanceSimilarNodeGroups = value
 			object.bitmap_ |= 8
+		case "balancing_ignored_labels":
+			value := readStringList(iterator)
+			object.balancingIgnoredLabels = value
+			object.bitmap_ |= 16
+		case "ignore_daemonsets_utilization":
+			value := iterator.ReadBool()
+			object.ignoreDaemonsetsUtilization = value
+			object.bitmap_ |= 32
 		case "log_verbosity":
 			value := iterator.ReadInt()
 			object.logVerbosity = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 64
+		case "max_node_provision_time":
+			value := iterator.ReadString()
+			object.maxNodeProvisionTime = value
+			object.bitmap_ |= 128
 		case "max_pod_grace_period":
 			value := iterator.ReadInt()
 			object.maxPodGracePeriod = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 256
+		case "pod_priority_threshold":
+			value := iterator.ReadInt()
+			object.podPriorityThreshold = value
+			object.bitmap_ |= 512
 		case "resource_limits":
 			value := readAutoscalerResourceLimits(iterator)
 			object.resourceLimits = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 1024
 		case "scale_down":
 			value := readAutoscalerScaleDownConfig(iterator)
 			object.scaleDown = value
-			object.bitmap_ |= 128
+			object.bitmap_ |= 2048
 		case "skip_nodes_with_local_storage":
 			value := iterator.ReadBool()
 			object.skipNodesWithLocalStorage = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 4096
 		default:
 			iterator.ReadAny()
 		}

@@ -42,6 +42,16 @@ func NewAWSInquiriesClient(transport http.RoundTripper, path string) *AWSInquiri
 	}
 }
 
+// STSAccountRoles returns the target 'AWSSTS_account_roles_inquiry' resource.
+//
+// Reference to the resource that manages aws sts roles
+func (c *AWSInquiriesClient) STSAccountRoles() *AWSSTSAccountRolesInquiryClient {
+	return NewAWSSTSAccountRolesInquiryClient(
+		c.transport,
+		path.Join(c.path, "sts_account_roles"),
+	)
+}
+
 // STSCredentialRequests returns the target 'STS_credential_requests_inquiry' resource.
 //
 // Reference to the resource that manages sts cred request.

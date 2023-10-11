@@ -35,10 +35,11 @@ const AWSMachinePoolNilKind = "AWSMachinePoolNil"
 //
 // Representation of aws machine pool specific parameters.
 type AWSMachinePool struct {
-	bitmap_           uint32
-	id                string
-	href              string
-	spotMarketOptions *AWSSpotMarketOptions
+	bitmap_                    uint32
+	id                         string
+	href                       string
+	additionalSecurityGroupIds []string
+	spotMarketOptions          *AWSSpotMarketOptions
 }
 
 // Kind returns the name of the type of the object.
@@ -98,12 +99,35 @@ func (o *AWSMachinePool) Empty() bool {
 	return o == nil || o.bitmap_&^1 == 0
 }
 
+// AdditionalSecurityGroupIds returns the value of the 'additional_security_group_ids' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Additional AWS Security Groups to be added machine pool. Note that machine pools can only be worker node at the time.
+func (o *AWSMachinePool) AdditionalSecurityGroupIds() []string {
+	if o != nil && o.bitmap_&8 != 0 {
+		return o.additionalSecurityGroupIds
+	}
+	return nil
+}
+
+// GetAdditionalSecurityGroupIds returns the value of the 'additional_security_group_ids' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Additional AWS Security Groups to be added machine pool. Note that machine pools can only be worker node at the time.
+func (o *AWSMachinePool) GetAdditionalSecurityGroupIds() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&8 != 0
+	if ok {
+		value = o.additionalSecurityGroupIds
+	}
+	return
+}
+
 // SpotMarketOptions returns the value of the 'spot_market_options' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Use spot instances on this machine pool to reduce cost.
 func (o *AWSMachinePool) SpotMarketOptions() *AWSSpotMarketOptions {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.spotMarketOptions
 	}
 	return nil
@@ -114,7 +138,7 @@ func (o *AWSMachinePool) SpotMarketOptions() *AWSSpotMarketOptions {
 //
 // Use spot instances on this machine pool to reduce cost.
 func (o *AWSMachinePool) GetSpotMarketOptions() (value *AWSSpotMarketOptions, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.spotMarketOptions
 	}

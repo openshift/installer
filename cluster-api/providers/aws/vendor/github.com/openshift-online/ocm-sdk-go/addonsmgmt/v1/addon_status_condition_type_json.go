@@ -47,11 +47,20 @@ func writeAddonStatusCondition(object *AddonStatusCondition, stream *jsoniter.St
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("message")
+		stream.WriteString(object.message)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("reason")
 		stream.WriteString(object.reason)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0
+	present_ = object.bitmap_&4 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -60,7 +69,7 @@ func writeAddonStatusCondition(object *AddonStatusCondition, stream *jsoniter.St
 		stream.WriteString(string(object.statusType))
 		count++
 	}
-	present_ = object.bitmap_&4 != 0
+	present_ = object.bitmap_&8 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -92,20 +101,24 @@ func readAddonStatusCondition(iterator *jsoniter.Iterator) *AddonStatusCondition
 			break
 		}
 		switch field {
+		case "message":
+			value := iterator.ReadString()
+			object.message = value
+			object.bitmap_ |= 1
 		case "reason":
 			value := iterator.ReadString()
 			object.reason = value
-			object.bitmap_ |= 1
+			object.bitmap_ |= 2
 		case "status_type":
 			text := iterator.ReadString()
 			value := AddonStatusConditionType(text)
 			object.statusType = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		case "status_value":
 			text := iterator.ReadString()
 			value := AddonStatusConditionValue(text)
 			object.statusValue = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 8
 		default:
 			iterator.ReadAny()
 		}

@@ -83,11 +83,20 @@ func writeSelfAccessReviewResponse(object *SelfAccessReviewResponse, stream *jso
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("is_ocm_internal")
+		stream.WriteBool(object.isOCMInternal)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("organization_id")
 		stream.WriteString(object.organizationID)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,7 +105,7 @@ func writeSelfAccessReviewResponse(object *SelfAccessReviewResponse, stream *jso
 		stream.WriteString(object.reason)
 		count++
 	}
-	present_ = object.bitmap_&64 != 0
+	present_ = object.bitmap_&128 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -105,7 +114,7 @@ func writeSelfAccessReviewResponse(object *SelfAccessReviewResponse, stream *jso
 		stream.WriteString(object.resourceType)
 		count++
 	}
-	present_ = object.bitmap_&128 != 0
+	present_ = object.bitmap_&256 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -153,22 +162,26 @@ func readSelfAccessReviewResponse(iterator *jsoniter.Iterator) *SelfAccessReview
 			value := iterator.ReadString()
 			object.clusterUUID = value
 			object.bitmap_ |= 8
+		case "is_ocm_internal":
+			value := iterator.ReadBool()
+			object.isOCMInternal = value
+			object.bitmap_ |= 16
 		case "organization_id":
 			value := iterator.ReadString()
 			object.organizationID = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 32
 		case "reason":
 			value := iterator.ReadString()
 			object.reason = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 64
 		case "resource_type":
 			value := iterator.ReadString()
 			object.resourceType = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 128
 		case "subscription_id":
 			value := iterator.ReadString()
 			object.subscriptionID = value
-			object.bitmap_ |= 128
+			object.bitmap_ |= 256
 		default:
 			iterator.ReadAny()
 		}

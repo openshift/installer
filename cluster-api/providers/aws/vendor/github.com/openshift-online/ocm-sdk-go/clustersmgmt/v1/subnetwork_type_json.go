@@ -47,11 +47,20 @@ func writeSubnetwork(object *Subnetwork, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("cidr_block")
+		stream.WriteString(object.cidrBlock)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("availability_zone")
 		stream.WriteString(object.availabilityZone)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0
+	present_ = object.bitmap_&4 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -60,7 +69,7 @@ func writeSubnetwork(object *Subnetwork, stream *jsoniter.Stream) {
 		stream.WriteString(object.name)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0
+	present_ = object.bitmap_&8 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -69,7 +78,16 @@ func writeSubnetwork(object *Subnetwork, stream *jsoniter.Stream) {
 		stream.WriteBool(object.public)
 		count++
 	}
-	present_ = object.bitmap_&8 != 0
+	present_ = object.bitmap_&16 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("red_hat_managed")
+		stream.WriteBool(object.redHatManaged)
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -101,22 +119,30 @@ func readSubnetwork(iterator *jsoniter.Iterator) *Subnetwork {
 			break
 		}
 		switch field {
+		case "cidr_block":
+			value := iterator.ReadString()
+			object.cidrBlock = value
+			object.bitmap_ |= 1
 		case "availability_zone":
 			value := iterator.ReadString()
 			object.availabilityZone = value
-			object.bitmap_ |= 1
+			object.bitmap_ |= 2
 		case "name":
 			value := iterator.ReadString()
 			object.name = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		case "public":
 			value := iterator.ReadBool()
 			object.public = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 8
+		case "red_hat_managed":
+			value := iterator.ReadBool()
+			object.redHatManaged = value
+			object.bitmap_ |= 16
 		case "subnet_id":
 			value := iterator.ReadString()
 			object.subnetID = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 32
 		default:
 			iterator.ReadAny()
 		}

@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 type GCPNetwork struct {
 	bitmap_            uint32
 	vpcName            string
+	vpcProjectID       string
 	computeSubnet      string
 	controlPlaneSubnet string
 }
@@ -57,12 +58,35 @@ func (o *GCPNetwork) GetVPCName() (value string, ok bool) {
 	return
 }
 
+// VPCProjectID returns the value of the 'VPC_project_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The name of the host project where the shared VPC exists.
+func (o *GCPNetwork) VPCProjectID() string {
+	if o != nil && o.bitmap_&2 != 0 {
+		return o.vpcProjectID
+	}
+	return ""
+}
+
+// GetVPCProjectID returns the value of the 'VPC_project_ID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The name of the host project where the shared VPC exists.
+func (o *GCPNetwork) GetVPCProjectID() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&2 != 0
+	if ok {
+		value = o.vpcProjectID
+	}
+	return
+}
+
 // ComputeSubnet returns the value of the 'compute_subnet' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Compute subnet used by the cluster.
 func (o *GCPNetwork) ComputeSubnet() string {
-	if o != nil && o.bitmap_&2 != 0 {
+	if o != nil && o.bitmap_&4 != 0 {
 		return o.computeSubnet
 	}
 	return ""
@@ -73,7 +97,7 @@ func (o *GCPNetwork) ComputeSubnet() string {
 //
 // Compute subnet used by the cluster.
 func (o *GCPNetwork) GetComputeSubnet() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2 != 0
+	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
 		value = o.computeSubnet
 	}
@@ -85,7 +109,7 @@ func (o *GCPNetwork) GetComputeSubnet() (value string, ok bool) {
 //
 // Control plane subnet used by the cluster.
 func (o *GCPNetwork) ControlPlaneSubnet() string {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.controlPlaneSubnet
 	}
 	return ""
@@ -96,7 +120,7 @@ func (o *GCPNetwork) ControlPlaneSubnet() string {
 //
 // Control plane subnet used by the cluster.
 func (o *GCPNetwork) GetControlPlaneSubnet() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.controlPlaneSubnet
 	}

@@ -184,7 +184,7 @@ func (o *STS) GetManagedPolicies() (value bool, ok bool) {
 // OidcConfig returns the value of the 'oidc_config' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Registered Oidc Config, if available holds information related to the oidc config
+// Registered Oidc Config, if available holds information related to the oidc config.
 func (o *STS) OidcConfig() *OidcConfig {
 	if o != nil && o.bitmap_&64 != 0 {
 		return o.oidcConfig
@@ -195,7 +195,7 @@ func (o *STS) OidcConfig() *OidcConfig {
 // GetOidcConfig returns the value of the 'oidc_config' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Registered Oidc Config, if available holds information related to the oidc config
+// Registered Oidc Config, if available holds information related to the oidc config.
 func (o *STS) GetOidcConfig() (value *OidcConfig, ok bool) {
 	ok = o != nil && o.bitmap_&64 != 0
 	if ok {

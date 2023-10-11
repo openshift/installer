@@ -56,11 +56,20 @@ func writeGCPNetwork(object *GCPNetwork, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("vpc_project_id")
+		stream.WriteString(object.vpcProjectID)
+		count++
+	}
+	present_ = object.bitmap_&4 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("compute_subnet")
 		stream.WriteString(object.computeSubnet)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0
+	present_ = object.bitmap_&8 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,14 +105,18 @@ func readGCPNetwork(iterator *jsoniter.Iterator) *GCPNetwork {
 			value := iterator.ReadString()
 			object.vpcName = value
 			object.bitmap_ |= 1
+		case "vpc_project_id":
+			value := iterator.ReadString()
+			object.vpcProjectID = value
+			object.bitmap_ |= 2
 		case "compute_subnet":
 			value := iterator.ReadString()
 			object.computeSubnet = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
 		case "control_plane_subnet":
 			value := iterator.ReadString()
 			object.controlPlaneSubnet = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 8
 		default:
 			iterator.ReadAny()
 		}
