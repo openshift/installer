@@ -80,7 +80,7 @@ func (o *dnsInput) LookupPublicZone(ctx context.Context, l *logrus.Logger, clien
 		l.Error(err, "Public zone not found", "name", name)
 		return "", err
 	}
-	l.Info("Found existing public zone", "name", name, "id", id)
+	l.WithField("name", name).WithField("id", id).Infoln("Found existing public zone")
 	return id, nil
 }
 
@@ -113,7 +113,7 @@ func (o *dnsInput) CreatePrivateZone(ctx context.Context, l *logrus.Logger, clie
 	logger := l.WithField("name", name)
 	id, err := lookupZone(ctx, client, name, true)
 	if err == nil {
-		logger.Infof("Found existing private zone id %s", id)
+		logger.WithField("id", id).Infoln("Found existing private zone")
 		err := setSOAMinimum(ctx, client, id, name)
 		if err != nil {
 			return "", err

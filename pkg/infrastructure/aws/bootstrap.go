@@ -66,12 +66,12 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 			if err != nil {
 				return fmt.Errorf("error creating S3 bucket: %w", err)
 			}
-			l.Infof("Created s3 bucket: %v", bucketName)
+			l.WithField("name", bucketName).Infoln("Created s3 bucket")
 		} else {
 			return err
 		}
 	} else {
-		l.Infof("s3 bucket already exists: %v", bucketName)
+		l.WithField("name", bucketName).Infoln("s3 bucket already exists")
 	}
 
 	_, err = s3Client.PutBucketTagging(&s3.PutBucketTaggingInput{
@@ -102,7 +102,7 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 		return fmt.Errorf("error uploading object to S3: %w", err)
 	}
 
-	l.Infof("Uploaded bootstrap.ign to S3 bucket: %s\n", bootstrapInput.ignitionBucket)
+	l.WithField("bucket name", bootstrapInput.ignitionBucket).Infoln("Uploaded bootstrap.ign to S3 bucket")
 
 	// S3 Object tagging supports only up to 10 tags
 	// FIXME: make sure that the "owned" tag is not excluded
@@ -175,7 +175,7 @@ func createBootstrapResources(l *logrus.Logger, session *session.Session, bootst
 		if err != nil {
 			return err
 		}
-		l.Infof("Target registered id: %v, targetGroup: %v", *instance.PrivateIpAddress, targetGroupARN)
+		l.WithField("id", aws.StringValue(instance.PrivateIpAddress)).WithField("target group", targetGroupARN).Infoln("Target registered")
 	}
 	l.Infof("Target registered")
 
@@ -247,9 +247,9 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 		if err != nil {
 			return nil, fmt.Errorf("cannot create worker role: %w", err)
 		}
-		l.Info("Created role", "name", roleName)
+		l.WithField("name", roleName).Infoln("Created role")
 	} else {
-		l.Info("Found existing role", "name", roleName)
+		l.WithField("name", roleName).Infoln("Found existing role")
 	}
 	instanceProfile, err := existingInstanceProfile(client, profileName)
 	if err != nil {
@@ -268,9 +268,9 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 			return nil, fmt.Errorf("cannot create instance profile: %w", err)
 		}
 		instanceProfile = result.InstanceProfile
-		l.Info("Created instance profile", "name", profileName)
+		l.WithField("name", profileName).Infoln("Created instance profile")
 	} else {
-		l.Info("Found existing instance profile", "name", profileName)
+		l.WithField("name", profileName).Infoln("Found existing instance profile")
 	}
 	hasRole := false
 	for _, role := range instanceProfile.Roles {
@@ -286,7 +286,7 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 		if err != nil {
 			return nil, fmt.Errorf("cannot add role to instance profile: %w", err)
 		}
-		l.Info("Added role to instance profile", "role", roleName, "profile", profileName)
+		l.WithField("role", roleName).WithField("profile", profileName).Infoln("Added role to instance profile")
 	}
 	rolePolicyName := fmt.Sprintf("%s-policy", profileName)
 	hasPolicy, err := existingRolePolicy(client, roleName, rolePolicyName)
@@ -302,7 +302,7 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 		if err != nil {
 			return nil, fmt.Errorf("cannot create profile policy: %w", err)
 		}
-		l.Info("Created role policy", "name", rolePolicyName)
+		l.WithField("name", rolePolicyName).Infoln("Created role policy")
 	}
 
 	waitContext, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
@@ -315,7 +315,7 @@ func CreateBootstrapInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, in
 			lastError = err
 		}
 		if instanceProfile != nil {
-			l.Infof("Instance profile was created and exists: %s", profileName)
+			l.WithField("name", profileName).Infoln("Instance profile was created and exists")
 			lastError = nil
 			cancel()
 		}
@@ -409,7 +409,7 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 	}
 	// If an instance already exists, return its instance ID.
 	if len(existingInstances.Reservations) > 0 && len(existingInstances.Reservations[0].Instances) > 0 {
-		l.Infof("Instance already exists: %v", *existingInstances.Reservations[0].Instances[0].InstanceId)
+		l.WithField("id", aws.StringValue(existingInstances.Reservations[0].Instances[0].InstanceId)).Infoln("Instance already exists")
 		return existingInstances.Reservations[0].Instances[0], nil
 	}
 
@@ -455,7 +455,7 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 	}
 
 	if len(runResult.Instances) > 0 {
-		l.Infof("Created instance: %v", *runResult.Instances[0].InstanceId)
+		l.WithField("id", aws.StringValue(runResult.Instances[0].InstanceId)).Infoln("Created instance")
 		return runResult.Instances[0], nil
 	}
 

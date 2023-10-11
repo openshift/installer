@@ -174,10 +174,11 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 			return "", fmt.Errorf("failed to create VPC: %w", err)
 		}
 		vpcID = aws.StringValue(createResult.Vpc.VpcId)
-		l.Info("Created VPC", "id", vpcID)
+		l.WithField("id", vpcID).Infoln("Created VPC")
 	} else {
-		l.Info("Found existing VPC", "id", vpcID)
+		l.WithField("id", vpcID).Infoln("Found existing VPC")
 	}
+	logger := l.WithField("id", vpcID)
 	_, err = client.ModifyVpcAttribute(&ec2.ModifyVpcAttributeInput{
 		VpcId:            aws.String(vpcID),
 		EnableDnsSupport: &ec2.AttributeBooleanValue{Value: aws.Bool(true)},
@@ -185,7 +186,7 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 	if err != nil {
 		return "", fmt.Errorf("failed to modify VPC attributes: %w", err)
 	}
-	l.Info("Enabled DNS support on VPC", "id", vpcID)
+	logger.Info("Enabled DNS support on VPC")
 	_, err = client.ModifyVpcAttribute(&ec2.ModifyVpcAttributeInput{
 		VpcId:              aws.String(vpcID),
 		EnableDnsHostnames: &ec2.AttributeBooleanValue{Value: aws.Bool(true)},
@@ -193,7 +194,7 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 	if err != nil {
 		return "", fmt.Errorf("failed to modify VPC attributes: %w", err)
 	}
-	l.Info("Enabled DNS hostnames on VPC", "id", vpcID)
+	logger.Info("Enabled DNS hostnames on VPC")
 	return vpcID, nil
 }
 
@@ -278,9 +279,9 @@ func (o *CreateInfraOptions) CreateDHCPOptions(l *logrus.Logger, client ec2iface
 			return fmt.Errorf("cannot create dhcp-options: %w", err)
 		}
 		optID = aws.StringValue(result.DhcpOptions.DhcpOptionsId)
-		l.Info("Created DHCP options", "id", optID)
+		l.WithField("id", optID).Info("Created DHCP options")
 	} else {
-		l.Info("Found existing DHCP options", "id", optID)
+		l.WithField("id", optID).Info("Found existing DHCP options")
 	}
 	_, err = client.AssociateDhcpOptions(&ec2.AssociateDhcpOptionsInput{
 		DhcpOptionsId: aws.String(optID),
@@ -289,7 +290,7 @@ func (o *CreateInfraOptions) CreateDHCPOptions(l *logrus.Logger, client ec2iface
 	if err != nil {
 		return fmt.Errorf("cannot associate dhcp-options to VPC: %w", err)
 	}
-	l.Info("Associated DHCP options with VPC", "vpc", vpcID, "dhcp options", optID)
+	l.WithField("vpc", vpcID).WithField("dhcp option", optID).Infoln("Associated DHCP options with VPC")
 	return nil
 }
 
@@ -320,10 +321,11 @@ func (o *CreateInfraOptions) CreateInternetGateway(l *logrus.Logger, client ec2i
 			return "", fmt.Errorf("cannot create internet gateway: %w", err)
 		}
 		igw = result.InternetGateway
-		l.Info("Created internet gateway", "id", aws.StringValue(igw.InternetGatewayId))
+		l.WithField("id", aws.StringValue(igw.InternetGatewayId)).Infoln("Created internet gateway")
 	} else {
-		l.Info("Found existing internet gateway", "id", aws.StringValue(igw.InternetGatewayId))
+		l.WithField("id", aws.StringValue(igw.InternetGatewayId)).Infoln("Found existing internet gateway")
 	}
+	igwId := aws.StringValue(igw.InternetGatewayId)
 	attached := false
 	for _, attachment := range igw.Attachments {
 		if aws.StringValue(attachment.VpcId) == vpcID {
@@ -339,9 +341,9 @@ func (o *CreateInfraOptions) CreateInternetGateway(l *logrus.Logger, client ec2i
 		if err != nil {
 			return "", fmt.Errorf("cannot attach internet gateway to vpc: %w", err)
 		}
-		l.Info("Attached internet gateway to VPC", "internet gateway", aws.StringValue(igw.InternetGatewayId), "vpc", vpcID)
+		l.WithField("internet gateway", igwId).WithField("vpc", vpcID).Infoln("Attached internet gateway to VPC")
 	}
-	return aws.StringValue(igw.InternetGatewayId), nil
+	return igwId, nil
 }
 
 func (o *CreateInfraOptions) existingInternetGateway(client ec2iface.EC2API, name string) (*ec2.InternetGateway, error) {
@@ -1068,7 +1070,7 @@ func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2A
 		return "", err
 	}
 	if len(subnetID) > 0 {
-		l.Info("Found existing subnet", "name", name, "id", subnetID)
+		l.WithField("name", name).WithField("id", subnetID).Infoln("Found existing subnet")
 		return subnetID, nil
 	}
 	tagSpec := ec2TagSpecifications("subnet", name, o.additionalEC2Tags)
@@ -1107,7 +1109,7 @@ func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2A
 		return "", fmt.Errorf("cannot find subnet that was just created (%s)", aws.StringValue(result.Subnet.SubnetId))
 	}
 	subnetID = aws.StringValue(result.Subnet.SubnetId)
-	l.Info("Created subnet", "name", name, "id", subnetID)
+	l.WithField("name", name).WithField("id", subnetID).Infoln("Created subnet")
 	return subnetID, nil
 }
 
@@ -1152,7 +1154,7 @@ func (o *CreateInfraOptions) CreateNATGateway(l *logrus.Logger, client ec2iface.
 	natGatewayName := fmt.Sprintf("%s-nat-%s", o.InfraID, availabilityZone)
 	natGateway, _ := o.existingNATGateway(client, natGatewayName)
 	if natGateway != nil {
-		l.Info("Found existing NAT gateway", "id", aws.StringValue(natGateway.NatGatewayId))
+		l.WithField("id", aws.StringValue(natGateway.NatGatewayId)).Infoln("Found existing NAT gateway")
 		return *natGateway.NatGatewayId, nil
 	}
 
@@ -1163,7 +1165,7 @@ func (o *CreateInfraOptions) CreateNATGateway(l *logrus.Logger, client ec2iface.
 		return "", fmt.Errorf("cannot allocate EIP for NAT gateway: %w", err)
 	}
 	allocationID := aws.StringValue(eipResult.AllocationId)
-	l.Info("Created elastic IP for NAT gateway", "id", allocationID)
+	l.WithField("id", allocationID).Infoln("Created elastic IP for NAT gateway")
 
 	// NOTE: there's a potential to leak EIP addresses if the following tag operation fails, since we have no way of
 	// recognizing the EIP as belonging to the cluster
@@ -1201,7 +1203,7 @@ func (o *CreateInfraOptions) CreateNATGateway(l *logrus.Logger, client ec2iface.
 			return err
 		}
 		natGateway = gatewayResult.NatGateway
-		l.Info("Created NAT gateway", "id", aws.StringValue(natGateway.NatGatewayId))
+		l.WithField("id", aws.StringValue(natGateway.NatGatewayId)).Infoln("Created NAT gateway")
 		return nil
 	})
 	if err != nil {
@@ -1263,9 +1265,9 @@ func (o *CreateInfraOptions) CreatePrivateRouteTable(l *logrus.Logger, client ec
 		if err != nil {
 			return "", fmt.Errorf("cannot create nat gateway route in private route table: %w", err)
 		}
-		l.Info("Created route to NAT gateway", "route table", aws.StringValue(routeTable.RouteTableId), "nat gateway", natGatewayID)
+		l.WithField("route table", aws.StringValue(routeTable.RouteTableId)).WithField("nat gateway", natGatewayID).Infoln("Created route to NAT gateway")
 	} else {
-		l.Info("Found existing route to NAT gateway", "route table", aws.StringValue(routeTable.RouteTableId), "nat gateway", natGatewayID)
+		l.WithField("route table", aws.StringValue(routeTable.RouteTableId)).WithField("nat gateway", natGatewayID).Infoln("Found existing route to NAT gateway")
 	}
 	if !o.hasAssociatedSubnet(routeTable, subnetID) {
 		_, err = client.AssociateRouteTable(&ec2.AssociateRouteTableInput{
@@ -1275,9 +1277,9 @@ func (o *CreateInfraOptions) CreatePrivateRouteTable(l *logrus.Logger, client ec
 		if err != nil {
 			return "", fmt.Errorf("cannot associate private route table with subnet: %w", err)
 		}
-		l.Info("Associated subnet with route table", "route table", aws.StringValue(routeTable.RouteTableId), "subnet", subnetID)
+		l.WithField("route table", aws.StringValue(routeTable.RouteTableId)).WithField("subnet", subnetID).Infoln("Associated subnet with route table")
 	} else {
-		l.Info("Subnet already associated with route table", "route table", aws.StringValue(routeTable.RouteTableId), "subnet", subnetID)
+		l.WithField("route table", aws.StringValue(routeTable.RouteTableId)).WithField("subnet", subnetID).Infoln("Subnet already associated with route table")
 	}
 	return aws.StringValue(routeTable.RouteTableId), nil
 }
@@ -1330,7 +1332,7 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 		if err != nil {
 			return "", fmt.Errorf("cannot set vpc main route table: %w", err)
 		}
-		l.Info("Set main VPC route table", "route table", tableID, "vpc", vpcID)
+		l.WithField("route table", tableID).WithField("vpc", vpcID).Infoln("Set main VPC route table")
 	}
 
 	// Create route to internet gateway
@@ -1343,9 +1345,9 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 		if err != nil {
 			return "", fmt.Errorf("cannot create route to internet gateway: %w", err)
 		}
-		l.Info("Created route to internet gateway", "route table", tableID, "internet gateway", igwID)
+		l.WithField("route table", tableID).WithField("internet gateway", igwID).Infoln("Created route to internet gateway")
 	} else {
-		l.Info("Found existing route to internet gateway", "route table", tableID, "internet gateway", igwID)
+		l.WithField("route table", tableID).WithField("internet gateway", igwID).Infoln("Found existing route to internet gateway")
 	}
 
 	// Associate the route table with the public subnet ID
@@ -1358,9 +1360,9 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 			if err != nil {
 				return "", fmt.Errorf("cannot associate private route table with subnet: %w", err)
 			}
-			l.Info("Associated route table with subnet", "route table", tableID, "subnet", subnetID)
+			l.WithField("route table", tableID).WithField("subnet", subnetID).Infoln("Associated route table with subnet")
 		} else {
-			l.Info("Found existing association between route table and subnet", "route table", tableID, "subnet", subnetID)
+			l.WithField("route table", tableID).WithField("subnet", subnetID).Infoln("Found existing association between route table and subnet")
 		}
 	}
 	return tableID, nil
@@ -1374,7 +1376,7 @@ func (o *CreateInfraOptions) createRouteTable(l *logrus.Logger, client ec2iface.
 	if err != nil {
 		return nil, fmt.Errorf("cannot create route table: %w", err)
 	}
-	l.Info("Created route table", "name", name, "id", aws.StringValue(result.RouteTable.RouteTableId))
+	l.WithField("name", name).WithField("id", aws.StringValue(result.RouteTable.RouteTableId)).Infoln("Created route table")
 	return result.RouteTable, nil
 }
 
@@ -1384,7 +1386,7 @@ func (o *CreateInfraOptions) existingRouteTable(l *logrus.Logger, client ec2ifac
 		return nil, fmt.Errorf("cannot list route tables: %w", err)
 	}
 	if len(result.RouteTables) > 0 {
-		l.Info("Found existing route table", "name", name, "id", aws.StringValue(result.RouteTables[0].RouteTableId))
+		l.WithField("name", name).WithField("id", aws.StringValue(result.RouteTables[0].RouteTableId)).Infoln("Found existing route table")
 		return result.RouteTables[0], nil
 	}
 	return nil, nil
@@ -1489,12 +1491,12 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 		}
 		o.LoadBalancers.Internal.ZoneID = *internalLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.Internal.DNSName = *internalLBOutput.LoadBalancers[0].DNSName
-		l.Infof("Internal Load Balancer created: %v", *internalLBOutput.LoadBalancers[0].DNSName)
+		l.WithField("name", aws.StringValue(internalLBOutput.LoadBalancers[0].DNSName)).Infoln("Internal Load Balancer created")
 	} else {
 		internalLBARN = *describeLBOutput.LoadBalancers[0].LoadBalancerArn
 		o.LoadBalancers.Internal.ZoneID = *describeLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.Internal.DNSName = *describeLBOutput.LoadBalancers[0].DNSName
-		l.Infof("Internal Load Balancer already exists: %v", *describeLBOutput.LoadBalancers[0].DNSName)
+		l.WithField("name", aws.StringValue(describeLBOutput.LoadBalancers[0].DNSName)).Infoln("Internal Load Balancer already exists")
 	}
 
 	// Create InternalA TargetGroup.
@@ -1545,10 +1547,10 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 			return fmt.Errorf("error creating internal target group: %w", err)
 		}
 		internalATGARN = *internalTGOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("InternalA Target Group created: %v", *internalTGOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", aws.StringValue(internalTGOutput.TargetGroups[0].TargetGroupArn)).Infoln("InternalA Target Group created")
 	} else {
 		internalATGARN = *describeInternalATGOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("InternalA Target Group already exists: %v", *describeInternalATGOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", aws.StringValue(describeInternalATGOutput.TargetGroups[0].TargetGroupArn)).Infoln("InternalA Target Group already exists")
 	}
 
 	// Create InternalA Listener.
@@ -1585,7 +1587,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 	if err != nil {
 		return fmt.Errorf("error creating internal listener: %w", err)
 	}
-	l.Infof("Internal Listener created: %v", *internalAListenerOutput.Listeners[0].ListenerArn)
+	l.WithField("arn", aws.StringValue(internalAListenerOutput.Listeners[0].ListenerArn)).Infoln("Internal Listener created")
 
 	// Create InternalS TargetGroup.
 	internalSTGName := fmt.Sprintf("%s-sint", o.InfraID)
@@ -1636,12 +1638,12 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 			return fmt.Errorf("error creating target group: %w", err)
 		}
 
-		internalSTGARN = *createSTGOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("InternalS Target Group created: %v", internalSTGARN)
+		internalSTGARN = aws.StringValue(createSTGOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", internalSTGARN).Infoln("InternalS Target Group created")
 	} else {
 		// Target group already exists
-		internalSTGARN = *describeInternalSTGOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("InternalS Target Group already exists: %v", internalSTGARN)
+		internalSTGARN = aws.StringValue(describeInternalSTGOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", internalSTGARN).Infoln("InternalS Target Group already exists")
 	}
 
 	internalSListenerName := fmt.Sprintf("%s-sint", o.InfraID)
@@ -1678,7 +1680,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 	if err != nil {
 		return fmt.Errorf("error creating listener: %w", err)
 	}
-	l.Infof("Internal Service Listener created: %v", *internalAListenerOutput.Listeners[0].ListenerArn)
+	l.WithField("arn", aws.StringValue(internalAListenerOutput.Listeners[0].ListenerArn)).Infoln("Internal Service Listener created")
 
 	if !external {
 		return nil
@@ -1749,12 +1751,12 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 		}
 		o.LoadBalancers.External.ZoneID = *externalLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.External.DNSName = *externalLBOutput.LoadBalancers[0].DNSName
-		l.Infof("External Load Balancer created: %v", *externalLBOutput.LoadBalancers[0].DNSName)
+		l.WithField("name", aws.StringValue(externalLBOutput.LoadBalancers[0].DNSName)).Infoln("External Load Balancer created")
 	} else {
 		externalLBARN = *describeExternalLBOutput.LoadBalancers[0].LoadBalancerArn
 		o.LoadBalancers.External.ZoneID = *describeExternalLBOutput.LoadBalancers[0].CanonicalHostedZoneId
 		o.LoadBalancers.External.DNSName = *describeExternalLBOutput.LoadBalancers[0].DNSName
-		l.Infof("External Load Balancer already exists: %v", *describeExternalLBOutput.LoadBalancers[0].DNSName)
+		l.WithField("name", aws.StringValue(describeExternalLBOutput.LoadBalancers[0].DNSName)).Infoln("External Load Balancer already exists")
 	}
 
 	// Create TargetGroup.
@@ -1805,11 +1807,11 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 		if err != nil {
 			return fmt.Errorf("error creating internal target group: %w", err)
 		}
-		externalTGARN = *tgOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("External Target Group created: %v", *tgOutput.TargetGroups[0].TargetGroupArn)
+		externalTGARN = aws.StringValue(tgOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", externalTGARN).Infoln("External Target Group created")
 	} else {
-		externalTGARN = *describeExternalTGOutput.TargetGroups[0].TargetGroupArn
-		l.Infof("External Target Group already exists: %v", *describeExternalTGOutput.TargetGroups[0].TargetGroupArn)
+		externalTGARN = aws.StringValue(describeExternalTGOutput.TargetGroups[0].TargetGroupArn)
+		l.WithField("arn", externalTGARN).Infoln("External Target Group already exists")
 	}
 
 	externalListenerName := fmt.Sprintf("%s-aext", o.InfraID)
@@ -1845,7 +1847,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 	if err != nil {
 		return fmt.Errorf("error creating external listener: %w", err)
 	}
-	l.Infof("External Listener created: %v", *externalListenerOutput.Listeners[0].ListenerArn)
+	l.WithField("arn", aws.StringValue(externalListenerOutput.Listeners[0].ListenerArn)).Infoln("External Listener created")
 
 	o.targetGroupARNs = []string{externalTGARN, internalATGARN, internalSTGARN}
 	return nil
@@ -1869,7 +1871,7 @@ func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2ifa
 		return err
 	}
 	if len(existingEndpoint) > 0 {
-		l.Info("Found existing s3 VPC endpoint", "id", existingEndpoint)
+		l.WithField("id", existingEndpoint).Infoln("Found existing s3 VPC endpoint")
 		return nil
 	}
 	isRetriable := func(err error) bool {
@@ -1886,7 +1888,7 @@ func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2ifa
 			TagSpecifications: ec2TagSpecifications("vpc-endpoint", "", o.additionalEC2Tags),
 		})
 		if err == nil {
-			l.Info("Created s3 VPC endpoint", "id", aws.StringValue(result.VpcEndpoint.VpcEndpointId))
+			l.WithField("id", aws.StringValue(result.VpcEndpoint.VpcEndpointId)).Infoln("Created s3 VPC endpoint")
 		}
 		return err
 	}); err != nil {

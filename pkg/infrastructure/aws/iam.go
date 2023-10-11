@@ -83,9 +83,9 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 		if err != nil {
 			return nil, fmt.Errorf("cannot create worker role: %w", err)
 		}
-		l.Info("Created role", "name", roleName)
+		l.WithField("name", roleName).Infoln("Created role")
 	} else {
-		l.Info("Found existing role", "name", roleName)
+		l.WithField("name", roleName).Infoln("Found existing role")
 	}
 	instanceProfile, err := existingInstanceProfile(client, profileName)
 	if err != nil {
@@ -104,9 +104,9 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 			return nil, fmt.Errorf("cannot create instance profile: %w", err)
 		}
 		instanceProfile = result.InstanceProfile
-		l.Info("Created instance profile", "name", profileName)
+		l.WithField("name", profileName).Infoln("Created instance profile")
 	} else {
-		l.Info("Found existing instance profile", "name", profileName)
+		l.WithField("name", profileName).Infoln("Found existing instance profile")
 	}
 	hasRole := false
 	for _, role := range instanceProfile.Roles {
@@ -122,7 +122,7 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 		if err != nil {
 			return nil, fmt.Errorf("cannot add role to instance profile: %w", err)
 		}
-		l.Info("Added role to instance profile", "role", roleName, "profile", profileName)
+		l.WithField("role", roleName).WithField("profile", profileName).Infoln("Added role to instance profile")
 	}
 	rolePolicyName := fmt.Sprintf("%s-policy", profileName)
 	hasPolicy, err := existingRolePolicy(client, roleName, rolePolicyName)
@@ -138,7 +138,7 @@ func CreateComputeInstanceProfile(l *logrus.Logger, client iamiface.IAMAPI, infr
 		if err != nil {
 			return nil, fmt.Errorf("cannot create profile policy: %w", err)
 		}
-		l.Info("Created role policy", "name", rolePolicyName)
+		l.WithField("name", rolePolicyName).Infoln("Created role policy")
 	}
 
 	// We sleep here otherwise got an error when creating the ec2 instance referencing the profile.
