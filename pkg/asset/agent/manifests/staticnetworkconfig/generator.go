@@ -123,8 +123,14 @@ func (s *staticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, ho
 		s.log.WithError(err).Warn("Failed to close file")
 	}
 
+	// Check if nmstatectl executable exists in the system
+	nmstatectlPath, err := exec.LookPath("nmstatectl")
+	if err != nil {
+		return "", fmt.Errorf("install nmstate package, %w", err)
+	}
+
 	var stdoutBytes, stderrBytes bytes.Buffer
-	cmd := exec.CommandContext(ctx, "nmstatectl", "gc", f.Name()) //nolint:gosec
+	cmd := exec.CommandContext(ctx, nmstatectlPath, "gc", f.Name()) //nolint:gosec
 	cmd.Stdout = &stdoutBytes
 	cmd.Stderr = &stderrBytes
 
