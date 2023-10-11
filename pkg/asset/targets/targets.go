@@ -25,7 +25,6 @@ var (
 	Manifests = []asset.WritableAsset{
 		&machines.Master{},
 		&machines.Worker{},
-		&machines.CAPIMachine{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&manifests.ClusterAPI{},

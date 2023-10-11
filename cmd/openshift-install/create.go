@@ -198,7 +198,9 @@ var (
 
 				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
-				defer capi.Teardown()
+				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_ENVTEST"); !ok || oi == "" {
+					defer capi.Teardown()
+				}
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.

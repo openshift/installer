@@ -35,7 +35,7 @@ var (
 // creation using CAPI.
 type ClusterAPI struct {
 	FileList  []*asset.File
-	Manifests []Manifest
+	Manifests []Manifest `json:"-"`
 }
 
 type Manifest struct {
