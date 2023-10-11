@@ -123,7 +123,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	for _, stage := range stages {
 		outputs, stateFile, err := stage.Provision(tfvarsFiles, c.FileList) //TODO: make sure c.FileList ends up being used
 		if err != nil {
-			errors.Wrapf(err, "provisioning infrastructure in stage %s", stage.Name())
+			return errors.Wrapf(err, "provisioning infrastructure in stage %s", stage.Name())
 		}
 		if outputs != nil {
 			tfvarsFiles = append(tfvarsFiles, outputs)
