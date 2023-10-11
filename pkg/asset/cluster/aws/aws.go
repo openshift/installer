@@ -14,6 +14,7 @@ import (
 	awsic "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
 // Metadata converts an install configuration to AWS metadata.
@@ -22,6 +23,7 @@ func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.
 		Region: config.Platform.AWS.Region,
 		Identifier: []map[string]string{{
 			fmt.Sprintf("kubernetes.io/cluster/%s", infraID): "owned",
+			capa.ClusterTagKey(infraID):                      "owned",
 		}, {
 			"openshiftClusterID": clusterID,
 		}},
