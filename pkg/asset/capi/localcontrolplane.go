@@ -120,10 +120,6 @@ func (c *LocalControlPlane) Generate(parents asset.Parents) (err error) {
 
 	kc := fromEnvTestConfig(c.Cfg)
 	{
-		wd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
 		dir := filepath.Join(command.RootOpts.Dir, "auth")
 		kf, err := os.Create(filepath.Join(dir, "envtest.kubeconfig"))
 		if err != nil {
