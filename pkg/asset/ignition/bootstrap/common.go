@@ -50,14 +50,17 @@ var (
 	commonEnabledServices = []string{
 		"progress.service",
 		"kubelet.service",
-		"chown-gatewayd-key.service",
-		"systemd-journal-gatewayd.socket",
 		"approve-csr.service",
 		// baremetal & openstack platform services
 		"keepalived.service",
 		"coredns.service",
 		"ironic.service",
 		"master-bmh-update.service",
+	}
+
+	rhcosEnabledServices = []string{
+		"chown-gatewayd-key.service",
+		"systemd-journal-gatewayd.socket",
 	}
 )
 
@@ -173,8 +176,13 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	if err := AddStorageFiles(a.Config, "/", "bootstrap/files", templateData); err != nil {
 		return err
 	}
-	if err := AddSystemdUnits(a.Config, "bootstrap/systemd/units", templateData, commonEnabledServices); err != nil {
+	if err := AddSystemdUnits(a.Config, "bootstrap/systemd/common/units", templateData, commonEnabledServices); err != nil {
 		return err
+	}
+	if !templateData.IsOKD {
+		if err := AddSystemdUnits(a.Config, "bootstrap/systemd/rhcos/units", templateData, rhcosEnabledServices); err != nil {
+			return err
+		}
 	}
 
 	// Check for optional platform specific files/units
