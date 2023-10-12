@@ -52,7 +52,7 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 			subnet.Filters = []capa.Filter{
 				{
 					Name:   "tag:Name",
-					Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+					Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
 				},
 			}
 		} else {
@@ -86,8 +86,6 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 					IOPS:      int64(mpool.EC2RootVolume.IOPS),
 					Encrypted: pointer.Bool(true), // TODO(padillon): configure
 				},
-				//Subnet: ?
-				//AdditionalTags: tags,
 			},
 		}
 
