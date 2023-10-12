@@ -60,7 +60,6 @@ func (a *AgentHosts) Generate(dependencies asset.Parents) error {
 	agentConfig := &AgentConfig{}
 	installConfig := &agentAsset.OptionalInstallConfig{}
 	dependencies.Get(agentConfig, installConfig)
-	var hostsFromInstallConfig = false
 
 	if agentConfig.Config != nil {
 		a.RendezvousIP = agentConfig.Config.RendezvousIP
@@ -71,22 +70,19 @@ func (a *AgentHosts) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Platform.Name() == baremetal.Name && len(installConfig.Config.Platform.BareMetal.Hosts) > 0 {
 			fieldPath := field.NewPath("Platform", "Baremetal", "Hosts")
 			if len(a.Hosts) == 0 {
-				logrus.Debugf("Using %s from %s", fieldPath, agentAsset.InstallConfigFilename)
-				hostsFromInstallConfig = true
+				logrus.Infof("Using %s from %s", fieldPath, agentAsset.InstallConfigFilename)
 				if err := a.getInstallConfigDefaults(installConfig.Config.Platform.BareMetal); err != nil {
 					return errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
 				}
 			} else {
 				logrus.Warnf(fmt.Sprintf("%s from %s is ignored", fieldPath, agentAsset.InstallConfigFilename))
+				logrus.Infof("Using hosts from %s", agentConfigFilename)
 			}
 		}
 	}
 
 	if err := a.validateAgentHosts().ToAggregate(); err != nil {
-		if hostsFromInstallConfig {
-			return errors.Wrapf(err, "invalid Install Config configuration")
-		}
-		return errors.Wrapf(err, "invalid Agent Config configuration")
+		return errors.Wrapf(err, "invalid Hosts configuration")
 	}
 
 	return nil
