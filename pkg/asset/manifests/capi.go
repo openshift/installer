@@ -192,7 +192,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 								FromPort:    30000,
 								ToPort:      32767,
 							},
-							{}
+							{},
 						},
 					},
 					AdditionalControlPlaneIngressRules: []capa.IngressRule{
