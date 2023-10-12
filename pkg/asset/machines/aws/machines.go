@@ -242,10 +242,10 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		SecurityGroups:    securityGroups,
 	}
 
-	subnetName := fmt.Sprintf("%s-private-%s", in.clusterID, in.zone)
+	subnetName := fmt.Sprintf("%s-subnet-private-%s", in.clusterID, in.zone)
 	if in.publicSubnet {
 		config.PublicIP = pointer.Bool(in.publicSubnet)
-		subnetName = fmt.Sprintf("%s-public-%s", in.clusterID, in.zone)
+		subnetName = fmt.Sprintf("%s-subnet-public-%s", in.clusterID, in.zone)
 	}
 
 	if in.subnet == "" {

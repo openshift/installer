@@ -104,33 +104,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to get availability zones")
 		}
-		// By default, split the main CIDR into 8 subnets (which covers 4 zones), unless the
-		// number of zones * 2 is more than 8.
-		// availableSubnets, err := ipnet.SplitInto(8, cidr)
-		// if err != nil || len(availableSubnets) != 8 {
-		// 	return errors.Wrap(err, "failed to split CIDR into subnets")
-		// }
-		// subnets := capa.Subnets{}
-		// idx := 0
-		// for _, zone := range zones {
-		// 	if idx >= len(availableSubnets) {
-		// 		// If we run out of subnets, just stop.
-		// 		break
-		// 	}
-		// 	subnets = append(subnets,
-		// 		capa.SubnetSpec{
-		// 			ID:               clusterID.InfraID + "-private-" + zone,
-		// 			AvailabilityZone: zone,
-		// 			CidrBlock:        availableSubnets[idx].String(),
-		// 		},
-		// 		capa.SubnetSpec{
-		// 			ID:        clusterID.InfraID + "-public-" + zone,
-		// 			IsPublic:  true,
-		// 			CidrBlock: availableSubnets[idx+1].String(),
-		// 		},
-		// 	)
-		// 	idx += 2
-		// }
 
 		awsCluster := &capa.AWSCluster{
 			ObjectMeta: metav1.ObjectMeta{

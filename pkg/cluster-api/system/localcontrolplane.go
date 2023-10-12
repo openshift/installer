@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	capav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -19,6 +20,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -66,15 +68,7 @@ func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfi
 		return err
 	}
 
-	// api := fmt.Sprintf("%s/kube-apiserver", binDir)
-	// if err := os.Setenv("TEST_ASSET_KUBE_APISERVER", api); err != nil {
-	// 	return err
-	// }
-	// etcd := fmt.Sprintf("%s/etcd", binDir)
-	// if err := os.Setenv("TEST_ASSET_ETCD", etcd); err != nil {
-	// 	return err
-	// }
-
+	log.SetLogger(klog.NewKlogr())
 	logrus.Info("Started local control plane with envtest")
 	c.Env = &envtest.Environment{
 		Scheme:                   scheme.Scheme,
