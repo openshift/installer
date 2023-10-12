@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/ipnet"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -85,13 +87,49 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	region := installConfig.Config.Platform.AWS.Region
-
 	switch platform {
 	case awstypes.Name:
 		// Not sure if this is the best place to create IAM roles.
 		if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
 			return errors.Wrap(err, "failed to create IAM roles")
+		}
+
+		// Retrieve the AZs available and generate the subnets private
+		// and public.
+		cidr := ipnet.MustParseCIDR("10.0.0.0/16")
+		if len(installConfig.Config.MachineNetwork) > 0 {
+			cidr = &installConfig.Config.MachineNetwork[0].CIDR
+		}
+		zones, err := installConfig.AWS.AvailabilityZones(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, "failed to get availability zones")
+		}
+		// By default, split the main CIDR into 8 subnets (which covers 4 zones), unless the
+		// number of zones * 2 is more than 8.
+		availableSubnets, err := ipnet.SplitInto(8, cidr)
+		if err != nil || len(availableSubnets) != 8 {
+			return errors.Wrap(err, "failed to split CIDR into subnets")
+		}
+		subnets := []capa.Subnets{}
+		idx := 0
+		for _, zone := range zones {
+			if idx >= len(availableSubnets) {
+				// If we run out of subnets, just stop.
+				break
+			}
+			subnets = append(subnets, capa.Subnets{
+				{
+					ID:               clusterID.InfraID + "-private-" + zone,
+					AvailabilityZone: zone,
+					CidrBlock:        availableSubnets[idx].String(),
+				},
+				{
+					ID:        clusterID.InfraID + "-public-" + zone,
+					IsPublic:  true,
+					CidrBlock: availableSubnets[idx+1].String(),
+				},
+			})
+			idx += 2
 		}
 
 		awsCluster := &capa.AWSCluster{
@@ -103,43 +141,9 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				Region: installConfig.Config.Platform.AWS.Region,
 				NetworkSpec: capa.NetworkSpec{
 					VPC: capa.VPCSpec{
-						AvailabilityZoneUsageLimit: pointer.Int(6),
+						CidrBlock:                  cidr.String(),
+						AvailabilityZoneUsageLimit: pointer.Int(len(zones)),
 						AvailabilityZoneSelection:  &capa.AZSelectionSchemeOrdered,
-					},
-					Subnets: capa.Subnets{
-						{
-							ID:               clusterID.InfraID + "-private-" + region + "a",
-							AvailabilityZone: region + "a",
-							CidrBlock:        "10.0.0.0/19",
-						},
-						{
-							ID:               clusterID.InfraID + "-private-" + region + "b",
-							AvailabilityZone: region + "b",
-							CidrBlock:        "10.0.32.0/19",
-						},
-						{
-							ID:               clusterID.InfraID + "-private-" + region + "c",
-							AvailabilityZone: region + "c",
-							CidrBlock:        "10.0.64.0/19",
-						},
-						{
-							ID:               clusterID.InfraID + "-public-" + region + "a",
-							IsPublic:         true,
-							AvailabilityZone: region + "a",
-							CidrBlock:        "10.0.128.0/19",
-						},
-						{
-							ID:               clusterID.InfraID + "-public-" + region + "b",
-							IsPublic:         true,
-							AvailabilityZone: region + "b",
-							CidrBlock:        "10.0.160.0/19",
-						},
-						{
-							ID:               clusterID.InfraID + "-public-" + region + "c",
-							IsPublic:         true,
-							AvailabilityZone: region + "c",
-							CidrBlock:        "10.0.192.0/19",
-						},
 					},
 					CNI: &capa.CNISpec{
 						CNIIngressRules: capa.CNIIngressRules{
