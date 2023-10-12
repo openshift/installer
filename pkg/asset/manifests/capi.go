@@ -181,12 +181,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 								ToPort:      9999,
 							},
 							{
-								Description: "Port 10259 (TCP) for kube-scheduler",
-								Protocol:    capa.SecurityGroupProtocolTCP,
-								FromPort:    10259,
-								ToPort:      10259,
-							},
-							{
 								Description: "Service node ports (TCP)",
 								Protocol:    capa.SecurityGroupProtocolTCP,
 								FromPort:    30000,
@@ -198,6 +192,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 								FromPort:    30000,
 								ToPort:      32767,
 							},
+							{}
 						},
 					},
 					AdditionalControlPlaneIngressRules: []capa.IngressRule{
