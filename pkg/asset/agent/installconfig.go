@@ -175,18 +175,26 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	return allErrs
 }
 
+func vcenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
+	if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
+		return true
+	}
+	return false
+}
+
 func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	vspherePlatform := installConfig.Platform.VSphere
 	vcenterServers := map[string]bool{}
+	userProvidedCredentials := false
 	for _, vcenter := range vspherePlatform.VCenters {
 		vcenterServers[vcenter.Server] = true
 
 		// If any one of the required credential values is entered, then the user is choosing to enter credentials
-		if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
+		if vcenterCredentialsAreProvided(vcenter) {
 			// Then check all required credential values are filled
+			userProvidedCredentials = true
 			if !(vcenter.Server != "" && vcenter.Username != "" && vcenter.Password != "" && len(vcenter.Datacenters) > 0) {
-
 				message := "All credential fields are required if any one is specified"
 				if vcenter.Server == "" {
 					fieldPath := field.NewPath("Platform", "VSphere", "vcenter")
@@ -212,9 +220,22 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 	}
 
 	for _, failureDomain := range vspherePlatform.FailureDomains {
-		if !vcenterServers[failureDomain.Server] {
-			fieldPath := field.NewPath("Platform", "VSphere", "failureDomains", "Server")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("failureDomain server %v must have a corresponding vcenter server defined", failureDomain.Server)))
+		// if !vcenterServers[failureDomain.Server] {
+		// 	fieldPath := field.NewPath("Platform", "VSphere", "failureDomains", "Server")
+		// 	allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("failureDomain server %v must have a corresponding vcenter server defined", failureDomain.Server)))
+		// }
+
+		// Although folder is optional in IPI/UPI, it is must be set for agent-based installs.
+		// If it is not set, assisted-service will set a placeholder value for folder:
+		// "/datacenterplaceholder/vm/folderplaceholder"
+		//
+		// When assisted-service generates the install-config to for the cluster, it will fail
+		// validation because the placeholder value's datacenter name may not match
+		// the datacenter set in the failureDomain in the install-config.yaml submitted
+		// to the agent-based create image command.
+		if failureDomain.Topology.Folder == "" && userProvidedCredentials {
+			fieldPath := field.NewPath("Platform", "VSphere", "failureDomains", "topology", "folder")
+			allErrs = append(allErrs, field.Required(fieldPath, "must specify a folder for agent-based installs"))
 		}
 	}
 

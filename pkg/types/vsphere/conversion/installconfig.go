@@ -12,6 +12,12 @@ import (
 
 var localLogger = logrus.New()
 
+const (
+	GeneratedFailureDomainName   string = "generated-failure-domain"
+	GeneratedFailureDomainRegion string = "generated-region"
+	GeneratedFailureDomainZone   string = "generated-zone"
+)
+
 // ConvertInstallConfig modifies a given platform spec for the new requirements.
 func ConvertInstallConfig(config *types.InstallConfig) error {
 	platform := config.Platform.VSphere
@@ -55,10 +61,10 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		localLogger.Warn("vsphere topology fields are now depreciated please use failureDomains")
 
 		platform.FailureDomains = make([]vsphere.FailureDomain, 1)
-		platform.FailureDomains[0].Name = "generated-failure-domain"
+		platform.FailureDomains[0].Name = GeneratedFailureDomainName
 		platform.FailureDomains[0].Server = platform.VCenters[0].Server
-		platform.FailureDomains[0].Region = "generated-region"
-		platform.FailureDomains[0].Zone = "generated-zone"
+		platform.FailureDomains[0].Region = GeneratedFailureDomainRegion
+		platform.FailureDomains[0].Zone = GeneratedFailureDomainZone
 
 		platform.FailureDomains[0].Topology.Datacenter = platform.DeprecatedDatacenter
 		platform.FailureDomains[0].Topology.ResourcePool = platform.DeprecatedResourcePool
