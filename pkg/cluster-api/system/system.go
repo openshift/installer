@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,8 +30,17 @@ var (
 func Teardown() {
 	cancel()
 	logrus.Info("Shutting down local Cluster API control plane...")
-	wg.Wait()
-	logrus.Info("Local control plane has completed operations")
+	ch := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	select {
+	case <-ch:
+		logrus.Info("Local control plane has completed operations")
+	case <-time.After(30 * time.Second):
+		logrus.Warn("Timed out waiting for local control plane to shut down")
+	}
 }
 
 // System creates a local capi control plane
@@ -143,8 +153,10 @@ func (c *System) runController(ctx context.Context, ct *controller) error {
 		return fmt.Errorf("failed to install controller %q manifests in local control plane: %w", ct.Name, err)
 	}
 	pr := &process.State{
-		Path: ct.Path,
-		Args: ct.Args,
+		Path:         ct.Path,
+		Args:         ct.Args,
+		StartTimeout: 10 * time.Second,
+		StopTimeout:  10 * time.Second,
 		HealthCheck: process.HealthCheck{
 			URL: url.URL{
 				Scheme: "http",

@@ -241,12 +241,14 @@ func (ps *State) Stop() error {
 	}
 
 	timedOut := time.After(ps.StopTimeout)
-
 	select {
 	case <-ps.waitDone:
 		break
 	case <-timedOut:
-		return fmt.Errorf("timeout waiting for process %s to stop", path.Base(ps.Path))
+		if err := ps.Cmd.Process.Signal(syscall.SIGKILL); err != nil {
+			return fmt.Errorf("unable to signal for process %s to stop: %w", ps.Path, err)
+		}
+		return fmt.Errorf("timeout waiting for process %s to stop, sent SIGKILL", path.Base(ps.Path))
 	}
 	ps.ready = false
 	return nil

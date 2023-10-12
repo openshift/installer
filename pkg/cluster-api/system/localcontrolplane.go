@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -79,6 +80,8 @@ func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfi
 		Scheme:                   scheme.Scheme,
 		AttachControlPlaneOutput: false,
 		BinaryAssetsDirectory:    c.BinDir,
+		ControlPlaneStartTimeout: 10 * time.Second,
+		ControlPlaneStopTimeout:  10 * time.Second,
 	}
 	c.Cfg, err = c.Env.Start()
 	if err != nil {

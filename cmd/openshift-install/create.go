@@ -192,6 +192,9 @@ var (
 			Short: "Create an OpenShift cluster with Cluster API",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
+			PreRun: func(cmd *cobra.Command, args []string) {
+				logrus.DeferExitHandler(system.Teardown)
+			},
 			PostRun: func(_ *cobra.Command, _ []string) {
 				ctx := context.Background()
 
