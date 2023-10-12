@@ -393,6 +393,8 @@ type instanceOptions struct {
 	additionalEC2Tags        []*ec2.Tag
 }
 
+var iopsInputPermittedTypes = [...]string{"gp3", "io1", "io2"}
+
 // createEC2Instance creates an EC2 instance and returns its instance ID.
 func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, options instanceOptions) (*ec2.Instance, error) {
 	// Check if an instance exists.
@@ -411,6 +413,26 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 	if len(existingInstances.Reservations) > 0 && len(existingInstances.Reservations[0].Instances) > 0 {
 		l.WithField("id", aws.StringValue(existingInstances.Reservations[0].Instances[0].InstanceId)).Infoln("Instance already exists")
 		return existingInstances.Reservations[0].Instances[0], nil
+	}
+
+	kmsKeyID := options.kmsKeyID
+	// Get default KMS key ID
+	if kmsKeyID == "" {
+		resp, err := ec2Client.GetEbsDefaultKmsKeyId(&ec2.GetEbsDefaultKmsKeyIdInput{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get default KMS key: %w", err)
+		}
+		kmsKeyID = aws.StringValue(resp.KmsKeyId)
+	}
+
+	// InvalidParameterCombination: The parameter iops is not supported for gp2 volumes.
+	var iops *int64
+	if options.volumeIOPS > 0 {
+		for _, permitted := range iopsInputPermittedTypes {
+			if options.volumeType == permitted {
+				iops = aws.Int64(options.volumeIOPS)
+			}
+		}
 	}
 
 	// Create a new EC2 instance.
@@ -438,11 +460,9 @@ func createEC2Instance(l *logrus.Logger, ec2Client *ec2.EC2, clusterID string, o
 				Ebs: &ec2.EbsBlockDevice{
 					VolumeType: aws.String(options.volumeType),
 					VolumeSize: aws.Int64(options.volumeSize),
-					// TODO(alberto): Parameterize this.
-					Encrypted: aws.Bool(false),
-					//Encrypted:  aws.Bool(encrypted),
-					//KmsKeyId:   aws.String(kmsKeyID),
-					//Iops:       aws.Int64(volumeIOPS),
+					Encrypted:  aws.Bool(options.encrypted),
+					KmsKeyId:   aws.String(kmsKeyID),
+					Iops:       iops,
 				},
 			},
 		},

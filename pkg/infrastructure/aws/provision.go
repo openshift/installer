@@ -100,9 +100,8 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		volumeType:               "gp2",
 		volumeSize:               30,
 		volumeIOPS:               0,
-		// TODO(alberto): use encrypt input.
-		encrypted: false,
-		kmsKeyID:  clusterAWSConfig.KMSKeyID,
+		encrypted:                clusterAWSConfig.Encrypted,
+		kmsKeyID:                 clusterAWSConfig.KMSKeyID,
 	}
 	if err := createBootstrapResources(logger, awsSession, bootstrapInput); err != nil {
 		return nil, nil, err
@@ -121,10 +120,9 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		volumeSize:      clusterAWSConfig.Size,
 		volumeIOPS:      clusterAWSConfig.IOPS,
 		additionalTags:  clusterAWSConfig.ExtraTags,
-		// TODO(alberto): use encrypt input.
-		encrypted: false,
-		kmsKeyID:  clusterAWSConfig.KMSKeyID,
-		replicas:  clusterConfig.Masters,
+		encrypted:       clusterAWSConfig.Encrypted,
+		kmsKeyID:        clusterAWSConfig.KMSKeyID,
+		replicas:        clusterConfig.Masters,
 	}
 	if err := createControlPlaneResources(logger, awsSession, controlPlaneInput); err != nil {
 		return nil, nil, err
