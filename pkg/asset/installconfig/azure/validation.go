@@ -377,14 +377,18 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 	// The assumption here is that since cp and compute arches cannot differ today, it's ok to not check the
 	// default instance as long as it is used in any one place.
 	if !useDefaultInstanceType && defaultInstanceType != "" {
+		architecture := types.Architecture(types.ArchitectureAMD64)
 		if ic.ControlPlane != nil {
-			fieldPath := field.NewPath("platform", "azure", "defaultMachinePlatform")
-			capabilities, err := client.GetVMCapabilities(context.TODO(), defaultInstanceType, ic.Azure.Region)
-			if err != nil {
-				return append(allErrs, field.Invalid(fieldPath.Child("type"), defaultInstanceType, err.Error()))
-			}
-			allErrs = append(allErrs, validateVMArchitecture(fieldPath.Child("type"), defaultInstanceType, ic.ControlPlane.Architecture, capabilities)...)
+			architecture = ic.ControlPlane.Architecture
 		}
+		minReq := computeReq
+		if ic.ControlPlane == nil || ic.ControlPlane.Platform.Azure == nil {
+			minReq = controlPlaneReq
+		}
+		fieldPath := field.NewPath("platform", "azure", "defaultMachinePlatform")
+		ultraSSDEnabled := strings.EqualFold(defaultUltraSSDCapability, "Enabled")
+		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath,
+			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture)...)
 	}
 	return allErrs
 }
