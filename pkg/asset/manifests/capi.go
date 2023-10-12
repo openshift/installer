@@ -249,6 +249,43 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+
+		// If the install config has subnets, use them.
+		if len(installConfig.AWS.Subnets) > 0 {
+			vpc, err := installConfig.AWS.VPC(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "failed to get VPC")
+			}
+			awsCluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
+				ID: vpc,
+			}
+			privateSubnets, err := installConfig.AWS.PrivateSubnets(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "failed to get private subnets")
+			}
+			for _, subnet := range privateSubnets {
+				awsCluster.Spec.NetworkSpec.Subnets = append(awsCluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+					ID:               subnet.ID,
+					CidrBlock:        subnet.CIDR,
+					AvailabilityZone: subnet.Zone.Name,
+					IsPublic:         subnet.Public,
+				})
+			}
+			publicSubnets, err := installConfig.AWS.PublicSubnets(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "failed to get public subnets")
+			}
+
+			for _, subnet := range publicSubnets {
+				awsCluster.Spec.NetworkSpec.Subnets = append(awsCluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
+					ID:               subnet.ID,
+					CidrBlock:        subnet.CIDR,
+					AvailabilityZone: subnet.Zone.Name,
+					IsPublic:         subnet.Public,
+				})
+			}
+		}
+
 		awsClusterFn := "01_aws-cluster.yaml"
 		c.Manifests = append(c.Manifests, Manifest{awsCluster, awsClusterFn})
 

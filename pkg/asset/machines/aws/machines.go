@@ -113,7 +113,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			domain.Subnet.Type = machinev1.AWSFiltersReferenceType
 			domain.Subnet.Filters = &[]machinev1.AWSResourceFilter{{
 				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
+				Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
 			}}
 		} else {
 			domain.Subnet.Type = machinev1.AWSIDReferenceType
