@@ -27,7 +27,6 @@ var (
 		&machines.Worker{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
-		&manifests.ClusterAPI{},
 	}
 
 	// ManifestTemplates are the manifest-templates targeted assets.
