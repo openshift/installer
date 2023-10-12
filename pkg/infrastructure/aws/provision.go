@@ -13,6 +13,7 @@ import (
 	tfvarsaws "github.com/openshift/installer/pkg/tfvars/aws"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File) (*asset.File, *asset.File, error) {
@@ -51,16 +52,20 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Creator", version.Raw),
 	})
 
+	availabilityZones := sets.New(clusterAWSConfig.MasterAvailabilityZones...)
+	availabilityZones.Insert(clusterAWSConfig.WorkerAvailabilityZones...)
+
 	// Create VPC resources.
 	vpcInput := &CreateInfraOptions{
 		Region:         clusterAWSConfig.Region,
 		InfraID:        clusterConfig.ClusterID,
-		Zones:          clusterAWSConfig.MasterAvailabilityZones,
+		Zones:          sets.List(availabilityZones),
 		BaseDomain:     clusterConfig.BaseDomain,
 		AdditionalTags: clusterAWSConfig.ExtraTags,
 		public:         clusterAWSConfig.PublishStrategy == "External",
 		cidrV4Blocks:   clusterConfig.MachineV4CIDRs,
 		cidrV6Blocks:   clusterConfig.MachineV6CIDRs,
+		vpcID:          clusterAWSConfig.VPC,
 	}
 	logger := logrus.StandardLogger()
 	if err := createVPCResources(logger, awsSession, vpcInput); err != nil {
@@ -107,6 +112,14 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		return nil, nil, err
 	}
 
+	// Choose appropriate subnet according to the zone
+	// We assume that len(AZs) == len(masters)
+	subnetIDs := make([]string, clusterConfig.Masters)
+	for i := 0; i < clusterConfig.Masters; i++ {
+		zoneIdx := i % len(clusterAWSConfig.MasterAvailabilityZones)
+		subnetIDs[i] = vpcInput.zoneToSubnetIDMap[clusterAWSConfig.MasterAvailabilityZones[zoneIdx]]
+	}
+
 	// Create Control Plane resources.
 	controlPlaneInput := &controlPlaneInput{
 		clusterID:       clusterConfig.ClusterID,
@@ -114,7 +127,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		userData:        clusterConfig.IgnitionMaster,
 		amiID:           clusterAWSConfig.AMI,
 		instanceType:    clusterAWSConfig.MasterInstanceType,
-		subnetIDs:       vpcInput.privateSubnetIDs,
+		subnetIDs:       subnetIDs,
 		securityGroupID: vpcInput.masterSecurityGroupID,
 		volumeType:      clusterAWSConfig.Type,
 		volumeSize:      clusterAWSConfig.Size,

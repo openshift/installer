@@ -3,10 +3,12 @@ package aws
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -33,36 +35,133 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 		})
 	}
 
-	vpcID, err := vpcInput.createVPC(logger, ec2Client)
-	if err != nil {
-		return err
-	}
-	vpcInput.vpcID = vpcID
+	var err error
+	zoneToPrivateSubnetIDMap := make(map[string]string)
+	vpcID := vpcInput.vpcID
+	if vpcID == "" {
+		vpcID, err = vpcInput.createVPC(logger, ec2Client)
+		if err != nil {
+			return err
+		}
+		vpcInput.vpcID = vpcID
 
-	if err = vpcInput.CreateDHCPOptions(logger, ec2Client, vpcID); err != nil {
-		return err
-	}
+		if err = vpcInput.CreateDHCPOptions(logger, ec2Client, vpcID); err != nil {
+			return err
+		}
 
-	igwID, err := vpcInput.CreateInternetGateway(logger, ec2Client, vpcID)
-	if err != nil {
-		return err
-	}
+		igwID, err := vpcInput.CreateInternetGateway(logger, ec2Client, vpcID)
+		if err != nil {
+			return err
+		}
 
-	bootstrapSG, err := vpcInput.CreateBootstrapSecurityGroup(logger, ec2Client, vpcID)
-	if err != nil {
-		return err
-	}
-	// FIXME: only use 0.0.0.0/0 if using public endpoints
-	var machineV4Cidrs []string
-	if vpcInput.public {
-		machineV4Cidrs = []string{"0.0.0.0/0"}
+		bootstrapSG, err := vpcInput.CreateBootstrapSecurityGroup(logger, ec2Client, vpcID)
+		if err != nil {
+			return err
+		}
+		// FIXME: only use 0.0.0.0/0 if using public endpoints
+		var machineV4Cidrs []string
+		if vpcInput.public {
+			machineV4Cidrs = []string{"0.0.0.0/0"}
+		} else {
+			machineV4Cidrs = vpcInput.cidrV4Blocks
+		}
+		bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, machineV4Cidrs)
+		if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, bootstrapSG, bootstrapIngressPermissions); err != nil {
+			return err
+		}
+
+		// Per zone resources
+		_, network, err := net.ParseCIDR(vpcInput.cidrV4Blocks[0])
+		if err != nil {
+			return err
+		}
+		privateNetwork, err := cidr.Subnet(network, 1, 0)
+		if err != nil {
+			return err
+		}
+		publicNetwork, err := cidr.Subnet(network, 1, 1)
+		if err != nil {
+			return err
+		}
+
+		// If a single-zone deployment, the available CIDR block will be split
+		// into two to allow user expansion
+		if len(vpcInput.Zones) == 1 {
+			privateNetwork, err = cidr.Subnet(privateNetwork, 1, 0)
+			if err != nil {
+				return err
+			}
+			publicNetwork, err = cidr.Subnet(publicNetwork, 1, 0)
+			if err != nil {
+				return err
+			}
+		}
+
+		var publicSubnetIDs []string
+		var privateSubnetIDs []string
+		var endpointRouteTableIds []*string
+		newBits := int(math.Ceil(math.Log2(float64(len(vpcInput.Zones)))))
+		for i, zone := range vpcInput.Zones {
+			privateCIDR, err := cidr.Subnet(privateNetwork, newBits, i)
+			if err != nil {
+				return err
+			}
+			privateSubnetID, err := vpcInput.CreatePrivateSubnet(logger, ec2Client, vpcID, zone, privateCIDR.String())
+			if err != nil {
+				return err
+			}
+			zoneToPrivateSubnetIDMap[zone] = privateSubnetID
+
+			publicCIDR, err := cidr.Subnet(publicNetwork, newBits, i)
+			if err != nil {
+				return err
+			}
+			publicSubnetID, err := vpcInput.CreatePublicSubnet(logger, ec2Client, vpcID, zone, publicCIDR.String())
+			if err != nil {
+				return err
+			}
+
+			var natGatewayID string
+			publicSubnetIDs = append(publicSubnetIDs, publicSubnetID)
+			privateSubnetIDs = append(privateSubnetIDs, privateSubnetID)
+
+			if !vpcInput.EnableProxy {
+				natGatewayID, err = vpcInput.CreateNATGateway(logger, ec2Client, publicSubnetID, zone)
+				if err != nil {
+					return err
+				}
+			}
+			privateRouteTable, err := vpcInput.CreatePrivateRouteTable(logger, ec2Client, vpcID, natGatewayID, privateSubnetID, zone)
+			if err != nil {
+				return err
+			}
+			endpointRouteTableIds = append(endpointRouteTableIds, aws.String(privateRouteTable))
+		}
+		vpcInput.publicSubnetIDs = publicSubnetIDs
+		vpcInput.privateSubnetIDs = privateSubnetIDs
+
+		publicRouteTable, err := vpcInput.CreatePublicRouteTable(logger, ec2Client, vpcID, igwID, publicSubnetIDs)
+		if err != nil {
+			return err
+		}
+
+		endpointRouteTableIds = append(endpointRouteTableIds, aws.String(publicRouteTable))
+		err = vpcInput.CreateVPCS3Endpoint(logger, ec2Client, vpcID, endpointRouteTableIds)
+		if err != nil {
+			return err
+		}
 	} else {
-		machineV4Cidrs = vpcInput.cidrV4Blocks
+		logger.WithField("id", vpcID).Debugln("Using user-supplied VPC")
+
+		result, err := ec2Client.DescribeSubnets(&ec2.DescribeSubnetsInput{SubnetIds: aws.StringSlice(vpcInput.privateSubnetIDs)})
+		if err != nil {
+			return err
+		}
+		for _, subnet := range result.Subnets {
+			zoneToPrivateSubnetIDMap[aws.StringValue(subnet.AvailabilityZone)] = aws.StringValue(subnet.SubnetId)
+		}
 	}
-	bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, machineV4Cidrs)
-	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, bootstrapSG, bootstrapIngressPermissions); err != nil {
-		return err
-	}
+	vpcInput.zoneToSubnetIDMap = zoneToPrivateSubnetIDMap
 
 	masterSG, err := vpcInput.CreateMasterSecurityGroup(logger, ec2Client, vpcID)
 	if err != nil {
@@ -88,69 +187,7 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 		return err
 	}
 
-	// Per zone resources
-	// TODO(alberto): Parameterize this.
-	basePrivateSubnetCIDR := "10.0.128.0/20"
-	basePublicSubnetCIDR := "10.0.0.0/20"
-	var endpointRouteTableIds []*string
-	var publicSubnetIDs []string
-	var privateSubnetIDs []string
-	_, privateNetwork, err := net.ParseCIDR(basePrivateSubnetCIDR)
-	if err != nil {
-		return err
-	}
-	_, publicNetwork, err := net.ParseCIDR(basePublicSubnetCIDR)
-	if err != nil {
-		return err
-	}
-	for _, zone := range vpcInput.Zones {
-		privateSubnetID, err := vpcInput.CreatePrivateSubnet(logger, ec2Client, vpcID, zone, privateNetwork.String())
-		if err != nil {
-			return err
-		}
-		publicSubnetID, err := vpcInput.CreatePublicSubnet(logger, ec2Client, vpcID, zone, publicNetwork.String())
-		if err != nil {
-			return err
-		}
-		var natGatewayID string
-		publicSubnetIDs = append(publicSubnetIDs, publicSubnetID)
-		privateSubnetIDs = append(privateSubnetIDs, privateSubnetID)
-
-		if !vpcInput.EnableProxy {
-			natGatewayID, err = vpcInput.CreateNATGateway(logger, ec2Client, publicSubnetID, zone)
-			if err != nil {
-				return err
-			}
-		}
-		privateRouteTable, err := vpcInput.CreatePrivateRouteTable(logger, ec2Client, vpcID, natGatewayID, privateSubnetID, zone)
-		if err != nil {
-			return err
-		}
-		endpointRouteTableIds = append(endpointRouteTableIds, aws.String(privateRouteTable))
-
-		//result.Zones = append(result.Zones, &CreateInfraOutputZone{
-		//	Name:     zone,
-		//	SubnetID: privateSubnetID,
-		//})
-
-		// increment each subnet by /20
-		privateNetwork.IP[2] = privateNetwork.IP[2] + 16
-		publicNetwork.IP[2] = publicNetwork.IP[2] + 16
-	}
-	vpcInput.publicSubnetIDs = publicSubnetIDs
-	vpcInput.privateSubnetIDs = privateSubnetIDs
-
-	publicRouteTable, err := vpcInput.CreatePublicRouteTable(logger, ec2Client, vpcID, igwID, publicSubnetIDs)
-	if err != nil {
-		return err
-	}
-	endpointRouteTableIds = append(endpointRouteTableIds, aws.String(publicRouteTable))
-	err = vpcInput.CreateVPCS3Endpoint(logger, ec2Client, vpcID, endpointRouteTableIds)
-	if err != nil {
-		return err
-	}
-
-	err = vpcInput.CreateLoadBalancers(logger, session, vpcID, privateSubnetIDs, publicSubnetIDs, vpcInput.public)
+	err = vpcInput.CreateLoadBalancers(logger, session, vpcID, vpcInput.privateSubnetIDs, vpcInput.publicSubnetIDs, vpcInput.public)
 	if err != nil {
 		return err
 	}
@@ -1682,7 +1719,10 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 	}
 	l.WithField("arn", aws.StringValue(internalAListenerOutput.Listeners[0].ListenerArn)).Infoln("Internal Service Listener created")
 
+	o.targetGroupARNs = []string{internalATGARN, internalSTGARN}
+
 	if !external {
+		l.Debugln("Skipping creation of a public LB because of private cluster")
 		return nil
 	}
 
@@ -1849,7 +1889,7 @@ func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *sess
 	}
 	l.WithField("arn", aws.StringValue(externalListenerOutput.Listeners[0].ListenerArn)).Infoln("External Listener created")
 
-	o.targetGroupARNs = []string{externalTGARN, internalATGARN, internalSTGARN}
+	o.targetGroupARNs = append(o.targetGroupARNs, externalTGARN)
 	return nil
 }
 
@@ -1937,6 +1977,7 @@ type CreateInfraOptions struct {
 	bootstrapSecurityGroupID string
 	masterSecurityGroupID    string
 	workerSecurityGroupID    string
+	zoneToSubnetIDMap        map[string]string
 }
 
 // CreateInfraOutput
