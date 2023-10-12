@@ -28,20 +28,6 @@
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
 
-  - name: 'List the Control Plane Trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk list"
-    when: os_networking_type == "Kuryr"
-    register: control_plane_trunks
-
-  - name: 'Create the Control Plane trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_cp_trunk_name }}-{{ item.0 }}"
-    with_indexed_items: "{{ ports.results }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - "os_cp_trunk_name|string not in control_plane_trunks.stdout"
-
   - name: 'List the Server groups'
     ansible.builtin.command:
       # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy

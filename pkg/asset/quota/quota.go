@@ -141,7 +141,7 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			logrus.Warnf("Empty OpenStack cloud info and therefore will skip checking quota validation.")
 			return nil
 		}
-		reports, err := quota.Check(ci.Quotas, openstack.Constraints(ci, masters, workers, ic.Config.NetworkType))
+		reports, err := quota.Check(ci.Quotas, openstack.Constraints(ci, masters, workers))
 		if err != nil {
 			return summarizeFailingReport(reports)
 		}

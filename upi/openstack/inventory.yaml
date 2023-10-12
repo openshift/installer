@@ -11,16 +11,6 @@ all:
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
-      # Service subnet cidr
-      svc_subnet_range: '172.30.0.0/16'
-      os_svc_network_range: '172.30.0.0/15'
-      # Subnet pool prefixes
-      cluster_network_cidrs: '10.128.0.0/14'
-      # Subnet pool prefix length
-      host_prefix: '23'
-      # Name of the SDN.
-      # Possible values are OpenshiftSDN or Kuryr.
-      os_networking_type: 'OpenshiftSDN'
 
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.

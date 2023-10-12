@@ -639,7 +639,6 @@ github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/rou
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/quotas
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/rules
-github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/subnetpools
 github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks
 github.com/gophercloud/gophercloud/openstack/networking/v2/networks
 github.com/gophercloud/gophercloud/openstack/networking/v2/ports

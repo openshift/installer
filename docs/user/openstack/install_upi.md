@@ -30,7 +30,6 @@ of this method of installation.
   - [Install Config](#install-config)
     - [Configure the machineNetwork.CIDR apiVIP and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
     - [Empty Compute Pools](#empty-compute-pools)
-    - [Modify NetworkType (Required for Kuryr SDN)](#modify-networktype-required-for-kuryr-sdn)
   - [Edit Manifests](#edit-manifests)
     - [Remove Machines and MachineSets](#remove-machines-and-machinesets)
     - [Set control-plane nodes to desired schedulable state](#set-control-plane-nodes-to-desired-schedulable-state)
@@ -49,12 +48,10 @@ of this method of installation.
     - [Subnet DNS (optional)](#subnet-dns-optional)
   - [Bootstrap](#bootstrap)
   - [Control Plane](#control-plane)
-    - [Control Plane Trunks (Kuryr SDN)](#control-plane-trunks-kuryr-sdn)
     - [Wait for the Control Plane to Complete](#wait-for-the-control-plane-to-complete)
     - [Access the OpenShift API](#access-the-openshift-api)
     - [Delete the Bootstrap Resources](#delete-the-bootstrap-resources)
   - [Compute Nodes](#compute-nodes)
-    - [Compute Nodes Trunks (Kuryr SDN)](#compute-nodes-trunks-kuryr-sdn)
     - [Approve the worker CSRs](#approve-the-worker-csrs)
     - [Wait for the OpenShift Installation to Complete](#wait-for-the-openshift-installation-to-complete)
     - [Compute Nodes with SR-IOV NICs](#compute-nodes-with-sr-iov-nics)
@@ -90,13 +87,6 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
   - it must be the resolver for the base domain, for the installer and for the end-user machines
   - it will host two records: for API and apps access
 
-For an installation with Kuryr SDN on UPI, you should also check the requirements which are the same
-needed for [OpenStack IPI with Kuryr][ipi-reqs-kuryr]. Please also note that **RHEL 7 nodes are not
-supported on deployments configured with Kuryr**. This is because Kuryr container images are based on
-RHEL 8 and may not work properly when run on RHEL 7.
-
-[ipi-reqs-kuryr]: ./kuryr.md#requirements-when-enabling-kuryr
-
 ## Install Ansible
 
 This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
@@ -112,7 +102,6 @@ RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-load-balancers.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
@@ -405,11 +394,11 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
-### Modify NetworkType (Required for Kuryr SDN)
+### Modify NetworkType (Required for OpenShift SDN)
 
 By default the `networkType` is set to `OVNKubernetes` on the `install-config.yaml`.
 
-If an installation with Kuryr is desired, you must modify the `networkType` field.
+If an installation with OpenShift SDN is desired, you must modify the `networkType` field.
 
 This command will do it for you:
 
@@ -418,11 +407,9 @@ $ python -c '
 import yaml
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
-data["networking"]["networkType"] = "Kuryr"
+data["networking"]["networkType"] = "OpenShiftSDN"
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
-
-Also set `os_networking_type` to `Kuryr` in `inventory.yaml`.
 
 ## Edit Manifests
 
@@ -903,10 +890,6 @@ The playbook places the Control Plane in a Server Group with "soft anti-affinity
 
 The master nodes should load the initial Ignition and then keep waiting until the bootstrap node stands up the Machine Config Server which will provide the rest of the configuration.
 
-### Control Plane Trunks (Kuryr SDN)
-
-If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook creates the Trunks for Kuryr to plug the containers into the OpenStack SDN.
-
 ### Wait for the Control Plane to Complete
 
 When that happens, the masters will start running their own pods, run etcd and join the "bootstrap" cluster. Eventually, they will form a fully operational control plane.
@@ -980,10 +963,6 @@ $ ansible-playbook -i inventory.yaml compute-nodes.yaml
 This process is similar to the masters, but the workers need to be approved before they're allowed to join the cluster.
 
 The workers need no ignition override.
-
-### Compute Nodes Trunks (Kuryr SDN)
-
-If `os_networking_type` is set to `Kuryr` in the Ansible inventory, the playbook creates the Trunks for Kuryr to plug the containers into the OpenStack SDN.
 
 ### Compute Nodes with SR-IOV NICs
 
@@ -1111,18 +1090,11 @@ $ ansible-playbook -i inventory.yaml  \
 	down-bootstrap.yaml      \
 	down-control-plane.yaml  \
 	down-compute-nodes.yaml  \
-	down-load-balancers.yaml \
 	down-containers.yaml     \
 	down-network.yaml        \
 	down-security-groups.yaml
 ```
 <!--- e2e-openstack-upi(deprovision): INCLUDE END --->
-
-The playbook `down-load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
-
-> **Note**
-> The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped.
-> Make sure to retry the `down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
 
 Delete the RHCOS image if it's no longer useful.
 

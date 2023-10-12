@@ -221,11 +221,6 @@ Cluster is initially deployed with VM workers. BM workers are added to the clust
         
 - Once the cluster is deployed and running, [create and deploy a new infrastructure MachineSet][6] using the bare-metal server flavor.
 
-## Known issues
-
-Bare metal nodes are not supported on clusters that use Kuryr.
-
-
 [1]: <https://docs.openstack.org/nova/latest/user/flavors.html> "In OpenStack, flavors define the compute, memory, and storage capacity of nova computing instances"
 [2]: <https://docs.openstack.org/ironic/latest/>
 [3]: <https://docs.openstack.org/api-ref/compute/>
