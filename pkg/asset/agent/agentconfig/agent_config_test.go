@@ -137,6 +137,23 @@ wrongField: wrongValue`,
 			expectedError: "failed to unmarshal agent-config.yaml: error unmarshaling JSON: while decoding JSON: json: unknown field \"wrongField\"",
 		},
 		{
+			name: "host-missing-interface-error",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    role: master
+  - hostname: control-1.example.org
+    role: master
+  - hostname: control-2.example.org
+    role: master`,
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: [Hosts[0].Interfaces: Required value: at least one interface must be defined for each node, Hosts[1].Interfaces: Required value: at least one interface must be defined for each node, Hosts[2].Interfaces: Required value: at least one interface must be defined for each node]",
+		},
+		{
 			name: "interface-missing-mac-address-error",
 			data: `
 apiVersion: v1beta1

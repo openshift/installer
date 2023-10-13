@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -97,7 +97,7 @@ func NewClient() (*Client, error) {
 	}
 
 	if err := client.loadSDKServices(); err != nil {
-		return nil, errors.Wrap(err, "failed to load IBM SDK services")
+		return nil, fmt.Errorf("failed to load IBM SDK services: %w", err)
 	}
 
 	if bxCli.PowerVSResourceGroup == "Default" {
@@ -107,7 +107,7 @@ func NewClient() (*Client, error) {
 
 		resourceGroups, err := client.ListResourceGroups(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err, "client.ListResourceGroups failed")
+			return nil, fmt.Errorf("client.ListResourceGroups failed: %w", err)
 		}
 		if resourceGroups == nil {
 			return nil, errors.New("client.ListResourceGroups returns nil")
@@ -172,7 +172,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 			Name: core.StringPtr(recordName),
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "could not retrieve DNS records")
+			return nil, fmt.Errorf("could not retrieve DNS records: %w", err)
 		}
 		for _, record := range records.Result {
 			dnsRecords = append(dnsRecords, DNSRecordResponse{Name: *record.Name, Type: *record.Type})
@@ -188,7 +188,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 
 		dnsCRN, err := crn.Parse(crnstr)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to parse DNSInstanceCRN")
+			return nil, fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
 		}
 
 		// Get DNS records by name
@@ -202,7 +202,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 			}
 		}
 		if err != nil {
-			return nil, errors.Wrap(err, "could not retrieve DNS records")
+			return nil, fmt.Errorf("could not retrieve DNS records: %w", err)
 		}
 	}
 
@@ -260,7 +260,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 
 	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get cis instance")
+		return nil, fmt.Errorf("failed to get cis instance: %w", err)
 	}
 
 	var allZones []DNSZoneResponse
@@ -276,7 +276,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 				Crn:           instance.CRN,
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to list DNS zones")
+				return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 			}
 
 			options := zonesService.NewListZonesOptions()
@@ -303,7 +303,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 				Authenticator: authenticator,
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to list DNS zones")
+				return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 			}
 
 			options := dnsZonesService.NewListDnszonesOptions(*instance.GUID)
@@ -356,13 +356,13 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	listRegionsOptions := c.vpcAPI.NewListRegionsOptions()
 	listRegionsResponse, _, err := c.vpcAPI.ListRegionsWithContext(ctx, listRegionsOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc regions")
+		return nil, fmt.Errorf("failed to list vpc regions: %w", err)
 	}
 
 	for _, region := range listRegionsResponse.Regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to set vpc api service url")
+			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
 
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
@@ -389,12 +389,12 @@ func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vp
 
 	vpc, err := c.GetVPCByName(ctx, vpcName)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get VPC")
+		return nil, fmt.Errorf("failed to get VPC: %w", err)
 	}
 
 	vpcCRN, err := crn.Parse(*vpc.CRN)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse VPC CRN")
+		return nil, fmt.Errorf("failed to parse VPC CRN: %w", err)
 	}
 
 	err = c.SetVPCServiceURLForRegion(ctx, vpcCRN.Region)
@@ -557,7 +557,7 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 
 	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to set vpc api service url")
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 	}
 
 	vpcs, _, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions())
@@ -602,7 +602,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	listGroupOptions := c.managementAPI.NewListResourceGroupsOptions()
 	groups, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, listGroupOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to list resource groups")
+		return nil, fmt.Errorf("failed to list resource groups: %w", err)
 	}
 	for _, group := range groups.Resources {
 		if *group.Name == groupID {
@@ -619,7 +619,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	for moreData {
 		resources, _, err = c.controllerAPI.ListResourceInstancesWithContext(ctx, options)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to list resource instances")
+			return nil, fmt.Errorf("failed to list resource instances: %w", err)
 		}
 
 		for _, resource := range resources.Resources {
@@ -633,7 +633,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 
 			resourceInstance, response, err = c.controllerAPI.GetResourceInstance(getResourceOptions)
 			if err != nil {
-				return nil, errors.Wrap(err, "Failed to get instance")
+				return nil, fmt.Errorf("failed to get instance: %w", err)
 			}
 			if response != nil && response.StatusCode == http.StatusNotFound || response.StatusCode == http.StatusInternalServerError {
 				continue
@@ -647,7 +647,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
 		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to GetQueryParam on start")
+			return nil, fmt.Errorf("failed to GetQueryParam on start: %w", err)
 		}
 		if nextURL == nil {
 			options.SetStart("")

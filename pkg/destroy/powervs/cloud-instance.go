@@ -2,13 +2,13 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -141,7 +141,7 @@ func (o *ClusterUninstaller) destroyCloudInstances() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyCloudInstances: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyCloudInstances: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyCloudInstances: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

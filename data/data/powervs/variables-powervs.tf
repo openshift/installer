@@ -75,12 +75,6 @@ variable "powervs_wait_for_vpc" {
   default     = "60s"
 }
 
-variable "powervs_ccon_name" {
-  type        = string
-  description = "The name of a pre-created Power VS Cloud connection"
-  default     = ""
-}
-
 variable "powervs_network_name" {
   type        = string
   description = "The name of a pre-created Power VS DHCP network"

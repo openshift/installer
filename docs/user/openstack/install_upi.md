@@ -238,7 +238,7 @@ access between OpenStack KVM hypervisors and the cluster nodes.
 To enable this feature, you must add the `hw_qemu_guest_agent=yes` property to the image:
 
 ```
-$ openstack image "rhcos-${CLUSTER_NAME}" update --property hw_qemu_guest_agent=yes
+$ openstack image "rhcos-${CLUSTER_NAME}" set --property hw_qemu_guest_agent=yes
 ```
 
 Finally validate that the image was successfully created:

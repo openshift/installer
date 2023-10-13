@@ -906,7 +906,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				VPCPermitted:          vpcPermitted,
 				VPCGatewayName:        vpcGatewayName,
 				VPCGatewayAttached:    vpcGatewayAttached,
-				CloudConnectionName:   installConfig.Config.PowerVS.CloudConnectionName,
 				CISInstanceCRN:        cisCRN,
 				DNSInstanceCRN:        dnsCRN,
 				PublishStrategy:       installConfig.Config.Publish,

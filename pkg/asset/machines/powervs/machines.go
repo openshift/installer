@@ -2,9 +2,9 @@
 package powervs
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -43,7 +43,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	machineProvider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to create provider")
+		return nil, nil, fmt.Errorf("failed to create provider: %w", err)
 	}
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -179,14 +179,14 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	for _, machine := range machines {
 		providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 		if !ok {
-			return errors.New("Unable to set load balancers to control plane machine set")
+			return errors.New("unable to set load balancers to control plane machine set")
 		}
 		providerSpec.LoadBalancers = lbrefs
 	}
 
 	providerSpec, ok := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
 	if !ok {
-		return errors.New("Unable to set load balancers to control plane machine set")
+		return errors.New("unable to set load balancers to control plane machine set")
 	}
 	providerSpec.LoadBalancers = lbrefs
 	return nil

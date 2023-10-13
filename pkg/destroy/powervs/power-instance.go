@@ -2,11 +2,11 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -129,7 +129,7 @@ func (o *ClusterUninstaller) destroyPowerInstances() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyPowerInstances: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyPowerInstances: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyPowerInstances: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

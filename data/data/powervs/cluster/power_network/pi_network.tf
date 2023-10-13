@@ -20,7 +20,7 @@ resource "ibm_pi_dhcp" "new_dhcp_service" {
 }
 
 resource "ibm_pi_cloud_connection" "new_cloud_connection" {
-  count                              = (var.transit_gateway_enabled || var.cloud_conn_name != "") ? 0 : 1
+  count                              = var.transit_gateway_enabled ? 0 : 1
   pi_cloud_instance_id               = var.cloud_instance_id
   pi_cloud_connection_name           = "cloud-con-${var.cluster_id}"
   pi_cloud_connection_speed          = 50
@@ -31,7 +31,7 @@ resource "ibm_pi_cloud_connection" "new_cloud_connection" {
 
 data "ibm_pi_cloud_connection" "cloud_connection" {
   count                    = var.transit_gateway_enabled ? 0 : 1
-  pi_cloud_connection_name = var.cloud_conn_name == "" ? ibm_pi_cloud_connection.new_cloud_connection[0].pi_cloud_connection_name : var.cloud_conn_name
+  pi_cloud_connection_name = ibm_pi_cloud_connection.new_cloud_connection[0].pi_cloud_connection_name
   pi_cloud_instance_id     = var.cloud_instance_id
 }
 

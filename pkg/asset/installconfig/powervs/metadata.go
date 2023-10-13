@@ -2,10 +2,10 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -158,17 +158,17 @@ func (m *Metadata) GetExistingVPCGateway(ctx context.Context, vpcName string, vp
 
 	vpc, err := m.client.GetVPCByName(ctx, vpcName)
 	if err != nil {
-		return "", false, errors.Wrap(err, "failed to get VPC")
+		return "", false, fmt.Errorf("failed to get VPC: %w", err)
 	}
 
 	vpcCRN, err := crn.Parse(*vpc.CRN)
 	if err != nil {
-		return "", false, errors.Wrap(err, "failed to parse VPC CRN")
+		return "", false, fmt.Errorf("failed to parse VPC CRN: %w", err)
 	}
 
 	subnet, err := m.client.GetSubnetByName(ctx, vpcSubnet, vpcCRN.Region)
 	if err != nil {
-		return "", false, errors.Wrap(err, "failed to get subnet")
+		return "", false, fmt.Errorf("failed to get subnet: %w", err)
 	}
 	// Check if subnet has an attached public gateway. If it does, we're done.
 	if subnet.PublicGateway != nil {
@@ -178,7 +178,7 @@ func (m *Metadata) GetExistingVPCGateway(ctx context.Context, vpcName string, vp
 	// Check if a gateway exists in the VPN that isn't attached
 	gw, err := m.client.GetPublicGatewayByVPC(ctx, vpcName)
 	if err != nil {
-		return "", false, errors.Wrap(err, "failed to get find gw")
+		return "", false, fmt.Errorf("failed to get find gw: %w", err)
 	}
 	// Found an unattached gateway
 	if gw != nil {
@@ -198,7 +198,7 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 	if m.dnsInstanceCRN == "" {
 		_, err := m.DNSInstanceCRN(ctx)
 		if err != nil {
-			return false, errors.Wrap(err, "cannot collect DNS permitted networks without DNS Instance")
+			return false, fmt.Errorf("cannot collect DNS permitted networks without DNS Instance: %w", err)
 		}
 	}
 
@@ -214,12 +214,12 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string, ba
 	// Get CIS zone ID by name
 	zoneID, err := m.client.GetDNSZoneIDByName(context.TODO(), baseDomain, types.InternalPublishingStrategy)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to get DNS zone ID")
+		return false, fmt.Errorf("failed to get DNS zone ID: %w", err)
 	}
 
 	dnsCRN, err := crn.Parse(m.dnsInstanceCRN)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to parse DNSInstanceCRN")
+		return false, fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
 	}
 
 	networks, err := m.client.GetDNSInstancePermittedNetworks(ctx, dnsCRN.ServiceInstance, zoneID)

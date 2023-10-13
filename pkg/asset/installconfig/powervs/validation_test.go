@@ -25,7 +25,7 @@ import (
 type editFunctions []func(ic *types.InstallConfig)
 
 var (
-	validRegion                  = "lon"
+	validRegion                  = "dal"
 	validCIDR                    = "192.168.0.0/24"
 	validCISInstanceCRN          = "crn:v1:bluemix:public:internet-svcs:global:a/valid-account-id:valid-instance-id::"
 	validClusterName             = "valid-cluster-name"
@@ -44,7 +44,7 @@ var (
 		validPrivateSubnetUSSouth2ID,
 	}
 	validUserID = "valid-user@example.com"
-	validZone   = "lon04"
+	validZone   = "dal10"
 
 	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
@@ -62,7 +62,7 @@ var (
 	invalidMachinePoolCIDR = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrInvalid }
 	cidrValid, _           = ipnet.ParseCIDR("192.168.0.0/24")
 	validMachinePoolCIDR   = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrValid }
-	validVPCRegion         = "eu-gb"
+	validVPCRegion         = "us-south"
 	invalidVPCRegion       = "foo-bah"
 	setValidVPCRegion      = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCRegion = validVPCRegion }
 	validRG                = "valid-resource-group"
@@ -617,16 +617,16 @@ func TestSystemPool(t *testing.T) {
 	}
 
 	err := powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeCores)
-	assert.EqualError(t, err, "Not enough cores available (2) for the compute nodes (need 5)")
+	assert.EqualError(t, err, "not enough cores available (2) for the compute nodes (need 5)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerCores)
-	assert.EqualError(t, err, "Not enough cores available (1) for the worker nodes (need 3)")
+	assert.EqualError(t, err, "not enough cores available (1) for the worker nodes (need 3)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeMemory)
-	assert.EqualError(t, err, "Not enough memory available (32) for the compute nodes (need 160)")
+	assert.EqualError(t, err, "not enough memory available (32) for the compute nodes (need 160)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerMemory)
-	assert.EqualError(t, err, "Not enough memory available (32) for the worker nodes (need 96)")
+	assert.EqualError(t, err, "not enough memory available (32) for the worker nodes (need 96)")
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsGood)
 	assert.Empty(t, err)

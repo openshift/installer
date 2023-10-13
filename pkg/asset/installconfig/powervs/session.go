@@ -3,6 +3,7 @@ package powervs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	gohttp "net/http"
@@ -25,7 +26,6 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -273,44 +273,44 @@ func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string, mac
 	// Create PowerVS network client
 	networkClient := instance.NewIBMPINetworkClient(ctx, c.PISession, svcInsID)
 	if networkClient == nil {
-		return errors.New("Failed to create a networkClient in ValidateDhcpService")
+		return errors.New("failed to create a networkClient in ValidateDhcpService")
 	}
 
 	// Create PowerVS CloudConnection client
 	cloudConnectionClient := instance.NewIBMPICloudConnectionClient(ctx, c.PISession, svcInsID)
 	if cloudConnectionClient == nil {
-		return errors.New("Failed to create a cloudConnectionClient in ValidateDhcpService")
+		return errors.New("failed to create a cloudConnectionClient in ValidateDhcpService")
 	}
 
 	allCloudConnecitons, err := cloudConnectionClient.GetAll()
 	if err != nil {
-		return errors.Wrap(err, "failed to get all existing Cloud Connections")
+		return fmt.Errorf("failed to get all existing Cloud Connections: %w", err)
 	}
 
 	for _, singleCloudConnection := range allCloudConnecitons.CloudConnections {
 		// Unfortunately, the Networks array is not filled in for a GetAll call :(
 		cloudConnection, err := cloudConnectionClient.Get(*singleCloudConnection.CloudConnectionID)
 		if err != nil {
-			return errors.Wrap(err, "failed to get existing Cloud Connection details")
+			return fmt.Errorf("failed to get existing Cloud Connection details: %w", err)
 		}
 		for _, ccNetwork := range cloudConnection.Networks {
 			// The NetworkReference object does not provide subnet CIDRs.
 			// So you have to get the network object based on the ID to find the CIDR.
 			network, err := networkClient.Get(*ccNetwork.NetworkID)
 			if err != nil {
-				return errors.Wrap(err, "failed to get CC's network")
+				return fmt.Errorf("failed to get CC's network: %w", err)
 			}
 
 			_, n1, err := net.ParseCIDR(*network.Cidr)
 			if err != nil {
-				return errors.Wrap(err, "failed to parse network.Cidr")
+				return fmt.Errorf("failed to parse network.Cidr: %w", err)
 			}
 
 			// Check each machineNetwork, typically one
 			for _, machineNetwork := range machineNetworks {
 				_, n2, err := net.ParseCIDR(machineNetwork.CIDR.String())
 				if err != nil {
-					return errors.Wrap(err, "failed to parse machineNetwork.CIDR")
+					return fmt.Errorf("failed to parse machineNetwork.CIDR: %w", err)
 				}
 				if n2.Contains(n1.IP) || n1.Contains(n2.IP) {
 					return fmt.Errorf("cidr conflicts with existing network")
@@ -334,7 +334,7 @@ func (c *BxClient) ValidateCloudConnectionInPowerVSRegion(ctx context.Context, s
 	//check number of cloudconnections
 	getAllResp, err := cloudConnectionClient.GetAll()
 	if err != nil {
-		return errors.Wrap(err, "failed to get existing Cloud connection details")
+		return fmt.Errorf("failed to get existing Cloud connection details: %w", err)
 	}
 
 	if len(getAllResp.CloudConnections) >= 2 {
@@ -349,7 +349,7 @@ func (c *BxClient) ValidateCloudConnectionInPowerVSRegion(ctx context.Context, s
 	for _, cc := range cloudConnectionsIDs {
 		cloudConn, err := cloudConnectionClient.Get(cc)
 		if err != nil {
-			return errors.Wrap(err, "failed to get Cloud connection details")
+			return fmt.Errorf("failed to get Cloud connection details: %w", err)
 		}
 		if cloudConn != nil {
 			for _, nw := range cloudConn.Networks {
@@ -371,7 +371,7 @@ func (c *BxClient) GetSystemPools(ctx context.Context, serviceInstanceID string)
 
 	systemPools, err := systemPoolClient.GetSystemPools()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get system pools")
+		return nil, fmt.Errorf("failed to get system pools: %w", err)
 	}
 
 	return systemPools, nil
@@ -410,7 +410,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 	} else {
 		cores, err := strconv.ParseFloat(ctrplConfigs[0].Processors.StrVal, 64)
 		if err != nil {
-			return errors.Wrap(err, "failed to convert compute cores to a float")
+			return fmt.Errorf("failed to convert compute cores to a float: %w", err)
 		}
 		computeProcessors = float64(numCompute) * cores
 	}
@@ -434,7 +434,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 		} else {
 			cores, err := strconv.ParseFloat(computeConfigs[0].Processors.StrVal, 64)
 			if err != nil {
-				return errors.Wrap(err, "failed to convert worker cores to a float")
+				return fmt.Errorf("failed to convert worker cores to a float: %w", err)
 			}
 			workerProcessors = float64(computeReplicas[i]) * cores
 		}
@@ -453,7 +453,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 		// PowerVS uses internally.
 		computeProcessors = 0
 	default:
-		return errors.Errorf("Unknown compute processor type (%v)", computeProcessorType)
+		return fmt.Errorf("unknown compute processor type (%v)", computeProcessorType)
 	}
 
 	switch workerProcessorType {
@@ -465,7 +465,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 		// PowerVS uses internally.
 		workerProcessors = 0
 	default:
-		return errors.Errorf("Unknown worker processor type (%v)", workerProcessorType)
+		return fmt.Errorf("unknown worker processor type (%v)", workerProcessorType)
 	}
 
 	for _, systemPool := range systemPools {
@@ -474,23 +474,23 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 
 		if computeSystemType == systemPool.Type {
 			if computeProcessors > *systemPool.MaxCoresAvailable.Cores {
-				return errors.Errorf("Not enough cores available (%v) for the compute nodes (need %v)", *systemPool.MaxCoresAvailable.Cores, computeProcessors)
+				return fmt.Errorf("not enough cores available (%v) for the compute nodes (need %v)", *systemPool.MaxCoresAvailable.Cores, computeProcessors)
 			}
 			*systemPool.MaxCoresAvailable.Cores -= computeProcessors
 
 			if computeMemoryGiB > *systemPool.MaxCoresAvailable.Memory {
-				return errors.Errorf("Not enough memory available (%v) for the compute nodes (need %v)", *systemPool.MaxCoresAvailable.Memory, computeMemoryGiB)
+				return fmt.Errorf("not enough memory available (%v) for the compute nodes (need %v)", *systemPool.MaxCoresAvailable.Memory, computeMemoryGiB)
 			}
 			*systemPool.MaxCoresAvailable.Memory -= computeMemoryGiB
 		}
 		if workerSystemType == systemPool.Type {
 			if workerProcessors > *systemPool.MaxCoresAvailable.Cores {
-				return errors.Errorf("Not enough cores available (%v) for the worker nodes (need %v)", *systemPool.MaxCoresAvailable.Cores, workerProcessors)
+				return fmt.Errorf("not enough cores available (%v) for the worker nodes (need %v)", *systemPool.MaxCoresAvailable.Cores, workerProcessors)
 			}
 			*systemPool.MaxCoresAvailable.Cores -= workerProcessors
 
 			if workerMemoryGiB > *systemPool.MaxCoresAvailable.Memory {
-				return errors.Errorf("Not enough memory available (%v) for the worker nodes (need %v)", *systemPool.MaxCoresAvailable.Memory, workerMemoryGiB)
+				return fmt.Errorf("not enough memory available (%v) for the worker nodes (need %v)", *systemPool.MaxCoresAvailable.Memory, workerMemoryGiB)
 			}
 			*systemPool.MaxCoresAvailable.Memory -= workerMemoryGiB
 		}
@@ -506,7 +506,7 @@ func (c *BxClient) ValidateCapacity(ctx context.Context, controlPlanes []machine
 
 	systemPools, err := c.GetSystemPools(ctx, serviceInstanceID)
 	if err != nil {
-		return errors.Wrap(err, "failed to get system pools")
+		return fmt.Errorf("failed to get system pools: %w", err)
 	}
 
 	// Call another function which we can also test with mock

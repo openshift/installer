@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
@@ -57,7 +58,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateZones(client, ic)...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
-	allErrs = append(allErrs, validateCredentialMode(client, ic)...)
+	allErrs = append(allErrs, ValidateCredentialMode(client, ic)...)
 	allErrs = append(allErrs, validatePreexistingServiceAccountXpn(client, ic)...)
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
@@ -466,34 +467,32 @@ func validateRegion(client API, ic *types.InstallConfig, fieldPath *field.Path) 
 	return nil
 }
 
-// ValidateCredentialMode checks whether the credential mode is
-// compatible with the authentication mode.
-func ValidateCredentialMode(client API, ic *types.InstallConfig) error {
-	creds := client.GetCredentials()
-
-	if creds.JSON == nil && ic.CredentialsMode != types.ManualCredentialsMode {
-		errMsg := "environmental authentication is only supported with Manual credentials mode"
-		return field.Forbidden(field.NewPath("credentialsMode"), errMsg)
-	}
-
-	return nil
-}
-
-func validateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList {
+// ValidateCredentialMode The presence of `authorized_user` in the credentials indicates that no service account
+// was used for authentication and requires Manual credential mode.
+func ValidateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-
 	creds := client.GetCredentials()
-	if creds.JSON == nil {
-		if ic.CredentialsMode == "" {
-			logrus.Warn("Currently using GCP Environmental Authentication. Please set credentialsMode to manual, or provide a service account json file.")
-		} else {
-			if ic.CredentialsMode != "" && ic.CredentialsMode != types.ManualCredentialsMode {
-				errMsg := "environmental authentication is only supported with Manual credentials mode"
-				return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
-			}
-		}
-	}
 
+	if creds.JSON != nil {
+		var credsMap map[string]interface{}
+		err := json.Unmarshal(creds.JSON, &credsMap)
+		if err != nil {
+			return append(allErrs, field.Invalid(field.NewPath("credentials").Child("JSON"), creds.JSON, "failed to unmarshal JSON credentials"))
+		}
+
+		credsType, found := credsMap["type"]
+		if !found {
+			return append(allErrs, field.NotFound(field.NewPath("credentials").Child("JSON").Child("type"), "failed to find credentials type"))
+		}
+
+		if credsType.(string) == string(gcp.AuthorizedUserMode) && ic.CredentialsMode != types.ManualCredentialsMode {
+			errMsg := "environmental authentication is only supported with Manual credentials mode"
+			return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+		}
+	} else if creds.JSON == nil && ic.CredentialsMode != types.ManualCredentialsMode {
+		errMsg := "Manual credentials mode needs to be enabled to use environmental authentication"
+		return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
+	}
 	return allErrs
 }
 

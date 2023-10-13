@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	gohttp "net/http"
@@ -28,7 +29,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang-jwt/jwt"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -209,7 +209,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
 		var derivedVPCRegion string
 		if derivedVPCRegion, err = powervstypes.VPCRegionForPowerVSRegion(metadata.ClusterPlatformMetadata.PowerVS.Region); err != nil {
-			return nil, errors.Wrap(err, "powervs.New failed to derive VPCRegion")
+			return nil, fmt.Errorf("powervs.New failed to derive VPCRegion: %w", err)
 		}
 		logger.Debugf("powervs.New: PowerVS.VPCRegion is missing, derived VPCRegion = %v", derivedVPCRegion)
 		metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = derivedVPCRegion
@@ -246,12 +246,12 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	defer cancel()
 
 	if ctx == nil {
-		return nil, errors.Wrap(err, "powervs.Run: contextWithTimeout returns nil")
+		return nil, fmt.Errorf("powervs.Run: contextWithTimeout returns nil: %w", err)
 	}
 
 	deadline, ok = ctx.Deadline()
 	if !ok {
-		return nil, errors.Wrap(err, "powervs.Run: failed to call ctx.Deadline")
+		return nil, fmt.Errorf("powervs.Run: failed to call ctx.Deadline: %w", err)
 	}
 
 	var duration time.Duration = deadline.Sub(time.Now())
@@ -287,7 +287,7 @@ func (o *ClusterUninstaller) PolledRun() (bool, error) {
 	err = o.destroyCluster()
 	if err != nil {
 		o.Logger.Debugf("powervs.PolledRun: Failed destroyCluster")
-		return false, errors.Wrap(err, "failed to destroy cluster")
+		return false, fmt.Errorf("failed to destroy cluster: %w", err)
 	}
 
 	return true, nil
@@ -381,12 +381,12 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	defer cancel()
 
 	if ctx == nil {
-		return errors.Wrap(err, "executeStageFunction contextWithTimeout returns nil")
+		return fmt.Errorf("executeStageFunction contextWithTimeout returns nil: %w", err)
 	}
 
 	deadline, ok = ctx.Deadline()
 	if !ok {
-		return errors.Wrap(err, "executeStageFunction failed to call ctx.Deadline")
+		return fmt.Errorf("executeStageFunction failed to call ctx.Deadline: %w", err)
 	}
 
 	var duration time.Duration = deadline.Sub(time.Now())
@@ -658,7 +658,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		// Get the Zone ID
 		dnsCRN, err := crn.Parse(o.DNSInstanceCRN)
 		if err != nil {
-			return errors.Wrap(err, "Failed to parse DNSInstanceCRN")
+			return fmt.Errorf("failed to parse DNSInstanceCRN: %w", err)
 		}
 		options := o.dnsZonesSvc.NewListDnszonesOptions(dnsCRN.ServiceInstance)
 		listZonesResponse, detailedResponse, err := o.dnsZonesSvc.ListDnszones(options)
@@ -784,7 +784,7 @@ func aggregateError(errs []error, pending ...int) error {
 		return err
 	}
 	if len(pending) > 0 && pending[0] > 0 {
-		return errors.Errorf("%d items pending", pending[0])
+		return fmt.Errorf("%d items pending", pending[0])
 	}
 	return nil
 }

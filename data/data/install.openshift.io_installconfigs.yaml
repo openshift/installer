@@ -4121,10 +4121,6 @@ spec:
                 description: PowerVS is the configuration used when installing on
                   Power VS.
                 properties:
-                  cloudConnectionName:
-                    description: CloudConnctionName is the name of an existing Power
-                      VS Cloud connection. If empty, one is created by the installer.
-                    type: string
                   clusterOSImage:
                     description: ClusterOSImage is a pre-created Power VS boot image
                       that overrides the default image for cluster nodes.

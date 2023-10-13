@@ -7,7 +7,6 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types/powervs"
 )
@@ -91,7 +90,7 @@ func GetRegion(defaultRegion string) (string, error) {
 				choice := regionTransform(ans).(core.OptionAnswer).Value
 				i := sort.SearchStrings(shortRegions, choice)
 				if i == len(shortRegions) || shortRegions[i] != choice {
-					return errors.Errorf("Invalid region %q", choice)
+					return fmt.Errorf("invalid region %q", choice)
 				}
 				return nil
 			}),
@@ -135,7 +134,7 @@ func GetZone(region string, defaultZone string) (string, error) {
 				choice := zoneTransform(ans).(core.OptionAnswer).Value
 				i := sort.SearchStrings(zones, choice)
 				if i == len(zones) || zones[i] != choice {
-					return errors.Errorf("Invalid zone %q", choice)
+					return fmt.Errorf("invalid zone %q", choice)
 				}
 				return nil
 			}),

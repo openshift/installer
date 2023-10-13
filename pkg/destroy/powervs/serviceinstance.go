@@ -10,7 +10,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -38,7 +37,7 @@ func (o *ClusterUninstaller) convertResourceGroupNameToID(resourceGroupID string
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("failed to find resource group %v", resourceGroupID))
+	return "", fmt.Errorf("failed to find resource group %v", resourceGroupID)
 }
 
 // listServiceInstances list service instances for the cluster.
@@ -67,7 +66,7 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 
 	resourceGroupID, err = o.convertResourceGroupNameToID(o.resourceGroupID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to convert resourceGroupID")
+		return nil, fmt.Errorf("failed to convert resourceGroupID: %w", err)
 	}
 	o.Logger.Debugf("listServiceInstances: converted %v to %v", o.resourceGroupID, resourceGroupID)
 
@@ -88,7 +87,7 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 
 		resources, _, err = o.controllerSvc.ListResourceInstancesWithContext(ctx, options)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list resource instances")
+			return nil, fmt.Errorf("failed to list resource instances: %w", err)
 		}
 
 		o.Logger.Debugf("listServiceInstances: resources.RowsCount = %v", *resources.RowsCount)
@@ -106,7 +105,7 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 
 			resourceInstance, response, err = o.controllerSvc.GetResourceInstance(getResourceOptions)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to get instance: %s", response)
+				return nil, fmt.Errorf("failed to get instance: %s: %w", response, err)
 			}
 			if response != nil && response.StatusCode == gohttp.StatusNotFound {
 				o.Logger.Debugf("listServiceInstances: gohttp.StatusNotFound")
@@ -138,7 +137,7 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
 		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to GetQueryParam on start: %s", err)
+			return nil, fmt.Errorf("failed to GetQueryParam on start: %w", err)
 		}
 		if nextURL == nil {
 			o.Logger.Debugf("nextURL = nil")
@@ -195,7 +194,7 @@ func (o *ClusterUninstaller) destroyServiceInstance(item cloudResource) error {
 	response, err = o.controllerSvc.DeleteResourceInstanceWithContext(ctx, options)
 
 	if err != nil && response != nil && response.StatusCode != gohttp.StatusNotFound {
-		return errors.Wrapf(err, "failed to delete service instance %s", item.name)
+		return fmt.Errorf("failed to delete service instance %s: %w", item.name, err)
 	}
 
 	o.Logger.Infof("Deleted Service Instance %q", item.name)
@@ -251,7 +250,7 @@ func (o *ClusterUninstaller) destroyServiceInstances() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyServiceInstances: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyServiceInstances: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyServiceInstances: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

@@ -56,6 +56,13 @@ type agentClusterInstallOnPremPlatform struct {
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 }
 
+type agentClusterInstallOnPremExternalPlatform struct {
+	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
+	PlatformName string `json:"platformName,omitempty"`
+	// CloudControllerManager when set to external, this property will enable an external cloud provider.
+	CloudControllerManager external.CloudControllerManager `json:"cloudControllerManager,omitempty"`
+}
+
 type agentClusterInstallPlatform struct {
 	// BareMetal is the configuration used when installing on bare metal.
 	// +optional
@@ -63,6 +70,9 @@ type agentClusterInstallPlatform struct {
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
 	VSphere *agentClusterInstallOnPremPlatform `json:"vsphere,omitempty"`
+	// External is the configuration used when installing on external cloud provider.
+	// +optional
+	External *agentClusterInstallOnPremExternalPlatform `json:"external,omitempty"`
 }
 
 // Used to generate InstallConfig overrides for Assisted Service to apply
@@ -77,8 +87,6 @@ type agentClusterInstallInstallConfigOverrides struct {
 	Platform *agentClusterInstallPlatform `json:"platform,omitempty"`
 	// Capabilities selects the managed set of optional, core cluster components.
 	Capabilities *types.Capabilities `json:"capabilities,omitempty"`
-	// AdditionalTrustBundle must be set here when mirroring not configured
-	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 	// Allow override of network type
 	Networking *types.Networking `json:"networking,omitempty"`
 	// Allow override of CPUPartitioning
@@ -205,6 +213,14 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			}
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
+		} else if installConfig.Config.Platform.External != nil {
+			icOverridden = true
+			icOverrides.Platform = &agentClusterInstallPlatform{
+				External: &agentClusterInstallOnPremExternalPlatform{
+					PlatformName:           installConfig.Config.External.PlatformName,
+					CloudControllerManager: installConfig.Config.External.CloudControllerManager,
+				},
+			}
 		}
 
 		networkOverridden := setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
@@ -215,14 +231,6 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		if installConfig.Config.Capabilities != nil {
 			icOverrides.Capabilities = installConfig.Config.Capabilities
-			icOverridden = true
-		}
-
-		if installConfig.Config.AdditionalTrustBundle != "" {
-			// Add trust bundle to the config overrides to be included in installed image
-			// TODO: when MGMT-11520 adds support for AdditionalTrustBundle as part of the InfraEnv CRD
-			// then it must be set in the infraEnv manifest instead of below
-			icOverrides.AdditionalTrustBundle = installConfig.Config.AdditionalTrustBundle
 			icOverridden = true
 		}
 
@@ -237,21 +245,12 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to marshal AgentClusterInstall installConfigOverrides")
 			}
 			agentClusterInstall.SetAnnotations(map[string]string{
-				installConfigOverrides: fmt.Sprintf("%s", overrides),
+				installConfigOverrides: string(overrides),
 			})
 		}
 
 		a.Config = agentClusterInstall
 
-		agentClusterInstallData, err := yaml.Marshal(agentClusterInstall)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
-		}
-
-		a.File = &asset.File{
-			Filename: agentClusterInstallFilename,
-			Data:     agentClusterInstallData,
-		}
 	}
 	return a.finish()
 }
@@ -274,8 +273,6 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		}
 		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", agentClusterInstallFilename))
 	}
-
-	a.File = agentClusterInstallFile
 
 	agentClusterInstall := &hiveext.AgentClusterInstall{}
 	if err := yaml.UnmarshalStrict(agentClusterInstallFile.Data, agentClusterInstall); err != nil {
@@ -331,6 +328,15 @@ func (a *AgentClusterInstall) finish() error {
 		return errors.Wrapf(err, "invalid PlatformType configured")
 	}
 
+	agentClusterInstallData, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent installer AgentClusterInstall")
+	}
+
+	a.File = &asset.File{
+		Filename: agentClusterInstallFilename,
+		Data:     agentClusterInstallData,
+	}
 	return nil
 }
 
