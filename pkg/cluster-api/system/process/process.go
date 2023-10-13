@@ -143,6 +143,9 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 	ps.Cmd = exec.CommandContext(ctx, ps.Path, ps.Args...)
 	ps.Cmd.Stdout = stdout
 	ps.Cmd.Stderr = stderr
+	ps.Cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+	}
 
 	ready := make(chan bool)
 	timedOut := time.After(ps.StartTimeout)
