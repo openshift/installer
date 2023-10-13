@@ -105,8 +105,20 @@ func (s *Service) DeleteNetwork() (err error) {
 
 	vpc.DeepCopyInto(s.scope.VPC())
 
+	// VPC Endpoints.
+	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	if err := s.scope.PatchObject(); err != nil {
+		return err
+	}
+
+	if err := s.deleteVPCEndpoints(); err != nil {
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		return err
+	}
+	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+
 	// Routing tables.
-	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
 	if err := s.scope.PatchObject(); err != nil {
 		return err
 	}
