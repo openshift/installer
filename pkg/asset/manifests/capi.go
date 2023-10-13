@@ -192,7 +192,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 								FromPort:    30000,
 								ToPort:      32767,
 							},
-							{},
 						},
 					},
 					AdditionalControlPlaneIngressRules: []capa.IngressRule{
@@ -208,14 +207,14 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 							Protocol:                 capa.SecurityGroupProtocolTCP,
 							FromPort:                 10257,
 							ToPort:                   10257,
-							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane"},
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", " node"},
 						},
 						{
 							Description:              "kube-scheduler",
 							Protocol:                 capa.SecurityGroupProtocolTCP,
 							FromPort:                 10259,
 							ToPort:                   10259,
-							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane"},
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 						},
 						{
 							Description: "SSH everyone",
