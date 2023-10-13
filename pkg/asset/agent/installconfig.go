@@ -222,11 +222,6 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 	}
 
 	for _, failureDomain := range vspherePlatform.FailureDomains {
-		// if !vcenterServers[failureDomain.Server] {
-		// 	fieldPath := field.NewPath("Platform", "VSphere", "failureDomains", "Server")
-		// 	allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("failureDomain server %v must have a corresponding vcenter server defined", failureDomain.Server)))
-		// }
-
 		// Although folder is optional in IPI/UPI, it is must be set for agent-based installs.
 		// If it is not set, assisted-service will set a placeholder value for folder:
 		// "/datacenterplaceholder/vm/folderplaceholder"
