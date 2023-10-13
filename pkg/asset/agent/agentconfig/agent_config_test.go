@@ -331,6 +331,79 @@ rendezvousIP: 192.168.111.80`,
 			expectedFound: false,
 			expectedError: "invalid Agent Config configuration: AdditionalNTPSources[4]: Invalid value: \"invalid_pool.ntp.org\": NTP source is not a valid domain name nor a valid IP",
 		},
+		{
+			name: "valid-rendezvousIPAssignedToMaster",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+    - hostname: host0
+      role: master
+      interfaces:
+        - name: eth0
+          macAddress: 00:d4:3f:3b:80:bb
+      networkConfig:
+        interfaces:
+          - name: eth0
+            type: ethernet
+            state: up
+            mac-address: 00:d4:3f:3b:80:bb
+            ipv4:
+              enabled: true
+              address:
+                - ip: 192.168.111.80
+                  prefix-length: 24
+              dhcp: false`,
+			expectedFound: true,
+			expectedConfig: agentConfig().hosts(
+				agentHost().
+					name("host0").
+					role("master").
+					interfaces(iface("eth0", "00:d4:3f:3b:80:bb")).
+					networkConfig(
+						`interfaces:
+                          - name: eth0
+                            type: ethernet
+                            state: up
+                            mac-address: 00:d4:3f:3b:80:bb
+                            ipv4:
+                              enabled: true
+                              address:
+                                - ip: 192.168.111.80
+                                  prefix-length: 24
+                              dhcp: false`),
+			),
+		},
+		{
+			name: "invalid-rendezvousIPAssignedToWorker",
+			data: `
+apiVersion: v1alpha1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+    - hostname: host0
+      role: worker
+      interfaces:
+        - name: eth0
+          macAddress: 00:d4:3f:3b:80:bb
+      networkConfig:
+        interfaces:
+          - name: eth0
+            type: ethernet
+            state: up
+            mac-address: 00:d4:3f:3b:80:bb
+            ipv4:
+              enabled: true
+              address:
+                - ip: 192.168.111.80
+                  prefix-length: 24
+              dhcp: false`,
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[0].Host: Forbidden: Host host0 is not of role 'master' and has the rendevousIP assigned to it. The rendevousIP must be assigned to a host of role 'master'",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
