@@ -175,7 +175,7 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	return allErrs
 }
 
-// VcenterCredentialsAreProvider returns true if server, username, password, and at least one datacenter
+// VCenterCredentialsAreProvided returns true if server, username, password, and at least one datacenter
 // have been provided.
 func VCenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
 	if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {

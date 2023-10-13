@@ -13,9 +13,12 @@ import (
 var localLogger = logrus.New()
 
 const (
-	GeneratedFailureDomainName   string = "generated-failure-domain"
+	// GeneratedFailureDomainName is a placeholder name when one wasn't provided.
+	GeneratedFailureDomainName string = "generated-failure-domain"
+	// GeneratedFailureDomainRegion is a placeholder region when one wasn't provided.
 	GeneratedFailureDomainRegion string = "generated-region"
-	GeneratedFailureDomainZone   string = "generated-zone"
+	// GeneratedFailureDomainZone is a placeholder zone when one wasn't provided.
+	GeneratedFailureDomainZone string = "generated-zone"
 )
 
 // ConvertInstallConfig modifies a given platform spec for the new requirements.
