@@ -175,7 +175,9 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	return allErrs
 }
 
-func vcenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
+// VcenterCredentialsAreProvider returns true if server, username, password, and at least one datacenter
+// have been provided.
+func VCenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
 	if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
 		return true
 	}
@@ -191,7 +193,7 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 		vcenterServers[vcenter.Server] = true
 
 		// If any one of the required credential values is entered, then the user is choosing to enter credentials
-		if vcenterCredentialsAreProvided(vcenter) {
+		if VCenterCredentialsAreProvided(vcenter) {
 			// Then check all required credential values are filled
 			userProvidedCredentials = true
 			if !(vcenter.Server != "" && vcenter.Username != "" && vcenter.Password != "" && len(vcenter.Datacenters) > 0) {
