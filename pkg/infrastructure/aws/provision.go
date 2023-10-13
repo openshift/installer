@@ -122,20 +122,20 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create Control Plane resources.
 	controlPlaneInput := &controlPlaneInput{
-		clusterID:       clusterConfig.ClusterID,
-		targetGroupARNs: vpcInput.targetGroupARNs,
-		userData:        clusterConfig.IgnitionMaster,
-		amiID:           clusterAWSConfig.AMI,
-		instanceType:    clusterAWSConfig.MasterInstanceType,
-		subnetIDs:       subnetIDs,
-		securityGroupID: vpcInput.masterSecurityGroupID,
-		volumeType:      clusterAWSConfig.Type,
-		volumeSize:      clusterAWSConfig.Size,
-		volumeIOPS:      clusterAWSConfig.IOPS,
-		additionalTags:  clusterAWSConfig.ExtraTags,
-		encrypted:       clusterAWSConfig.Encrypted,
-		kmsKeyID:        clusterAWSConfig.KMSKeyID,
-		replicas:        clusterConfig.Masters,
+		clusterID:        clusterConfig.ClusterID,
+		targetGroupARNs:  vpcInput.targetGroupARNs,
+		userData:         clusterConfig.IgnitionMaster,
+		amiID:            clusterAWSConfig.AMI,
+		instanceType:     clusterAWSConfig.MasterInstanceType,
+		subnetIDs:        subnetIDs,
+		securityGroupIDs: append(clusterAWSConfig.MasterSecurityGroups, vpcInput.masterSecurityGroupID),
+		volumeType:       clusterAWSConfig.Type,
+		volumeSize:       clusterAWSConfig.Size,
+		volumeIOPS:       clusterAWSConfig.IOPS,
+		additionalTags:   clusterAWSConfig.ExtraTags,
+		encrypted:        clusterAWSConfig.Encrypted,
+		kmsKeyID:         clusterAWSConfig.KMSKeyID,
+		replicas:         clusterConfig.Masters,
 	}
 	if err := createControlPlaneResources(logger, awsSession, controlPlaneInput); err != nil {
 		return nil, nil, err

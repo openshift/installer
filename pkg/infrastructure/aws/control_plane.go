@@ -14,20 +14,20 @@ import (
 )
 
 type controlPlaneInput struct {
-	clusterID       string
-	userData        string
-	amiID           string
-	instanceType    string
-	subnetIDs       []string
-	securityGroupID string
-	volumeType      string
-	volumeSize      int64
-	volumeIOPS      int64
-	encrypted       bool
-	kmsKeyID        string
-	targetGroupARNs []string
-	replicas        int
-	additionalTags  map[string]string
+	clusterID        string
+	userData         string
+	amiID            string
+	instanceType     string
+	subnetIDs        []string
+	securityGroupIDs []string
+	volumeType       string
+	volumeSize       int64
+	volumeIOPS       int64
+	encrypted        bool
+	kmsKeyID         string
+	targetGroupARNs  []string
+	replicas         int
+	additionalTags   map[string]string
 }
 
 func createControlPlaneResources(l *logrus.Logger, session *session.Session, controlPlaneInput *controlPlaneInput) error {
@@ -51,7 +51,7 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		amiID:                    controlPlaneInput.amiID,
 		instanceType:             controlPlaneInput.instanceType,
 		userData:                 controlPlaneInput.userData,
-		securityGroupIDs:         []string{controlPlaneInput.securityGroupID},
+		securityGroupIDs:         controlPlaneInput.securityGroupIDs,
 		associatePublicIPAddress: false,
 		volumeType:               controlPlaneInput.volumeType,
 		volumeSize:               controlPlaneInput.volumeSize,
