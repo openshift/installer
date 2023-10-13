@@ -207,7 +207,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 							Protocol:                 capa.SecurityGroupProtocolTCP,
 							FromPort:                 10257,
 							ToPort:                   10257,
-							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", " node"},
+							SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 						},
 						{
 							Description:              "kube-scheduler",
