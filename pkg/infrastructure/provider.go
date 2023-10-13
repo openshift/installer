@@ -15,7 +15,7 @@ type Provider interface {
 	Provision(dir string, vars []*asset.File) ([]*asset.File, error)
 
 	// DestroyBootstrap destroys the temporary bootstrap resources.
-	DestroyBootstrap(dir string, varFiles []string) error
+	DestroyBootstrap(dir string) error
 
 	// ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 	ExtractHostAddresses(dir string, config *types.InstallConfig, ha *HostAddresses) error

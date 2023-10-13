@@ -3,16 +3,13 @@ package bootstrap
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
-	"github.com/openshift/installer/pkg/terraform"
-	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -45,77 +42,10 @@ func Destroy(dir string) (err error) {
 		platform = typesazure.StackTerraformName
 	}
 
-	varFiles := []string{cluster.TfVarsFileName, cluster.TfPlatformVarsFileName}
-	tfStages := platformstages.StagesForPlatform(platform)
-	for _, stage := range tfStages {
-		varFiles = append(varFiles, stage.OutputsFilename())
-	}
-
-	terraformDir := filepath.Join(dir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return errors.Wrap(err, "could not create the terraform directory")
-	}
-
-	terraformDirPath, err := filepath.Abs(terraformDir)
-	if err != nil {
-		return errors.Wrap(err, "could not get absolute path of terraform directory")
-	}
-
-	defer os.RemoveAll(terraformDirPath)
-	terraform.UnpackTerraform(terraformDirPath, tfStages)
-
-	for i := len(tfStages) - 1; i >= 0; i-- {
-		stage := tfStages[i]
-
-		if !stage.DestroyWithBootstrap() {
-			continue
-		}
-
-		tempDir, err := os.MkdirTemp("", fmt.Sprintf("openshift-install-%s-", stage.Name()))
-		if err != nil {
-			return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
-		}
-		defer os.RemoveAll(tempDir)
-
-		stateFilePathInInstallDir := filepath.Join(dir, stage.StateFilename())
-		stateFilePathInTempDir := filepath.Join(tempDir, terraform.StateFilename)
-		if err := copy(stateFilePathInInstallDir, stateFilePathInTempDir); err != nil {
-			return errors.Wrap(err, "failed to copy state file to the temporary directory")
-		}
-
-		targetVarFiles := make([]string, 0, len(varFiles))
-		for _, filename := range varFiles {
-			sourcePath := filepath.Join(dir, filename)
-			targetPath := filepath.Join(tempDir, filename)
-			if err := copy(sourcePath, targetPath); err != nil {
-				// platform may not need platform-specific Terraform variables
-				if filename == cluster.TfPlatformVarsFileName {
-					if os.IsNotExist(err) && err.(*os.PathError).Path == sourcePath {
-						continue
-					}
-				}
-				return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
-			}
-			targetVarFiles = append(targetVarFiles, targetPath)
-		}
-
-		if err := stage.Destroy(tempDir, terraformDirPath, targetVarFiles); err != nil {
-			return err
-		}
-
-		if err := copy(stateFilePathInTempDir, stateFilePathInInstallDir); err != nil {
-			return errors.Wrap(err, "failed to copy state file from the temporary directory")
-		}
+	provider := infra.ProviderForPlatform(platform)
+	if err := provider.DestroyBootstrap(dir); err != nil {
+		return fmt.Errorf("error destroying bootstrap resources %w", err)
 	}
 
 	return nil
-}
-
-func copy(from string, to string) error {
-	data, err := os.ReadFile(from)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(to, data, 0o666) //nolint:gosec // state file doesn't need to be 0600
 }

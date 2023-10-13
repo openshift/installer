@@ -10,6 +10,9 @@ type Stage interface {
 	// Name is the name of the stage.
 	Name() string
 
+	// Platform is the name of the platform.
+	Platform() string
+
 	// StateFilename is the name of the terraform state file.
 	StateFilename() string
 
