@@ -280,25 +280,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerIAMRoleName = awsMP.IAMRole
 		}
 
+		var securityGroups []string
+		if mp := installConfig.Config.AWS.DefaultMachinePlatform; mp != nil {
+			securityGroups = mp.AdditionalSecurityGroupIDs
+		}
 		masterIAMRoleName := ""
 		if mp := installConfig.Config.ControlPlane; mp != nil {
 			awsMP := &aws.MachinePool{}
 			awsMP.Set(installConfig.Config.AWS.DefaultMachinePlatform)
 			awsMP.Set(mp.Platform.AWS)
 			masterIAMRoleName = awsMP.IAMRole
+			if len(awsMP.AdditionalSecurityGroupIDs) > 0 {
+				securityGroups = awsMP.AdditionalSecurityGroupIDs
+			}
 		}
 
 		// AWS Zones is used to determine which route table the edge zone will be associated.
 		allZones, err := installConfig.AWS.AllZones(ctx)
 		if err != nil {
 			return err
-		}
-
-		var securityGroups []string
-		if mp := installConfig.Config.ControlPlane; mp != nil {
-			if mp.Platform.AWS != nil {
-				securityGroups = append(securityGroups, mp.Platform.AWS.AdditionalSecurityGroupIDs...)
-			}
 		}
 
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
