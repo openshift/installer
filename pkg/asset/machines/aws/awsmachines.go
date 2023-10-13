@@ -81,10 +81,11 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 				Subnet:               subnet,
 				AdditionalTags:       tags,
 				RootVolume: &capa.Volume{
-					Size:      int64(mpool.EC2RootVolume.Size),
-					Type:      capa.VolumeTypeGP3, // TODO(padillon): mpool.EC2RootVolume.Type,
-					IOPS:      int64(mpool.EC2RootVolume.IOPS),
-					Encrypted: pointer.Bool(true), // TODO(padillon): configure
+					Size:          int64(mpool.EC2RootVolume.Size),
+					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
+					IOPS:          int64(mpool.EC2RootVolume.IOPS),
+					Encrypted:     pointer.Bool(true),
+					EncryptionKey: mpool.KMSKeyARN,
 				},
 			},
 		}

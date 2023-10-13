@@ -88,6 +88,14 @@ const (
 )
 
 const (
+	// VpcEndpointsReadyCondition reports successful reconciliation of vpc endpoints.
+	// Only applicable to managed clusters.
+	VpcEndpointsReadyCondition clusterv1.ConditionType = "VpcEndpointsReadyCondition"
+	// VpcEndpointsReconciliationFailedReason used when any errors occur during reconciliation of vpc endpoints.
+	VpcEndpointsReconciliationFailedReason = "VpcEndpointsReconciliationFailed"
+)
+
+const (
 	// SecondaryCidrsReadyCondition reports successful reconciliation of secondary CIDR blocks.
 	// Only applicable to managed clusters.
 	SecondaryCidrsReadyCondition clusterv1.ConditionType = "SecondaryCidrsReady"

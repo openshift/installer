@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
@@ -128,6 +129,89 @@ func (s *Service) reconcileVPC() error {
 		return true, nil
 	}, awserrors.VPCNotFound); err != nil {
 		return errors.Wrapf(err, "failed to set vpc attributes for %q", vpc.ID)
+	}
+
+	return nil
+}
+
+func (s *Service) reconcileVPCEndpoints() error {
+	// If the VPC is unmanaged, return early.
+	if s.scope.VPC().IsUnmanaged(s.scope.Name()) {
+		return nil
+	}
+
+	// Gather all services that need to be enabled.
+	services := sets.New[string]()
+	if s.scope.Bucket() != nil {
+		services.Insert(fmt.Sprintf("com.amazonaws.%s.s3", s.scope.Region()))
+	}
+	if services.Len() == 0 {
+		return nil
+	}
+
+	routeTables := sets.New[string]()
+	for _, rt := range s.scope.Subnets() {
+		if rt.RouteTableID != nil {
+			routeTables.Insert(*rt.RouteTableID)
+		}
+	}
+	if routeTables.Len() == 0 {
+		return nil
+	}
+
+	// Get all existing endpoints.
+	input := &ec2.DescribeVpcEndpointsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("vpc-id"),
+				Values: aws.StringSlice([]string{s.scope.VPC().ID}),
+			},
+		},
+	}
+	for _, service := range services.UnsortedList() {
+		input.Filters = append(input.Filters, &ec2.Filter{
+			Name:   aws.String("service-name"),
+			Values: aws.StringSlice([]string{service}),
+		})
+	}
+
+	// Create a map of existing endpoints.
+	endpoints := map[string]*ec2.VpcEndpoint{}
+	if err := s.EC2Client.DescribeVpcEndpointsPages(input, func(dveo *ec2.DescribeVpcEndpointsOutput, lastPage bool) bool {
+		for _, ep := range dveo.VpcEndpoints {
+			endpoints[*ep.ServiceName] = ep
+		}
+		return true
+	}); err != nil {
+		return errors.Wrap(err, "failed to describe vpc endpoints")
+	}
+
+	// Iterate over all services and create missing endpoints.
+	for _, service := range services.UnsortedList() {
+		if existing, ok := endpoints[service]; ok {
+			existingRouteTables := sets.New(aws.StringValueSlice(existing.RouteTableIds)...)
+			additions := routeTables.Difference(existingRouteTables)
+			removals := existingRouteTables.Difference(routeTables)
+			if additions.Len() > 0 || removals.Len() > 0 {
+				if _, err := s.EC2Client.ModifyVpcEndpoint(&ec2.ModifyVpcEndpointInput{
+					VpcEndpointId:       existing.VpcEndpointId,
+					AddRouteTableIds:    aws.StringSlice(additions.UnsortedList()),
+					RemoveRouteTableIds: aws.StringSlice(removals.UnsortedList()),
+				}); err != nil {
+					return errors.Wrapf(err, "failed to modify vpc endpoint for service %q", service)
+				}
+			}
+			continue
+		}
+
+		// Create the endpoint.
+		if _, err := s.EC2Client.CreateVpcEndpoint(&ec2.CreateVpcEndpointInput{
+			VpcId:         aws.String(s.scope.VPC().ID),
+			ServiceName:   aws.String(service),
+			RouteTableIds: aws.StringSlice(routeTables.UnsortedList()),
+		}); err != nil {
+			return errors.Wrapf(err, "failed to create vpc endpoint for service %q", service)
+		}
 	}
 
 	return nil

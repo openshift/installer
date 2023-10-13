@@ -164,10 +164,11 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID.InfraID),
 				PublicIP:             pointer.Bool(true),
 				RootVolume: &capa.Volume{
-					Size:      int64(mpool.EC2RootVolume.Size),
-					Type:      capa.VolumeTypeGP3,
-					IOPS:      int64(mpool.EC2RootVolume.IOPS),
-					Encrypted: pointer.Bool(true),
+					Size:          int64(mpool.EC2RootVolume.Size),
+					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
+					IOPS:          int64(mpool.EC2RootVolume.IOPS),
+					Encrypted:     pointer.Bool(true),
+					EncryptionKey: mpool.KMSKeyARN,
 				},
 			},
 		}

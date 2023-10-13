@@ -245,13 +245,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 		// If the install config has subnets, use them.
 		if len(installConfig.AWS.Subnets) > 0 {
-			vpc, err := installConfig.AWS.VPC(context.TODO())
-			if err != nil {
-				return errors.Wrap(err, "failed to get VPC")
-			}
-			awsCluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
-				ID: vpc,
-			}
 			privateSubnets, err := installConfig.AWS.PrivateSubnets(context.TODO())
 			if err != nil {
 				return errors.Wrap(err, "failed to get private subnets")
@@ -276,6 +269,14 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					AvailabilityZone: subnet.Zone.Name,
 					IsPublic:         subnet.Public,
 				})
+			}
+
+			vpc, err := installConfig.AWS.VPC(context.TODO())
+			if err != nil {
+				return errors.Wrap(err, "failed to get VPC")
+			}
+			awsCluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
+				ID: vpc,
 			}
 		}
 

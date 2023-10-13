@@ -73,6 +73,12 @@ func (s *Service) ReconcileNetwork() (err error) {
 		return err
 	}
 
+	// VPC Endpoints.
+	if err := s.reconcileVPCEndpoints(); err != nil {
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, infrav1.VpcEndpointsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		return err
+	}
+
 	s.scope.Debug("Reconcile network completed successfully")
 	return nil
 }

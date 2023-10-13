@@ -1208,8 +1208,8 @@ github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv
 github.com/vincent-petithory/dataurl v0.0.0-20160330182126-9a301d65acbb/go.mod h1:FHafX5vmDzyP+1CQATJn7WFKc9CvnvxyvZy6I1MrG/U=
 github.com/vincent-petithory/dataurl v1.0.0 h1:cXw+kPto8NLuJtlMsI152irrVw9fRDX8AbShPRpg2CI=
 github.com/vincent-petithory/dataurl v1.0.0/go.mod h1:FHafX5vmDzyP+1CQATJn7WFKc9CvnvxyvZy6I1MrG/U=
-github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231011153931-787f339ccef5 h1:9hcGN66mS02FnECwhAlwBJLHFU0wiTOJPLdwtv50c8k=
-github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231011153931-787f339ccef5/go.mod h1:yL7ZLZIB8YKItiH32+uzjqgnAjm2ZuNcXRJFktcbTBc=
+github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231013185335-4bf78534a07e h1:7xAWPy02YMhl1BWs0r+AMCbdqRD5J3LhaclM/JasHEE=
+github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231013185335-4bf78534a07e/go.mod h1:yL7ZLZIB8YKItiH32+uzjqgnAjm2ZuNcXRJFktcbTBc=
 github.com/vishvananda/netlink v1.0.0/go.mod h1:+SR5DhBJrl6ZM7CoCKvpw5BKroDKQ+PJqOg65H/2ktk=
 github.com/vishvananda/netlink v1.1.0/go.mod h1:cTgwzPIzzgDAYoQrMm0EdrjRUBkTqKYppBueQtXaqoE=
 github.com/vishvananda/netlink v1.1.1-0.20201029203352-d40f9887b852/go.mod h1:twkDnbuQxJYemMlGd4JFIcuhgX83tXhKS2B/PRMpOho=
