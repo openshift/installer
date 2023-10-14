@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -45,12 +46,12 @@ func (c *localControlPlane) Name() string {
 
 // Run launches the local control plane.
 func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfig *installconfig.InstallConfig) error {
-	_ = clientgoscheme.AddToScheme(scheme.Scheme)
-	_ = clusterv1alpha3.AddToScheme(scheme.Scheme)
-	_ = clusterv1alpha4.AddToScheme(scheme.Scheme)
-	_ = clusterv1.AddToScheme(scheme.Scheme)
-	_ = capav1beta1.AddToScheme(scheme.Scheme)
-	_ = capav1.AddToScheme(scheme.Scheme)
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1alpha3.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1alpha4.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(capav1beta1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(capav1.AddToScheme(scheme.Scheme))
 
 	// Create a temporary directory to unpack the cluster-api binaries.
 	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
@@ -148,6 +149,9 @@ func fromEnvTestConfig(cfg *rest.Config) []byte {
 		},
 		CurrentContext: contextName,
 	}
-	data, _ := clientcmd.Write(c)
+	data, err := clientcmd.Write(c)
+	if err != nil {
+		logrus.Fatalf("failed to write kubeconfig: %v", err)
+	}
 	return data
 }

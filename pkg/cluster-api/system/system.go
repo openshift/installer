@@ -27,6 +27,7 @@ var (
 	ctx, cancel = context.WithCancel(signals.SetupSignalHandler())
 )
 
+// Teardown shuts down the local capi control plane and all its controllers.
 func Teardown() {
 	cancel()
 	logrus.Info("Shutting down local Cluster API control plane...")
@@ -56,7 +57,7 @@ func (c *System) Name() string {
 	return "Cluster API System"
 }
 
-// Generate launches the cluster and generates the terraform state file on disk.
+// Run launches the cluster-api system.
 func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installconfig.InstallConfig) (err error) {
 	c.lcp = &localControlPlane{}
 	if err := c.lcp.Run(clusterID, installConfig); err != nil {

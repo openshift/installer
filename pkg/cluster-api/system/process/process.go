@@ -30,6 +30,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // ListenAddr represents some listening address and port.
@@ -236,7 +238,10 @@ func (ps *State) Stop() error {
 	if ps.Cmd == nil {
 		return nil
 	}
-	if done, _ := ps.Exited(); done {
+	if done, err := ps.Exited(); done {
+		if err != nil {
+			logrus.Warnf("process %s exited with error: %v", path.Base(ps.Path), err)
+		}
 		return nil
 	}
 	if err := ps.Cmd.Process.Signal(syscall.SIGTERM); err != nil {

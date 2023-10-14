@@ -111,7 +111,7 @@ func SplitInto(count uint, parent *IPNet) ([]*IPNet, error) {
 	}
 
 	networkLength, _ := parent.Mask.Size()
-	networkLength += int(additionalBits)
+	networkLength += additionalBits
 
 	var subnets []*IPNet
 	for i := 0; i < 1<<additionalBits; i++ {
