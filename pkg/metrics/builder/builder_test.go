@@ -18,7 +18,7 @@ func getDescStruct(opts MetricOpts, labelKeyValues map[string]string) string {
 	}
 	sort.Strings(lpStrings)
 	return fmt.Sprintf("Desc{fqName: %q, help: %q, constLabels: {%s}, variableLabels: %v}",
-		opts.Name, opts.Desc, strings.Join(lpStrings, ","), []string{})
+		opts.Name, opts.Desc, strings.Join(lpStrings, ","), "{}")
 }
 
 func getCollectorDescription(collector prometheus.Collector) string {
