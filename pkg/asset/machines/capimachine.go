@@ -29,18 +29,6 @@ type CAPIMachine struct {
 	Machines []client.Object `json:"-"`
 }
 
-const (
-	infraDirectory = "infra"
-
-	// masterMachineFileName is the format string for constucting the
-	// master Machine filenames.
-	capiMachineFileName = "03_master-%s-%smachine.yaml"
-)
-
-var (
-	_ asset.WritableAsset = (*Master)(nil)
-)
-
 // Name returns a human friendly name for the Master Asset.
 func (m *CAPIMachine) Name() string {
 	return "CAPI Machines"
@@ -148,6 +136,10 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 		}
 		m.Machines = append(m.Machines, awsMachines...)
 
+		// TODO(vincepri): The following code is almost duplicated from aws.AWSMachines.
+		// Refactor and generalize around a bootstrap pool, with a single machine and
+		// a custom openshift label to determine the bootstrap machine role, so we can
+		// delete the machine when the stage is complete.
 		bootstrapAWSMachine := &capa.AWSMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-%s-bootstrap", clusterID.InfraID, pool.Name),
@@ -171,6 +163,14 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 					EncryptionKey: mpool.KMSKeyARN,
 				},
 			},
+		}
+
+		// Handle additional security groups.
+		for _, sg := range mpool.AdditionalSecurityGroupIDs {
+			bootstrapAWSMachine.Spec.AdditionalSecurityGroups = append(
+				bootstrapAWSMachine.Spec.AdditionalSecurityGroups,
+				capa.AWSResourceReference{ID: pointer.String(sg)},
+			)
 		}
 
 		bootstrapMachine := &capi.Machine{

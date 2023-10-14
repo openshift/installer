@@ -63,7 +63,7 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the respective operator config.yml files
+// Generate generates the respective operator config.yml files.
 func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}

@@ -78,14 +78,14 @@ fi
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
-# make -C terraform all
-
-# Copy terraform parts to embedded mirror.
-# copy_terraform_to_mirror
+if test "${SKIP_TERRAFORM}" != y
+then
+  make -C terraform all
+  copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
+fi
 
 # build cluster-api binaries before setting environment variables since it messes up make
 make -C cluster-api all
-
 copy_cluster_api_to_mirror
 copy_envtest_bins_to_mirror
 

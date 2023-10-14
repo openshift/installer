@@ -82,7 +82,7 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create asset store")
 	}
-	for _, asset := range capiClusterTarget.assets {
+	for _, asset := range clusterTarget.assets {
 		if err := store.Destroy(asset); err != nil {
 			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
 		}

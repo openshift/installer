@@ -122,7 +122,7 @@ type stopChannel chan struct{}
 // without the leading `--` (e.g. `CheckFlag("insecure-port")` checks for `--insecure-port`),
 // returning true if the flag is present.
 func (ps *State) CheckFlag(flag string) (bool, error) {
-	cmd := exec.Command(ps.Path, "--help")
+	cmd := exec.Command(ps.Path, "--help") //nolint:gosec
 	outContents, err := cmd.CombinedOutput()
 	if err != nil {
 		return false, fmt.Errorf("unable to run command %q to check for flag %q: %w", ps.Path, flag, err)
@@ -142,7 +142,7 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 		return nil
 	}
 
-	ps.Cmd = exec.CommandContext(ctx, ps.Path, ps.Args...)
+	ps.Cmd = exec.CommandContext(ctx, ps.Path, ps.Args...) //nolint:gosec
 	ps.Cmd.Stdout = stdout
 	ps.Cmd.Stderr = stderr
 	ps.Cmd.SysProcAttr = &syscall.SysProcAttr{

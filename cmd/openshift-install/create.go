@@ -21,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -43,6 +42,7 @@ import (
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	"github.com/openshift/installer/pkg/cluster-api/system"
+	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -115,81 +115,11 @@ var (
 		assets: targetassets.SingleNodeIgnitionConfig,
 	}
 
-	// clusterTarget = target{
-	// 	name: "Cluster",
-	// 	command: &cobra.Command{
-	// 		Use:   "cluster",
-	// 		Short: "Create an OpenShift cluster",
-	// 		// FIXME: add longer descriptions for our commands with examples for better UX.
-	// 		// Long:  "",
-	// 		PostRun: func(_ *cobra.Command, _ []string) {
-	// 			ctx := context.Background()
-
-	// 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
-	// 			defer cleanup()
-
-	// 			// FIXME: pulling the kubeconfig and metadata out of the root
-	// 			// directory is a bit cludgy when we already have them in memory.
-	// 			config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
-	// 			if err != nil {
-	// 				logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
-	// 			}
-
-	// 			timer.StartTimer("Bootstrap Complete")
-	// 			if err := waitForBootstrapComplete(ctx, config); err != nil {
-	// 				bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
-	// 				if gatherErr != nil {
-	// 					logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
-	// 				}
-	// 				if err := logClusterOperatorConditions(ctx, config); err != nil {
-	// 					logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
-	// 				}
-	// 				logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
-	// 				logrus.Error(err.Error())
-	// 				if gatherErr == nil {
-	// 					if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
-	// 						logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
-	// 					}
-	// 					logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
-	// 				}
-	// 				logrus.Exit(exitCodeBootstrapFailed)
-	// 			}
-	// 			timer.StopTimer("Bootstrap Complete")
-	// 			timer.StartTimer("Bootstrap Destroy")
-
-	// 			if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
-	// 				logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
-	// 					"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
-	// 			} else {
-	// 				logrus.Info("Destroying the bootstrap resources...")
-	// 				err = destroybootstrap.Destroy(command.RootOpts.Dir)
-	// 				if err != nil {
-	// 					logrus.Fatal(err)
-	// 				}
-	// 			}
-	// 			timer.StopTimer("Bootstrap Destroy")
-
-	// 			err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
-	// 			if err != nil {
-	// 				if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
-	// 					logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
-	// 				}
-	// 				logTroubleshootingLink()
-	// 				logrus.Error(err)
-	// 				logrus.Exit(exitCodeInstallFailed)
-	// 			}
-	// 			timer.StopTimer(timer.TotalTimeElapsed)
-	// 			timer.LogSummary()
-	// 		},
-	// 	},
-	// 	assets: targetassets.Cluster,
-	// }
-
-	capiClusterTarget = target{
+	clusterTarget = target{
 		name: "Cluster",
 		command: &cobra.Command{
 			Use:   "cluster",
-			Short: "Create an OpenShift cluster with Cluster API",
+			Short: "Create an OpenShift cluster",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PreRun: func(cmd *cobra.Command, args []string) {
@@ -200,9 +130,6 @@ var (
 
 				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
-				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_ENVTEST"); !ok || oi == "" {
-					defer system.Teardown()
-				}
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.
@@ -213,16 +140,6 @@ var (
 				metadata, err := cluster.LoadMetadata(command.RootOpts.Dir)
 				if err != nil {
 					logrus.Fatal(err)
-				}
-				envtestCfg, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "envtest.kubeconfig"))
-				if err != nil {
-					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
-				}
-				envtestClient, err := client.New(envtestCfg, client.Options{
-					Scheme: scheme.Scheme,
-				})
-				if err != nil {
-					logrus.Fatal(errors.Wrap(err, "failed to create a new client for envtest"))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
@@ -246,13 +163,33 @@ var (
 				}
 				timer.StopTimer("Bootstrap Complete")
 				timer.StartTimer("Bootstrap Destroy")
-				if err := envtestClient.Delete(ctx, &clusterv1.Machine{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-master-bootstrap", metadata.InfraID),
-						Namespace: cluster.ClusterAPINamespace,
-					},
-				}); client.IgnoreNotFound(err) != nil {
-					logrus.Fatal(errors.Wrap(err, "failed to delete bootstrap machine"))
+
+				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
+						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
+				} else {
+					logrus.Info("Destroying the bootstrap resources...")
+
+					cl, err := getLocalControlPlaneClient()
+					if err != nil && !os.IsNotExist(err) {
+						logrus.Fatal(err)
+					}
+					if cl != nil {
+						// TODO: Delete the bootstrap machine by labels, not name.
+						if err := cl.Delete(ctx, &clusterv1.Machine{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      fmt.Sprintf("%s-master-bootstrap", metadata.InfraID),
+								Namespace: cluster.ClusterAPINamespace,
+							},
+						}); client.IgnoreNotFound(err) != nil {
+							logrus.Fatal(errors.Wrap(err, "failed to delete bootstrap machine"))
+						}
+					} else {
+						// Fall back to the legacy bootstrap deletion method.
+						if err := destroybootstrap.Destroy(command.RootOpts.Dir); err != nil {
+							logrus.Fatal(err)
+						}
+					}
 				}
 				timer.StopTimer("Bootstrap Destroy")
 
@@ -269,10 +206,10 @@ var (
 				timer.LogSummary()
 			},
 		},
-		assets: targetassets.CAPICluster,
+		assets: targetassets.Cluster,
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, singleNodeIgnitionConfigTarget, capiClusterTarget}
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, singleNodeIgnitionConfigTarget, clusterTarget}
 )
 
 // clusterCreateError defines a custom error type that would help identify where the error occurs

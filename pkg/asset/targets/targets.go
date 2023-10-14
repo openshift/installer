@@ -72,16 +72,4 @@ var (
 		&tls.JournalCertKey{},
 		&cluster.Cluster{},
 	}
-
-	// CAPICluster are the cluster targeted assets.
-	CAPICluster = []asset.WritableAsset{
-		&cluster.Metadata{},
-		&machine.MasterIgnitionCustomizations{},
-		&machine.WorkerIgnitionCustomizations{},
-		&cluster.TerraformVariables{},
-		&kubeconfig.AdminClient{},
-		&password.KubeadminPassword{},
-		&tls.JournalCertKey{},
-		&cluster.CAPICluster{},
-	}
 )

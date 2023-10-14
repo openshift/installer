@@ -9,15 +9,14 @@ import (
 	"github.com/sirupsen/logrus"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	capav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
+	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3" //nolint:staticcheck
+	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -27,6 +26,14 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	providers "github.com/openshift/installer/pkg/cluster-api"
 )
+
+func init() {
+	utilruntime.Must(clusterv1alpha3.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1alpha4.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(capav1beta1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(capav1.AddToScheme(scheme.Scheme))
+}
 
 // localControlPlane creates a local capi control plane
 // to use as a management cluster.
@@ -46,13 +53,6 @@ func (c *localControlPlane) Name() string {
 
 // Run launches the local control plane.
 func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfig *installconfig.InstallConfig) error {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1alpha3.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1alpha4.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(capav1beta1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(capav1.AddToScheme(scheme.Scheme))
-
 	// Create a temporary directory to unpack the cluster-api binaries.
 	binDir, err := os.MkdirTemp("", "openshift-cluster-api-bins")
 	if err != nil {
