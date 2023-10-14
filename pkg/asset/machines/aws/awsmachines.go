@@ -90,6 +90,14 @@ func AWSMachines(clusterID string, region string, subnets map[string]string, poo
 			},
 		}
 
+		// Handle additional security groups.
+		for _, sg := range mpool.AdditionalSecurityGroupIDs {
+			awsMachine.Spec.AdditionalSecurityGroups = append(
+				awsMachine.Spec.AdditionalSecurityGroups,
+				capa.AWSResourceReference{ID: pointer.String(sg)},
+			)
+		}
+
 		machine := &capi.Machine{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: capiGuestsNamespace,
