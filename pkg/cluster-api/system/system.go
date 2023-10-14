@@ -25,23 +25,26 @@ import (
 var (
 	wg          = &sync.WaitGroup{}
 	ctx, cancel = context.WithCancel(signals.SetupSignalHandler())
+	once        = &sync.Once{}
 )
 
 // Teardown shuts down the local capi control plane and all its controllers.
 func Teardown() {
-	cancel()
-	logrus.Info("Shutting down local Cluster API control plane...")
-	ch := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-	select {
-	case <-ch:
-		logrus.Info("Local control plane has completed operations")
-	case <-time.After(30 * time.Second):
-		logrus.Warn("Timed out waiting for local control plane to shut down")
-	}
+	once.Do(func() {
+		cancel()
+		logrus.Info("Shutting down local Cluster API control plane...")
+		ch := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(ch)
+		}()
+		select {
+		case <-ch:
+			logrus.Info("Local control plane has completed operations")
+		case <-time.After(30 * time.Second):
+			logrus.Warn("Timed out waiting for local control plane to shut down")
+		}
+	})
 }
 
 // System creates a local capi control plane

@@ -130,6 +130,7 @@ var (
 
 				cleanup := command.SetupFileHook(command.RootOpts.Dir)
 				defer cleanup()
+				defer system.Teardown()
 
 				// FIXME: pulling the kubeconfig and metadata out of the root
 				// directory is a bit cludgy when we already have them in memory.
