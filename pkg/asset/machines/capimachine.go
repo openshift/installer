@@ -198,8 +198,7 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 
 		m.Machines = append(m.Machines, bootstrapAWSMachine, bootstrapMachine)
 	default:
-		return fmt.Errorf("invalid Platform")
+		return nil
 	}
-
 	return nil
 }

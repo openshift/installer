@@ -311,7 +311,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		idFn := "00_aws-cluster-controller-identity-default.yaml"
 		c.Manifests = append(c.Manifests, Manifest{id, idFn})
 	default:
-		return errors.Errorf("unsupported platform %q", platform)
+		return nil
 	}
 
 	clusterFn := "01-capi-cluster.yaml"
@@ -331,7 +331,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	}
 
 	asset.SortFiles(c.FileList)
-
 	return nil
 }
 
