@@ -3,8 +3,15 @@ package aws
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -112,42 +119,112 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		return nil, nil, err
 	}
 
-	// Choose appropriate subnet according to the zone
-	// We assume that len(AZs) == len(masters)
-	subnetIDs := make([]string, clusterConfig.Masters)
-	for i := 0; i < clusterConfig.Masters; i++ {
-		zoneIdx := i % len(clusterAWSConfig.MasterAvailabilityZones)
-		subnetIDs[i] = vpcInput.zoneToSubnetIDMap[clusterAWSConfig.MasterAvailabilityZones[zoneIdx]]
-	}
-
 	// Create Control Plane resources.
 	controlPlaneInput := &controlPlaneInput{
-		clusterID:        clusterConfig.ClusterID,
-		targetGroupARNs:  vpcInput.targetGroupARNs,
-		userData:         clusterConfig.IgnitionMaster,
-		amiID:            clusterAWSConfig.AMI,
-		instanceType:     clusterAWSConfig.MasterInstanceType,
-		subnetIDs:        subnetIDs,
-		securityGroupIDs: append(clusterAWSConfig.MasterSecurityGroups, vpcInput.masterSecurityGroupID),
-		volumeType:       clusterAWSConfig.Type,
-		volumeSize:       clusterAWSConfig.Size,
-		volumeIOPS:       clusterAWSConfig.IOPS,
-		additionalTags:   clusterAWSConfig.ExtraTags,
-		encrypted:        clusterAWSConfig.Encrypted,
-		kmsKeyID:         clusterAWSConfig.KMSKeyID,
-		replicas:         clusterConfig.Masters,
+		clusterID:         clusterConfig.ClusterID,
+		targetGroupARNs:   vpcInput.targetGroupARNs,
+		userData:          clusterConfig.IgnitionMaster,
+		amiID:             clusterAWSConfig.AMI,
+		instanceType:      clusterAWSConfig.MasterInstanceType,
+		subnetIDs:         vpcInput.privateSubnetIDs,
+		securityGroupIDs:  append(clusterAWSConfig.MasterSecurityGroups, vpcInput.masterSecurityGroupID),
+		volumeType:        clusterAWSConfig.Type,
+		volumeSize:        clusterAWSConfig.Size,
+		volumeIOPS:        clusterAWSConfig.IOPS,
+		additionalTags:    clusterAWSConfig.ExtraTags,
+		encrypted:         clusterAWSConfig.Encrypted,
+		kmsKeyID:          clusterAWSConfig.KMSKeyID,
+		replicas:          clusterConfig.Masters,
+		availabilityZones: clusterAWSConfig.MasterAvailabilityZones,
+		zoneToSubnetIDMap: vpcInput.zoneToSubnetIDMap,
 	}
 	if err := createControlPlaneResources(logger, awsSession, controlPlaneInput); err != nil {
 		return nil, nil, err
 	}
 
 	// Create IAM resources.
-	iamInput := &iamInput{
-		clusterID: clusterConfig.ClusterID,
-	}
-	if err := createIAMResources(logger, awsSession, iamInput); err != nil {
+	if err := createIAMResources(logger, awsSession, clusterConfig.ClusterID, clusterAWSConfig.ExtraTags); err != nil {
 		return nil, nil, err
 	}
 
 	return nil, nil, nil
+}
+
+func createInstanceProfile(logger *logrus.Logger, session *session.Session, namePrefix, assumeRolePolicy, policyDocument string, tags map[string]string) (string, error) {
+	iamClient := iam.New(session)
+	iamTags := iamCreateTags(tags)
+
+	roleName := fmt.Sprintf("%s-role", namePrefix)
+	role, err := iamGetRole(iamClient, roleName)
+	if err != nil {
+		return "", err
+	}
+	if role == nil {
+		if _, err := iamCreateRole(iamClient, roleName, assumeRolePolicy, iamTags); err != nil {
+			return "", err
+		}
+		logger.WithField("name", roleName).Infoln("Created role")
+	} else {
+		logger.WithField("name", roleName).Infoln("Found existing role")
+	}
+
+	profileName := fmt.Sprintf("%s-profile", namePrefix)
+	instanceProfile, err := iamGetInstanceProfile(iamClient, profileName)
+	if err != nil {
+		return "", err
+	}
+	if instanceProfile == nil {
+		instanceProfile, err = iamCreateInstanceProfile(iamClient, profileName, iamTags)
+		if err != nil {
+			return "", err
+		}
+		logger.WithField("name", profileName).Infoln("Created instance profile")
+		//logger.WithField("name", profileName).Infoln("Instance profile was created and exists")
+	} else {
+		logger.WithField("name", profileName).Infoln("Found existing instance profile")
+	}
+	if err := iamAddRoleToProfile(iamClient, instanceProfile, roleName); err != nil {
+		return "", err
+	}
+	logger.WithField("role", roleName).WithField("profile", profileName).Infoln("Added role to instance profile")
+
+	rolePolicyName := fmt.Sprintf("%s-policy", profileName)
+	policyName, err := iamGetRolePolicy(iamClient, roleName, rolePolicyName)
+	if err != nil {
+		return "", err
+	}
+	if policyName != rolePolicyName {
+		if err := iamAddPolicyToRole(iamClient, roleName, rolePolicyName, policyDocument); err != nil {
+			return "", err
+		}
+		logger.WithField("name", rolePolicyName).Infoln("Created role policy")
+	}
+
+	// We sleep here otherwise got an error when creating the ec2 instance referencing the profile.
+	time.Sleep(10 * time.Second)
+
+	return aws.StringValue(instanceProfile.Arn), nil
+}
+
+func createInstance(l *logrus.Logger, ec2Client ec2iface.EC2API, options instanceOptions) (*ec2.Instance, error) {
+	// Check if an instance exists.
+	instance, err := ec2GetInstance(ec2Client, []*ec2.Filter{
+		ec2CreateFilter("tag:Name", options.name),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if instance != nil {
+		l.WithField("id", aws.StringValue(instance.InstanceId)).Infoln("Instance already exists")
+		return instance, nil
+	}
+
+	// Create a new EC2 instance.
+	instance, err = ec2CreateInstance(ec2Client, options)
+	if err != nil {
+		return nil, err
+	}
+	l.WithField("id", aws.StringValue(instance.InstanceId)).Infoln("Created instance")
+
+	return instance, nil
 }
