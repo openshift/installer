@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
 	"github.com/sirupsen/logrus"
 )
 
@@ -1045,7 +1046,7 @@ func (o *CreateInfraOptions) addTargetGroup(arn string) {
 	o.targetGroupARNs = append(o.targetGroupARNs, arn)
 }
 
-func (o *CreateInfraOptions) createLB(l *logrus.Logger, elbClient *elbv2.ELBV2, name string, subnets []string, isPublic bool, elbTags []*elbv2.Tag) (*elbv2.LoadBalancer, error) {
+func (o *CreateInfraOptions) createLB(l *logrus.Logger, elbClient elbv2iface.ELBV2API, name string, subnets []string, isPublic bool, elbTags []*elbv2.Tag) (*elbv2.LoadBalancer, error) {
 	// Check if the internal load balancer already exists.
 	lb, err := elbGetLoadBalancer(elbClient, name)
 	if err != nil {
@@ -1063,7 +1064,7 @@ func (o *CreateInfraOptions) createLB(l *logrus.Logger, elbClient *elbv2.ELBV2, 
 	return lb, nil
 }
 
-func (o *CreateInfraOptions) createTargeGroup(l *logrus.Logger, elbClient *elbv2.ELBV2, name, vpcID, healthCheckPath string, port int64, elbTags []*elbv2.Tag) (*elbv2.TargetGroup, error) {
+func (o *CreateInfraOptions) createTargeGroup(l *logrus.Logger, elbClient elbv2iface.ELBV2API, name, vpcID, healthCheckPath string, port int64, elbTags []*elbv2.Tag) (*elbv2.TargetGroup, error) {
 	logger := l.WithField("target group", name)
 	// Check if the target group already exists
 	tg, err := elbGetTargetGroup(elbClient, name)
@@ -1082,7 +1083,7 @@ func (o *CreateInfraOptions) createTargeGroup(l *logrus.Logger, elbClient *elbv2
 	return tg, nil
 }
 
-func (o *CreateInfraOptions) createInternalLB(l *logrus.Logger, elbClient *elbv2.ELBV2, vpcID string, privateSubnets []string, elbTags []*elbv2.Tag) error {
+func (o *CreateInfraOptions) createInternalLB(l *logrus.Logger, elbClient elbv2iface.ELBV2API, vpcID string, privateSubnets []string, elbTags []*elbv2.Tag) error {
 	// Create internal LB.
 	internalLBName := fmt.Sprintf("%s-int", o.InfraID)
 
@@ -1132,7 +1133,7 @@ func (o *CreateInfraOptions) createInternalLB(l *logrus.Logger, elbClient *elbv2
 	return nil
 }
 
-func (o *CreateInfraOptions) createExternalLB(l *logrus.Logger, elbClient *elbv2.ELBV2, vpcID string, publicSubnets []string, elbTags []*elbv2.Tag) error {
+func (o *CreateInfraOptions) createExternalLB(l *logrus.Logger, elbClient elbv2iface.ELBV2API, vpcID string, publicSubnets []string, elbTags []*elbv2.Tag) error {
 	// Create external LB.
 	externalLBName := fmt.Sprintf("%s-ext", o.InfraID)
 	lb, err := o.createLB(l, elbClient, externalLBName, publicSubnets, true, elbTags)

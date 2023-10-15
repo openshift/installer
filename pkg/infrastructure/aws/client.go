@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -1137,7 +1138,7 @@ func r53Tags(name string) []*route53.Tag {
 	return tags
 }
 
-func elbGetLoadBalancer(client *elbv2.ELBV2, name string) (*elbv2.LoadBalancer, error) {
+func elbGetLoadBalancer(client elbv2iface.ELBV2API, name string) (*elbv2.LoadBalancer, error) {
 	describeLBInput := &elbv2.DescribeLoadBalancersInput{
 		Names: []*string{aws.String(name)},
 	}
@@ -1158,7 +1159,7 @@ func elbGetLoadBalancer(client *elbv2.ELBV2, name string) (*elbv2.LoadBalancer, 
 	return nil, nil
 }
 
-func elbCreateLoadBalancer(client *elbv2.ELBV2, lbName string, subnets []string, internetFacing bool, elbTags []*elbv2.Tag) (*elbv2.LoadBalancer, error) {
+func elbCreateLoadBalancer(client elbv2iface.ELBV2API, lbName string, subnets []string, internetFacing bool, elbTags []*elbv2.Tag) (*elbv2.LoadBalancer, error) {
 	scheme := "internal"
 	if internetFacing {
 		scheme = "internet-facing"
@@ -1198,7 +1199,7 @@ func elbCreateLoadBalancer(client *elbv2.ELBV2, lbName string, subnets []string,
 	return lbOutput.LoadBalancers[0], nil
 }
 
-func elbGetTargetGroup(client *elbv2.ELBV2, targetName string) (*elbv2.TargetGroup, error) {
+func elbGetTargetGroup(client elbv2iface.ELBV2API, targetName string) (*elbv2.TargetGroup, error) {
 	describeInternalATGInput := &elbv2.DescribeTargetGroupsInput{
 		Names: []*string{aws.String(targetName)},
 	}
@@ -1219,7 +1220,7 @@ func elbGetTargetGroup(client *elbv2.ELBV2, targetName string) (*elbv2.TargetGro
 	return nil, nil
 }
 
-func elbCreateTargetGroup(client *elbv2.ELBV2, targetName string, vpcID string, healthCheckPath string, port int64, elbTags []*elbv2.Tag) (*elbv2.TargetGroup, error) {
+func elbCreateTargetGroup(client elbv2iface.ELBV2API, targetName string, vpcID string, healthCheckPath string, port int64, elbTags []*elbv2.Tag) (*elbv2.TargetGroup, error) {
 	createInternalTGInput := &elbv2.CreateTargetGroupInput{
 		HealthCheckEnabled:         aws.Bool(true),
 		HealthCheckPath:            aws.String(healthCheckPath),
@@ -1245,7 +1246,7 @@ func elbCreateTargetGroup(client *elbv2.ELBV2, targetName string, vpcID string, 
 	return internalTGOutput.TargetGroups[0], nil
 }
 
-func elbCreateListener(client *elbv2.ELBV2, listenerName string, lbARN string, tgARN string, port int64, elbTags []*elbv2.Tag) (*elbv2.Listener, error) {
+func elbCreateListener(client elbv2iface.ELBV2API, listenerName string, lbARN string, tgARN string, port int64, elbTags []*elbv2.Tag) (*elbv2.Listener, error) {
 	createInternalSListenerInput := &elbv2.CreateListenerInput{
 		LoadBalancerArn: aws.String(lbARN),
 		Protocol:        aws.String("TCP"),
@@ -1275,7 +1276,7 @@ func elbCreateListener(client *elbv2.ELBV2, listenerName string, lbARN string, t
 	return listenerOutput.Listeners[0], nil
 }
 
-func elbRegisterTargetGroup(elbClient *elbv2.ELBV2, targetGroupARN string, ipAddressID string) error {
+func elbRegisterTargetGroup(elbClient elbv2iface.ELBV2API, targetGroupARN string, ipAddressID string) error {
 	_, err := elbClient.RegisterTargets(&elbv2.RegisterTargetsInput{
 		TargetGroupArn: aws.String(targetGroupARN),
 		Targets: []*elbv2.TargetDescription{
