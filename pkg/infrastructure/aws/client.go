@@ -703,10 +703,7 @@ func ec2CreateRoute(client ec2iface.EC2API, tableID, igwID string) error {
 		RouteTableId:         aws.String(tableID),
 		GatewayId:            aws.String(igwID),
 	})
-	if err != nil {
-		return fmt.Errorf("cannot create route to internet gateway: %w", err)
-	}
-	return nil
+	return err
 }
 
 func ec2AllocateEIPAddress(client ec2iface.EC2API, ec2Tags []*ec2.Tag) (string, error) {
@@ -797,10 +794,7 @@ func ec2CreateNatGatewayRoute(client ec2iface.EC2API, tableID, natGatewayID stri
 		})
 		return err
 	})
-	if err != nil {
-		return fmt.Errorf("cannot create nat gateway route in private route table: %w", err)
-	}
-	return nil
+	return err
 }
 
 func ec2AssociateRouteTable(client ec2iface.EC2API, tableID, subnetID string) error {
@@ -808,10 +802,7 @@ func ec2AssociateRouteTable(client ec2iface.EC2API, tableID, subnetID string) er
 		RouteTableId: aws.String(tableID),
 		SubnetId:     aws.String(subnetID),
 	})
-	if err != nil {
-		return fmt.Errorf("cannot associate private route table with subnet: %w", err)
-	}
-	return nil
+	return err
 }
 
 func ec2ReplaceRouteTableAssociation(client ec2iface.EC2API, tableID, associationID string) error {
@@ -819,10 +810,7 @@ func ec2ReplaceRouteTableAssociation(client ec2iface.EC2API, tableID, associatio
 		RouteTableId:  aws.String(tableID),
 		AssociationId: aws.String(associationID),
 	})
-	if err != nil {
-		return fmt.Errorf("cannot set vpc main route table: %w", err)
-	}
-	return nil
+	return err
 }
 
 func ec2HasInternetGatewayRoute(table *ec2.RouteTable, igwID string) bool {
@@ -854,7 +842,7 @@ func ec2HasNATGatewayRoute(table *ec2.RouteTable, natGatewayID string) bool {
 	return false
 }
 
-func ec2CreateVPCS3Endpoint(client ec2iface.EC2API, endpointName, vpcID, serviceName string, routeTableIDs []*string, ec2Tags []*ec2.Tag) (*ec2.VpcEndpoint, error) {
+func ec2CreateVPCS3Endpoint(client ec2iface.EC2API, endpointName, vpcID, serviceName string, routeTableIDs []string, ec2Tags []*ec2.Tag) (*ec2.VpcEndpoint, error) {
 	isRetriable := func(err error) bool {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) {
@@ -867,7 +855,7 @@ func ec2CreateVPCS3Endpoint(client ec2iface.EC2API, endpointName, vpcID, service
 		result, err := client.CreateVpcEndpoint(&ec2.CreateVpcEndpointInput{
 			VpcId:             aws.String(vpcID),
 			ServiceName:       aws.String(serviceName),
-			RouteTableIds:     routeTableIDs,
+			RouteTableIds:     aws.StringSlice(routeTableIDs),
 			TagSpecifications: ec2TagSpecifications("vpc-endpoint", endpointName, ec2Tags),
 		})
 		if err == nil {

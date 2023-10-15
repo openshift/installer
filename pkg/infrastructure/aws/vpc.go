@@ -20,159 +20,121 @@ func createVPCResources(logger *logrus.Logger, session *session.Session, vpcInpu
 
 	vpcInput.additionalEC2Tags = ec2CreateTags(vpcInput.AdditionalTags)
 
-	var err error
-	zoneToPrivateSubnetIDMap := make(map[string]string)
-	vpcID := vpcInput.vpcID
-	if vpcID == "" {
-		vpcID, err = vpcInput.createVPC(logger, ec2Client)
+	var igwID string
+	var endpointRouteTableIds []string
+	if vpcInput.vpcID == "" {
+		var err error
+		vpcID, err := vpcInput.createVPC(logger, ec2Client)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create VPC: %w", err)
 		}
 		vpcInput.vpcID = vpcID
 
 		if err = vpcInput.CreateDHCPOptions(logger, ec2Client, vpcID); err != nil {
-			return err
+			return fmt.Errorf("failed to create DHCP options: %w", err)
 		}
 
-		igwID, err := vpcInput.CreateInternetGateway(logger, ec2Client, vpcID)
+		igwID, err = vpcInput.CreateInternetGateway(logger, ec2Client, vpcID)
+		if err != nil {
+			return fmt.Errorf("failed to create internet gateway: %w", err)
+		}
+
+		publicRouteTable, err := vpcInput.CreatePublicRouteTable(logger, ec2Client, igwID)
+		if err != nil {
+			return fmt.Errorf("failed to create public route table: %w", err)
+		}
+		endpointRouteTableIds = append(endpointRouteTableIds, publicRouteTable)
+
+	} else {
+		logger.WithField("id", vpcInput.vpcID).Debugln("Using user-supplied VPC")
+	}
+
+	if err := vpcInput.createSecurityGroups(logger, ec2Client); err != nil {
+		return fmt.Errorf("failed to create security groups: %w", err)
+	}
+
+	// Per zone resources
+
+	_, network, err := net.ParseCIDR(vpcInput.cidrV4Blocks[0])
+	if err != nil {
+		return err
+	}
+
+	privateNetwork, err := cidr.Subnet(network, 1, 0)
+	if err != nil {
+		return err
+	}
+
+	publicNetwork, err := cidr.Subnet(network, 1, 1)
+	if err != nil {
+		return err
+	}
+
+	// If a single-zone deployment, the available CIDR block will be split
+	// into two to allow user expansion
+	if len(vpcInput.Zones) == 1 {
+		privateNetwork, err = cidr.Subnet(privateNetwork, 1, 0)
 		if err != nil {
 			return err
 		}
-
-		bootstrapSG, err := vpcInput.CreateBootstrapSecurityGroup(logger, ec2Client, vpcID)
+		publicNetwork, err = cidr.Subnet(publicNetwork, 1, 0)
 		if err != nil {
 			return err
 		}
-		var machineV4Cidrs []string
-		if vpcInput.public {
-			machineV4Cidrs = []string{"0.0.0.0/0"}
-		} else {
-			machineV4Cidrs = vpcInput.cidrV4Blocks
-		}
-		bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(vpcInput.bootstrapSecurityGroupID, machineV4Cidrs)
-		if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, bootstrapSG, bootstrapIngressPermissions); err != nil {
-			return err
-		}
+	}
 
-		// Per zone resources
-		_, network, err := net.ParseCIDR(vpcInput.cidrV4Blocks[0])
+	var publicSubnetZoneMap map[string]string
+	if len(vpcInput.publicSubnetIDs) == 0 {
+		publicSubnetZoneMap, err = vpcInput.CreatePublicSubnets(logger, ec2Client, publicNetwork)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create public subnets: %w", err)
 		}
-		privateNetwork, err := cidr.Subnet(network, 1, 0)
+	}
+
+	var privateSubnetZoneMap map[string]string
+	if len(vpcInput.privateSubnetIDs) == 0 {
+		privateSubnetZoneMap, err = vpcInput.CreatePrivateSubnets(logger, ec2Client, privateNetwork)
 		if err != nil {
-			return err
-		}
-		publicNetwork, err := cidr.Subnet(network, 1, 1)
-		if err != nil {
-			return err
+			return fmt.Errorf("failed to create private subnets: %w", err)
 		}
 
-		// If a single-zone deployment, the available CIDR block will be split
-		// into two to allow user expansion
-		if len(vpcInput.Zones) == 1 {
-			privateNetwork, err = cidr.Subnet(privateNetwork, 1, 0)
-			if err != nil {
-				return err
-			}
-			publicNetwork, err = cidr.Subnet(publicNetwork, 1, 0)
-			if err != nil {
-				return err
-			}
-		}
-
-		var publicSubnetIDs []string
-		var privateSubnetIDs []string
-		var endpointRouteTableIds []*string
-		newBits := int(math.Ceil(math.Log2(float64(len(vpcInput.Zones)))))
-		for i, zone := range vpcInput.Zones {
-			privateCIDR, err := cidr.Subnet(privateNetwork, newBits, i)
-			if err != nil {
-				return err
-			}
-			privateSubnetID, err := vpcInput.CreatePrivateSubnet(logger, ec2Client, vpcID, zone, privateCIDR.String())
-			if err != nil {
-				return err
-			}
-			zoneToPrivateSubnetIDMap[zone] = privateSubnetID
-
-			publicCIDR, err := cidr.Subnet(publicNetwork, newBits, i)
-			if err != nil {
-				return err
-			}
-			publicSubnetID, err := vpcInput.CreatePublicSubnet(logger, ec2Client, vpcID, zone, publicCIDR.String())
-			if err != nil {
-				return err
-			}
-
+		for _, zone := range vpcInput.Zones {
 			var natGatewayID string
-			publicSubnetIDs = append(publicSubnetIDs, publicSubnetID)
-			privateSubnetIDs = append(privateSubnetIDs, privateSubnetID)
-
-			if !vpcInput.EnableProxy {
-				natGatewayID, err = vpcInput.CreateNATGateway(logger, ec2Client, publicSubnetID, zone)
+			if !vpcInput.EnableProxy && len(publicSubnetZoneMap) > 0 {
+				natGatewayID, err = vpcInput.CreateNATGateway(logger, ec2Client, publicSubnetZoneMap[zone], zone)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to create NAT gateway: %w", err)
 				}
 			}
-			privateRouteTable, err := vpcInput.CreatePrivateRouteTable(logger, ec2Client, vpcID, natGatewayID, privateSubnetID, zone)
+			privateRouteTable, err := vpcInput.CreatePrivateRouteTable(logger, ec2Client, vpcInput.vpcID, natGatewayID, privateSubnetZoneMap[zone], zone)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create private route table: %w", err)
 			}
-			endpointRouteTableIds = append(endpointRouteTableIds, aws.String(privateRouteTable))
-		}
-		vpcInput.publicSubnetIDs = publicSubnetIDs
-		vpcInput.privateSubnetIDs = privateSubnetIDs
-
-		publicRouteTable, err := vpcInput.CreatePublicRouteTable(logger, ec2Client, vpcID, igwID, publicSubnetIDs)
-		if err != nil {
-			return err
-		}
-
-		endpointRouteTableIds = append(endpointRouteTableIds, aws.String(publicRouteTable))
-		err = vpcInput.CreateVPCS3Endpoint(logger, ec2Client, vpcID, endpointRouteTableIds)
-		if err != nil {
-			return err
+			endpointRouteTableIds = append(endpointRouteTableIds, privateRouteTable)
 		}
 	} else {
-		logger.WithField("id", vpcID).Debugln("Using user-supplied VPC")
-
+		privateSubnetZoneMap = make(map[string]string, len(vpcInput.privateSubnetIDs))
 		subnets, err := ec2GetSubnets(ec2Client, vpcInput.privateSubnetIDs)
 		if err != nil {
 			return err
 		}
 		for _, subnet := range subnets {
-			zoneToPrivateSubnetIDMap[aws.StringValue(subnet.AvailabilityZone)] = aws.StringValue(subnet.SubnetId)
+			privateSubnetZoneMap[aws.StringValue(subnet.AvailabilityZone)] = aws.StringValue(subnet.SubnetId)
 		}
 	}
-	vpcInput.zoneToSubnetIDMap = zoneToPrivateSubnetIDMap
+	vpcInput.zoneToSubnetIDMap = privateSubnetZoneMap
 
-	masterSG, err := vpcInput.CreateMasterSecurityGroup(logger, ec2Client, vpcID)
-	if err != nil {
-		return err
-	}
-	//vpcInput.masterSecurityGroupID = aws.StringValue(masterSG.GroupId)
-
-	workerSG, err := vpcInput.CreateWorkerSecurityGroup(logger, ec2Client, vpcID)
-	if err != nil {
-		return err
-	}
-	//vpcInput.workerSecurityGroupID = aws.StringValue(workerSG.GroupId)
-
-	masterIngressPermissions := DefaultMasterSGIngressRules(vpcInput.masterSecurityGroupID, vpcInput.workerSecurityGroupID, vpcInput.cidrV4Blocks)
-	// masterIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.masterSecurityGroupID, []string{})
-	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, masterSG, masterIngressPermissions); err != nil {
-		return err
+	// If we created the VPC
+	if len(endpointRouteTableIds) > 0 {
+		err = vpcInput.CreateVPCS3Endpoint(logger, ec2Client, endpointRouteTableIds)
+		if err != nil {
+			return fmt.Errorf("failed to create VPC s3 endpoint: %w", err)
+		}
 	}
 
-	workerIngressPermissions := DefaultWorkerSGIngressRules(vpcInput.workerSecurityGroupID, vpcInput.masterSecurityGroupID, vpcInput.cidrV4Blocks)
-	// workerIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.workerSecurityGroupID, []string{})
-	if err := vpcInput.AttachSecurityGroupIngressRules(logger, ec2Client, workerSG, workerIngressPermissions); err != nil {
-		return err
-	}
-
-	if err := vpcInput.CreateLoadBalancers(logger, session, vpcID, vpcInput.privateSubnetIDs, vpcInput.publicSubnetIDs, vpcInput.public); err != nil {
-		return err
+	elbClient := elbv2.New(session)
+	if err := vpcInput.CreateLoadBalancers(logger, elbClient); err != nil {
+		return fmt.Errorf("failed to create load balancers: %w", err)
 	}
 
 	return nil
@@ -188,7 +150,7 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 	if vpcID == "" {
 		vpcID, err = ec2CreateVPC(client, vpcName, o.cidrV4Blocks[0], o.additionalEC2Tags)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to create VPC: %w", err)
 		}
 		l.WithField("id", vpcID).Infoln("Created VPC")
 	} else {
@@ -197,11 +159,11 @@ func (o *CreateInfraOptions) createVPC(l *logrus.Logger, client ec2iface.EC2API)
 
 	logger := l.WithField("id", vpcID)
 	if err := ec2VPCEnableDNSSupport(client, vpcID); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to enabled VPC DNS support: %w", err)
 	}
 	logger.Info("Enabled DNS support on VPC")
 	if err := ec2VPCEnableDNSHostnames(client, vpcID); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to enable VPC DNS Hostname: %w", err)
 	}
 	logger.Info("Enabled DNS hostnames on VPC")
 
@@ -238,7 +200,7 @@ func (o *CreateInfraOptions) CreateDHCPOptions(l *logrus.Logger, client ec2iface
 		}
 		optID, err = ec2CreateDHCPOptions(client, "", domainName, o.additionalEC2Tags)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create DHCP options: %w", err)
 		}
 		l.WithField("id", optID).Info("Created DHCP options")
 	} else {
@@ -247,7 +209,7 @@ func (o *CreateInfraOptions) CreateDHCPOptions(l *logrus.Logger, client ec2iface
 
 	err = ec2AssociateDHCPOptionsToVPC(client, optID, vpcID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to associate DHCP options to VPC: %w", err)
 	}
 	l.WithField("vpc", vpcID).WithField("dhcp option", optID).Infoln("Associated DHCP options with VPC")
 
@@ -267,7 +229,7 @@ func (o *CreateInfraOptions) CreateInternetGateway(l *logrus.Logger, client ec2i
 	if igw == nil {
 		igw, err = ec2CreateInternetGateway(client, gatewayName, o.additionalEC2Tags)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to create Internet gateway: %w", err)
 		}
 		l.WithField("id", aws.StringValue(igw.InternetGatewayId)).Infoln("Created internet gateway")
 	} else {
@@ -284,7 +246,7 @@ func (o *CreateInfraOptions) CreateInternetGateway(l *logrus.Logger, client ec2i
 	if !attached {
 		err := ec2AttachInternetGatewayToVPC(client, igwID, vpcID)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to attach Internet gateway to VPC: %w", err)
 		}
 		l.WithField("internet gateway", igwID).WithField("vpc", vpcID).Infoln("Attached internet gateway to VPC")
 	}
@@ -295,27 +257,50 @@ func (o *CreateInfraOptions) existingInternetGateway(client ec2iface.EC2API, nam
 	return ec2GetInternetGateway(client, o.ec2Filters(name))
 }
 
-func (o *CreateInfraOptions) createSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string, groupName string) (*ec2.SecurityGroup, error) {
-	securityGroup, err := o.existingSecurityGroup(client, groupName)
+func (o *CreateInfraOptions) createSecurityGroups(l *logrus.Logger, client ec2iface.EC2API) error {
+	bootstrapSG, err := o.CreateBootstrapSecurityGroup(l, client)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	logger := l.WithField("name", groupName)
-	if securityGroup != nil {
-		logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Found existing security group")
-		return securityGroup, nil
+	var machineV4Cidrs []string
+	if o.public {
+		machineV4Cidrs = []string{"0.0.0.0/0"}
+	} else {
+		machineV4Cidrs = o.cidrV4Blocks
 	}
-	securityGroup, err = ec2CreateSecurityGroup(client, groupName, vpcID, o.additionalEC2Tags)
+	bootstrapIngressPermissions := DefaultBootstrapSGIngressRules(o.bootstrapSecurityGroupID, machineV4Cidrs)
+	if err := o.AttachSecurityGroupIngressRules(l, client, bootstrapSG, bootstrapIngressPermissions); err != nil {
+		return err
+	}
+
+	masterSG, err := o.CreateMasterSecurityGroup(l, client)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Created security group")
-	return securityGroup, nil
+
+	workerSG, err := o.CreateWorkerSecurityGroup(l, client)
+	if err != nil {
+		return err
+	}
+
+	masterIngressPermissions := DefaultMasterSGIngressRules(o.masterSecurityGroupID, o.workerSecurityGroupID, o.cidrV4Blocks)
+	// masterIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.masterSecurityGroupID, []string{})
+	if err := o.AttachSecurityGroupIngressRules(l, client, masterSG, masterIngressPermissions); err != nil {
+		return err
+	}
+
+	workerIngressPermissions := DefaultWorkerSGIngressRules(o.workerSecurityGroupID, o.masterSecurityGroupID, o.cidrV4Blocks)
+	// workerIngressPermissions := DefaultAllowAllSGIngressRules(vpcInput.workerSecurityGroupID, []string{})
+	if err := o.AttachSecurityGroupIngressRules(l, client, workerSG, workerIngressPermissions); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (o *CreateInfraOptions) CreateBootstrapSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+func (o *CreateInfraOptions) CreateBootstrapSecurityGroup(l *logrus.Logger, client ec2iface.EC2API) (*ec2.SecurityGroup, error) {
 	groupName := fmt.Sprintf("%s-bootstrap-sg", o.InfraID)
-	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	securityGroup, err := o.createSecurityGroup(l, client, groupName)
 	if err != nil {
 		return nil, err
 	}
@@ -329,9 +314,9 @@ func (o *CreateInfraOptions) CreateBootstrapSecurityGroup(l *logrus.Logger, clie
 	return securityGroup, nil
 }
 
-func (o *CreateInfraOptions) CreateMasterSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+func (o *CreateInfraOptions) CreateMasterSecurityGroup(l *logrus.Logger, client ec2iface.EC2API) (*ec2.SecurityGroup, error) {
 	groupName := fmt.Sprintf("%s-master-sg", o.InfraID)
-	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	securityGroup, err := o.createSecurityGroup(l, client, groupName)
 	if err != nil {
 		return nil, err
 	}
@@ -345,9 +330,9 @@ func (o *CreateInfraOptions) CreateMasterSecurityGroup(l *logrus.Logger, client 
 	return securityGroup, nil
 }
 
-func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, vpcID string) (*ec2.SecurityGroup, error) {
+func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client ec2iface.EC2API) (*ec2.SecurityGroup, error) {
 	groupName := fmt.Sprintf("%s-worker-sg", o.InfraID)
-	securityGroup, err := o.createSecurityGroup(l, client, vpcID, groupName)
+	securityGroup, err := o.createSecurityGroup(l, client, groupName)
 	if err != nil {
 		return nil, err
 	}
@@ -359,6 +344,24 @@ func (o *CreateInfraOptions) CreateWorkerSecurityGroup(l *logrus.Logger, client 
 	}
 
 	o.workerSecurityGroupID = securityGroupID
+	return securityGroup, nil
+}
+
+func (o *CreateInfraOptions) createSecurityGroup(l *logrus.Logger, client ec2iface.EC2API, groupName string) (*ec2.SecurityGroup, error) {
+	securityGroup, err := o.existingSecurityGroup(client, groupName)
+	if err != nil {
+		return nil, err
+	}
+	logger := l.WithField("name", groupName)
+	if securityGroup != nil {
+		logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Found existing security group")
+		return securityGroup, nil
+	}
+	securityGroup, err = ec2CreateSecurityGroup(client, groupName, o.vpcID, o.additionalEC2Tags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create security group %s: %w", groupName, err)
+	}
+	logger.WithField("id", aws.StringValue(securityGroup.GroupId)).Infoln("Created security group")
 	return securityGroup, nil
 }
 
@@ -376,11 +379,15 @@ func (o *CreateInfraOptions) AttachSecurityGroupEgressRules(l *logrus.Logger, cl
 		logger.Infoln("Authorizing egress rules on security group")
 		err := ec2AuthorizeEgressRules(client, securityGroupID, egressToAuthorize)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to authorized egress rules: %w", err)
 		}
 		logger.Infoln("Authorized egress rules on security group")
 	}
 	return nil
+}
+
+func (o *CreateInfraOptions) existingSecurityGroup(client ec2iface.EC2API, name string) (*ec2.SecurityGroup, error) {
+	return ec2GetSecurityGroup(client, o.ec2Filters(name))
 }
 
 func (o *CreateInfraOptions) AttachSecurityGroupIngressRules(l *logrus.Logger, client ec2iface.EC2API, securityGroup *ec2.SecurityGroup, ingressPermissions []*ec2.IpPermission) error {
@@ -397,15 +404,11 @@ func (o *CreateInfraOptions) AttachSecurityGroupIngressRules(l *logrus.Logger, c
 		logger.Infoln("Authorizing ingress rules on security group")
 		err := ec2AuthorizeIngressRules(client, securityGroupID, ingressToAuthorize)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to authorized ingress rules: %w", err)
 		}
 		logger.Infoln("Authorized ingress rules on security group")
 	}
 	return nil
-}
-
-func (o *CreateInfraOptions) existingSecurityGroup(client ec2iface.EC2API, name string) (*ec2.SecurityGroup, error) {
-	return ec2GetSecurityGroup(client, o.ec2Filters(name))
 }
 
 func includesPermission(list []*ec2.IpPermission, permission *ec2.IpPermission) bool {
@@ -850,23 +853,61 @@ const (
 	tagNameSubnetPublicELB = "kubernetes.io/role/elb"
 )
 
-func (o *CreateInfraOptions) CreatePrivateSubnet(l *logrus.Logger, client ec2iface.EC2API, vpcID string, zone string, cidr string) (string, error) {
+func (o *CreateInfraOptions) CreatePrivateSubnets(l *logrus.Logger, client ec2iface.EC2API, network *net.IPNet) (map[string]string, error) {
 	tags := append(o.additionalEC2Tags, &ec2.Tag{
 		Key:   aws.String(tagNameSubnetInternalELB),
 		Value: aws.String("true"),
 	})
-	return o.CreateSubnet(l, client, vpcID, zone, cidr, fmt.Sprintf("%s-private-%s", o.InfraID, zone), tags)
+	privateSubnetIDs := make([]string, 0, len(o.Zones))
+	subnetZoneMap := make(map[string]string, len(o.Zones))
+	newBits := int(math.Ceil(math.Log2(float64(len(o.Zones)))))
+	for i, zone := range o.Zones {
+		privateCIDR, err := cidr.Subnet(network, newBits, i)
+		if err != nil {
+			return nil, err
+		}
+
+		name := fmt.Sprintf("%s-private-%s", o.InfraID, zone)
+		privateSubnetID, err := o.CreateSubnet(l, client, zone, privateCIDR.String(), name, tags)
+		if err != nil {
+			return nil, err
+		}
+		privateSubnetIDs = append(privateSubnetIDs, privateSubnetID)
+		subnetZoneMap[zone] = privateSubnetID
+	}
+	o.privateSubnetIDs = privateSubnetIDs
+
+	return subnetZoneMap, nil
 }
 
-func (o *CreateInfraOptions) CreatePublicSubnet(l *logrus.Logger, client ec2iface.EC2API, vpcID string, zone string, cidr string) (string, error) {
+func (o *CreateInfraOptions) CreatePublicSubnets(l *logrus.Logger, client ec2iface.EC2API, network *net.IPNet) (map[string]string, error) {
 	tags := append(o.additionalEC2Tags, &ec2.Tag{
 		Key:   aws.String(tagNameSubnetPublicELB),
 		Value: aws.String("true"),
 	})
-	return o.CreateSubnet(l, client, vpcID, zone, cidr, fmt.Sprintf("%s-public-%s", o.InfraID, zone), tags)
+	publicSubnetIDs := make([]string, 0, len(o.Zones))
+	subnetZoneMap := make(map[string]string, len(o.Zones))
+	newBits := int(math.Ceil(math.Log2(float64(len(o.Zones)))))
+	for i, zone := range o.Zones {
+		publicCIDR, err := cidr.Subnet(network, newBits, i)
+		if err != nil {
+			return nil, err
+		}
+
+		name := fmt.Sprintf("%s-public-%s", o.InfraID, zone)
+		publicSubnetID, err := o.CreateSubnet(l, client, zone, publicCIDR.String(), name, tags)
+		if err != nil {
+			return nil, err
+		}
+		publicSubnetIDs = append(publicSubnetIDs, publicSubnetID)
+		subnetZoneMap[zone] = publicSubnetID
+	}
+	o.publicSubnetIDs = publicSubnetIDs
+
+	return subnetZoneMap, nil
 }
 
-func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2API, vpcID, zone, cidr, name string, ec2Tags []*ec2.Tag) (string, error) {
+func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2API, zone, cidr, name string, ec2Tags []*ec2.Tag) (string, error) {
 	logger := l.WithField("name", name)
 	subnetID, err := o.existingSubnet(client, name)
 	if err != nil {
@@ -877,7 +918,7 @@ func (o *CreateInfraOptions) CreateSubnet(l *logrus.Logger, client ec2iface.EC2A
 		return subnetID, nil
 	}
 
-	subnetID, err = ec2CreateSubnet(client, name, zone, vpcID, cidr, ec2Tags)
+	subnetID, err = ec2CreateSubnet(client, name, zone, o.vpcID, cidr, ec2Tags)
 	if err != nil {
 		return "", err
 	}
@@ -929,13 +970,13 @@ func (o *CreateInfraOptions) CreatePrivateRouteTable(l *logrus.Logger, client ec
 	logger := l.WithField("route table", tableID)
 
 	// Everything below this is only needed if direct internet access is used
-	if o.EnableProxy {
+	if o.EnableProxy || natGatewayID == "" {
 		return tableID, nil
 	}
 
 	if !ec2HasNATGatewayRoute(routeTable, natGatewayID) {
 		if err := ec2CreateNatGatewayRoute(client, tableID, natGatewayID); err != nil {
-			return "", err
+			return "", fmt.Errorf("cannot create nat gateway route in private route table: %w", err)
 		}
 		logger.WithField("nat gateway", natGatewayID).Infoln("Created route to NAT gateway")
 	} else {
@@ -943,7 +984,7 @@ func (o *CreateInfraOptions) CreatePrivateRouteTable(l *logrus.Logger, client ec
 	}
 	if !ec2HasAssociatedSubnet(routeTable, subnetID) {
 		if err := ec2AssociateRouteTable(client, tableID, subnetID); err != nil {
-			return "", err
+			return "", fmt.Errorf("cannot associate private route table with subnet: %w", err)
 		}
 		logger.WithField("subnet", subnetID).Infoln("Associated subnet with route table")
 	} else {
@@ -952,9 +993,9 @@ func (o *CreateInfraOptions) CreatePrivateRouteTable(l *logrus.Logger, client ec
 	return tableID, nil
 }
 
-func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2iface.EC2API, vpcID, igwID string, subnetIDs []string) (string, error) {
+func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2iface.EC2API, igwID string) (string, error) {
 	tableName := fmt.Sprintf("%s-public", o.InfraID)
-	routeTable, err := o.createRouteTable(l, client, vpcID, tableName)
+	routeTable, err := o.createRouteTable(l, client, o.vpcID, tableName)
 	if err != nil {
 		return "", err
 	}
@@ -963,7 +1004,7 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 
 	// Replace the VPC's main route table
 	routeTableInfo, err := ec2GetRouteTable(client, []*ec2.Filter{
-		ec2CreateFilter("vpc-id", vpcID),
+		ec2CreateFilter("vpc-id", o.vpcID),
 		ec2CreateFilter("association.main", "true"),
 	})
 	if err != nil {
@@ -982,15 +1023,15 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 			}
 		}
 		if err := ec2ReplaceRouteTableAssociation(client, tableID, associationID); err != nil {
-			return "", err
+			return "", fmt.Errorf("cannot set vpc main route table: %w", err)
 		}
-		logger.WithField("vpc", vpcID).Infoln("Set main VPC route table")
+		logger.WithField("vpc", o.vpcID).Infoln("Set main VPC route table")
 	}
 
 	// Create route to internet gateway
 	if !ec2HasInternetGatewayRoute(routeTable, igwID) {
 		if err := ec2CreateRoute(client, tableID, igwID); err != nil {
-			return "", err
+			return "", fmt.Errorf("cannot create route to internet gateway: %w", err)
 		}
 		logger.WithField("internet gateway", igwID).Infoln("Created route to internet gateway")
 	} else {
@@ -998,20 +1039,22 @@ func (o *CreateInfraOptions) CreatePublicRouteTable(l *logrus.Logger, client ec2
 	}
 
 	// Associate the route table with the public subnet ID
-	for _, subnetID := range subnetIDs {
+	for _, subnetID := range o.publicSubnetIDs {
 		if !ec2HasAssociatedSubnet(routeTable, subnetID) {
 			if err := ec2AssociateRouteTable(client, tableID, subnetID); err != nil {
-				return "", err
+				return "", fmt.Errorf("cannot associate public route table with subnet: %w", err)
 			}
-			logger.WithField("subnet", subnetID).Infoln("Associated route table with subnet")
+			logger.WithField("subnet", subnetID).Infoln("Associated route table with public subnet")
 		} else {
-			logger.WithField("subnet", subnetID).Infoln("Found existing association between route table and subnet")
+			logger.WithField("subnet", subnetID).Infoln("Found existing association between route table and public subnet")
 		}
 	}
+
 	return tableID, nil
 }
 
 func (o *CreateInfraOptions) createRouteTable(l *logrus.Logger, client ec2iface.EC2API, vpcID, name string) (*ec2.RouteTable, error) {
+	logger := l.WithField("route table", name)
 	table, err := o.existingRouteTable(l, client, name)
 	if err != nil {
 		return nil, err
@@ -1021,20 +1064,15 @@ func (o *CreateInfraOptions) createRouteTable(l *logrus.Logger, client ec2iface.
 		if err != nil {
 			return nil, err
 		}
+		logger.WithField("id", aws.StringValue(table.RouteTableId)).Infoln("Created route table")
+	} else {
+		logger.WithField("id", aws.StringValue(table.RouteTableId)).Infoln("Found existing route table")
 	}
-	l.WithField("name", name).WithField("id", aws.StringValue(table.RouteTableId)).Infoln("Created route table")
 	return table, nil
 }
 
 func (o *CreateInfraOptions) existingRouteTable(l *logrus.Logger, client ec2iface.EC2API, name string) (*ec2.RouteTable, error) {
-	table, err := ec2GetRouteTable(client, o.ec2Filters(name))
-	if err != nil {
-		return nil, err
-	}
-	if table != nil {
-		l.WithField("name", name).WithField("id", aws.StringValue(table.RouteTableId)).Infoln("Found existing route table")
-	}
-	return table, nil
+	return ec2GetRouteTable(client, o.ec2Filters(name))
 }
 
 func (o *CreateInfraOptions) addTargetGroup(arn string) {
@@ -1163,19 +1201,19 @@ func (o *CreateInfraOptions) createExternalLB(l *logrus.Logger, elbClient elbv2i
 	return nil
 }
 
-func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, session *session.Session, vpcID string, privateSubnets []string, publicSubnets []string, external bool) error {
-	elbClient := elbv2.New(session)
+func (o *CreateInfraOptions) CreateLoadBalancers(l *logrus.Logger, client elbv2iface.ELBV2API) error {
 	elbTags := elbCreateTags(o.AdditionalTags)
-	if err := o.createInternalLB(l, elbClient, vpcID, privateSubnets, elbTags); err != nil {
+
+	if err := o.createInternalLB(l, client, o.vpcID, o.privateSubnetIDs, elbTags); err != nil {
 		return err
 	}
 
-	if !external {
+	if !o.public {
 		l.Debugln("Skipping creation of a public LB because of private cluster")
 		return nil
 	}
 
-	if err := o.createExternalLB(l, elbClient, vpcID, publicSubnets, elbTags); err != nil {
+	if err := o.createExternalLB(l, client, o.vpcID, o.publicSubnetIDs, elbTags); err != nil {
 		return err
 	}
 
@@ -1186,7 +1224,7 @@ func (o *CreateInfraOptions) existingVPCS3Endpoint(client ec2iface.EC2API) (stri
 	return ec2GetVPCS3Endpoint(client, o.ec2Filters(""))
 }
 
-func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2iface.EC2API, vpcID string, routeTableIds []*string) error {
+func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2iface.EC2API, routeTableIds []string) error {
 	existingEndpoint, err := o.existingVPCS3Endpoint(client)
 	if err != nil {
 		return err
@@ -1196,7 +1234,7 @@ func (o *CreateInfraOptions) CreateVPCS3Endpoint(l *logrus.Logger, client ec2ifa
 		return nil
 	}
 	serviceName := fmt.Sprintf("com.amazonaws.%s.s3", o.Region)
-	endpoint, err := ec2CreateVPCS3Endpoint(client, "", vpcID, serviceName, routeTableIds, o.additionalEC2Tags)
+	endpoint, err := ec2CreateVPCS3Endpoint(client, "", o.vpcID, serviceName, routeTableIds, o.additionalEC2Tags)
 	if err != nil {
 		return err
 	}

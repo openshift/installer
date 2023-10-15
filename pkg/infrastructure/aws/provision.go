@@ -64,15 +64,19 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 
 	// Create VPC resources.
 	vpcInput := &CreateInfraOptions{
-		Region:         clusterAWSConfig.Region,
-		InfraID:        clusterConfig.ClusterID,
-		Zones:          sets.List(availabilityZones),
-		BaseDomain:     clusterConfig.BaseDomain,
-		AdditionalTags: clusterAWSConfig.ExtraTags,
-		public:         clusterAWSConfig.PublishStrategy == "External",
-		cidrV4Blocks:   clusterConfig.MachineV4CIDRs,
-		cidrV6Blocks:   clusterConfig.MachineV6CIDRs,
-		vpcID:          clusterAWSConfig.VPC,
+		Region:           clusterAWSConfig.Region,
+		InfraID:          clusterConfig.ClusterID,
+		Zones:            sets.List(availabilityZones),
+		BaseDomain:       clusterConfig.BaseDomain,
+		AdditionalTags:   clusterAWSConfig.ExtraTags,
+		public:           clusterAWSConfig.PublishStrategy == "External",
+		cidrV4Blocks:     clusterConfig.MachineV4CIDRs,
+		cidrV6Blocks:     clusterConfig.MachineV6CIDRs,
+		vpcID:            clusterAWSConfig.VPC,
+		privateSubnetIDs: clusterAWSConfig.PrivateSubnets,
+	}
+	if clusterAWSConfig.PublicSubnets != nil {
+		vpcInput.publicSubnetIDs = *clusterAWSConfig.PublicSubnets
 	}
 	logger := logrus.StandardLogger()
 	if err := createVPCResources(logger, awsSession, vpcInput); err != nil {
@@ -93,7 +97,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		loadBalancerInternalZoneDNS: vpcInput.LoadBalancers.Internal.DNSName,
 	}
 	if err := createDNSResources(context.TODO(), logger, awsSession, dnsInput); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create DNS resources: %w", err)
 	}
 
 	// Create Bootstrap resources.
@@ -116,7 +120,7 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		kmsKeyID:                 clusterAWSConfig.KMSKeyID,
 	}
 	if err := createBootstrapResources(logger, awsSession, bootstrapInput); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create bootstrap resources: %w", err)
 	}
 
 	// Create Control Plane resources.
@@ -139,12 +143,12 @@ func normalAWSProvision(a AWSInfraProvider, tfvarsFiles, fileList []*asset.File)
 		zoneToSubnetIDMap: vpcInput.zoneToSubnetIDMap,
 	}
 	if err := createControlPlaneResources(logger, awsSession, controlPlaneInput); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create master resources: %w", err)
 	}
 
 	// Create IAM resources.
 	if err := createIAMResources(logger, awsSession, clusterConfig.ClusterID, clusterAWSConfig.ExtraTags); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create IAM resources: %w", err)
 	}
 
 	return nil, nil, nil
@@ -161,7 +165,7 @@ func createInstanceProfile(logger *logrus.Logger, session *session.Session, name
 	}
 	if role == nil {
 		if _, err := iamCreateRole(iamClient, roleName, assumeRolePolicy, iamTags); err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to create role %s: %w", roleName, err)
 		}
 		logger.WithField("name", roleName).Infoln("Created role")
 	} else {
@@ -176,15 +180,14 @@ func createInstanceProfile(logger *logrus.Logger, session *session.Session, name
 	if instanceProfile == nil {
 		instanceProfile, err = iamCreateInstanceProfile(iamClient, profileName, iamTags)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to create instance profile %s: %w", profileName, err)
 		}
 		logger.WithField("name", profileName).Infoln("Created instance profile")
-		//logger.WithField("name", profileName).Infoln("Instance profile was created and exists")
 	} else {
 		logger.WithField("name", profileName).Infoln("Found existing instance profile")
 	}
 	if err := iamAddRoleToProfile(iamClient, instanceProfile, roleName); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to add role %s to instance profile %s: %w", roleName, profileName, err)
 	}
 	logger.WithField("role", roleName).WithField("profile", profileName).Infoln("Added role to instance profile")
 
@@ -195,7 +198,7 @@ func createInstanceProfile(logger *logrus.Logger, session *session.Session, name
 	}
 	if policyName != rolePolicyName {
 		if err := iamAddPolicyToRole(iamClient, roleName, rolePolicyName, policyDocument); err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to add policy %s to role %s: %w", rolePolicyName, roleName, err)
 		}
 		logger.WithField("name", rolePolicyName).Infoln("Created role policy")
 	}
@@ -212,7 +215,7 @@ func createInstance(l *logrus.Logger, ec2Client ec2iface.EC2API, options instanc
 		ec2CreateFilter("tag:Name", options.name),
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve instance %s: %w", options.name, err)
 	}
 	if instance != nil {
 		l.WithField("id", aws.StringValue(instance.InstanceId)).Infoln("Instance already exists")
@@ -222,7 +225,7 @@ func createInstance(l *logrus.Logger, ec2Client ec2iface.EC2API, options instanc
 	// Create a new EC2 instance.
 	instance, err = ec2CreateInstance(ec2Client, options)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create instance %s: %w", options.name, err)
 	}
 	l.WithField("id", aws.StringValue(instance.InstanceId)).Infoln("Created instance")
 

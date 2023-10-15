@@ -31,7 +31,7 @@ type controlPlaneInput struct {
 func createControlPlaneResources(l *logrus.Logger, session *session.Session, controlPlaneInput *controlPlaneInput) error {
 	instanceProfileARN, err := CreateControlPlaneInstanceProfile(l, session, controlPlaneInput.clusterID, controlPlaneInput.additionalTags)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create master instance profile: %w", err)
 	}
 
 	baseInstanceOptions := instanceOptions{
@@ -39,7 +39,6 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		instanceType:             controlPlaneInput.instanceType,
 		userData:                 controlPlaneInput.userData,
 		securityGroupIDs:         controlPlaneInput.securityGroupIDs,
-		associatePublicIPAddress: false,
 		volumeType:               controlPlaneInput.volumeType,
 		volumeSize:               controlPlaneInput.volumeSize,
 		volumeIOPS:               controlPlaneInput.volumeIOPS,
@@ -47,6 +46,7 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 		kmsKeyID:                 controlPlaneInput.kmsKeyID,
 		iamInstanceProfileARN:    instanceProfileARN,
 		additionalEC2Tags:        ec2CreateTags(controlPlaneInput.additionalTags),
+		associatePublicIPAddress: false,
 	}
 
 	ec2Client := ec2.New(session)
@@ -60,11 +60,11 @@ func createControlPlaneResources(l *logrus.Logger, session *session.Session, con
 
 		instance, err := createInstance(l, ec2Client, options)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create master %s: %w", options.name, err)
 		}
 
 		if err := RegisterTargetGroups(l, session, controlPlaneInput.targetGroupARNs, aws.StringValue(instance.PrivateIpAddress)); err != nil {
-			return err
+			return fmt.Errorf("failed to register master target groups: %w", err)
 		}
 	}
 
