@@ -1374,7 +1374,7 @@ func s3BucketPutObject(s3Client s3iface.S3API, bucketName, key, content string) 
 func s3BucketTagObject(s3Client s3iface.S3API, bucketName string, key string, tags []*s3.Tag) error {
 	_, err := s3Client.PutObjectTagging(&s3.PutObjectTaggingInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String("bootstrap.ign"),
+		Key:    aws.String(key),
 		Tagging: &s3.Tagging{
 			TagSet: append(tags, &s3.Tag{
 				Key:   aws.String("Name"),
