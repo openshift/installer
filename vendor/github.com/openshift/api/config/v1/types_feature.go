@@ -163,9 +163,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		Disabled: []FeatureGateDescription{},
 	},
 	TechPreviewNoUpgrade: newDefaultFeatures().
-		with(validatingAdmissionPolicy).
-		with(externalCloudProvider).
-		with(externalCloudProviderGCP).
+		without(validatingAdmissionPolicy).
 		with(csiDriverSharedResource).
 		with(nodeSwap).
 		with(machineAPIProviderOpenStack).
@@ -194,7 +192,9 @@ var defaultFeatures = &FeatureGateEnabledDisabled{
 		alibabaPlatform, // This is a bug, it should be TechPreviewNoUpgrade. This must be downgraded before 4.14 is shipped.
 		azureWorkloadIdentity,
 		cloudDualStackNodeIPs,
+		externalCloudProvider,
 		externalCloudProviderAzure,
+		externalCloudProviderGCP,
 		externalCloudProviderExternal,
 		privateHostedZoneAWS,
 		buildCSIVolumes,
