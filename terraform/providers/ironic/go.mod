@@ -1,6 +1,6 @@
 module github.com/openshift/installer/terraform/providers/ironic
 
-go 1.18
+go 1.20
 
 require github.com/openshift-metal3/terraform-provider-ironic v0.4.0
 

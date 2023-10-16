@@ -17,6 +17,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"math/big"
 	"sort"
 	"strings"
 
@@ -50,10 +51,12 @@ const (
 	iexportVersionPosCol   = 1
 	iexportVersionGo1_18   = 2
 	iexportVersionGenerics = 2
+
+	iexportVersionCurrent = 2
 )
 
 type ident struct {
-	pkg  string
+	pkg  *types.Package
 	name string
 }
 
@@ -82,7 +85,7 @@ const (
 // If the export data version is not recognized or the format is otherwise
 // compromised, an error is returned.
 func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []byte, path string) (int, *types.Package, error) {
-	pkgs, err := iimportCommon(fset, imports, data, false, path)
+	pkgs, err := iimportCommon(fset, imports, data, false, path, nil)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -91,16 +94,18 @@ func IImportData(fset *token.FileSet, imports map[string]*types.Package, data []
 
 // IImportBundle imports a set of packages from the serialized package bundle.
 func IImportBundle(fset *token.FileSet, imports map[string]*types.Package, data []byte) ([]*types.Package, error) {
-	return iimportCommon(fset, imports, data, true, "")
+	return iimportCommon(fset, imports, data, true, "", nil)
 }
 
-func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data []byte, bundle bool, path string) (pkgs []*types.Package, err error) {
-	const currentVersion = 1
+func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data []byte, bundle bool, path string, insert InsertType) (pkgs []*types.Package, err error) {
+	const currentVersion = iexportVersionCurrent
 	version := int64(-1)
 	if !debug {
 		defer func() {
 			if e := recover(); e != nil {
-				if version > currentVersion {
+				if bundle {
+					err = fmt.Errorf("%v", e)
+				} else if version > currentVersion {
 					err = fmt.Errorf("cannot import %q (%v), export data is newer version - update tool", path, e)
 				} else {
 					err = fmt.Errorf("cannot import %q (%v), possibly version skew - reinstall package", path, e)
@@ -132,19 +137,34 @@ func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data 
 	}
 
 	sLen := int64(r.uint64())
+	var fLen int64
+	var fileOffset []uint64
+	if insert != nil {
+		// Shallow mode uses a different position encoding.
+		fLen = int64(r.uint64())
+		fileOffset = make([]uint64, r.uint64())
+		for i := range fileOffset {
+			fileOffset[i] = r.uint64()
+		}
+	}
 	dLen := int64(r.uint64())
 
 	whence, _ := r.Seek(0, io.SeekCurrent)
 	stringData := data[whence : whence+sLen]
-	declData := data[whence+sLen : whence+sLen+dLen]
-	r.Seek(sLen+dLen, io.SeekCurrent)
+	fileData := data[whence+sLen : whence+sLen+fLen]
+	declData := data[whence+sLen+fLen : whence+sLen+fLen+dLen]
+	r.Seek(sLen+fLen+dLen, io.SeekCurrent)
 
 	p := iimporter{
 		version: int(version),
 		ipath:   path,
+		insert:  insert,
 
 		stringData:  stringData,
 		stringCache: make(map[uint64]string),
+		fileOffset:  fileOffset,
+		fileData:    fileData,
+		fileCache:   make([]*token.File, len(fileOffset)),
 		pkgCache:    make(map[uint64]*types.Package),
 
 		declData: declData,
@@ -182,11 +202,18 @@ func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data 
 		} else if pkg.Name() != pkgName {
 			errorf("conflicting names %s and %s for package %q", pkg.Name(), pkgName, path)
 		}
+		if i == 0 && !bundle {
+			p.localpkg = pkg
+		}
 
 		p.pkgCache[pkgPathOff] = pkg
 
+		// Read index for package.
 		nameIndex := make(map[string]uint64)
-		for nSyms := r.uint64(); nSyms > 0; nSyms-- {
+		nSyms := r.uint64()
+		// In shallow mode we don't expect an index for other packages.
+		assert(nSyms == 0 || p.localpkg == pkg || p.insert == nil)
+		for ; nSyms > 0; nSyms-- {
 			name := p.stringAt(r.uint64())
 			nameIndex[name] = r.uint64()
 		}
@@ -237,6 +264,15 @@ func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data 
 		pkg.MarkComplete()
 	}
 
+	// SetConstraint can't be called if the constraint type is not yet complete.
+	// When type params are created in the 'P' case of (*importReader).obj(),
+	// the associated constraint type may not be complete due to recursion.
+	// Therefore, we defer calling SetConstraint there, and call it here instead
+	// after all types are complete.
+	for _, d := range p.later {
+		typeparams.SetTypeParamConstraint(d.t, d.constraint)
+	}
+
 	for _, typ := range p.interfaceList {
 		typ.Complete()
 	}
@@ -244,12 +280,23 @@ func iimportCommon(fset *token.FileSet, imports map[string]*types.Package, data 
 	return pkgs, nil
 }
 
+type setConstraintArgs struct {
+	t          *typeparams.TypeParam
+	constraint types.Type
+}
+
 type iimporter struct {
 	version int
 	ipath   string
 
+	localpkg *types.Package
+	insert   func(pkg *types.Package, name string) // "shallow" mode only
+
 	stringData  []byte
 	stringCache map[uint64]string
+	fileOffset  []uint64 // fileOffset[i] is offset in fileData for info about file encoded as i
+	fileData    []byte
+	fileCache   []*token.File // memoized decoding of file encoded as i
 	pkgCache    map[uint64]*types.Package
 
 	declData    []byte
@@ -259,6 +306,9 @@ type iimporter struct {
 
 	fake          fakeFileSet
 	interfaceList []*types.Interface
+
+	// Arguments for calls to SetConstraint that are deferred due to recursive types
+	later []setConstraintArgs
 
 	indent int // for tracing support
 }
@@ -288,6 +338,13 @@ func (p *iimporter) doDecl(pkg *types.Package, name string) {
 
 	off, ok := p.pkgIndex[pkg][name]
 	if !ok {
+		// In "shallow" mode, call back to the application to
+		// find the object and insert it into the package scope.
+		if p.insert != nil {
+			assert(pkg != p.localpkg)
+			p.insert(pkg, name) // "can't fail"
+			return
+		}
 		errorf("%v.%v not in index", pkg, name)
 	}
 
@@ -310,6 +367,55 @@ func (p *iimporter) stringAt(off uint64) string {
 	s := string(p.stringData[spos : spos+slen])
 	p.stringCache[off] = s
 	return s
+}
+
+func (p *iimporter) fileAt(index uint64) *token.File {
+	file := p.fileCache[index]
+	if file == nil {
+		off := p.fileOffset[index]
+		file = p.decodeFile(intReader{bytes.NewReader(p.fileData[off:]), p.ipath})
+		p.fileCache[index] = file
+	}
+	return file
+}
+
+func (p *iimporter) decodeFile(rd intReader) *token.File {
+	filename := p.stringAt(rd.uint64())
+	size := int(rd.uint64())
+	file := p.fake.fset.AddFile(filename, -1, size)
+
+	// SetLines requires a nondecreasing sequence.
+	// Because it is common for clients to derive the interval
+	// [start, start+len(name)] from a start position, and we
+	// want to ensure that the end offset is on the same line,
+	// we fill in the gaps of the sparse encoding with values
+	// that strictly increase by the largest possible amount.
+	// This allows us to avoid having to record the actual end
+	// offset of each needed line.
+
+	lines := make([]int, int(rd.uint64()))
+	var index, offset int
+	for i, n := 0, int(rd.uint64()); i < n; i++ {
+		index += int(rd.uint64())
+		offset += int(rd.uint64())
+		lines[index] = offset
+
+		// Ensure monotonicity between points.
+		for j := index - 1; j > 0 && lines[j] == 0; j-- {
+			lines[j] = lines[j+1] - 1
+		}
+	}
+
+	// Ensure monotonicity after last point.
+	for j := len(lines) - 1; j > 0 && lines[j] == 0; j-- {
+		size--
+		lines[j] = size
+	}
+
+	if !file.SetLines(lines) {
+		errorf("SetLines failed: %d", lines) // can't happen
+	}
+	return file
 }
 
 func (p *iimporter) pkgAt(off uint64) *types.Package {
@@ -444,7 +550,7 @@ func (r *importReader) obj(name string) {
 
 		// To handle recursive references to the typeparam within its
 		// bound, save the partial type in tparamIndex before reading the bounds.
-		id := ident{r.currPkg.Name(), name}
+		id := ident{r.currPkg, name}
 		r.p.tparamIndex[id] = t
 		var implicit bool
 		if r.p.version >= iexportVersionGo1_18 {
@@ -458,7 +564,11 @@ func (r *importReader) obj(name string) {
 			}
 			typeparams.MarkImplicit(iface)
 		}
-		typeparams.SetTypeParamConstraint(t, constraint)
+		// The constraint type may not be complete, if we
+		// are in the middle of a type recursion involving type
+		// constraints. So, we defer SetConstraint until we have
+		// completely set up all types in ImportData.
+		r.p.later = append(r.p.later, setConstraintArgs{t: t, constraint: constraint})
 
 	case 'V':
 		typ := r.typ()
@@ -489,7 +599,9 @@ func (r *importReader) value() (typ types.Type, val constant.Value) {
 		val = constant.MakeString(r.string())
 
 	case types.IsInteger:
-		val = r.mpint(b)
+		var x big.Int
+		r.mpint(&x, b)
+		val = constant.Make(&x)
 
 	case types.IsFloat:
 		val = r.mpfloat(b)
@@ -538,8 +650,8 @@ func intSize(b *types.Basic) (signed bool, maxBytes uint) {
 	return
 }
 
-func (r *importReader) mpint(b *types.Basic) constant.Value {
-	signed, maxBytes := intSize(b)
+func (r *importReader) mpint(x *big.Int, typ *types.Basic) {
+	signed, maxBytes := intSize(typ)
 
 	maxSmall := 256 - maxBytes
 	if signed {
@@ -558,7 +670,8 @@ func (r *importReader) mpint(b *types.Basic) constant.Value {
 				v = ^v
 			}
 		}
-		return constant.MakeInt64(v)
+		x.SetInt64(v)
+		return
 	}
 
 	v := -n
@@ -568,47 +681,23 @@ func (r *importReader) mpint(b *types.Basic) constant.Value {
 	if v < 1 || uint(v) > maxBytes {
 		errorf("weird decoding: %v, %v => %v", n, signed, v)
 	}
-
-	buf := make([]byte, v)
-	io.ReadFull(&r.declReader, buf)
-
-	// convert to little endian
-	// TODO(gri) go/constant should have a more direct conversion function
-	//           (e.g., once it supports a big.Float based implementation)
-	for i, j := 0, len(buf)-1; i < j; i, j = i+1, j-1 {
-		buf[i], buf[j] = buf[j], buf[i]
-	}
-
-	x := constant.MakeFromBytes(buf)
+	b := make([]byte, v)
+	io.ReadFull(&r.declReader, b)
+	x.SetBytes(b)
 	if signed && n&1 != 0 {
-		x = constant.UnaryOp(token.SUB, x, 0)
+		x.Neg(x)
 	}
-	return x
 }
 
-func (r *importReader) mpfloat(b *types.Basic) constant.Value {
-	x := r.mpint(b)
-	if constant.Sign(x) == 0 {
-		return x
+func (r *importReader) mpfloat(typ *types.Basic) constant.Value {
+	var mant big.Int
+	r.mpint(&mant, typ)
+	var f big.Float
+	f.SetInt(&mant)
+	if f.Sign() != 0 {
+		f.SetMantExp(&f, int(r.int64()))
 	}
-
-	exp := r.int64()
-	switch {
-	case exp > 0:
-		x = constant.Shift(x, token.SHL, uint(exp))
-		// Ensure that the imported Kind is Float, else this constant may run into
-		// bitsize limits on overlarge integers. Eventually we can instead adopt
-		// the approach of CL 288632, but that CL relies on go/constant APIs that
-		// were introduced in go1.13.
-		//
-		// TODO(rFindley): sync the logic here with tip Go once we no longer
-		// support go1.12.
-		x = constant.ToFloat(x)
-	case exp < 0:
-		d := constant.Shift(constant.MakeInt64(1), token.SHL, uint(-exp))
-		x = constant.BinaryOp(x, token.QUO, d)
-	}
-	return x
+	return constant.Make(&f)
 }
 
 func (r *importReader) ident() string {
@@ -622,6 +711,9 @@ func (r *importReader) qualifiedIdent() (*types.Package, string) {
 }
 
 func (r *importReader) pos() token.Pos {
+	if r.p.insert != nil { // shallow mode
+		return r.posv2()
+	}
 	if r.p.version >= iexportVersionPosCol {
 		r.posv1()
 	} else {
@@ -656,6 +748,15 @@ func (r *importReader) posv1() {
 			r.prevFile = r.string()
 		}
 	}
+}
+
+func (r *importReader) posv2() token.Pos {
+	file := r.uint64()
+	if file == 0 {
+		return token.NoPos
+	}
+	tf := r.p.fileAt(file - 1)
+	return tf.Pos(int(r.uint64()))
 }
 
 func (r *importReader) typ() types.Type {
@@ -756,7 +857,7 @@ func (r *importReader) doType(base *types.Named) (res types.Type) {
 			errorf("unexpected type param type")
 		}
 		pkg, name := r.qualifiedIdent()
-		id := ident{pkg.Name(), name}
+		id := ident{pkg, name}
 		if t, ok := r.p.tparamIndex[id]; ok {
 			// We're already in the process of importing this typeparam.
 			return t
