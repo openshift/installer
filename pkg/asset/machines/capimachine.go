@@ -122,9 +122,6 @@ func (m *CAPIMachine) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		// Handle additional security groups.
-		mpool.AdditionalSecurityGroupIDs = append(mpool.AdditionalSecurityGroupIDs, pool.Platform.AWS.AdditionalSecurityGroupIDs...)
-
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.AWSMachines(
 			clusterID.InfraID,

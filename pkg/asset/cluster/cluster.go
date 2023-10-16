@@ -16,9 +16,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -248,19 +246,14 @@ func (c *Cluster) generateClusterAPI(parents asset.Parents, installConfig *insta
 		}
 	}
 
-	// TODO(vincepri): This logic should be generic and based on the clsuterv1.Cluster object,
-	// not on the specific provider. This is a temporary workaround to get the cluster up and running.
-	// Once we can generalize, add an interface to the provider to provision the endpoints.
 	{
-		// Use exponential backoff to wait for the `LoadBalancerReady` condition on AWSCluster.
-		// The condition, when set to True, guarantees that the load balancer is ready to receive traffic.
-		var awsCluster *capa.AWSCluster
+		var cluster *clusterv1.Cluster
 		if err := wait.ExponentialBackoff(wait.Backoff{
 			Duration: time.Second * 10,
 			Factor:   float64(1.5),
 			Steps:    32,
 		}, func() (bool, error) {
-			c := &capa.AWSCluster{}
+			c := &clusterv1.Cluster{}
 			if err := cl.Get(context.Background(), client.ObjectKey{
 				Name:      clusterID.InfraID,
 				Namespace: ns.Name,
@@ -270,20 +263,21 @@ func (c *Cluster) generateClusterAPI(parents asset.Parents, installConfig *insta
 				}
 				return false, err
 			}
-			awsCluster = c
-			return conditions.IsTrue(c, capa.LoadBalancerReadyCondition), nil
+			cluster = c
+			return cluster.Spec.ControlPlaneEndpoint.IsValid(), nil
 		}); err != nil {
 			return err
 		}
-		if awsCluster == nil {
+		if cluster == nil {
 			return errors.New("error occurred during load balancer ready check")
 		}
-		if awsCluster.Spec.ControlPlaneEndpoint.Host == "" {
+		if cluster.Spec.ControlPlaneEndpoint.Host == "" {
 			return errors.New("control plane endpoint is not set")
 		}
 
+		// TODO: Move this to a separate asset.
 		// The endpoint is available in:
-		// awsCluster.Spec.ControlPlaneEndpoint.Host
+		// cluster.Spec.ControlPlaneEndpoint.Host
 		ssn, err := installConfig.AWS.Session(context.TODO())
 		if err != nil {
 			return fmt.Errorf("failed to create session: %w", err)
@@ -291,7 +285,7 @@ func (c *Cluster) generateClusterAPI(parents asset.Parents, installConfig *insta
 		client := awsconfig.NewClient(ssn)
 		r53cfg := awsconfig.GetR53ClientCfg(ssn, "")
 		//awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
-		err = client.CreateOrUpdateRecord(installConfig.Config, awsCluster.Spec.ControlPlaneEndpoint.Host, r53cfg)
+		err = client.CreateOrUpdateRecord(installConfig.Config, cluster.Spec.ControlPlaneEndpoint.Host, r53cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create route53 records: %w", err)
 		}
