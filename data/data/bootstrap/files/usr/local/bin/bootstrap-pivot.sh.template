@@ -42,10 +42,25 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
   record_service_stage_start "rebase-to-okd-os-image"
 {{if .IsFCOS -}}
   mnt="$(podman image mount "${MACHINE_OS_IMAGE}")"
+{{- if .BootstrapInPlace }}
+  # SNO setup boots into Live ISO which cannot be rebased
+  # https://github.com/coreos/rpm-ostree/issues/4547
+  mkdir /var/mnt/{upper,worker}
+  mount -t overlay overlay -o "lowerdir=/usr:$mnt/usr" /usr
+  mount -t overlay overlay -o "lowerdir=/etc:$mnt/etc,upperdir=/var/mnt/upper,workdir=/var/mnt/worker" /etc
+  systemctl daemon-reload
+
+  # Workaround for SELinux denials when launching crio.service from overlayfs
+  setenforce Permissive
+
+  systemctl start crio.service
+  # No reboot necessary because SNO setup will reboot system
+{{ else }}
   pushd "${mnt}/bootstrap"
     # shellcheck disable=SC1091
     . ./pre-pivot.sh
   popd
+{{ end -}}
 {{else if .IsSCOS -}}
   chmod 0644 /etc/containers/registries.conf
   rpm-ostree rebase --experimental "ostree-unverified-registry:${MACHINE_OS_IMAGE}"
