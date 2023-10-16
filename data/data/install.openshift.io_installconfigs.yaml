@@ -79,6 +79,7 @@ spec:
                   - Build
                   - DeploymentConfig
                   - ImageRegistry
+                  - OperatorLifecycleManager
                   type: string
                 type: array
               baselineCapabilitySet:
