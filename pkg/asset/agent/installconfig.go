@@ -123,6 +123,7 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 	case types.ArchitectureAMD64:
 	case types.ArchitectureARM64:
 	case types.ArchitecturePPC64LE:
+        case types.ArchitectureS390X:
 	default:
 		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE}))
 	}
