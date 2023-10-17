@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+bin/
+config/
+hack/
+docs/
+templates/
+scripts/
+**/.md
+tilt-provider.json
+_artifacts/

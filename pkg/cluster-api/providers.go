@@ -15,6 +15,16 @@ import (
 var (
 	// AWS is the provider for creating resources in AWS.
 	AWS = provider("aws")
+	// Azure is the provider for creating resources in Azure.
+	Azure = provider("azure")
+	// IBMCloud is the provider for creating resources in IBM Cloud.
+	IBMCloud = provider("ibmcloud")
+	// GCP is the provider for creating resources in GCP.
+	GCP = provider("gcp")
+	// Nutanix is the provider for creating resources in Nutanix.
+	Nutanix = provider("nutanix")
+	// vSphere is the provider for creating resources in vSphere.
+	VSphere = provider("vsphere")
 )
 
 // Provider is a terraform provider.

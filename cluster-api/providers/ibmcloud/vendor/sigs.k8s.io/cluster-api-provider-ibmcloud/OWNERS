@@ -1,0 +1,18 @@
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+
+approvers:
+- gyliu513
+- jichenjc
+- mkumatag
+
+reviewers:
+- gyliu513
+- jichenjc
+- mkumatag
+- relyt0925
+- spzala
+- wentao-zh
+- Prajyot-Parab
+
+emeritus_approvers:
+- xunpan

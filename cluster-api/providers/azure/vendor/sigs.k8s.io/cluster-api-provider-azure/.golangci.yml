@@ -1,0 +1,153 @@
+run:
+  deadline: 10m
+  skip-files:
+  - 'zz_generated\.(\w*)\.go$'
+  build-tags:
+    - e2e
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - asciicheck
+    - bodyclose
+    - containedctx
+    - decorder
+    - depguard
+    - dogsled
+    - errcheck
+    - errchkjson
+    - errorlint
+    - execinquery
+    - exportloopref
+    - gci
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gofmt
+    - goimports
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - rowserrcheck
+    - staticcheck
+    - stylecheck
+    - thelper
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - whitespace
+  # Run with --fast=false for more extensive checks
+  fast: true
+
+linters-settings:
+  importas:
+    no-unaliased: true
+    alias:
+      # Kubernetes
+      - pkg: k8s.io/api/core/v1
+        alias: corev1
+      - pkg: k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1
+        alias: apiextensionsv1
+      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+        alias: metav1
+      - pkg: k8s.io/apimachinery/pkg/api/errors
+        alias: apierrors
+      - pkg: k8s.io/apimachinery/pkg/util/errors
+        alias: kerrors
+      # Controller Runtime
+      - pkg: sigs.k8s.io/controller-runtime
+        alias: ctrl
+      # CAPI
+      - pkg: sigs.k8s.io/cluster-api/api/v1beta1
+        alias: clusterv1
+      # CAPI exp
+      - pkg: sigs.k8s.io/cluster-api/exp/api/v1beta1
+        alias: expv1
+      # CAPZ
+      - pkg: sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
+        alias: infrav1
+      # CAPZ exp
+      - pkg: sigs.k8s.io/cluster-api-provider-azure/exp/api/v1beta1
+        alias: infrav1exp
+      - pkg: sigs.k8s.io/cluster-api-provider-azure/util/webhook
+        alias: webhookutils
+      # Azure
+      - pkg: github.com/Azure/go-autorest/autorest/azure
+        alias: azureautorest
+      # ASO
+      - pkg: github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601
+        alias: asoresourcesv1
+      # Azureutil
+      - pkg: sigs.k8s.io/cluster-api-provider-azure/util/azure
+        alias: azureutil
+      # Deprecated
+      - pkg: github.com/Azure/go-autorest/autorest/to
+        alias: deprecated-use-k8s.io-utils-pointer
+  gocritic:
+    enabled-tags:
+      - "experimental"
+  godot:
+    #   declarations - for top level declaration comments (default);
+    #   toplevel     - for top level comments;
+    #   all          - for all comments.
+    scope: toplevel
+    exclude:
+    - '^ \+.*'
+    - '^ ANCHOR.*'
+  gosec:
+    excludes:
+    - G307 # Deferring unsafe method "Close" on type "\*os.File"
+    - G108 # Profiling endpoint is automatically exposed on /debug/pprof
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disableStutteringCheck
+  staticcheck:
+    go: "1.20"
+  stylecheck:
+    go: "1.20"
+  unused:
+    go: "1.20"
+
+issues:
+  exclude-rules:
+    - path: '(\w*)conversion.go'
+      text: "use underscores in Go names|receiver name (.+) should be consistent|methods on the same type should have the same receiver name"
+    - path: 'mock(\w+)/doc.go$'
+      text: "use underscores in package names|don't use an underscore in package name"
+    - path: ^test/
+      linters:
+        - dogsled
+        - goconst
+        - godot
+        - prealloc
+    - path: ^test/
+      text: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
+    # Need to use the deprecated module "github.com/Azure/azure-sdk-for-go/services" till issue #2670 is addressed.
+    - linters:
+      - staticcheck
+      text: "github.com/Azure/azure-sdk-for-go/services/.* is deprecated"
+    - source: \"github.com/onsi/(ginkgo/v2|gomega)\"
+      text: "should not use dot imports"
+  include:
+  - EXC0012  # revive: check for comments
+  - EXC0014  # revive: check for comments
+  max-issues-per-linter: 0
+  max-same-issues: 0

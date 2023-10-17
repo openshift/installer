@@ -20,6 +20,12 @@ import (
 	providers "github.com/openshift/installer/pkg/cluster-api"
 	"github.com/openshift/installer/pkg/cluster-api/system/process"
 	"github.com/openshift/installer/pkg/cluster-api/system/process/addr"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/nutanix"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
@@ -51,8 +57,9 @@ func Teardown() {
 // to use as a management cluster.
 // TODO: Add support for existing management cluster.
 type System struct {
-	lcp    *localControlPlane
-	Client client.Client
+	manifestDir string
+	lcp         *localControlPlane
+	Client      client.Client
 }
 
 // Name returns the human-friendly name of the asset.
@@ -77,19 +84,51 @@ func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installc
 	if err := data.Unpack(manifestDir, "/cluster-api"); err != nil {
 		return err
 	}
+	c.manifestDir = manifestDir
 
 	controllers := []*controller{
 		{
 			Name:      "Cluster API",
 			Path:      fmt.Sprintf("%s/cluster-api", c.lcp.BinDir),
-			Manifests: []string{manifestDir + "/core-components.yaml"},
+			Manifests: []string{c.manifestDir + "/core-components.yaml"},
 		},
-		{
-			Name:      "AWS Infrastructure Provider",
-			Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(c.lcp.BinDir, providers.AWS.Source), providers.AWS.Name, runtime.GOOS, runtime.GOARCH),
-			Manifests: []string{manifestDir + "/aws-infrastructure-components.yaml"},
-			Args:      []string{"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true"},
-		},
+	}
+
+	platform := installConfig.Config.Platform.Name()
+
+	switch platform {
+	case aws.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.AWS,
+			[]string{"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true"},
+		))
+	case azure.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.Azure,
+			[]string{""},
+		))
+	case gcp.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.GCP,
+			[]string{""},
+		))
+	case ibmcloud.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.IBMCloud,
+			[]string{""},
+		))
+	case nutanix.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.Nutanix,
+			[]string{""},
+		))
+	case vsphere.Name:
+		controllers = append(controllers, c.getInfrastructureController(
+			providers.VSphere,
+			[]string{""},
+		))
+	default:
+		return fmt.Errorf("unsupported platform %q", platform)
 	}
 
 	// Run the controllers.
@@ -116,6 +155,15 @@ func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installc
 	}()
 
 	return nil
+}
+
+func (c *System) getInfrastructureController(provider providers.Provider, args []string) *controller {
+	return &controller{
+		Name:      fmt.Sprintf("%s infrastructure provider", provider.Name),
+		Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(c.lcp.BinDir, provider.Source), provider.Name, runtime.GOOS, runtime.GOARCH),
+		Manifests: []string{filepath.Join(c.manifestDir, fmt.Sprintf("/%s-infrastructure-components.yaml", provider.Name))},
+		Args:      args,
+	}
 }
 
 type controller struct {

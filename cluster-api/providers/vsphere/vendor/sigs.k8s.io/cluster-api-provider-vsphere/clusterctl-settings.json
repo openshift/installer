@@ -1,0 +1,7 @@
+{
+  "name": "infrastructure-vsphere",
+  "config": {
+    "componentsFile": "infrastructure-components.yaml",
+    "nextVersion": "v1.8.0"
+  }
+}

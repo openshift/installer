@@ -1,0 +1,17 @@
+{
+  "name": "vsphere",
+  "config": {
+    "version": "v1.8.99",
+    "image": "gcr.io/cluster-api-provider-vsphere/release/manager",
+    "live_reload_deps": [
+      "main.go",
+      "go.mod",
+      "go.sum",
+      "api",
+      "contrib",
+      "controllers",
+      "pkg"
+    ],
+    "label": "CAPV"
+  }
+}

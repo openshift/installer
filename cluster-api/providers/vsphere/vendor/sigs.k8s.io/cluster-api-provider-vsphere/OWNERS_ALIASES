@@ -1,0 +1,35 @@
+# See the OWNERS docs: https://git.k8s.io/community/docs/devel/owners.md
+
+aliases:
+  sig-cluster-lifecycle-leads:
+    - fabriziopandini
+    - justinsb
+    - neolit123
+  sig-cluster-lifecycle-tech-leads:
+    - CecileRobertMichon
+    - vincepri
+  cluster-api-maintainers:
+    - CecileRobertMichon
+    - enxebre
+    - fabriziopandini
+    - killianmuldoon
+    - sbueringer
+    - vincepri
+  cluster-api-vsphere-maintainers:
+    - randomvariable
+    - srm09
+    - yastij
+    - gab-satchi
+    - chrischdi
+  cluster-api-vsphere-reviewers:
+    - maxrink
+    - vrabbi
+    - zhanggbj
+  cluster-api-vsphere-emeritus-maintainers:
+    - akutz
+    - andrewsykim
+    - figo
+    - frapposelli
+    - ncdc
+    - sidharthsurana
+    - frapposelli
