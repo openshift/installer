@@ -532,6 +532,7 @@ github.com/google/gnostic-models/jsonschema
 github.com/google/gnostic-models/openapiv2
 github.com/google/gnostic-models/openapiv3
 # github.com/google/go-cmp v0.6.0
+# github.com/google/go-cmp v0.5.9
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -8732,7 +8733,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.17
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20230831095235-8891815aa476
+# github.com/openshift/api v0.0.0-20231003083825-c3f7566f6ef6
 ## explicit; go 1.20
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -9070,6 +9071,7 @@ golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
 # golang.org/x/net v0.14.0 => golang.org/x/net v0.5.0
+# golang.org/x/net v0.13.0 => golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/html
@@ -9103,6 +9105,7 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.13.0
+# golang.org/x/term v0.10.0
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.13.0 => golang.org/x/text v0.3.7

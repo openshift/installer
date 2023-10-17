@@ -1541,6 +1541,26 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `capabilities.baselineCapabilitySet: Unsupported value: "vNotValid": supported values: .*`,
 		},
 		{
+			name: "invalid capability marketplace specified without OperatorLifecycleManager",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
+				return c
+			}(),
+			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: the marketplace capability requires the OperatorLifecycleManager capability`,
+		},
+		{
+			name: "invalid capability baremetal specified without MachineAPI",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None",
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"baremetal"}}
+				return c
+			}(),
+			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"baremetal"}: the baremetal capability requires the MachineAPI capability`,
+		},
+		{
 			name: "valid additional enabled capability specified",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
