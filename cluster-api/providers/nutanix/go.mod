@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/nutanix
 
-go 1.21.3
+go 1.20
 
 require github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.2.4
 

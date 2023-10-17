@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/gcp
 
-go 1.21.3
+go 1.20
 
 require sigs.k8s.io/cluster-api-provider-gcp v1.4.1-0.20231017090837-ee0bd436b734
 

@@ -1,6 +1,6 @@
 module openshift/installer/cluster-api/providers/vsphere
 
-go 1.21.3
+go 1.20
 
 replace sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.5.2
 
