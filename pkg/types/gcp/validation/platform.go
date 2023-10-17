@@ -67,7 +67,7 @@ var (
 	}()
 
 	// userLabelKeyRegex is for verifying that the label key contains only allowed characters.
-	userLabelKeyRegex = regexp.MustCompile(`^[a-z][0-9a-z_-]{1,62}$`)
+	userLabelKeyRegex = regexp.MustCompile(`^[a-z][0-9a-z_-]{0,62}$`)
 
 	// userLabelValueRegex is for verifying that the label value contains only allowed characters.
 	userLabelValueRegex = regexp.MustCompile(`^[0-9a-z_-]{1,63}$`)
