@@ -19,20 +19,18 @@ type Kargs struct {
 func (a *Kargs) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.AgentClusterInstall{},
-		&manifests.AgentManifests{},
 	}
 }
 
 // Generate generates the kernel args configurations for the agent ISO image and PXE assets.
 func (a *Kargs) Generate(dependencies asset.Parents) error {
 	agentClusterInstall := &manifests.AgentClusterInstall{}
-	agentManifests := &manifests.AgentManifests{}
-	dependencies.Get(agentClusterInstall, agentManifests)
+	dependencies.Get(agentClusterInstall)
 
 	a.fips = agentClusterInstall.FIPSEnabled()
 
 	// Add kernel args for external oci platform
-	if agentManifests.GetExternalPlatformName() == string(models.PlatformTypeOci) {
+	if agentClusterInstall.GetExternalPlatformName() == string(models.PlatformTypeOci) {
 		logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, string(models.PlatformTypeOci))
 		a.consoleArgs = " console=ttyS0"
 	}

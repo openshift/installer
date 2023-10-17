@@ -442,3 +442,11 @@ func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
 	}
 	return allErrs
 }
+
+// GetExternalPlatformName returns the platform name for the external platform.
+func (a *AgentClusterInstall) GetExternalPlatformName() string {
+	if a.Config != nil && a.Config.Spec.ExternalPlatformSpec != nil {
+		return a.Config.Spec.ExternalPlatformSpec.PlatformName
+	}
+	return ""
+}
