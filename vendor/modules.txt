@@ -532,7 +532,6 @@ github.com/google/gnostic-models/jsonschema
 github.com/google/gnostic-models/openapiv2
 github.com/google/gnostic-models/openapiv3
 # github.com/google/go-cmp v0.6.0
-# github.com/google/go-cmp v0.5.9
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -9071,7 +9070,6 @@ golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
 # golang.org/x/net v0.14.0 => golang.org/x/net v0.5.0
-# golang.org/x/net v0.13.0 => golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/html
@@ -9105,7 +9103,6 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.13.0
-# golang.org/x/term v0.10.0
 ## explicit; go 1.17
 golang.org/x/term
 # golang.org/x/text v0.13.0 => golang.org/x/text v0.3.7
