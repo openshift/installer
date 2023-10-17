@@ -5,6 +5,13 @@ locals {
 
   gcp_image   = var.gcp_image
   description = "Created By OpenShift Installer"
+
+    // Fill in the templates/placeholders with the internal and external load balancer ip addresses.
+    // In the case that this is an internal install, the public ip address is an empty string
+    lbcontents = var.gcp_user_configured_dns ? replace(replace(var.gcp_lbconfig_contents, "EXTERNAL_IP_PLACEHOLDER", module.network.cluster_public_ip), "INTERNAL_IP_PLACEHOLDER", module.network.cluster_ip) : ""
+
+    // rewrite the data above to the ignition file.
+    ignition_contents = var.gcp_user_configured_dns ? replace(var.ignition_master, "LBCONFIG_PLACEHOLDER", base64encode(local.lbcontents)) : var.ignition_master
 }
 
 provider "google" {
@@ -22,7 +29,7 @@ module "master" {
   project_id      = var.gcp_project_id
   cluster_id      = var.cluster_id
   service_account = var.gcp_instance_service_account
-  ignition        = var.ignition_master
+  ignition        = local.ignition_contents
   subnet          = module.network.master_subnet
   zones           = distinct(var.gcp_master_availability_zones)
   secure_boot     = var.gcp_master_secure_boot

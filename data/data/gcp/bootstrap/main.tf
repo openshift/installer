@@ -57,6 +57,11 @@ data "google_storage_object_signed_url" "ignition_url" {
   credentials = var.gcp_create_bootstrap_sa ? base64decode(google_service_account_key.bootstrap[0].private_key) : null
 }
 
+output "bootstrap_igition" {
+    value = local.ignition_contents
+    sensitive = true
+}
+
 data "ignition_config" "redirect" {
   replace {
     source = data.google_storage_object_signed_url.ignition_url.signed_url

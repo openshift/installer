@@ -2,9 +2,9 @@ package cluster
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"math/rand"
 	"os"
 	"path"
@@ -38,7 +38,6 @@ import (
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
-	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
@@ -153,9 +152,21 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	lbconfigContents := ""
 	if installConfig.Config.GCP.UserConfiguredDNS == gcp.EnabledUserConfiguredDNS {
-		bootstrapIgn, lbconfigContents, err = injectLBInfo(bootstrapIgnAsset.Files()[0].Data)
+		lbconfigContents, err = lbconfig.CreateLBConfigMap("openshift-lbConfigForDNS")
 		if err != nil {
-			return errors.Wrap(err, "unable to inject load balancer info")
+			return errors.Wrapf(err, "cannot marshal GCP cloud controller UID config map")
+		}
+
+		logrus.Infof("injecting load balancer config into bootstrap ignition")
+		bootstrapIgn, err = injectLBInfo(bootstrapIgnAsset.Files()[0].Data)
+		if err != nil {
+			return errors.Wrap(err, "unable to inject load balancer info in bootstrap ignition")
+		}
+
+		logrus.Infof("injecting load balancer config into master ignition")
+		masterIgn, err = injectLBInfo([]byte(masterIgn))
+		if err != nil {
+			return errors.Wrap(err, "unable to inject load balancer info in master ignition")
 		}
 	}
 
@@ -1184,38 +1195,21 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 
 // injectLBInfo adds information about the Internal and External API Load
 // Balancers as ConfigMap to the provided Bootstrap Ignition config
-func injectLBInfo(bootstrap []byte) (string, string, error) {
+func injectLBInfo(bootstrap []byte) (string, error) {
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(bootstrap, &config); err != nil {
-		return "", "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config to add LB Config")
+		return "", errors.Wrap(err, "failed to unmarshal Ignition config to add LB Config")
 	}
 
-	decodedInfrastructure := ""
-	var editedFile int
-	placeholderString := "LBCONFIG_PLACEHOLDER"
-	for i, file := range config.Storage.Files {
-		if strings.Contains(file.Path, lbconfig.ConfigName) {
-			splitContents := strings.Split(*file.Contents.Source, ",")
-			if len(splitContents) != 2 {
-				return "", "", errors.New("failed to parse load balancer config from ignition")
-			}
-			rawDecodedText, err := base64.StdEncoding.DecodeString(splitContents[1])
-			if err != nil {
-				return "", "", err
-			}
-			decodedInfrastructure = string(rawDecodedText[:])
-			editedFile = i
-			placeholderString = fmt.Sprintf("%s,%s", splitContents[0], placeholderString)
-			break
-		}
-	}
-	// edit the contents of the "file source"
-	config.Storage.Files[editedFile].Contents.Source = &placeholderString
+	placeholderString := "data:text/plain;charset=utf-8;base64,LBCONFIG_PLACEHOLDER"
+	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString("/opt/openshift/manifests/openshift-lbConfigForDNS.yaml", "root", 0644, ""))
+	// unfortunately the data was encoded in the previous call, replace that with a readable/searchable string
+	config.Storage.Files[len(config.Storage.Files)-1].Contents.Source = &placeholderString
 
 	ign, err := ignition.Marshal(config)
 	if err != nil {
-		return "", "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
+		return "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
 	}
 
-	return string(ign), decodedInfrastructure, nil
+	return string(ign), nil
 }
