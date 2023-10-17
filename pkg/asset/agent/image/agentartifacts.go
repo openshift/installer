@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
@@ -40,6 +41,7 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 		&Kargs{},
 		&BaseIso{},
 		&manifests.AgentManifests{},
+		&manifests.AgentClusterInstall{},
 		&mirror.RegistriesConf{},
 		&config.AgentConfig{},
 	}
@@ -51,29 +53,34 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	kargs := &Kargs{}
 	baseIso := &BaseIso{}
 	agentManifests := &manifests.AgentManifests{}
+	agentClusterInstall := &manifests.AgentClusterInstall{}
 	registriesConf := &mirror.RegistriesConf{}
 	agentconfig := &config.AgentConfig{}
 
-	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf, agentconfig)
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, agentClusterInstall, registriesConf, agentconfig)
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
 		return err
 	}
+
 	a.CPUArch = ignition.CPUArch
 	a.RendezvousIP = ignition.RendezvousIP
 	a.IgnitionByte = ignitionByte
 	a.ISOPath = baseIso.File.Filename
 	a.Kargs = kargs.KernelCmdLine()
+
 	if agentconfig.Config != nil {
 		a.BootArtifactsBaseURL = strings.Trim(agentconfig.Config.BootArtifactsBaseURL, "/")
 	}
 
-	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
-	if err != nil {
-		return err
+	var agentTuiFiles []string
+	if agentClusterInstall.GetExternalPlatformName() != string(models.PlatformTypeOci) {
+		agentTuiFiles, err = a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
+		if err != nil {
+			return err
+		}
 	}
-
 	err = a.prepareAgentArtifacts(a.ISOPath, agentTuiFiles)
 	if err != nil {
 		return err
