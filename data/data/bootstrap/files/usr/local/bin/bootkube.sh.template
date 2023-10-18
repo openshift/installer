@@ -55,8 +55,6 @@ KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
 NODE_TUNING_OPERATOR_IMAGE=$(image_for cluster-node-tuning-operator)
 
-CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
-
 OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
 
@@ -399,35 +397,6 @@ API_INT_SERVER_URL="{{.APIIntServerURL}}"
 
 resolve_url "API_URL" "${API_SERVER_URL}"
 resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"
-
-if [ ! -f cco-bootstrap.done ]
-then
-    record_service_stage_start "cco-bootstrap"
-	echo "Rendering CCO manifests..."
-
-	rm --recursive --force cco-bootstrap
-
-	# shellcheck disable=SC2154
-	bootkube_podman_run \
-		--name cco-render \
-		--quiet \
-		--user 0 \
-		--volume "$PWD:/assets:z" \
-		${CLOUD_CREDENTIAL_OPERATOR_IMAGE} \
-		render \
-			--dest-dir=/assets/cco-bootstrap \
-			--manifests-dir=/assets/manifests \
-			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
-
-	cp cco-bootstrap/manifests/* manifests/
-	# skip copy if static pod manifest does not exist (ie CCO has been disabled)
-	if [ -f cco-bootstrap/bootstrap-manifests/cloud-credential-operator-pod.yaml ]; then
-		cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
-	fi
-
-	touch cco-bootstrap.done
-    record_service_stage_success
-fi
 
 # in case of single node, if we removed etcd, there is no point to wait for it on restart
 if [ ! -f stop-etcd.done ]
