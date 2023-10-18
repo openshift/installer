@@ -80,12 +80,12 @@ MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
 if test "${SKIP_TERRAFORM}" != y
 then
-  make -C terraform all
+  make -j8 -C terraform all
   copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
 fi
 
 # build cluster-api binaries before setting environment variables since it messes up make
-make -C cluster-api all
+make -j8 -C cluster-api all
 copy_cluster_api_to_mirror
 copy_envtest_bins_to_mirror
 
