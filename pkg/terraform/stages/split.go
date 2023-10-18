@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
-	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -172,5 +171,6 @@ func normalDestroy(s SplitStage, directory string, terraformDir string, varFiles
 	for i, varFile := range varFiles {
 		opts[i] = tfexec.VarFile(varFile)
 	}
-	return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
+	return nil
+	//return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
 }

@@ -52,7 +52,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	case gcptypes.Name:
-		if installConfig.GCP.UserConfiguredDNS == gcptypes.EnabledUserConfiguredDNS {
+		if role == "master" && installConfig.GCP.UserConfiguredDNS == gcptypes.EnabledUserConfiguredDNS {
 			files = append(files, ignition.FileFromString("/opt/openshift/manifests/openshift-lbConfigForDNS.yaml", "root", 0644, ""))
 
 			// replace the data with something that is readable/replaceable
