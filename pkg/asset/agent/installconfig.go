@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -96,9 +97,16 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(HivePlatformType(installConfig.Platform)) {
 		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedInstallerPlatforms()))
 	}
-	fieldPath = field.NewPath("Platform", "External", "PlatformName")
-	if installConfig.Platform.Name() == external.Name && installConfig.Platform.External.PlatformName != "oci" {
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.External.PlatformName, []string{"oci"}))
+	if installConfig.Platform.Name() == external.Name {
+		if installConfig.Platform.External.PlatformName != string(models.PlatformTypeOci) {
+			fieldPath = field.NewPath("Platform", "External", "PlatformName")
+			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.External.PlatformName, []string{string(models.PlatformTypeOci)}))
+		}
+		if installConfig.Platform.External.PlatformName == string(models.PlatformTypeOci) &&
+			installConfig.Platform.External.CloudControllerManager != external.CloudControllerManagerTypeExternal {
+			fieldPath = field.NewPath("Platform", "External", "CloudControllerManager")
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.External.CloudControllerManager, fmt.Sprintf("When using external %s platform, %s must be set to %s", string(models.PlatformTypeOci), fieldPath, external.CloudControllerManagerTypeExternal)))
+		}
 	}
 	return allErrs
 }
