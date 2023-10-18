@@ -2,6 +2,7 @@ package machine
 
 import (
 	"fmt"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	"net"
 	"net/url"
 
@@ -28,6 +29,10 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 	var ignitionHost string
 	// Default platform independent ignitionHost
 	ignitionHost = fmt.Sprintf("api-int.%s:22623", installConfig.ClusterDomain())
+
+	// Extra files to add during
+	files := []igntypes.File{}
+
 	// Update ignitionHost as necessary for platform
 	switch installConfig.Platform.Name() {
 	case baremetaltypes.Name:
@@ -46,8 +51,19 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		if len(installConfig.VSphere.APIVIPs) > 0 {
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
+	case gcptypes.Name:
+		if installConfig.GCP.UserConfiguredDNS == gcptypes.EnabledUserConfiguredDNS {
+			files = append(files, ignition.FileFromString("/opt/openshift/manifests/openshift-lbConfigForDNS.yaml", "root", 0644, ""))
+
+			// replace the data with something that is readable/replaceable
+			placeholderString := "data:text/plain;charset=utf-8;base64,LBCONFIG_PLACEHOLDER"
+			files[len(files)-1].Contents.Source = &placeholderString
+		}
 	}
 	return &igntypes.Config{
+		Storage: igntypes.Storage{
+			Files: files,
+		},
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{

@@ -162,12 +162,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to inject load balancer info in bootstrap ignition")
 		}
-
-		logrus.Infof("injecting load balancer config into master ignition")
-		masterIgn, err = injectLBInfo([]byte(masterIgn))
-		if err != nil {
-			return errors.Wrap(err, "unable to inject load balancer info in master ignition")
-		}
+		//
+		//logrus.Infof("injecting load balancer config into master ignition")
+		//masterIgn, err = injectLBInfo([]byte(masterIgn))
+		//if err != nil {
+		//	return errors.Wrap(err, "unable to inject load balancer info in master ignition")
+		//}
 	}
 
 	var useIPv4, useIPv6 bool
