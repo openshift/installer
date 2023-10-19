@@ -32,6 +32,17 @@ var Regions = map[string]Region{
 		VPCRegion:   "jp-osa",
 		Zones:       []string{"osa21"},
 	},
+	// @HAMZY @HACK
+	"syd": {
+		Description: "Sydney, Australia",
+		VPCRegion:   "au-syd",
+		Zones:       []string{"syd04"},
+	},
+	"tok": {
+		Description: "Tokyo, Japan",
+		VPCRegion:   "jp-tok",
+		Zones:       []string{"tok04"},
+	},
 }
 
 // VPCRegionForPowerVSRegion returns the VPC region for the specified PowerVS region.

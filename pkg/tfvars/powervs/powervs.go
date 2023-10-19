@@ -14,7 +14,6 @@ import (
 )
 
 type config struct {
-	ServiceInstanceID     string `json:"powervs_cloud_instance_id"`
 	APIKey                string `json:"powervs_api_key"`
 	SSHKey                string `json:"powervs_ssh_key"`
 	PowerVSRegion         string `json:"powervs_region"`
@@ -42,7 +41,6 @@ type config struct {
 	PublishStrategy       string `json:"powervs_publish_strategy"`
 	EnableSNAT            bool   `json:"powervs_enable_snat"`
 	TransitGatewayEnabled bool   `json:"powervs_transit_gateway_enabled"`
-	ServiceInstanceCRN    string `json:"powervs_service_instance_crn"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -68,7 +66,6 @@ type TFVarsSources struct {
 	PublishStrategy       types.PublishingStrategy
 	EnableSNAT            bool
 	TransitGatewayEnabled bool
-	ServiceInstanceCRN    string
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -80,12 +77,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, fmt.Errorf("failed to find COS region for PowerVS region")
 	}
 
-	var serviceInstanceID, processor, dnsGUID string
-	if masterConfig.ServiceInstance.ID != nil {
-		serviceInstanceID = *masterConfig.ServiceInstance.ID
-	} else {
-		return nil, fmt.Errorf("serviceInstanceID is nil")
-	}
+	var processor, dnsGUID string
 
 	if masterConfig.Processors.StrVal != "" {
 		processor = masterConfig.Processors.StrVal
@@ -103,7 +95,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		ServiceInstanceID:     serviceInstanceID,
 		APIKey:                sources.APIKey,
 		SSHKey:                sources.SSHKey,
 		PowerVSRegion:         sources.Region,
@@ -130,7 +121,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:       string(sources.PublishStrategy),
 		EnableSNAT:            sources.EnableSNAT,
 		TransitGatewayEnabled: sources.TransitGatewayEnabled,
-		ServiceInstanceCRN:    sources.ServiceInstanceCRN,
 	}
 	if masterConfig.Network.Name != nil {
 		cfg.NetworkName = *masterConfig.Network.Name
