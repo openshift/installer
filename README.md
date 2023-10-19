@@ -23,7 +23,13 @@
 
 First, install all [build dependencies](docs/dev/dependencies.md).
 
-Clone this repository. Then build the `openshift-install` binary with:
+Clone this repository:
+
+```sh
+git clone --recursive-submodules https://github.com/openshift/installer
+```
+
+Then build the `openshift-install` binary with:
 
 ```sh
 hack/build.sh
