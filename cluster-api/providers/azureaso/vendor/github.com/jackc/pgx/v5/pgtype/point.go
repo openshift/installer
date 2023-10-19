@@ -40,7 +40,7 @@ func (p Point) PointValue() (Point, error) {
 }
 
 func parsePoint(src []byte) (*Point, error) {
-	if src == nil || bytes.Equal(src, []byte("null")) {
+	if src == nil || bytes.Compare(src, []byte("null")) == 0 {
 		return &Point{}, nil
 	}
 

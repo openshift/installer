@@ -11,7 +11,7 @@ The `armsubscription` module provides operations for working with Azure Subscrip
 ## Prerequisites
 
 - an [Azure subscription](https://azure.microsoft.com/free/)
-- Go 1.18 or above (You could download and install the latest version of Go from [here](https://go.dev/doc/install). It will replace the existing Go on your machine. If you want to install multiple Go versions on the same machine, you could refer this [doc](https://go.dev/doc/manage-install).)
+- Go 1.18 or above
 
 ## Install the package
 
@@ -33,12 +33,12 @@ cred, err := azidentity.NewDefaultAzureCredential(nil)
 
 For more information on authentication, please see the documentation for `azidentity` at [pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity).
 
-## Client Factory
+## Clients
 
-Azure Subscription module consists of one or more clients. We provide a client factory which could be used to create any client in this module.
+Azure Subscription modules consist of one or more clients.  A client groups a set of related APIs, providing access to its functionality within the specified subscription.  Create one or more clients to access the APIs you require using your credential.
 
 ```go
-clientFactory, err := armsubscription.NewClientFactory(<subscription ID>, cred, nil)
+client, err := armsubscription.NewClient(<subscription ID>, cred, nil)
 ```
 
 You can use `ClientOptions` in package `github.com/Azure/azure-sdk-for-go/sdk/azcore/arm` to set endpoint to connect with public and sovereign clouds as well as Azure Stack. For more information, please see the documentation for `azcore` at [pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azcore](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azcore).
@@ -49,15 +49,7 @@ options := arm.ClientOptions {
         Cloud: cloud.AzureChina,
     },
 }
-clientFactory, err := armsubscription.NewClientFactory(<subscription ID>, cred, &options)
-```
-
-## Clients
-
-A client groups a set of related APIs, providing access to its functionality.  Create one or more clients to access the APIs you require using client factory.
-
-```go
-client := clientFactory.NewClient()
+client, err := armsubscription.NewClient(<subscription ID>, cred, &options)
 ```
 
 ## Provide Feedback

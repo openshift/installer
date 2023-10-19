@@ -1,15 +1,12 @@
 clock
 =====
 
-[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/mod/github.com/benbjohnson/clock)
-
 Clock is a small library for mocking time in Go. It provides an interface
 around the standard library's [`time`][time] package so that the application
 can use the realtime clock while tests can use the mock clock.
 
-The module is currently maintained by @djmitche.
+[time]: http://golang.org/pkg/time/
 
-[time]: https://pkg.go.dev/github.com/benbjohnson/clock
 
 ## Usage
 
@@ -89,7 +86,7 @@ count := 0
 
 // Kick off a timer to increment every 1 mock second.
 go func() {
-    ticker := mock.Ticker(1 * time.Second)
+    ticker := clock.Ticker(1 * time.Second)
     for {
         <-ticker.C
         count++
@@ -103,3 +100,5 @@ mock.Add(10 * time.Second)
 // This prints 10.
 fmt.Println(count)
 ```
+
+

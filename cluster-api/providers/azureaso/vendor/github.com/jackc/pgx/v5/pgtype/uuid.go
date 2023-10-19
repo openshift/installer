@@ -97,7 +97,7 @@ func (src UUID) MarshalJSON() ([]byte, error) {
 }
 
 func (dst *UUID) UnmarshalJSON(src []byte) error {
-	if bytes.Equal(src, []byte("null")) {
+	if bytes.Compare(src, []byte("null")) == 0 {
 		*dst = UUID{}
 		return nil
 	}

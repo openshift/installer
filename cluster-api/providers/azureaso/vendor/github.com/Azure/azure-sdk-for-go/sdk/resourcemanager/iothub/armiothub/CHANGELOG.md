@@ -1,12 +1,5 @@
 # Release History
 
-## 1.2.0 (2023-09-22)
-### Features Added
-
-- New struct `RoutingCosmosDBSQLAPIProperties`
-- New field `CosmosDBSQLContainers` in struct `RoutingEndpoints`
-
-
 ## 1.1.1 (2023-04-14)
 ### Bug Fixes
 

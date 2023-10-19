@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/pointer"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
@@ -366,18 +365,15 @@ func AddFinalizer(o client.Object, finalizer string) (finalizersUpdated bool) {
 // It returns an indication of whether it updated the object's list of finalizers.
 func RemoveFinalizer(o client.Object, finalizer string) (finalizersUpdated bool) {
 	f := o.GetFinalizers()
-	length := len(f)
-
-	index := 0
-	for i := 0; i < length; i++ {
+	for i := 0; i < len(f); i++ {
 		if f[i] == finalizer {
-			continue
+			f = append(f[:i], f[i+1:]...)
+			i--
+			finalizersUpdated = true
 		}
-		f[index] = f[i]
-		index++
 	}
-	o.SetFinalizers(f[:index])
-	return length != index
+	o.SetFinalizers(f)
+	return
 }
 
 // ContainsFinalizer checks an Object that the provided finalizer is present.
@@ -390,3 +386,9 @@ func ContainsFinalizer(o client.Object, finalizer string) bool {
 	}
 	return false
 }
+
+// Object allows functions to work indistinctly with any resource that
+// implements both Object interfaces.
+//
+// Deprecated: Use client.Object instead.
+type Object = client.Object
