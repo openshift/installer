@@ -17,6 +17,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/analysis/passes/internal/analysisutil"
 	"golang.org/x/tools/go/ast/inspector"
+	"golang.org/x/tools/internal/typeparams"
 )
 
 // TODO(adonovan): make this analysis modular: export a mustUseResult
@@ -44,7 +45,7 @@ var funcs, stringMethods stringSetFlag
 func init() {
 	// TODO(adonovan): provide a comment syntax to allow users to
 	// add their functions to this set using facts.
-	funcs.Set("errors.New,fmt.Errorf,fmt.Sprintf,fmt.Sprint,sort.Reverse")
+	funcs.Set("errors.New,fmt.Errorf,fmt.Sprintf,fmt.Sprint,sort.Reverse,context.WithValue,context.WithCancel,context.WithDeadline,context.WithTimeout")
 	Analyzer.Flags.Var(&funcs, "funcs",
 		"comma-separated list of functions whose results must be used")
 
@@ -68,6 +69,11 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 		if pass.TypesInfo.Types[fun].IsType() {
 			return // a conversion, not a call
+		}
+
+		x, _, _, _ := typeparams.UnpackIndexExpr(fun)
+		if x != nil {
+			fun = x // If this is generic function or method call, skip the instantiation arguments
 		}
 
 		selector, ok := fun.(*ast.SelectorExpr)
