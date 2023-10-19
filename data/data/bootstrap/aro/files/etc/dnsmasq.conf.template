@@ -1,0 +1,15 @@
+{{ define "dnsmasq.conf" }}
+resolv-file=/etc/resolv.conf.dnsmasq
+strict-order
+address=/api.{{ .PlatformData.ARO.ClusterDomain }}/{{ .PlatformData.ARO.APIIntIP }}
+address=/api-int.{{ .PlatformData.ARO.ClusterDomain }}/{{ .PlatformData.ARO.APIIntIP }}
+address=/.apps.{{ .PlatformData.ARO.ClusterDomain }}/{{ .PlatformData.ARO.IngressIP }}
+{{- range $GatewayDomain := .PlatformData.ARO.GatewayDomains }}
+address=/{{ $GatewayDomain }}/{{ $.PlatformData.ARO.GatewayPrivateEndpointIP }}
+{{- end }}
+user=dnsmasq
+group=dnsmasq
+no-hosts
+cache-size=0
+{{ end }}
+

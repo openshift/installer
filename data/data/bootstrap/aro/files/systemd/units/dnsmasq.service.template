@@ -1,0 +1,19 @@
+{{ define "dnsmasq.service" }}
+[Unit]
+Description=DNS caching server.
+After=network-online.target
+Before=bootkube.service
+
+[Service]
+# ExecStartPre will create a copy of the customer current resolv.conf file and make it upstream DNS.
+# This file is a product of user DNS settings on the VNET. We will replace this file to point to
+# dnsmasq instance on the node. dnsmasq will inject certain dns records we need and forward rest of the queries to
+# resolv.conf.dnsmasq upstream customer dns.
+ExecStartPre=/bin/bash /usr/local/bin/aro-dnsmasq-pre.sh
+ExecStart=/usr/sbin/dnsmasq -k
+ExecStopPost=/bin/bash -c '/bin/mv /etc/resolv.conf.dnsmasq /etc/resolv.conf; /usr/sbin/restorecon /etc/resolv.conf'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+{{ end }}

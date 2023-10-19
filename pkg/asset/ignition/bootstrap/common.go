@@ -27,6 +27,7 @@ import (
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/aro"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/vsphere"
 	mcign "github.com/openshift/installer/pkg/asset/ignition/machine"
@@ -38,6 +39,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -95,6 +97,7 @@ type bootstrapTemplateData struct {
 // platformTemplateData is the data to use to replace values in bootstrap
 // template files that are specific to one platform.
 type platformTemplateData struct {
+	ARO       *aro.TemplateData
 	BareMetal *baremetal.TemplateData
 	VSphere   *vsphere.TemplateData
 }
@@ -189,6 +192,12 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 
 	// Check for optional platform specific files/units
 	platform := installConfig.Config.Platform.Name()
+
+	// ARO is a special case of Azure
+	if installConfig.Config.Platform.Azure.IsARO() == true {
+		platform = "aro"
+	}
+
 	platformFilePath := fmt.Sprintf("bootstrap/%s/files", platform)
 	directory, err := data.Assets.Open(platformFilePath)
 	if err == nil {
@@ -282,6 +291,13 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	var platformData platformTemplateData
 
 	switch installConfig.Config.Platform.Name() {
+	case azuretypes.Name:
+		if installConfig.Config.Platform.Azure.IsARO() {
+			platformData.ARO = aro.GetTemplateData(installConfig.Config.Platform.Azure)
+			if platformData.ARO == nil {
+				logrus.Warnf("error getting ARO template data")
+			}
+		}
 	case baremetaltypes.Name:
 		platformData.BareMetal = baremetal.GetTemplateData(installConfig.Config.Platform.BareMetal, installConfig.Config.MachineNetwork, ironicCreds.Username, ironicCreds.Password)
 	case vspheretypes.Name:
