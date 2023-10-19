@@ -1,0 +1,5 @@
+#!/bin/bash
+
+if [ "$1" == "eth0" ] && [ "$2" == "up" ]; then
+    ip link set $1 mtu 3900
+fi
