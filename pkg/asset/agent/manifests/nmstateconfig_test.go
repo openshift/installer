@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types/agent"
 )
 
 func TestNMStateConfig_Generate(t *testing.T) {
@@ -473,6 +474,7 @@ func TestGetNodeZeroIP(t *testing.T) {
 		expectedIP    string
 		expectedError string
 		configs       []string
+		hosts         []agent.Host
 	}{
 		{
 			name:          "no interfaces",
@@ -608,6 +610,110 @@ interfaces:
 `,
 			},
 		},
+		{
+			name:       "skip workers/nodes without role",
+			expectedIP: "192.168.122.22",
+			hosts: []agent.Host{
+				{
+					Role: "worker",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.31`)},
+				},
+				{
+					Role: "",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.32`)},
+				},
+				{
+					Role: "master",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.22`)},
+				},
+			},
+		},
+		{
+			name:          "fail if only workers",
+			expectedError: "invalid NMState configurations provided, no interface IPs set",
+			hosts: []agent.Host{
+				{
+					Role: "worker",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.31`)},
+				},
+			},
+		},
+		{
+			name:          "fail if only master without static configuration",
+			expectedError: "invalid NMState configurations provided, no interface IPs set",
+			hosts: []agent.Host{
+				{
+					Role: "master",
+				},
+			},
+		},
+		{
+			name:       "fallback on configs if missing host definition",
+			expectedIP: "192.168.122.22",
+			hosts: []agent.Host{
+				{
+					Role: "master",
+				},
+			},
+			configs: []string{`
+interfaces:
+  - name: eth0
+    type: ethernet
+    ipv4:
+      address:
+        - ip: 192.168.122.22`,
+			},
+		},
+		{
+			name:       "implicit masters",
+			expectedIP: "192.168.122.32",
+			hosts: []agent.Host{
+				{
+					Role: "worker",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.31`)},
+				},
+				{
+					Role: "",
+					NetworkConfig: aiv1beta1.NetConfig{Raw: []byte(`
+interfaces:
+- name: eth0
+  type: ethernet
+  ipv4:
+    address:
+      - ip: 192.168.122.32`)},
+				},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -622,7 +728,7 @@ interfaces:
 				})
 			}
 
-			ip, err := GetNodeZeroIP(configs)
+			ip, err := GetNodeZeroIP(&agent.Config{Hosts: tc.hosts}, configs)
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedIP, ip)
