@@ -26,56 +26,44 @@ copy_terraform_to_mirror() {
   cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
+# Define cluster api base directories.
+TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
+CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
+mkdir -p "${CLUSTER_API_BIN_DIR}"
+CLUSTER_API_MIRROR_DIR="${PWD}/pkg/cluster-api/mirror/"
+mkdir -p "${CLUSTER_API_MIRROR_DIR}"
+
 copy_cluster_api_to_mirror() {
-  TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
-
   # Clean the mirror, but preserve the README file.
-  # rm -rf "${PWD}"/pkg/cluster-api/mirror/*/
+  rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
 
-  # Copy local cluster api providers into data
-  find "${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/" -maxdepth 1 -name "cluster-api-provider-*" -exec bash -c '
-      providerName="$(basename "$1" | cut -d '-' -f 4 | cut -d '.' -f 1)"
-      targetOSArch="$2"
-      dstDir="${PWD}/pkg/cluster-api/mirror/openshift/local/$providerName"
-      mkdir -p "$dstDir"
-      echo "Copying $providerName provider to mirror"
-      cp "$1" "$dstDir/cluster-api-provider-${providerName}_${targetOSArch}"
-    ' shell {} "${TARGET_OS_ARCH}" \;
+  sync_envtest
 
-  mkdir -p "${PWD}/pkg/cluster-api/mirror/cluster-api/"
-  cp "${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/cluster-api" "${PWD}/pkg/cluster-api/mirror/cluster-api/"
+  # Zip every binary in the folder into a single zip file.
+  zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
 }
 
 envtest_k8s_version="1.28.0"
-copy_envtest_bins_to_mirror() {
-  mirror_dir="${PWD}/pkg/cluster-api/mirror/envtest/"
-  mkdir -p "${mirror_dir}"
-  # Check first if the kube-apiserver are already in the mirror directory and are the correct version.
-  if [ -f "${mirror_dir}/kube-apiserver" ]; then
-    version=$("${mirror_dir}/kube-apiserver" --version)
-    echo "Found envtest binaries in the mirror directory with version: ${version}"
+envtest_arch=$(go env GOOS)-$(go env GOARCH)
+sync_envtest() {
+  if [ -f "${CLUSTER_API_BIN_DIR}/kube-apiserver" ]; then
+    version=$("${CLUSTER_API_BIN_DIR}/kube-apiserver" --version || echo "Kubernetes v0.0.0")
+    echo "Found envtest binaries with version: ${version}"
     if [ "${version}" = "Kubernetes v${envtest_k8s_version}" ]; then
-      echo "envtest binaries are already in the mirror directory, and are the correct version"
       return
     fi
   fi
 
   bucket="https://storage.googleapis.com/kubebuilder-tools"
-  envtest_arch=$(go env GOOS)-$(go env GOARCH)
   tar_file="kubebuilder-tools-${envtest_k8s_version}-${envtest_arch}.tar.gz"
-  # Download the tar.gz in the mirror directory and unpack it.
-  envtest_bin_dir="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}/envtest"
-  mkdir -p "${envtest_bin_dir}"
-
-  # Download the tar file if it doesn't exist and unpack it in the mirror directory.
-  dst="${envtest_bin_dir}/${tar_file}"
-  if ! [ -f "${envtest_bin_dir}/${tar_file}" ]; then
+  dst="${CLUSTER_API_BIN_DIR}/${tar_file}"
+  if ! [ -f "${CLUSTER_API_BIN_DIR}/${tar_file}" ]; then
     echo "Downloading envtest binaries"
     curl -fL "${bucket}/${tar_file}" -o "${dst}"
   fi
-  # Copy the binaries to the mirror directory.
-  echo "Unpacking envtest binaries to mirror"
-  tar -C "${mirror_dir}" -xzf "${dst}" --strip-components=2
+  tar -C "${CLUSTER_API_BIN_DIR}" -xzf "${dst}" --strip-components=2
+  rm "${dst}" # Remove the tar file.
+  rm "${CLUSTER_API_BIN_DIR}/kubectl" # Remove kubectl since we don't need it.
 }
 
 minimum_go_version=1.20
@@ -98,7 +86,6 @@ fi
 # build cluster-api binaries before setting environment variables since it messes up make
 make -j8 -C cluster-api all
 copy_cluster_api_to_mirror
-copy_envtest_bins_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"

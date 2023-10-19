@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"text/template"
@@ -211,7 +210,7 @@ func (c *System) getInfrastructureController(provider *providers.Provider, args 
 	return &controller{
 		Provider:  provider,
 		Name:      fmt.Sprintf("%s infrastructure provider", provider.Name),
-		Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(c.lcp.BinDir, provider.Source), provider.Name, runtime.GOOS, runtime.GOARCH),
+		Path:      fmt.Sprintf("%s/cluster-api-provider-%s", c.lcp.BinDir, provider.Name),
 		Manifests: manifests,
 		Args:      args,
 		Env:       env,
