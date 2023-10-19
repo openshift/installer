@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 	capav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3" //nolint:staticcheck
 	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -33,17 +34,18 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(capav1beta1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(capav1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(capzv1.AddToScheme(scheme.Scheme))
 }
 
 // localControlPlane creates a local capi control plane
 // to use as a management cluster.
 // TODO: Add support for existing management cluster.
 type localControlPlane struct {
-	Env            *envtest.Environment `json:"-"`
-	Client         client.Client        `json:"-"`
-	Cfg            *rest.Config         `json:"-"`
+	Env            *envtest.Environment
+	Client         client.Client
+	Cfg            *rest.Config
 	BinDir         string
-	KubeconfigPath string //TODO: move to its own asset
+	KubeconfigPath string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -63,9 +65,6 @@ func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfi
 		return err
 	}
 	if err := providers.UnpackEnvtestBinaries(binDir); err != nil {
-		return err
-	}
-	if err := providers.AWS.Extract(binDir); err != nil {
 		return err
 	}
 
@@ -108,7 +107,10 @@ func (c *localControlPlane) Run(clusterID *installconfig.ClusterID, installConfi
 		if err := kf.Close(); err != nil {
 			return err
 		}
-		c.KubeconfigPath = kf.Name()
+		c.KubeconfigPath, err = filepath.Abs(kf.Name())
+		if err != nil {
+			return err
+		}
 	}
 
 	// Create a new client to interact with the cluster.

@@ -122,6 +122,11 @@ type ManagedClusterSpec struct {
 
 	// OIDCIssuerProfile is the OIDC issuer profile of the Managed Cluster.
 	OIDCIssuerProfile *OIDCIssuerProfile
+
+	// DNSPrefix allows the user to customize dns prefix.
+	DNSPrefix *string
+	// DisableLocalAccounts disables getting static credentials for this cluster when set. Expected to only be used for AAD clusters.
+	DisableLocalAccounts *bool
 }
 
 // HTTPProxyConfig is the HTTP proxy configuration for the cluster.
@@ -326,7 +331,7 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existing interface{
 		Properties: &armcontainerservice.ManagedClusterProperties{
 			NodeResourceGroup: &s.NodeResourceGroup,
 			EnableRBAC:        ptr.To(true),
-			DNSPrefix:         &s.Name,
+			DNSPrefix:         s.DNSPrefix,
 			KubernetesVersion: &s.Version,
 
 			ServicePrincipalProfile: &armcontainerservice.ManagedClusterServicePrincipalProfile{
@@ -386,6 +391,9 @@ func (s *ManagedClusterSpec) Parameters(ctx context.Context, existing interface{
 			Managed:             &s.AADProfile.Managed,
 			EnableAzureRBAC:     &s.AADProfile.EnableAzureRBAC,
 			AdminGroupObjectIDs: azure.PtrSlice[string](&s.AADProfile.AdminGroupObjectIDs),
+		}
+		if s.DisableLocalAccounts != nil {
+			managedCluster.Properties.DisableLocalAccounts = s.DisableLocalAccounts
 		}
 	}
 
@@ -735,6 +743,14 @@ func computeDiffOfNormalizedClusters(managedCluster armcontainerservice.ManagedC
 		existingMCClusterNormalized.Properties.OidcIssuerProfile = &armcontainerservice.ManagedClusterOIDCIssuerProfile{
 			Enabled: existingMC.Properties.OidcIssuerProfile.Enabled,
 		}
+	}
+
+	if managedCluster.Properties.DisableLocalAccounts != nil {
+		clusterNormalized.Properties.DisableLocalAccounts = managedCluster.Properties.DisableLocalAccounts
+	}
+
+	if existingMC.Properties.DisableLocalAccounts != nil {
+		existingMCClusterNormalized.Properties.DisableLocalAccounts = existingMC.Properties.DisableLocalAccounts
 	}
 
 	diff := cmp.Diff(clusterNormalized, existingMCClusterNormalized)

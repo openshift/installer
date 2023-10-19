@@ -115,7 +115,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
-	case typesaws.Name:
+	case typesaws.Name, typesazure.Name:
 		return c.generateClusterAPI(parents, installConfig, clusterID)
 	default:
 		return c.generateTerraform(installConfig, clusterID, terraformVariables, platform)

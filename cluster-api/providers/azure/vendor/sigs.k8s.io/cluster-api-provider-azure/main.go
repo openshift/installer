@@ -26,6 +26,7 @@ import (
 
 	// +kubebuilder:scaffold:imports
 	aadpodv1 "github.com/Azure/aad-pod-identity/pkg/apis/aadpodidentity/v1"
+	asonetworkv1 "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701"
 	asoresourcesv1 "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -74,6 +75,7 @@ func init() {
 	_ = expv1.AddToScheme(scheme)
 	_ = kubeadmv1.AddToScheme(scheme)
 	_ = asoresourcesv1.AddToScheme(scheme)
+	_ = asonetworkv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 
 	// Add aadpodidentity v1 to the scheme.
@@ -107,6 +109,7 @@ var (
 	syncPeriod                         time.Duration
 	healthAddr                         string
 	webhookPort                        int
+	webhookCertDir                     string
 	reconcileTimeout                   time.Duration
 	enableTracing                      bool
 )
@@ -219,8 +222,11 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&webhookPort,
 		"webhook-port",
 		9443,
-		"Webhook Server port, disabled by default. When enabled, the manager will only work as webhook server, no reconcilers are installed.",
+		"The webhook server port the manager will listen on.",
 	)
+
+	fs.StringVar(&webhookCertDir, "webhook-cert-dir", "/tmp/k8s-webhook-server/serving-certs/",
+		"The webhook certificate directory, where the server should find the TLS certificate and key.")
 
 	fs.DurationVar(&reconcileTimeout,
 		"reconcile-timeout",
@@ -287,7 +293,8 @@ func main() {
 			},
 		},
 		WebhookServer: webhook.NewServer(webhook.Options{
-			Port: webhookPort,
+			Port:    webhookPort,
+			CertDir: webhookCertDir,
 		}),
 		EventBroadcaster: broadcaster,
 	})

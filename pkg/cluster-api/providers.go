@@ -17,7 +17,9 @@ var (
 	AWS = provider("aws")
 	// Azure is the provider for creating resources in Azure.
 	Azure = provider("azure")
-	// IBMCloud is the provider for creating resources in IBM Cloud.
+	// AzureASO is a companion component to Azure that is used to create resources declaratively.
+	AzureASO = provider("azureaso")
+	// IBMCloud is the provider for creating resources in IBM Cloud and powervs.
 	IBMCloud = provider("ibmcloud")
 	// GCP is the provider for creating resources in GCP.
 	GCP = provider("gcp")
@@ -55,7 +57,7 @@ func (p Provider) Extract(dir string) error {
 	destDir := destProviderDir
 	srcDir := filepath.Join("mirror", providerDir)
 	logrus.Debugf("creating %s directory", destDir)
-	if err := os.MkdirAll(destDir, 0777); err != nil {
+	if err := os.MkdirAll(destDir, 0o777); err != nil {
 		return errors.Wrapf(err, "could not make directory for the %s provider", p.Name)
 	}
 	if err := unpack(srcDir, destDir); err != nil {
@@ -74,7 +76,7 @@ func unpack(srcDir, destDir string) error {
 			childSrcDir := filepath.Join(srcDir, entry.Name())
 			childDestDir := filepath.Join(destDir, entry.Name())
 			logrus.Debugf("creating %s directory", childDestDir)
-			if err := os.Mkdir(childDestDir, 0777); err != nil {
+			if err := os.Mkdir(childDestDir, 0o777); err != nil {
 				return err
 			}
 			if err := unpack(childSrcDir, childDestDir); err != nil {
@@ -96,7 +98,7 @@ func unpackFile(srcPath, destPath string) error {
 		return err
 	}
 	defer srcFile.Close()
-	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o777)
 	if err != nil {
 		return err
 	}
@@ -110,7 +112,7 @@ func unpackFile(srcPath, destPath string) error {
 // UnpackClusterAPIBinary unpacks the cluster-api binary from the embedded data so that it can be run to create the
 // infrastructure for the cluster.
 func UnpackClusterAPIBinary(dir string) error {
-	if err := os.MkdirAll(dir, 0777); err != nil {
+	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return err
 	}
 	return unpack("mirror/cluster-api", dir)
@@ -119,7 +121,7 @@ func UnpackClusterAPIBinary(dir string) error {
 // UnpackEnvtestBinaries unpacks the envtest binaries from the embedded data so that it can be run to create the
 // infrastructure for the cluster.
 func UnpackEnvtestBinaries(dir string) error {
-	if err := os.MkdirAll(dir, 0777); err != nil {
+	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return err
 	}
 	return unpack("mirror/envtest", dir)

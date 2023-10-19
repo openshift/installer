@@ -21,7 +21,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
-	"github.com/Azure/go-autorest/autorest"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -40,12 +39,11 @@ type Pauser interface {
 // ServiceReconciler is an Azure service reconciler which can reconcile an Azure service.
 type ServiceReconciler interface {
 	Name() string
-	IsManaged(ctx context.Context) (bool, error)
 	Reconciler
 }
 
-// Authorizer is an interface which can get the subscription ID, base URI, and authorizer for an Azure service.
-// The Authorizer field is used by SDKv1 services while the Token is used by SDKv2 services.
+// Authorizer is an interface which can get details such as subscription ID, base URI, and token
+// for authorizing to an Azure service.
 type Authorizer interface {
 	SubscriptionID() string
 	ClientID() string
@@ -53,7 +51,6 @@ type Authorizer interface {
 	CloudEnvironment() string
 	TenantID() string
 	BaseURI() string
-	Authorizer() autorest.Authorizer
 	HashKey() string
 	Token() azcore.TokenCredential
 }
@@ -138,14 +135,14 @@ type ResourceSpecGetterWithHeaders interface {
 }
 
 // ASOResourceSpecGetter is an interface for getting all the required information to create/update/delete an Azure resource.
-type ASOResourceSpecGetter interface {
+type ASOResourceSpecGetter[T genruntime.MetaObject] interface {
 	// ResourceRef returns a concrete, named (and namespaced if applicable) ASO
 	// resource type to facilitate a strongly-typed GET.
-	ResourceRef() genruntime.MetaObject
+	ResourceRef() T
 	// Parameters returns a modified object if it points to a non-nil resource.
-	// Otherwise it returns a new value or nil if no updates are needed.
-	Parameters(ctx context.Context, object genruntime.MetaObject) (genruntime.MetaObject, error)
+	// Otherwise it returns an unmodified object if no updates are needed.
+	Parameters(ctx context.Context, existing T) (T, error)
 	// WasManaged returns whether or not the given resource was managed by a
 	// non-ASO-backed CAPZ and should be considered eligible for adoption.
-	WasManaged(genruntime.MetaObject) bool
+	WasManaged(T) bool
 }

@@ -3,15 +3,15 @@ module github.com/openshift/installer
 go 1.20
 
 require (
-	cloud.google.com/go/monitoring v1.13.0
+	cloud.google.com/go/monitoring v1.15.1
 	github.com/AlecAivazis/survey/v2 v2.3.5
-	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.1.0
+	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4 v4.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
-	github.com/Azure/go-autorest/autorest v0.11.28
+	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 	github.com/IBM-Cloud/power-go-client v1.2.0
@@ -47,7 +47,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-exec v0.17.3
-	github.com/jongio/azidext/go/azidext v0.4.0
+	github.com/jongio/azidext/go/azidext v0.5.0
 	github.com/kdomanski/iso9660 v0.2.1
 	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/metal3-io/baremetal-operator/apis v0.2.0
@@ -75,7 +75,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.10.1
+	github.com/pkg/sftp v1.13.6
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/common v0.44.0
 	github.com/rogpeppe/go-internal v1.11.0
@@ -93,36 +93,41 @@ require (
 	golang.org/x/sys v0.13.0
 	golang.org/x/term v0.13.0
 	google.golang.org/api v0.130.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
-	google.golang.org/grpc v1.56.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5
+	google.golang.org/grpc v1.58.2
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.28.2
-	k8s.io/apiextensions-apiserver v0.28.0
-	k8s.io/apimachinery v0.28.2
+	k8s.io/api v0.28.3
+	k8s.io/apiextensions-apiserver v0.28.3
+	k8s.io/apimachinery v0.28.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.100.1
-	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/cluster-api v1.5.2
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.2.4
+	sigs.k8s.io/cluster-api-provider-azure v0.0.0-00010101000000-000000000000
 	sigs.k8s.io/controller-runtime v0.16.2
 	sigs.k8s.io/controller-tools v0.10.0
 	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
-	cloud.google.com/go/compute v1.20.1 // indirect
+	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.2.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4 v4.3.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.21 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12 // indirect
+	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
@@ -137,6 +142,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/coreos/vcontext v0.0.0-20230201181013-d72178a18687 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.7.0 // indirect
@@ -157,6 +163,7 @@ require (
 	github.com/gobuffalo/flect v1.0.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -166,7 +173,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.2.0 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/terraform-json v0.14.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
@@ -205,7 +212,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
+	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
@@ -214,20 +221,21 @@ require (
 	github.com/zclconf/go-cty v1.11.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.11.1 // indirect
-	go.opentelemetry.io/otel/trace v1.11.1 // indirect
+	go.opentelemetry.io/otel v1.19.0 // indirect
+	go.opentelemetry.io/otel/metric v1.19.0 // indirect
+	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/mod v0.13.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.12.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 // indirect
+	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
@@ -236,7 +244,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/cluster-bootstrap v0.27.2 // indirect
-	k8s.io/component-base v0.28.2 // indirect
+	k8s.io/component-base v0.28.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
@@ -255,7 +263,9 @@ replace (
 
 replace sigs.k8s.io/cluster-api-provider-aws/v2 => github.com/vincepri/cluster-api-provider-aws/v2 v2.0.0-20231013205918-8347c5355060
 
-replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231005234617-5771399a8ce5
+replace sigs.k8s.io/cluster-api-provider-azure => github.com/vincepri/cluster-api-provider-azure v1.11.1-0.20231018134233-b48d68682d3e
+
+replace sigs.k8s.io/controller-runtime => github.com/vincepri/controller-runtime v0.15.0-beta.0.0.20231019000313-ebeba1cb6aa2
 
 // Pin MCO so it doesn't get downgraded
 replace github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8

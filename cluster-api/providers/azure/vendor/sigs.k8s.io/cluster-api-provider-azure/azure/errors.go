@@ -33,11 +33,6 @@ func ResourceNotFound(err error) bool {
 	return hasStatusCode(err, http.StatusNotFound)
 }
 
-// ResourceConflict parses an error to check if its status code is Conflict (409).
-func ResourceConflict(err error) bool {
-	return hasStatusCode(err, http.StatusConflict)
-}
-
 // hasStatusCode returns true if an error is a DetailedError or ResponseError with a matching status code.
 func hasStatusCode(err error, statusCode int) bool {
 	derr := autorest.DetailedError{} // azure-sdk-for-go v1

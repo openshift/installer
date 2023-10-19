@@ -76,7 +76,9 @@ type State struct {
 	// For example, the /healthz endpoint of the k8s API server, or the /health endpoint of etcd.
 	HealthCheck HealthCheck
 
+	Dir  string
 	Args []string
+	Env  []string
 
 	StopTimeout  time.Duration
 	StartTimeout time.Duration
@@ -143,8 +145,10 @@ func (ps *State) Start(ctx context.Context, stdout io.Writer, stderr io.Writer) 
 	}
 
 	ps.Cmd = exec.CommandContext(ctx, ps.Path, ps.Args...) //nolint:gosec
+	ps.Cmd.Env = append(ps.Cmd.Environ(), ps.Env...)
 	ps.Cmd.Stdout = stdout
 	ps.Cmd.Stderr = stderr
+	ps.Cmd.Dir = ps.Dir
 	ps.Cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: true,
 	}

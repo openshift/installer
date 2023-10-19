@@ -31,6 +31,7 @@ import (
 // CredentialGetter is a helper interface for getting managed cluster credentials.
 type CredentialGetter interface {
 	GetCredentials(context.Context, string, string) ([]byte, error)
+	GetUserCredentials(context.Context, string, string) ([]byte, error)
 }
 
 // azureClient contains the Azure go-sdk Client.
@@ -79,6 +80,23 @@ func (ac *azureClient) GetCredentials(ctx context.Context, resourceGroupName, na
 
 	if len(credentialList.Kubeconfigs) == 0 {
 		return nil, errors.New("no kubeconfigs available for the managed cluster")
+	}
+
+	return credentialList.Kubeconfigs[0].Value, nil
+}
+
+// GetUserCredentials fetches the user kubeconfig for a managed cluster.
+func (ac *azureClient) GetUserCredentials(ctx context.Context, resourceGroupName, name string) ([]byte, error) {
+	ctx, _, done := tele.StartSpanWithLogger(ctx, "managedclusters.azureClient.GetCredentials")
+	defer done()
+
+	credentialList, err := ac.managedclusters.ListClusterUserCredentials(ctx, resourceGroupName, name, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(credentialList.Kubeconfigs) == 0 {
+		return nil, errors.New("no user kubeconfigs available for the managed cluster")
 	}
 
 	return credentialList.Kubeconfigs[0].Value, nil

@@ -9,17 +9,12 @@ package azidentity
 import (
 	"context"
 	"crypto"
-	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/pem"
 	"errors"
-	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	"golang.org/x/crypto/pkcs12"
 )
@@ -30,6 +25,15 @@ const credNameCert = "ClientCertificateCredential"
 type ClientCertificateCredentialOptions struct {
 	azcore.ClientOptions
 
+	// AdditionallyAllowedTenants specifies additional tenants for which the credential may acquire tokens.
+	// Add the wildcard value "*" to allow the credential to acquire tokens for any tenant in which the
+	// application is registered.
+	AdditionallyAllowedTenants []string
+	// DisableInstanceDiscovery should be set true only by applications authenticating in disconnected clouds, or
+	// private clouds such as Azure Stack. It determines whether the credential requests Azure AD instance metadata
+	// from https://login.microsoft.com before authenticating. Setting this to true will skip this request, making
+	// the application responsible for ensuring the configured authority is valid and trustworthy.
+	DisableInstanceDiscovery bool
 	// SendCertificateChain controls whether the credential sends the public certificate chain in the x5c
 	// header of each token request's JWT. This is required for Subject Name/Issuer (SNI) authentication.
 	// Defaults to False.
@@ -38,7 +42,7 @@ type ClientCertificateCredentialOptions struct {
 
 // ClientCertificateCredential authenticates a service principal with a certificate.
 type ClientCertificateCredential struct {
-	client confidentialClient
+	client *confidentialClient
 }
 
 // NewClientCertificateCredential constructs a ClientCertificateCredential. Pass nil for options to accept defaults.
@@ -46,37 +50,20 @@ func NewClientCertificateCredential(tenantID string, clientID string, certs []*x
 	if len(certs) == 0 {
 		return nil, errors.New("at least one certificate is required")
 	}
-	pk, ok := key.(*rsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("'key' must be an *rsa.PrivateKey")
-	}
-	if !validTenantID(tenantID) {
-		return nil, errors.New(tenantIDValidationErr)
-	}
 	if options == nil {
 		options = &ClientCertificateCredentialOptions{}
 	}
-	authorityHost, err := setAuthorityHost(options.Cloud)
+	cred, err := confidential.NewCredFromCert(certs, key)
 	if err != nil {
 		return nil, err
 	}
-	cert, err := newCertContents(certs, pk, options.SendCertificateChain)
-	if err != nil {
-		return nil, err
+	msalOpts := confidentialClientOptions{
+		AdditionallyAllowedTenants: options.AdditionallyAllowedTenants,
+		ClientOptions:              options.ClientOptions,
+		DisableInstanceDiscovery:   options.DisableInstanceDiscovery,
+		SendX5C:                    options.SendCertificateChain,
 	}
-	cred := confidential.NewCredFromCert(cert.c, key) // TODO: NewCredFromCert should take a slice
-	if err != nil {
-		return nil, err
-	}
-	o := []confidential.Option{
-		confidential.WithAuthority(runtime.JoinPaths(authorityHost, tenantID)),
-		confidential.WithHTTPClient(newPipelineAdapter(&options.ClientOptions)),
-		confidential.WithAzureRegion(os.Getenv(azureRegionalAuthorityName)),
-	}
-	if options.SendCertificateChain {
-		o = append(o, confidential.WithX5C())
-	}
-	c, err := confidential.New(clientID, cred, o...)
+	c, err := newConfidentialClient(tenantID, clientID, credNameCert, cred, msalOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -85,21 +72,7 @@ func NewClientCertificateCredential(tenantID string, clientID string, certs []*x
 
 // GetToken requests an access token from Azure Active Directory. This method is called automatically by Azure SDK clients.
 func (c *ClientCertificateCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (azcore.AccessToken, error) {
-	if len(opts.Scopes) == 0 {
-		return azcore.AccessToken{}, errors.New(credNameCert + ": GetToken() requires at least one scope")
-	}
-	ar, err := c.client.AcquireTokenSilent(ctx, opts.Scopes)
-	if err == nil {
-		logGetTokenSuccess(c, opts)
-		return azcore.AccessToken{Token: ar.AccessToken, ExpiresOn: ar.ExpiresOn.UTC()}, err
-	}
-
-	ar, err = c.client.AcquireTokenByCredential(ctx, opts.Scopes)
-	if err != nil {
-		return azcore.AccessToken{}, newAuthenticationFailedErrorFromMSALError(credNameCert, err)
-	}
-	logGetTokenSuccess(c, opts)
-	return azcore.AccessToken{Token: ar.AccessToken, ExpiresOn: ar.ExpiresOn.UTC()}, err
+	return c.client.GetToken(ctx, opts)
 }
 
 // ParseCertificates loads certificates and a private key, in PEM or PKCS12 format, for use with NewClientCertificateCredential.
@@ -154,36 +127,6 @@ func ParseCertificates(certData []byte, password []byte) ([]*x509.Certificate, c
 		return nil, nil, errors.New("found no private key")
 	}
 	return certs, pk, nil
-}
-
-type certContents struct {
-	c   *x509.Certificate // the signing cert
-	fp  []byte            // the signing cert's fingerprint, a SHA-1 digest
-	pk  *rsa.PrivateKey   // the signing key
-	x5c []string          // concatenation of every provided cert, base64 encoded
-}
-
-func newCertContents(certs []*x509.Certificate, key *rsa.PrivateKey, sendCertificateChain bool) (*certContents, error) {
-	cc := certContents{pk: key}
-	// need the the signing cert's fingerprint: identify that cert by matching its public key to the private key
-	for _, cert := range certs {
-		certKey, ok := cert.PublicKey.(*rsa.PublicKey)
-		if ok && key.E == certKey.E && key.N.Cmp(certKey.N) == 0 {
-			fp := sha1.Sum(cert.Raw)
-			cc.fp = fp[:]
-			cc.c = cert
-			if sendCertificateChain {
-				// signing cert must be first in x5c
-				cc.x5c = append([]string{base64.StdEncoding.EncodeToString(cert.Raw)}, cc.x5c...)
-			}
-		} else if sendCertificateChain {
-			cc.x5c = append(cc.x5c, base64.StdEncoding.EncodeToString(cert.Raw))
-		}
-	}
-	if len(cc.fp) == 0 || cc.c == nil {
-		return nil, errors.New("found no certificate matching 'key'")
-	}
-	return &cc, nil
 }
 
 func loadPEMCert(certData []byte) ([]*pem.Block, error) {

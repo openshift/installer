@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # If you update this file, please follow
-# https://suva.sh/posts/well-documented-makefiles
+# https://suva.sh/en/writings/well-documented-makefiles
 
 # Ensure Make is run with bash shell as some syntax below is bash-specific
 SHELL:=/usr/bin/env bash
@@ -33,7 +33,7 @@ export GOPROXY
 export GO111MODULE=on
 
 # Kubebuilder.
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.20.2
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.27
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -89,7 +89,7 @@ KUSTOMIZE_VER := v4.5.2
 KUSTOMIZE_BIN := kustomize
 KUSTOMIZE := $(TOOLS_BIN_DIR)/$(KUSTOMIZE_BIN)-$(KUSTOMIZE_VER)
 
-MOCKGEN_VER := v0.2.0
+MOCKGEN_VER := v0.3.0
 MOCKGEN_BIN := mockgen
 MOCKGEN := $(TOOLS_BIN_DIR)/$(MOCKGEN_BIN)-$(MOCKGEN_VER)
 
@@ -105,7 +105,7 @@ GO_APIDIFF_VER := v0.6.0
 GO_APIDIFF_BIN := go-apidiff
 GO_APIDIFF := $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)
 
-GINKGO_VER := v2.12.0
+GINKGO_VER := v2.13.0
 GINKGO_BIN := ginkgo
 GINKGO := $(TOOLS_BIN_DIR)/$(GINKGO_BIN)-$(GINKGO_VER)
 
@@ -125,7 +125,7 @@ KIND_VER := v0.20.0
 KIND_BIN := kind
 KIND :=  $(TOOLS_BIN_DIR)/$(KIND_BIN)-$(KIND_VER)
 
-CODESPELL_VER := 2.2.5
+CODESPELL_VER := 2.2.6
 CODESPELL_BIN := codespell
 CODESPELL_DIST_DIR := codespell_dist
 CODESPELL := $(TOOLS_BIN_DIR)/$(CODESPELL_DIST_DIR)/$(CODESPELL_BIN)
@@ -135,11 +135,7 @@ SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-ifeq ($(shell go env GOOS),darwin) # Use the darwin/amd64 binary until an arm64 version is available
-	KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
-else
-	KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
-endif
+KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 
 # Define Docker related variables. Releases should modify and double check these vars.
 ifeq (,$(shell command -v gcloud))
@@ -162,7 +158,7 @@ WEBHOOK_ROOT ?= $(MANIFEST_ROOT)/webhook
 RBAC_ROOT ?= $(MANIFEST_ROOT)/rbac
 ASO_CRDS_PATH := $(MANIFEST_ROOT)/aso/crds.yaml
 ASO_VERSION := v2.3.0
-ASO_CRDS := resourcegroups.resources.azure.com
+ASO_CRDS := resourcegroups.resources.azure.com natgateways.network.azure.com
 
 # Allow overriding the imagePullPolicy
 PULL_POLICY ?= Always
@@ -307,6 +303,9 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KUBECTL) $(KIND) ## Create
 	# Deploy CAPI
 	curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.5.2/cluster-api-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -
 
+	# Deploy CAAPH
+	curl --retry $(CURL_RETRIES) -sSL https://github.com/kubernetes-sigs/cluster-api-addon-provider-helm/releases/download/v0.1.0-alpha.9/addon-components.yaml | $(ENVSUBST) | $(KUBECTL) apply -f -
+
 	# Deploy CAPZ
 	$(KIND) load docker-image $(CONTROLLER_IMG)-$(ARCH):$(TAG) --name=$(KIND_CLUSTER_NAME)
 	$(KUSTOMIZE) build config/default | $(ENVSUBST) | $(KUBECTL) apply -f -
@@ -315,6 +314,9 @@ create-management-cluster: $(KUSTOMIZE) $(ENVSUBST) $(KUBECTL) $(KIND) ## Create
 	$(KUBECTL) wait --for=condition=Available --timeout=5m -n capi-system deployment -l cluster.x-k8s.io/provider=cluster-api
 	$(KUBECTL) wait --for=condition=Available --timeout=5m -n capi-kubeadm-bootstrap-system deployment -l cluster.x-k8s.io/provider=bootstrap-kubeadm
 	$(KUBECTL) wait --for=condition=Available --timeout=5m -n capi-kubeadm-control-plane-system deployment -l cluster.x-k8s.io/provider=control-plane-kubeadm
+
+	# Wait for CAAPH deployment
+	$(KUBECTL) wait --for=condition=Available --timeout=5m -n caaph-system deployment -l cluster.x-k8s.io/provider=helm
 
 	# Wait for the ClusterResourceSet CRD resource to be "installed" onto the mgmt cluster before installing CRS addons
 	timeout --foreground 300 bash -c "until $(KUBECTL) get clusterresourcesets -A; do sleep 3; done"

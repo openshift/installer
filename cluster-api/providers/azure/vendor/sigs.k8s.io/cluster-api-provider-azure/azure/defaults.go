@@ -24,7 +24,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
-	"github.com/Azure/go-autorest/autorest"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	"sigs.k8s.io/cluster-api-provider-azure/version"
 )
@@ -69,7 +68,7 @@ const (
 
 const (
 	// DefaultWindowsOsAndVersion is the default Windows Server version to use when
-	// genearating default images for Windows nodes.
+	// generating default images for Windows nodes.
 	DefaultWindowsOsAndVersion = "windows-2019"
 )
 
@@ -402,37 +401,4 @@ func (p CustomPutPatchHeaderPolicy) Do(req *policy.Request) (*http.Response, err
 	}
 
 	return req.Next()
-}
-
-// SetAutoRestClientDefaults set authorizer and user agent for autorest client.
-func SetAutoRestClientDefaults(c *autorest.Client, auth autorest.Authorizer) {
-	c.Authorizer = auth
-	// Wrap the original Sender on the autorest.Client c.
-	// The wrapped Sender should set the x-ms-correlation-request-id on the given
-	// request, then pass the new request to the underlying Sender.
-	c.Sender = autorest.DecorateSender(c.Sender, msCorrelationIDSendDecorator)
-	// The default number of retries is 3. This means the client will attempt to retry operation results like resource
-	// conflicts (HTTP 409). For a reconciling controller, this is undesirable behavior since if the controller runs
-	// into an error reconciling, the controller would be better off to end with an error and try again later.
-	//
-	// Unfortunately, the naming of this field is a bit misleading. This is not actually "retry attempts", it actually
-	// is attempts. Setting this to a value of 0 will cause a panic in Go AutoRest.
-	c.RetryAttempts = 1
-	AutoRestClientAppendUserAgent(c, UserAgent())
-}
-
-// AutoRestClientAppendUserAgent autorest client calls "AddToUserAgent" but ignores errors.
-func AutoRestClientAppendUserAgent(c *autorest.Client, extension string) {
-	_ = c.AddToUserAgent(extension) // intentionally ignore error as it doesn't matter
-}
-
-func msCorrelationIDSendDecorator(snd autorest.Sender) autorest.Sender {
-	return autorest.SenderFunc(func(r *http.Request) (*http.Response, error) {
-		// if the correlation ID was found in the request context, set
-		// it in the header
-		if corrID, ok := tele.CorrIDFromCtx(r.Context()); ok {
-			r.Header.Set(string(tele.CorrIDKeyVal), string(corrID))
-		}
-		return snd.Do(r)
-	})
 }

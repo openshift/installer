@@ -9,8 +9,9 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -18,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
+	"github.com/openshift/installer/pkg/asset/manifests/internal/cidr"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -29,9 +31,7 @@ const (
 	capiGuestsNamespace = "openshift-cluster-api-guests"
 )
 
-var (
-	_ asset.WritableAsset = (*ClusterAPI)(nil)
-)
+var _ asset.WritableAsset = (*ClusterAPI)(nil)
 
 // ClusterAPI generates manifests for target cluster
 // creation using CAPI.
@@ -83,8 +83,18 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			Namespace: capiGuestsNamespace,
 		},
 		Spec: clusterv1.ClusterSpec{
-			InfrastructureRef: &v1.ObjectReference{},
+			InfrastructureRef: &v1.ObjectReference{
+				Namespace: capiGuestsNamespace,
+				Name:      clusterID.InfraID,
+			},
 		},
+	}
+
+	// Retrieve the AZs available and generate the subnets private
+	// and public.
+	mainCIDR := ipnet.MustParseCIDR("10.0.0.0/16")
+	if len(installConfig.Config.MachineNetwork) > 0 {
+		mainCIDR = &installConfig.Config.MachineNetwork[0].CIDR
 	}
 
 	switch platform {
@@ -94,12 +104,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create IAM roles")
 		}
 
-		// Retrieve the AZs available and generate the subnets private
-		// and public.
-		cidr := ipnet.MustParseCIDR("10.0.0.0/16")
-		if len(installConfig.Config.MachineNetwork) > 0 {
-			cidr = &installConfig.Config.MachineNetwork[0].CIDR
-		}
 		zones, err := installConfig.AWS.AvailabilityZones(context.TODO())
 		if err != nil {
 			return errors.Wrap(err, "failed to get availability zones")
@@ -111,11 +115,11 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				Namespace: capiGuestsNamespace,
 			},
 			Spec: capa.AWSClusterSpec{
-				Region: installConfig.Config.Platform.AWS.Region,
+				Region: installConfig.Config.AWS.Region,
 				NetworkSpec: capa.NetworkSpec{
 					VPC: capa.VPCSpec{
-						CidrBlock:                  cidr.String(),
-						AvailabilityZoneUsageLimit: pointer.Int(len(zones)),
+						CidrBlock:                  mainCIDR.String(),
+						AvailabilityZoneUsageLimit: ptr.To(len(zones)),
 						AvailabilityZoneSelection:  &capa.AZSelectionSchemeOrdered,
 					},
 					CNI: &capa.CNISpec{
@@ -230,7 +234,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 				},
 				ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-					Name:             pointer.String(clusterID.InfraID + "-ext"),
+					Name:             ptr.To(clusterID.InfraID + "-ext"),
 					LoadBalancerType: capa.LoadBalancerTypeNLB,
 					Scheme:           &capa.ELBSchemeInternetFacing,
 					AdditionalListeners: []*capa.AdditionalListenerSpec{
@@ -285,27 +289,116 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 		cluster.Spec.InfrastructureRef.APIVersion = "infrastructure.cluster.x-k8s.io/v1beta2"
 		cluster.Spec.InfrastructureRef.Kind = "AWSCluster"
-		cluster.Spec.InfrastructureRef.Name = clusterID.InfraID
 
 		id := &capa.AWSClusterControllerIdentity{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AWSClusterControllerIdentity",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "default",
 			},
 			Spec: capa.AWSClusterControllerIdentitySpec{
 				AWSClusterIdentitySpec: capa.AWSClusterIdentitySpec{
-					AllowedNamespaces: &capa.AllowedNamespaces{
-						// TODO: The godoc for this field indicates:
-						// An nil or empty list indicates that AWSClusters cannot use the identity from any namespace.
-						// Our internal notes say:
-						// https://github.com/openshift-cloud-team/cluster-api-installer-poc/blob/main/templates/00_aws-cluster-controller-identity-default.yaml
-						// allowedNamespaces: {}  # matches all namespaces
-						// Check if this is a discrepency.
+					AllowedNamespaces: &capa.AllowedNamespaces{}, // Allow all namespaces.
+				},
+			},
+		}
+		idFn := "00_aws-cluster-controller-identity-default.yaml"
+		c.Manifests = append(c.Manifests, Manifest{id, idFn})
+	case "azure":
+		session, err := installConfig.Azure.Session()
+		if err != nil {
+			return errors.Wrap(err, "failed to create Azure session")
+		}
+
+		subnets, err := cidr.SplitIntoSubnetsIPv4(mainCIDR.String(), 2)
+		if err != nil {
+			return errors.Wrap(err, "failed to split CIDR into subnets")
+		}
+
+		// CAPZ expects the capz-system to be created.
+		azureNamespace := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
+		azureNamespaceFn := "00_azure-namespace.yaml"
+		c.Manifests = append(c.Manifests, Manifest{azureNamespace, azureNamespaceFn})
+
+		azureCluster := &capz.AzureCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      clusterID.InfraID,
+				Namespace: capiGuestsNamespace,
+			},
+			Spec: capz.AzureClusterSpec{
+				ResourceGroup: clusterID.InfraID,
+				AzureClusterClassSpec: capz.AzureClusterClassSpec{
+					SubscriptionID:   session.Credentials.SubscriptionID,
+					Location:         installConfig.Config.Azure.Region,
+					AzureEnvironment: string(installConfig.Azure.CloudName),
+					IdentityRef: &v1.ObjectReference{
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+						Kind:       "AzureClusterIdentity",
+						Name:       clusterID.InfraID,
 					},
 				},
+				NetworkSpec: capz.NetworkSpec{
+					Vnet: capz.VnetSpec{
+						ID: installConfig.Config.Azure.VirtualNetwork,
+						VnetClassSpec: capz.VnetClassSpec{
+							CIDRBlocks: []string{
+								mainCIDR.String(),
+							},
+						},
+					},
+					Subnets: capz.Subnets{
+						{
+							SubnetClassSpec: capz.SubnetClassSpec{
+								Name: "control-plane-subnet",
+								Role: capz.SubnetControlPlane,
+								CIDRBlocks: []string{
+									subnets[0].String(),
+								},
+							},
+						},
+						{
+							SubnetClassSpec: capz.SubnetClassSpec{
+								Name: "worker-subnet",
+								Role: capz.SubnetNode,
+								CIDRBlocks: []string{
+									subnets[1].String(),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		azureClusterFn := "01_azure-cluster.yaml"
+		c.Manifests = append(c.Manifests, Manifest{azureCluster, azureClusterFn})
+
+		cluster.Spec.InfrastructureRef.APIVersion = "infrastructure.cluster.x-k8s.io/v1beta1"
+		cluster.Spec.InfrastructureRef.Kind = "AzureCluster"
+
+		azureClientSecret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      clusterID.InfraID + "-azure-client-secret",
+				Namespace: capiGuestsNamespace,
+			},
+			StringData: map[string]string{
+				"clientSecret": session.Credentials.ClientSecret,
+			},
+		}
+		azureClientSecretFn := "00_azure-client-secret.yaml"
+		c.Manifests = append(c.Manifests, Manifest{azureClientSecret, azureClientSecretFn})
+
+		id := &capz.AzureClusterIdentity{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: clusterID.InfraID,
+			},
+			Spec: capz.AzureClusterIdentitySpec{
+				Type:              capz.ManualServicePrincipal,
+				AllowedNamespaces: &capz.AllowedNamespaces{}, // Allow all namespaces.
+				ClientID:          session.Credentials.ClientID,
+				ClientSecret: v1.SecretReference{
+					Name:      azureClientSecret.Name,
+					Namespace: azureClientSecret.Namespace,
+				},
+				TenantID: session.Credentials.TenantID,
 			},
 		}
 		idFn := "00_aws-cluster-controller-identity-default.yaml"
@@ -314,6 +407,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
+	// Create the infrastructure manifest.
 	clusterFn := "01-capi-cluster.yaml"
 	c.Manifests = append(c.Manifests, Manifest{cluster, clusterFn})
 

@@ -346,7 +346,7 @@ def deploy_worker_templates(template, substitutions):
         "CLUSTER_CLASS_NAME": "default",
     }
 
-    if flavor == "aks":
+    if "aks" in flavor:
         # AKS version support is usually a bit behind CAPI version, so use an older version
         substitutions["KUBERNETES_VERSION"] = settings.get("aks_kubernetes_version")
 

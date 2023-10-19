@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/pkg/errors"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/converters"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/tags"
 	"sigs.k8s.io/cluster-api-provider-azure/util/maps"
@@ -32,9 +33,11 @@ import (
 const tagsLastAppliedAnnotation = "sigs.k8s.io/cluster-api-provider-azure-last-applied-tags"
 
 // reconcileTags modifies parameters in place to update its tags and its last-applied annotation.
-func reconcileTags(t TagsGetterSetter, existing genruntime.MetaObject, parameters genruntime.MetaObject) error {
+func reconcileTags[T genruntime.MetaObject](t TagsGetterSetter[T], existing T, resourceExists bool, parameters T) error {
+	var existingTags infrav1.Tags
 	lastAppliedTags := map[string]interface{}{}
-	if existing != nil {
+
+	if resourceExists {
 		lastAppliedTagsJSON := existing.GetAnnotations()[tagsLastAppliedAnnotation]
 		if lastAppliedTagsJSON != "" {
 			err := json.Unmarshal([]byte(lastAppliedTagsJSON), &lastAppliedTags)
@@ -42,30 +45,20 @@ func reconcileTags(t TagsGetterSetter, existing genruntime.MetaObject, parameter
 				return errors.Wrapf(err, "failed to unmarshal JSON from %s annotation", tagsLastAppliedAnnotation)
 			}
 		}
+
+		existingTags = t.GetActualTags(existing)
 	}
 
-	existingTags, err := t.GetActualTags(existing)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get actual tags for %s %s/%s", existing.GetObjectKind().GroupVersionKind(), existing.GetNamespace(), existing.GetName())
-	}
 	existingTagsMap := converters.TagsToMap(existingTags)
-
 	_, createdOrUpdated, deleted, newAnnotation := tags.TagsChanged(lastAppliedTags, t.GetAdditionalTags(), existingTagsMap)
-	desiredTags, err := t.GetDesiredTags(parameters)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get desired tags for %s %s/%s", parameters.GetObjectKind().GroupVersionKind(), parameters.GetNamespace(), parameters.GetName())
-	}
-	newTags := maps.Merge(maps.Merge(existingTags, desiredTags), createdOrUpdated)
+	newTags := maps.Merge(maps.Merge(existingTags, t.GetDesiredTags(parameters)), createdOrUpdated)
 	for k := range deleted {
 		delete(newTags, k)
 	}
 	if len(newTags) == 0 {
 		newTags = nil
 	}
-	err = t.SetTags(parameters, newTags)
-	if err != nil {
-		return errors.Wrapf(err, "failed to set tags for %s %s/%s", existing.GetObjectKind().GroupVersionKind(), existing.GetNamespace(), existing.GetName())
-	}
+	t.SetTags(parameters, newTags)
 
 	// We also need to update the annotation even if nothing changed to
 	// ensure it's set immediately following resource creation.

@@ -22,18 +22,27 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Reconciler is a generic interface used to perform reconciliation of Azure resources backed by ASO.
-type Reconciler interface {
-	CreateOrUpdateResource(ctx context.Context, spec azure.ASOResourceSpecGetter, serviceName string) (result genruntime.MetaObject, err error)
-	DeleteResource(ctx context.Context, spec azure.ASOResourceSpecGetter, serviceName string) (err error)
+type Reconciler[T genruntime.MetaObject] interface {
+	CreateOrUpdateResource(ctx context.Context, spec azure.ASOResourceSpecGetter[T], serviceName string) (result T, err error)
+	DeleteResource(ctx context.Context, spec azure.ASOResourceSpecGetter[T], serviceName string) (err error)
+	PauseResource(ctx context.Context, spec azure.ASOResourceSpecGetter[T], serviceName string) (err error)
 }
 
 // TagsGetterSetter represents an object that supports tags.
-type TagsGetterSetter interface {
+type TagsGetterSetter[T genruntime.MetaObject] interface {
 	GetAdditionalTags() infrav1.Tags
-	GetDesiredTags(resource genruntime.MetaObject) (infrav1.Tags, error)
-	GetActualTags(resource genruntime.MetaObject) (infrav1.Tags, error)
-	SetTags(resource genruntime.MetaObject, tags infrav1.Tags) error
+	GetDesiredTags(resource T) infrav1.Tags
+	GetActualTags(resource T) infrav1.Tags
+	SetTags(resource T, tags infrav1.Tags)
+}
+
+// Scope represents the common functionality related to all scopes needed for ASO services.
+type Scope interface {
+	azure.AsyncStatusUpdater
+	GetClient() client.Client
+	ClusterName() string
 }

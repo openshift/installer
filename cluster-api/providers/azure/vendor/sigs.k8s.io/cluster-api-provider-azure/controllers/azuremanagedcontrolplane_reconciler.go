@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
@@ -138,20 +139,25 @@ func (r *azureManagedControlPlaneService) reconcileKubeconfig(ctx context.Contex
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.azureManagedControlPlaneService.reconcileKubeconfig")
 	defer done()
 
-	kubeConfigData := r.scope.GetKubeConfigData()
-	if kubeConfigData == nil {
-		return nil
-	}
-	kubeConfigSecret := r.scope.MakeEmptyKubeConfigSecret()
+	kubeConfigs := [][]byte{r.scope.GetAdminKubeconfigData(), r.scope.GetUserKubeconfigData()}
 
-	// Always update credentials in case of rotation
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.kubeclient, &kubeConfigSecret, func() error {
-		kubeConfigSecret.Data = map[string][]byte{
-			secret.KubeconfigDataName: kubeConfigData,
+	for i, kubeConfigData := range kubeConfigs {
+		if len(kubeConfigData) == 0 {
+			continue
 		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "failed to kubeconfig secret for cluster")
+		kubeConfigSecret := r.scope.MakeEmptyKubeConfigSecret()
+		if i == 1 {
+			// 2nd kubeconfig is the user kubeconfig
+			kubeConfigSecret.Name = fmt.Sprintf("%s-user", kubeConfigSecret.Name)
+		}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.kubeclient, &kubeConfigSecret, func() error {
+			kubeConfigSecret.Data = map[string][]byte{
+				secret.KubeconfigDataName: kubeConfigData,
+			}
+			return nil
+		}); err != nil {
+			return errors.Wrap(err, "failed to kubeconfig secret for cluster")
+		}
 	}
 
 	return nil

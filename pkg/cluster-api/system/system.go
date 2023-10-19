@@ -1,13 +1,17 @@
 package system
 
 import (
+	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -27,6 +31,12 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
+
+func init() {
+	// Set verbose logging for controller-runtime.
+	flag.Set("v", "2")
+	flag.Parse()
+}
 
 var (
 	wg          = &sync.WaitGroup{}
@@ -91,6 +101,13 @@ func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installc
 			Name:      "Cluster API",
 			Path:      fmt.Sprintf("%s/cluster-api", c.lcp.BinDir),
 			Manifests: []string{c.manifestDir + "/core-components.yaml"},
+			Args: []string{
+				"-v=2",
+				"--metrics-bind-addr=0",
+				"--health-addr={{suggestHealthHostPort}}",
+				"--webhook-port={{.WebhookPort}}",
+				"--webhook-cert-dir={{.WebhookCertDir}}",
+			},
 		},
 	}
 
@@ -98,35 +115,63 @@ func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installc
 
 	switch platform {
 	case aws.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.AWS,
-			[]string{"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true"},
-		))
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&providers.AWS,
+				[]string{
+					"-v=2",
+					"--metrics-bind-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+					"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true",
+				},
+				map[string]string{},
+			),
+		)
 	case azure.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.Azure,
-			[]string{""},
-		))
+		session, err := installConfig.Azure.Session()
+		if err != nil {
+			return fmt.Errorf("failed to create azure session: %w", err)
+		}
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&providers.Azure,
+				[]string{
+					"-v=2",
+					"--metrics-bind-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+				},
+				map[string]string{},
+			),
+			c.getInfrastructureController(
+				&providers.AzureASO,
+				[]string{
+					"--v=0",
+					"--metrics-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+					"--crd-pattern=",
+					"--enable-crd-management=false",
+				}, map[string]string{
+					"POD_NAMESPACE":                     "capz-system",
+					"AZURE_CLIENT_ID":                   session.Credentials.ClientID,
+					"AZURE_CLIENT_SECRET":               session.Credentials.ClientSecret,
+					"AZURE_CLIENT_CERTIFICATE":          session.Credentials.ClientCertificatePath,
+					"AZURE_CLIENT_CERTIFICATE_PASSWORD": session.Credentials.ClientCertificatePassword,
+					"AZURE_TENANT_ID":                   session.Credentials.TenantID,
+					"AZURE_SUBSCRIPTION_ID":             session.Credentials.SubscriptionID,
+				},
+			),
+		)
 	case gcp.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.GCP,
-			[]string{""},
-		))
 	case ibmcloud.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.IBMCloud,
-			[]string{""},
-		))
 	case nutanix.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.Nutanix,
-			[]string{""},
-		))
 	case vsphere.Name:
-		controllers = append(controllers, c.getInfrastructureController(
-			providers.VSphere,
-			[]string{""},
-		))
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}
@@ -157,62 +202,112 @@ func (c *System) Run(clusterID *installconfig.ClusterID, installConfig *installc
 	return nil
 }
 
-func (c *System) getInfrastructureController(provider providers.Provider, args []string) *controller {
+func (c *System) getInfrastructureController(provider *providers.Provider, args []string, env map[string]string) *controller {
+	manifests := []string{}
+	defaultManifestPath := filepath.Join(c.manifestDir, fmt.Sprintf("/%s-infrastructure-components.yaml", provider.Name))
+	if _, err := os.Stat(defaultManifestPath); err == nil {
+		manifests = append(manifests, defaultManifestPath)
+	}
 	return &controller{
+		Provider:  provider,
 		Name:      fmt.Sprintf("%s infrastructure provider", provider.Name),
 		Path:      fmt.Sprintf("%s/cluster-api-provider-%s_%s_%s", filepath.Join(c.lcp.BinDir, provider.Source), provider.Name, runtime.GOOS, runtime.GOARCH),
-		Manifests: []string{filepath.Join(c.manifestDir, fmt.Sprintf("/%s-infrastructure-components.yaml", provider.Name))},
+		Manifests: manifests,
 		Args:      args,
+		Env:       env,
 	}
 }
 
 type controller struct {
-	state *process.State
+	Provider *providers.Provider
+	state    *process.State
 
 	Name      string
+	Dir       string
 	Path      string
 	Manifests []string
 	Args      []string
+	Env       map[string]string
 }
 
 func (c *System) runController(ctx context.Context, ct *controller) error {
+	if ct.Provider != nil {
+		if err := ct.Provider.Extract(c.lcp.BinDir); err != nil {
+			logrus.Fatal(err)
+		}
+	}
+
 	wh := envtest.WebhookInstallOptions{
-		Paths: ct.Manifests,
+		Paths:                   ct.Manifests,
+		IgnoreSchemeConvertible: true,
 	}
 	if err := wh.Install(c.lcp.Cfg); err != nil {
 		return fmt.Errorf("failed to prepare controller %q webhook options: %w", ct.Name, err)
 	}
-	port, host, err := addr.Suggest("")
-	if err != nil {
-		return fmt.Errorf("unable to grab random port for serving health checks on: %w", err)
+
+	var healthHost string
+	var healthPort int
+	funcs := template.FuncMap{
+		"suggestHealthHostPort": func() (string, error) {
+			var err error
+			healthPort, healthHost, err = addr.Suggest("")
+			if err != nil {
+				return "", fmt.Errorf("unable to grab random port: %w", err)
+			}
+			return fmt.Sprintf("%s:%d", healthHost, healthPort), nil
+		},
 	}
 
-	// TODO(vincepri): Check if these args have already been set, and overwrite.
-	ct.Args = append(ct.Args,
-		"-v=2",
-		"--metrics-bind-addr=:0",
-		fmt.Sprintf("--health-addr=%s:%d", host, port),
-		fmt.Sprintf("--kubeconfig=%s", c.lcp.KubeconfigPath),
-		fmt.Sprintf("--webhook-port=%d", wh.LocalServingPort),
-		fmt.Sprintf("--webhook-cert-dir=%s", wh.LocalServingCertDir),
-	)
-	opts := envtest.CRDInstallOptions{
-		Scheme:         c.lcp.Env.Scheme,
-		Paths:          ct.Manifests,
-		WebhookOptions: wh,
+	templateData := map[string]string{
+		"WebhookPort":    fmt.Sprintf("%d", wh.LocalServingPort),
+		"WebhookCertDir": wh.LocalServingCertDir,
 	}
-	if _, err := envtest.InstallCRDs(c.lcp.Cfg, opts); err != nil {
-		return fmt.Errorf("failed to install controller %q manifests in local control plane: %w", ct.Name, err)
+
+	args := make([]string, 0, len(ct.Args))
+	for _, arg := range ct.Args {
+		final := new(bytes.Buffer)
+		tmpl := template.Must(template.New("arg").Funcs(funcs).Parse(arg))
+		if err := tmpl.Execute(final, templateData); err != nil {
+			return fmt.Errorf("failed to render controller %q arg %q: %w", ct.Name, arg, err)
+		}
+		args = append(args, strings.TrimSpace(final.String()))
 	}
+	ct.Args = args
+
+	// Override KUBECONFIG to point to the local control plane.
+	env := []string{}
+	if ct.Env == nil {
+		ct.Env = map[string]string{}
+	}
+	ct.Env["KUBECONFIG"] = c.lcp.KubeconfigPath
+	for key, value := range ct.Env {
+		env = append(env, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	// Install the manifests for the controller, if any.
+	if len(ct.Manifests) > 0 {
+		opts := envtest.CRDInstallOptions{
+			Scheme:         c.lcp.Env.Scheme,
+			Paths:          ct.Manifests,
+			WebhookOptions: wh,
+		}
+		if _, err := envtest.InstallCRDs(c.lcp.Cfg, opts); err != nil {
+			return fmt.Errorf("failed to install controller %q manifests in local control plane: %w", ct.Name, err)
+		}
+	}
+
+	logrus.Infof("Running process: %s with args %v and env %v", ct.Name, ct.Args, env)
 	pr := &process.State{
 		Path:         ct.Path,
 		Args:         ct.Args,
-		StartTimeout: 10 * time.Second,
+		Dir:          ct.Dir,
+		Env:          env,
+		StartTimeout: 60 * time.Second,
 		StopTimeout:  10 * time.Second,
 		HealthCheck: process.HealthCheck{
 			URL: url.URL{
 				Scheme: "http",
-				Host:   fmt.Sprintf("%s:%d", host, port),
+				Host:   fmt.Sprintf("%s:%d", healthHost, healthPort),
 				Path:   "/healthz",
 			},
 		},

@@ -22,18 +22,25 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v4"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/azure"
 	"sigs.k8s.io/cluster-api-provider-azure/azure/services/async"
+	"sigs.k8s.io/cluster-api-provider-azure/azure/services/token"
 	"sigs.k8s.io/cluster-api-provider-azure/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
-const serviceName = "managedcluster"
+const (
+	serviceName        = "managedcluster"
+	kubeletIdentityKey = "kubeletidentity"
 
-const kubeletIdentityKey = "kubeletidentity"
+	// The aadResourceID is the application-id used by the server side. The access token accessing AKS clusters need to be issued for this app.
+	// Refer: https://azure.github.io/kubelogin/concepts/aks.html?highlight=6dae42f8-4368-4678-94ff-3960e28e3630#azure-kubernetes-service-aad-server
+	aadResourceID = "6dae42f8-4368-4678-94ff-3960e28e3630"
+)
 
 // ManagedClusterScope defines the scope interface for a managed cluster.
 type ManagedClusterScope interface {
@@ -43,8 +50,12 @@ type ManagedClusterScope interface {
 	SetControlPlaneEndpoint(clusterv1.APIEndpoint)
 	SetKubeletIdentity(string)
 	MakeEmptyKubeConfigSecret() corev1.Secret
-	GetKubeConfigData() []byte
-	SetKubeConfigData([]byte)
+	GetAdminKubeconfigData() []byte
+	SetAdminKubeconfigData([]byte)
+	GetUserKubeconfigData() []byte
+	SetUserKubeconfigData([]byte)
+	IsAADEnabled() bool
+	AreLocalAccountsDisabled() bool
 	SetOIDCIssuerProfileStatus(*infrav1.OIDCIssuerProfileStatus)
 }
 
@@ -102,11 +113,13 @@ func (s *Service) Reconcile(ctx context.Context) error {
 
 		// Update kubeconfig data
 		// Always fetch credentials in case of rotation
-		kubeConfigData, err := s.GetCredentials(ctx, managedClusterSpec.ResourceGroupName(), managedClusterSpec.ResourceName())
+		adminKubeConfigData, userKubeConfigData, err := s.ReconcileKubeconfig(ctx, managedClusterSpec)
 		if err != nil {
-			return errors.Wrap(err, "failed to get credentials for managed cluster")
+			return errors.Wrap(err, "error while reconciling adminKubeConfigData")
 		}
-		s.Scope.SetKubeConfigData(kubeConfigData)
+
+		s.Scope.SetAdminKubeconfigData(adminKubeConfigData)
+		s.Scope.SetUserKubeconfigData(userKubeConfigData)
 
 		// This field gets populated by AKS when not set by the user. Persist AKS's value so for future diffs,
 		// the "before" reflects the correct value.
@@ -146,4 +159,76 @@ func (s *Service) Delete(ctx context.Context) error {
 // IsManaged returns always returns true as CAPZ does not support BYO managed cluster.
 func (s *Service) IsManaged(ctx context.Context) (bool, error) {
 	return true, nil
+}
+
+// ReconcileKubeconfig will reconcile admin kubeconfig and user kubeconfig.
+/*
+  Returns the admin kubeconfig and user kubeconfig
+  If aad is enabled a user kubeconfig will also get generated and stored in the secret <cluster-name>-kubeconfig-user
+  If we disable local accounts for aad clusters we do not have access to admin kubeconfig, hence we need to create
+  the admin kubeconfig by authenticating with the user credentials and retrieving the token for kubeconfig.
+  The token is used to create the admin kubeconfig.
+  The user needs to ensure to provide service principle with admin aad privileges.
+*/
+func (s *Service) ReconcileKubeconfig(ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) (userKubeConfigData []byte, adminKubeConfigData []byte, err error) {
+	if s.Scope.IsAADEnabled() {
+		if userKubeConfigData, err = s.GetUserKubeconfigData(ctx, managedClusterSpec); err != nil {
+			return nil, nil, errors.Wrap(err, "error while trying to get user kubeconfig")
+		}
+	}
+
+	if s.Scope.AreLocalAccountsDisabled() {
+		userKubeconfigWithToken, err := s.GetUserKubeConfigWithToken(userKubeConfigData, ctx, managedClusterSpec)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "error while trying to get user kubeconfig with token")
+		}
+		return userKubeconfigWithToken, userKubeConfigData, nil
+	}
+
+	adminKubeConfigData, err = s.GetCredentials(ctx, managedClusterSpec.ResourceGroupName(), managedClusterSpec.ResourceName())
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to get credentials for managed cluster")
+	}
+	return adminKubeConfigData, userKubeConfigData, nil
+}
+
+// GetUserKubeconfigData gets user kubeconfig when aad is enabled for the aad clusters.
+func (s *Service) GetUserKubeconfigData(ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) ([]byte, error) {
+	kubeConfigData, err := s.GetUserCredentials(ctx, managedClusterSpec.ResourceGroupName(), managedClusterSpec.ResourceName())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get credentials for managed cluster")
+	}
+	return kubeConfigData, nil
+}
+
+// GetUserKubeConfigWithToken returns the kubeconfig with user token, for capz to create the target cluster.
+func (s *Service) GetUserKubeConfigWithToken(userKubeConfigData []byte, ctx context.Context, managedClusterSpec azure.ResourceSpecGetter) ([]byte, error) {
+	tokenClient, err := token.NewClient(s.Scope)
+	if err != nil {
+		return nil, errors.Wrap(err, "error while getting aad token client")
+	}
+
+	token, err := tokenClient.GetAzureActiveDirectoryToken(ctx, aadResourceID)
+	if err != nil {
+		return nil, errors.Wrap(err, "error while getting aad token for user kubeconfig")
+	}
+
+	return s.CreateUserKubeconfigWithToken(token, userKubeConfigData)
+}
+
+// CreateUserKubeconfigWithToken gets the kubeconfigdata for authenticating with target cluster.
+func (s *Service) CreateUserKubeconfigWithToken(token string, userKubeConfigData []byte) ([]byte, error) {
+	config, err := clientcmd.Load(userKubeConfigData)
+	if err != nil {
+		return nil, errors.Wrap(err, "error while trying to unmarshal new user kubeconfig with token")
+	}
+	for _, auth := range config.AuthInfos {
+		auth.Token = token
+		auth.Exec = nil
+	}
+	kubeconfig, err := clientcmd.Write(*config)
+	if err != nil {
+		return nil, errors.Wrap(err, "error while trying to marshal new user kubeconfig with token")
+	}
+	return kubeconfig, nil
 }
