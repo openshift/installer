@@ -3,7 +3,6 @@ package system
 import (
 	"bytes"
 	"context"
-	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -30,12 +29,6 @@ import (
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
-
-func init() {
-	// Set verbose logging for controller-runtime.
-	flag.Set("v", "2")
-	flag.Parse()
-}
 
 var (
 	wg          = &sync.WaitGroup{}
