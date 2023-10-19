@@ -175,7 +175,7 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 	return allErrs
 }
 
-// VCenterCredentialsAreProvided returns true if server, username, password, and at least one datacenter
+// VCenterCredentialsAreProvided returns true if server, username, password, or at least one datacenter
 // have been provided.
 func VCenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
 	if vcenter.Server != "" || vcenter.Username != "" || vcenter.Password != "" || len(vcenter.Datacenters) > 0 {
@@ -196,37 +196,35 @@ func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.Ins
 		if VCenterCredentialsAreProvided(vcenter) {
 			// Then check all required credential values are filled
 			userProvidedCredentials = true
-			if !(vcenter.Server != "" && vcenter.Username != "" && vcenter.Password != "" && len(vcenter.Datacenters) > 0) {
-				message := "All credential fields are required if any one is specified"
-				if vcenter.Server == "" {
-					fieldPath := field.NewPath("Platform", "VSphere", "vcenter")
-					allErrs = append(allErrs, field.Required(fieldPath, message))
+			message := "All credential fields are required if any one is specified"
+			if vcenter.Server == "" {
+				fieldPath := field.NewPath("Platform", "VSphere", "vcenter")
+				allErrs = append(allErrs, field.Required(fieldPath, message))
+			}
+			if vcenter.Username == "" {
+				fieldPath := field.NewPath("Platform", "VSphere", "user")
+				if vspherePlatform.DeprecatedVCenter != "" || vspherePlatform.DeprecatedPassword != "" || vspherePlatform.DeprecatedDatacenter != "" {
+					fieldPath = field.NewPath("Platform", "VSphere", "username")
 				}
-				if vcenter.Username == "" {
-					fieldPath := field.NewPath("Platform", "VSphere", "user")
-					if vspherePlatform.DeprecatedVCenter != "" || vspherePlatform.DeprecatedPassword != "" || vspherePlatform.DeprecatedDatacenter != "" {
-						fieldPath = field.NewPath("Platform", "VSphere", "username")
-					}
-					allErrs = append(allErrs, field.Required(fieldPath, message))
-				}
-				if vcenter.Password == "" {
-					fieldPath := field.NewPath("Platform", "VSphere", "password")
-					allErrs = append(allErrs, field.Required(fieldPath, message))
-				}
-				if len(vcenter.Datacenters) == 0 {
-					fieldPath := field.NewPath("Platform", "VSphere", "datacenter")
-					allErrs = append(allErrs, field.Required(fieldPath, message))
-				}
+				allErrs = append(allErrs, field.Required(fieldPath, message))
+			}
+			if vcenter.Password == "" {
+				fieldPath := field.NewPath("Platform", "VSphere", "password")
+				allErrs = append(allErrs, field.Required(fieldPath, message))
+			}
+			if len(vcenter.Datacenters) == 0 {
+				fieldPath := field.NewPath("Platform", "VSphere", "datacenter")
+				allErrs = append(allErrs, field.Required(fieldPath, message))
 			}
 		}
 	}
 
 	for _, failureDomain := range vspherePlatform.FailureDomains {
-		// Although folder is optional in IPI/UPI, it is must be set for agent-based installs.
+		// Although folder is optional in IPI/UPI, it must be set for agent-based installs.
 		// If it is not set, assisted-service will set a placeholder value for folder:
 		// "/datacenterplaceholder/vm/folderplaceholder"
 		//
-		// When assisted-service generates the install-config to for the cluster, it will fail
+		// When assisted-service generates the install-config for the cluster, it will fail
 		// validation because the placeholder value's datacenter name may not match
 		// the datacenter set in the failureDomain in the install-config.yaml submitted
 		// to the agent-based create image command.
