@@ -2,6 +2,10 @@
 
 set -ex
 
+# Source the Cluster API build script.
+# shellcheck source=hack/build-cluster-api.sh
+. "$(dirname "$0")/build-cluster-api.sh"
+
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
@@ -36,11 +40,19 @@ fi
 
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
-# build terraform binaries before setting environment variables since it messes up make
-make -C terraform all
 
-# Copy terraform parts to embedded mirror.
-copy_terraform_to_mirror
+# Build terraform binaries before setting environment variables since it messes up make
+if test "${SKIP_TERRAFORM}" != y
+then
+  make -j8 -C terraform all
+  copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
+fi
+
+# build cluster-api binaries
+if [ -n "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
+  make -j8 -C cluster-api all
+  copy_cluster_api_to_mirror
+fi
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
@@ -74,6 +86,8 @@ if (echo "${TAGS}" | grep -q 'libvirt')
 then
 	export CGO_ENABLED=1
 fi
+
+echo "building openshift-install"
 
 # shellcheck disable=SC2086
 go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
