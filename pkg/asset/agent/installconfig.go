@@ -187,35 +187,10 @@ func VCenterCredentialsAreProvided(vcenter vsphere.VCenter) bool {
 func (a *OptionalInstallConfig) validateVSpherePlatform(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	vspherePlatform := installConfig.Platform.VSphere
-	vcenterServers := map[string]bool{}
 	userProvidedCredentials := false
 	for _, vcenter := range vspherePlatform.VCenters {
-		vcenterServers[vcenter.Server] = true
-
-		// If any one of the required credential values is entered, then the user is choosing to enter credentials
 		if VCenterCredentialsAreProvided(vcenter) {
-			// Then check all required credential values are filled
 			userProvidedCredentials = true
-			message := "All credential fields are required if any one is specified"
-			if vcenter.Server == "" {
-				fieldPath := field.NewPath("Platform", "VSphere", "vcenter")
-				allErrs = append(allErrs, field.Required(fieldPath, message))
-			}
-			if vcenter.Username == "" {
-				fieldPath := field.NewPath("Platform", "VSphere", "user")
-				if vspherePlatform.DeprecatedVCenter != "" || vspherePlatform.DeprecatedPassword != "" || vspherePlatform.DeprecatedDatacenter != "" {
-					fieldPath = field.NewPath("Platform", "VSphere", "username")
-				}
-				allErrs = append(allErrs, field.Required(fieldPath, message))
-			}
-			if vcenter.Password == "" {
-				fieldPath := field.NewPath("Platform", "VSphere", "password")
-				allErrs = append(allErrs, field.Required(fieldPath, message))
-			}
-			if len(vcenter.Datacenters) == 0 {
-				fieldPath := field.NewPath("Platform", "VSphere", "datacenter")
-				allErrs = append(allErrs, field.Required(fieldPath, message))
-			}
 		}
 	}
 

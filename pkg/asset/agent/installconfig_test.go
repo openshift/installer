@@ -207,7 +207,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.vcenters.username: Required value: must specify the username, platform.vsphere.vcenters.password: Required value: must specify the password, platform.vsphere.vcenters.datacenters: Required value: must specify at least one datacenter, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
@@ -228,7 +228,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.vcenters.password: Required value: must specify the password, platform.vsphere.vcenters.datacenters: Required value: must specify at least one datacenter, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
 		},
 		{
 			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",

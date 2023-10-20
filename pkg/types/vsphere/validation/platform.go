@@ -51,10 +51,13 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 			allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
 		}
 	} else {
-		// agent-based installation allows the credentials to be optional
 		if len(p.VCenters) > 0 {
-			if p.VCenters[0].Username != "" && p.VCenters[0].Password != "" &&
-				p.VCenters[0].Server != "" && len(p.VCenters[0].Datacenters) != 0 {
+			if p.VCenters[0].Username == "" && p.VCenters[0].Password == "" &&
+				p.VCenters[0].Server == "" && len(p.VCenters[0].Datacenters) == 0 {
+				// agent-based installation allows the credentials to be optional.
+				// do not validate the vcenters if credentials are not provided
+			} else {
+				// credentials are provided, validate them
 				allErrs = append(allErrs, validateVCenters(p, fldPath.Child("vcenters"))...)
 			}
 		}
