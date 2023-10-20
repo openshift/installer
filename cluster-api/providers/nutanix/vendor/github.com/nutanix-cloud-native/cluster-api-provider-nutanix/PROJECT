@@ -1,0 +1,33 @@
+domain: cluster.x-k8s.io
+layout:
+- go.kubebuilder.io/v3
+projectName: cluster-api-provider-nutanix
+repo: github.com/nutanix-cloud-native/cluster-api-provider-nutanix
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cluster.x-k8s.io
+  group: infrastructure
+  kind: NutanixCluster
+  path: github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1alpha4
+  version: v1alpha4
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: cluster.x-k8s.io
+  group: infrastructure
+  kind: NutanixMachine
+  path: github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1alpha4
+  version: v1alpha4
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: cluster.x-k8s.io
+  group: infrastructure
+  kind: NutanixMachineTemplate
+  path: github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1alpha4
+  version: v1alpha4
+version: "3"
