@@ -142,7 +142,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	if len(failureDomains) > 0 {
-		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = machinev1.FailureDomains{
+		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = &machinev1.FailureDomains{
 			Platform: v1.AzurePlatformType,
 			Azure:    &failureDomains,
 		}

@@ -156,7 +156,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	if CPMSFailureDomains := pruneFailureDomains(failureDomains); CPMSFailureDomains != nil {
-		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = machinev1.FailureDomains{
+		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = &machinev1.FailureDomains{
 			Platform:  v1.OpenStackPlatformType,
 			OpenStack: CPMSFailureDomains,
 		}
