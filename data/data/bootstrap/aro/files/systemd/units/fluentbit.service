@@ -1,0 +1,28 @@
+[Unit]
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+RestartSec=1s
+EnvironmentFile=/etc/sysconfig/fluentbit
+ExecStartPre=-/bin/podman rm -f fluent-journal
+ExecStartPre=-/bin/podman pull $FLUENTIMAGE
+ExecStartPre=-mkdir -p /var/lib/fluent
+ExecStart=/bin/podman run \
+  --entrypoint /opt/td-agent-bit/bin/td-agent-bit \
+  --net=host \
+  --hostname bootstrap \
+  --name fluent-journal \
+  --rm \
+  -v /etc/fluentbit/journal.conf:/etc/fluentbit/journal.conf \
+  -v /var/lib/fluent:/var/lib/fluent:z \
+  -v /var/log/journal:/var/log/journal:z,ro \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  $FLUENTIMAGE \
+  -c /etc/fluentbit/journal.conf
+
+ExecStop=/bin/podman stop %N
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

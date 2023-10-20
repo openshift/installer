@@ -1,0 +1,1 @@
+FLUENTIMAGE={{ .PlatformData.ARO.FluentbitImage }}

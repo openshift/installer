@@ -143,5 +143,7 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 
 // IsARO returns true if ARO-only modifications are enabled
 func (p *Platform) IsARO() bool {
-	return aro
+	// XXX: return true for testing, change when complete
+	return true
+	//return aro
 }

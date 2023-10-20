@@ -1,0 +1,26 @@
+[Unit]
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+RestartSec=1s
+EnvironmentFile=/etc/sysconfig/mdsd
+ExecStartPre=-/bin/podman rm -f %N
+ExecStartPre=-mkdir /var/run/mdsd
+ExecStartPre=-/bin/podman pull $MDSDIMAGE
+ExecStart=/bin/podman run \
+  --entrypoint /usr/sbin/mdsd \
+  --net=host \
+  --name mdsd \
+  --env-file /etc/mdsd.d/mdsd.env \
+  --rm \
+  -v /etc/mdsd.d/:/etc/mdsd.d/:z \
+  -v /var/run/mdsd:/var/run/mdsd:z \
+  $MDSDIMAGE \
+  -A -D -f 24224 -r /var/run/mdsd/default
+
+ExecStop=/bin/podman stop %N
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

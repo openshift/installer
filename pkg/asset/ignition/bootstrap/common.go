@@ -58,6 +58,9 @@ var (
 		"coredns.service",
 		"ironic.service",
 		"master-bmh-update.service",
+		// ARO services
+		"fluentbit.service",
+		"mdsd.service",
 	}
 
 	rhcosEnabledServices = []string{
