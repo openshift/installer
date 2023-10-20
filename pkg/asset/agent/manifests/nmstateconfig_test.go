@@ -728,7 +728,7 @@ interfaces:
 				})
 			}
 
-			ip, err := GetNodeZeroIP(&agent.Config{Hosts: tc.hosts}, configs)
+			ip, err := GetNodeZeroIP(tc.hosts, configs)
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedIP, ip)

@@ -228,7 +228,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "missing rendezvousIP in agent-config, at least one host networkConfig in agent-config, or at least one NMStateConfig manifest",
+			expectedError: "missing rendezvousIP in agent-config, at least one host networkConfig, or at least one NMStateConfig manifest",
 		},
 		{
 			Name: "non-canonical-ipv6-address",
@@ -259,7 +259,11 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, tc.agentConfig.Hosts, tc.nmStateConfigs)
+			var hosts []agent.Host
+			if tc.agentConfig != nil {
+				hosts = tc.agentConfig.Hosts
+			}
+			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, hosts, tc.nmStateConfigs)
 			if tc.expectedError != "" {
 				assert.Regexp(t, tc.expectedError, err.Error())
 			} else {
