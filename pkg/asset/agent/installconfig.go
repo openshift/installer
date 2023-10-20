@@ -179,6 +179,14 @@ func (a *OptionalInstallConfig) ClusterName() string {
 	return "agent-cluster"
 }
 
+// GetBaremetalHosts gets the hosts defined for a baremetal platform.
+func (a *OptionalInstallConfig) GetBaremetalHosts() []*baremetal.Host {
+	if a.Config != nil && a.Config.Platform.Name() == baremetal.Name {
+		return a.Config.Platform.BareMetal.Hosts
+	}
+	return nil
+}
+
 func warnUnusedConfig(installConfig *types.InstallConfig) {
 	// "Proxyonly" is the default set from generic install config code
 	if installConfig.AdditionalTrustBundlePolicy != "Proxyonly" {

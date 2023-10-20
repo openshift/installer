@@ -64,20 +64,21 @@ func (a *AgentHosts) Generate(dependencies asset.Parents) error {
 	if agentConfig.Config != nil {
 		a.RendezvousIP = agentConfig.Config.RendezvousIP
 		a.Hosts = append(a.Hosts, agentConfig.Config.Hosts...)
+		if len(a.Hosts) > 0 {
+			// Hosts defined in agent-config take precedence
+			logrus.Infof("Using hosts from %s", agentConfigFilename)
+		}
 	}
 
-	if installConfig != nil && installConfig.Config != nil {
-		if installConfig.Config.Platform.Name() == baremetal.Name && len(installConfig.Config.Platform.BareMetal.Hosts) > 0 {
-			fieldPath := field.NewPath("Platform", "Baremetal", "Hosts")
-			if len(a.Hosts) == 0 {
-				logrus.Infof("Using %s from %s", fieldPath, agentAsset.InstallConfigFilename)
-				if err := a.getInstallConfigDefaults(installConfig.Config.Platform.BareMetal); err != nil {
-					return errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
-				}
-			} else {
-				logrus.Warnf(fmt.Sprintf("%s from %s is ignored", fieldPath, agentAsset.InstallConfigFilename))
-				logrus.Infof("Using hosts from %s", agentConfigFilename)
+	if installConfig != nil && installConfig.GetBaremetalHosts() != nil {
+		icHosts := installConfig.GetBaremetalHosts()
+		if len(a.Hosts) == 0 {
+			if err := a.getInstallConfigDefaults(icHosts); err != nil {
+				return errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
 			}
+		}
+		if len(a.Hosts) > 0 && len(icHosts) > 0 {
+			logrus.Warnf(fmt.Sprintf("hosts from %s are ignored", agentAsset.InstallConfigFilename))
 		}
 	}
 
@@ -196,9 +197,13 @@ func (a *AgentHosts) validateRendezvousIPNotWorker(rendezvousIP string, hosts []
 	return allErrs
 }
 
-// Add the baremetal hosts defined in install-config to the agent-config.
-func (a *AgentHosts) getInstallConfigDefaults(platform *baremetal.Platform) error {
-	for _, icHost := range platform.Hosts {
+// Add the baremetal hosts defined in install-config to the agent Hosts.
+func (a *AgentHosts) getInstallConfigDefaults(hosts []*baremetal.Host) error {
+	if hosts == nil {
+		return nil
+	}
+
+	for _, icHost := range hosts {
 		if icHost.BootMACAddress == "" {
 			return errors.New("host bootMACAddress is required")
 		}
@@ -253,9 +258,9 @@ func (a *AgentHosts) getInstallConfigDefaults(platform *baremetal.Platform) erro
 			host.Interfaces = append(host.Interfaces, hostInterface)
 		}
 
+		logrus.Infof("Using hosts from %s", agentAsset.InstallConfigFilename)
 		a.Hosts = append(a.Hosts, host)
 	}
-
 	return nil
 }
 
