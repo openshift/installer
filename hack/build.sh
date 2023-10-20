@@ -26,6 +26,20 @@ copy_terraform_to_mirror() {
   cp "${PWD}/terraform/bin/${TARGET_OS_ARCH}/terraform" "${PWD}/pkg/terraform/providers/mirror/terraform/"
 }
 
+# Check whether terraform providers are built and up-to-date
+check_terraform_providers() {
+  TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
+
+  find "${PWD}/terraform/providers/" -maxdepth 1 -mindepth 1 -type d | while read dir; do
+      provider="$(basename "${dir}")"
+	  binDir="${PWD}/terraform/bin/${TARGET_OS_ARCH}"
+      test -f "${binDir}/terraform-provider-${provider}" || return 1
+      test -f "${binDir}/terraform-provider-${provider}.zip" || return 1
+      providerVersion="$(go version -m "${binDir}/terraform-provider-${provider}" | grep -E '^\s+mod' | awk '{ print $2, $3, $4 }')"
+      grep -q -s "$providerVersion" "${dir}/go.sum" || return 1
+  done
+}
+
 minimum_go_version=1.20
 current_go_version=$(go version | cut -d " " -f 3)
 
@@ -37,7 +51,12 @@ fi
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
-make -C terraform all
+if check_terraform_providers; then
+    echo "Terraform providers are up-to-date. Skipping..."
+else
+    echo "Terraform providers are not up-to-date. Rebuilding..."
+    make -C terraform all
+fi
 
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror
