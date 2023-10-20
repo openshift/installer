@@ -3,6 +3,7 @@ package platform
 import (
 	"fmt"
 
+	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
@@ -32,42 +33,41 @@ import (
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
-// StagesForPlatform returns the terraform stages to run to provision the infrastructure for the specified platform.
-func StagesForPlatform(platform string) []terraform.Stage {
+// ProviderForPlatform returns the stages to run to provision the infrastructure for the specified platform.
+func ProviderForPlatform(platform string) infrastructure.Provider {
 	switch platform {
 	case alibabacloudtypes.Name:
-		return alibabacloud.PlatformStages
+		return terraform.InitializeProvider(alibabacloud.PlatformStages)
 	case awstypes.Name:
-		return aws.PlatformStages
+		return terraform.InitializeProvider(aws.PlatformStages)
 	case azuretypes.Name:
-		return azure.PlatformStages
+		return terraform.InitializeProvider(azure.PlatformStages)
 	case azuretypes.StackTerraformName:
-		return azure.StackPlatformStages
+		return terraform.InitializeProvider(azure.StackPlatformStages)
 	case baremetaltypes.Name:
-		return baremetal.PlatformStages
+		return terraform.InitializeProvider(baremetal.PlatformStages)
 	case gcptypes.Name:
-		return gcp.PlatformStages
+		return terraform.InitializeProvider(gcp.PlatformStages)
 	case ibmcloudtypes.Name:
-		return ibmcloud.PlatformStages
+		return terraform.InitializeProvider(ibmcloud.PlatformStages)
 	case libvirttypes.Name:
-		return libvirt.PlatformStages
+		return terraform.InitializeProvider(libvirt.PlatformStages)
 	case nutanixtypes.Name:
-		return nutanix.PlatformStages
+		return terraform.InitializeProvider(nutanix.PlatformStages)
 	case powervstypes.Name:
-		return powervs.PlatformStages
+		return terraform.InitializeProvider(powervs.PlatformStages)
 	case openstacktypes.Name:
-		return openstack.PlatformStages
+		return terraform.InitializeProvider(openstack.PlatformStages)
 	case ovirttypes.Name:
-		return ovirt.PlatformStages
+		return terraform.InitializeProvider(ovirt.PlatformStages)
 	case vspheretypes.Name:
-		return vsphere.PlatformStages
+		return terraform.InitializeProvider(vsphere.PlatformStages)
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"
-		return []terraform.Stage{}
+		return terraform.InitializeProvider([]terraform.Stage{})
 	case externaltypes.Name:
 		// terraform is not used when the platform is "external"
-		return []terraform.Stage{}
-	default:
-		panic(fmt.Sprintf("unsupported platform %q", platform))
+		return terraform.InitializeProvider([]terraform.Stage{})
 	}
+	panic(fmt.Sprintf("unsupported platform %q", platform))
 }

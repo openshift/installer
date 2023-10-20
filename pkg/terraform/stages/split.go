@@ -103,6 +103,11 @@ func (s SplitStage) Destroy(directory string, terraformDir string, varFiles []st
 	return s.destroy(s, directory, terraformDir, varFiles)
 }
 
+// Platform implements pkg/terraform/Stage.Platform.
+func (s SplitStage) Platform() string {
+	return s.platform
+}
+
 // ExtractHostAddresses implements pkg/terraform/Stage.ExtractHostAddresses
 func (s SplitStage) ExtractHostAddresses(directory string, ic *types.InstallConfig) (string, int, []string, error) {
 	if s.extractHostAddresses != nil {
