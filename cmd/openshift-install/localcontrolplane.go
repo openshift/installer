@@ -3,10 +3,11 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/openshift/installer/cmd/openshift-install/command"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/openshift/installer/cmd/openshift-install/command"
 )
 
 func getLocalControlPlaneClient() (client.Client, error) {

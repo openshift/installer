@@ -127,10 +127,14 @@ func TestParseIPv6CIDR(t *testing.T) {
 
 func TestSplitIntoSubnetsIPv6(t *testing.T) {
 	RegisterTestingT(t)
-	ip1, _, _ := net.ParseCIDR("2001:db8:1234:1a01::/64")
-	ip2, _, _ := net.ParseCIDR("2001:db8:1234:1a02::/64")
-	ip3, _, _ := net.ParseCIDR("2001:db8:1234:1a03::/64")
-	ip4, _, _ := net.ParseCIDR("2001:db8:1234:1a04::/64")
+	ip1, _, err := net.ParseCIDR("2001:db8:1234:1a01::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip2, _, err := net.ParseCIDR("2001:db8:1234:1a02::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip3, _, err := net.ParseCIDR("2001:db8:1234:1a03::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip4, _, err := net.ParseCIDR("2001:db8:1234:1a04::/64")
+	Expect(err).NotTo(HaveOccurred())
 	output, err := SplitIntoSubnetsIPv6(block, 4)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(output).To(ConsistOf(
@@ -155,10 +159,14 @@ func TestSplitIntoSubnetsIPv6(t *testing.T) {
 
 func TestSplitIntoSubnetsIPv6WithFurtherSplitting(t *testing.T) {
 	RegisterTestingT(t)
-	ip1, _, _ := net.ParseCIDR("2001:db8:1234:1a01::/64")
-	ip2, _, _ := net.ParseCIDR("2001:db8:1234:1a02::/64")
-	ip3, _, _ := net.ParseCIDR("2001:db8:1234:1a03::/64")
-	ip4, _, _ := net.ParseCIDR("2001:db8:1234:1a04::/64")
+	ip1, _, err := net.ParseCIDR("2001:db8:1234:1a01::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip2, _, err := net.ParseCIDR("2001:db8:1234:1a02::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip3, _, err := net.ParseCIDR("2001:db8:1234:1a03::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip4, _, err := net.ParseCIDR("2001:db8:1234:1a04::/64")
+	Expect(err).NotTo(HaveOccurred())
 	output, err := SplitIntoSubnetsIPv6(block, 4)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(output).To(ConsistOf(
@@ -181,9 +189,12 @@ func TestSplitIntoSubnetsIPv6WithFurtherSplitting(t *testing.T) {
 	))
 	output, err = SplitIntoSubnetsIPv6(output[len(output)-1].String(), 3)
 	Expect(err).NotTo(HaveOccurred())
-	ip1, _, _ = net.ParseCIDR("2001:db8:1234:1a05::/64")
-	ip2, _, _ = net.ParseCIDR("2001:db8:1234:1a06::/64")
-	ip3, _, _ = net.ParseCIDR("2001:db8:1234:1a07::/64")
+	ip1, _, err = net.ParseCIDR("2001:db8:1234:1a05::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip2, _, err = net.ParseCIDR("2001:db8:1234:1a06::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip3, _, err = net.ParseCIDR("2001:db8:1234:1a07::/64")
+	Expect(err).NotTo(HaveOccurred())
 	Expect(output).To(ContainElements(
 		&net.IPNet{
 			IP:   ip1,
@@ -204,10 +215,14 @@ func TestSplitIntoSubnetsIPv6HigherSubnetSplitting(t *testing.T) {
 	RegisterTestingT(t)
 	output, err := SplitIntoSubnetsIPv6("2001:db8:cad:ffff::/56", 6)
 	Expect(err).NotTo(HaveOccurred())
-	ip1, _, _ := net.ParseCIDR("2001:db8:cad:ff01::/64")
-	ip2, _, _ := net.ParseCIDR("2001:db8:cad:ff02::/64")
-	ip3, _, _ := net.ParseCIDR("2001:db8:cad:ff03::/64")
-	ip4, _, _ := net.ParseCIDR("2001:db8:cad:ff04::/64")
+	ip1, _, err := net.ParseCIDR("2001:db8:cad:ff01::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip2, _, err := net.ParseCIDR("2001:db8:cad:ff02::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip3, _, err := net.ParseCIDR("2001:db8:cad:ff03::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip4, _, err := net.ParseCIDR("2001:db8:cad:ff04::/64")
+	Expect(err).NotTo(HaveOccurred())
 	Expect(output).To(ContainElements(
 		&net.IPNet{
 			IP:   ip1,
@@ -232,11 +247,16 @@ func TestSplitIntoSubnetsIPv6NoCompression(t *testing.T) {
 	RegisterTestingT(t)
 	output, err := SplitIntoSubnetsIPv6("2001:0db8:85a3:0010:1111:8a2e:0370:7334/56", 5)
 	Expect(err).NotTo(HaveOccurred())
-	ip1, _, _ := net.ParseCIDR("2001:db8:85a3:1::/64")
-	ip2, _, _ := net.ParseCIDR("2001:db8:85a3:2::/64")
-	ip3, _, _ := net.ParseCIDR("2001:db8:85a3:3::/64")
-	ip4, _, _ := net.ParseCIDR("2001:db8:85a3:4::/64")
-	ip5, _, _ := net.ParseCIDR("2001:db8:85a3:5::/64")
+	ip1, _, err := net.ParseCIDR("2001:db8:85a3:1::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip2, _, err := net.ParseCIDR("2001:db8:85a3:2::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip3, _, err := net.ParseCIDR("2001:db8:85a3:3::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip4, _, err := net.ParseCIDR("2001:db8:85a3:4::/64")
+	Expect(err).NotTo(HaveOccurred())
+	ip5, _, err := net.ParseCIDR("2001:db8:85a3:5::/64")
+	Expect(err).NotTo(HaveOccurred())
 	Expect(output).To(ContainElements(
 		&net.IPNet{
 			IP:   ip1,

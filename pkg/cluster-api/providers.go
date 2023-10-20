@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -42,7 +43,7 @@ var (
 	GCP = infrastructureProvider("gcp")
 	// Nutanix is the provider for creating resources in Nutanix.
 	Nutanix = infrastructureProvider("nutanix")
-	// vSphere is the provider for creating resources in vSphere.
+	// VSphere is the provider for creating resources in vSphere.
 	VSphere = infrastructureProvider("vsphere")
 )
 
@@ -99,12 +100,17 @@ func (p Provider) Extract(dir string) error {
 
 	// Extract the files.
 	for _, f := range r.File {
-		if !p.Sources.Has(f.Name) {
+		name := f.Name
+		if !p.Sources.Has(name) {
 			continue
 		}
-		logrus.Debugf("extracting %s file", filepath.Join(dir, f.Name))
-		if err := unpackFile(f, filepath.Join(dir, f.Name)); err != nil {
-			return errors.Wrapf(err, "failed to extract %s file", f.Name)
+		path, err := sanitizeArchivePath(dir, name)
+		if err != nil {
+			return errors.Wrapf(err, "failed to sanitize archive file %q", name)
+		}
+		logrus.Debugf("extracting %s file", path)
+		if err := unpackFile(f, path); err != nil {
+			return errors.Wrapf(err, "failed to extract %q", path)
 		}
 	}
 	return nil
@@ -121,10 +127,19 @@ func unpackFile(f *zip.File, destPath string) error {
 		return err
 	}
 	defer destFile.Close()
-	if _, err := io.Copy(destFile, src); err != nil {
+	if _, err := io.CopyN(destFile, src, f.FileInfo().Size()); err != nil {
 		return err
 	}
 	return nil
+}
+
+func sanitizeArchivePath(d, t string) (v string, err error) {
+	v = filepath.Join(d, t)
+	if strings.HasPrefix(v, filepath.Clean(d)) {
+		return v, nil
+	}
+
+	return "", fmt.Errorf("%s: %s", "content filepath is tainted", t)
 }
 
 // UnpackClusterAPIBinary unpacks the cluster-api binary from the embedded data so that it can be run to create the
