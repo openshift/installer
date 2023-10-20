@@ -1,6 +1,11 @@
 package defaults
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/sirupsen/logrus"
+
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -129,4 +134,32 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if c.AdditionalTrustBundlePolicy == "" {
 		c.AdditionalTrustBundlePolicy = types.PolicyProxyOnly
 	}
+
+	setPullSecretDefault(c)
+}
+
+func setPullSecretDefault(config *types.InstallConfig) {
+	if config.PullSecret != "" {
+		return
+	}
+
+	var pullSecretFile string
+	if pullSecretFile = os.Getenv("REGISTRY_AUTH_FILE"); pullSecretFile == "" {
+		return
+	}
+
+	var err error
+	if _, err = os.Stat(pullSecretFile); err != nil {
+		logrus.Warn("REGISTRY_AUTH_FILE is set, but the credentials file does not exist")
+		return
+	}
+
+	var data []byte
+	if data, err = os.ReadFile(pullSecretFile); err != nil {
+		logrus.Warn(fmt.Sprintf("Cannot use REGISTRY_AUTH_FILE credentials file due the following error: %s", err))
+		return
+	}
+
+	config.PullSecret = string(data)
+	logrus.Debug("Pull secret configured using REGISTRY_AUTH_FILE")
 }

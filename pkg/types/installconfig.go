@@ -130,7 +130,8 @@ type InstallConfig struct {
 	// perform the installation.
 	Platform `json:"platform"`
 
-	// PullSecret is the secret to use when pulling images.
+	// PullSecret is the secret to use when pulling images. If not configured,
+	// REGISTRY_AUT_FILE env variable can be also specified.
 	PullSecret string `json:"pullSecret"`
 
 	// Proxy defines the proxy settings for the cluster.
