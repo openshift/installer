@@ -1,0 +1,49 @@
+run:
+  timeout: 60m
+  go: 1.19
+  modules-download-mode: vendor
+  skip-dirs:
+    - /sdk/ # Excluding sdk folders as these are externally generated
+  skip-files:
+    - "internal/services/.*/.*_gen.go$"
+
+issues:
+  max-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bidichk
+    - errcheck
+    - gocritic
+    - gofmt
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - nakedret
+    - misspell
+    #- nolintlint
+    #- nlreturn
+    - reassign
+    - staticcheck
+    - typecheck
+    - unused
+    - unconvert
+    - unparam
+    - vet
+    - vetshadow
+    # - wastedassign # disabled because of generics
+    # - whitespace # Disabled for performance reasons - Ignores cache and takes 12+ minutes to run on the repo for _any_ change
+
+linters-settings:
+  errcheck:
+    ignore: github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema:ForceNew|Set,fmt:.*,io:Close
+  misspell:
+    ignore-words:
+      - hdinsight
+      - exportfs
+  nakedret:
+    max-func-lines: 40
