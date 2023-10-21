@@ -1,7 +1,0 @@
-go 1.19
-
-use (
-	.
-	./tools
-	./v2/awsv1shim
-)
