@@ -1,0 +1,98 @@
+syntax = "proto2";
+package pbmodel;
+
+option java_package = "com.aliyun.datahub.client.model.protobuf";
+option java_outer_classname = "DatahubProtos";
+
+message StringPair
+{
+    required string key = 1;
+    required string value = 2;
+}
+
+message FieldData
+{
+    optional bytes value = 1;
+}
+
+message RecordAttributes
+{
+    repeated StringPair attributes = 1;
+}
+
+message RecordData
+{
+    repeated FieldData data = 1;
+}
+
+message RecordEntry
+{
+    optional string shard_id = 1;
+    optional string hash_key = 2;
+    optional string partition_key = 3;
+    optional string cursor = 4;
+    optional string next_cursor = 5;
+    optional int64 sequence = 6;
+    optional int64 system_time = 7;
+    optional RecordAttributes attributes = 8;
+    required RecordData data = 9;
+}
+
+message PutRecordsRequest
+{
+    repeated RecordEntry records = 1;
+}
+
+message FailedRecord
+{
+    required int32 index = 1;
+    optional string error_code = 2;
+    optional string error_message = 3;
+}
+
+message PutRecordsResponse
+{
+    optional int32 failed_count = 1;
+    repeated FailedRecord failed_records = 2;
+}
+
+message GetRecordsRequest
+{
+    required string cursor = 1;
+    optional int32 limit = 2 [default = 1];
+}
+
+message GetRecordsResponse
+{
+    required string next_cursor = 1;
+    required int32 record_count = 2;
+    optional int64 start_sequence = 3;
+    repeated RecordEntry records = 4;
+    optional int64 latest_sequence = 5 [default = -1];
+    optional int64 latest_time = 6 [default = -1];
+}
+
+message BinaryRecordEntry
+{
+    optional string cursor = 1;
+    optional string next_cursor = 2;
+    optional int64 sequence = 3;
+    optional int64 system_time = 4;
+    optional uint32 serial = 5 [default = 0];
+    optional bytes data = 6;
+}
+
+message PutBinaryRecordsRequest
+{
+    repeated BinaryRecordEntry records = 1;
+}
+
+message GetBinaryRecordsResponse
+{
+    required string next_cursor = 1;
+    required int32 record_count = 2;
+    optional int64 start_sequence = 3;
+    repeated BinaryRecordEntry records = 4;
+    optional int64 latest_sequence = 5 [default = -1];
+    optional int64 latest_time = 6 [default = -1];
+}
