@@ -19,7 +19,7 @@ endif
 all: go-build
 
 .PHONY: go-mod-tidy-vendor
-go-mod-tidy-vendor: $(GO_MOD_TIDY_TARGETS)
+go-mod-tidy-vendor: $(GO_MOD_TIDY_TARGETS) go-mod-tidy-vendor-cluster-api
 $(GO_MOD_TIDY_TARGETS): go-mod-tidy-vendor.%:
 	cd providers/$* && go mod tidy && go mod vendor
 
@@ -34,6 +34,10 @@ $(PROVIDER_TARGETS): bin/$(TARGET_OS_ARCH)/cluster-api-provider-%: providers/%/g
 
 .PHONY: go-build-cluster-api
 go-build-cluster-api: bin/$(TARGET_OS_ARCH)/cluster-api
+
+.PHONY: go-build-cluster-api
+go-mod-tidy-vendor-cluster-api:
+	cd cluster-api; go mod tidy && go mod vendor
 
 bin/$(TARGET_OS_ARCH)/cluster-api: cluster-api/go.mod
 	cd cluster-api; \
