@@ -3,12 +3,10 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -37,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
@@ -327,21 +326,6 @@ func (c *Cluster) generateTerraform(installConfig *installconfig.InstallConfig, 
 		platform = typesazure.StackTerraformName
 	}
 
-	stages := platformstages.StagesForPlatform(platform)
-
-	terraformDir := filepath.Join(InstallDir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return errors.Wrap(err, "could not create the terraform directory")
-	}
-
-	terraformDirPath, err := filepath.Abs(terraformDir)
-	if err != nil {
-		return errors.Wrap(err, "cannot get absolute path of terraform directory")
-	}
-
-	defer os.RemoveAll(terraformDir)
-	terraform.UnpackTerraform(terraformDirPath, stages)
-
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
 	case typesaws.Name:
@@ -358,18 +342,16 @@ func (c *Cluster) generateTerraform(installConfig *installconfig.InstallConfig, 
 		}
 	}
 
-	tfvarsFiles := make([]*asset.File, 0, len(terraformVariables.Files())+len(stages))
+	tfvarsFiles := []*asset.File{}
 	for _, file := range terraformVariables.Files() {
 		tfvarsFiles = append(tfvarsFiles, file)
 	}
 
-	for _, stage := range stages {
-		outputs, err := c.applyStage(platform, stage, terraformDirPath, tfvarsFiles)
-		if err != nil {
-			return errors.Wrapf(err, "failure applying terraform for %q stage", stage.Name())
-		}
-		tfvarsFiles = append(tfvarsFiles, outputs)
-		c.FileList = append(c.FileList, outputs)
+	provider := infra.ProviderForPlatform(platform)
+	files, err := provider.Provision(InstallDir, tfvarsFiles)
+	c.FileList = append(c.FileList, files...) // append state files even in case of failure
+	if err != nil {
+		return fmt.Errorf("%s: %w", asset.ClusterCreationError, err)
 	}
 
 	return nil

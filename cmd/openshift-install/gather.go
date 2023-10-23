@@ -26,7 +26,8 @@ import (
 	serialgather "github.com/openshift/installer/pkg/gather"
 	"github.com/openshift/installer/pkg/gather/service"
 	"github.com/openshift/installer/pkg/gather/ssh"
-	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	"github.com/openshift/installer/pkg/infrastructure"
+	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 
 	_ "github.com/openshift/installer/pkg/gather/aws"
 	_ "github.com/openshift/installer/pkg/gather/azure"
@@ -109,38 +110,29 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 	}
 	gatherBootstrapOpts.sshKeys = append(gatherBootstrapOpts.sshKeys, tmpfile.Name())
 
-	bootstrap := gatherBootstrapOpts.bootstrap
-	port := 22
-	masters := gatherBootstrapOpts.masters
-	if bootstrap == "" && len(masters) == 0 {
+	ha := &infrastructure.HostAddresses{
+		Bootstrap: gatherBootstrapOpts.bootstrap,
+		Port:      22,
+		Masters:   gatherBootstrapOpts.masters,
+	}
+
+	if ha.Bootstrap == "" && len(ha.Masters) == 0 {
 		config := &installconfig.InstallConfig{}
 		if err := assetStore.Fetch(config); err != nil {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 		}
 
-		for _, stage := range platformstages.StagesForPlatform(config.Config.Platform.Name()) {
-			stageBootstrap, stagePort, stageMasters, err := stage.ExtractHostAddresses(directory, config.Config)
-			if err != nil {
-				logrus.Warnf("Failed to extract host addresses: %s", err.Error())
-			} else {
-				if stageBootstrap != "" {
-					bootstrap = stageBootstrap
-				}
-				if stagePort != 0 {
-					port = stagePort
-				}
-				if len(stageMasters) > 0 {
-					masters = stageMasters
-				}
-			}
+		provider := infra.ProviderForPlatform(config.Config.Platform.Name())
+		if err = provider.ExtractHostAddresses(directory, config.Config, ha); err != nil {
+			logrus.Warnf("Failed to extract host addresses: %s", err.Error())
 		}
 	}
 
-	if bootstrap == "" {
+	if ha.Bootstrap == "" {
 		return "", errors.New("must provide bootstrap host address")
 	}
 
-	return gatherBootstrap(bootstrap, port, masters, directory)
+	return gatherBootstrap(ha.Bootstrap, ha.Port, ha.Masters, directory)
 }
 
 func gatherBootstrap(bootstrap string, port int, masters []string, directory string) (string, error) {
