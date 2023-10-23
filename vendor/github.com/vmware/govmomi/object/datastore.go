@@ -27,6 +27,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/vmware/govmomi/internal"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25"
@@ -83,8 +84,14 @@ func (d Datastore) Path(path string) string {
 func (d Datastore) NewURL(path string) *url.URL {
 	u := d.c.URL()
 
+	scheme := u.Scheme
+	// In rare cases where vCenter and ESX are accessed using different schemes.
+	if overrideScheme := os.Getenv("GOVMOMI_DATASTORE_ACCESS_SCHEME"); overrideScheme != "" {
+		scheme = overrideScheme
+	}
+
 	return &url.URL{
-		Scheme: u.Scheme,
+		Scheme: scheme,
 		Host:   u.Host,
 		Path:   fmt.Sprintf("/folder/%s", path),
 		RawQuery: url.Values{
@@ -223,8 +230,18 @@ func (d Datastore) ServiceTicket(ctx context.Context, path string, method string
 	delete(q, "dcPath")
 	u.RawQuery = q.Encode()
 
+	// Now that we have a host selected, take a copy of the URL.
+	transferURL := *u
+
+	if internal.UsingEnvoySidecar(d.Client()) {
+		// Rewrite the host URL to go through the Envoy sidecar on VC.
+		// Reciever must use a custom dialer.
+		u = internal.HostGatewayTransferURL(u, host.Reference())
+	}
+
 	spec := types.SessionManagerHttpServiceRequestSpec{
-		Url: u.String(),
+		// Use the original URL (without rewrites) for the session ticket.
+		Url: transferURL.String(),
 		// See SessionManagerHttpServiceRequestSpecMethod enum
 		Method: fmt.Sprintf("http%s%s", method[0:1], strings.ToLower(method[1:])),
 	}
@@ -261,7 +278,10 @@ func (d Datastore) uploadTicket(ctx context.Context, path string, param *soap.Up
 		return nil, nil, err
 	}
 
-	p.Ticket = ticket
+	if ticket != nil {
+		p.Ticket = ticket
+		p.Close = true // disable Keep-Alive connection to ESX
+	}
 
 	return u, &p, nil
 }
@@ -277,7 +297,10 @@ func (d Datastore) downloadTicket(ctx context.Context, path string, param *soap.
 		return nil, nil, err
 	}
 
-	p.Ticket = ticket
+	if ticket != nil {
+		p.Ticket = ticket
+		p.Close = true // disable Keep-Alive connection to ESX
+	}
 
 	return u, &p, nil
 }
@@ -297,7 +320,13 @@ func (d Datastore) UploadFile(ctx context.Context, file string, path string, par
 	if err != nil {
 		return err
 	}
-	return d.Client().UploadFile(ctx, file, u, p)
+	vc := d.Client()
+	if internal.UsingEnvoySidecar(vc) {
+		// Override the vim client with a new one that wraps a Unix socket transport.
+		// Using HTTP here so secure means nothing.
+		vc = internal.ClientWithEnvoyHostGateway(vc)
+	}
+	return vc.UploadFile(ctx, file, u, p)
 }
 
 // Download via soap.Download with an http service ticket
@@ -315,7 +344,13 @@ func (d Datastore) DownloadFile(ctx context.Context, path string, file string, p
 	if err != nil {
 		return err
 	}
-	return d.Client().DownloadFile(ctx, file, u, p)
+	vc := d.Client()
+	if internal.UsingEnvoySidecar(vc) {
+		// Override the vim client with a new one that wraps a Unix socket transport.
+		// Using HTTP here so secure means nothing.
+		vc = internal.ClientWithEnvoyHostGateway(vc)
+	}
+	return vc.DownloadFile(ctx, file, u, p)
 }
 
 // AttachedHosts returns hosts that have this Datastore attached, accessible and writable.
