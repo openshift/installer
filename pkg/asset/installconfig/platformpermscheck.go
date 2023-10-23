@@ -75,7 +75,10 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 		if ic.Config.AWS.DefaultMachinePlatform != nil && ic.Config.AWS.DefaultMachinePlatform.EC2RootVolume != ec2RootVolume {
 			awsMachinePoolUsingKMS = len(ic.Config.AWS.DefaultMachinePlatform.EC2RootVolume.KMSKeyARN) != 0
 		}
-		if ic.Config.ControlPlane.Name == types.MachinePoolControlPlaneRoleName && ic.Config.ControlPlane.Platform.AWS.EC2RootVolume != ec2RootVolume {
+		if ic.Config.ControlPlane != nil &&
+			ic.Config.ControlPlane.Name == types.MachinePoolControlPlaneRoleName &&
+			ic.Config.ControlPlane.Platform.AWS != nil &&
+			ic.Config.ControlPlane.Platform.AWS.EC2RootVolume != ec2RootVolume {
 			masterMachinePoolUsingKMS = len(ic.Config.ControlPlane.Platform.AWS.EC2RootVolume.KMSKeyARN) != 0
 		}
 		// Add KMS encryption keys, if provided.
