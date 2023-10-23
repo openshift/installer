@@ -51,42 +51,60 @@ func newGetIso(getter getIsoFile) *getIso {
 // GetIsoPluggable defines the method to use get the baseIso file
 var GetIsoPluggable = downloadIso
 
-// Download the ISO using the URL in rhcos.json
+func getMetalArtifact(archName string) (stream.PlatformArtifacts, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	// Get the ISO to use from rhcos.json
+	st, err := rhcos.FetchCoreOSBuild(ctx)
+	if err != nil {
+		return stream.PlatformArtifacts{}, err
+	}
+
+	streamArch, err := st.GetArchitecture(archName)
+	if err != nil {
+		return stream.PlatformArtifacts{}, err
+	}
+
+	metal, ok := streamArch.Artifacts["metal"]
+	if !ok {
+		return stream.PlatformArtifacts{}, fmt.Errorf("coreOs stream data not found for 'metal' artifact")
+	}
+
+	return metal, nil
+}
+
+// Download the ISO using the URL in rhcos.json.
 func downloadIso(archName string) (string, error) {
-	streamArch, err := getStreamArch(archName)
+	metal, err := getMetalArtifact(archName)
 	if err != nil {
 		return "", err
 	}
-	if artifacts, ok := streamArch.Artifacts["metal"]; ok {
-		if format, ok := artifacts.Formats["iso"]; ok {
-			url := format.Disk.Location
 
-			cachedImage, err := DownloadImageFile(url)
-			if err != nil {
-				return "", errors.Wrapf(err, "failed to download base ISO image %s", url)
-			}
-			return cachedImage, nil
-		}
-	} else {
-		return "", errors.Wrap(err, "invalid artifact")
+	format, ok := metal.Formats["iso"]
+	if !ok {
+		return "", fmt.Errorf("no ISO found to download for %s", archName)
 	}
 
-	return "", fmt.Errorf("no ISO found to download for %s", archName)
+	url := format.Disk.Location
+	cachedImage, err := DownloadImageFile(url)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to download base ISO image %s", url)
+	}
+
+	return cachedImage, nil
 }
 
 // Fetch RootFS URL using the rhcos.json.
 func (i *BaseIso) getRootFSURL(archName string) (string, error) {
-	streamArch, err := getStreamArch(archName)
+	metal, err := getMetalArtifact(archName)
 	if err != nil {
 		return "", err
 	}
-	if artifacts, ok := streamArch.Artifacts["metal"]; ok {
-		if format, ok := artifacts.Formats["pxe"]; ok {
-			rootFSUrl := format.Rootfs.Location
-			return rootFSUrl, nil
-		}
-	} else {
-		return "", errors.Wrap(err, "invalid artifact")
+
+	if format, ok := metal.Formats["pxe"]; ok {
+		rootFSUrl := format.Rootfs.Location
+		return rootFSUrl, nil
 	}
 
 	return "", fmt.Errorf("no RootFSURL found for %s", archName)
@@ -101,18 +119,27 @@ func (i *BaseIso) Dependencies() []asset.Asset {
 	}
 }
 
-func getStreamArch(archName string) (*stream.Arch, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-	defer cancel()
-	st, err := rhcos.FetchCoreOSBuild(ctx)
+func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) {
+	logrus.Debugf("Checking release payload base ISO version")
+
+	// Get current release payload CoreOS version
+	payloadRelease, err := r.GetBaseIsoVersion(archName)
 	if err != nil {
-		return nil, err
+		logrus.Warnf("unable to determine base ISO version: %s", err.Error())
+		return
 	}
-	streamArch, err := st.GetArchitecture(archName)
+
+	// Get pinned version from installer
+	metal, err := getMetalArtifact(archName)
 	if err != nil {
-		return nil, err
+		logrus.Warnf("unable to determine base ISO version: %s", err.Error())
+		return
 	}
-	return streamArch, nil
+
+	// Check for a mismatch
+	if metal.Release != payloadRelease {
+		logrus.Warnf("base ISO version mismatch in release payload. Expected version %s but found %s", metal.Release, payloadRelease)
+	}
 }
 
 // Generate the baseIso
@@ -170,6 +197,8 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 		logrus.Info("Extracting base ISO from release payload")
 		baseIsoFileName, err = ocRelease.GetBaseIso(archName)
 		if err == nil {
+			i.checkReleasePayloadBaseISOVersion(ocRelease, archName)
+
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
 			return baseIsoFileName, nil
