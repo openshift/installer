@@ -22,7 +22,8 @@ type folder struct {
 	Datacenter string `json:"vsphere_datacenter"`
 }
 
-type config struct {
+// Config provides vSphere platform specific configuration to the infrastructure provider
+type Config struct {
 	OvaFilePath              string                                   `json:"vsphere_ova_filepath"`
 	DiskType                 vtypes.DiskType                          `json:"vsphere_disk_type"`
 	VCenters                 map[string]vtypes.VCenter                `json:"vsphere_vcenters"`
@@ -67,7 +68,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, err
 	}
 
-	cfg := &config{
+	cfg := &Config{
 		OvaFilePath:               cachedImage,
 		DiskType:                  sources.DiskType,
 		VCenters:                  vcenterZones,
@@ -220,7 +221,7 @@ func constructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gat
 
 // processGuestNetworkConfiguration takes the config and sources data and generates the kernel arguments (kargs)
 // needed to boot RHCOS with static IP configurations.
-func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error {
+func processGuestNetworkConfiguration(cfg *Config, sources TFVarsSources) error {
 	platform := sources.InstallConfig.Config.Platform.VSphere
 
 	// Generate bootstrap karg using vsphere platform info from install-config

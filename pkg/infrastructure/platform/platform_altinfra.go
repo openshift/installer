@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/infrastructure/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -22,8 +23,7 @@ func ProviderForPlatform(platform string) (infrastructure.Provider, error) {
 		panic("not implemented")
 		return nil, nil
 	case vspheretypes.Name:
-		panic("not implemented")
-		return nil, nil
+		return vsphere.InitializeProvider(), nil
 	}
 	return nil, fmt.Errorf("platform %q is not supported in the altinfra Installer build", platform)
 }

@@ -103,14 +103,14 @@ func createControlPlaneConfigs(ipTypes int64) []*v1beta1.VSphereMachineProviderS
 	return machines
 }
 
-func createVsphereConfig() *config {
-	return &config{}
+func createVsphereConfig() *Config {
+	return &Config{}
 }
 
 func TestProcessGuestNetworkConfiguration(t *testing.T) {
 	cases := []struct {
 		name                 string
-		config               *config
+		config               *Config
 		source               TFVarsSources
 		expectedBootKargs    string
 		expectedControlKargs []string
