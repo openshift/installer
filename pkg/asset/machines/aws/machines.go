@@ -149,7 +149,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			Template: machinev1.ControlPlaneMachineSetTemplate{
 				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
 				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
-					FailureDomains: machinev1.FailureDomains{
+					FailureDomains: &machinev1.FailureDomains{
 						Platform: v1.AWSPlatformType,
 						AWS:      &failureDomains,
 					},
