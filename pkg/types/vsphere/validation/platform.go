@@ -13,6 +13,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/types/vsphere/conversion"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -48,6 +49,25 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		// Validate hosts if configured for static IP
 		if p.Hosts != nil {
 			allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
+		}
+	} else {
+		// agent-based installation allows the credentials to be optional
+		if len(p.VCenters) > 0 {
+			if p.VCenters[0].Username != "" && p.VCenters[0].Password != "" &&
+				p.VCenters[0].Server != "" && len(p.VCenters[0].Datacenters) != 0 {
+				allErrs = append(allErrs, validateVCenters(p, fldPath.Child("vcenters"))...)
+			}
+		}
+
+		// Validate the FailureDomain if it is not one that is pregenerated.
+		// Pregenerated ones are used if user does not enter any credentials.
+		// Pregenerated values do not pass validation.
+		if len(p.FailureDomains) > 0 {
+			if p.FailureDomains[0].Name != conversion.GeneratedFailureDomainName &&
+				p.FailureDomains[0].Zone != conversion.GeneratedFailureDomainZone &&
+				p.FailureDomains[0].Region != conversion.GeneratedFailureDomainRegion {
+				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+			}
 		}
 	}
 
