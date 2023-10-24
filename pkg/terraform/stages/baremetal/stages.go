@@ -20,14 +20,8 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		"baremetal",
 		"bootstrap",
-		[]providers.Provider{providers.Ironic, providers.Libvirt},
+		[]providers.Provider{providers.Libvirt},
 		stages.WithNormalBootstrapDestroy(),
-	),
-	stages.NewStage(
-		"baremetal",
-		"masters",
-		[]providers.Provider{providers.Ironic},
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
 	),
 }
 

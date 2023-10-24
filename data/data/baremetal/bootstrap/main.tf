@@ -2,18 +2,6 @@ provider "libvirt" {
   uri = var.libvirt_uri
 }
 
-provider "ironic" {
-  url                = var.ironic_uri
-  inspector          = var.inspector_uri
-  microversion       = "1.56"
-  timeout            = 900
-  auth_strategy      = "http_basic"
-  ironic_username    = var.ironic_username
-  ironic_password    = var.ironic_password
-  inspector_username = var.ironic_username
-  inspector_password = var.ironic_password
-}
-
 resource "libvirt_pool" "bootstrap" {
   name = "${var.cluster_id}-bootstrap"
   type = "dir"
