@@ -179,7 +179,7 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	if err := AddSystemdUnits(a.Config, "bootstrap/systemd/common/units", templateData, commonEnabledServices); err != nil {
 		return err
 	}
-	if !templateData.IsOKD {
+	if !(templateData.IsOKD && templateData.Invoker == "agent-installer") {
 		if err := AddSystemdUnits(a.Config, "bootstrap/systemd/rhcos/units", templateData, rhcosEnabledServices); err != nil {
 			return err
 		}
