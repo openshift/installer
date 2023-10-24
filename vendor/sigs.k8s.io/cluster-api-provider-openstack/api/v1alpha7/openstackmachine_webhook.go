@@ -62,6 +62,14 @@ func (r *OpenStackMachine) ValidateCreate() (admission.Warnings, error) {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "identityRef", "kind"), "must be a Secret"))
 	}
 
+	if r.Spec.RootVolume != nil && r.Spec.AdditionalBlockDevices != nil {
+		for _, device := range r.Spec.AdditionalBlockDevices {
+			if device.Name == "root" {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "additionalBlockDevices"), "cannot contain a device named \"root\" when rootVolume is set"))
+			}
+		}
+	}
+
 	return aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
 
