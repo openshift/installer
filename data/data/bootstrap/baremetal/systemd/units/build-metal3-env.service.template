@@ -1,0 +1,13 @@
+[Unit]
+Description=Build Metal3 environment
+Requires=release-image.service
+Wants=network-online.target crio.service
+After=network-online.target crio.service release-image.service
+
+[Service]
+ExecStart=/usr/local/bin/build-metal3-env.sh
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
