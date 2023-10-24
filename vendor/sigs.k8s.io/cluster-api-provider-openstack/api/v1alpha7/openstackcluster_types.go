@@ -50,6 +50,13 @@ type OpenStackClusterSpec struct {
 	// If NodeCIDR cannot be set this can be used to detect an existing subnet.
 	Subnet SubnetFilter `json:"subnet,omitempty"`
 
+	// NetworkMTU sets the maximum transmission unit (MTU) value to address fragmentation for the private network ID.
+	// This value will be used only if the Cluster actuator creates the network.
+	// If leaved empty, the network will have the default MTU defined in Openstack network service.
+	// To use this field, the Openstack installation requires the net-mtu neutron API extension.
+	// +optional
+	NetworkMTU int `json:"networkMtu,omitempty"`
+
 	// DNSNameservers is the list of nameservers for OpenStack Subnet being created.
 	// Set this value when you need create a new network/subnet while the access
 	// through DNS is required.

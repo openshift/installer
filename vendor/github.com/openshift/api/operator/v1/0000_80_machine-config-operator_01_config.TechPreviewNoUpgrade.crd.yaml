@@ -6,6 +6,7 @@ metadata:
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
+    release.openshift.io/feature-set: TechPreviewNoUpgrade
   name: machineconfigurations.operator.openshift.io
 spec:
   group: operator.openshift.io
@@ -66,6 +67,140 @@ spec:
                 - Trace
                 - TraceAll
                 type: string
+              managedBootImages:
+                description: managedBootImages allows configuration for the management
+                  of boot images for machine resources within the cluster. This configuration
+                  allows users to select resources that should be updated to the latest
+                  boot images during cluster upgrades, ensuring that new machines
+                  always boot with the current cluster version's boot image. When
+                  omitted, no boot images will be updated.
+                properties:
+                  machineManagers:
+                    description: machineManagers can be used to register machine management
+                      resources for boot image updates. The Machine Config Operator
+                      will watch for changes to this list. Only one entry is permitted
+                      per type of machine management resource.
+                    items:
+                      description: MachineManager describes a target machine resource
+                        that is registered for boot image updates. It stores identifying
+                        information such as the resource type and the API Group of
+                        the resource. It also provides granular control via the selection
+                        field.
+                      properties:
+                        apiGroup:
+                          description: apiGroup is name of the APIGroup that the machine
+                            management resource belongs to. The only current valid
+                            value is machine.openshift.io. machine.openshift.io means
+                            that the machine manager will only register resources
+                            that belong to OpenShift machine API group.
+                          enum:
+                          - machine.openshift.io
+                          type: string
+                        resource:
+                          description: resource is the machine management resource's
+                            type. The only current valid value is machinesets. machinesets
+                            means that the machine manager will only register resources
+                            of the kind MachineSet.
+                          enum:
+                          - machinesets
+                          type: string
+                        selection:
+                          description: selection allows granular control of the machine
+                            management resources that will be registered for boot
+                            image updates.
+                          properties:
+                            mode:
+                              description: mode determines how machine managers will
+                                be selected for updates. Valid values are All and
+                                Partial. All means that every resource matched by
+                                the machine manager will be updated. Partial requires
+                                specified selector(s) and allows customisation of
+                                which resources matched by the machine manager will
+                                be updated.
+                              enum:
+                              - All
+                              - Partial
+                              type: string
+                            partial:
+                              description: partial provides label selector(s) that
+                                can be used to match machine management resources.
+                                Only permitted when mode is set to "Partial".
+                              properties:
+                                machineResourceSelector:
+                                  description: machineResourceSelector is a label
+                                    selector that can be used to select machine resources
+                                    like MachineSets.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements. The requirements are
+                                        ANDed.
+                                      items:
+                                        description: A label selector requirement
+                                          is a selector that contains values, a key,
+                                          and an operator that relates the key and
+                                          values.
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: operator represents a key's
+                                              relationship to a set of values. Valid
+                                              operators are In, NotIn, Exists and
+                                              DoesNotExist.
+                                            type: string
+                                          values:
+                                            description: values is an array of string
+                                              values. If the operator is In or NotIn,
+                                              the values array must be non-empty.
+                                              If the operator is Exists or DoesNotExist,
+                                              the values array must be empty. This
+                                              array is replaced during a strategic
+                                              merge patch.
+                                            items:
+                                              type: string
+                                            type: array
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: matchLabels is a map of {key,value}
+                                        pairs. A single {key,value} in the matchLabels
+                                        map is equivalent to an element of matchExpressions,
+                                        whose key field is "key", the operator is
+                                        "In", and the values array contains only "value".
+                                        The requirements are ANDed.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                              required:
+                              - machineResourceSelector
+                              type: object
+                          required:
+                          - mode
+                          type: object
+                          x-kubernetes-validations:
+                          - message: Partial is required when type is partial, and
+                              forbidden otherwise
+                            rule: 'has(self.mode) && self.mode == ''Partial'' ?  has(self.partial)
+                              : !has(self.partial)'
+                      required:
+                      - apiGroup
+                      - resource
+                      - selection
+                      type: object
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - resource
+                    - apiGroup
+                    x-kubernetes-list-type: map
+                type: object
               managementState:
                 description: managementState indicates whether and how the operator
                   should manage the component

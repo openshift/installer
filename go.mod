@@ -44,8 +44,8 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.12.1
-	github.com/gophercloud/gophercloud v1.6.0
-	github.com/gophercloud/utils v0.0.0-20230523080330-de873b9cf00d
+	github.com/gophercloud/gophercloud v1.7.0
+	github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
@@ -59,7 +59,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.31.1
-	github.com/openshift/api v0.0.0-20240207185517-ae973131190e
+	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999
 	github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -113,7 +113,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-azure v1.13.0
 	sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
-	sigs.k8s.io/cluster-api-provider-openstack v0.8.0
+	sigs.k8s.io/cluster-api-provider-openstack v0.9.0
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.0
 	sigs.k8s.io/controller-runtime v0.16.5
 	sigs.k8s.io/controller-tools v0.12.0

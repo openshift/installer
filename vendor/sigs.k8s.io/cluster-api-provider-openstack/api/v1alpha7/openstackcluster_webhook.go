@@ -134,6 +134,12 @@ func (r *OpenStackCluster) ValidateUpdate(oldRaw runtime.Object) (admission.Warn
 	old.Spec.AllowAllInClusterTraffic = false
 	r.Spec.AllowAllInClusterTraffic = false
 
+	// Allow change on the spec.APIServerFloatingIP only if it matches the current api server loadbalancer IP.
+	if old.Status.APIServerLoadBalancer != nil && r.Spec.APIServerFloatingIP == old.Status.APIServerLoadBalancer.IP {
+		r.Spec.APIServerFloatingIP = ""
+		old.Spec.APIServerFloatingIP = ""
+	}
+
 	if !reflect.DeepEqual(old.Spec, r.Spec) {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec"), "cannot be modified"))
 	}
