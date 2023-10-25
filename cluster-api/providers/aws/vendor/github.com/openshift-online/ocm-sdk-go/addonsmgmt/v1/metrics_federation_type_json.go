@@ -1,0 +1,154 @@
+/*
+Copyright (c) 2020 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// IMPORTANT: This file has been generated automatically, refrain from modifying it manually as all
+// your changes will be lost when the file is generated again.
+
+package v1 // github.com/openshift-online/ocm-sdk-go/addonsmgmt/v1
+
+import (
+	"io"
+	"sort"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
+)
+
+// MarshalMetricsFederation writes a value of the 'metrics_federation' type to the given writer.
+func MarshalMetricsFederation(object *MetricsFederation, writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	writeMetricsFederation(object, stream)
+	err := stream.Flush()
+	if err != nil {
+		return err
+	}
+	return stream.Error
+}
+
+// writeMetricsFederation writes a value of the 'metrics_federation' type to the given stream.
+func writeMetricsFederation(object *MetricsFederation, stream *jsoniter.Stream) {
+	count := 0
+	stream.WriteObjectStart()
+	var present_ bool
+	present_ = object.bitmap_&1 != 0 && object.matchLabels != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("match_labels")
+		if object.matchLabels != nil {
+			stream.WriteObjectStart()
+			keys := make([]string, len(object.matchLabels))
+			i := 0
+			for key := range object.matchLabels {
+				keys[i] = key
+				i++
+			}
+			sort.Strings(keys)
+			for i, key := range keys {
+				if i > 0 {
+					stream.WriteMore()
+				}
+				item := object.matchLabels[key]
+				stream.WriteObjectField(key)
+				stream.WriteString(item)
+			}
+			stream.WriteObjectEnd()
+		} else {
+			stream.WriteNil()
+		}
+		count++
+	}
+	present_ = object.bitmap_&2 != 0 && object.matchNames != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("match_names")
+		writeStringList(object.matchNames, stream)
+		count++
+	}
+	present_ = object.bitmap_&4 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("namespace")
+		stream.WriteString(object.namespace)
+		count++
+	}
+	present_ = object.bitmap_&8 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("port_name")
+		stream.WriteString(object.portName)
+	}
+	stream.WriteObjectEnd()
+}
+
+// UnmarshalMetricsFederation reads a value of the 'metrics_federation' type from the given
+// source, which can be an slice of bytes, a string or a reader.
+func UnmarshalMetricsFederation(source interface{}) (object *MetricsFederation, err error) {
+	iterator, err := helpers.NewIterator(source)
+	if err != nil {
+		return
+	}
+	object = readMetricsFederation(iterator)
+	err = iterator.Error
+	return
+}
+
+// readMetricsFederation reads a value of the 'metrics_federation' type from the given iterator.
+func readMetricsFederation(iterator *jsoniter.Iterator) *MetricsFederation {
+	object := &MetricsFederation{}
+	for {
+		field := iterator.ReadObject()
+		if field == "" {
+			break
+		}
+		switch field {
+		case "match_labels":
+			value := map[string]string{}
+			for {
+				key := iterator.ReadObject()
+				if key == "" {
+					break
+				}
+				item := iterator.ReadString()
+				value[key] = item
+			}
+			object.matchLabels = value
+			object.bitmap_ |= 1
+		case "match_names":
+			value := readStringList(iterator)
+			object.matchNames = value
+			object.bitmap_ |= 2
+		case "namespace":
+			value := iterator.ReadString()
+			object.namespace = value
+			object.bitmap_ |= 4
+		case "port_name":
+			value := iterator.ReadString()
+			object.portName = value
+			object.bitmap_ |= 8
+		default:
+			iterator.ReadAny()
+		}
+	}
+	return object
+}

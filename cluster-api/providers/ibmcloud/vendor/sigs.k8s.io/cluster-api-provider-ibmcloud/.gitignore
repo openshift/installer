@@ -1,0 +1,41 @@
+# temporay files
+*.swp
+
+# binaries
+bin/
+cmd/clusterctl/clusterctl
+cmd/manager/manager
+IBM_Cloud_CLI*
+
+# command generated files
+kubeconfig
+cmd/clusterctl/kubeconfig
+
+# scripts outputs
+cmd/clusterctl/examples/ibmcloud/out/
+cmd/clusterctl/examples/ibmcloud/cluster-api-0.1.4
+cmd/clusterctl/examples/ibmcloud/v0.1.4.tar.gz
+cmd/clusterctl/examples/ibmcloud/clouds.yaml
+cmd/clusterctl/examples/ibmcloud/provider-component/clouds-secrets/configs
+cmd/clusterctl/examples/ibmcloud/provider-component/user-data/ubuntu/master-user-data.sh
+cmd/clusterctl/examples/ibmcloud/provider-component/user-data/ubuntu/worker-user-data.sh
+
+# test coverage out
+cover.out
+
+# JUnit test output from ginkgo unit tests
+junit*.xml
+
+#e2e test files
+test/e2e/config/ibmcloud-e2e-envsubst.yaml
+pvsadm.log
+
+# dep ensured 3rd code
+vendor/sigs.k8s.io/cluster-api/docs/book/*.json
+
+# tilt
+.tiltbuild
+
+# release
+_artifacts/
+out/

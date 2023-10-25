@@ -1,0 +1,76 @@
+linters:
+  disable-all: true
+  enable:
+  - asciicheck
+  - bodyclose
+  - dogsled
+  - errcheck
+  - exportloopref
+  - gci
+  - goconst
+  - gocritic
+  - gocyclo
+  - godot
+  - gofmt
+  - goimports
+  - goprintffuncname
+  - gosec
+  - gosimple
+  - govet
+  - importas
+  - ineffassign
+  - misspell
+  - nakedret
+  - nilerr
+  - noctx
+  - nolintlint
+  - prealloc
+  - predeclared
+  - revive
+  - rowserrcheck
+  - staticcheck
+  - stylecheck
+  - thelper
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - whitespace
+
+linters-settings:
+  gci:
+    local-prefixes: sigs.k8s.io/cluster-api-provider-vsphere
+run:
+  skip-files:
+  - ".*zz_generated.*\\.go"
+  - "contrib/.*"
+  - "apis/v1alpha3/.*"
+  - "apis/v1alpha4/.*"
+  timeout: 5m
+issue:
+  max-same-issues: 0
+  max-per-linter: 0
+issues:
+  exclude-rules:
+    # Specific exclude rules for deprecated fields that are still part of the codebase. These
+    # should be removed as the referenced deprecated item is removed from the project.
+    - linters:
+      - staticcheck
+      text: "SA1019: failureDomain.AutoConfigure is deprecated"
+    # Specific exclude rules for deprecated packages that are still part of the codebase. These
+    # should be removed as the referenced deprecated packages are removed from the project.
+    - linters:
+        - staticcheck
+      text: "SA1019: .* is deprecated: This package will be removed in one of the next releases."
+    - path: "test/e2e/*"
+      linters:
+        - gosec
+      text: "G106:"
+    - linters:
+        - revive
+      text: "dot-imports"
+      path: ".*test.*"
+    - linters:
+        - stylecheck
+      text: "ST1001"
+      path: ".*test.*"

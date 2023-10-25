@@ -1,0 +1,17 @@
+version: "3"
+domain: x-k8s.io
+repo: sigs.k8s.io/cluster-api-provider-azure
+resources:
+  kind: AzureMachineTemplate
+- group: infrastructure
+  version: v1beta1
+  kind: AzureMachine
+- group: infrastructure
+  version: v1beta1
+  kind: AzureCluster
+- group: infrastructure
+  version: v1beta1
+  kind: AzureMachineTemplate
+- group: infrastructure
+  version: v1beta1
+  kind: AzureClusterTemplate

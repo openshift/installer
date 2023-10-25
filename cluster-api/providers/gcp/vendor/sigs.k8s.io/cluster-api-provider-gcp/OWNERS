@@ -1,0 +1,19 @@
+# See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
+
+approvers:
+  - sig-cluster-lifecycle-leads
+  - sig-gcp-leads
+  - cluster-api-admins
+  - cluster-api-maintainers
+  - cluster-api-gcp-maintainers
+
+reviewers:
+  - cluster-api-gcp-maintainers
+
+emeritus_approvers:
+  - detiber
+  - gab-satchi
+  - justinsb
+  - krousey
+  - roberthbailey
+  - rsmitty
