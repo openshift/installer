@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -13,7 +12,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
-	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -43,7 +41,6 @@ func (*AgentConfig) Dependencies() []asset.Asset {
 
 // Generate generates the Agent Config manifest.
 func (a *AgentConfig) Generate(dependencies asset.Parents) error {
-
 	// TODO: We are temporarily generating a template of the agent-config.yaml
 	// Change this when its interactive survey is implemented.
 	agentConfigTemplate := `#
@@ -103,7 +100,7 @@ hosts:
 	return nil
 }
 
-// PersistToFile writes the agent-config.yaml file to the assets folder
+// PersistToFile writes the agent-config.yaml file to the assets folder.
 func (a *AgentConfig) PersistToFile(directory string) error {
 	templatePath := filepath.Join(directory, agentConfigFilename)
 	templateByte := []byte(a.Template)
@@ -126,7 +123,6 @@ func (a *AgentConfig) Files() []*asset.File {
 
 // Load returns agent config asset from the disk.
 func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
-
 	file, err := f.FetchByName(agentConfigFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -146,6 +142,7 @@ func (a *AgentConfig) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	a.File, a.Config = file, config
+
 	if err = a.finish(); err != nil {
 		return false, err
 	}
@@ -168,15 +165,7 @@ func (a *AgentConfig) validateAgent() field.ErrorList {
 		allErrs = append(allErrs, err...)
 	}
 
-	if err := a.validateHosts(); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
 	if err := a.validateAdditionalNTPSources(field.NewPath("AdditionalNTPSources"), a.Config.AdditionalNTPSources); err != nil {
-		allErrs = append(allErrs, err...)
-	}
-
-	if err := a.validateRendezvousIPNotWorker(a.Config.RendezvousIP, a.Config.Hosts); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 
@@ -192,93 +181,13 @@ func (a *AgentConfig) validateRendezvousIP() field.ErrorList {
 
 	rendezvousIPPath := field.NewPath("rendezvousIP")
 
-	//empty rendezvous ip is fine
+	// empty rendezvous ip is fine
 	if a.Config.RendezvousIP == "" {
 		return nil
 	}
 
 	if err := validate.IP(a.Config.RendezvousIP); err != nil {
 		allErrs = append(allErrs, field.Invalid(rendezvousIPPath, a.Config.RendezvousIP, err.Error()))
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateHosts() field.ErrorList {
-	var allErrs field.ErrorList
-
-	macs := make(map[string]bool)
-	for i, host := range a.Config.Hosts {
-
-		hostPath := field.NewPath("Hosts").Index(i)
-
-		if err := a.validateHostInterfaces(hostPath, host, macs); err != nil {
-			allErrs = append(allErrs, err...)
-		}
-
-		if err := a.validateHostRootDeviceHints(hostPath, host); err != nil {
-			allErrs = append(allErrs, err...)
-		}
-
-		if err := a.validateRoles(hostPath, host); err != nil {
-			allErrs = append(allErrs, err...)
-		}
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Host, macs map[string]bool) field.ErrorList {
-	var allErrs field.ErrorList
-
-	interfacePath := hostPath.Child("Interfaces")
-	if len(host.Interfaces) == 0 {
-		allErrs = append(allErrs, field.Required(interfacePath, "at least one interface must be defined for each node"))
-	}
-
-	for j := range host.Interfaces {
-		mac := host.Interfaces[j].MacAddress
-		macAddressPath := interfacePath.Index(j).Child("macAddress")
-
-		if mac == "" {
-			allErrs = append(allErrs, field.Required(macAddressPath, "each interface must have a MAC address defined"))
-			continue
-		}
-
-		if err := validate.MAC(mac); err != nil {
-			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, err.Error()))
-		}
-
-		if _, ok := macs[mac]; ok {
-			allErrs = append(allErrs, field.Invalid(macAddressPath, mac, "duplicate MAC address found"))
-		}
-		macs[mac] = true
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {
-	rdhPath := hostPath.Child("rootDeviceHints")
-	allErrs := validation.ValidateHostRootDeviceHints(&host.RootDeviceHints, rdhPath)
-
-	if host.RootDeviceHints.WWNWithExtension != "" {
-		allErrs = append(allErrs, field.Forbidden(
-			rdhPath.Child("wwnWithExtension"), "WWN extensions are not supported in root device hints"))
-	}
-
-	if host.RootDeviceHints.WWNVendorExtension != "" {
-		allErrs = append(allErrs, field.Forbidden(rdhPath.Child("wwnVendorExtension"), "WWN vendor extensions are not supported in root device hints"))
-	}
-
-	return allErrs
-}
-
-func (a *AgentConfig) validateRoles(hostPath *field.Path, host agent.Host) field.ErrorList {
-	var allErrs field.ErrorList
-
-	if len(host.Role) > 0 && host.Role != "master" && host.Role != "worker" {
-		allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), "host role has incorrect value. Role must either be 'master' or 'worker'"))
 	}
 
 	return allErrs
@@ -300,21 +209,6 @@ func (a *AgentConfig) validateAdditionalNTPSources(additionalNTPSourcesPath *fie
 	return allErrs
 }
 
-func (a *AgentConfig) validateRendezvousIPNotWorker(rendezvousIP string, hosts []agent.Host) field.ErrorList {
-	var allErrs field.ErrorList
-
-	if rendezvousIP != "" {
-		for i, host := range hosts {
-			hostPath := field.NewPath("Hosts").Index(i)
-			if strings.Contains(string(host.NetworkConfig.Raw), rendezvousIP) && host.Role == "worker" {
-				errMsg := "Host " + host.Hostname + " has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host."
-				allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
-			}
-		}
-	}
-	return allErrs
-}
-
 func (a *AgentConfig) validateBootArtifactsBaseURL() field.ErrorList {
 	var allErrs field.ErrorList
 
@@ -330,48 +224,6 @@ func (a *AgentConfig) validateBootArtifactsBaseURL() field.ErrorList {
 	}
 
 	return allErrs
-}
-
-// HostConfigFileMap is a map from a filepath ("<host>/<file>") to file content
-// for hostconfig files.
-type HostConfigFileMap map[string][]byte
-
-// HostConfigFiles returns a map from filename to contents of the files used for
-// host-specific configuration by the agent installer client
-func (a *AgentConfig) HostConfigFiles() (HostConfigFileMap, error) {
-	if a == nil || a.Config == nil {
-		return nil, nil
-	}
-
-	files := HostConfigFileMap{}
-	for i, host := range a.Config.Hosts {
-		name := fmt.Sprintf("host-%d", i)
-		if host.Hostname != "" {
-			name = host.Hostname
-		}
-
-		macs := []string{}
-		for _, iface := range host.Interfaces {
-			macs = append(macs, strings.ToLower(iface.MacAddress)+"\n")
-		}
-
-		if len(macs) > 0 {
-			files[filepath.Join(name, "mac_addresses")] = []byte(strings.Join(macs, ""))
-		}
-
-		rdh, err := yaml.Marshal(host.RootDeviceHints)
-		if err != nil {
-			return nil, err
-		}
-		if len(rdh) > 0 && string(rdh) != "{}\n" {
-			files[filepath.Join(name, "root-device-hints.yaml")] = rdh
-		}
-
-		if len(host.Role) > 0 {
-			files[filepath.Join(name, "role")] = []byte(host.Role)
-		}
-	}
-	return files, nil
 }
 
 func unmarshalJSON(b []byte) []byte {

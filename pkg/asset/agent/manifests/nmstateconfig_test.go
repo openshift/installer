@@ -27,9 +27,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		expectedError      string
 	}{
 		{
-			name: "agent-config does not contain networkConfig",
+			name: "agentHosts does not contain networkConfig",
 			dependencies: []asset.Asset{
-				getValidDHCPAgentConfigNoHosts(),
+				getAgentHostsNoHosts(),
 				getValidOptionalInstallConfig(),
 			},
 			requiresNmstatectl: false,
@@ -37,9 +37,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 			expectedError:      "",
 		},
 		{
-			name: "valid dhcp agent config with some hosts without networkconfig",
+			name: "agentHosts with some hosts without networkconfig",
 			dependencies: []asset.Asset{
-				getValidDHCPAgentConfigWithSomeHostsWithoutNetworkConfig(),
+				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				getValidOptionalInstallConfig(),
 			},
 			requiresNmstatectl: true,
@@ -72,7 +72,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
-				getValidAgentConfig(),
+				getValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
 			requiresNmstatectl: true,
@@ -153,7 +153,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "invalid networkConfig",
 			dependencies: []asset.Asset{
-				getInValidAgentConfig(),
+				getInValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
 			requiresNmstatectl: true,
@@ -728,7 +728,7 @@ interfaces:
 				})
 			}
 
-			ip, err := GetNodeZeroIP(&agent.Config{Hosts: tc.hosts}, configs)
+			ip, err := GetNodeZeroIP(tc.hosts, configs)
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedIP, ip)

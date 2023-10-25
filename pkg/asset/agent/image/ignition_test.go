@@ -228,7 +228,7 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "missing rendezvousIP in agent-config, at least one host networkConfig in agent-config, or at least one NMStateConfig manifest",
+			expectedError: "missing rendezvousIP in agent-config, at least one host networkConfig, or at least one NMStateConfig manifest",
 		},
 		{
 			Name: "non-canonical-ipv6-address",
@@ -259,7 +259,11 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
-			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, tc.nmStateConfigs)
+			var hosts []agent.Host
+			if tc.agentConfig != nil {
+				hosts = tc.agentConfig.Hosts
+			}
+			rendezvousIP, err := RetrieveRendezvousIP(tc.agentConfig, hosts, tc.nmStateConfigs)
 			if tc.expectedError != "" {
 				assert.Regexp(t, tc.expectedError, err.Error())
 			} else {
@@ -273,17 +277,15 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 func TestAddHostConfig_Roles(t *testing.T) {
 	cases := []struct {
 		Name                            string
-		agentConfig                     *agentconfig.AgentConfig
+		agentHosts                      *agentconfig.AgentHosts
 		expectedNumberOfHostConfigFiles int
 	}{
 		{
 			Name: "one-host-role-defined",
-			agentConfig: &agentconfig.AgentConfig{
-				Config: &agent.Config{
-					Hosts: []agent.Host{
-						{
-							Role: "master",
-						},
+			agentHosts: &agentconfig.AgentHosts{
+				Hosts: []agent.Host{
+					{
+						Role: "master",
 					},
 				},
 			},
@@ -291,24 +293,22 @@ func TestAddHostConfig_Roles(t *testing.T) {
 		},
 		{
 			Name: "multiple-host-roles-defined",
-			agentConfig: &agentconfig.AgentConfig{
-				Config: &agent.Config{
-					Hosts: []agent.Host{
-						{
-							Role: "master",
-						},
-						{
-							Role: "master",
-						},
-						{
-							Role: "master",
-						},
-						{
-							Role: "worker",
-						},
-						{
-							Role: "worker",
-						},
+			agentHosts: &agentconfig.AgentHosts{
+				Hosts: []agent.Host{
+					{
+						Role: "master",
+					},
+					{
+						Role: "master",
+					},
+					{
+						Role: "master",
+					},
+					{
+						Role: "worker",
+					},
+					{
+						Role: "worker",
 					},
 				},
 			},
@@ -322,7 +322,7 @@ func TestAddHostConfig_Roles(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {
 			config := &igntypes.Config{}
-			err := addHostConfig(config, tc.agentConfig)
+			err := addHostConfig(config, tc.agentHosts)
 			assert.NoError(t, err)
 			assert.Equal(t, len(config.Storage.Files), tc.expectedNumberOfHostConfigFiles)
 			for _, file := range config.Storage.Files {
@@ -647,6 +647,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 				Filename: "/cluster-manifests/agent-config.yaml",
 			},
 		},
+		&agentconfig.AgentHosts{},
 		&manifests.ExtraManifests{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
