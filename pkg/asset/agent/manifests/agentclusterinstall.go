@@ -69,7 +69,7 @@ type agentClusterInstallPlatform struct {
 	BareMetal *agentClusterInstallOnPremPlatform `json:"baremetal,omitempty"`
 	// VSphere is the configuration used when installing on vSphere.
 	// +optional
-	VSphere *agentClusterInstallOnPremPlatform `json:"vsphere,omitempty"`
+	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
 	// External is the configuration used when installing on external cloud provider.
 	// +optional
 	External *agentClusterInstallOnPremExternalPlatform `json:"external,omitempty"`
@@ -202,13 +202,29 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.BareMetal.IngressVIPs[0]
 		} else if installConfig.Config.Platform.VSphere != nil {
+			vspherePlatform := vsphere.Platform{}
 			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 1 {
 				icOverridden = true
+				vspherePlatform.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
+				vspherePlatform.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+			}
+			hasCredentials := false
+			if len(installConfig.Config.Platform.VSphere.VCenters) > 0 {
+				for _, vcenter := range installConfig.Config.Platform.VSphere.VCenters {
+					if agent.VCenterCredentialsAreProvided(vcenter) {
+						icOverridden = true
+						hasCredentials = true
+						vspherePlatform.VCenters = append(vspherePlatform.VCenters, vcenter)
+					}
+				}
+			}
+			if hasCredentials && len(installConfig.Config.Platform.VSphere.FailureDomains) > 0 {
+				icOverridden = true
+				vspherePlatform.FailureDomains = append(vspherePlatform.FailureDomains, installConfig.Config.VSphere.FailureDomains...)
+			}
+			if icOverridden {
 				icOverrides.Platform = &agentClusterInstallPlatform{
-					VSphere: &agentClusterInstallOnPremPlatform{
-						APIVIPs:     installConfig.Config.Platform.VSphere.APIVIPs,
-						IngressVIPs: installConfig.Config.Platform.VSphere.IngressVIPs,
-					},
+					VSphere: &vspherePlatform,
 				}
 			}
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]

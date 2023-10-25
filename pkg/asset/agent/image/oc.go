@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/stream-metadata-go/stream"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,7 @@ const (
 	machineOsImageName   = "machine-os-images"
 	coreOsFileName       = "/coreos/coreos-%s.iso"
 	coreOsSha256FileName = "/coreos/coreos-%s.iso.sha256"
+	coreOsStreamFileName = "/coreos/coreos-stream.json"
 	//OcDefaultTries is the number of times to execute the oc command on failues
 	OcDefaultTries = 5
 	// OcDefaultRetryDelay is the time between retries
@@ -45,6 +47,7 @@ type Config struct {
 // Release is the interface to use the oc command to the get image info
 type Release interface {
 	GetBaseIso(architecture string) (string, error)
+	GetBaseIsoVersion(architecture string) (string, error)
 	ExtractFile(image string, filename string) ([]string, error)
 }
 
@@ -129,6 +132,38 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 	}
 	logrus.Infof("Base ISO obtained from release and cached at %s", path)
 	return path[0], err
+}
+
+func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
+	files, err := r.ExtractFile(machineOsImageName, coreOsStreamFileName)
+	if err != nil {
+		return "", err
+	}
+
+	if len(files) > 1 {
+		return "", fmt.Errorf("too many files found for %s", coreOsStreamFileName)
+	}
+
+	rawData, err := os.ReadFile(files[0])
+	if err != nil {
+		return "", err
+	}
+
+	var st stream.Stream
+	if err := json.Unmarshal(rawData, &st); err != nil {
+		return "", errors.Wrap(err, "failed to parse CoreOS stream metadata")
+	}
+
+	streamArch, err := st.GetArchitecture(architecture)
+	if err != nil {
+		return "", err
+	}
+
+	if metal, ok := streamArch.Artifacts["metal"]; ok {
+		return metal.Release, nil
+	}
+
+	return "", errors.New("unable to determine CoreOS release version")
 }
 
 func (r *release) getImageFromRelease(imageName string) (string, error) {

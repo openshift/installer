@@ -89,7 +89,149 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
 		},
 		{
-			name: "Required values not set for vsphere platform",
+			name: "ingressVIP missing and deprecated vSphere credentials are present",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    vCenter: test.vcenter.com
+    username: testuser
+    password: testpassword
+    datacenter: testDatacenter
+    defaultDatastore: testDatastore
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+		},
+		{
+			name: "ingressVIP missing and vcenter vSphere credentials are present",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    vcenters:
+    - server: test.vcenter.com
+      user: testuser
+      password: testpassword
+      datacenters:
+      - testDatacenter
+    failureDomains:
+    - name: testFailuredomain
+      server: test.vcenter.com
+      zone: testZone
+      region: testRegion
+      topology:
+        computeCluster: "/testDatacenter/host/testcluster"
+        datacenter: testDatacenter
+        datastore: "/testDatacenter/datastore/testDatastore"
+        folder: "/testDatacenter/vm/testFolder"
+        networks:
+        - testNetwork
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
+		},
+		{
+			name: "vcenter vSphere credentials are present but failureDomain server does not match",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vcenters:
+    - server: test.vcenter.com
+      user: testuser
+      password: testpassword
+      datacenters:
+      - testDatacenter
+    failureDomains:
+    - name: testFailuredomain
+      server: diff1.vcenter.com
+      zone: testZone
+      region: testRegion
+      topology:
+        computeCluster: "/testDatacenter/host/testcluster"
+        datacenter: testDatacenter
+        datastore: "/testDatacenter/datastore/testDatastore"
+        folder: "/testDatacenter/vm/testFolder"
+        networks:
+        - testNetwork
+    - name: testFailuredomain2
+      server: diff2.vcenter.com
+      zone: testZone2
+      region: testRegion2
+      topology:
+        computeCluster: "/testDatacenter2/host/testcluster2"
+        datacenter: testDatacenter2
+        datastore: "/testDatacenter2/datastore/testDatastore2"
+        folder: "/testDatacenter2/vm/testFolder"
+        networks:
+        - testNetwork2
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.com": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.com": server does not exist in vcenters]`,
+		},
+		{
+			name: "All required vSphere fields must be entered if some of them are entered - deprecated fields",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vCenter: test.vcenter.com
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+		},
+		{
+			name: "All required vSphere fields must be entered if some of them are entered - vcenter fields",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  vsphere:
+    apiVips:
+      - 192.168.122.10
+    ingressVips:
+      - 192.168.122.11
+    vcenters:
+    - server: test.vcenter.com
+      user: testuser
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
+		},
+		{
+			name: "ingressVIP missing for vSphere, credentials not provided and should not flag error",
 			data: `
 apiVersion: v1
 metadata:
@@ -613,6 +755,7 @@ platform:
     password: testPassword
     datacenter: testDataCenter
     defaultDataStore: testDefaultDataStore
+    folder: testFolder
     cluster: testCluster
     apiVIP: 192.168.122.10
     ingressVIPs: 
@@ -664,6 +807,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						DeprecatedDatacenter:       "testDataCenter",
 						DeprecatedCluster:          "testCluster",
 						DeprecatedDefaultDatastore: "testDefaultDataStore",
+						DeprecatedFolder:           "testFolder",
 						DeprecatedAPIVIP:           "192.168.122.10",
 						APIVIPs:                    []string{"192.168.122.10"},
 						IngressVIPs:                []string{"192.168.122.11"},
@@ -685,7 +829,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 								Networks:       []string{""},
 								Datastore:      "/testDataCenter/datastore/testDefaultDataStore",
 								ResourcePool:   "/testDataCenter/host/testCluster//Resources",
-								Folder:         "",
+								Folder:         "/testDataCenter/vm/testFolder",
 							},
 						}},
 					},
