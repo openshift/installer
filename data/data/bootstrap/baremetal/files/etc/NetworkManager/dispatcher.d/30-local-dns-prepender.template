@@ -25,7 +25,8 @@ EOF
             mkdir -p /etc/systemd/resolved.conf.d
             echo "[Resolve]" > /etc/systemd/resolved.conf.d/60-kni.conf
             echo "DNS=$DNS_IP" >> /etc/systemd/resolved.conf.d/60-kni.conf
-            echo "Domains={{.ClusterDomain}}" >> /etc/systemd/resolved.conf.d/60-kni.conf
+            echo "Domains=api.{{.ClusterDomain}} api-int.{{.ClusterDomain}} apps.{{.ClusterDomain}}" >> \
+                /etc/systemd/resolved.conf.d/60-kni.conf
             if systemctl -q is-active systemd-resolved; then
                 >&2 echo "NM resolv-prepender: restarting systemd-resolved"
                 systemctl restart systemd-resolved
