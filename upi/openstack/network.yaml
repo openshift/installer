@@ -28,6 +28,18 @@
       allocation_pool_end: "{{ os_subnet_range | ansible.utils.ipaddr('last_usable') }}"
       dns_nameservers: "{{ os_external_dns }}"
 
+  - name: 'Create the primary cluster IPv6 subnet'
+    openstack.cloud.subnet:
+      name: "{{ os_subnet6 }}"
+      network_name: "{{ os_network }}"
+      cidr: "{{ os_subnet6_range }}"
+      ip_version: 6
+      ipv6_address_mode: "{{ os_subnet6_address_mode }}"
+      ipv6_ra_mode: "{{ os_subnet6_router_advertisements_mode }}"
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
+
   - name: 'Set tags on  primary cluster subnet'
     ansible.builtin.command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
@@ -113,6 +125,16 @@
     ansible.builtin.command:
       cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
     when: os_external_network is defined and os_external_network|length>0
+
+  - name: 'Add IPv6 subnet to the external router'
+    openstack.cloud.router:
+      name: "{{ os_router }}"
+      interfaces:
+      - "{{ os_subnet6 }}"
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
+    - os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
     openstack.cloud.port:

@@ -12,6 +12,7 @@
       os_infra_id: "{{ infraID }}"
       os_network: "{{ infraID }}-network"
       os_subnet: "{{ infraID }}-nodes"
+      os_subnet6: "{{ infraID }}-v6-nodes"
       os_router: "{{ infraID }}-external-router"
       # Port names
       os_port_api: "{{ infraID }}-api-port"
