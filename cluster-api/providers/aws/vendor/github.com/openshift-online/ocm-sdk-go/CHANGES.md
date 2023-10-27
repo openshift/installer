@@ -24,7 +24,7 @@ SDK.
 
 ## 0.1.369
 - Update model version to v0.0.321
-  - Exposes `/api/clusters_mgmt/v1/aws_inquiries/sts_account_roles` in the SDK
+  - Exposes `/api/clusters_mgmt/v1/aws_inquiries/sts_account_roles` in the SDK 
 
 ## 0.1.368
 - Update model version v0.0.318
@@ -80,7 +80,7 @@ SDK.
 - Update model version v0.0.302
   - Add property `MarketplaceGCP` to `billing_model_type` in `clusters_mgmt` and `accounts_mgmt`
   - Document `GovCloud`, `KMSLocationID` and `KMSLocationName` fields to `CloudRegion`
-  - Document `fetchRegions=true` to `cloud_providers`
+  - Document `fetchRegions=true` to `cloud_providers` 
 
 ## 0.1.356
 - Update model version v0.0.301
