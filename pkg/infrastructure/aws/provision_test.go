@@ -12,8 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 type mockEC2Client struct {
@@ -1920,6 +1923,854 @@ func TestEnsureS3VPCEndpoint(t *testing.T) {
 				vpcID: vpcID,
 			}
 			res, err := state.ensureVPCS3Endpoint(context.TODO(), logger, &test.mockSvc, []*string{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+type mockELBClient struct {
+	elbv2iface.ELBV2API
+
+	// swappable functions
+	createListener func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error)
+
+	createTargetGroup    func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error)
+	describeTargetGroups func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error)
+
+	createLoadBalancer    func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error)
+	describeLoadBalancers func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error)
+	modifyLBAttr          func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error)
+}
+
+func (m *mockELBClient) CreateListenerWithContext(_ context.Context, in *elbv2.CreateListenerInput, _ ...request.Option) (*elbv2.CreateListenerOutput, error) {
+	return m.createListener(in)
+}
+
+func (m *mockELBClient) CreateTargetGroupWithContext(_ context.Context, in *elbv2.CreateTargetGroupInput, _ ...request.Option) (*elbv2.CreateTargetGroupOutput, error) {
+	return m.createTargetGroup(in)
+}
+
+func (m *mockELBClient) DescribeTargetGroupsWithContext(_ context.Context, in *elbv2.DescribeTargetGroupsInput, _ ...request.Option) (*elbv2.DescribeTargetGroupsOutput, error) {
+	return m.describeTargetGroups(in)
+}
+
+func (m *mockELBClient) CreateLoadBalancerWithContext(_ context.Context, in *elbv2.CreateLoadBalancerInput, _ ...request.Option) (*elbv2.CreateLoadBalancerOutput, error) {
+	return m.createLoadBalancer(in)
+}
+
+func (m *mockELBClient) DescribeLoadBalancersWithContext(_ context.Context, in *elbv2.DescribeLoadBalancersInput, _ ...request.Option) (*elbv2.DescribeLoadBalancersOutput, error) {
+	return m.describeLoadBalancers(in)
+}
+
+func (m *mockELBClient) ModifyLoadBalancerAttributesWithContext(_ context.Context, in *elbv2.ModifyLoadBalancerAttributesInput, _ ...request.Option) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+	return m.modifyLBAttr(in)
+}
+
+func TestEnsureTargetGroup(t *testing.T) {
+	expectedTargetGroup := &elbv2.TargetGroup{}
+
+	tests := []struct {
+		name        string
+		mockSvc     mockELBClient
+		expectedOut *elbv2.TargetGroup
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing target groups",
+			mockSvc: mockELBClient{
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Target group already created",
+			mockSvc: mockELBClient{
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return &elbv2.DescribeTargetGroupsOutput{TargetGroups: []*elbv2.TargetGroup{expectedTargetGroup}}, nil
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedOut: expectedTargetGroup,
+		},
+		{
+			name: "Creating target group fails",
+			mockSvc: mockELBClient{
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return &elbv2.DescribeTargetGroupsOutput{}, nil
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^some AWS SDK error$`,
+		},
+		{
+			name: "Creating target group succeeds",
+			mockSvc: mockELBClient{
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeTargetGroupNotFoundException, "", errAwsSdk)
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return &elbv2.CreateTargetGroupOutput{TargetGroups: []*elbv2.TargetGroup{expectedTargetGroup}}, nil
+				},
+			},
+			expectedOut: expectedTargetGroup,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := ensureTargetGroup(context.TODO(), logger, &test.mockSvc, "tgName", "vpc-1", readyzPath, apiPort, map[string]string{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func TestEnsureLoadBalancer(t *testing.T) {
+	expectedLoadBalancer := &elbv2.LoadBalancer{}
+
+	tests := []struct {
+		name        string
+		mockSvc     mockELBClient
+		expectedOut *elbv2.LoadBalancer
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing load balancers",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errAwsSdk
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list load balancers: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer already exists but enabling cross zone fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return &elbv2.DescribeLoadBalancersOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to enable cross_zone attribute: some AWS SDK error$`,
+		},
+		{
+			name: "Creating load balancer fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeLoadBalancerNotFoundException, "", errAwsSdk)
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return nil, errAwsSdk
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but enabling cross zone fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to enable cross_zone attribute: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created and cross zone attribute set",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+			},
+			expectedOut: expectedLoadBalancer,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := ensureLoadBalancer(context.TODO(), logger, &test.mockSvc, "lbName", []string{}, true, map[string]string{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func TestEnsureInternalLoadBalancer(t *testing.T) {
+	expectedLoadBalancer := &elbv2.LoadBalancer{}
+	const tgAName = "infraID-aint"
+	targetA := &elbv2.TargetGroup{
+		TargetGroupName: aws.String(tgAName),
+		TargetGroupArn:  aws.String("aint-arn"),
+	}
+	listenerA := &elbv2.Listener{
+		ListenerArn: aws.String("aint-arn"),
+		Port:        aws.Int64(apiPort),
+	}
+	const tgSName = "infraID-sint"
+	targetS := &elbv2.TargetGroup{
+		TargetGroupName: aws.String(tgSName),
+		TargetGroupArn:  aws.String("sint-arn"),
+	}
+	listenerS := &elbv2.Listener{
+		ListenerArn: aws.String("sint-arn"),
+		Port:        aws.Int64(servicePort),
+	}
+
+	tests := []struct {
+		name        string
+		mockSvc     mockELBClient
+		expectedOut *elbv2.LoadBalancer
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing load balancers",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errAwsSdk
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					panic("should not be called")
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					panic("should not be called")
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list load balancers: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer already exists but creating target group A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return &elbv2.DescribeLoadBalancersOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errNotFound
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create internalA target group: some AWS SDK error$`,
+		},
+		{
+			name: "Creating load balancer fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeLoadBalancerNotFoundException, "", errAwsSdk)
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return nil, errAwsSdk
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					panic("should not be called")
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but listing target group fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create internalA target group: failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but creating target group A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeTargetGroupNotFoundException, "", errAwsSdk)
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create internalA target group: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but creating listener A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return &elbv2.CreateTargetGroupOutput{}, nil
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to create internalA target group: failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created, target A and listener created but listing target groups fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(in *elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					if aws.StringValue(in.Names[0]) == tgAName {
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetA},
+						}, nil
+					}
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(in *elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					if aws.Int64Value(in.Port) == apiPort {
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerA},
+						}, nil
+					}
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create internalS target group: failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created, target A and listener created but creating target S fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return &elbv2.DescribeLoadBalancersOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(in *elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					switch aws.StringValue(in.Names[0]) {
+					case tgAName:
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetA},
+						}, nil
+					case tgSName:
+						return nil, errNotFound
+					default:
+						panic("should not be called")
+					}
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					switch aws.StringValue(in.Name) {
+					case tgAName:
+						panic("should not be called")
+					case tgSName:
+						return nil, errAwsSdk
+					default:
+						panic("should not be called")
+					}
+				},
+				createListener: func(in *elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					if aws.Int64Value(in.Port) == apiPort {
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerA},
+						}, nil
+					}
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create internalS target group: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created, target A and listener created, target S created but listener fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return &elbv2.DescribeLoadBalancersOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(in *elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					switch aws.StringValue(in.Names[0]) {
+					case tgAName:
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetA},
+						}, nil
+					case tgSName:
+						return nil, errNotFound
+					default:
+						panic("should not be called")
+					}
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					switch aws.StringValue(in.Name) {
+					case tgAName:
+						panic("should not be called")
+					case tgSName:
+						return &elbv2.CreateTargetGroupOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetS},
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+				createListener: func(in *elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					switch aws.Int64Value(in.Port) {
+					case apiPort:
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerA},
+						}, nil
+					case servicePort:
+						return nil, errAwsSdk
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedErr: `^failed to create internalS listener: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer, target groups and listeners created",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(in *elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					switch aws.StringValue(in.Names[0]) {
+					case tgAName:
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetA},
+						}, nil
+					case tgSName:
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetS},
+						}, nil
+					default:
+						return nil, errAwsSdk
+					}
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(in *elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					switch aws.Int64Value(in.Port) {
+					case apiPort:
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerA},
+						}, nil
+					case servicePort:
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerS},
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedOut: expectedLoadBalancer,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			state := lbState{
+				input: &lbInputOptions{
+					infraID: "infraID",
+					vpcID:   "vpc-1",
+				},
+				targetGroupArns: sets.New[string](),
+			}
+			res, err := state.ensureInternalLoadBalancer(context.TODO(), logger, &test.mockSvc, []string{}, map[string]string{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func TestEnsureExternalLoadBalancer(t *testing.T) {
+	expectedLoadBalancer := &elbv2.LoadBalancer{}
+	const tgAName = "infraID-aext"
+	targetA := &elbv2.TargetGroup{
+		TargetGroupName: aws.String(tgAName),
+		TargetGroupArn:  aws.String("aext-arn"),
+	}
+	listenerA := &elbv2.Listener{
+		ListenerArn: aws.String("aext-arn"),
+		Port:        aws.Int64(apiPort),
+	}
+
+	tests := []struct {
+		name        string
+		mockSvc     mockELBClient
+		expectedOut *elbv2.LoadBalancer
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing load balancers",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errAwsSdk
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					panic("should not be called")
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					panic("should not be called")
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list load balancers: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer already exists but creating target group A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return &elbv2.DescribeLoadBalancersOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					panic("should not be called")
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errNotFound
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create external target group: some AWS SDK error$`,
+		},
+		{
+			name: "Creating load balancer fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeLoadBalancerNotFoundException, "", errAwsSdk)
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return nil, errAwsSdk
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					panic("should not be called")
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but listing target group fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create external target group: failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but creating target group A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, awserr.New(elbv2.ErrCodeTargetGroupNotFoundException, "", errAwsSdk)
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create external target group: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer created but creating listener A fails",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(*elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createTargetGroup: func(*elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					return &elbv2.CreateTargetGroupOutput{}, nil
+				},
+				createListener: func(*elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to create external target group: failed to list target groups: some AWS SDK error$`,
+		},
+		{
+			name: "Load balancer, target groups and listeners created",
+			mockSvc: mockELBClient{
+				describeLoadBalancers: func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error) {
+					return nil, errNotFound
+				},
+				createLoadBalancer: func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error) {
+					return &elbv2.CreateLoadBalancerOutput{
+						LoadBalancers: []*elbv2.LoadBalancer{expectedLoadBalancer},
+					}, nil
+				},
+				modifyLBAttr: func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
+					return &elbv2.ModifyLoadBalancerAttributesOutput{}, nil
+				},
+				describeTargetGroups: func(in *elbv2.DescribeTargetGroupsInput) (*elbv2.DescribeTargetGroupsOutput, error) {
+					switch aws.StringValue(in.Names[0]) {
+					case tgAName:
+						return &elbv2.DescribeTargetGroupsOutput{
+							TargetGroups: []*elbv2.TargetGroup{targetA},
+						}, nil
+					default:
+						return nil, errAwsSdk
+					}
+				},
+				createTargetGroup: func(in *elbv2.CreateTargetGroupInput) (*elbv2.CreateTargetGroupOutput, error) {
+					panic("should not be called")
+				},
+				createListener: func(in *elbv2.CreateListenerInput) (*elbv2.CreateListenerOutput, error) {
+					switch aws.Int64Value(in.Port) {
+					case apiPort:
+						return &elbv2.CreateListenerOutput{
+							Listeners: []*elbv2.Listener{listenerA},
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedOut: expectedLoadBalancer,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			state := lbState{
+				input: &lbInputOptions{
+					infraID: "infraID",
+					vpcID:   "vpc-1",
+				},
+				targetGroupArns: sets.New[string](),
+			}
+			res, err := state.ensureExternalLoadBalancer(context.TODO(), logger, &test.mockSvc, []string{}, map[string]string{})
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedOut, res)
