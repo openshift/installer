@@ -1,10 +1,13 @@
 package aws
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -78,7 +81,30 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	tags := mergeTags(clusterAWSConfig.ExtraTags, map[string]string{
 		clusterOwnedTag(clusterConfig.ClusterID): ownedTagValue,
 	})
-	_ = ec2.New(awsSession)
+
+	logger := logrus.StandardLogger()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	logger.Infoln("Creating VPC resources")
+	ec2Client := ec2.New(awsSession)
+	vpcInput := vpcInputOptions{
+		infraID:          clusterConfig.ClusterID,
+		region:           clusterAWSConfig.Region,
+		vpcID:            clusterAWSConfig.VPC,
+		cidrV4Block:      clusterConfig.MachineV4CIDRs[0],
+		zones:            sets.List(availabilityZones),
+		tags:             tags,
+		privateSubnetIDs: clusterAWSConfig.PrivateSubnets,
+	}
+	if clusterAWSConfig.PublicSubnets != nil {
+		vpcInput.publicSubnetIDs = *clusterAWSConfig.PublicSubnets
+	}
+
+	_, err = createVPCResources(ctx, logger, ec2Client, &vpcInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create VPC resources: %w", err)
+	}
 
 	return nil, fmt.Errorf("provision stage not implemented yet")
 }
