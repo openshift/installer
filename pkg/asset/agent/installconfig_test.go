@@ -845,10 +845,10 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			defer mockCtrl.Finish()
 
 			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
-			fileFetcher.EXPECT().FetchByName(installConfigFilename).
+			fileFetcher.EXPECT().FetchByName(InstallConfigFilename).
 				Return(
 					&asset.File{
-						Filename: installConfigFilename,
+						Filename: InstallConfigFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				).MaxTimes(2)

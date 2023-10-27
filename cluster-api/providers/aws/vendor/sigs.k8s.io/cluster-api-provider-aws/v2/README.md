@@ -198,7 +198,7 @@ and the previous/emeritus maintainers & reviewers:
 | [@randomvariable](https://github.com/randomvariable) | [@ingvagabund](https://github.com/ingvagabund)         |
 | [@rudoi](https://github.com/rudoi)                   | [@michaelbeaumont](https://github.com/michaelbeaumont) |
 | [@sedefsavas](https://github.com/sedefsavas)         | [@sethp-nr](https://github.com/sethp-nr)               |
-| [@vincepri](https://github.com/vincepri)             |                                                        | 
+| [@vincepri](https://github.com/vincepri)             |                                                        |
 
 All the CAPA contributors:
 

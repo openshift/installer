@@ -23,7 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
 	"github.com/openshift/installer/pkg/types"
-	agenttypes "github.com/openshift/installer/pkg/types/agent"
+	agenttype "github.com/openshift/installer/pkg/types/agent"
 )
 
 var (
@@ -63,7 +63,7 @@ func (*NMStateConfig) Name() string {
 // the asset.
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&agentconfig.AgentConfig{},
+		&agentconfig.AgentHosts{},
 		&agent.OptionalInstallConfig{},
 	}
 }
@@ -71,79 +71,77 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 
-	agentConfig := &agentconfig.AgentConfig{}
+	agentHosts := &agentconfig.AgentHosts{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(agentConfig, installConfig)
+	dependencies.Get(agentHosts, installConfig)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
 	var isNetworkConfigAvailable bool
 
-	if agentConfig.Config != nil {
-		if len(agentConfig.Config.Hosts) == 0 {
-			return nil
-		}
-		if err := validateHostCount(installConfig.Config, agentConfig); err != nil {
-			return err
-		}
+	if len(agentHosts.Hosts) == 0 {
+		return nil
+	}
+	if err := validateHostCount(installConfig.Config, agentHosts); err != nil {
+		return err
+	}
 
-		for i, host := range agentConfig.Config.Hosts {
-			if host.NetworkConfig.Raw != nil {
-				isNetworkConfigAvailable = true
+	for i, host := range agentHosts.Hosts {
+		if host.NetworkConfig.Raw != nil {
+			isNetworkConfigAvailable = true
 
-				nmStateConfig := aiv1beta1.NMStateConfig{
-					TypeMeta: metav1.TypeMeta{
-						Kind:       "NMStateConfig",
-						APIVersion: "agent-install.openshift.io/v1beta1",
+			nmStateConfig := aiv1beta1.NMStateConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "NMStateConfig",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
+					Namespace: getObjectMetaNamespace(installConfig),
+					Labels:    getNMStateConfigLabels(installConfig),
+				},
+				Spec: aiv1beta1.NMStateConfigSpec{
+					NetConfig: aiv1beta1.NetConfig{
+						Raw: []byte(host.NetworkConfig.Raw),
 					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
-						Namespace: getObjectMetaNamespace(installConfig),
-						Labels:    getNMStateConfigLabels(installConfig),
-					},
-					Spec: aiv1beta1.NMStateConfigSpec{
-						NetConfig: aiv1beta1.NetConfig{
-							Raw: []byte(host.NetworkConfig.Raw),
-						},
-					},
-				}
-				for _, hostInterface := range host.Interfaces {
-					intrfc := aiv1beta1.Interface{
-						Name:       hostInterface.Name,
-						MacAddress: hostInterface.MacAddress,
-					}
-					nmStateConfig.Spec.Interfaces = append(nmStateConfig.Spec.Interfaces, &intrfc)
-
-				}
-				nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
-
-				staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
-					MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
-					NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
-				})
-
-				// Marshal the nmStateConfig one at a time
-				// and add a yaml seperator with new line
-				// so as not to marshal the nmStateConfigs
-				// as a yaml list in the generated nmstateconfig.yaml
-				nmStateConfigData, err := k8syaml.Marshal(nmStateConfig)
-
-				if err != nil {
-					return errors.Wrap(err, "failed to marshal agent installer NMStateConfig")
-				}
-				data = fmt.Sprint(data, fmt.Sprint(string(nmStateConfigData), "---\n"))
+				},
 			}
-		}
+			for _, hostInterface := range host.Interfaces {
+				intrfc := aiv1beta1.Interface{
+					Name:       hostInterface.Name,
+					MacAddress: hostInterface.MacAddress,
+				}
+				nmStateConfig.Spec.Interfaces = append(nmStateConfig.Spec.Interfaces, &intrfc)
 
-		if isNetworkConfigAvailable {
-			n.Config = nmStateConfigs
-			n.StaticNetworkConfig = staticNetworkConfig
-
-			n.File = &asset.File{
-				Filename: nmStateConfigFilename,
-				Data:     []byte(data),
 			}
+			nmStateConfigs = append(nmStateConfigs, &nmStateConfig)
+
+			staticNetworkConfig = append(staticNetworkConfig, &models.HostStaticNetworkConfig{
+				MacInterfaceMap: buildMacInterfaceMap(nmStateConfig),
+				NetworkYaml:     string(nmStateConfig.Spec.NetConfig.Raw),
+			})
+
+			// Marshal the nmStateConfig one at a time
+			// and add a yaml separator with new line
+			// so as not to marshal the nmStateConfigs
+			// as a yaml list in the generated nmstateconfig.yaml
+			nmStateConfigData, err := k8syaml.Marshal(nmStateConfig)
+
+			if err != nil {
+				return errors.Wrap(err, "failed to marshal agent installer NMStateConfig")
+			}
+			data = fmt.Sprint(data, fmt.Sprint(string(nmStateConfigData), "---\n"))
+		}
+	}
+
+	if isNetworkConfigAvailable {
+		n.Config = nmStateConfigs
+		n.StaticNetworkConfig = staticNetworkConfig
+
+		n.File = &asset.File{
+			Filename: nmStateConfigFilename,
+			Data:     []byte(data),
 		}
 	}
 	return n.finish()
@@ -270,27 +268,25 @@ func getFirstIP(nmstateRaw []byte) (string, error) {
 // The method prioritizes the search by trying to scan first the NMState configs defined
 // in the agent-config hosts - so that it would be possible to skip the worker nodes - and then
 // the NMStateConfig.
-func GetNodeZeroIP(agentConfig *agenttypes.Config, nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
+func GetNodeZeroIP(hosts []agenttype.Host, nmStateConfigs []*aiv1beta1.NMStateConfig) (string, error) {
 	rawConfigs := []aiv1beta1.RawNetConfig{}
 
 	// Select first the configs from the hosts, if defined
-	if agentConfig != nil {
-		// Skip worker hosts (or without an explicit role assigned)
-		for _, host := range agentConfig.Hosts {
-			if host.Role != "master" {
-				continue
-			}
-			rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
+	// Skip worker hosts (or without an explicit role assigned)
+	for _, host := range hosts {
+		if host.Role != "master" {
+			continue
 		}
+		rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
+	}
 
-		// Add other hosts without explicit role with a lower
-		// priority as potential candidates
-		for _, host := range agentConfig.Hosts {
-			if host.Role != "" {
-				continue
-			}
-			rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
+	// Add other hosts without explicit role with a lower
+	// priority as potential candidates
+	for _, host := range hosts {
+		if host.Role != "" {
+			continue
 		}
+		rawConfigs = append(rawConfigs, host.NetworkConfig.Raw)
 	}
 
 	// Fallback on nmstate configs (in case hosts weren't found or didn't have static configuration)
@@ -379,13 +375,13 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	return macInterfaceMap
 }
 
-func validateHostCount(installConfig *types.InstallConfig, agentConfig *agentconfig.AgentConfig) error {
+func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconfig.AgentHosts) error {
 	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
 	numMasters := int64(0)
 	numWorkers := int64(0)
 	// Check for hosts explicitly defined
-	for _, host := range agentConfig.Config.Hosts {
+	for _, host := range agentHosts.Hosts {
 		switch host.Role {
 		case "master":
 			numMasters++
@@ -395,7 +391,7 @@ func validateHostCount(installConfig *types.InstallConfig, agentConfig *agentcon
 	}
 
 	// If role is not defined it will first be assigned as a master
-	for _, host := range agentConfig.Config.Hosts {
+	for _, host := range agentHosts.Hosts {
 		if host.Role == "" {
 			if numMasters < numRequiredMasters {
 				numMasters++

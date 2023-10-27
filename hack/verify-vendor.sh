@@ -35,9 +35,14 @@ if [ "$IS_CONTAINER" != "" ]; then
   do
     verify_module "$dir" "1.18"
   done
-
   # Verify the terraform sub-module.
   verify_module "terraform/terraform"
+
+  find cluster-api/providers -maxdepth 1 -mindepth 1 -print0 | while read -r -d '' dir
+  do
+    verify_module "$dir"
+  done
+  verify_module "cluster-api/cluster-api"
 
   git diff --exit-code
 else
