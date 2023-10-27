@@ -1,6 +1,0 @@
-{{ if .UseDualForNodeIP }}
-[connection]
-type=ethernet
-[ipv6]
-method=auto
-{{end}}
