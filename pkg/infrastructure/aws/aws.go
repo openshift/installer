@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -101,9 +102,24 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		vpcInput.publicSubnetIDs = *clusterAWSConfig.PublicSubnets
 	}
 
-	_, err = createVPCResources(ctx, logger, ec2Client, &vpcInput)
+	vpcOutput, err := createVPCResources(ctx, logger, ec2Client, &vpcInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VPC resources: %w", err)
+	}
+
+	logger.Infoln("Creating Load Balancer resources")
+	elbClient := elbv2.New(awsSession)
+	lbInput := lbInputOptions{
+		infraID:          clusterConfig.ClusterID,
+		vpcID:            vpcOutput.vpcID,
+		privateSubnetIDs: vpcOutput.privateSubnetIDs,
+		publicSubnetIDs:  vpcOutput.publicSubnetIDs,
+		tags:             tags,
+		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
+	}
+	_, err = createLoadBalancers(ctx, logger, elbClient, &lbInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create load balancers: %w", err)
 	}
 
 	return nil, fmt.Errorf("provision stage not implemented yet")
