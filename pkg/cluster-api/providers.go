@@ -2,6 +2,7 @@ package providers
 
 import (
 	"archive/zip"
+	"bytes"
 	"embed"
 	"fmt"
 	"io"
@@ -72,22 +73,29 @@ var Mirror embed.FS
 
 // Extract extracts the provider from the embedded data into the specified directory.
 func (p Provider) Extract(dir string) error {
-	zipFile, err := Mirror.Open(filepath.Join("mirror", zipFile))
+	f, err := Mirror.Open(filepath.Join("mirror", zipFile))
 	if err != nil {
 		return errors.Wrap(err, "failed to open cluster api zip from mirror")
 	}
-	defer zipFile.Close()
-	stat, err := zipFile.Stat()
+	defer f.Close()
+	stat, err := f.Stat()
 	if err != nil {
 		return errors.Wrap(err, "failed to stat cluster api zip")
 	}
-	zipReaderAt, ok := zipFile.(io.ReaderAt)
+	seek, ok := f.(io.ReaderAt)
 	if !ok {
+		// If the file does not support ReaderAt interface (<Go1.20)
+		// we need to read the whole file into memory.
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return errors.Wrap(err, "failed to read cluster api zip")
+		}
+		seek = bytes.NewReader(b)
 		return errors.New("zip file does not support seeking")
 	}
 
 	// Open a zip archive for reading.
-	r, err := zip.NewReader(zipReaderAt, stat.Size())
+	r, err := zip.NewReader(seek, stat.Size())
 	if err != nil {
 		return errors.Wrap(err, "failed to open cluster api zip")
 	}
