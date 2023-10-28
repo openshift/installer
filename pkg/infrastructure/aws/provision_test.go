@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
+	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -2780,4 +2782,316 @@ func TestEnsureExternalLoadBalancer(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockR53Client struct {
+	route53iface.Route53API
+
+	createHostedZone func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error)
+	listHostedZones  func(*route53.ListHostedZonesInput, func(*route53.ListHostedZonesOutput, bool) bool) error
+	changeTags       func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error)
+
+	listRecordSets  func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error)
+	changeRecordSet func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
+}
+
+func (m *mockR53Client) CreateHostedZoneWithContext(_ context.Context, in *route53.CreateHostedZoneInput, _ ...request.Option) (*route53.CreateHostedZoneOutput, error) {
+	return m.createHostedZone(in)
+}
+
+func (m *mockR53Client) ListHostedZonesPagesWithContext(_ context.Context, in *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool, _ ...request.Option) error {
+	return m.listHostedZones(in, fn)
+}
+
+func (m *mockR53Client) ChangeTagsForResourceWithContext(_ context.Context, in *route53.ChangeTagsForResourceInput, _ ...request.Option) (*route53.ChangeTagsForResourceOutput, error) {
+	return m.changeTags(in)
+}
+
+func (m *mockR53Client) ListResourceRecordSetsWithContext(_ context.Context, in *route53.ListResourceRecordSetsInput, _ ...request.Option) (*route53.ListResourceRecordSetsOutput, error) {
+	return m.listRecordSets(in)
+}
+
+func (m *mockR53Client) ChangeResourceRecordSetsWithContext(_ context.Context, in *route53.ChangeResourceRecordSetsInput, _ ...request.Option) (*route53.ChangeResourceRecordSetsOutput, error) {
+	return m.changeRecordSet(in)
+}
+
+func TestEnsurePrivateHostedZone(t *testing.T) {
+	privateHostedZone := &route53.HostedZone{
+		Id:     aws.String("hostedzone-1"),
+		Name:   aws.String("domain.com."),
+		Config: &route53.HostedZoneConfig{PrivateZone: aws.Bool(true)},
+	}
+	tests := []struct {
+		name        string
+		mockSvc     mockR53Client
+		isPrivate   bool
+		expectedOut *route53.HostedZone
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing hosted zones",
+			mockSvc: mockR53Client{
+				listHostedZones: func(*route53.ListHostedZonesInput, func(*route53.ListHostedZonesOutput, bool) bool) error {
+					return errAwsSdk
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list hosted zones: .*$`,
+		},
+		{
+			name: "Create hosted zone fails",
+			mockSvc: mockR53Client{
+				listHostedZones: func(*route53.ListHostedZonesInput, func(*route53.ListHostedZonesOutput, bool) bool) error {
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					return nil, errAwsSdk
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create private hosted zone: failed to create hosted zone: .*$`,
+		},
+		{
+			name: "Hosted zone created but tagging fails",
+			mockSvc: mockR53Client{
+				listHostedZones: func(*route53.ListHostedZonesInput, func(*route53.ListHostedZonesOutput, bool) bool) error {
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					return &route53.CreateHostedZoneOutput{
+						HostedZone: privateHostedZone,
+					}, nil
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to tag private hosted zone: some AWS SDK error$`,
+		},
+		{
+			name: "Existing zone and tagging succeeds but listing records fails",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return nil, errAwsSdk
+				},
+				changeRecordSet: func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					panic("change records should not be called")
+				},
+			},
+			expectedErr: `failed to find SOA record set for private zone: some AWS SDK error$`,
+		},
+		{
+			name: "Created and tagged zone but SOA record set not found",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return &route53.ListResourceRecordSetsOutput{}, nil
+				},
+				changeRecordSet: func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `failed to find SOA record set for private zone: not found$`,
+		},
+		{
+			name: "Created and tagged zone but SOA not found",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("create should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return &route53.ListResourceRecordSetsOutput{
+						ResourceRecordSets: []*route53.ResourceRecordSet{
+							{
+								Name:            aws.String("domain.com."),
+								Type:            aws.String("SOA"),
+								ResourceRecords: []*route53.ResourceRecord{},
+							},
+						},
+					}, nil
+				},
+				changeRecordSet: func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					panic("change records should not be called")
+				},
+			},
+			expectedErr: `failed to find SOA record for private zone$`,
+		},
+		{
+			name: "Created and tagged zone but SOA has wrong number of fields",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("create should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return &route53.ListResourceRecordSetsOutput{
+						ResourceRecordSets: []*route53.ResourceRecordSet{
+							{
+								Name: aws.String("domain.com."),
+								Type: aws.String("SOA"),
+								ResourceRecords: []*route53.ResourceRecord{
+									{Value: aws.String("domain email 1")},
+								},
+							},
+						},
+					}, nil
+				},
+				changeRecordSet: func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					panic("change records should not be called")
+				},
+			},
+			expectedErr: `SOA record value has [^7] fields, expected 7$`,
+		},
+		{
+			name: "Created and tagged zone but setting SOA minimum TTL fails",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("create should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return &route53.ListResourceRecordSetsOutput{
+						ResourceRecordSets: []*route53.ResourceRecordSet{
+							{
+								Name: aws.String("domain.com."),
+								Type: aws.String("SOA"),
+								ResourceRecords: []*route53.ResourceRecord{
+									{Value: aws.String("domain email 1 7200 900 1209600 86400")},
+								},
+							},
+						},
+					}, nil
+				},
+				changeRecordSet: func(*route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `failed to set SOA TTL to minimum: some AWS SDK error$`,
+		},
+		{
+			name: "Zone created, tagged zone and SOA set to minimum TTL",
+			mockSvc: mockR53Client{
+				listHostedZones: func(_ *route53.ListHostedZonesInput, fn func(*route53.ListHostedZonesOutput, bool) bool) error {
+					fn(&route53.ListHostedZonesOutput{
+						HostedZones: []*route53.HostedZone{privateHostedZone},
+					}, true)
+					return nil
+				},
+				createHostedZone: func(*route53.CreateHostedZoneInput) (*route53.CreateHostedZoneOutput, error) {
+					panic("create should not be called")
+				},
+				changeTags: func(*route53.ChangeTagsForResourceInput) (*route53.ChangeTagsForResourceOutput, error) {
+					return &route53.ChangeTagsForResourceOutput{}, nil
+				},
+				listRecordSets: func(*route53.ListResourceRecordSetsInput) (*route53.ListResourceRecordSetsOutput, error) {
+					return &route53.ListResourceRecordSetsOutput{
+						ResourceRecordSets: []*route53.ResourceRecordSet{
+							{
+								Name: aws.String("domain.com."),
+								Type: aws.String("SOA"),
+								ResourceRecords: []*route53.ResourceRecord{
+									{Value: aws.String("domain email 1 7200 900 1209600 86400")},
+								},
+							},
+						},
+					}, nil
+				},
+				changeRecordSet: func(in *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
+					updated := aws.StringValue(in.ChangeBatch.Changes[0].ResourceRecordSet.ResourceRecords[0].Value)
+					if updated != "domain email 1 7200 900 1209600 60" {
+						panic("SOA minimum TTL not set")
+					}
+					return &route53.ChangeResourceRecordSetsOutput{}, nil
+				},
+			},
+			expectedOut: privateHostedZone,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	input := dnsInputOptions{
+		clusterDomain: "domain.com",
+		vpcID:         "vpc-1",
+		region:        "region-1",
+		infraID:       "infraID",
+		tags:          map[string]string{"custom-tag": "custom-value"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := ensurePrivateZone(context.TODO(), logger, &test.mockSvc, &input)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func TestFQDN(t *testing.T) {
+	assert.Equal(t, "domain.", fqdn("domain"))
+	assert.Equal(t, "domain.", fqdn("domain."))
+	assert.Equal(t, "domain.com.", fqdn("domain.com"))
+	assert.Equal(t, "domain.com.", fqdn("domain.com."))
+	assert.Equal(t, "", fqdn(""))
+	assert.Equal(t, ".", fqdn("."))
 }
