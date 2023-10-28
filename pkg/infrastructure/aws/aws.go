@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -117,9 +118,29 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		tags:             tags,
 		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
 	}
-	_, err = createLoadBalancers(ctx, logger, elbClient, &lbInput)
+	lbOutput, err := createLoadBalancers(ctx, logger, elbClient, &lbInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create load balancers: %w", err)
+	}
+
+	logger.Infoln("Creating DNS resources")
+	r53Client := route53.New(awsSession)
+	dnsInput := dnsInputOptions{
+		infraID:           clusterConfig.ClusterID,
+		region:            clusterAWSConfig.Region,
+		baseDomain:        clusterConfig.BaseDomain,
+		clusterDomain:     clusterConfig.ClusterDomain,
+		vpcID:             vpcOutput.vpcID,
+		tags:              tags,
+		lbExternalZoneID:  lbOutput.external.zoneID,
+		lbExternalZoneDNS: lbOutput.external.dnsName,
+		lbInternalZoneID:  lbOutput.internal.zoneID,
+		lbInternalZoneDNS: lbOutput.internal.dnsName,
+		isPrivateCluster:  clusterAWSConfig.PublishStrategy != "External",
+	}
+	err = createDNSResources(ctx, logger, r53Client, &dnsInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS rsources: %w", err)
 	}
 
 	return nil, fmt.Errorf("provision stage not implemented yet")
