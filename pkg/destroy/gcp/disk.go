@@ -64,24 +64,32 @@ func (o *ClusterUninstaller) listDisksWithFilter(fields string, filter string, f
 		for _, scopedList := range list.Items {
 			for _, item := range scopedList.Disks {
 				if filterFunc == nil || filterFunc != nil && filterFunc(item) {
-					zone := o.getZoneName(item.Zone)
-					o.Logger.Debugf("Found disk: %s in zone %s", item.Name, zone)
-					result = append(result, cloudResource{
-						key:      fmt.Sprintf("%s/%s", zone, item.Name),
-						name:     item.Name,
-						typeName: "disk",
-						zone:     zone,
-						quota: []gcp.QuotaUsage{{
-							Metric: &gcp.Metric{
-								Service: gcp.ServiceComputeEngineAPI,
-								Limit:   getDiskLimit(item.Type),
-								Dimensions: map[string]string{
-									"region": getRegionFromZone(zone),
+					// Regional disks are replicated in multiple zones, so we
+					// need to destroy all the replicas
+					zoneUrls := item.ReplicaZones
+					if len(item.Zone) > 0 {
+						zoneUrls = append(zoneUrls, item.Zone)
+					}
+					for _, url := range zoneUrls {
+						zone := o.getZoneName(url)
+						o.Logger.Debugf("Found disk: %s in zone %s", item.Name, zone)
+						result = append(result, cloudResource{
+							key:      fmt.Sprintf("%s/%s", zone, item.Name),
+							name:     item.Name,
+							typeName: "disk",
+							zone:     zone,
+							quota: []gcp.QuotaUsage{{
+								Metric: &gcp.Metric{
+									Service: gcp.ServiceComputeEngineAPI,
+									Limit:   getDiskLimit(item.Type),
+									Dimensions: map[string]string{
+										"region": getRegionFromZone(zone),
+									},
 								},
-							},
-							Amount: item.SizeGb,
-						}},
-					})
+								Amount: item.SizeGb,
+							}},
+						})
+					}
 				}
 			}
 		}
