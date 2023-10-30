@@ -227,8 +227,16 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					VSphere: &vspherePlatform,
 				}
 			}
-			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
-			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
+			if len(installConfig.Config.Platform.VSphere.APIVIPs) == 0 || len(installConfig.Config.Platform.VSphere.IngressVIPs) == 0 {
+				agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
+			}
+
+			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 0 {
+				agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
+			}
+			if len(installConfig.Config.Platform.VSphere.IngressVIPs) > 0 {
+				agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
+			}
 		} else if installConfig.Config.Platform.External != nil {
 			icOverridden = true
 			icOverrides.Platform = &agentClusterInstallPlatform{
