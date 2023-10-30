@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -46,8 +48,10 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 	dependencies.Get(ic)
 
 	if ic.Config.CredentialsMode != "" {
+		logrus.Debug("CredentialsMode is set. Skipping platform permissions checks before attempting installation.")
 		return nil
 	}
+	logrus.Debug("CredentialsMode is not set. Performing platform permissions checks before attempting installation.")
 
 	var err error
 	platform := ic.Config.Platform.Name()
@@ -63,6 +67,23 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 
 		if !usingExistingPrivateZone {
 			permissionGroups = append(permissionGroups, awsconfig.PermissionCreateHostedZone)
+		}
+
+		var ec2RootVolume = aws.EC2RootVolume{}
+		var awsMachinePoolUsingKMS, masterMachinePoolUsingKMS bool
+		if ic.Config.AWS.DefaultMachinePlatform != nil && ic.Config.AWS.DefaultMachinePlatform.EC2RootVolume != ec2RootVolume {
+			awsMachinePoolUsingKMS = len(ic.Config.AWS.DefaultMachinePlatform.EC2RootVolume.KMSKeyARN) != 0
+		}
+		if ic.Config.ControlPlane != nil &&
+			ic.Config.ControlPlane.Name == types.MachinePoolControlPlaneRoleName &&
+			ic.Config.ControlPlane.Platform.AWS != nil &&
+			ic.Config.ControlPlane.Platform.AWS.EC2RootVolume != ec2RootVolume {
+			masterMachinePoolUsingKMS = len(ic.Config.ControlPlane.Platform.AWS.EC2RootVolume.KMSKeyARN) != 0
+		}
+		// Add KMS encryption keys, if provided.
+		if awsMachinePoolUsingKMS || masterMachinePoolUsingKMS {
+			logrus.Debugf("Adding %s to the group of permissions to validate", awsconfig.PermissionKMSEncryptionKeys)
+			permissionGroups = append(permissionGroups, awsconfig.PermissionKMSEncryptionKeys)
 		}
 
 		// Add delete permissions for non-C2S installs.
