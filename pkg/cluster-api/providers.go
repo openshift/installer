@@ -91,7 +91,6 @@ func (p Provider) Extract(dir string) error {
 			return errors.Wrap(err, "failed to read cluster api zip")
 		}
 		seek = bytes.NewReader(b)
-		return errors.New("zip file does not support seeking")
 	}
 
 	// Open a zip archive for reading.
