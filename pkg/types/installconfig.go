@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/external"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -515,4 +516,23 @@ func (c *InstallConfig) WorkerMachinePool() *MachinePool {
 	}
 
 	return nil
+}
+
+// EnabledFeatureGates returns a FeatureGate that can be checked (using the Enabled function)
+// to determine if a feature gate is enabled in the current feature sets.
+func (c *InstallConfig) EnabledFeatureGates() (featuregates.FeatureGate, error) {
+	var customFS *configv1.CustomFeatureGates
+	var err error
+	if c.FeatureSet == configv1.CustomNoUpgrade {
+		customFS, err = featuregates.GenerateCustomFeatures(c.FeatureGates)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error generating feature set from custom features: %w", err)
+	}
+
+	fg, err := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, c.FeatureSet, customFS)
+	if err != nil {
+		return nil, fmt.Errorf("error generating feature gates from feature sets: %w", err)
+	}
+	return fg, nil
 }
