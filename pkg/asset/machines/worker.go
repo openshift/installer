@@ -294,6 +294,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to create ignition for multipath enabled for worker machines")
 			}
 			machineConfigs = append(machineConfigs, ignMultipath)
+
+			// set SMT level if specified for powervs.
+			if pool.Platform.PowerVS != nil && pool.Platform.PowerVS.SMTLevel != "" {
+				ignPowerSMT, err := machineconfig.ForPowerSMT("worker", pool.Platform.PowerVS.SMTLevel)
+				if err != nil {
+					return errors.Wrap(err, "failed to create ignition for Power SMT for worker machines")
+				}
+				machineConfigs = append(machineConfigs, ignPowerSMT)
+			}
 		}
 		// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.
 		// The cluster-network-operator handles the validation of this field.

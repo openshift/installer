@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/openshift/installer/pkg/types/powervs"
 )
+
+var validSMTLevels = sets.New[string]("1", "2", "3", "4", "5", "6", "7", "8", "on", "off")
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.ErrorList {
@@ -68,6 +71,11 @@ func ValidateMachinePool(p *powervs.MachinePool, fldPath *field.Path) field.Erro
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("processors"), processors, "minimum number of processors must be from 1 core for Dedicated ProcType"))
 			}
 		}
+	}
+
+	// Validate SMTLevel
+	if p.SMTLevel != "" && !validSMTLevels.Has(p.SMTLevel) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("smtLevel"), p.SMTLevel, fmt.Sprintf("Valid SMT Levels are %s", sets.List(validSMTLevels))))
 	}
 
 	// Validate SysType

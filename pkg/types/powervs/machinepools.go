@@ -30,6 +30,11 @@ type MachinePool struct {
 	// +optional
 	ProcType machinev1.PowerVSProcessorType `json:"procType,omitempty"`
 
+	// SMTLevel specifies the level of SMT to set the control plane and worker nodes to.
+	//
+	// +optional
+	SMTLevel string `json:"smtLevel,omitempty"`
+
 	// SysType defines the system type for instance.
 	//
 	// +optional
@@ -52,6 +57,9 @@ func (a *MachinePool) Set(required *MachinePool) {
 	}
 	if required.ProcType != "" {
 		a.ProcType = required.ProcType
+	}
+	if required.SMTLevel != "" {
+		a.SMTLevel = required.SMTLevel
 	}
 	if required.SysType != "" {
 		a.SysType = required.SysType
