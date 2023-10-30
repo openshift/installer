@@ -1,3 +1,7 @@
+// Copyright 2019 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 // Package imports implements a Go pretty-printer (like package "go/format")
 // that also adds or removes import statements as necessary.
 package imports // import "golang.org/x/tools/imports"
@@ -36,7 +40,7 @@ var LocalPrefix string
 //
 // Note that filename's directory influences which imports can be chosen,
 // so it is important that filename be accurate.
-// To process data ``as if'' it were in filename, pass the data as a non-nil src.
+// To process data “as if” it were in filename, pass the data as a non-nil src.
 func Process(filename string, src []byte, opt *Options) ([]byte, error) {
 	var err error
 	if src == nil {

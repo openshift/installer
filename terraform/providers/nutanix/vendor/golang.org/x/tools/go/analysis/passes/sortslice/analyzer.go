@@ -45,16 +45,26 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		if fn.FullName() != "sort.Slice" {
+		fnName := fn.FullName()
+		if fnName != "sort.Slice" && fnName != "sort.SliceStable" && fnName != "sort.SliceIsSorted" {
 			return
 		}
 
 		arg := call.Args[0]
 		typ := pass.TypesInfo.Types[arg].Type
+
+		if tuple, ok := typ.(*types.Tuple); ok {
+			typ = tuple.At(0).Type() // special case for Slice(f(...))
+		}
+
 		switch typ.Underlying().(type) {
 		case *types.Slice, *types.Interface:
 			return
 		}
+
+		// Restore typ to the original type, we may unwrap the tuple above,
+		// typ might not be the type of arg.
+		typ = pass.TypesInfo.Types[arg].Type
 
 		var fixes []analysis.SuggestedFix
 		switch v := typ.Underlying().(type) {
@@ -115,7 +125,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		pass.Report(analysis.Diagnostic{
 			Pos:            call.Pos(),
 			End:            call.End(),
-			Message:        fmt.Sprintf("sort.Slice's argument must be a slice; is called with %s", typ.String()),
+			Message:        fmt.Sprintf("%s's argument must be a slice; is called with %s", fnName, typ.String()),
 			SuggestedFixes: fixes,
 		})
 	})
