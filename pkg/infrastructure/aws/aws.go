@@ -8,7 +8,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -151,9 +153,43 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
 		tags:             tags,
 	}
-	_, err = createSecurityGroups(ctx, logger, ec2Client, &sgInput)
+	sgOutput, err := createSecurityGroups(ctx, logger, ec2Client, &sgInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create security groups: %w", err)
+	}
+
+	logger.Infoln("Creating bootstrap resources")
+	bootstrapSubnet := vpcOutput.privateSubnetIDs[0]
+	if clusterAWSConfig.PublishStrategy == "External" {
+		bootstrapSubnet = vpcOutput.publicSubnetIDs[0]
+	}
+	bootstrapInput := bootstrapInputOptions{
+		instanceInputOptions: instanceInputOptions{
+			infraID:           clusterConfig.ClusterID,
+			amiID:             clusterAWSConfig.AMI,
+			instanceType:      clusterAWSConfig.MasterInstanceType,
+			iamRole:           clusterAWSConfig.MasterIAMRoleName,
+			volumeType:        "gp2",
+			volumeSize:        30,
+			volumeIOPS:        0,
+			isEncrypted:       true,
+			metadataAuth:      clusterAWSConfig.BootstrapMetadataAuthentication,
+			kmsKeyID:          clusterAWSConfig.KMSKeyID,
+			securityGroupIds:  []string{sgOutput.bootstrap, sgOutput.controlPlane},
+			targetGroupARNs:   lbOutput.targetGroupArns,
+			subnetID:          bootstrapSubnet,
+			associatePublicIP: clusterAWSConfig.PublishStrategy == "External",
+			userData:          clusterAWSConfig.BootstrapIgnitionStub,
+			tags:              tags,
+		},
+		ignitionBucket:  clusterAWSConfig.IgnitionBucket,
+		ignitionContent: clusterConfig.IgnitionBootstrap,
+	}
+	iamClient := iam.New(awsSession)
+	s3Client := s3.New(awsSession)
+	err = createBootstrapResources(ctx, logger, ec2Client, iamClient, s3Client, elbClient, &bootstrapInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bootstrap resources: %w", err)
 	}
 
 	return nil, fmt.Errorf("provision stage not implemented yet")
