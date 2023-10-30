@@ -1,6 +1,7 @@
 {{if .IsOKD -}}
 #!/usr/bin/env bash
 set -euo pipefail
+set -x
 
 # Exit early if pivot is attempted on SCOS Live ISO
 {{if .IsSCOS -}}
@@ -65,6 +66,8 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
     # Load new systemd unit files and configuration such as crio.service after mounting the content of OKD/FCOS Machine
     # OS over /usr and copying new files to /etc
     systemctl daemon-reload
+
+    systemctl status systemd-resolved.service || true
 
     # CoreDNS fails to listen to 127.0.0.53:53 when Agent-based Installer boots its the rendezvous host with a Fedora
     # CoreOS bootimage because by default FCOS' systemd-resolved already listens to this port. OKD/FCOS disables
