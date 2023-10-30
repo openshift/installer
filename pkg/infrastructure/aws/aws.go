@@ -143,6 +143,19 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		return nil, fmt.Errorf("failed to create DNS rsources: %w", err)
 	}
 
+	logger.Infoln("Creating security groups")
+	sgInput := sgInputOptions{
+		infraID:          clusterConfig.ClusterID,
+		vpcID:            vpcOutput.vpcID,
+		cidrV4Blocks:     clusterConfig.MachineV4CIDRs,
+		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
+		tags:             tags,
+	}
+	_, err = createSecurityGroups(ctx, logger, ec2Client, &sgInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create security groups: %w", err)
+	}
+
 	return nil, fmt.Errorf("provision stage not implemented yet")
 }
 
