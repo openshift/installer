@@ -56,6 +56,11 @@ type mockEC2Client struct {
 
 	createVpcEndpoint    func(*ec2.CreateVpcEndpointInput) (*ec2.CreateVpcEndpointOutput, error)
 	describeVpcEndpoints func(*ec2.DescribeVpcEndpointsInput) (*ec2.DescribeVpcEndpointsOutput, error)
+
+	describeSGs      func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error)
+	createSG         func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error)
+	authorizeEgress  func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error)
+	authorizeIngress func(*ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error)
 }
 
 func (m *mockEC2Client) DescribeVpcsWithContext(_ context.Context, in *ec2.DescribeVpcsInput, _ ...request.Option) (*ec2.DescribeVpcsOutput, error) {
@@ -152,6 +157,22 @@ func (m *mockEC2Client) CreateVpcEndpointWithContext(_ context.Context, in *ec2.
 
 func (m *mockEC2Client) DescribeVpcEndpointsWithContext(_ context.Context, in *ec2.DescribeVpcEndpointsInput, _ ...request.Option) (*ec2.DescribeVpcEndpointsOutput, error) {
 	return m.describeVpcEndpoints(in)
+}
+
+func (m *mockEC2Client) DescribeSecurityGroupsWithContext(_ context.Context, in *ec2.DescribeSecurityGroupsInput, _ ...request.Option) (*ec2.DescribeSecurityGroupsOutput, error) {
+	return m.describeSGs(in)
+}
+
+func (m *mockEC2Client) CreateSecurityGroupWithContext(_ context.Context, in *ec2.CreateSecurityGroupInput, _ ...request.Option) (*ec2.CreateSecurityGroupOutput, error) {
+	return m.createSG(in)
+}
+
+func (m *mockEC2Client) AuthorizeSecurityGroupEgressWithContext(_ context.Context, in *ec2.AuthorizeSecurityGroupEgressInput, _ ...request.Option) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+	return m.authorizeEgress(in)
+}
+
+func (m *mockEC2Client) AuthorizeSecurityGroupIngressWithContext(_ context.Context, in *ec2.AuthorizeSecurityGroupIngressInput, _ ...request.Option) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+	return m.authorizeIngress(in)
 }
 
 var errAwsSdk = errors.New("some AWS SDK error")
@@ -1925,6 +1946,545 @@ func TestEnsureS3VPCEndpoint(t *testing.T) {
 				vpcID: vpcID,
 			}
 			res, err := state.ensureVPCS3Endpoint(context.TODO(), logger, &test.mockSvc, []*string{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func TestEnsureSecurityGroup(t *testing.T) {
+	emptySG := &ec2.SecurityGroup{
+		GroupId: aws.String("sg-1"),
+	}
+	expectedSG := &ec2.SecurityGroup{
+		GroupId: aws.String("sg-1"),
+		IpPermissionsEgress: []*ec2.IpPermission{
+			{
+				IpProtocol: aws.String("-1"),
+				IpRanges: []*ec2.IpRange{
+					{CidrIp: aws.String("0.0.0.0/0")},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		mockSvc     mockEC2Client
+		expectedOut *ec2.SecurityGroup
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing security groups",
+			mockSvc: mockEC2Client{
+				describeSGs: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					panic("should not be called")
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to list security groups: some AWS SDK error$`,
+		},
+		{
+			name: "Failed to create security group",
+			mockSvc: mockEC2Client{
+				describeSGs: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					return nil, errNotFound
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create security group \(node-sg\): some AWS SDK error$`,
+		},
+		{
+			name: "Security group created but not found",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					return nil, errNotFound
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return &ec2.CreateSecurityGroupOutput{
+						GroupId: aws.String("sg-1"),
+					}, nil
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to find security group \(node-sg\) that was just created: .*$`,
+		},
+		{
+			name: "Security group created but authorizing egress fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 0 {
+						return nil, errNotFound
+					}
+					return &ec2.DescribeSecurityGroupsOutput{
+						SecurityGroups: []*ec2.SecurityGroup{emptySG},
+					}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return &ec2.CreateSecurityGroupOutput{
+						GroupId: aws.String("sg-1"),
+					}, nil
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to authorize egress rules for security group \(node-sg\): .*$`,
+		},
+		{
+			name: "Security group exists but authorizing egress fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					return &ec2.DescribeSecurityGroupsOutput{
+						SecurityGroups: []*ec2.SecurityGroup{emptySG},
+					}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					panic("should not be called")
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to authorize egress rules for security group \(node-sg\): .*$`,
+		},
+		{
+			name: "Security Group created and egress rules authorized",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 0 {
+						return nil, errNotFound
+					}
+					return &ec2.DescribeSecurityGroupsOutput{
+						SecurityGroups: []*ec2.SecurityGroup{expectedSG},
+					}, nil
+				},
+				createSG: func(in *ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					if len(in.TagSpecifications) == 0 || len(in.TagSpecifications[0].Tags) == 0 {
+						panic("security group not tagged")
+					}
+					if aws.StringValue(in.TagSpecifications[0].ResourceType) != "security-group" {
+						panic("security group tagged with wrong resource type")
+					}
+					return &ec2.CreateSecurityGroupOutput{
+						GroupId: aws.String("sg-1"),
+					}, nil
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return &ec2.AuthorizeSecurityGroupEgressOutput{
+						SecurityGroupRules: []*ec2.SecurityGroupRule{{}},
+					}, nil
+				},
+			},
+			expectedOut: expectedSG,
+		},
+		{
+			name: "Security Group already created and egress rules already authorized",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 0 {
+						return nil, errNotFound
+					}
+					return &ec2.DescribeSecurityGroupsOutput{
+						SecurityGroups: []*ec2.SecurityGroup{expectedSG},
+					}, nil
+				},
+				createSG: func(in *ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					if len(in.TagSpecifications) == 0 || len(in.TagSpecifications[0].Tags) == 0 {
+						panic("security group not tagged")
+					}
+					if aws.StringValue(in.TagSpecifications[0].ResourceType) != "security-group" {
+						panic("security group tagged with wrong resource type")
+					}
+					return &ec2.CreateSecurityGroupOutput{
+						GroupId: aws.String("sg-1"),
+					}, nil
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return nil, awserr.New(errDuplicatePermission, "", errAwsSdk)
+				},
+			},
+			expectedOut: expectedSG,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			res, err := ensureSecurityGroup(context.TODO(), logger, &test.mockSvc, "infraID", "vpc-1", "node-sg", map[string]string{"custom-tag": "custom-value"})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+//nolint:gocyclo // we don't care about the cyclomatic complexity
+func TestCreateSecurityGroups(t *testing.T) {
+	bootstrapSG := &ec2.SecurityGroup{
+		GroupId: aws.String("sg-1"),
+	}
+	controlplaneSG := &ec2.SecurityGroup{
+		GroupId: aws.String("sg-2"),
+	}
+	computeSG := &ec2.SecurityGroup{
+		GroupId: aws.String("sg-3"),
+	}
+	cidrBlocks := []string{"10.0.0.0/16"}
+	defaultEgress := defaultEgressRules(aws.String("sg-1"))
+	bootstrapIngress := defaultBootstrapSGIngressRules(aws.String("sg-1"), cidrBlocks)
+	masterIngress := defaultMasterSGIngressRules(aws.String("sg-2"), aws.String("sg-3"), cidrBlocks)
+	workerIngress := defaultWorkerSGIngressRules(aws.String("sg-3"), aws.String("sg-2"), cidrBlocks)
+
+	tests := []struct {
+		name        string
+		mockSvc     mockEC2Client
+		private     bool
+		expectedOut *sgOutput
+		expectedErr string
+	}{
+		{
+			name: "Creating bootstrap security group fails when listing security groups",
+			mockSvc: mockEC2Client{
+				describeSGs: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					return nil, errAwsSdk
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create bootstrap security group: failed to list security groups: some AWS SDK error$`,
+		},
+		{
+			name: "Creating bootstrap security group fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 0 {
+						return &ec2.DescribeSecurityGroupsOutput{SecurityGroups: []*ec2.SecurityGroup{}}, nil
+					}
+					panic("should not be called")
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to create bootstrap security group: failed to create security group \(infraID-bootstrap-sg\): some AWS SDK error$`,
+		},
+		{
+			name: "Bootstrap security group created but authorizing ingress fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 0 {
+						return &ec2.DescribeSecurityGroupsOutput{
+							SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+						}, nil
+					}
+					panic("should not be called")
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					panic("should not be called")
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return &ec2.AuthorizeSecurityGroupEgressOutput{
+						SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(defaultEgress)),
+					}, nil
+				},
+				authorizeIngress: func(*ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to attach ingress rules to bootstrap security group: .*$`,
+		},
+		{
+			name: "Bootstrap security group created and authorizing ingress for public cluster uses all addresses but creating master security group fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 1 && aws.StringValue(in.Filters[1].Values[0]) == "infraID-bootstrap-sg" {
+						return &ec2.DescribeSecurityGroupsOutput{
+							SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+						}, nil
+					}
+					return &ec2.DescribeSecurityGroupsOutput{}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					return &ec2.AuthorizeSecurityGroupEgressOutput{
+						SecurityGroupRules: []*ec2.SecurityGroupRule{{}},
+					}, nil
+				},
+				authorizeIngress: func(in *ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					if aws.StringValue(in.IpPermissions[0].IpRanges[0].CidrIp) != "0.0.0.0/0" {
+						panic("should have used 0.0.0.0/0 for public clusters")
+					}
+					rules := make([]*ec2.SecurityGroupRule, len(bootstrapIngress))
+					return &ec2.AuthorizeSecurityGroupIngressOutput{
+						SecurityGroupRules: rules,
+					}, nil
+				},
+			},
+			expectedErr: `^failed to create control plane security group: failed to create security group \(infraID-master-sg\): some AWS SDK error$`,
+		},
+		{
+			name: "Bootstrap security group created, master created but creating worker fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 1 {
+						switch aws.StringValue(in.Filters[1].Values[0]) {
+						case "infraID-bootstrap-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+							}, nil
+						case "infraID-master-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{controlplaneSG},
+							}, nil
+						default:
+							return &ec2.DescribeSecurityGroupsOutput{}, nil
+						}
+					}
+					return &ec2.DescribeSecurityGroupsOutput{}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(in *ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1", "sg-2":
+						return &ec2.AuthorizeSecurityGroupEgressOutput{
+							SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(defaultEgress)),
+						}, nil
+					}
+					panic("should not be called")
+				},
+				authorizeIngress: func(in *ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1":
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(bootstrapIngress)),
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedErr: `failed to create compute security group: failed to create security group \(infraID-worker-sg\): some AWS SDK error$`,
+		},
+		{
+			name: "Bootstrap, master and worker security groups created but authorizing master ingress fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 1 {
+						switch aws.StringValue(in.Filters[1].Values[0]) {
+						case "infraID-bootstrap-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+							}, nil
+						case "infraID-master-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{controlplaneSG},
+							}, nil
+						case "infraID-worker-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{computeSG},
+							}, nil
+						default:
+							panic("should not be called")
+						}
+					}
+					return &ec2.DescribeSecurityGroupsOutput{}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(in *ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1", "sg-2", "sg-3":
+						return &ec2.AuthorizeSecurityGroupEgressOutput{
+							SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(defaultEgress)),
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+				authorizeIngress: func(in *ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1":
+						rules := make([]*ec2.SecurityGroupRule, len(bootstrapIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					case "sg-2":
+						return nil, errAwsSdk
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedErr: `failed to attach ingress rules to master security group: .*$`,
+		},
+		{
+			name: "Bootstrap, master and worker security groups created but authorizing worker ingress fails",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 1 {
+						switch aws.StringValue(in.Filters[1].Values[0]) {
+						case "infraID-bootstrap-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+							}, nil
+						case "infraID-master-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{controlplaneSG},
+							}, nil
+						case "infraID-worker-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{computeSG},
+							}, nil
+						default:
+							panic("should not be called")
+						}
+					}
+					return &ec2.DescribeSecurityGroupsOutput{}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(in *ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1", "sg-2", "sg-3":
+						return &ec2.AuthorizeSecurityGroupEgressOutput{
+							SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(defaultEgress)),
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+				authorizeIngress: func(in *ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1":
+						rules := make([]*ec2.SecurityGroupRule, len(bootstrapIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					case "sg-2":
+						rules := make([]*ec2.SecurityGroupRule, len(masterIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					case "sg-3":
+						return nil, errAwsSdk
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedErr: `failed to attach ingress rules to worker security group: .*$`,
+		},
+		{
+			name: "All security groups created and rules authorized",
+			mockSvc: mockEC2Client{
+				describeSGs: func(in *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+					if len(in.Filters) > 1 {
+						switch aws.StringValue(in.Filters[1].Values[0]) {
+						case "infraID-bootstrap-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{bootstrapSG},
+							}, nil
+						case "infraID-master-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{controlplaneSG},
+							}, nil
+						case "infraID-worker-sg":
+							return &ec2.DescribeSecurityGroupsOutput{
+								SecurityGroups: []*ec2.SecurityGroup{computeSG},
+							}, nil
+						default:
+							panic("should not be called")
+						}
+					}
+					return &ec2.DescribeSecurityGroupsOutput{}, nil
+				},
+				createSG: func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error) {
+					return nil, errAwsSdk
+				},
+				authorizeEgress: func(in *ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1", "sg-2", "sg-3":
+						return &ec2.AuthorizeSecurityGroupEgressOutput{
+							SecurityGroupRules: make([]*ec2.SecurityGroupRule, len(defaultEgress)),
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+				authorizeIngress: func(in *ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
+					switch aws.StringValue(in.GroupId) {
+					case "sg-1":
+						rules := make([]*ec2.SecurityGroupRule, len(bootstrapIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					case "sg-2":
+						rules := make([]*ec2.SecurityGroupRule, len(masterIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					case "sg-3":
+						rules := make([]*ec2.SecurityGroupRule, len(workerIngress))
+						return &ec2.AuthorizeSecurityGroupIngressOutput{
+							SecurityGroupRules: rules,
+						}, nil
+					default:
+						panic("should not be called")
+					}
+				},
+			},
+			expectedOut: &sgOutput{
+				bootstrap:    "sg-1",
+				controlPlane: "sg-2",
+				compute:      "sg-3",
+			},
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := sgInputOptions{
+				infraID:          "infraID",
+				vpcID:            "vpc-1",
+				cidrV4Blocks:     []string{"10.0.0.0/16"},
+				isPrivateCluster: test.private,
+				tags:             map[string]string{"custom-tag": "custom-value"},
+			}
+			res, err := createSecurityGroups(context.TODO(), logger, &test.mockSvc, &input)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedOut, res)
