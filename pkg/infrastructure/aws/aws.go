@@ -221,7 +221,17 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		return nil, fmt.Errorf("failed to create control plane resources: %w", err)
 	}
 
-	return nil, fmt.Errorf("provision stage not implemented yet")
+	logger.Infoln("Creating compute resources")
+	computeInput := computeInputOptions{
+		infraID: clusterConfig.ClusterID,
+		tags:    tags,
+	}
+	err = createComputeResources(ctx, logger, iamClient, &computeInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create compute resources: %w", err)
+	}
+
+	return nil, nil
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
