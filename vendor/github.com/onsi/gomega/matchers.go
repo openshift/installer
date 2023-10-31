@@ -94,7 +94,7 @@ func Succeed() types.GomegaMatcher {
 //
 //	Expect(err).Should(MatchError("an error")) //asserts that err.Error() == "an error"
 //	Expect(err).Should(MatchError(SomeError)) //asserts that err == SomeError (via reflect.DeepEqual)
-//	Expect(err).Should(MatchError(ContainSubstring("sprocket not found"))) // asserts that edrr.Error() contains substring "sprocket not found"
+//	Expect(err).Should(MatchError(ContainSubstring("sprocket not found"))) // asserts that err.Error() contains substring "sprocket not found"
 //
 // It is an error for err to be nil or an object that does not implement the
 // Error interface
@@ -381,7 +381,7 @@ func ContainElements(elements ...interface{}) types.GomegaMatcher {
 }
 
 // HaveEach succeeds if actual solely contains elements that match the passed in element.
-// Please note that if actual is empty, HaveEach always will succeed.
+// Please note that if actual is empty, HaveEach always will fail.
 // By default HaveEach() uses Equal() to perform the match, however a
 // matcher can be passed in instead:
 //

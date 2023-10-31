@@ -1,4 +1,5 @@
-// +build !darwin,!linux
+//go:build !darwin && !linux && !plan9
+// +build !darwin,!linux,!plan9
 
 package sftp
 
@@ -6,6 +7,10 @@ import (
 	"syscall"
 )
 
-func (p sshFxpExtendedPacketStatVFS) respond(svr *Server) responsePacket {
-	return statusFromError(p, syscall.ENOTSUP)
+func (p *sshFxpExtendedPacketStatVFS) respond(svr *Server) responsePacket {
+	return statusFromError(p.ID, syscall.ENOTSUP)
+}
+
+func getStatVFSForPath(name string) (*StatVFS, error) {
+	return nil, syscall.ENOTSUP
 }

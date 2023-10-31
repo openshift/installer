@@ -41,7 +41,7 @@ func (ca *policyAdapter) WithAuthorization() autorest.PrepareDecorator {
 			if err != nil {
 				return r, err
 			}
-			_, err = ca.pl.Do(req)
+			resp, err := ca.pl.Do(req)
 			// if the authentication failed due to invalid/missing credentials
 			// return a wrapped error so the retry policy won't kick in.
 			type nonRetriable interface {
@@ -59,7 +59,7 @@ func (ca *policyAdapter) WithAuthorization() autorest.PrepareDecorator {
 			}
 			// copy the authorization header to the real request
 			const authHeader = "Authorization"
-			r.Header.Set(authHeader, req.Raw().Header.Get(authHeader))
+			r.Header.Set(authHeader, resp.Request.Header.Get(authHeader))
 			return r, err
 		})
 	}
@@ -97,7 +97,7 @@ func NewDefaultAzureCredentialAdapter(options *DefaultAzureCredentialOptions) (a
 type nullPolicy struct{}
 
 func (nullPolicy) Do(req *policy.Request) (*http.Response, error) {
-	return &http.Response{StatusCode: http.StatusOK}, nil
+	return &http.Response{Request: req.Raw(), StatusCode: http.StatusOK}, nil
 }
 
 // error type returned to prevent the retry policy from retrying the request
