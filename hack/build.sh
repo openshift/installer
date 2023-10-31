@@ -42,7 +42,7 @@ export CGO_ENABLED=0
 MODE="${MODE:-release}"
 
 # Build terraform binaries before setting environment variables since it messes up make
-if test "${SKIP_TERRAFORM}" != y
+if test "${SKIP_TERRAFORM}" != y && ! (echo "${TAGS}" | grep -q -e 'aro' -e 'altinfra')
 then
   make -j8 -C terraform all
   copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
