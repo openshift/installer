@@ -40,16 +40,18 @@ var (
 	validResourceSkuRegions        = "southeastasia"
 
 	vmCapabilities = map[string]map[string]string{
-		"Standard_D8s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D4s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_A1_v2":   {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
-		"Standard_D2_v4":   {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D4_v4":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_D2s_v3":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
-		"Standard_Dc4_v4":  {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "CpuArchitectureType": "x64"},
-		"Standard_B4ms":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
-		"Standard_D8ps_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
-		"Standard_D4ps_v5": {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64"},
+		"Standard_D8s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V1", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_A1_v2":     {"vCPUsAvailable": "1", "MemoryGB": "2", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D2_v4":     {"vCPUsAvailable": "2", "MemoryGB": "8", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D4_v4":     {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "False", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_D2s_v3":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64"},
+		"Standard_Dc4_v4":    {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "CpuArchitectureType": "x64"},
+		"Standard_B4ms":      {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V1,V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64"},
+		"Standard_D8ps_v5":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
+		"Standard_D4ps_v5":   {"vCPUsAvailable": "4", "MemoryGB": "16", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "Arm64", "TrustedLaunchDisabled": "True"},
+		"Standard_DC8ads_v5": {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "False", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SNP"},
+		"Standard_DC8s_v3":   {"vCPUsAvailable": "8", "MemoryGB": "32", "PremiumIO": "True", "HyperVGenerations": "V2", "AcceleratedNetworkingEnabled": "True", "CpuArchitectureType": "x64", "ConfidentialComputingType": "SGX"},
 	}
 
 	instanceTypeSku = func() []*azsku.ResourceSku {
@@ -116,6 +118,26 @@ var (
 		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_B4ms"
 	}
 
+	validConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8ads_v5"
+	}
+
+	invalidConfidentialVMInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_B4ms"
+	}
+
+	invalidConfidentialVMSGXInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_DC8s_v3"
+	}
+
+	validTrustedLaunchInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8s_v3"
+	}
+
+	invalidTrustedLaunchInstanceTypes = func(ic *types.InstallConfig) {
+		ic.Platform.Azure.DefaultMachinePlatform.InstanceType = "Standard_D8ps_v5"
+	}
+
 	invalidateMachineCIDR = func(ic *types.InstallConfig) {
 		_, newCidr, _ := net.ParseCIDR("192.168.111.0/24")
 		ic.MachineNetwork = []types.MachineNetworkEntry{
@@ -144,6 +166,25 @@ var (
 	vmNetworkingTypeAcceleratedControlPlane = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.VMNetworkingType = "Accelerated" }
 	vmNetworkingTypeAcceleratedCompute      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.VMNetworkingType = "Accelerated" }
 	vmNetworkingTypeAcceleratedDefault      = func(ic *types.InstallConfig) { ic.Azure.DefaultMachinePlatform.VMNetworkingType = "Accelerated" }
+
+	securityTypeConfidentialVMDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeConfidentialVMControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeConfidentialVMCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "ConfidentialVM"}
+	}
+	securityTypeTrustedLaunchDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
+	securityTypeTrustedLaunchControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
+	securityTypeTrustedLaunchCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Settings = &azure.SecuritySettings{SecurityType: "TrustedLaunch"}
+	}
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
@@ -198,6 +239,13 @@ var (
 		Type:     to.StringPtr(diskEncryptionSetType),
 		Location: to.StringPtr(diskEncryptionSetLocation),
 	}
+	validConfidentialVMDiskEncryptionSetResult = &azenc.DiskEncryptionSet{
+		ID:                      to.StringPtr(diskEncryptionSetID),
+		Name:                    to.StringPtr(diskEncryptionSetName),
+		Type:                    to.StringPtr(diskEncryptionSetType),
+		Location:                to.StringPtr(diskEncryptionSetLocation),
+		EncryptionSetProperties: &azenc.EncryptionSetProperties{EncryptionType: azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey},
+	}
 
 	validDiskEncryptionSetSubscriptionID = "test-encryption-set-subscription-id"
 	validDiskEncryptionSetResourceGroup  = "test-encryption-set-resource-group"
@@ -207,6 +255,14 @@ var (
 			SubscriptionID: validDiskEncryptionSetSubscriptionID,
 			ResourceGroup:  validDiskEncryptionSetResourceGroup,
 			Name:           validDiskEncryptionSetName,
+		}
+	}
+	validConfidentialVMDiskEncryptionSetName   = "test-confidential-vm-encryption-set-name"
+	validConfidentialVMDiskEncryptionSetConfig = func() *azure.DiskEncryptionSet {
+		return &azure.DiskEncryptionSet{
+			SubscriptionID: validDiskEncryptionSetSubscriptionID,
+			ResourceGroup:  validDiskEncryptionSetResourceGroup,
+			Name:           validConfidentialVMDiskEncryptionSetName,
 		}
 	}
 	invalidDiskEncryptionSetName   = "test-encryption-set-invalid-name"
@@ -251,6 +307,34 @@ var (
 	}
 	invalidDiskEncryptionSetCompute = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.Azure.OSDisk.DiskEncryptionSet = invalidDiskEncryptionSetConfig()
+	}
+
+	validConfidentialVMDiskEncryptionSetDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validConfidentialVMDiskEncryptionSetConfig()}
+	}
+	validConfidentialVMDiskEncryptionSetControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validConfidentialVMDiskEncryptionSetConfig()}
+	}
+	validConfidentialVMDiskEncryptionSetCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validConfidentialVMDiskEncryptionSetConfig()}
+	}
+	invalidConfidentialVMDiskEncryptionSetDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: invalidDiskEncryptionSetConfig()}
+	}
+	invalidConfidentialVMDiskEncryptionSetControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: invalidDiskEncryptionSetConfig()}
+	}
+	invalidConfidentialVMDiskEncryptionSetCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: invalidDiskEncryptionSetConfig()}
+	}
+	invalidTypeConfidentialVMDiskEncryptionSetDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validDiskEncryptionSetConfig()}
+	}
+	invalidTypeConfidentialVMDiskEncryptionSetControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validDiskEncryptionSetConfig()}
+	}
+	invalidTypeConfidentialVMDiskEncryptionSetCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validDiskEncryptionSetConfig()}
 	}
 
 	validOSImageCompute = func(ic *types.InstallConfig) {
@@ -421,6 +505,61 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 			name:     "Unsupported VMNetworkingType in Compute",
 			edits:    editFunctions{invalidVMNetworkingIstanceTypes, vmNetworkingTypeAcceleratedCompute},
 			errorMsg: `compute\[0\].platform.azure.vmNetworkingType: Invalid value: "Accelerated": vm networking type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Supported ConfidentialVM security type",
+			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in control plane",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in control plane",
+			edits:    editFunctions{invalidConfidentialVMSGXInstanceTypes, securityTypeConfidentialVMControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_DC8s_v3`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in compute",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in compute for SGX instance type",
+			edits:    editFunctions{invalidConfidentialVMSGXInstanceTypes, securityTypeConfidentialVMCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_DC8s_v3`,
+		},
+		{
+			name:     "Unsupported ConfidentialVM security type in default machine platform",
+			edits:    editFunctions{invalidConfidentialVMInstanceTypes, securityTypeConfidentialVMDefaultMachinePlatform},
+			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_B4ms]`,
+		},
+		{
+			name:     "Supported TrustedLaunch security type",
+			edits:    editFunctions{validTrustedLaunchInstanceTypes, securityTypeTrustedLaunchControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in control plane",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchControlPlane},
+			errorMsg: `controlPlane.platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D8ps_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in compute",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type for Confindential VM size in compute",
+			edits:    editFunctions{validConfidentialVMInstanceTypes, securityTypeTrustedLaunchCompute},
+			errorMsg: `compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_DC8ads_v5`,
+		},
+		{
+			name:     "Unsupported TrustedLaunch security type in default machine platform",
+			edits:    editFunctions{validArm64InstanceTypes, invalidTrustedLaunchInstanceTypes, securityTypeTrustedLaunchDefaultMachinePlatform},
+			errorMsg: `[compute\[0\].platform.azure.settings.securityType: Invalid value: "TrustedLaunch": this security type is not supported for instance type Standard_D4ps_v5,controlPlane.platform.azure.settings.securityType: Invalid valud: "ConfidentialVM": this security type is not supported for instance type Standard_D4ps_v5]`,
 		},
 	}
 
@@ -673,6 +812,86 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 			}
 
 			errors := ValidateDiskEncryptionSet(azureClient, editedInstallConfig)
+			aggregatedErrors := errors.ToAggregate()
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name:     "Valid security profile disk encryption set for default pool",
+			edits:    editFunctions{validConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid security profile disk encryption set not found for default pool",
+			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+		},
+		{
+			name:     "Invalid security profile disk encryption set with default encryption type for default pool",
+			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
+		},
+		{
+			name:     "Valid security profile disk encryption set for control-plane",
+			edits:    editFunctions{validConfidentialVMDiskEncryptionSetControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid security profile disk encryption set not found for control-plane",
+			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetControlPlane},
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+		},
+		{
+			name:     "Invalid security profile disk encryption set with default encryption type for control-plane",
+			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetControlPlane},
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
+		},
+		{
+			name:     "Valid security profile disk encryption set for compute",
+			edits:    editFunctions{validConfidentialVMDiskEncryptionSetCompute},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid security profile disk encryption set not found for compute",
+			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetCompute},
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+		},
+		{
+			name:     "Invalid security profile disk encryption set with default encryption type for compute",
+			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetCompute},
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey),
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+
+	azureClient.EXPECT().GetDiskEncryptionSet(gomock.Any(), validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validConfidentialVMDiskEncryptionSetName).Return(validConfidentialVMDiskEncryptionSetResult, nil).AnyTimes()
+	azureClient.EXPECT().GetDiskEncryptionSet(gomock.Any(), validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName).Return(validDiskEncryptionSetResult, nil).AnyTimes()
+	azureClient.EXPECT().GetDiskEncryptionSet(gomock.Any(), validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName).Return(nil, fmt.Errorf("failed to get disk encryption set")).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errors := ValidateSecurityProfileDiskEncryptionSet(azureClient, editedInstallConfig)
 			aggregatedErrors := errors.ToAggregate()
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
