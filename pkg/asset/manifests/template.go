@@ -96,3 +96,16 @@ type openshiftTemplateData struct {
 	CloudCreds                   cloudCredsSecretData
 	Base64EncodedKubeadminPwHash string
 }
+
+type machineMountDeviceTemplateData struct {
+	MachineRole       string
+	MachineConfigName string
+	DevicePath        string
+	DeviceName        string
+	MountPointName    string
+	MountPointPath    string
+	FileSystemType    string
+	ForceCreateFS     bool
+	SyncOldData       bool
+	SyncTestDirExists string
+}

@@ -244,6 +244,99 @@ spec:
                       description: Azure is the configuration used when installing
                         on Azure.
                       properties:
+                        EtcdDataDisk:
+                          description: DataDisks defines the additional storage for
+                            instance.
+                          properties:
+                            cachingType:
+                              description: CachingType specifies the caching requirements.
+                                Empty value means no opinion and the platform chooses
+                                a default, which is subject to change over time. Currently
+                                the default is CachingTypeNone.
+                              enum:
+                              - None
+                              - ReadOnly
+                              - ReadWrite
+                              type: string
+                            deletionPolicy:
+                              description: DeletionPolicy specifies the data disk
+                                deletion policy upon Machine deletion. Possible values
+                                are "Delete","Detach". When "Delete" is used the data
+                                disk is deleted when the Machine is deleted. When
+                                "Detach" is used the data disk is detached from the
+                                Machine and retained when the Machine is deleted.
+                              enum:
+                              - Delete
+                              - Detach
+                              type: string
+                            diskSizeGB:
+                              description: DiskSizeGB is the size in GB to assign
+                                to the data disk.
+                              format: int32
+                              minimum: 4
+                              type: integer
+                            lun:
+                              description: Lun Specifies the logical unit number of
+                                the data disk. This value is used to identify data
+                                disks within the VM and therefore must be unique for
+                                each data disk attached to a VM. This value is also
+                                needed for referencing the data disks devices within
+                                userdata to perform disk initialization through Ignition
+                                (e.g. partition/format/mount). The value must be between
+                                0 and 63.
+                              format: int32
+                              maximum: 63
+                              minimum: 0
+                              type: integer
+                            managedDisk:
+                              description: 'ManagedDisk specifies the Managed Disk
+                                parameters for the data disk. Empty value means no
+                                opinion and the platform chooses a default, which
+                                is subject to change over time. Currently the default
+                                is a ManagedDisk with with storageAccountType: "Premium_LRS"
+                                and diskEncryptionSet.id: "Default".'
+                              properties:
+                                diskEncryptionSet:
+                                  description: 'DiskEncryptionSet is the disk encryption
+                                    set properties. Empty value means no opinion and
+                                    the platform chooses a default, which is subject
+                                    to change over time. Currently the default is
+                                    a DiskEncryptionSet with id: "Default".'
+                                  properties:
+                                    id:
+                                      description: 'ID is the disk encryption set
+                                        ID Empty value means no opinion and the platform
+                                        chooses a default, which is subject to change
+                                        over time. Currently the default is: "Default".'
+                                      type: string
+                                  type: object
+                                storageAccountType:
+                                  description: StorageAccountType is the storage account
+                                    type to use. Possible values include "Standard_LRS",
+                                    "Premium_LRS" and "UltraSSD_LRS".
+                                  enum:
+                                  - Standard_LRS
+                                  - Premium_LRS
+                                  - UltraSSD_LRS
+                                  type: string
+                              type: object
+                            nameSuffix:
+                              description: NameSuffix is the suffix to be appended
+                                to the machine name to generate the disk name. Each
+                                disk name will be in format <machineName>_<nameSuffix>.
+                                NameSuffix name must start and finish with an alphanumeric
+                                character and can only contain letters, numbers, underscores,
+                                periods or hyphens. The overall disk name must not
+                                exceed 80 chars in length.
+                              maxLength: 78
+                              pattern: ^[a-zA-Z0-9](?:[\w\.-]*[a-zA-Z0-9])?$
+                              type: string
+                          required:
+                          - deletionPolicy
+                          - diskSizeGB
+                          - lun
+                          - nameSuffix
+                          type: object
                         encryptionAtHost:
                           description: EncryptionAtHost enables encryption at the
                             VM host.
@@ -1180,6 +1273,99 @@ spec:
                     description: Azure is the configuration used when installing on
                       Azure.
                     properties:
+                      EtcdDataDisk:
+                        description: DataDisks defines the additional storage for
+                          instance.
+                        properties:
+                          cachingType:
+                            description: CachingType specifies the caching requirements.
+                              Empty value means no opinion and the platform chooses
+                              a default, which is subject to change over time. Currently
+                              the default is CachingTypeNone.
+                            enum:
+                            - None
+                            - ReadOnly
+                            - ReadWrite
+                            type: string
+                          deletionPolicy:
+                            description: DeletionPolicy specifies the data disk deletion
+                              policy upon Machine deletion. Possible values are "Delete","Detach".
+                              When "Delete" is used the data disk is deleted when
+                              the Machine is deleted. When "Detach" is used the data
+                              disk is detached from the Machine and retained when
+                              the Machine is deleted.
+                            enum:
+                            - Delete
+                            - Detach
+                            type: string
+                          diskSizeGB:
+                            description: DiskSizeGB is the size in GB to assign to
+                              the data disk.
+                            format: int32
+                            minimum: 4
+                            type: integer
+                          lun:
+                            description: Lun Specifies the logical unit number of
+                              the data disk. This value is used to identify data disks
+                              within the VM and therefore must be unique for each
+                              data disk attached to a VM. This value is also needed
+                              for referencing the data disks devices within userdata
+                              to perform disk initialization through Ignition (e.g.
+                              partition/format/mount). The value must be between 0
+                              and 63.
+                            format: int32
+                            maximum: 63
+                            minimum: 0
+                            type: integer
+                          managedDisk:
+                            description: 'ManagedDisk specifies the Managed Disk parameters
+                              for the data disk. Empty value means no opinion and
+                              the platform chooses a default, which is subject to
+                              change over time. Currently the default is a ManagedDisk
+                              with with storageAccountType: "Premium_LRS" and diskEncryptionSet.id:
+                              "Default".'
+                            properties:
+                              diskEncryptionSet:
+                                description: 'DiskEncryptionSet is the disk encryption
+                                  set properties. Empty value means no opinion and
+                                  the platform chooses a default, which is subject
+                                  to change over time. Currently the default is a
+                                  DiskEncryptionSet with id: "Default".'
+                                properties:
+                                  id:
+                                    description: 'ID is the disk encryption set ID
+                                      Empty value means no opinion and the platform
+                                      chooses a default, which is subject to change
+                                      over time. Currently the default is: "Default".'
+                                    type: string
+                                type: object
+                              storageAccountType:
+                                description: StorageAccountType is the storage account
+                                  type to use. Possible values include "Standard_LRS",
+                                  "Premium_LRS" and "UltraSSD_LRS".
+                                enum:
+                                - Standard_LRS
+                                - Premium_LRS
+                                - UltraSSD_LRS
+                                type: string
+                            type: object
+                          nameSuffix:
+                            description: NameSuffix is the suffix to be appended to
+                              the machine name to generate the disk name. Each disk
+                              name will be in format <machineName>_<nameSuffix>. NameSuffix
+                              name must start and finish with an alphanumeric character
+                              and can only contain letters, numbers, underscores,
+                              periods or hyphens. The overall disk name must not exceed
+                              80 chars in length.
+                            maxLength: 78
+                            pattern: ^[a-zA-Z0-9](?:[\w\.-]*[a-zA-Z0-9])?$
+                            type: string
+                        required:
+                        - deletionPolicy
+                        - diskSizeGB
+                        - lun
+                        - nameSuffix
+                        type: object
                       encryptionAtHost:
                         description: EncryptionAtHost enables encryption at the VM
                           host.
@@ -2462,6 +2648,99 @@ spec:
                       used when installing on Azure for machine pools which do not
                       define their own platform configuration.
                     properties:
+                      EtcdDataDisk:
+                        description: DataDisks defines the additional storage for
+                          instance.
+                        properties:
+                          cachingType:
+                            description: CachingType specifies the caching requirements.
+                              Empty value means no opinion and the platform chooses
+                              a default, which is subject to change over time. Currently
+                              the default is CachingTypeNone.
+                            enum:
+                            - None
+                            - ReadOnly
+                            - ReadWrite
+                            type: string
+                          deletionPolicy:
+                            description: DeletionPolicy specifies the data disk deletion
+                              policy upon Machine deletion. Possible values are "Delete","Detach".
+                              When "Delete" is used the data disk is deleted when
+                              the Machine is deleted. When "Detach" is used the data
+                              disk is detached from the Machine and retained when
+                              the Machine is deleted.
+                            enum:
+                            - Delete
+                            - Detach
+                            type: string
+                          diskSizeGB:
+                            description: DiskSizeGB is the size in GB to assign to
+                              the data disk.
+                            format: int32
+                            minimum: 4
+                            type: integer
+                          lun:
+                            description: Lun Specifies the logical unit number of
+                              the data disk. This value is used to identify data disks
+                              within the VM and therefore must be unique for each
+                              data disk attached to a VM. This value is also needed
+                              for referencing the data disks devices within userdata
+                              to perform disk initialization through Ignition (e.g.
+                              partition/format/mount). The value must be between 0
+                              and 63.
+                            format: int32
+                            maximum: 63
+                            minimum: 0
+                            type: integer
+                          managedDisk:
+                            description: 'ManagedDisk specifies the Managed Disk parameters
+                              for the data disk. Empty value means no opinion and
+                              the platform chooses a default, which is subject to
+                              change over time. Currently the default is a ManagedDisk
+                              with with storageAccountType: "Premium_LRS" and diskEncryptionSet.id:
+                              "Default".'
+                            properties:
+                              diskEncryptionSet:
+                                description: 'DiskEncryptionSet is the disk encryption
+                                  set properties. Empty value means no opinion and
+                                  the platform chooses a default, which is subject
+                                  to change over time. Currently the default is a
+                                  DiskEncryptionSet with id: "Default".'
+                                properties:
+                                  id:
+                                    description: 'ID is the disk encryption set ID
+                                      Empty value means no opinion and the platform
+                                      chooses a default, which is subject to change
+                                      over time. Currently the default is: "Default".'
+                                    type: string
+                                type: object
+                              storageAccountType:
+                                description: StorageAccountType is the storage account
+                                  type to use. Possible values include "Standard_LRS",
+                                  "Premium_LRS" and "UltraSSD_LRS".
+                                enum:
+                                - Standard_LRS
+                                - Premium_LRS
+                                - UltraSSD_LRS
+                                type: string
+                            type: object
+                          nameSuffix:
+                            description: NameSuffix is the suffix to be appended to
+                              the machine name to generate the disk name. Each disk
+                              name will be in format <machineName>_<nameSuffix>. NameSuffix
+                              name must start and finish with an alphanumeric character
+                              and can only contain letters, numbers, underscores,
+                              periods or hyphens. The overall disk name must not exceed
+                              80 chars in length.
+                            maxLength: 78
+                            pattern: ^[a-zA-Z0-9](?:[\w\.-]*[a-zA-Z0-9])?$
+                            type: string
+                        required:
+                        - deletionPolicy
+                        - diskSizeGB
+                        - lun
+                        - nameSuffix
+                        type: object
                       encryptionAtHost:
                         description: EncryptionAtHost enables encryption at the VM
                           host.

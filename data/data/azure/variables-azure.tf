@@ -57,6 +57,12 @@ variable "azure_master_root_volume_size" {
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
+variable "azure_controlplane_etcd_disk" {
+  type        = map(string)
+  default     = {}
+  description = "Additional Data Disk for etcd on for Control Planes."
+}
+
 variable "azure_control_plane_ultra_ssd_enabled" {
   type        = bool
   description = "Determines if the control plane should have UltraSSD Enabled."

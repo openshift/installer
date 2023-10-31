@@ -44,6 +44,7 @@ type config struct {
 	ControlPlaneUltraSSDEnabled             bool              `json:"azure_control_plane_ultra_ssd_enabled"`
 	VolumeType                              string            `json:"azure_master_root_volume_type"`
 	VolumeSize                              int32             `json:"azure_master_root_volume_size"`
+	ControlPlaneDataDisk                    map[string]string `json:"azure_controlplane_etcd_disk"`
 	ImageURL                                string            `json:"azure_image_url,omitempty"`
 	ImageRelease                            string            `json:"azure_image_release,omitempty"`
 	Region                                  string            `json:"azure_region,omitempty"`
@@ -150,6 +151,21 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Version:   masterConfig.Image.Version,
 	}
 
+	// Master Data Disks
+	var etcdDataDisk map[string]string
+	for _, dd := range masterConfig.DataDisks {
+		if dd.NameSuffix != "etcd" {
+			return nil, errors.Wrapf(err, "unsupported Data Disk configuration. NameSuffix must be 'etcd': %v", dd.NameSuffix)
+		}
+		etcdDataDisk = map[string]string{
+			"name":                 dd.NameSuffix,
+			"storage_account_type": string(dd.ManagedDisk.StorageAccountType),
+			"disk_size_gb":         fmt.Sprintf("%d", dd.DiskSizeGB),
+			"lun":                  fmt.Sprintf("%d", dd.Lun),
+		}
+	}
+	fmt.Printf(">> managed disk for etcd - tfmap: %v\n", etcdDataDisk)
+
 	cfg := &config{
 		Auth:                                    sources.Auth,
 		Environment:                             environment,
@@ -162,6 +178,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ControlPlaneUltraSSDEnabled:             masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled,
 		VolumeType:                              masterConfig.OSDisk.ManagedDisk.StorageAccountType,
 		VolumeSize:                              masterConfig.OSDisk.DiskSizeGB,
+		ControlPlaneDataDisk:                    etcdDataDisk,
 		ImageURL:                                sources.ImageURL,
 		ImageRelease:                            sources.ImageRelease,
 		Private:                                 sources.Publish == types.InternalPublishingStrategy,
