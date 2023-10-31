@@ -61,6 +61,10 @@ type mockEC2Client struct {
 	createSG         func(*ec2.CreateSecurityGroupInput) (*ec2.CreateSecurityGroupOutput, error)
 	authorizeEgress  func(*ec2.AuthorizeSecurityGroupEgressInput) (*ec2.AuthorizeSecurityGroupEgressOutput, error)
 	authorizeIngress func(*ec2.AuthorizeSecurityGroupIngressInput) (*ec2.AuthorizeSecurityGroupIngressOutput, error)
+
+	describeInstances func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error)
+	runInstances      func(*ec2.RunInstancesInput) (*ec2.Reservation, error)
+	getDefaultKmsKey  func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error)
 }
 
 func (m *mockEC2Client) DescribeVpcsWithContext(_ context.Context, in *ec2.DescribeVpcsInput, _ ...request.Option) (*ec2.DescribeVpcsOutput, error) {
@@ -173,6 +177,18 @@ func (m *mockEC2Client) AuthorizeSecurityGroupEgressWithContext(_ context.Contex
 
 func (m *mockEC2Client) AuthorizeSecurityGroupIngressWithContext(_ context.Context, in *ec2.AuthorizeSecurityGroupIngressInput, _ ...request.Option) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
 	return m.authorizeIngress(in)
+}
+
+func (m *mockEC2Client) DescribeInstancesWithContext(_ context.Context, in *ec2.DescribeInstancesInput, _ ...request.Option) (*ec2.DescribeInstancesOutput, error) {
+	return m.describeInstances(in)
+}
+
+func (m *mockEC2Client) RunInstancesWithContext(_ context.Context, in *ec2.RunInstancesInput, _ ...request.Option) (*ec2.Reservation, error) {
+	return m.runInstances(in)
+}
+
+func (m *mockEC2Client) GetEbsDefaultKmsKeyIdWithContext(_ context.Context, in *ec2.GetEbsDefaultKmsKeyIdInput, _ ...request.Option) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) { //nolint:revive,stylecheck //This is a mocked function so we cannot rename it
+	return m.getDefaultKmsKey(in)
 }
 
 var errAwsSdk = errors.New("some AWS SDK error")
@@ -2496,6 +2512,213 @@ func TestCreateSecurityGroups(t *testing.T) {
 	}
 }
 
+func TestEnsureInstance(t *testing.T) {
+	expectedInstance := &ec2.Instance{
+		InstanceId:       aws.String("instance-1"),
+		PrivateIpAddress: aws.String("ip-1"),
+	}
+	tests := []struct {
+		name        string
+		mockEC2     mockEC2Client
+		mockELB     mockELBClient
+		expectedOut *ec2.Instance
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error listing instances",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return nil, errAwsSdk
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					panic("should not be called")
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to find instance: some AWS SDK error$`,
+		},
+		{
+			name: "Creating instance fails getting default KMS key",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return nil, errAwsSdk
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					panic("should not be called")
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to get default KMS key: some AWS SDK error$`,
+		},
+		{
+			name: "Creating instance fails",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return &ec2.GetEbsDefaultKmsKeyIdOutput{
+						KmsKeyId: aws.String("kms-1"),
+					}, nil
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					return nil, errAwsSdk
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^some AWS SDK error$`,
+		},
+		{
+			name: "Instance created but no reservations found",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return &ec2.GetEbsDefaultKmsKeyIdOutput{
+						KmsKeyId: aws.String("kms-1"),
+					}, nil
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					return &ec2.Reservation{
+						Instances: []*ec2.Instance{},
+					}, nil
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^instance was not created$`,
+		},
+		{
+			name: "Instance created but fails to register target groups",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return &ec2.GetEbsDefaultKmsKeyIdOutput{
+						KmsKeyId: aws.String("kms-1"),
+					}, nil
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					return &ec2.Reservation{
+						Instances: []*ec2.Instance{expectedInstance},
+					}, nil
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to register target group \(tg-1\): some AWS SDK error$`,
+		},
+		{
+			name: "Instance created and target groups registered",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return &ec2.GetEbsDefaultKmsKeyIdOutput{
+						KmsKeyId: aws.String("kms-1"),
+					}, nil
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					return &ec2.Reservation{
+						Instances: []*ec2.Instance{expectedInstance},
+					}, nil
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					return &elbv2.RegisterTargetsOutput{}, nil
+				},
+			},
+			expectedOut: expectedInstance,
+		},
+		{
+			name: "Instance found and target groups registered",
+			mockEC2: mockEC2Client{
+				describeInstances: func(*ec2.DescribeInstancesInput) (*ec2.DescribeInstancesOutput, error) {
+					return &ec2.DescribeInstancesOutput{
+						Reservations: []*ec2.Reservation{
+							{Instances: []*ec2.Instance{expectedInstance}},
+						},
+					}, nil
+				},
+				getDefaultKmsKey: func(*ec2.GetEbsDefaultKmsKeyIdInput) (*ec2.GetEbsDefaultKmsKeyIdOutput, error) {
+					return &ec2.GetEbsDefaultKmsKeyIdOutput{
+						KmsKeyId: aws.String("kms-1"),
+					}, nil
+				},
+				runInstances: func(*ec2.RunInstancesInput) (*ec2.Reservation, error) {
+					panic("should not be called")
+				},
+			},
+			mockELB: mockELBClient{
+				registerTargets: func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error) {
+					return &elbv2.RegisterTargetsOutput{}, nil
+				},
+			},
+			expectedOut: expectedInstance,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := instanceInputOptions{
+				infraID:         "infraID",
+				amiID:           "ami-1",
+				name:            "instance-1",
+				instanceType:    "type-1",
+				subnetID:        "subnet-1",
+				targetGroupARNs: []string{"tg-1"},
+				tags:            map[string]string{"custom-tag": "custom-value"},
+			}
+			res, err := ensureInstance(context.TODO(), logger, &test.mockEC2, &test.mockELB, &input)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
 type mockELBClient struct {
 	elbv2iface.ELBV2API
 
@@ -2508,6 +2731,8 @@ type mockELBClient struct {
 	createLoadBalancer    func(*elbv2.CreateLoadBalancerInput) (*elbv2.CreateLoadBalancerOutput, error)
 	describeLoadBalancers func(*elbv2.DescribeLoadBalancersInput) (*elbv2.DescribeLoadBalancersOutput, error)
 	modifyLBAttr          func(*elbv2.ModifyLoadBalancerAttributesInput) (*elbv2.ModifyLoadBalancerAttributesOutput, error)
+
+	registerTargets func(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error)
 }
 
 func (m *mockELBClient) CreateListenerWithContext(_ context.Context, in *elbv2.CreateListenerInput, _ ...request.Option) (*elbv2.CreateListenerOutput, error) {
@@ -2532,6 +2757,10 @@ func (m *mockELBClient) DescribeLoadBalancersWithContext(_ context.Context, in *
 
 func (m *mockELBClient) ModifyLoadBalancerAttributesWithContext(_ context.Context, in *elbv2.ModifyLoadBalancerAttributesInput, _ ...request.Option) (*elbv2.ModifyLoadBalancerAttributesOutput, error) {
 	return m.modifyLBAttr(in)
+}
+
+func (m *mockELBClient) RegisterTargetsWithContext(_ context.Context, in *elbv2.RegisterTargetsInput, _ ...request.Option) (*elbv2.RegisterTargetsOutput, error) {
+	return m.registerTargets(in)
 }
 
 func TestEnsureTargetGroup(t *testing.T) {
