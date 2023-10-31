@@ -192,6 +192,35 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		return nil, fmt.Errorf("failed to create bootstrap resources: %w", err)
 	}
 
+	logger.Infoln("Creating control plane resources")
+	controlPlaneInput := controlPlaneInputOptions{
+		instanceInputOptions: instanceInputOptions{
+			infraID:           clusterConfig.ClusterID,
+			amiID:             clusterAWSConfig.AMI,
+			instanceType:      clusterAWSConfig.MasterInstanceType,
+			iamRole:           clusterAWSConfig.MasterIAMRoleName,
+			volumeType:        clusterAWSConfig.Type,
+			volumeSize:        clusterAWSConfig.Size,
+			volumeIOPS:        clusterAWSConfig.IOPS,
+			isEncrypted:       clusterAWSConfig.Encrypted,
+			kmsKeyID:          clusterAWSConfig.KMSKeyID,
+			metadataAuth:      clusterAWSConfig.MasterMetadataAuthentication,
+			securityGroupIds:  append(clusterAWSConfig.MasterSecurityGroups, sgOutput.controlPlane),
+			targetGroupARNs:   lbOutput.targetGroupArns,
+			associatePublicIP: false,
+			userData:          clusterConfig.IgnitionMaster,
+			tags:              tags,
+		},
+		nReplicas:         clusterConfig.Masters,
+		privateSubnetIDs:  vpcOutput.privateSubnetIDs,
+		zoneToSubnetMap:   vpcOutput.zoneToSubnetMap,
+		availabilityZones: clusterAWSConfig.MasterAvailabilityZones,
+	}
+	err = createControlPlaneResources(ctx, logger, ec2Client, iamClient, elbClient, &controlPlaneInput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create control plane resources: %w", err)
+	}
+
 	return nil, fmt.Errorf("provision stage not implemented yet")
 }
 
