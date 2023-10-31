@@ -9,7 +9,7 @@ fi
 
 TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
 CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
-CLUSTER_API_MIRROR_DIR="${PWD}/pkg/cluster-api/mirror/"
+CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
 ENVTEST_K8S_VERSION="1.28.0"
 ENVTEST_ARCH=$(go env GOOS)-$(go env GOARCH)
 
