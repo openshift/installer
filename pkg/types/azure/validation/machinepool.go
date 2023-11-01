@@ -130,14 +130,14 @@ func validateSecurityProfile(p *azure.MachinePool, cloudName azure.CloudEnvironm
 			"settings should be set when osDisk.securityProfile.securityEncryptionType is defined."))
 	}
 
+	if cloudName == azure.StackCloud {
+		return append(errs, field.Invalid(fieldPath.Child("settings").Child("securityType"),
+			p.Settings.SecurityType,
+			fmt.Sprintf("the securityType field is not supported on %s.", azure.StackCloud)))
+	}
+
 	switch p.Settings.SecurityType {
 	case azure.SecurityTypesConfidentialVM:
-		if cloudName == azure.StackCloud {
-			return append(errs, field.Invalid(fieldPath.Child("settings").Child("securityType"),
-				p.Settings.SecurityType,
-				fmt.Sprintf("securityType %s is not supported on %s.", azure.SecurityTypesConfidentialVM, azure.StackCloud)))
-		}
-
 		if p.OSDisk.SecurityProfile == nil || p.OSDisk.SecurityProfile.SecurityEncryptionType == "" {
 			securityProfileFieldPath := fieldPath.Child("osDisk").Child("securityProfile")
 			return append(errs, field.Required(securityProfileFieldPath.Child("securityEncryptionType"),

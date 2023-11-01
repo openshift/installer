@@ -43,7 +43,6 @@ wait_for_etcd_cluster() {
 }
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
-MACHINE_CONFIG_OSCONTENT=$(image_for machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 

@@ -11,6 +11,7 @@ import (
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
+	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -92,6 +93,60 @@ func ValidateDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorL
 	return allErrs
 }
 
+func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztypes.DiskEncryptionSet, desFieldPath *field.Path) error {
+	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
+	if requestErr != nil {
+		return requestErr
+	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey {
+		return errors.Errorf("the disk encryption set should be created with type %s", azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey)
+	}
+	return nil
+}
+
+// ValidateSecurityProfileDiskEncryptionSet ensures the security profile disk encryption set exists and is valid.
+func ValidateSecurityProfileDiskEncryptionSet(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.Platform.Azure.DefaultMachinePlatform != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+		desFieldPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "osDisk", "securityProfile", "diskEncryptionSet")
+		diskEncryptionSet := ic.Platform.Azure.DefaultMachinePlatform.OSDisk.SecurityProfile.DiskEncryptionSet
+		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+		}
+	}
+
+	if ic.ControlPlane != nil &&
+		ic.ControlPlane.Platform.Azure != nil &&
+		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile != nil &&
+		ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+		desFieldPath := field.NewPath("platform").Child("azure", "osDisk", "securityProfile", "diskEncryptionSet")
+		diskEncryptionSet := ic.ControlPlane.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet
+		err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+		}
+	}
+
+	for idx, compute := range ic.Compute {
+		fieldPath := field.NewPath("compute").Index(idx)
+		if compute.Platform.Azure != nil &&
+			compute.Platform.Azure.OSDisk.SecurityProfile != nil &&
+			compute.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+			desFieldPath := fieldPath.Child("platform", "azure", "osDisk", "securityProfile", "diskEncryptionSet")
+			diskEncryptionSet := compute.Platform.Azure.OSDisk.SecurityProfile.DiskEncryptionSet
+			err := validateConfidentialDiskEncryptionSet(client, diskEncryptionSet, desFieldPath)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(desFieldPath, diskEncryptionSet, err.Error()))
+			}
+		}
+	}
+
+	return allErrs
+}
+
 func validatePremiumDisk(fieldPath *field.Path, diskType string, instanceType string, capabilities map[string]string) field.ErrorList {
 	fldPath := fieldPath.Child("osDisk", "diskType")
 	val, ok := capabilities["PremiumIO"]
@@ -153,6 +208,42 @@ func validateMininumRequirements(fieldPath *field.Path, req resourceRequirements
 		}
 	} else {
 		logrus.Warnf("could not find MemoryGB information for instance type %s", instanceType)
+	}
+
+	return allErrs
+}
+
+func validateSecurityType(fieldPath *field.Path, securityType aztypes.SecurityTypes, instanceType string, capabilities map[string]string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	_, hasTrustedLaunchDisabled := capabilities["TrustedLaunchDisabled"]
+	confidentialComputingType, hasConfidentialComputingType := capabilities["ConfidentialComputingType"]
+	isConfidentialComputingTypeSNP := confidentialComputingType == "SNP"
+
+	var reason string
+	supportedSecurityType := true
+	switch securityType {
+	case aztypes.SecurityTypesConfidentialVM:
+		supportedSecurityType = hasConfidentialComputingType && isConfidentialComputingTypeSNP
+
+		if !hasConfidentialComputingType {
+			reason = "no support for Confidential Computing"
+		} else if !isConfidentialComputingTypeSNP {
+			reason = "no support for AMD-SEV SNP"
+		}
+	case aztypes.SecurityTypesTrustedLaunch:
+		supportedSecurityType = !(hasTrustedLaunchDisabled || hasConfidentialComputingType)
+
+		if hasTrustedLaunchDisabled {
+			reason = "no support for Trusted Launch"
+		} else if hasConfidentialComputingType {
+			reason = "confidential VMs do not support Trusted Launch for VMs"
+		}
+	}
+
+	if !supportedSecurityType {
+		errMsg := fmt.Sprintf("this security type is not supported for instance type %s, %s", instanceType, reason)
+		allErrs = append(allErrs, field.Invalid(fieldPath, securityType, errMsg))
 	}
 
 	return allErrs
@@ -245,7 +336,7 @@ func validateUltraSSD(client API, fieldPath *field.Path, icZones []string, regio
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu, Memory, and a valid family type.
-func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string, architecture types.Architecture) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceType, diskType string, req resourceRequirements, ultraSSDEnabled bool, vmNetworkingType string, icZones []string, architecture types.Architecture, securityType aztypes.SecurityTypes) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	capabilities, err := client.GetVMCapabilities(context.TODO(), instanceType, region)
@@ -255,6 +346,7 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 
 	allErrs = append(allErrs, validateMininumRequirements(fieldPath.Child("type"), req, instanceType, capabilities)...)
 	allErrs = append(allErrs, validateVMArchitecture(fieldPath.Child("type"), instanceType, architecture, capabilities)...)
+	allErrs = append(allErrs, validateSecurityType(fieldPath.Child("settings", "securityType"), securityType, instanceType, capabilities)...)
 
 	family, _ := client.GetVirtualMachineFamily(context.TODO(), instanceType, region)
 	if family != "" {
@@ -280,6 +372,8 @@ func ValidateInstanceType(client API, fieldPath *field.Path, region, instanceTyp
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	var securityType aztypes.SecurityTypes
+
 	defaultDiskType := aztypes.DefaultDiskType
 	defaultInstanceType := ""
 	defaultUltraSSDCapability := "Disabled"
@@ -303,6 +397,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if ic.Platform.Azure.DefaultMachinePlatform.Zones != nil {
 			defaultZones = ic.Platform.Azure.DefaultMachinePlatform.Zones
 		}
+		if ic.Platform.Azure.DefaultMachinePlatform.Settings != nil {
+			securityType = ic.Platform.Azure.DefaultMachinePlatform.Settings.SecurityType
+		}
 	}
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.Azure != nil {
@@ -314,6 +411,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		zones := ic.ControlPlane.Platform.Azure.Zones
 		architecture := ic.ControlPlane.Architecture
 
+		if ic.ControlPlane.Platform.Azure.Settings != nil {
+			securityType = ic.ControlPlane.Platform.Azure.Settings.SecurityType
+		}
 		if diskType == "" {
 			diskType = defaultDiskType
 		}
@@ -334,7 +434,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			zones = defaultZones
 		}
 		ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
-		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, zones, architecture)...)
+		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath, ic.Azure.Region, instanceType, diskType, controlPlaneReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType)...)
 	}
 
 	for idx, compute := range ic.Compute {
@@ -347,6 +447,9 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			zones := compute.Platform.Azure.Zones
 			architecture := compute.Architecture
 
+			if compute.Platform.Azure.Settings != nil {
+				securityType = compute.Platform.Azure.Settings.SecurityType
+			}
 			if diskType == "" {
 				diskType = defaultDiskType
 			}
@@ -368,7 +471,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			ultraSSDEnabled := strings.EqualFold(ultraSSDCapability, "Enabled")
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "azure"),
-				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, zones, architecture)...)
+				ic.Azure.Region, instanceType, diskType, computeReq, ultraSSDEnabled, vmNetworkingType, zones, architecture, securityType)...)
 		}
 	}
 
@@ -387,7 +490,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		fieldPath := field.NewPath("platform", "azure", "defaultMachinePlatform")
 		ultraSSDEnabled := strings.EqualFold(defaultUltraSSDCapability, "Enabled")
 		allErrs = append(allErrs, ValidateInstanceType(client, fieldPath,
-			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture)...)
+			ic.Azure.Region, defaultInstanceType, defaultDiskType, minReq, ultraSSDEnabled, defaultVMNetworkingType, defaultZones, architecture, securityType)...)
 	}
 	return allErrs
 }
@@ -525,6 +628,7 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateResourceGroup(client, field.NewPath("platform").Child("azure"), ic.Azure)...)
 	allErrs = append(allErrs, ValidateDiskEncryptionSet(client, ic)...)
+	allErrs = append(allErrs, ValidateSecurityProfileDiskEncryptionSet(client, ic)...)
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}

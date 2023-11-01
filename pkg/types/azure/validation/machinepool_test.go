@@ -376,7 +376,25 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "ConfidentialVM": securityType ConfidentialVM is not supported on AzureStackCloud.$`,
+			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "ConfidentialVM": the securityType field is not supported on AzureStackCloud.$`,
+		},
+		{
+			name:          "securityType set to TrustedLaunch and platform to AzureStackCloud",
+			azurePlatform: azure.StackCloud,
+			pool: &types.MachinePool{
+				Name: "",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						OSDisk: azure.OSDisk{
+							DiskSizeGB: 128,
+						},
+						Settings: &azure.SecuritySettings{
+							SecurityType: azure.SecurityTypesTrustedLaunch,
+						},
+					},
+				},
+			},
+			expected: `^test-path.defaultMachinePlatform.settings.securityType: Invalid value: "TrustedLaunch": the securityType field is not supported on AzureStackCloud.$`,
 		},
 		{
 			name:          "securityType set to ConfidentialVM but securityEncryptionType is empty",

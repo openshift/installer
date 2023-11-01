@@ -1,3 +1,7 @@
+// Copyright 2019 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package analysis
 
 import "go/token"
@@ -33,7 +37,7 @@ type Diagnostic struct {
 // declaration.
 type RelatedInformation struct {
 	Pos     token.Pos
-	End     token.Pos
+	End     token.Pos // optional
 	Message string
 }
 
