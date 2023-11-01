@@ -332,6 +332,9 @@ then
 	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
 		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-config-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml"
 	fi
+	if [ -f "/opt/openshift/manifests/openshift-lbconfig-custom-dns.yaml" ]; then
+		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-lb-config-file=/assets/manifests/openshift-lb-config.yaml"
+	fi
 
 	# Dump out image reference file so MCO can consume multiple/additional image references
 	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
