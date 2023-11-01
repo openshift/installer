@@ -301,6 +301,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
+		var userConfiguredDNS bool
+		if installConfig.Config.AWS.UserConfiguredDNS == "Enabled" {
+			userConfiguredDNS = true
+		}
+
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
 			VPC:                       vpc,
 			PrivateSubnets:            privateSubnets,
@@ -323,6 +328,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Proxy:                     installConfig.Config.Proxy,
 			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
 			MasterSecurityGroups:      securityGroups,
+			UserConfiguredDNS:         userConfiguredDNS,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

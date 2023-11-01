@@ -211,3 +211,8 @@ variable "aws_master_security_groups" {
   description = "(optional) List of additional security group IDs to attach to the master nodes"
   default     = []
 }
+
+variable "aws_user_configured_dns" {
+  type        = bool
+  description = "The variable that needs to be set to skip configuring Route53 for DNS resolution."
+}
