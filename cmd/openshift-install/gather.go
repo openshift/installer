@@ -122,7 +122,10 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 		}
 
-		provider := infra.ProviderForPlatform(config.Config.Platform.Name())
+		provider, err := infra.ProviderForPlatform(config.Config.Platform.Name())
+		if err != nil {
+			return "", fmt.Errorf("error getting infrastructure provider: %w", err)
+		}
 		if err = provider.ExtractHostAddresses(directory, config.Config, ha); err != nil {
 			logrus.Warnf("Failed to extract host addresses: %s", err.Error())
 		}

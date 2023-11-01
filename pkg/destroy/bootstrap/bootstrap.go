@@ -42,7 +42,11 @@ func Destroy(dir string) (err error) {
 		platform = typesazure.StackTerraformName
 	}
 
-	provider := infra.ProviderForPlatform(platform)
+	provider, err := infra.ProviderForPlatform(platform)
+	if err != nil {
+		return fmt.Errorf("error getting infrastructure provider: %w", err)
+	}
+
 	if err := provider.DestroyBootstrap(dir); err != nil {
 		return fmt.Errorf("error destroying bootstrap resources %w", err)
 	}
