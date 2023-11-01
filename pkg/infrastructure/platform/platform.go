@@ -1,3 +1,6 @@
+//go:build !(altinfra || aro)
+// +build !altinfra,!aro
+
 package platform
 
 import (
