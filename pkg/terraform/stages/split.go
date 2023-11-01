@@ -57,6 +57,15 @@ func WithCustomExtractHostAddresses(extractHostAddresses ExtractFunc) StageOptio
 	}
 }
 
+// WithCustomAddLBConfig returns an option for specifying that a split stage
+// should use a custom method to extract load balancer DNS names and add it
+// to bootstrap ignition.
+func WithCustomAddLBConfig(addLBConfig AddLBConfigFunc) StageOption {
+	return func(s *SplitStage) {
+		s.addLBConfig = addLBConfig
+	}
+}
+
 // SplitStage is a split stage.
 type SplitStage struct {
 	platform             string
@@ -65,6 +74,7 @@ type SplitStage struct {
 	destroyWithBootstrap bool
 	destroy              DestroyFunc
 	extractHostAddresses ExtractFunc
+	addLBConfig          AddLBConfigFunc
 }
 
 // DestroyFunc is a function for destroying the stage.
@@ -72,6 +82,9 @@ type DestroyFunc func(s SplitStage, directory string, terraformDir string, varFi
 
 // ExtractFunc is a function for extracting host addresses.
 type ExtractFunc func(s SplitStage, directory string, ic *types.InstallConfig) (string, int, []string, error)
+
+// AddLBConfigFunc is a function for extracting LB DNS config and adding to bootstrap ignition.
+type AddLBConfigFunc func(s SplitStage, directory string, terraformDir string, varFiles []string) (string, error)
 
 // Name implements pkg/terraform/Stage.Name
 func (s SplitStage) Name() string {
@@ -114,6 +127,14 @@ func (s SplitStage) ExtractHostAddresses(directory string, ic *types.InstallConf
 		return s.extractHostAddresses(s, directory, ic)
 	}
 	return normalExtractHostAddresses(s, directory, ic)
+}
+
+// AddLBConfig implements pkg/terraform/Stage.AddLBConfig.
+func (s SplitStage) AddLBConfig(directory string, terraformDir string, varFiles []string) (string, error) {
+	if s.addLBConfig != nil {
+		return s.addLBConfig(s, directory, terraformDir, varFiles)
+	}
+	return normalAddLBConfig(s, directory, terraformDir, varFiles)
 }
 
 // GetTerraformOutputs reads the terraform outputs file for the stage and parses it into a map of outputs.
@@ -175,4 +196,8 @@ func normalDestroy(s SplitStage, directory string, terraformDir string, varFiles
 		opts[i] = tfexec.VarFile(varFile)
 	}
 	return errors.Wrap(terraform.Destroy(directory, s.platform, s, terraformDir, opts...), "terraform destroy")
+}
+
+func normalAddLBConfig(s SplitStage, directory string, terraformDir string, varFiles []string) (string, error) {
+	return "", nil
 }

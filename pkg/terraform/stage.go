@@ -31,4 +31,8 @@ type Stage interface {
 
 	// ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 	ExtractHostAddresses(directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error)
+
+	// AddLBConfig extracts the LB DNS config of the internal and external API LBs
+	// and adds them to the bootstrap ignition
+	AddLBConfig(directory string, terraformDir string, varFiles []string) (ignition string, err error)
 }
