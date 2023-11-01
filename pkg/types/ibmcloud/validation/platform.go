@@ -16,6 +16,7 @@ var (
 		"us-east":  "US East (Washington DC)",
 		"eu-gb":    "United Kindom (London)",
 		"eu-de":    "EU Germany (Frankfurt)",
+		"eu-es":    "Spain (Madrid)",
 		"jp-tok":   "Japan (Tokyo)",
 		"jp-osa":   "Japan (Osaka)",
 		"au-syd":   "Australia (Sydney)",
