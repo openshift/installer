@@ -34,3 +34,10 @@ variable "ami_id" {
   type = string
 }
 
+variable "aws_external_api_lb_dns_name" {
+  type = string
+}
+
+variable "aws_internal_api_lb_dns_name" {
+  type = string
+}
