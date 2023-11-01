@@ -191,6 +191,30 @@
       protocol: '112'
       remote_ip_prefix: "{{ os_subnet_range }}"
 
+  - name: 'Create master-sg rule "master ingress HTTP (TCP)"'
+    openstack.cloud.security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      port_range_min: 80
+      port_range_max: 80
+    when: os_master_schedulable is defined and os_master_schedulable
+
+  - name: 'Create master-sg rule "master ingress HTTPS (TCP)"'
+    openstack.cloud.security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      port_range_min: 443
+      port_range_max: 443
+    when: os_master_schedulable is defined and os_master_schedulable
+
+  - name: 'Create master-sg rule "router"'
+    openstack.cloud.security_group_rule:
+      security_group: "{{ os_sg_master }}"
+      protocol: tcp
+      remote_ip_prefix: "{{ os_subnet_range }}"
+      port_range_min: 1936
+      port_range_max: 1936
+    when: os_master_schedulable is defined and os_master_schedulable
 
   - name: 'Create worker-sg rule "ICMP"'
     openstack.cloud.security_group_rule:

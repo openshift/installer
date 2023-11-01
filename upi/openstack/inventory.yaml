@@ -27,7 +27,6 @@ all:
       os_cp_nodes_number: 3
 
       # Number of provisioned Compute nodes.
-      # 3 is the minimum number for a fully-functional cluster.
       os_compute_nodes_number: 3
 
       # The IP addresses of DNS servers to be used for the DNS resolution of
@@ -72,3 +71,6 @@ all:
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"
+
+      # Set control-plane nodes to schedule workloads when number of compute nodes is zero
+      os_master_schedulable: "{{ os_compute_nodes_number | int == 0 }}"
