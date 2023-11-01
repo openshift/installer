@@ -97,8 +97,8 @@ func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztype
 	resp, requestErr := client.GetDiskEncryptionSet(context.TODO(), diskEncryptionSet.SubscriptionID, diskEncryptionSet.ResourceGroup, diskEncryptionSet.Name)
 	if requestErr != nil {
 		return requestErr
-	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey {
-		return errors.Errorf("the disk encryption set should be created with type %s", azenc.DiskEncryptionSetTypeConfidentialVMEncryptedWithCustomerKey)
+	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.ConfidentialVMEncryptedWithCustomerKey {
+		return errors.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
 	}
 	return nil
 }
