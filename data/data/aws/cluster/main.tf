@@ -55,6 +55,7 @@ module "masters" {
   user_data_ign                    = var.ignition_master
   publish_strategy                 = var.aws_publish_strategy
   iam_role_name                    = var.aws_master_iam_role_name
+  user_configured_dns              = var.aws_user_configured_dns
 }
 
 module "iam" {

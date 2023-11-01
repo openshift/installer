@@ -7,6 +7,8 @@ locals {
 
   use_cname = contains(["us-gov-west-1", "us-gov-east-1"], var.region)
   use_alias = ! local.use_cname
+
+  configure_route53 = var.user_configured_dns == "Enabled" ? false : true
 }
 
 provider "aws" {
@@ -31,7 +33,7 @@ provider "aws" {
 }
 
 data "aws_route53_zone" "public" {
-  count = local.public_endpoints ? 1 : 0
+  count = configure_route53 && local.public_endpoints ? 1 : 0
 
   name = var.base_domain
 
@@ -39,13 +41,15 @@ data "aws_route53_zone" "public" {
 }
 
 data "aws_route53_zone" "int" {
+  count = configure_route53 ? 1 : 0
+
   provider = aws.private_hosted_zone
 
   zone_id = var.internal_zone == null ? aws_route53_zone.new_int[0].id : var.internal_zone
 }
 
 resource "aws_route53_zone" "new_int" {
-  count = var.internal_zone == null ? 1 : 0
+  count = configure_route53 && var.internal_zone == null ? 1 : 0
 
   name          = var.cluster_domain
   force_destroy = true
@@ -63,7 +67,7 @@ resource "aws_route53_zone" "new_int" {
 }
 
 resource "aws_route53_record" "api_external_alias" {
-  count = local.use_alias && local.public_endpoints ? 1 : 0
+  count = configure_route53 && local.use_alias && local.public_endpoints ? 1 : 0
 
   zone_id = data.aws_route53_zone.public[0].zone_id
   name    = "api.${var.cluster_domain}"
@@ -78,7 +82,7 @@ resource "aws_route53_record" "api_external_alias" {
 
 resource "aws_route53_record" "api_internal_alias" {
   provider = aws.private_hosted_zone
-  count    = local.use_alias ? 1 : 0
+  count    = configure_route53 && local.use_alias ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -93,7 +97,7 @@ resource "aws_route53_record" "api_internal_alias" {
 
 resource "aws_route53_record" "api_external_internal_zone_alias" {
   provider = aws.private_hosted_zone
-  count    = local.use_alias ? 1 : 0
+  count    = configure_route53 && local.use_alias ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
@@ -107,7 +111,7 @@ resource "aws_route53_record" "api_external_internal_zone_alias" {
 }
 
 resource "aws_route53_record" "api_external_cname" {
-  count = local.use_cname && local.public_endpoints ? 1 : 0
+  count = configure_route53 && local.use_cname && local.public_endpoints ? 1 : 0
 
   zone_id = data.aws_route53_zone.public[0].zone_id
   name    = "api.${var.cluster_domain}"
@@ -119,7 +123,7 @@ resource "aws_route53_record" "api_external_cname" {
 
 resource "aws_route53_record" "api_internal_cname" {
   provider = aws.private_hosted_zone
-  count    = local.use_cname ? 1 : 0
+  count    = configure_route53 && local.use_cname ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
@@ -131,7 +135,7 @@ resource "aws_route53_record" "api_internal_cname" {
 
 resource "aws_route53_record" "api_external_internal_zone_cname" {
   provider = aws.private_hosted_zone
-  count    = local.use_cname ? 1 : 0
+  count    = configure_route53 && local.use_cname ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api.${var.cluster_domain}"
