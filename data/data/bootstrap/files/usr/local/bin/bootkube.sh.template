@@ -47,6 +47,7 @@ MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
 MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+API_IMAGE=$(image_for cluster-config-api)
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
@@ -84,6 +85,28 @@ elif [ -f $IDMS_MANIFEST_FILE ]; then
 fi
 
 VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
+
+if [ ! -f api-bootstrap.done ]
+then
+    record_service_stage_start "api-bootstrap"
+	echo "Rendering api manifests..."
+
+	rm --recursive --force api-bootstrap
+
+	bootkube_podman_run \
+		--name api-render \
+		--volume "$PWD:/assets:z" \
+		"${API_IMAGE}" \
+		/usr/bin/render \
+		--asset-output-dir=/assets/api-bootstrap \
+		--rendered-manifest-dir=/assets/manifests \
+		--payload-version=$VERSION
+
+	cp api-bootstrap/manifests/* manifests/
+
+	touch api-bootstrap.done
+    record_service_stage_success
+fi
 
 if [ ! -f config-bootstrap.done ]
 then
