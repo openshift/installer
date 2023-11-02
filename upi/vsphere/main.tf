@@ -12,8 +12,8 @@ locals {
   bootstrap_fqdns     = ["bootstrap-0.${var.cluster_domain}"]
   lb_fqdns            = ["lb-0.${var.cluster_domain}"]
   api_lb_fqdns        = formatlist("%s.%s", ["api", "api-int", "*.apps"], var.cluster_domain)
-  control_plane_fqdns = [for idx in range(length(var.control_plane_ip_addresses)) : "control-plane-${idx}.${var.cluster_domain}"]
-  compute_fqdns       = [for idx in range(length(var.compute_ip_addresses)) : "compute-${idx}.${var.cluster_domain}"]
+  control_plane_fqdns = [for idx in range(var.control_plane_count) : "control-plane-${idx}.${var.cluster_domain}"]
+  compute_fqdns       = [for idx in range(var.compute_count) : "compute-${idx}.${var.cluster_domain}"]
   datastores          = [for idx in range(length(local.failure_domains)) : local.failure_domains[idx]["datastore"]]
   datacenters         = [for idx in range(length(local.failure_domains)) : local.failure_domains[idx]["datacenter"]]
   datacenters_distinct = distinct([for idx in range(length(local.failure_domains)) : local.failure_domains[idx]["datacenter"]])
