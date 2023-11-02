@@ -280,12 +280,12 @@ func applyTerraform(tmpDir string, platform string, stage Stage, terraformDir st
 	}
 
 	if applyErr != nil {
-		return nil, nil, fmt.Errorf("error applying Terraform configs: %w", applyErr)
+		return nil, stateFile, fmt.Errorf("error applying Terraform configs: %w", applyErr)
 	}
 
 	outputs, err := Outputs(tmpDir, terraformDir)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
+		return nil, stateFile, errors.Wrapf(err, "could not get outputs from stage %q", stage.Name())
 	}
 
 	outputsFile = &asset.File{
