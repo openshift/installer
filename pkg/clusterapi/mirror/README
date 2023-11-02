@@ -1,0 +1,4 @@
+Mirror of the cluster-api binaries to embed in the installer.
+The mirror is populated as part of the build process so that only the binaries for the target architecture are embedded.
+
+(note that this file is needed to appease govet so that the directory is not empty)

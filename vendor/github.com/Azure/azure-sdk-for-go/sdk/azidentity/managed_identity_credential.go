@@ -8,12 +8,12 @@ package azidentity
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 )
 
 const credNameManagedIdentity = "ManagedIdentityCredential"
@@ -70,8 +70,8 @@ type ManagedIdentityCredentialOptions struct {
 // user-assigned identity. See Azure Active Directory documentation for more information about managed identities:
 // https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview
 type ManagedIdentityCredential struct {
-	id     ManagedIDKind
-	client *managedIdentityClient
+	client *confidentialClient
+	mic    *managedIdentityClient
 }
 
 // NewManagedIdentityCredential creates a ManagedIdentityCredential. Pass nil to accept default options.
@@ -79,27 +79,35 @@ func NewManagedIdentityCredential(options *ManagedIdentityCredentialOptions) (*M
 	if options == nil {
 		options = &ManagedIdentityCredentialOptions{}
 	}
-	client, err := newManagedIdentityClient(options)
+	mic, err := newManagedIdentityClient(options)
 	if err != nil {
 		return nil, err
 	}
-	return &ManagedIdentityCredential{id: options.ID, client: client}, nil
+	cred := confidential.NewCredFromTokenProvider(mic.provideToken)
+
+	// It's okay to give MSAL an invalid client ID because MSAL will use it only as part of a cache key.
+	// ManagedIdentityClient handles all the details of authentication and won't receive this value from MSAL.
+	clientID := "SYSTEM-ASSIGNED-MANAGED-IDENTITY"
+	if options.ID != nil {
+		clientID = options.ID.String()
+	}
+	// similarly, it's okay to give MSAL an incorrect tenant because MSAL won't use the value
+	c, err := newConfidentialClient("common", clientID, credNameManagedIdentity, cred, confidentialClientOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return &ManagedIdentityCredential{client: c, mic: mic}, nil
 }
 
 // GetToken requests an access token from the hosting environment. This method is called automatically by Azure SDK clients.
 func (c *ManagedIdentityCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (azcore.AccessToken, error) {
 	if len(opts.Scopes) != 1 {
-		err := errors.New(credNameManagedIdentity + ": GetToken() requires exactly one scope")
+		err := fmt.Errorf("%s.GetToken() requires exactly one scope", credNameManagedIdentity)
 		return azcore.AccessToken{}, err
 	}
 	// managed identity endpoints require an AADv1 resource (i.e. token audience), not a v2 scope, so we remove "/.default" here
-	scopes := []string{strings.TrimSuffix(opts.Scopes[0], defaultSuffix)}
-	tk, err := c.client.authenticate(ctx, c.id, scopes)
-	if err != nil {
-		return azcore.AccessToken{}, err
-	}
-	logGetTokenSuccess(c, opts)
-	return tk, err
+	opts.Scopes = []string{strings.TrimSuffix(opts.Scopes[0], defaultSuffix)}
+	return c.client.GetToken(ctx, opts)
 }
 
 var _ azcore.TokenCredential = (*ManagedIdentityCredential)(nil)

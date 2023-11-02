@@ -80,7 +80,6 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 		// policy is disabled
 		return req.Next()
 	}
-	const unregisteredRPCode = "MissingSubscriptionRegistration"
 	const registeredState = "Registered"
 	var rp string
 	var resp *http.Response
@@ -97,10 +96,13 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 			return resp, err
 		}
 		if reqErr.ServiceError == nil {
-			return resp, errors.New("missing error information")
+			// missing service error info. just return the response
+			// to the caller so its error unmarshalling will kick in
+			return resp, err
 		}
-		if !strings.EqualFold(reqErr.ServiceError.Code, unregisteredRPCode) {
-			// not a 409 due to unregistered RP
+		if !isUnregisteredRPCode(reqErr.ServiceError.Code) {
+			// not a 409 due to unregistered RP. just return the response
+			// to the caller so its error unmarshalling will kick in
 			return resp, err
 		}
 		// RP needs to be registered.  start by getting the subscription ID from the original request
@@ -168,6 +170,22 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 	}
 	// if we get here it means we exceeded the number of attempts
 	return resp, fmt.Errorf("exceeded attempts to register %s", rp)
+}
+
+var unregisteredRPCodes = []string{
+	"MissingSubscriptionRegistration",
+	"MissingRegistrationForResourceProvider",
+	"Subscription Not Registered",
+	"SubscriptionNotRegistered",
+}
+
+func isUnregisteredRPCode(errorCode string) bool {
+	for _, code := range unregisteredRPCodes {
+		if strings.EqualFold(errorCode, code) {
+			return true
+		}
+	}
+	return false
 }
 
 func getSubscription(path string) (string, error) {
