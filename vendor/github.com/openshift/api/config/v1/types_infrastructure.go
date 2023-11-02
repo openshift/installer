@@ -1010,6 +1010,22 @@ type VSpherePlatformTopology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
 	// +optional
 	Folder string `json:"folder,omitempty"`
+
+	// template is the full inventory path of the virtual machine or template
+	// that will be cloned when creating new machines in this failure domain.
+	// The maximum length of the path is 2048 characters.
+	//
+	// When omitted, the template will be calculated by the control plane
+	// machineset operator based on the region and zone defined in
+	// VSpherePlatformFailureDomainSpec.
+	// For example, for zone=zonea, region=region1, and infrastructure name=test,
+	// the template path would be calculated as /<datacenter>/vm/test-rhcos-region1-zonea.
+	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
+	// +optional
+	Template string `json:"template,omitempty"`
 }
 
 // VSpherePlatformVCenterSpec stores the vCenter connection fields.
@@ -1166,15 +1182,14 @@ type VSpherePlatformStatus struct {
 // override existing defaults of IBM Cloud Services.
 type IBMCloudServiceEndpoint struct {
 	// name is the name of the IBM Cloud service.
+	// Possible values are: CIS, COS, DNSServices, GlobalSearch, GlobalTagging, HyperProtect, IAM, KeyProtect, ResourceController, ResourceManager, or VPC.
 	// For example, the IBM Cloud Private IAM service could be configured with the
 	// service `name` of `IAM` and `url` of `https://private.iam.cloud.ibm.com`
 	// Whereas the IBM Cloud Private VPC service for US South (Dallas) could be configured
 	// with the service `name` of `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9-]+$`
-	// +kubebuilder:validation:MaxLength=32
-	Name string `json:"name"`
+	Name IBMCloudServiceName `json:"name"`
 
 	// url is fully qualified URI with scheme https, that overrides the default generated
 	// endpoint for a client.
@@ -1209,13 +1224,13 @@ type IBMCloudPlatformStatus struct {
 	// for the cluster's base domain
 	DNSInstanceCRN string `json:"dnsInstanceCRN,omitempty"`
 
-        // serviceEndpoints is a list of custom endpoints which will override the default
-        // service endpoints of an IBM Cloud service. These endpoints are consumed by
+	// serviceEndpoints is a list of custom endpoints which will override the default
+	// service endpoints of an IBM Cloud service. These endpoints are consumed by
 	// components within the cluster to reach the respective IBM Cloud Services.
-        // +listType=map
-        // +listMapKey=name
-        // +optional
-        ServiceEndpoints []IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	ServiceEndpoints []IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 
 // KubevirtPlatformSpec holds the desired state of the kubevirt infrastructure provider.
