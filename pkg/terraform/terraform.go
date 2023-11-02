@@ -62,6 +62,11 @@ func (p *Provider) Provision(dir string, vars []*asset.File) ([]*asset.File, err
 		vars = append(vars, outputs)
 		fileList = append(fileList, outputs)
 		fileList = append(fileList, stateFile)
+
+		_, extErr := stage.ExtractLBConfig(dir, terraformDirPath, outputs, vars[0])
+		if extErr != nil {
+			return fileList, fmt.Errorf("failed to extract load balancer information: %w", extErr)
+		}
 	}
 	return fileList, nil
 }

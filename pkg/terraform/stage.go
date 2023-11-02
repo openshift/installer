@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform/providers"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -31,4 +32,7 @@ type Stage interface {
 
 	// ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 	ExtractHostAddresses(directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error)
+
+	// ExtractLBConfig extracts the LB DNS Names of the internal and external API LBs.
+	ExtractLBConfig(directory string, terraformDir string, file *asset.File, tfvarsFile *asset.File) (ignition string, err error)
 }
