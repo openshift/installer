@@ -1,5 +1,16 @@
 package gcp
 
+// ClusterHostedDNS indicates whether the cluster DNS is hosted by the cluster or Core DNS .
+type ClusterHostedDNS string
+
+const (
+	// ClusterHostedDNSEnabled indicates that the DNS solution is hosted by the cluster.
+	ClusterHostedDNSEnabled ClusterHostedDNS = "Enabled"
+
+	// ClusterHostedDNSDisabled indicates that the DNS solution is hosted by Core DNS.
+	ClusterHostedDNSDisabled ClusterHostedDNS = "Disabled"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -49,6 +60,13 @@ type Platform struct {
 	// feature and requires setting CustomNoUpgrade featureSet with GCPLabelsTags
 	// featureGate enabled or TechPreviewNoUpgrade featureSet to configure tags.
 	UserTags []UserTag `json:"userTags,omitempty"`
+
+	// ClusterHostedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provided by Core DNS.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	ClusterHostedDNS ClusterHostedDNS `json:"clusterHostedDNS,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

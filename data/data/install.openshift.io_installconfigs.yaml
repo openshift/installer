@@ -3042,6 +3042,15 @@ spec:
                 description: GCP is the configuration used when installing on Google
                   Cloud Platform.
                 properties:
+                  clusterHostedDNS:
+                    default: Disabled
+                    description: ClusterHostedDNS indicates if the customer is providing
+                      their own DNS solution in place of the default provided by Core
+                      DNS.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   computeSubnet:
                     description: ComputeSubnet is an existing subnet where the compute
                       nodes will be deployed. The value should be the name of the

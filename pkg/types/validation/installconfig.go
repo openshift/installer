@@ -1070,7 +1070,7 @@ func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		}
 		allErrs = append(allErrs, validateCustomFeatureGates(c)...)
 	}
-
+	
 	// We can only accurately check gated features
 	// if feature sets are correctly configured.
 	if len(allErrs) == 0 {

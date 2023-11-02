@@ -158,3 +158,11 @@ variable "gcp_create_bootstrap_sa" {
   default = false
   description = "Whether a service account should be created to sign the ignition URL."
 }
+
+variable "gcp_cluster_hosted_dns" {
+  type = bool
+  default = false
+  description = <<EOF
+When true the user has selected to configure their own dns solution, and no dns records will be created.
+EOF
+}
