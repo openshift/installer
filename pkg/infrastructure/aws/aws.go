@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -21,6 +24,7 @@ import (
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -236,6 +240,56 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 
 // DestroyBootstrap destroys the temporary bootstrap resources.
 func (a InfraProvider) DestroyBootstrap(dir string) error {
+	// Unmarshall input from tf variables, so we can use it along with
+	// installConfig and other assets as the contractual input regardless of
+	// the implementation.
+	clusterConfig := &tfvars.Config{}
+	data, err := os.ReadFile(filepath.Join(dir, tfVarsFileName))
+	if err == nil {
+		err = json.Unmarshal(data, clusterConfig)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to load cluster terraform variables: %w", err)
+	}
+	clusterAWSConfig := &awstfvars.Config{}
+	data, err = os.ReadFile(filepath.Join(dir, tfPlatformVarsFileName))
+	if err == nil {
+		err = json.Unmarshal(data, clusterAWSConfig)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to load AWS terraform variables: %w", err)
+	}
+
+	eps := []awstypes.ServiceEndpoint{}
+	for k, v := range clusterAWSConfig.CustomEndpoints {
+		eps = append(eps, awstypes.ServiceEndpoint{Name: k, URL: v})
+	}
+
+	awsSession, err := awssession.GetSessionWithOptions(
+		awssession.WithRegion(clusterAWSConfig.Region),
+		awssession.WithServiceEndpoints(clusterAWSConfig.Region, eps),
+	)
+	if err != nil {
+		return err
+	}
+	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
+		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
+		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	logger := logrus.StandardLogger()
+	input := &destroyInputOptions{
+		infraID: clusterConfig.ClusterID,
+		region:  clusterAWSConfig.Region,
+	}
+	err = destroyBootstrapResources(ctx, logger, awsSession, input)
+	if err != nil {
+		return fmt.Errorf("failed to delete bootstrap resources: %w", err)
+	}
+
 	return nil
 }
 
