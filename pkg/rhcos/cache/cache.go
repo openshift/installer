@@ -11,25 +11,30 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/h2non/filetype/matchers"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/thedevsaddam/retry"
 	"github.com/ulikunitz/xz"
 	"golang.org/x/sys/unix"
 )
 
 const (
+	// InstallerApplicationName is to use as application name by installer.
 	InstallerApplicationName = "openshift-installer"
-	AgentApplicationName     = "agent"
-	ImageDataType            = "image"
-	FilesDataType            = "files"
+	// AgentApplicationName is to use as application name used by agent.
+	AgentApplicationName = "agent"
+	// ImageDataType is used by installer.
+	ImageDataType = "image"
+	// FilesDataType is used by agent.
+	FilesDataType = "files"
 )
 
 // GetFileFromCache returns path of the cached file if found, otherwise returns an empty string
-// or error
+// or error.
 func GetFileFromCache(fileName string, cacheDir string) (string, error) {
-
 	filePath := filepath.Join(cacheDir, fileName)
 
 	// If the file has already been cached, return its path
@@ -75,7 +80,7 @@ func GetCacheDir(dataType, applicationName string) (string, error) {
 	return cacheDir, nil
 }
 
-// cacheFile puts data in the cache
+// cacheFile puts data in the cache.
 func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err error) {
 	logrus.Debugf("Unpacking file into %q...", filePath)
 
@@ -229,22 +234,24 @@ func (u *urlWithIntegrity) download(dataType, applicationName string) (string, e
 	}
 
 	// Send a request to get the file
-	resp, err := http.Get(u.location.String())
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+	err = retry.DoFunc(3, 5*time.Second, func() error {
+		resp, err := http.Get(u.location.String())
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
-	// Let's find the content length for future debugging
-	logrus.Debugf("image download content length: %d", resp.ContentLength)
+		// Let's find the content length for future debugging
+		logrus.Debugf("image download content length: %d", resp.ContentLength)
 
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.Errorf("bad status: %s", resp.Status)
-	}
+		// Check server response
+		if resp.StatusCode != http.StatusOK {
+			return errors.Errorf("bad status: %s", resp.Status)
+		}
 
-	filePath = filepath.Join(cacheDir, fileName)
-	err = cacheFile(resp.Body, filePath, u.uncompressedSHA256)
+		filePath = filepath.Join(cacheDir, fileName)
+		return cacheFile(resp.Body, filePath, u.uncompressedSHA256)
+	})
 	if err != nil {
 		return "", err
 	}
