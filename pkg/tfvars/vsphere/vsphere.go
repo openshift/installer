@@ -13,7 +13,7 @@ import (
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -55,7 +55,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	failureDomainMap, importOvaFailureDomainMap := createFailureDomainMaps(sources.InstallConfig.Config.VSphere.FailureDomains, sources.InfraID)
 
 	if len(importOvaFailureDomainMap) > 0 {
-		cachedImage, err = cache.DownloadImageFile(sources.ImageURL)
+		cachedImage, err = cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to use cached vsphere image")
 		}
