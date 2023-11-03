@@ -141,6 +141,12 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 			// with a machine without triggering provisioning. We only
 			// want to do that for control plane hosts.
 			newHost.Spec.ExternallyProvisioned = true
+			// Setting CustomDeploy early ensures that the
+			// corresponding Ironic node gets correctly configured
+			// from the beginning.
+			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+				Method: "install_coreos",
+			}
 			// Pause reconciliation until we can annotate with the initial
 			// status containing the HardwareDetails
 			newHost.ObjectMeta.Annotations = map[string]string{"baremetalhost.metal3.io/paused": ""}
