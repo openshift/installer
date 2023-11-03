@@ -1975,6 +1975,100 @@ func TestEnsureS3VPCEndpoint(t *testing.T) {
 	}
 }
 
+func TestEnsureUserVpc(t *testing.T) {
+	const vpcID = "vpc-1"
+	publicIDs := []string{"public-1", "public-2"}
+	privateIDs := []string{"private-1", "private-2"}
+	privateSubnets := []*ec2.Subnet{
+		{
+			SubnetId:         aws.String("private-1"),
+			AvailabilityZone: aws.String("zone-1"),
+		},
+		{
+			SubnetId:         aws.String("private-2"),
+			AvailabilityZone: aws.String("zone-2"),
+		},
+	}
+	privateSubnetZoneMap := map[string]string{
+		"zone-1": "private-1",
+		"zone-2": "private-2",
+	}
+	tests := []struct {
+		name        string
+		mockSvc     mockEC2Client
+		publicIDs   []string
+		expectedOut *vpcOutput
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error describing subnets",
+			mockSvc: mockEC2Client{
+				describeSubnets: func(*ec2.DescribeSubnetsInput) (*ec2.DescribeSubnetsOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to retrieve user-supplied subnets: some AWS SDK error$`,
+		},
+		{
+			name: "Subnet zones mapped and no resources created in private-only VPC",
+			mockSvc: mockEC2Client{
+				describeSubnets: func(*ec2.DescribeSubnetsInput) (*ec2.DescribeSubnetsOutput, error) {
+					return &ec2.DescribeSubnetsOutput{
+						Subnets: privateSubnets,
+					}, nil
+				},
+			},
+			expectedOut: &vpcOutput{
+				vpcID:            vpcID,
+				privateSubnetIDs: privateIDs,
+				zoneToSubnetMap:  privateSubnetZoneMap,
+				publicSubnetIDs:  nil,
+			},
+		},
+		{
+			name: "Subnet zones mapped and no resources created",
+			mockSvc: mockEC2Client{
+				describeSubnets: func(*ec2.DescribeSubnetsInput) (*ec2.DescribeSubnetsOutput, error) {
+					return &ec2.DescribeSubnetsOutput{
+						Subnets: privateSubnets,
+					}, nil
+				},
+			},
+			publicIDs: publicIDs,
+			expectedOut: &vpcOutput{
+				vpcID:            vpcID,
+				privateSubnetIDs: privateIDs,
+				zoneToSubnetMap:  privateSubnetZoneMap,
+				publicSubnetIDs:  publicIDs,
+			},
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := &vpcInputOptions{
+				infraID:          "infraID",
+				region:           "region",
+				vpcID:            vpcID,
+				privateSubnetIDs: privateIDs,
+				tags:             map[string]string{},
+			}
+			input.publicSubnetIDs = test.publicIDs
+			res, err := createVPCResources(context.TODO(), logger, &test.mockSvc, input)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
 func TestEnsureSecurityGroup(t *testing.T) {
 	emptySG := &ec2.SecurityGroup{
 		GroupId: aws.String("sg-1"),

@@ -67,6 +67,30 @@ type vpcOutput struct {
 }
 
 func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, vpcInput *vpcInputOptions) (*vpcOutput, error) {
+	// User-supplied VPC. In this case we don't create any subnets
+	if len(vpcInput.vpcID) > 0 {
+		logger.WithField("id", vpcInput.vpcID).Infoln("Found user-supplied VPC")
+
+		privateSubnetIDs := aws.StringSlice(vpcInput.privateSubnetIDs)
+		privateSubnetZoneMap := make(map[string]*string, len(privateSubnetIDs))
+		result, err := ec2Client.DescribeSubnetsWithContext(ctx, &ec2.DescribeSubnetsInput{
+			SubnetIds: privateSubnetIDs,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve user-supplied subnets: %w", err)
+		}
+		for _, subnet := range result.Subnets {
+			privateSubnetZoneMap[aws.StringValue(subnet.AvailabilityZone)] = subnet.SubnetId
+		}
+
+		return &vpcOutput{
+			vpcID:            vpcInput.vpcID,
+			publicSubnetIDs:  vpcInput.publicSubnetIDs,
+			privateSubnetIDs: vpcInput.privateSubnetIDs,
+			zoneToSubnetMap:  aws.StringValueMap(privateSubnetZoneMap),
+		}, nil
+	}
+
 	state := vpcState{input: vpcInput}
 	endpointRouteTableIDs := make([]*string, 0, len(vpcInput.zones)+1)
 
