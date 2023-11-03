@@ -13,10 +13,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const errSharedCredsLoad = "SharedCredsLoad"
+
+var cnameRegions = sets.New[string]("us-gov-west-1", "us-gov-east-1")
 
 type dnsInputOptions struct {
 	infraID           string
@@ -35,6 +38,7 @@ type dnsInputOptions struct {
 func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53Client route53iface.Route53API, input *dnsInputOptions) error {
 	apiName := fmt.Sprintf("api.%s", input.clusterDomain)
 	apiIntName := fmt.Sprintf("api-int.%s", input.clusterDomain)
+	useCNAME := cnameRegions.Has(input.region)
 
 	if !input.isPrivateCluster {
 		publicZone, err := existingHostedZone(ctx, route53Client, input.baseDomain, false)
@@ -48,7 +52,7 @@ func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53C
 		}).Infoln("Found existing public zone")
 
 		// Create API record in public zone
-		_, err = createRecordA(ctx, route53Client, zoneID, apiName, input.lbExternalZoneDNS, input.lbExternalZoneID)
+		_, err = createRecord(ctx, route53Client, zoneID, apiName, input.lbExternalZoneDNS, input.lbExternalZoneID, useCNAME)
 		if err != nil {
 			return fmt.Errorf("failed to create api record (%s) in public zone: %w", apiName, err)
 		}
@@ -62,14 +66,14 @@ func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53C
 	privateZoneID := cleanZoneID(privateZone.Id)
 
 	// Create API record in private zone
-	_, err = createRecordA(ctx, route53Client, privateZoneID, apiName, input.lbInternalZoneDNS, input.lbInternalZoneID)
+	_, err = createRecord(ctx, route53Client, privateZoneID, apiName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
 	if err != nil {
 		return fmt.Errorf("failed to create api record (%s) in private zone: %w", apiName, err)
 	}
 	logger.Infoln("Created api DNS record for private zone")
 
 	// Create API-int record in privat zone
-	_, err = createRecordA(ctx, route53Client, privateZoneID, apiIntName, input.lbInternalZoneDNS, input.lbInternalZoneID)
+	_, err = createRecord(ctx, route53Client, privateZoneID, apiIntName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
 	if err != nil {
 		return fmt.Errorf("failed to create api-int record (%s) in private zone: %w", apiIntName, err)
 	}
@@ -201,29 +205,38 @@ func createHostedZone(ctx context.Context, client route53iface.Route53API, name,
 	return res.HostedZone, nil
 }
 
-func createRecordA(ctx context.Context, client route53iface.Route53API, zoneID string, name string, aliasDNS string, aliasID string) (*route53.ChangeInfo, error) {
+func createRecord(ctx context.Context, client route53iface.Route53API, zoneID string, name string, dnsName string, aliasZoneID string, useCNAME bool) (*route53.ChangeInfo, error) {
+	recordSet := &route53.ResourceRecordSet{
+		Name: aws.String(cleanRecordName(name)),
+	}
+	if useCNAME {
+		recordSet.SetType("CNAME")
+		recordSet.SetTTL(10)
+		recordSet.SetResourceRecords([]*route53.ResourceRecord{
+			{Value: aws.String(dnsName)},
+		})
+	} else {
+		recordSet.SetType("A")
+		recordSet.SetAliasTarget(&route53.AliasTarget{
+			DNSName:              aws.String(dnsName),
+			HostedZoneId:         aws.String(aliasZoneID),
+			EvaluateTargetHealth: aws.Bool(false),
+		})
+	}
 	input := &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: aws.String(zoneID),
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{
 				{
-					Action: aws.String("UPSERT"),
-					ResourceRecordSet: &route53.ResourceRecordSet{
-						Name: aws.String(cleanRecordName(name)),
-						Type: aws.String("A"),
-						AliasTarget: &route53.AliasTarget{
-							DNSName:              aws.String(aliasDNS),
-							HostedZoneId:         aws.String(aliasID),
-							EvaluateTargetHealth: aws.Bool(false),
-						},
-					},
+					Action:            aws.String("UPSERT"),
+					ResourceRecordSet: recordSet,
 				},
 			},
 		},
 	}
 	res, err := client.ChangeResourceRecordSetsWithContext(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create alias record: %w", err)
+		return nil, err
 	}
 
 	return res.ChangeInfo, nil
