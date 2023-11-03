@@ -327,6 +327,18 @@ func (a InfraProvider) DestroyBootstrap(dir string) error {
 
 // ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 func (a InfraProvider) ExtractHostAddresses(dir string, ic *types.InstallConfig, ha *infrastructure.HostAddresses) error {
+	clusterOutput := &output{}
+	data, err := os.ReadFile(filepath.Join(dir, clusterOutputFileName))
+	if err == nil {
+		err = json.Unmarshal(data, clusterOutput)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to load cluster terraform variables: %w", err)
+	}
+
+	ha.Bootstrap = clusterOutput.BootstrapIP
+	ha.Masters = append(ha.Masters, clusterOutput.ControlPlaneIPs...)
+
 	return nil
 }
 
