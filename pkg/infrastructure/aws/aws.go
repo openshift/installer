@@ -30,6 +30,7 @@ import (
 const (
 	tfVarsFileName         = "terraform.tfvars.json"
 	tfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
+	clusterOutputFileName  = "cluster.awssdk.vars.json"
 
 	ownedTagKey   = "kubernetes.io/cluster/%s"
 	ownedTagValue = "owned"
@@ -41,6 +42,17 @@ type InfraProvider struct{}
 // InitializeProvider initializes the AWS SDK provider.
 func InitializeProvider() infrastructure.Provider {
 	return InfraProvider{}
+}
+
+type output struct {
+	VpcID            string   `json:"vpc_id,omitempty"`
+	MasterSGID       string   `json:"master_sg_id,omitempty"`
+	WorkerSGID       string   `json:"worker_sg_id,omitempty"`
+	BootstrapIP      string   `json:"bootstrap_ip,omitempty"`
+	ControlPlaneIPs  []string `json:"master_ips,omitempty"`
+	TargetGroupARNs  []string `json:"lb_target_group_arns,omitempty"`
+	PublicSubnetIDs  []string `json:"public_subnet_ids,omitempty"`
+	PrivateSubnetIDs []string `json:"private_subnet_ids,omitempty"`
 }
 
 // Provision creates the infrastructure resources for the stage.
@@ -191,7 +203,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	}
 	iamClient := iam.New(awsSession)
 	s3Client := s3.New(awsSession)
-	err = createBootstrapResources(ctx, logger, ec2Client, iamClient, s3Client, elbClient, &bootstrapInput)
+	bootstrapOut, err := createBootstrapResources(ctx, logger, ec2Client, iamClient, s3Client, elbClient, &bootstrapInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bootstrap resources: %w", err)
 	}
@@ -220,7 +232,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		zoneToSubnetMap:   vpcOutput.zoneToSubnetMap,
 		availabilityZones: clusterAWSConfig.MasterAvailabilityZones,
 	}
-	err = createControlPlaneResources(ctx, logger, ec2Client, iamClient, elbClient, &controlPlaneInput)
+	controlPlaneOut, err := createControlPlaneResources(ctx, logger, ec2Client, iamClient, elbClient, &controlPlaneInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create control plane resources: %w", err)
 	}
@@ -235,7 +247,27 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		return nil, fmt.Errorf("failed to create compute resources: %w", err)
 	}
 
-	return nil, nil
+	bootstrapIP := bootstrapOut.privateIP
+	if clusterAWSConfig.PublishStrategy == "External" {
+		bootstrapIP = bootstrapOut.publicIP
+	}
+	out := &output{
+		BootstrapIP:      bootstrapIP,
+		VpcID:            vpcOutput.vpcID,
+		TargetGroupARNs:  lbOutput.targetGroupArns,
+		PublicSubnetIDs:  vpcOutput.publicSubnetIDs,
+		PrivateSubnetIDs: vpcOutput.privateSubnetIDs,
+		MasterSGID:       sgOutput.controlPlane,
+		WorkerSGID:       sgOutput.compute,
+		ControlPlaneIPs:  controlPlaneOut.controlPlaneIPs,
+	}
+	data, err := json.MarshalIndent(out, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to write cluster output: %w", err)
+	}
+	return []*asset.File{
+		{Filename: clusterOutputFileName, Data: data},
+	}, nil
 }
 
 // DestroyBootstrap destroys the temporary bootstrap resources.

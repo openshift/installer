@@ -23,26 +23,34 @@ type bootstrapInputOptions struct {
 	ignitionContent string
 }
 
-func createBootstrapResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, iamClient iamiface.IAMAPI, s3Client s3iface.S3API, elbClient elbv2iface.ELBV2API, input *bootstrapInputOptions) error {
+type bootstrapOutput struct {
+	privateIP string
+	publicIP  string
+}
+
+func createBootstrapResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, iamClient iamiface.IAMAPI, s3Client s3iface.S3API, elbClient elbv2iface.ELBV2API, input *bootstrapInputOptions) (*bootstrapOutput, error) {
 	err := ensureIgnition(ctx, logger, s3Client, input.infraID, input.ignitionBucket, input.ignitionContent, input.tags)
 	if err != nil {
-		return fmt.Errorf("failed to create ignition resources: %w", err)
+		return nil, fmt.Errorf("failed to create ignition resources: %w", err)
 	}
 
 	profileName := fmt.Sprintf("%s-bootstrap", input.infraID)
 	instanceProfile, err := createBootstrapInstanceProfile(ctx, logger, iamClient, profileName, input.tags)
 	if err != nil {
-		return fmt.Errorf("failed to create bootstrap instance profile: %w", err)
+		return nil, fmt.Errorf("failed to create bootstrap instance profile: %w", err)
 	}
 	input.instanceProfileARN = aws.StringValue(instanceProfile.Arn)
 
 	input.name = fmt.Sprintf("%s-bootstrap", input.infraID)
-	_, err = ensureInstance(ctx, logger, ec2Client, elbClient, &input.instanceInputOptions)
+	instance, err := ensureInstance(ctx, logger, ec2Client, elbClient, &input.instanceInputOptions)
 	if err != nil {
-		return fmt.Errorf("failed to create bootstrap instace: %w", err)
+		return nil, fmt.Errorf("failed to create bootstrap instace: %w", err)
 	}
 
-	return nil
+	return &bootstrapOutput{
+		privateIP: aws.StringValue(instance.PrivateIpAddress),
+		publicIP:  aws.StringValue(instance.PublicIpAddress),
+	}, nil
 }
 
 func ensureIgnition(ctx context.Context, logger logrus.FieldLogger, client s3iface.S3API, infraID string, bucket string, content string, tags map[string]string) error {

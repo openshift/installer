@@ -20,13 +20,18 @@ type controlPlaneInputOptions struct {
 	availabilityZones []string
 }
 
-func createControlPlaneResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, iamClient iamiface.IAMAPI, elbClient elbv2iface.ELBV2API, input *controlPlaneInputOptions) error {
+type controlPlaneOutput struct {
+	controlPlaneIPs []string
+}
+
+func createControlPlaneResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, iamClient iamiface.IAMAPI, elbClient elbv2iface.ELBV2API, input *controlPlaneInputOptions) (*controlPlaneOutput, error) {
 	profileName := fmt.Sprintf("%s-master", input.infraID)
 	instanceProfile, err := createControlPlaneInstanceProfile(ctx, logger, iamClient, profileName, input.tags)
 	if err != nil {
-		return fmt.Errorf("failed to create control plane instance profile: %w", err)
+		return nil, fmt.Errorf("failed to create control plane instance profile: %w", err)
 	}
 
+	instanceIPs := make([]string, 0, input.nReplicas)
 	for i := 0; i < input.nReplicas; i++ {
 		options := input.instanceInputOptions
 		options.name = fmt.Sprintf("%s-master-%d", input.infraID, i)
@@ -35,14 +40,15 @@ func createControlPlaneResources(ctx context.Context, logger logrus.FieldLogger,
 		options.subnetID = input.zoneToSubnetMap[input.availabilityZones[zoneIdx]]
 		options.instanceProfileARN = aws.StringValue(instanceProfile.Arn)
 
-		_, err := ensureInstance(ctx, logger, ec2Client, elbClient, &options)
+		instance, err := ensureInstance(ctx, logger, ec2Client, elbClient, &options)
 		if err != nil {
-			return fmt.Errorf("failed to create control plane (%s): %w", options.name, err)
+			return nil, fmt.Errorf("failed to create control plane (%s): %w", options.name, err)
 		}
+		instanceIPs = append(instanceIPs, aws.StringValue(instance.PrivateIpAddress))
 	}
 	logger.Infoln("Created control plane instances")
 
-	return nil
+	return &controlPlaneOutput{controlPlaneIPs: instanceIPs}, nil
 }
 
 func createControlPlaneInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, tags map[string]string) (*iam.InstanceProfile, error) {
