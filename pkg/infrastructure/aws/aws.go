@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -32,8 +34,9 @@ const (
 	tfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
 	clusterOutputFileName  = "cluster.awssdk.vars.json"
 
-	ownedTagKey   = "kubernetes.io/cluster/%s"
-	ownedTagValue = "owned"
+	defaultDescription = "Created by Openshift Installer"
+	ownedTagKey        = "kubernetes.io/cluster/%s"
+	ownedTagValue      = "owned"
 )
 
 // InfraProvider is the AWS SDK infra provider.
@@ -106,8 +109,17 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	logger.Infoln("Creating VPC resources")
 	ec2Client := ec2.New(awsSession)
+	amiID := clusterAWSConfig.AMI
+	if clusterAWSConfig.Region != clusterAWSConfig.AMIRegion {
+		logger.Infof("Copying AMI to region %s", clusterAWSConfig.Region)
+		amiID, err = copyAMIToRegion(ctx, ec2Client, clusterAWSConfig.AMI, clusterAWSConfig.AMIRegion, clusterAWSConfig.Region, clusterConfig.ClusterID, tags)
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy AMI to region (%s): %w", clusterAWSConfig.Region, err)
+		}
+	}
+
+	logger.Infoln("Creating VPC resources")
 	vpcInput := vpcInputOptions{
 		infraID:          clusterConfig.ClusterID,
 		region:           clusterAWSConfig.Region,
@@ -182,7 +194,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	bootstrapInput := bootstrapInputOptions{
 		instanceInputOptions: instanceInputOptions{
 			infraID:           clusterConfig.ClusterID,
-			amiID:             clusterAWSConfig.AMI,
+			amiID:             amiID,
 			instanceType:      clusterAWSConfig.MasterInstanceType,
 			iamRole:           clusterAWSConfig.MasterIAMRoleName,
 			volumeType:        "gp2",
@@ -212,7 +224,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	controlPlaneInput := controlPlaneInputOptions{
 		instanceInputOptions: instanceInputOptions{
 			infraID:           clusterConfig.ClusterID,
-			amiID:             clusterAWSConfig.AMI,
+			amiID:             amiID,
 			instanceType:      clusterAWSConfig.MasterInstanceType,
 			iamRole:           clusterAWSConfig.MasterIAMRoleName,
 			volumeType:        clusterAWSConfig.Type,
@@ -355,4 +367,34 @@ func mergeTags(lhsTags, rhsTags map[string]string) map[string]string {
 
 func clusterOwnedTag(infraID string) string {
 	return fmt.Sprintf(ownedTagKey, infraID)
+}
+
+func copyAMIToRegion(ctx context.Context, client ec2iface.EC2API, sourceAMI string, sourceRegion string, targetRegion string, infraID string, tags map[string]string) (string, error) {
+	name := fmt.Sprintf("%s-ami-%s", infraID, targetRegion)
+	amiTags := mergeTags(tags, map[string]string{
+		"Name":         name,
+		"sourceAMI":    sourceAMI,
+		"sourceRegion": sourceRegion,
+	})
+	res, err := client.CopyImageWithContext(ctx, &ec2.CopyImageInput{
+		Name:          aws.String(fmt.Sprintf("%s-master", infraID)),
+		ClientToken:   aws.String(infraID),
+		Description:   aws.String(defaultDescription),
+		SourceImageId: aws.String(sourceAMI),
+		SourceRegion:  aws.String(sourceRegion),
+		Encrypted:     aws.Bool(true),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	_, err = client.CreateTagsWithContext(ctx, &ec2.CreateTagsInput{
+		Resources: []*string{res.ImageId},
+		Tags:      ec2Tags(amiTags),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to tag AMI copy (%s): %w", name, err)
+	}
+
+	return aws.StringValue(res.ImageId), nil
 }

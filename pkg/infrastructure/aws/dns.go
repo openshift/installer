@@ -16,11 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const (
-	errSharedCredsLoad = "SharedCredsLoad"
-
-	defaultDescription = "Created by Openshift Installer"
-)
+const errSharedCredsLoad = "SharedCredsLoad"
 
 type dnsInputOptions struct {
 	infraID           string
