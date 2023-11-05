@@ -17,6 +17,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const ignitionKey = "bootstrap.ign"
+
 type bootstrapInputOptions struct {
 	instanceInputOptions
 	ignitionBucket  string
@@ -59,7 +61,6 @@ func ensureIgnition(ctx context.Context, logger logrus.FieldLogger, client s3ifa
 		return err
 	}
 
-	const ignitionKey = "bootstrap.ign"
 	// Upload the bootstrap.ign file to the S3 bucket
 	_, err = client.PutObjectWithContext(ctx, &s3.PutObjectInput{
 		Bucket:               aws.String(bucket),
@@ -70,7 +71,7 @@ func ensureIgnition(ctx context.Context, logger logrus.FieldLogger, client s3ifa
 	if err != nil {
 		return fmt.Errorf("failed to upload %s to bucket: %w", ignitionKey, err)
 	}
-	logger.Infoln("Uploaded bootstrap.ign to S3 bucket")
+	logger.Infof("Uploaded %s to S3 bucket", ignitionKey)
 
 	// S3 Object tagging supports only up to 10 tags
 	// https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectTagging.html
@@ -89,7 +90,7 @@ func ensureIgnition(ctx context.Context, logger logrus.FieldLogger, client s3ifa
 	if err != nil {
 		return fmt.Errorf("failed to tag ignition object: %w", err)
 	}
-	logger.Infoln("Tagged bootstrap.ign object")
+	logger.Infof("Tagged %s object", ignitionKey)
 
 	return nil
 }

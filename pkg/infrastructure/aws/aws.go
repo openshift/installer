@@ -326,8 +326,10 @@ func (a InfraProvider) DestroyBootstrap(dir string) error {
 
 	logger := logrus.StandardLogger()
 	input := &destroyInputOptions{
-		infraID: clusterConfig.ClusterID,
-		region:  clusterAWSConfig.Region,
+		infraID:          clusterConfig.ClusterID,
+		region:           clusterAWSConfig.Region,
+		ignitionBucket:   clusterAWSConfig.IgnitionBucket,
+		preserveIgnition: clusterAWSConfig.PreserveBootstrapIgnition,
 	}
 	err = destroyBootstrapResources(ctx, logger, awsSession, input)
 	if err != nil {

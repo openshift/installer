@@ -3,14 +3,17 @@ package aws
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/sirupsen/logrus"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -18,8 +21,10 @@ import (
 )
 
 type destroyInputOptions struct {
-	infraID string
-	region  string
+	infraID          string
+	region           string
+	ignitionBucket   string
+	preserveIgnition bool
 }
 
 func destroyBootstrapResources(ctx context.Context, logger logrus.FieldLogger, awsSession *session.Session, input *destroyInputOptions) error {
@@ -67,6 +72,44 @@ func destroyBootstrapResources(ctx context.Context, logger logrus.FieldLogger, a
 	resourcesToDelete, tagClientsWithResources, err := awsdestroy.FindTaggedResourcesToDelete(ctx, logger, tagClients, filters, iamRoleSearch, nil, deleted)
 	if err != nil {
 		return fmt.Errorf("failed to collect bootstrap resources to delete: %w", err)
+	}
+
+	resourcesToPreserve := sets.New[string]()
+	if input.preserveIgnition {
+		logger.Debugln("Preserving ignition resources")
+		var errs []error
+		for _, resource := range resourcesToDelete.UnsortedList() {
+			arn, err := arn.Parse(resource)
+			if err != nil {
+				// We don't care if we failed to parse some resource ARNs as
+				// long as we are able to find the ignition bucket and object
+				// we are looking for
+				errs = append(errs, err)
+				continue
+			}
+			if arn.Service != "s3" {
+				continue
+			}
+			bucketName, objectName, objectFound := strings.Cut(arn.Resource, "/")
+			if bucketName != input.ignitionBucket {
+				continue
+			}
+			if !objectFound || objectName == ignitionKey {
+				resourcesToPreserve.Insert(resource)
+			}
+		}
+		// Should contain at least bucket
+		if resourcesToPreserve.Len() < 1 {
+			errMsg := "failed to find ignition resources to preserve"
+			if len(errs) > 0 {
+				return fmt.Errorf("%s: %w", errMsg, utilerrors.NewAggregate(errs))
+			}
+			return fmt.Errorf("%s", errMsg)
+		}
+		resourcesToDelete = resourcesToDelete.Difference(resourcesToPreserve)
+		// Pretend the ignition objects have already been deleted to avoid them
+		// being added again to the to-delete list
+		deleted = deleted.Union(resourcesToPreserve)
 	}
 
 	tracker := new(awsdestroy.ErrorTracker)
@@ -119,6 +162,8 @@ func destroyBootstrapResources(ctx context.Context, logger logrus.FieldLogger, a
 		logger.WithError(err).Infof("failed to delete the following resources: %v", resourcesToDelete.UnsortedList())
 		return fmt.Errorf("failed to delete bootstrap resources: %w", err)
 	}
+
+	logger.Debugf("Preserving the following resources: %v", resourcesToPreserve.UnsortedList())
 
 	return nil
 }
