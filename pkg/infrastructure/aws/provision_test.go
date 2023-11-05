@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/elbv2/elbv2iface"
+	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/iam/iamiface"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/sirupsen/logrus"
@@ -2708,6 +2710,324 @@ func TestEnsureInstance(t *testing.T) {
 				tags:            map[string]string{"custom-tag": "custom-value"},
 			}
 			res, err := ensureInstance(context.TODO(), logger, &test.mockEC2, &test.mockELB, &input)
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, test.expectedOut, res)
+			} else {
+				assert.Error(t, err)
+				assert.Regexp(t, test.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+type mockIAMClient struct {
+	iamiface.IAMAPI
+
+	// swappable functions
+	getRole          func(*iam.GetRoleInput) (*iam.GetRoleOutput, error)
+	createRole       func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error)
+	getProfile       func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error)
+	createProfile    func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error)
+	addRoleToProfile func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error)
+	getRolePolicy    func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error)
+	putRolePolicy    func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error)
+}
+
+func (m *mockIAMClient) GetRoleWithContext(_ context.Context, in *iam.GetRoleInput, _ ...request.Option) (*iam.GetRoleOutput, error) {
+	return m.getRole(in)
+}
+
+func (m *mockIAMClient) CreateRoleWithContext(_ context.Context, in *iam.CreateRoleInput, _ ...request.Option) (*iam.CreateRoleOutput, error) {
+	return m.createRole(in)
+}
+
+func (m *mockIAMClient) GetInstanceProfileWithContext(_ context.Context, in *iam.GetInstanceProfileInput, _ ...request.Option) (*iam.GetInstanceProfileOutput, error) {
+	return m.getProfile(in)
+}
+
+func (m *mockIAMClient) CreateInstanceProfileWithContext(_ context.Context, in *iam.CreateInstanceProfileInput, _ ...request.Option) (*iam.CreateInstanceProfileOutput, error) {
+	return m.createProfile(in)
+}
+
+func (m *mockIAMClient) AddRoleToInstanceProfileWithContext(_ context.Context, in *iam.AddRoleToInstanceProfileInput, _ ...request.Option) (*iam.AddRoleToInstanceProfileOutput, error) {
+	return m.addRoleToProfile(in)
+}
+
+func (m *mockIAMClient) GetRolePolicyWithContext(_ context.Context, in *iam.GetRolePolicyInput, _ ...request.Option) (*iam.GetRolePolicyOutput, error) {
+	return m.getRolePolicy(in)
+}
+
+func (m *mockIAMClient) PutRolePolicyWithContext(_ context.Context, in *iam.PutRolePolicyInput, _ ...request.Option) (*iam.PutRolePolicyOutput, error) {
+	return m.putRolePolicy(in)
+}
+
+func TestEnsureInstanceProfile(t *testing.T) {
+	expectedRole := &iam.Role{RoleName: aws.String("name-role")}
+	expectedProfile := &iam.InstanceProfile{
+		InstanceProfileName: aws.String("name-profile"),
+		Roles:               []*iam.Role{expectedRole},
+	}
+	tests := []struct {
+		name        string
+		mockIAM     mockIAMClient
+		expectedOut *iam.InstanceProfile
+		expectedErr string
+	}{
+		{
+			name: "AWS SDK error when retrieving role",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return nil, errAwsSdk
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to get existing role: some AWS SDK error$`,
+		},
+		{
+			name: "Creating role fails",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					return nil, errAwsSdk
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create role \(name-role\): some AWS SDK error$`,
+		},
+		{
+			name: "Role created but AWS SDK error when retrieving profile",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					return &iam.CreateRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to get instance profile: some AWS SDK error$`,
+		},
+		{
+			name: "Role created but creating profile fails",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					return &iam.CreateRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to create instance profile: some AWS SDK error$`,
+		},
+		{
+			name: "Role created and profile created but times out waiting for profile to exist",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createRole: func(in *iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					if len(in.Tags) == 0 {
+						panic("role not tagged")
+					}
+					return &iam.CreateRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				createProfile: func(in *iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					if len(in.Tags) == 0 {
+						panic("profile not tagged")
+					}
+					return &iam.CreateInstanceProfileOutput{
+						InstanceProfile: &iam.InstanceProfile{},
+					}, nil
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to create instance profile: timed out waiting for instance profile to exist: .*$`,
+		},
+		{
+			name: "Role created, profile created but adding role to profile fails",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return &iam.GetRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return &iam.GetInstanceProfileOutput{
+						InstanceProfile: &iam.InstanceProfile{},
+					}, nil
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to add role \(name-role\) to instance profile \(name-profile\): some AWS SDK error$`,
+		},
+		{
+			name: "Role created, profile created, role added to profile but getting policy fails",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return &iam.GetRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return &iam.GetInstanceProfileOutput{
+						InstanceProfile: &iam.InstanceProfile{},
+					}, nil
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					return &iam.AddRoleToInstanceProfileOutput{}, nil
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					return nil, errAwsSdk
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedErr: `^failed to get role policy: some AWS SDK error$`,
+		},
+		{
+			name: "Role created, profile created, role added to profile but adding policy fails",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return &iam.GetRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return &iam.GetInstanceProfileOutput{
+						InstanceProfile: &iam.InstanceProfile{},
+					}, nil
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					return &iam.AddRoleToInstanceProfileOutput{}, nil
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					return nil, errAwsSdk
+				},
+			},
+			expectedErr: `^failed to create role policy: some AWS SDK error$`,
+		},
+		{
+			name: "Role created, profile created, role added to profile and policy created",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					return &iam.GetRoleOutput{
+						Role: expectedRole,
+					}, nil
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return &iam.GetInstanceProfileOutput{
+						InstanceProfile: expectedProfile,
+					}, nil
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					return nil, awserr.New(iam.ErrCodeNoSuchEntityException, "", errAwsSdk)
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					return &iam.PutRolePolicyOutput{}, nil
+				},
+			},
+			expectedOut: expectedProfile,
+		},
+	}
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := instanceProfileOptions{
+				namePrefix:       "name",
+				assumeRolePolicy: "policy-role",
+				policyDocument:   "policy",
+				tags:             map[string]string{"custom-tag": "custom-value"},
+			}
+			res, err := createInstanceProfile(context.TODO(), logger, &test.mockIAM, &input)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedOut, res)
