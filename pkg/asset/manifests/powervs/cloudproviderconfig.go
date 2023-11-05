@@ -32,12 +32,13 @@ type provider struct {
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
 	PowerVSCloudInstanceID   string `gcfg:"powerVSCloudInstanceID"`
+	PowerVSCloudInstanceName string `gcfg:"powerVSCloudInstanceName"`
 	PowerVSRegion            string `gcfg:"powerVSRegion"`
 	PowerVSZone              string `gcfg:"powerVSZone"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBM Power VS platform.
-func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstID string, pvsRegion string, pvsZone string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, vpcName string, region string, resourceGroupName string, subnets []string, cloudInstName string, pvsRegion string, pvsZone string) (string, error) {
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -55,7 +56,8 @@ func CloudProviderConfig(infraID string, accountID string, vpcName string, regio
 			G2VPCName:                vpcName,
 			G2WorkerServiceAccountID: accountID,
 			G2VPCSubnetNames:         strings.Join(subnets, ","),
-			PowerVSCloudInstanceID:   cloudInstID,
+			PowerVSCloudInstanceID:   "",
+			PowerVSCloudInstanceName: cloudInstName,
 			PowerVSRegion:            pvsRegion,
 			PowerVSZone:              pvsZone,
 		},
@@ -83,6 +85,7 @@ g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
 g2VpcSubnetNames = {{.Provider.G2VPCSubnetNames}}
 powerVSCloudInstanceID = {{.Provider.PowerVSCloudInstanceID}}
+powerVSCloudInstanceName = {{.Provider.PowerVSCloudInstanceName}}
 powerVSRegion = {{.Provider.PowerVSRegion}}
 powerVSZone = {{.Provider.PowerVSZone}}
 `

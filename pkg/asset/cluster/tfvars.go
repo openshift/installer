@@ -911,7 +911,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublishStrategy:       installConfig.Config.Publish,
 				EnableSNAT:            len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
 				TransitGatewayEnabled: transitGatewayEnabled,
-				ServiceInstanceCRN:    serviceInstanceCRN,
 			},
 		)
 		if err != nil {

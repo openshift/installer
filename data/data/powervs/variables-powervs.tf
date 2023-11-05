@@ -34,11 +34,6 @@ variable "powervs_resource_group" {
   description = "The cloud instance resource group"
 }
 
-variable "powervs_cloud_instance_id" {
-  type        = string
-  description = "The cloud instance ID of your account"
-}
-
 variable "powervs_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
@@ -213,10 +208,6 @@ variable "powervs_dns_guid" {
 ################################################################
 # Configure Tranit Gateways
 ################################################################
-variable "powervs_service_instance_crn" {
-  type        = string
-  description = "The CRN of service instance to use."
-}
 
 ################################################################
 # Output Variables
