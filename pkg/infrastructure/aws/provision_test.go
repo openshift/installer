@@ -2863,10 +2863,11 @@ func TestEnsureInstanceProfile(t *testing.T) {
 		Roles:               []*iam.Role{expectedRole},
 	}
 	tests := []struct {
-		name        string
-		mockIAM     mockIAMClient
-		expectedOut *iam.InstanceProfile
-		expectedErr string
+		name         string
+		existingRole string
+		mockIAM      mockIAMClient
+		expectedOut  *iam.InstanceProfile
+		expectedErr  string
 	}{
 		{
 			name: "AWS SDK error when retrieving role",
@@ -3108,6 +3109,36 @@ func TestEnsureInstanceProfile(t *testing.T) {
 			},
 			expectedOut: expectedProfile,
 		},
+		{
+			name:         "Use user-supplied role",
+			existingRole: "existing-role",
+			mockIAM: mockIAMClient{
+				getRole: func(*iam.GetRoleInput) (*iam.GetRoleOutput, error) {
+					panic("should not be called")
+				},
+				createRole: func(*iam.CreateRoleInput) (*iam.CreateRoleOutput, error) {
+					panic("should not be called")
+				},
+				getProfile: func(*iam.GetInstanceProfileInput) (*iam.GetInstanceProfileOutput, error) {
+					return &iam.GetInstanceProfileOutput{
+						InstanceProfile: expectedProfile,
+					}, nil
+				},
+				createProfile: func(*iam.CreateInstanceProfileInput) (*iam.CreateInstanceProfileOutput, error) {
+					panic("should not be called")
+				},
+				addRoleToProfile: func(*iam.AddRoleToInstanceProfileInput) (*iam.AddRoleToInstanceProfileOutput, error) {
+					return &iam.AddRoleToInstanceProfileOutput{}, nil
+				},
+				getRolePolicy: func(*iam.GetRolePolicyInput) (*iam.GetRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+				putRolePolicy: func(*iam.PutRolePolicyInput) (*iam.PutRolePolicyOutput, error) {
+					panic("should not be called")
+				},
+			},
+			expectedOut: expectedProfile,
+		},
 	}
 
 	logger := logrus.New()
@@ -3120,6 +3151,9 @@ func TestEnsureInstanceProfile(t *testing.T) {
 				assumeRolePolicy: "policy-role",
 				policyDocument:   "policy",
 				tags:             map[string]string{"custom-tag": "custom-value"},
+			}
+			if len(test.existingRole) > 0 {
+				input.roleName = test.existingRole
 			}
 			res, err := createInstanceProfile(context.TODO(), logger, &test.mockIAM, &input)
 			if test.expectedErr == "" {

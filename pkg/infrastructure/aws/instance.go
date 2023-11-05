@@ -174,10 +174,16 @@ type instanceProfileOptions struct {
 }
 
 func createInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, input *instanceProfileOptions) (*iam.InstanceProfile, error) {
-	roleName := fmt.Sprintf("%s-role", input.namePrefix)
-	_, err := ensureRole(ctx, logger, client, roleName, input.assumeRolePolicy, input.tags)
-	if err != nil {
-		return nil, err
+	useExistingRole := len(input.roleName) > 0
+	roleName := input.roleName
+	if !useExistingRole {
+		roleName = fmt.Sprintf("%s-role", input.namePrefix)
+		_, err := ensureRole(ctx, logger, client, roleName, input.assumeRolePolicy, input.tags)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		logger.WithField("name", roleName).Infoln("Using user-supplied role")
 	}
 
 	profileName := fmt.Sprintf("%s-profile", input.namePrefix)
@@ -212,20 +218,22 @@ func createInstanceProfile(ctx context.Context, logger logrus.FieldLogger, clien
 		}).Infoln("Role already added to instance profile")
 	}
 
-	rolePolicyName := fmt.Sprintf("%s-policy", profileName)
-	err = existingRolePolicy(ctx, client, roleName, rolePolicyName)
-	if err != nil {
-		if !errors.Is(err, errNotFound) {
-			return nil, fmt.Errorf("failed to get profile policy: %w", err)
+	if !useExistingRole {
+		rolePolicyName := fmt.Sprintf("%s-policy", profileName)
+		err = existingRolePolicy(ctx, client, roleName, rolePolicyName)
+		if err != nil {
+			if !errors.Is(err, errNotFound) {
+				return nil, fmt.Errorf("failed to get role policy: %w", err)
+			}
+			_, err = client.PutRolePolicyWithContext(ctx, &iam.PutRolePolicyInput{
+				PolicyName:     aws.String(rolePolicyName),
+				PolicyDocument: aws.String(input.policyDocument),
+				RoleName:       aws.String(roleName),
+			})
 		}
-		_, err = client.PutRolePolicyWithContext(ctx, &iam.PutRolePolicyInput{
-			PolicyName:     aws.String(rolePolicyName),
-			PolicyDocument: aws.String(input.policyDocument),
-			RoleName:       aws.String(roleName),
-		})
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to create profile policy: %w", err)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create role policy: %w", err)
+		}
 	}
 
 	// We sleep here otherwise got an error when creating the ec2 instance

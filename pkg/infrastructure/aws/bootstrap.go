@@ -37,7 +37,7 @@ func createBootstrapResources(ctx context.Context, logger logrus.FieldLogger, ec
 	}
 
 	profileName := fmt.Sprintf("%s-bootstrap", input.infraID)
-	instanceProfile, err := createBootstrapInstanceProfile(ctx, logger, iamClient, profileName, input.tags)
+	instanceProfile, err := createBootstrapInstanceProfile(ctx, logger, iamClient, profileName, input.iamRole, input.tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bootstrap instance profile: %w", err)
 	}
@@ -167,7 +167,7 @@ func limitTags(tags map[string]string, size int) map[string]string {
 	return resized
 }
 
-func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, tags map[string]string) (*iam.InstanceProfile, error) {
+func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, roleName string, tags map[string]string) (*iam.InstanceProfile, error) {
 	const (
 		assumeRolePolicy = `{
     "Version": "2012-10-17",
@@ -206,6 +206,7 @@ func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogg
 
 	profileInput := &instanceProfileOptions{
 		namePrefix:       name,
+		roleName:         roleName,
 		assumeRolePolicy: assumeRolePolicy,
 		policyDocument:   bootstrapPolicy,
 		tags:             tags,
