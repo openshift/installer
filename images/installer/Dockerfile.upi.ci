@@ -58,8 +58,10 @@ RUN curl -sSL "${ALIYUN_URI}" --output /tmp/aliyun-cli-linux-latest-amd64.tgz &&
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
 RUN python get-pip.py 'pip<21.0'
 RUN python -m pip install pyopenssl
-ENV CLOUDSDK_PYTHON=/usr/bin/python
+ENV CLOUDSDK_PYTHON=/usr/bin/python3
 
+RUN pip3 install --upgrade pip
+RUN python3 -m pip install pyOpenSSL
 RUN python3 -m pip install yq
 
 ENV TERRAFORM_VERSION=1.0.11
