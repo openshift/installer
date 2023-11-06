@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,6 +21,8 @@ import (
 )
 
 var errInstanceNotCreated = errors.New("instance was not created")
+
+const errInstanceIDNotFound = "InvalidInstanceID.NotFound"
 
 type instanceInputOptions struct {
 	infraID            string
@@ -57,7 +60,45 @@ func ensureInstance(ctx context.Context, logger logrus.FieldLogger, ec2Client ec
 			return nil, err
 		}
 	}
-	l.WithField("id", aws.StringValue(instance.InstanceId)).Infoln(createdOrFoundMsg)
+	l = l.WithField("id", aws.StringValue(instance.InstanceId))
+	l.Infoln(createdOrFoundMsg)
+
+	// wait for the instance to get an IP address since we need to return it.
+	err = wait.ExponentialBackoffWithContext(
+		ctx,
+		defaultBackoff,
+		func(ctx context.Context) (bool, error) {
+			l.Debugln("Waiting for instance to be created and acquire IP address")
+			res, err := ec2Client.DescribeInstancesWithContext(ctx, &ec2.DescribeInstancesInput{
+				InstanceIds: []*string{instance.InstanceId},
+			})
+			if err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) && strings.EqualFold(awsErr.Code(), errInstanceIDNotFound) {
+					return false, nil
+				}
+				return true, err
+			}
+			// Should not happen but let's be safe
+			if len(res.Reservations) == 0 || len(res.Reservations[0].Instances) == 0 {
+				return false, nil
+			}
+			instance = res.Reservations[0].Instances[0]
+			if instance.PrivateIpAddress == nil {
+				return false, nil
+			}
+			if input.associatePublicIP && instance.PublicIpAddress == nil {
+				return false, nil
+			}
+			return true, nil
+		},
+	)
+	if err != nil {
+		l.WithError(err).Infoln("failed to wait for instance to acquire IP address")
+		// We dont return an error here since the installation can still
+		// proceed. However, we might not be able to gather instance logs in
+		// case of bootstrap failure
+	}
 
 	for _, targetGroup := range input.targetGroupARNs {
 		_, err = elbClient.RegisterTargetsWithContext(ctx, &elbv2.RegisterTargetsInput{
