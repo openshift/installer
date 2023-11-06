@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -35,7 +36,51 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	if err != nil {
 		return errors.Wrap(err, "failed to get session")
 	}
-	return tagResourceGroup(ctx, clusterID, installConfig, session)
+
+	if err := tagResourceGroup(ctx, clusterID, installConfig, session); err != nil {
+		return err
+	}
+
+	err = tagVNet(ctx, clusterID, installConfig, session)
+	return err
+}
+
+func tagVNet(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig, session *icazure.Session) error {
+	if len(installConfig.Config.Azure.VirtualNetwork) == 0 {
+		return nil
+	}
+
+	resourceGroupName := installConfig.Config.Azure.NetworkResourceGroupName
+
+	vnetClient, err := armnetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID, session.TokenCreds, nil)
+	if err != nil {
+		return errors.Wrap(err, "failed to get the virtual network client")
+	}
+
+	vnetResp, err := vnetClient.Get(ctx, resourceGroupName, installConfig.Config.Azure.VirtualNetwork, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get the virtual network %q: %w", installConfig.Config.Azure.VirtualNetwork, err)
+	}
+	vnet := vnetResp.VirtualNetwork
+	if vnet.Tags == nil {
+		vnet.Tags = map[string]*string{}
+	}
+	tagKey, tagValue := sharedTag(clusterID)
+	vnet.Tags[tagKey] = tagValue
+
+	tags := armnetwork.TagsObject{
+		Tags: vnet.Tags,
+	}
+
+	logrus.Debugf("Tagging %s with %s: %s", installConfig.Config.Azure.VirtualNetwork, tagKey, *tagValue)
+
+	if _, err := vnetClient.UpdateTags(
+		ctx, resourceGroupName, installConfig.Config.Azure.VirtualNetwork, tags, nil,
+	); err != nil {
+		return fmt.Errorf("failed to update virtual network tags: %w", err)
+	}
+
+	return nil
 }
 
 func tagResourceGroup(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig, session *icazure.Session) error {
@@ -56,7 +101,7 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 	if group.Tags == nil {
 		group.Tags = map[string]*string{}
 	}
-	tagKey, tagValue := sharedTag(clusterID)
+	tagKey, tagValue := ownedTag(clusterID)
 	group.Tags[tagKey] = tagValue
 	logrus.Debugf("Tagging %s with kubernetes.io/cluster/%s: shared", installConfig.Config.Azure.ResourceGroupName, clusterID)
 	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{
@@ -69,5 +114,9 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 }
 
 func sharedTag(clusterID string) (string, *string) {
+	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.StringPtr("shared")
+}
+
+func ownedTag(clusterID string) (string, *string) {
 	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.StringPtr("owned")
 }
