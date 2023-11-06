@@ -156,7 +156,12 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	}
 
 	logger.Infoln("Creating DNS resources")
+	r53Config := awssession.GetR53ClientCfg(awsSession, clusterAWSConfig.InternalZoneRole)
+	if len(clusterAWSConfig.InternalZoneRole) > 0 {
+		logger.WithField("role", clusterAWSConfig.InternalZoneRole).Debugln("Assuming role for private hosted zone")
+	}
 	r53Client := route53.New(awsSession)
+	assumedRoleClient := route53.New(awsSession, r53Config)
 	dnsInput := dnsInputOptions{
 		infraID:           clusterConfig.ClusterID,
 		region:            clusterAWSConfig.Region,
@@ -169,8 +174,9 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		lbInternalZoneID:  lbOutput.internal.zoneID,
 		lbInternalZoneDNS: lbOutput.internal.dnsName,
 		isPrivateCluster:  clusterAWSConfig.PublishStrategy != "External",
+		internalZone:      clusterAWSConfig.InternalZone,
 	}
-	err = createDNSResources(ctx, logger, r53Client, &dnsInput)
+	err = createDNSResources(ctx, logger, r53Client, assumedRoleClient, &dnsInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS rsources: %w", err)
 	}

@@ -31,11 +31,12 @@ type dnsInputOptions struct {
 	lbExternalZoneDNS string
 	lbInternalZoneID  string
 	lbInternalZoneDNS string
+	internalZone      string
 	isPrivateCluster  bool
 	tags              map[string]string
 }
 
-func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53Client route53iface.Route53API, input *dnsInputOptions) error {
+func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53Client route53iface.Route53API, assumedRoleClient route53iface.Route53API, input *dnsInputOptions) error {
 	apiName := fmt.Sprintf("api.%s", input.clusterDomain)
 	apiIntName := fmt.Sprintf("api-int.%s", input.clusterDomain)
 	useCNAME := cnameRegions.Has(input.region)
@@ -59,21 +60,28 @@ func createDNSResources(ctx context.Context, logger logrus.FieldLogger, route53C
 		logger.Infoln("Created api DNS record for public zone")
 	}
 
-	privateZone, err := ensurePrivateZone(ctx, logger, route53Client, input)
-	if err != nil {
-		return err
+	privateZoneID := cleanZoneID(aws.String(input.internalZone))
+	if len(privateZoneID) == 0 {
+		privateZone, err := ensurePrivateZone(ctx, logger, route53Client, input)
+		if err != nil {
+			return err
+		}
+		privateZoneID = cleanZoneID(privateZone.Id)
 	}
-	privateZoneID := cleanZoneID(privateZone.Id)
+
+	// Note: assumedRoleClient used below is either the standard route53 client
+	// or a client with a custom role if one was supplied for a phz belonging
+	// to a different account than the rest of the cluster resources.
 
 	// Create API record in private zone
-	_, err = createRecord(ctx, route53Client, privateZoneID, apiName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
+	_, err := createRecord(ctx, assumedRoleClient, privateZoneID, apiName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
 	if err != nil {
 		return fmt.Errorf("failed to create api record (%s) in private zone: %w", apiName, err)
 	}
 	logger.Infoln("Created api DNS record for private zone")
 
 	// Create API-int record in privat zone
-	_, err = createRecord(ctx, route53Client, privateZoneID, apiIntName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
+	_, err = createRecord(ctx, assumedRoleClient, privateZoneID, apiIntName, input.lbInternalZoneDNS, input.lbInternalZoneID, useCNAME)
 	if err != nil {
 		return fmt.Errorf("failed to create api-int record (%s) in private zone: %w", apiIntName, err)
 	}
