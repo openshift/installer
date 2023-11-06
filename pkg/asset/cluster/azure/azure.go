@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -30,13 +31,16 @@ func Metadata(config *types.InstallConfig) *azure.Metadata {
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
 func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
-	if len(installConfig.Config.Azure.ResourceGroupName) == 0 {
-		return nil
-	}
-
 	session, err := installConfig.Azure.Session()
 	if err != nil {
 		return errors.Wrap(err, "failed to get session")
+	}
+	return tagResourceGroup(ctx, clusterID, installConfig, session)
+}
+
+func tagResourceGroup(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig, session *icazure.Session) error {
+	if len(installConfig.Config.Azure.ResourceGroupName) == 0 {
+		return nil
 	}
 
 	client := resources.NewGroupsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
@@ -52,7 +56,8 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 	if group.Tags == nil {
 		group.Tags = map[string]*string{}
 	}
-	group.Tags[fmt.Sprintf("kubernetes.io_cluster.%s", clusterID)] = to.StringPtr("owned")
+	tagKey, tagValue := sharedTag(clusterID)
+	group.Tags[tagKey] = tagValue
 	logrus.Debugf("Tagging %s with kubernetes.io/cluster/%s: shared", installConfig.Config.Azure.ResourceGroupName, clusterID)
 	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{
 		Tags: group.Tags,
@@ -61,4 +66,8 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return errors.Wrapf(err, "failed to tag the resource group %s", installConfig.Config.Azure.ResourceGroupName)
 	}
 	return nil
+}
+
+func sharedTag(clusterID string) (string, *string) {
+	return fmt.Sprintf("kubernetes.io_cluster.%s", clusterID), to.StringPtr("owned")
 }
