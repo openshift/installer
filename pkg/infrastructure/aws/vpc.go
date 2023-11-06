@@ -182,21 +182,9 @@ func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Clien
 			}
 			table := privateRouteTables[tableIdx]
 			subnetID := subnetZoneMap[zone]
-			createdOrFoundMsg := "Edge subnet already associated with route table"
-			if !hasAssociatedSubnet(table, subnetID) {
-				createdOrFoundMsg = "Associated edge subnet with route table"
-				_, err := ec2Client.AssociateRouteTableWithContext(ctx, &ec2.AssociateRouteTableInput{
-					RouteTableId: table.RouteTableId,
-					SubnetId:     subnetID,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to associate edge subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
-				}
+			if err := addSubnetToRouteTable(ctx, logger, ec2Client, table, subnetID); err != nil {
+				return nil, fmt.Errorf("failed to associate edge subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
 			}
-			logger.WithFields(logrus.Fields{
-				"subnet":      aws.StringValue(subnetID),
-				"route table": aws.StringValue(table.RouteTableId),
-			}).Infoln(createdOrFoundMsg)
 		}
 	}
 
@@ -490,18 +478,9 @@ func (o *vpcState) ensurePrivateRouteTable(ctx context.Context, logger logrus.Fi
 	}
 	l.WithField("nat gateway", aws.StringValue(natGwID)).Infoln(createdOrFoundMsg)
 
-	createdOrFoundMsg = "Subnet already associated with route table"
-	if !hasAssociatedSubnet(table, subnetID) {
-		createdOrFoundMsg = "Associated subnet with route table"
-		_, err := client.AssociateRouteTableWithContext(ctx, &ec2.AssociateRouteTableInput{
-			RouteTableId: table.RouteTableId,
-			SubnetId:     subnetID,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to associate subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
-		}
+	if err = addSubnetToRouteTable(ctx, l, client, table, subnetID); err != nil {
+		return nil, fmt.Errorf("failed to associate subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
 	}
-	l.WithField("subnet", aws.StringValue(subnetID)).Infoln(createdOrFoundMsg)
 
 	return table, nil
 }
@@ -632,9 +611,10 @@ func (o *vpcState) ensurePublicSubnets(ctx context.Context, logger logrus.FieldL
 		return nil, nil, fmt.Errorf("failed to create public subnets: %w", err)
 	}
 
-	err = addSubnetsToRouteTable(ctx, client, publicTable, ids)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to associate public subnets with public route table (%s): %w", aws.StringValue(publicTable.RouteTableId), err)
+	for _, subnetID := range ids {
+		if err = addSubnetToRouteTable(ctx, logger, client, publicTable, subnetID); err != nil {
+			return nil, nil, fmt.Errorf("failed to associate public subnet (%s) with public route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(publicTable.RouteTableId), err)
+		}
 	}
 
 	return ids, zoneMap, nil
@@ -660,9 +640,10 @@ func (o *vpcState) ensureEdgePublicSubnets(ctx context.Context, logger logrus.Fi
 		return nil, nil, fmt.Errorf("failed to create public edge subnets: %w", err)
 	}
 
-	err = addSubnetsToRouteTable(ctx, client, publicTable, ids)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to associate public edge subnets with public route table (%s): %w", aws.StringValue(publicTable.RouteTableId), err)
+	for _, subnetID := range ids {
+		if err = addSubnetToRouteTable(ctx, logger, client, publicTable, subnetID); err != nil {
+			return nil, nil, fmt.Errorf("failed to associate public edge subnet (%s) with public route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(publicTable.RouteTableId), err)
+		}
 	}
 
 	return ids, zoneMap, nil
@@ -1087,33 +1068,37 @@ func splitNetworks(cidrBlock string, numZones int, numEdgeZones int) (*splitOutp
 	return output, nil
 }
 
-func addSubnetsToRouteTable(ctx context.Context, client ec2iface.EC2API, table *ec2.RouteTable, subnetIDs []*string) error {
-	for _, subnetID := range subnetIDs {
-		if hasAssociatedSubnet(table, subnetID) {
-			continue
-		}
-		err := wait.ExponentialBackoffWithContext(
-			ctx,
-			defaultBackoff,
-			func(ctx context.Context) (bool, error) {
-				_, err := client.AssociateRouteTableWithContext(ctx, &ec2.AssociateRouteTableInput{
-					RouteTableId: table.RouteTableId,
-					SubnetId:     subnetID,
-				})
-				if err != nil {
-					var awsErr awserr.Error
-					if errors.As(err, &awsErr) && strings.EqualFold(awsErr.Code(), errRouteTableIDNotFound) {
-						return false, nil
-					}
-					return false, err
-				}
-				return true, nil
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("failed to associate subnet (%s) with route table: %w", aws.StringValue(subnetID), err)
-		}
+func addSubnetToRouteTable(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, table *ec2.RouteTable, subnetID *string) error {
+	l := logger.WithFields(logrus.Fields{
+		"subnet id": aws.StringValue(subnetID),
+		"table id":  aws.StringValue(table.RouteTableId),
+	})
+	if hasAssociatedSubnet(table, subnetID) {
+		l.Infoln("Subnet already associated with route table")
+		return nil
 	}
+	err := wait.ExponentialBackoffWithContext(
+		ctx,
+		defaultBackoff,
+		func(ctx context.Context) (bool, error) {
+			_, err := client.AssociateRouteTableWithContext(ctx, &ec2.AssociateRouteTableInput{
+				RouteTableId: table.RouteTableId,
+				SubnetId:     subnetID,
+			})
+			if err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) && strings.EqualFold(awsErr.Code(), errRouteTableIDNotFound) {
+					return false, nil
+				}
+				return false, err
+			}
+			return true, nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+	l.Infoln("Associated subnet with route table")
 	return nil
 }
 

@@ -1250,7 +1250,7 @@ func TestEnsurePublicSubnets(t *testing.T) {
 					return nil, errAwsSdk
 				},
 			},
-			expectedErr: `^failed to associate public subnets with public route table \(table-1\): failed to associate subnet \(subnet-zone1\) with route table: some AWS SDK error$`,
+			expectedErr: `^failed to associate public subnet \(subnet-zone1\) with public route table \(table-1\): some AWS SDK error$`,
 		},
 		{
 			name: "Public subnets created",
