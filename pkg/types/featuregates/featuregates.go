@@ -3,11 +3,9 @@ package featuregates
 // source: https://github.com/openshift/cluster-config-operator/blob/636a2dc303037e2561a243ae1ab5c5b953ddad04/pkg/cmd/render/render.go#L153
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -43,30 +41,24 @@ func completeFeatureGates(knownFeatureSets map[configv1.FeatureSet]*configv1.Fea
 }
 
 // FeatureGateFromFeatureSets creates a FeatureGate from the active feature sets.
-func FeatureGateFromFeatureSets(knownFeatureSets map[configv1.FeatureSet]*configv1.FeatureGateEnabledDisabled, fs configv1.FeatureSet, customFS *configv1.CustomFeatureGates) (FeatureGate, error) {
+func FeatureGateFromFeatureSets(knownFeatureSets map[configv1.FeatureSet]*configv1.FeatureGateEnabledDisabled, fs configv1.FeatureSet, customFS *configv1.CustomFeatureGates) FeatureGate {
 	if customFS != nil {
 		completeEnabled, completeDisabled := completeFeatureGates(knownFeatureSets, customFS.Enabled, customFS.Disabled)
-		return newFeatureGate(completeEnabled, completeDisabled), nil
+		return newFeatureGate(completeEnabled, completeDisabled)
 	}
 
-	featureSet, ok := knownFeatureSets[fs]
-	if !ok {
-		return nil, fmt.Errorf(".spec.featureSet %q not found", featureSet)
-	}
+	featureSet := knownFeatureSets[fs]
 
 	completeEnabled, completeDisabled := completeFeatureGates(knownFeatureSets, toFeatureGateNames(featureSet.Enabled), toFeatureGateNames(featureSet.Disabled))
-	return newFeatureGate(completeEnabled, completeDisabled), nil
+	return newFeatureGate(completeEnabled, completeDisabled)
 }
 
 // GenerateCustomFeatures generates the custom feature gates from the install config.
-func GenerateCustomFeatures(features []string) (*configv1.CustomFeatureGates, error) {
+func GenerateCustomFeatures(features []string) *configv1.CustomFeatureGates {
 	customFeatures := &configv1.CustomFeatureGates{}
 
 	for _, feature := range features {
-		featureName, enabled, err := parseCustomFeatureGate(feature)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse custom feature %s", feature)
-		}
+		featureName, enabled := parseCustomFeatureGate(feature)
 
 		if enabled {
 			customFeatures.Enabled = append(customFeatures.Enabled, featureName)
@@ -75,18 +67,18 @@ func GenerateCustomFeatures(features []string) (*configv1.CustomFeatureGates, er
 		}
 	}
 
-	return customFeatures, nil
+	return customFeatures
 }
 
 // parseCustomFeatureGates parses the custom feature gate string into the feature name and whether it is enabled.
 // The expected format is <FeatureName>=<Enabled>.
-func parseCustomFeatureGate(rawFeature string) (configv1.FeatureGateName, bool, error) {
+func parseCustomFeatureGate(rawFeature string) (configv1.FeatureGateName, bool) {
 	var featureName string
 	var enabled bool
 
 	featureParts := strings.Split(rawFeature, "=")
 	if len(featureParts) != 2 {
-		return "", false, errors.Errorf("feature not in expected format %s", rawFeature)
+		return "", false
 	}
 
 	featureName = featureParts[0]
@@ -94,8 +86,8 @@ func parseCustomFeatureGate(rawFeature string) (configv1.FeatureGateName, bool, 
 	var err error
 	enabled, err = strconv.ParseBool(featureParts[1])
 	if err != nil {
-		return "", false, errors.Wrapf(err, "feature not in expected format %s, could not parse boolean value", rawFeature)
+		return "", false
 	}
 
-	return configv1.FeatureGateName(featureName), enabled, nil
+	return configv1.FeatureGateName(featureName), enabled
 }

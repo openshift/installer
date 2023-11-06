@@ -1124,13 +1124,9 @@ func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 		gatedFeatures = append(gatedFeatures, vspherevalidation.GatedFeatures(c)...)
 	}
 
-	fg, err := c.EnabledFeatureGates()
-	if err != nil {
-		errMsg := fmt.Errorf("error getting feature gates: %w", err)
-		return append(allErrs, field.InternalError(field.NewPath("featureSets"), errMsg))
-	}
-
+	fg := c.EnabledFeatureGates()
 	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+
 	fgCheck := func(c featuregates.GatedInstallConfigFeature) {
 		if !fg.Enabled(c.FeatureGateName) && c.Condition {
 			errMsg := fmt.Sprintf(errMsgTemplate, c.FeatureGateName)

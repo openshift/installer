@@ -520,19 +520,14 @@ func (c *InstallConfig) WorkerMachinePool() *MachinePool {
 
 // EnabledFeatureGates returns a FeatureGate that can be checked (using the Enabled function)
 // to determine if a feature gate is enabled in the current feature sets.
-func (c *InstallConfig) EnabledFeatureGates() (featuregates.FeatureGate, error) {
+func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	var customFS *configv1.CustomFeatureGates
-	var err error
+
 	if c.FeatureSet == configv1.CustomNoUpgrade {
-		customFS, err = featuregates.GenerateCustomFeatures(c.FeatureGates)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error generating feature set from custom features: %w", err)
+		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	fg, err := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, c.FeatureSet, customFS)
-	if err != nil {
-		return nil, fmt.Errorf("error generating feature gates from feature sets: %w", err)
-	}
-	return fg, nil
+	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, c.FeatureSet, customFS)
+
+	return fg
 }

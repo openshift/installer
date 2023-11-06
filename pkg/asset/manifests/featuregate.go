@@ -61,10 +61,7 @@ func (f *FeatureGate) Generate(dependencies asset.Parents) error {
 			return errors.Errorf("custom features can only be used with the CustomNoUpgrade feature set")
 		}
 
-		customFeatures, err := featuregates.GenerateCustomFeatures(installConfig.Config.FeatureGates)
-		if err != nil {
-			return errors.Wrapf(err, "failed to generate custom features")
-		}
+		customFeatures := featuregates.GenerateCustomFeatures(installConfig.Config.FeatureGates)
 		f.Config.Spec.CustomNoUpgrade = customFeatures
 	}
 
