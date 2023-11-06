@@ -171,7 +171,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 
 	// Get the initial resources to delete, so that they can be returned if the context is canceled while terminating
 	// instances.
-	deleted := sets.NewString()
+	deleted := sets.New[string]()
 	resourcesToDelete, tagClientsWithResources, err := o.findResourcesToDelete(ctx, tagClients, iamClient, iamRoleSearch, iamUserSearch, deleted)
 	if err != nil {
 		o.Logger.WithError(err).Info("error while finding resources to delete")
@@ -269,8 +269,8 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 // a shared tag will be ignored.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.String) (sets.String, error) { //nolint:staticcheck
-	resources := sets.NewString()
+func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamClient *iam.IAM, deleted sets.Set[string]) (sets.Set[string], error) {
+	resources := sets.New[string]()
 	o.Logger.Debug("search for IAM instance profiles")
 	for _, profileType := range []string{"master", "worker", "bootstrap"} {
 		profile := fmt.Sprintf("%s-%s-profile", o.ClusterID, profileType)
@@ -300,9 +300,9 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 	iamClient *iam.IAM,
 	iamRoleSearch *iamRoleSearch,
 	iamUserSearch *iamUserSearch,
-	deleted sets.String,
-) (sets.String, []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
-	resources := sets.NewString()
+	deleted sets.Set[string],
+) (sets.Set[string], []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
+	resources := sets.New[string]()
 	var tagClientsWithResources []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI
 	var errs []error
 
@@ -353,9 +353,9 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 func (o *ClusterUninstaller) findResourcesByTag(
 	ctx context.Context,
 	tagClient *resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
-	deleted sets.String,
-) (sets.String, error) {
-	resources := sets.NewString()
+	deleted sets.Set[string],
+) (sets.Set[string], error) {
+	resources := sets.New[string]()
 	for _, filter := range o.Filters {
 		o.Logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
 		tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
@@ -392,8 +392,8 @@ func (o *ClusterUninstaller) findResourcesByTag(
 //	resources - the resources to be deleted.
 //
 // The first return is the ARNs of the resources that were successfully deleted
-func (o *ClusterUninstaller) deleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *errorTracker) (sets.String, error) {
-	deleted := sets.NewString()
+func (o *ClusterUninstaller) deleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *errorTracker) (sets.Set[string], error) {
+	deleted := sets.New[string]()
 	for _, arnString := range resources {
 		logger := o.Logger.WithField("arn", arnString)
 		parsedARN, err := arn.Parse(arnString)

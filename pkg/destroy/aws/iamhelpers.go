@@ -158,27 +158,27 @@ func (search *iamUserSearch) arns(ctx context.Context) ([]string, error) {
 // findIAMRoles returns the IAM roles for the cluster.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
+func findIAMRoles(ctx context.Context, search *iamRoleSearch, deleted sets.Set[string], logger logrus.FieldLogger) (sets.Set[string], error) {
 	logger.Debug("search for IAM roles")
 	resources, _, err := search.find(ctx)
 	if err != nil {
 		logger.Info(err)
 		return nil, err
 	}
-	return sets.NewString(resources...).Difference(deleted), nil
+	return sets.New[string](resources...).Difference(deleted), nil
 }
 
 // findIAMUsers returns the IAM users for the cluster.
 //
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func findIAMUsers(ctx context.Context, search *iamUserSearch, deleted sets.String, logger logrus.FieldLogger) (sets.String, error) {
+func findIAMUsers(ctx context.Context, search *iamUserSearch, deleted sets.Set[string], logger logrus.FieldLogger) (sets.Set[string], error) {
 	logger.Debug("search for IAM users")
 	resources, err := search.arns(ctx)
 	if err != nil {
 		logger.Info(err)
 		return nil, err
 	}
-	return sets.NewString(resources...).Difference(deleted), nil
+	return sets.New[string](resources...).Difference(deleted), nil
 }
 
 func deleteIAM(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
