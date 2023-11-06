@@ -105,6 +105,8 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		clusterOwnedTag(clusterConfig.ClusterID): ownedTagValue,
 	})
 
+	usePublicEndpoints := clusterAWSConfig.PublishStrategy == "External"
+
 	logger := logrus.StandardLogger()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
@@ -148,7 +150,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		privateSubnetIDs: vpcOutput.privateSubnetIDs,
 		publicSubnetIDs:  vpcOutput.publicSubnetIDs,
 		tags:             tags,
-		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
+		isPrivateCluster: !usePublicEndpoints,
 	}
 	lbOutput, err := createLoadBalancers(ctx, logger, elbClient, &lbInput)
 	if err != nil {
@@ -173,7 +175,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		lbExternalZoneDNS: lbOutput.external.dnsName,
 		lbInternalZoneID:  lbOutput.internal.zoneID,
 		lbInternalZoneDNS: lbOutput.internal.dnsName,
-		isPrivateCluster:  clusterAWSConfig.PublishStrategy != "External",
+		isPrivateCluster:  !usePublicEndpoints,
 		internalZone:      clusterAWSConfig.InternalZone,
 	}
 	err = createDNSResources(ctx, logger, r53Client, assumedRoleClient, &dnsInput)
@@ -186,7 +188,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		infraID:          clusterConfig.ClusterID,
 		vpcID:            vpcOutput.vpcID,
 		cidrV4Blocks:     clusterConfig.MachineV4CIDRs,
-		isPrivateCluster: clusterAWSConfig.PublishStrategy != "External",
+		isPrivateCluster: !usePublicEndpoints,
 		tags:             tags,
 	}
 	sgOutput, err := createSecurityGroups(ctx, logger, ec2Client, &sgInput)
@@ -196,7 +198,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 
 	logger.Infoln("Creating bootstrap resources")
 	bootstrapSubnet := vpcOutput.privateSubnetIDs[0]
-	if clusterAWSConfig.PublishStrategy == "External" {
+	if usePublicEndpoints {
 		bootstrapSubnet = vpcOutput.publicSubnetIDs[0]
 	}
 	bootstrapInput := bootstrapInputOptions{
@@ -214,7 +216,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 			securityGroupIds:  []string{sgOutput.bootstrap, sgOutput.controlPlane},
 			targetGroupARNs:   lbOutput.targetGroupArns,
 			subnetID:          bootstrapSubnet,
-			associatePublicIP: clusterAWSConfig.PublishStrategy == "External",
+			associatePublicIP: usePublicEndpoints,
 			userData:          clusterAWSConfig.BootstrapIgnitionStub,
 			tags:              tags,
 		},
@@ -268,7 +270,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	}
 
 	bootstrapIP := bootstrapOut.privateIP
-	if clusterAWSConfig.PublishStrategy == "External" {
+	if usePublicEndpoints {
 		bootstrapIP = bootstrapOut.publicIP
 	}
 	out := &output{
