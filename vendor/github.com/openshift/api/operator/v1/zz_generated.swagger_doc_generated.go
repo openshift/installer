@@ -1300,7 +1300,6 @@ var map_DefaultNetworkDefinition = map[string]string{
 	"type":                "type is the type of network All NetworkTypes are supported except for NetworkTypeRaw",
 	"openshiftSDNConfig":  "openShiftSDNConfig configures the openshift-sdn plugin",
 	"ovnKubernetesConfig": "ovnKubernetesConfig configures the ovn-kubernetes plugin.",
-	"kuryrConfig":         "KuryrConfig configures the kuryr plugin",
 }
 
 func (DefaultNetworkDefinition) SwaggerDoc() map[string]string {
@@ -1393,22 +1392,6 @@ func (IPv6GatewayConfig) SwaggerDoc() map[string]string {
 	return map_IPv6GatewayConfig
 }
 
-var map_KuryrConfig = map[string]string{
-	"":                             "KuryrConfig configures the Kuryr-Kubernetes SDN",
-	"daemonProbesPort":             "The port kuryr-daemon will listen for readiness and liveness requests.",
-	"controllerProbesPort":         "The port kuryr-controller will listen for readiness and liveness requests.",
-	"openStackServiceNetwork":      "openStackServiceNetwork contains the CIDR of network from which to allocate IPs for OpenStack Octavia's Amphora VMs. Please note that with Amphora driver Octavia uses two IPs from that network for each loadbalancer - one given by OpenShift and second for VRRP connections. As the first one is managed by OpenShift's and second by Neutron's IPAMs, those need to come from different pools. Therefore `openStackServiceNetwork` needs to be at least twice the size of `serviceNetwork`, and whole `serviceNetwork` must be overlapping with `openStackServiceNetwork`. cluster-network-operator will then make sure VRRP IPs are taken from the ranges inside `openStackServiceNetwork` that are not overlapping with `serviceNetwork`, effectivly preventing conflicts. If not set cluster-network-operator will use `serviceNetwork` expanded by decrementing the prefix size by 1.",
-	"enablePortPoolsPrepopulation": "enablePortPoolsPrepopulation when true will make Kuryr prepopulate each newly created port pool with a minimum number of ports. Kuryr uses Neutron port pooling to fight the fact that it takes a significant amount of time to create one. It creates a number of ports when the first pod that is configured to use the dedicated network for pods is created in a namespace, and keeps them ready to be attached to pods. Port prepopulation is disabled by default.",
-	"poolMaxPorts":                 "poolMaxPorts sets a maximum number of free ports that are being kept in a port pool. If the number of ports exceeds this setting, free ports will get deleted. Setting 0 will disable this upper bound, effectively preventing pools from shrinking and this is the default value. For more information about port pools see enablePortPoolsPrepopulation setting.",
-	"poolMinPorts":                 "poolMinPorts sets a minimum number of free ports that should be kept in a port pool. If the number of ports is lower than this setting, new ports will get created and added to pool. The default is 1. For more information about port pools see enablePortPoolsPrepopulation setting.",
-	"poolBatchPorts":               "poolBatchPorts sets a number of ports that should be created in a single batch request to extend the port pool. The default is 3. For more information about port pools see enablePortPoolsPrepopulation setting.",
-	"mtu":                          "mtu is the MTU that Kuryr should use when creating pod networks in Neutron. The value has to be lower or equal to the MTU of the nodes network and Neutron has to allow creation of tenant networks with such MTU. If unset Pod networks will be created with the same MTU as the nodes network has. This also affects the services network created by cluster-network-operator.",
-}
-
-func (KuryrConfig) SwaggerDoc() map[string]string {
-	return map_KuryrConfig
-}
-
 var map_MTUMigration = map[string]string{
 	"":        "MTUMigration MTU contains infomation about MTU migration.",
 	"network": "network contains information about MTU migration for the default network. Migrations are only allowed to MTU values lower than the machine's uplink MTU by the minimum appropriate offset.",
@@ -1460,6 +1443,7 @@ var map_NetworkMigration = map[string]string{
 	"networkType": "networkType is the target type of network migration. Set this to the target network type to allow changing the default network. If unset, the operation of changing cluster default network plugin will be rejected. The supported values are OpenShiftSDN, OVNKubernetes",
 	"mtu":         "mtu contains the MTU migration configuration. Set this to allow changing the MTU values for the default network. If unset, the operation of changing the MTU for the default network will be rejected.",
 	"features":    "features contains the features migration configuration. Set this to migrate feature configuration when changing the cluster default network provider. if unset, the default operation is to migrate all the configuration of supported features.",
+	"mode":        "mode indicates the mode of network migration. The supported values are \"Live\", \"Offline\" and omitted. A \"Live\" migration operation will not cause service interruption by migrating the CNI of each node one by one. The cluster network will work as normal during the network migration. An \"Offline\" migration operation will cause service interruption. During an \"Offline\" migration, two rounds of node reboots are required. The cluster network will be malfunctioning during the network migration. When omitted, this means no opinion and the platform is left to choose a reasonable default which is subject to change over time. The current default value is \"Offline\".",
 }
 
 func (NetworkMigration) SwaggerDoc() map[string]string {

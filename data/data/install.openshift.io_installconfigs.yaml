@@ -80,6 +80,7 @@ spec:
                   - DeploymentConfig
                   - ImageRegistry
                   - OperatorLifecycleManager
+                  - CloudCredential
                   type: string
                 type: array
               baselineCapabilitySet:
