@@ -47,8 +47,10 @@ type vpcInputOptions struct {
 	vpcID            string
 	cidrV4Block      string
 	zones            []string
+	edgeZones        []string
 	publicSubnetIDs  []string
 	privateSubnetIDs []string
+	edgeParentMap    map[string]int
 	tags             map[string]string
 }
 
@@ -118,21 +120,22 @@ func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Clien
 	endpointRouteTableIDs = append(endpointRouteTableIDs, publicRouteTable.RouteTableId)
 
 	// Per-zone resources
-	privateNetwork, publicNetwork, err := splitNetworks(vpcInput.cidrV4Block, len(vpcInput.zones))
+	networks, err := splitNetworks(vpcInput.cidrV4Block, len(vpcInput.zones), len(vpcInput.edgeZones))
 	if err != nil {
 		return nil, err
 	}
 
-	publicSubnetIDs, publicSubnetZoneMap, err := state.ensurePublicSubnets(ctx, logger, ec2Client, publicNetwork, publicRouteTable)
+	publicSubnetIDs, publicSubnetZoneMap, err := state.ensurePublicSubnets(ctx, logger, ec2Client, networks.standard.public, publicRouteTable)
 	if err != nil {
 		return nil, err
 	}
 
-	privateSubnetIDs, privateSubnetZoneMap, err := state.ensurePrivateSubnets(ctx, logger, ec2Client, privateNetwork)
+	privateSubnetIDs, privateSubnetZoneMap, err := state.ensurePrivateSubnets(ctx, logger, ec2Client, networks.standard.private)
 	if err != nil {
 		return nil, err
 	}
 
+	privateRouteTables := make([]*ec2.RouteTable, 0, len(vpcInput.zones))
 	for _, zone := range vpcInput.zones {
 		var natGwID *string
 		if len(publicSubnetZoneMap) > 0 {
@@ -148,11 +151,53 @@ func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Clien
 			return nil, fmt.Errorf("failed to create private route table for zone (%s): %w", zone, err)
 		}
 		endpointRouteTableIDs = append(endpointRouteTableIDs, privateRouteTable.RouteTableId)
+		privateRouteTables = append(privateRouteTables, privateRouteTable)
 	}
 
 	_, err = state.ensureVPCS3Endpoint(ctx, logger, ec2Client, endpointRouteTableIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create VPC S3 endpoint: %w", err)
+	}
+
+	if len(vpcInput.edgeZones) > 0 {
+		_, _, err := state.ensureEdgePublicSubnets(ctx, logger, ec2Client, networks.edge.public, publicRouteTable)
+		if err != nil {
+			return nil, err
+		}
+
+		_, subnetZoneMap, err := state.ensureEdgePrivateSubnets(ctx, logger, ec2Client, networks.edge.private)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, zone := range vpcInput.edgeZones {
+			// Lookup the index of the parent zone from a given local zone
+			// name, getting the index for the route table id for that zone
+			// (parent). When not found (parent zone's gateway does not exist),
+			// the first route table will be used.
+			// Example: edgeParentMap = {"us-east-1-nyc-1a": 0}
+			tableIdx, found := vpcInput.edgeParentMap[zone]
+			if !found {
+				tableIdx = 0
+			}
+			table := privateRouteTables[tableIdx]
+			subnetID := subnetZoneMap[zone]
+			createdOrFoundMsg := "Edge subnet already associated with route table"
+			if !hasAssociatedSubnet(table, subnetID) {
+				createdOrFoundMsg = "Associated edge subnet with route table"
+				_, err := ec2Client.AssociateRouteTableWithContext(ctx, &ec2.AssociateRouteTableInput{
+					RouteTableId: table.RouteTableId,
+					SubnetId:     subnetID,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to associate edge subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
+				}
+			}
+			logger.WithFields(logrus.Fields{
+				"subnet":      aws.StringValue(subnetID),
+				"route table": aws.StringValue(table.RouteTableId),
+			}).Infoln(createdOrFoundMsg)
+		}
 	}
 
 	return &vpcOutput{
@@ -582,7 +627,7 @@ func (o *vpcState) ensurePublicSubnets(ctx context.Context, logger logrus.FieldL
 		tagNameSubnetPublicELB: "true",
 	})
 
-	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "public", tags)
+	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "public", o.input.zones, tags)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create public subnets: %w", err)
 	}
@@ -602,18 +647,40 @@ func (o *vpcState) ensurePrivateSubnets(ctx context.Context, logger logrus.Field
 		tagNameSubnetInternalELB: "true",
 	})
 
-	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "private", tags)
+	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "private", o.input.zones, tags)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create private subnets: %w", err)
 	}
 	return ids, zoneMap, nil
 }
 
-func (o *vpcState) ensureSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet, subnetType string, tags map[string]string) ([]*string, map[string]*string, error) {
-	subnetIDs := make([]*string, 0, len(o.input.zones))
-	subnetZoneMap := make(map[string]*string, len(o.input.zones))
-	newBits := int(math.Ceil(math.Log2(float64(len(o.input.zones)))))
-	for i, zone := range o.input.zones {
+func (o *vpcState) ensureEdgePublicSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet, publicTable *ec2.RouteTable) ([]*string, map[string]*string, error) {
+	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "public", o.input.edgeZones, o.input.tags)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create public edge subnets: %w", err)
+	}
+
+	err = addSubnetsToRouteTable(ctx, client, publicTable, ids)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to associate public edge subnets with public route table (%s): %w", aws.StringValue(publicTable.RouteTableId), err)
+	}
+
+	return ids, zoneMap, nil
+}
+
+func (o *vpcState) ensureEdgePrivateSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet) ([]*string, map[string]*string, error) {
+	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "private", o.input.edgeZones, o.input.tags)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create private edge subnets: %w", err)
+	}
+	return ids, zoneMap, nil
+}
+
+func (o *vpcState) ensureSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet, subnetType string, zones []string, tags map[string]string) ([]*string, map[string]*string, error) {
+	subnetIDs := make([]*string, 0, len(zones))
+	subnetZoneMap := make(map[string]*string, len(zones))
+	newBits := int(math.Ceil(math.Log2(float64(len(zones)))))
+	for i, zone := range zones {
 		cidr, err := cidr.Subnet(network, newBits, i)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to subnet %s network: %w", subnetType, err)
@@ -932,20 +999,59 @@ func existingVPCEndpoint(ctx context.Context, client ec2iface.EC2API, filters []
 	return nil, errNotFound
 }
 
-func splitNetworks(cidrBlock string, numZones int) (*net.IPNet, *net.IPNet, error) {
+type splitOutput struct {
+	standard struct {
+		private *net.IPNet
+		public  *net.IPNet
+	}
+	edge struct {
+		private *net.IPNet
+		public  *net.IPNet
+	}
+}
+
+func splitNetworks(cidrBlock string, numZones int, numEdgeZones int) (*splitOutput, error) {
+	output := &splitOutput{}
+
 	_, network, err := net.ParseCIDR(cidrBlock)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse IPv4 CIDR blocks: %w", err)
+		return nil, fmt.Errorf("failed to parse IPv4 CIDR blocks: %w", err)
 	}
 
+	// CIDR blocks for default IPI installation
 	privateNetwork, err := cidr.Subnet(network, 1, 0)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to determine private subnet: %w", err)
+		return nil, fmt.Errorf("failed to determine private subnet: %w", err)
 	}
-
 	publicNetwork, err := cidr.Subnet(network, 1, 1)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to determine public subnet: %w", err)
+		return nil, fmt.Errorf("failed to determine public subnet: %w", err)
+	}
+
+	// CIDR blocks used when creating subnets into edge zones.
+	var edgePrivateNetwork *net.IPNet
+	var edgePublicNetwork *net.IPNet
+	if numEdgeZones > 0 {
+		// The public CIDR is used to create the CIDR blocks for edge subnets.
+		sharedPublicNetwork, err := cidr.Subnet(publicNetwork, 1, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine shared public subnet: %w", err)
+		}
+		sharedEdgeNetwork, err := cidr.Subnet(publicNetwork, 1, 1)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine shared edge subnet: %w", err)
+		}
+		publicNetwork = sharedPublicNetwork
+
+		// CIDR bloks for edge subnets
+		edgePrivateNetwork, err = cidr.Subnet(sharedEdgeNetwork, 1, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine edge private subnet: %w", err)
+		}
+		edgePublicNetwork, err = cidr.Subnet(sharedEdgeNetwork, 1, 1)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine edge public subnet: %w", err)
+		}
 	}
 
 	// If a single-zone deployment, the available CIDR block is split into two
@@ -953,15 +1059,32 @@ func splitNetworks(cidrBlock string, numZones int) (*net.IPNet, *net.IPNet, erro
 	if numZones == 1 {
 		privateNetwork, err = cidr.Subnet(privateNetwork, 1, 0)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to split private subnet in single-zone deployment: %w", err)
+			return nil, fmt.Errorf("failed to split private subnet in single-zone deployment: %w", err)
 		}
 		publicNetwork, err = cidr.Subnet(publicNetwork, 1, 0)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to split public subnet in single-zone deployment: %w", err)
+			return nil, fmt.Errorf("failed to split public subnet in single-zone deployment: %w", err)
 		}
 	}
+	output.standard.private = privateNetwork
+	output.standard.public = publicNetwork
 
-	return privateNetwork, publicNetwork, nil
+	// If a single-zone deployment, the available CIDR block is split into two
+	// to allow for user expansion
+	if numEdgeZones == 1 {
+		edgePrivateNetwork, err = cidr.Subnet(edgePrivateNetwork, 1, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split private edge subnet in single-zone deployment: %w", err)
+		}
+		edgePublicNetwork, err = cidr.Subnet(edgePublicNetwork, 1, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split public edge subnet in single-zone deployment: %w", err)
+		}
+	}
+	output.edge.private = edgePrivateNetwork
+	output.edge.public = edgePublicNetwork
+
+	return output, nil
 }
 
 func addSubnetsToRouteTable(ctx context.Context, client ec2iface.EC2API, table *ec2.RouteTable, subnetIDs []*string) error {

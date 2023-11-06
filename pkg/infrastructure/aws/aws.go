@@ -128,6 +128,8 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		zones:            sets.List(availabilityZones),
 		tags:             tags,
 		privateSubnetIDs: clusterAWSConfig.PrivateSubnets,
+		edgeZones:        clusterAWSConfig.EdgeLocalZones,
+		edgeParentMap:    clusterAWSConfig.EdgeZonesGatewayIndex,
 	}
 	if clusterAWSConfig.PublicSubnets != nil {
 		vpcInput.publicSubnetIDs = *clusterAWSConfig.PublicSubnets
