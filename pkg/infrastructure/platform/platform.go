@@ -1,3 +1,6 @@
+//go:build !(altinfra || aro)
+// +build !altinfra,!aro
+
 package platform
 
 import (
@@ -34,40 +37,40 @@ import (
 )
 
 // ProviderForPlatform returns the stages to run to provision the infrastructure for the specified platform.
-func ProviderForPlatform(platform string) infrastructure.Provider {
+func ProviderForPlatform(platform string) (infrastructure.Provider, error) {
 	switch platform {
 	case alibabacloudtypes.Name:
-		return terraform.InitializeProvider(alibabacloud.PlatformStages)
+		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
 	case awstypes.Name:
-		return terraform.InitializeProvider(aws.PlatformStages)
+		return terraform.InitializeProvider(aws.PlatformStages), nil
 	case azuretypes.Name:
-		return terraform.InitializeProvider(azure.PlatformStages)
+		return terraform.InitializeProvider(azure.PlatformStages), nil
 	case azuretypes.StackTerraformName:
-		return terraform.InitializeProvider(azure.StackPlatformStages)
+		return terraform.InitializeProvider(azure.StackPlatformStages), nil
 	case baremetaltypes.Name:
-		return terraform.InitializeProvider(baremetal.PlatformStages)
+		return terraform.InitializeProvider(baremetal.PlatformStages), nil
 	case gcptypes.Name:
-		return terraform.InitializeProvider(gcp.PlatformStages)
+		return terraform.InitializeProvider(gcp.PlatformStages), nil
 	case ibmcloudtypes.Name:
-		return terraform.InitializeProvider(ibmcloud.PlatformStages)
+		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
 	case libvirttypes.Name:
-		return terraform.InitializeProvider(libvirt.PlatformStages)
+		return terraform.InitializeProvider(libvirt.PlatformStages), nil
 	case nutanixtypes.Name:
-		return terraform.InitializeProvider(nutanix.PlatformStages)
+		return terraform.InitializeProvider(nutanix.PlatformStages), nil
 	case powervstypes.Name:
-		return terraform.InitializeProvider(powervs.PlatformStages)
+		return terraform.InitializeProvider(powervs.PlatformStages), nil
 	case openstacktypes.Name:
-		return terraform.InitializeProvider(openstack.PlatformStages)
+		return terraform.InitializeProvider(openstack.PlatformStages), nil
 	case ovirttypes.Name:
-		return terraform.InitializeProvider(ovirt.PlatformStages)
+		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
-		return terraform.InitializeProvider(vsphere.PlatformStages)
+		return terraform.InitializeProvider(vsphere.PlatformStages), nil
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"
-		return terraform.InitializeProvider([]terraform.Stage{})
+		return terraform.InitializeProvider([]terraform.Stage{}), nil
 	case externaltypes.Name:
 		// terraform is not used when the platform is "external"
-		return terraform.InitializeProvider([]terraform.Stage{})
+		return terraform.InitializeProvider([]terraform.Stage{}), nil
 	}
-	panic(fmt.Sprintf("unsupported platform %q", platform))
+	return nil, fmt.Errorf("unsupported platform %q", platform)
 }
