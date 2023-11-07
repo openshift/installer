@@ -124,67 +124,17 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRun: func(_ *cobra.Command, _ []string) {
-				ctx := context.Background()
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				logrus.RegisterExitHandler(cancel)
 
-				cleanup := command.SetupFileHook(command.RootOpts.Dir)
-				defer cleanup()
-
-				// FIXME: pulling the kubeconfig and metadata out of the root
-				// directory is a bit cludgy when we already have them in memory.
-				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
+				exitCode, err := clusterCreatePostRun(ctx)
 				if err != nil {
-					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+					logrus.Fatal(err)
 				}
-
-				if err := handleUnreachableAPIServer(config); err != nil {
-					logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
+				if exitCode != 0 {
+					logrus.Exit(exitCode)
 				}
-
-				timer.StartTimer("Bootstrap Complete")
-				if err := waitForBootstrapComplete(ctx, config); err != nil {
-					bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
-					if gatherErr != nil {
-						logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
-					}
-					if err := logClusterOperatorConditions(ctx, config); err != nil {
-						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
-					}
-					logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
-					logrus.Error(err.Error())
-					if gatherErr == nil {
-						if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
-							logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
-						}
-						logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
-					}
-					logrus.Exit(exitCodeBootstrapFailed)
-				}
-				timer.StopTimer("Bootstrap Complete")
-				timer.StartTimer("Bootstrap Destroy")
-
-				if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
-					logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
-						"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
-				} else {
-					logrus.Info("Destroying the bootstrap resources...")
-					err = destroybootstrap.Destroy(command.RootOpts.Dir)
-					if err != nil {
-						logrus.Fatal(err)
-					}
-				}
-				timer.StopTimer("Bootstrap Destroy")
-
-				err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
-				if err != nil {
-					if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
-						logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
-					}
-					logTroubleshootingLink()
-					logrus.Error(err)
-					logrus.Exit(exitCodeInstallFailed)
-				}
-				timer.StopTimer(timer.TotalTimeElapsed)
-				timer.LogSummary()
 			},
 		},
 		assets: targetassets.Cluster,
@@ -192,6 +142,85 @@ var (
 
 	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget, singleNodeIgnitionConfigTarget}
 )
+
+// clusterCreatePostRun is the main entrypoint for the cluster create command
+// it was moved out of the clusterTarget.command.PostRun function to allow cleanup operations to always
+// run in a defer statement, given that we had multiple exit points in the function, like logrus.Fatal or logrus.Exit.
+//
+// Currently this function returns an exit code and an error, we should refactor this to only return an error,
+// that can be wrapped if we want a custom exit code.
+func clusterCreatePostRun(ctx context.Context) (int, error) {
+	cleanup := command.SetupFileHook(command.RootOpts.Dir)
+	defer cleanup()
+
+	// FIXME: pulling the kubeconfig and metadata out of the root
+	// directory is a bit cludgy when we already have them in memory.
+	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
+	if err != nil {
+		return 0, errors.Wrap(err, "loading kubeconfig")
+	}
+
+	// Handle the case when the API server is not reachable.
+	if err := handleUnreachableAPIServer(config); err != nil {
+		logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
+	}
+
+	//
+	// Wait for the bootstrap to complete.
+	//
+	timer.StartTimer("Bootstrap Complete")
+	if err := waitForBootstrapComplete(ctx, config); err != nil {
+		bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
+		if gatherErr != nil {
+			logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
+		}
+		if err := logClusterOperatorConditions(ctx, config); err != nil {
+			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err)
+		}
+		logrus.Error("Bootstrap failed to complete: ", err.Unwrap())
+		logrus.Error(err.Error())
+		if gatherErr == nil {
+			if err := service.AnalyzeGatherBundle(bundlePath); err != nil {
+				logrus.Error("Attempted to analyze the debug logs after installation failure: ", err)
+			}
+			logrus.Infof("Bootstrap gather logs captured here %q", bundlePath)
+		}
+		return exitCodeBootstrapFailed, nil
+	}
+	timer.StopTimer("Bootstrap Complete")
+
+	//
+	// Wait for the bootstrap to be destroyed.
+	//
+	timer.StartTimer("Bootstrap Destroy")
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+		logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources. " +
+			"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
+	} else {
+		logrus.Info("Destroying the bootstrap resources...")
+		err = destroybootstrap.Destroy(command.RootOpts.Dir)
+		if err != nil {
+			return 0, err
+		}
+	}
+	timer.StopTimer("Bootstrap Destroy")
+
+	//
+	// Wait for the cluster to initialize.
+	//
+	err = waitForInstallComplete(ctx, config, command.RootOpts.Dir)
+	if err != nil {
+		if err2 := logClusterOperatorConditions(ctx, config); err2 != nil {
+			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)
+		}
+		logTroubleshootingLink()
+		logrus.Error(err)
+		return exitCodeInstallFailed, nil
+	}
+	timer.StopTimer(timer.TotalTimeElapsed)
+	timer.LogSummary()
+	return 0, nil
+}
 
 // clusterCreateError defines a custom error type that would help identify where the error occurs
 // during the bootstrap phase of the installation process. This would help identify whether the error
