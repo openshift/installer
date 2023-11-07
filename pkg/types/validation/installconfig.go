@@ -32,6 +32,7 @@ import (
 	azurevalidation "github.com/openshift/installer/pkg/types/azure/validation"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -169,7 +170,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 
-	allErrs = append(allErrs, validateFeatureSet(c)...)
+	allErrs = append(allErrs, ValidateFeatureSet(c)...)
 
 	return allErrs
 }
@@ -1047,8 +1048,8 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 	}
 }
 
-// validateFeatureSet returns an error if a gated feature is used without opting into the feature set.
-func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
+// ValidateFeatureSet returns an error if a gated feature is used without opting into the feature set.
+func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
@@ -1070,29 +1071,10 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, validateCustomFeatureGates(c)...)
 	}
 
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
-
-		if c.OpenStack != nil {
-			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
-				allErrs = append(allErrs, field.Forbidden(f, errMsg))
-			}
-		}
-
-		if c.VSphere != nil {
-			if len(c.VSphere.Hosts) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "hosts"), errMsg))
-			}
-		}
-
-		if c.GCP != nil {
-			if len(c.GCP.UserTags) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "userTags"), errMsg))
-			}
-			if len(c.GCP.UserLabels) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "userLabels"), errMsg))
-			}
-		}
+	// We can only accurately check gated features
+	// if feature sets are correctly configured.
+	if len(allErrs) == 0 {
+		allErrs = append(allErrs, validateGatedFeatures(c)...)
 	}
 
 	return allErrs
@@ -1113,6 +1095,47 @@ func validateCustomFeatureGates(c *types.InstallConfig) field.ErrorList {
 		if _, err := strconv.ParseBool(featureParts[1]); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("featureGates").Index(i), rawFeature, "must match the format <feature-name>=<bool>, could not parse boolean value"))
 		}
+	}
+
+	return allErrs
+}
+
+// validateGatedFeatures ensures that any gated features used in
+// the install config are enabled.
+func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// legacy feature gating
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
+
+		if c.OpenStack != nil {
+			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
+				allErrs = append(allErrs, field.Forbidden(f, errMsg))
+			}
+		}
+	}
+
+	gatedFeatures := []featuregates.GatedInstallConfigFeature{}
+	switch {
+	case c.GCP != nil:
+		gatedFeatures = append(gatedFeatures, gcpvalidation.GatedFeatures(c)...)
+	case c.VSphere != nil:
+		gatedFeatures = append(gatedFeatures, vspherevalidation.GatedFeatures(c)...)
+	}
+
+	fg := c.EnabledFeatureGates()
+	errMsgTemplate := "this field is protected by the %s feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set"
+
+	fgCheck := func(c featuregates.GatedInstallConfigFeature) {
+		if !fg.Enabled(c.FeatureGateName) && c.Condition {
+			errMsg := fmt.Sprintf(errMsgTemplate, c.FeatureGateName)
+			allErrs = append(allErrs, field.Forbidden(c.Field, errMsg))
+		}
+	}
+
+	for _, gf := range gatedFeatures {
+		fgCheck(gf)
 	}
 
 	return allErrs
