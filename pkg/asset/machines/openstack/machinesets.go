@@ -58,7 +58,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			replicaNumber = int32(replicas)
 		}
 
-		providerSpec := generateProviderSpec(
+		providerSpec, err := generateProviderSpec(
 			clusterID,
 			platform,
 			mpool,
@@ -68,6 +68,9 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			trunkSupport,
 			failureDomains[idx],
 		)
+		if err != nil {
+			return nil, err
+		}
 
 		// Set unique name for the machineset
 		name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
