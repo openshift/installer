@@ -1,14 +1,14 @@
 package gcp
 
-// ClusterHostedDNS indicates whether the cluster DNS is hosted by the cluster or Core DNS .
-type ClusterHostedDNS string
+// UserProvisionedDNS indicates whether the DNS solution is provisioned by the Installer or the user.
+type UserProvisionedDNS string
 
 const (
-	// ClusterHostedDNSEnabled indicates that the DNS solution is hosted by the cluster.
-	ClusterHostedDNSEnabled ClusterHostedDNS = "Enabled"
+	// UserProvisionedDNSEnabled indicates that the DNS solution is provisioned and provided by the user.
+	UserProvisionedDNSEnabled UserProvisionedDNS = "Enabled"
 
-	// ClusterHostedDNSDisabled indicates that the DNS solution is hosted by Core DNS.
-	ClusterHostedDNSDisabled ClusterHostedDNS = "Disabled"
+	// UserProvisionedDNSDisabled indicates that the DNS solution is provisioned by the Installer.
+	UserProvisionedDNSDisabled UserProvisionedDNS = "Disabled"
 )
 
 // Platform stores all the global configuration that all machinesets
@@ -61,12 +61,12 @@ type Platform struct {
 	// featureGate enabled or TechPreviewNoUpgrade featureSet to configure tags.
 	UserTags []UserTag `json:"userTags,omitempty"`
 
-	// ClusterHostedDNS indicates if the customer is providing their own DNS solution in place of the default
-	// provided by Core DNS.
+	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provisioned by the Installer.
 	// +kubebuilder:default:="Disabled"
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
-	ClusterHostedDNS ClusterHostedDNS `json:"clusterHostedDNS,omitempty"`
+	UserProvisionedDNS UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

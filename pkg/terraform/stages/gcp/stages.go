@@ -62,7 +62,7 @@ func extractGCPLBConfig(s stages.SplitStage, directory string, terraformDir stri
 		return "", err
 	}
 
-	userConfiguredDNSRaw, ok := outputs["cluster_hosted_dns"]
+	userConfiguredDNSRaw, ok := outputs["user_provisioned_dns"]
 	if !ok {
 		return "", fmt.Errorf("failed to read cluster hosted dns from terraform inputs")
 	}
@@ -98,12 +98,15 @@ func extractGCPLBConfig(s stages.SplitStage, directory string, terraformDir stri
 		return "", err
 	}
 
-	lbConfigContents, err := lbconfig.CreateLBConfigMap("openshift-lb-config", apiIntLBIpRaw.(string), apiLBIpRaw.(string))
+	lbConfig, err := lbconfig.GenerateLBConfigOverride(apiIntLBIpRaw.(string), apiLBIpRaw.(string))
 	if err != nil {
-		return "", fmt.Errorf("failed to create load balancer config contents: %w", err)
+		return "", err
 	}
-	path := "/opt/openshift/manifests/openshift-lb-config.yaml"
-	ignData.Storage.Files = append(ignData.Storage.Files, ignition.FileFromString(path, "root", 0644, lbConfigContents))
+	if err := asset.NewDefaultFileWriter(lbConfig).PersistToFile(directory); err != nil {
+		return "", fmt.Errorf("failed to save %s to state file: %w", lbConfig.Name(), err)
+	}
+	path := fmt.Sprintf("/opt/openshift/manifests/%s", lbconfig.ConfigName)
+	ignData.Storage.Files = append(ignData.Storage.Files, ignition.FileFromString(path, "root", 0644, string(lbConfig.File.Data)))
 
 	ignitionOutput, err := json.Marshal(ignData)
 	if err != nil {

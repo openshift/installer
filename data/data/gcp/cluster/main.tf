@@ -67,7 +67,7 @@ module "network" {
 }
 
 module "dns" {
-  count = var.gcp_cluster_hosted_dns ? 0 : 1
+  count = var.gcp_user_provisioned_dns ? 0 : 1
 
   source = "./dns"
 

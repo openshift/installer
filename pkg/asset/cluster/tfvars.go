@@ -508,7 +508,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
-				ClusterHostedDNS:    installConfig.Config.GCP.ClusterHostedDNS == gcp.ClusterHostedDNSEnabled,
+				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
 			},
 		)
 		if err != nil {

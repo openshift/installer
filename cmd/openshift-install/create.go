@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,6 +37,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
@@ -43,6 +46,7 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
@@ -130,6 +134,10 @@ var (
 				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(command.RootOpts.Dir, "auth", "kubeconfig"))
 				if err != nil {
 					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
+				}
+
+				if err := handleUnreachableAPIServer(config); err != nil {
+					logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
 				}
 
 				timer.StartTimer("Bootstrap Complete")
@@ -777,4 +785,59 @@ func currentOperatorStability(clusterOperatorLister configlisters.ClusterOperato
 
 func meetsStabilityThreshold(progressing *configv1.ClusterOperatorStatusCondition) bool {
 	return progressing.Status == configv1.ConditionFalse && time.Since(progressing.LastTransitionTime.Time).Seconds() > coStabilityThreshold
+}
+
+func handleUnreachableAPIServer(config *rest.Config) error {
+	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+	if err != nil {
+		return fmt.Errorf("failed to create asset store: %w", err)
+	}
+
+	// Ensure that the install is expecting the user to provision their own DNS solution.
+	installConfig := &installconfig.InstallConfig{}
+	if err := assetStore.Fetch(installConfig); err != nil {
+		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
+	}
+	switch installConfig.Config.Platform.Name() { //nolint:gocritic
+	case gcp.Name:
+		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+			return nil
+		}
+	default:
+		return nil
+	}
+
+	lbConfig := &lbconfig.Config{}
+	if err := assetStore.Fetch(lbConfig); err != nil {
+		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
+	}
+
+	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbconfig.PublicLoadBalancer)
+	if err != nil {
+		return fmt.Errorf("failed to parse lbconfig: %w", err)
+	}
+
+	// The kubeconfig handles one ip address
+	ipAddr := ""
+	if len(ipAddrs) > 0 {
+		ipAddr = ipAddrs[0].String()
+	}
+	if ipAddr == "" {
+		return fmt.Errorf("no ip address found in lbconfig")
+	}
+
+	dialer := &net.Dialer{
+		Timeout:   1 * time.Minute,
+		KeepAlive: 1 * time.Minute,
+	}
+	config.Dial = kubeconfig.CreateDialContext(dialer, ipAddr)
+
+	// The asset is currently saved in <install-dir>/openshift. This directory
+	// was consumed during install but this file is generated after that action. This
+	// artifact will hang around unless it is purged here.
+	if err := asset.DeleteAssetFromDisk(lbConfig, command.RootOpts.Dir); err != nil {
+		return fmt.Errorf("failed to delete %s from disk", lbConfig.Name())
+	}
+
+	return nil
 }

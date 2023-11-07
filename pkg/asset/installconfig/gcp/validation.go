@@ -240,11 +240,6 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Er
 		return nil
 	}
 
-	// skip validation when user configured dns is enabled
-	if ic.Platform.GCP.ClusterHostedDNS == gcp.ClusterHostedDNSEnabled {
-		return nil
-	}
-
 	zone, err := client.GetDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain, true)
 	if err != nil {
 		if IsNotFound(err) {
@@ -259,11 +254,6 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Er
 // matching the name that will be used for this installation.
 func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) *field.Error {
 	if ic.GCP.Network == "" || ic.GCP.NetworkProjectID == "" {
-		return nil
-	}
-
-	// skip validation when user configured dns is enabled
-	if ic.Platform.GCP.ClusterHostedDNS == gcp.ClusterHostedDNSEnabled {
 		return nil
 	}
 
@@ -304,6 +294,10 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 
 // ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if ic.Platform.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
+		return nil
+	}
+
 	allErrs := field.ErrorList{}
 
 	client, err := NewClient(context.TODO())

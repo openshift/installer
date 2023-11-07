@@ -38,6 +38,6 @@ output "control_plane_ips" {
   value = module.master.ip_addresses
 }
 
-output "cluster_hosted_dns" {
-  value = var.gcp_cluster_hosted_dns
+output "user_provisioned_dns" {
+  value = var.gcp_user_provisioned_dns
 }
