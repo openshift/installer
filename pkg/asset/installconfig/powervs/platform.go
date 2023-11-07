@@ -26,7 +26,6 @@ func Platform() (*powervs.Platform, error) {
 	p.Region = bxCli.Region
 	p.Zone = bxCli.Zone
 	p.UserID = bxCli.User.ID
-	p.ServiceInstanceID = bxCli.ServiceInstanceID
 	p.PowerVSResourceGroup = bxCli.PowerVSResourceGroup
 
 	return &p, nil

@@ -5,13 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -36,7 +34,6 @@ var (
 	validPublicSubnetUSSouth2ID  = "public-subnet-us-south-2-id"
 	validPrivateSubnetUSSouth1ID = "private-subnet-us-south-1-id"
 	validPrivateSubnetUSSouth2ID = "private-subnet-us-south-2-id"
-	validServiceInstanceID       = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	validSubnets                 = []string{
 		validPublicSubnetUSSouth1ID,
 		validPublicSubnetUSSouth2ID,
@@ -146,7 +143,6 @@ func validMinimalPlatform() *powervstypes.Platform {
 	return &powervstypes.Platform{
 		PowerVSResourceGroup: validPowerVSResourceGroup,
 		Region:               validRegion,
-		ServiceInstanceID:    validServiceInstanceID,
 		UserID:               validUserID,
 		Zone:                 validZone,
 	}

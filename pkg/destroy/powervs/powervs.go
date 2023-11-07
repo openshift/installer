@@ -183,9 +183,9 @@ type ClusterUninstaller struct {
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	var (
-		bxClient    *powervs.BxClient
-		APIKey      string
-		err         error
+		bxClient *powervs.BxClient
+		APIKey   string
+		err      error
 	)
 
 	// We need to prompt for missing variables because NewPISession requires them!
@@ -206,7 +206,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Region = %v", metadata.ClusterPlatformMetadata.PowerVS.Region)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
-	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {

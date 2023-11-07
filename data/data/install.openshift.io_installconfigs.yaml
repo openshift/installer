@@ -4174,10 +4174,6 @@ spec:
                     description: Region specifies the IBM Cloud colo region where
                       the cluster will be created.
                     type: string
-                  serviceInstanceID:
-                    description: ServiceInstanceID is the ID of the Power IAAS instance
-                      created from the IBM Cloud Catalog
-                    type: string
                   userID:
                     description: UserID is the login for the user's IBM Cloud account.
                     type: string
@@ -4204,7 +4200,6 @@ spec:
                     type: string
                 required:
                 - powervsResourceGroup
-                - serviceInstanceID
                 - userID
                 - zone
                 type: object

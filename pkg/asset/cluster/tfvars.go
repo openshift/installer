@@ -879,14 +879,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
 
-		serviceInstanceCRN, err := client.ServiceInstanceIDToCRN(ctx, installConfig.Config.PowerVS.ServiceInstanceID)
-		if err != nil {
-			return err
-		}
-		if serviceInstanceCRN == "" {
-			return fmt.Errorf("the service instance CRN is empty for the given ID")
-		}
-
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{

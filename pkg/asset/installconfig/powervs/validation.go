@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -231,36 +230,6 @@ func ValidateResourceGroup(client API, ic *types.InstallConfig) error {
 		}
 		if !found {
 			return errors.New("platform:powervs:powervsresourcegroup has an invalid name")
-		}
-	}
-
-	return nil
-}
-
-// ValidateServiceInstance validates the service instance in our install config.
-func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
-	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
-	defer cancel()
-
-	serviceInstances, err := client.ListServiceInstances(ctx)
-	if err != nil {
-		return err
-	}
-
-	switch ic.PowerVS.ServiceInstanceID {
-	case "":
-		return errors.New("platform:powervs:serviceinstance is empty")
-	default:
-		found := false
-		for _, serviceInstance := range serviceInstances {
-			guid := strings.SplitN(serviceInstance, " ", 2)[1]
-			if guid == ic.PowerVS.ServiceInstanceID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return errors.New("platform:powervs:serviceinstance has an invalid guid")
 		}
 	}
 

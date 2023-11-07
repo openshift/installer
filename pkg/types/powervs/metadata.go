@@ -9,5 +9,4 @@ type Metadata struct {
 	Region               string `json:"region"`
 	VPCRegion            string `json:"vpcRegion"`
 	Zone                 string `json:"zone"`
-	ServiceInstanceGUID  string `json:"serviceInstanceID"`
 }
