@@ -28,16 +28,17 @@ import (
 )
 
 var (
-	binDir string
+	// Scheme is the scheme used by the local control plane.
+	Scheme = scheme.Scheme
 )
 
 func init() {
-	utilruntime.Must(clusterv1alpha3.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1alpha4.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(capav1beta1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(capav1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(capzv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterv1alpha3.AddToScheme(Scheme))
+	utilruntime.Must(clusterv1alpha4.AddToScheme(Scheme))
+	utilruntime.Must(clusterv1.AddToScheme(Scheme))
+	utilruntime.Must(capav1beta1.AddToScheme(Scheme))
+	utilruntime.Must(capav1.AddToScheme(Scheme))
+	utilruntime.Must(capzv1.AddToScheme(Scheme))
 }
 
 // localControlPlane creates a local capi control plane
@@ -64,7 +65,7 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	log.SetLogger(klog.NewKlogr())
 	logrus.Info("Started local control plane with envtest")
 	c.Env = &envtest.Environment{
-		Scheme:                   scheme.Scheme,
+		Scheme:                   Scheme,
 		AttachControlPlaneOutput: false,
 		BinaryAssetsDirectory:    c.BinDir,
 		ControlPlaneStartTimeout: 10 * time.Second,
