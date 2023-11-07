@@ -64,6 +64,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&ImageContentSourcePolicy{},
 		&ClusterCSIDriverConfig{},
 		&ImageDigestMirrorSet{},
+		&ImageRegistry{},
 		&tls.RootCA{},
 		&tls.MCSCertKey{},
 
@@ -87,8 +88,9 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	imageContentSourcePolicy := &ImageContentSourcePolicy{}
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
+	registry := &ImageRegistry{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, registry, clusterCSIDriverConfig)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -125,6 +127,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, imageContentSourcePolicy.Files()...)
 	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
+	m.FileList = append(m.FileList, registry.Files()...)
 
 	asset.SortFiles(m.FileList)
 
@@ -222,7 +225,6 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 
 	if !found {
 		return false, nil
-
 	}
 
 	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
