@@ -79,7 +79,7 @@
       port_range_max: 6443
     when:
     - os_subnet6_range is defined
-    - "{{ os_subnet6_range|ansible.utils.ipv6 }}"
+    - os_subnet6_range|ansible.utils.ipv6
 
   - name: 'Create master-sg rule "VXLAN"'
     openstack.cloud.security_group_rule:
@@ -221,7 +221,7 @@
       port_range_max: 80
     when:
     - os_subnet6_range is defined
-    - "{{ os_subnet6_range|ansible.utils.ipv6 }}"
+    - os_subnet6_range|ansible.utils.ipv6
 
   - name: 'Create worker-sg rule "Ingress HTTPS"'
     openstack.cloud.security_group_rule:
@@ -239,7 +239,7 @@
       port_range_max: 443
     when:
     - os_subnet6_range is defined
-    - "{{ os_subnet6_range|ansible.utils.ipv6 }}"
+    - os_subnet6_range|ansible.utils.ipv6
 
   - name: 'Create worker-sg rule "router"'
     openstack.cloud.security_group_rule:
