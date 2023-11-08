@@ -113,6 +113,23 @@ var (
 			ID:   &validRG,
 		},
 	}
+	regionWithPER    = "dal10"
+	regionWithoutPER = "foo99"
+	regionPERUnknown = "bah77"
+	mapWithPERFalse  = map[string]bool{
+		"disaster-recover-site": true,
+		"power-edge-router":     false,
+		"vpn-connections":       true,
+	}
+	mapWithPERTrue = map[string]bool{
+		"disaster-recover-site": true,
+		"power-edge-router":     true,
+		"vpn-connections":       true,
+	}
+	mapPERUnknown = map[string]bool{
+		"disaster-recover-site": true,
+		"power-vpn-connections": false,
+	}
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -469,6 +486,74 @@ func createComputes(numComputes int32, compute *machinev1.PowerVSMachineProvider
 	}
 
 	return computes
+}
+
+func TestValidatePERAvailability(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Region without PER",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithoutPER
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router is not available at: %s", regionWithoutPER),
+		},
+		{
+			name: "Region with PER",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithPER
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Region with no PER availability info",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionPERUnknown
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router capability unknown at: %s", regionPERUnknown),
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// Mocks: PER-absent region results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithoutPER).Return(mapWithPERFalse, nil)
+
+	// Mocks: PER-enabled region results in true
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
+
+	// Mocks: PER-unknown region results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionPERUnknown).Return(mapPERUnknown, nil)
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidatePERAvailability(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
 }
 
 func setMockEnvVars() {

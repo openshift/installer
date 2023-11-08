@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM-Cloud/power-go-client/power/client/datacenters"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
@@ -40,6 +41,7 @@ type API interface {
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
 	ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error)
+	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -745,4 +747,21 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 	}
 
 	return "", nil
+}
+
+// GetDatacenterCapabilities retrieves the capabilities of the specified datacenter.
+func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error) {
+	var err error
+	if c.BXCli.PISession == nil {
+		err = c.BXCli.NewPISession()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterCapabilities: %w", err)
+		}
+	}
+	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
+	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
+	}
+	return getOk.Payload.Capabilities, nil
 }
