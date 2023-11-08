@@ -15,7 +15,7 @@
     openstack.cloud.network:
       name: "{{ os_network }}"
 
-  - name: 'Set tags on the  primary cluster network'
+  - name: 'Set tags on the primary cluster network'
     ansible.builtin.command:
       cmd: "openstack network set --tag {{ primary_cluster_network_tag }} --tag {{ cluster_id_tag }} {{ os_network }}"
 
@@ -40,7 +40,7 @@
     - os_subnet6_range is defined
     - os_subnet6_range|ansible.utils.ipv6
 
-  - name: 'Set tags on  primary cluster subnet'
+  - name: 'Set tags on primary cluster subnet'
     ansible.builtin.command:
       cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
 
