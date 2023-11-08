@@ -3703,8 +3703,7 @@ spec:
                       for dualstack clusters. Providing this configuration will prevent
                       OpenShift from managing or updating this network and its subnets.
                       The network and its subnets will be used during creation of
-                      all nodes. This is a TechPreview feature and requires setting
-                      featureSet to TechPreviewNoUpgrade.
+                      all nodes.
                     properties:
                       fixedIPs:
                         description: Specify subnets of the network where control

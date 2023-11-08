@@ -1105,17 +1105,6 @@ func validateCustomFeatureGates(c *types.InstallConfig) field.ErrorList {
 func validateGatedFeatures(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	// legacy feature gating
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
-
-		if c.OpenStack != nil {
-			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
-				allErrs = append(allErrs, field.Forbidden(f, errMsg))
-			}
-		}
-	}
-
 	gatedFeatures := []featuregates.GatedInstallConfigFeature{}
 	switch {
 	case c.GCP != nil:
