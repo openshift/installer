@@ -324,11 +324,11 @@ In the previous steps, the installer added default values for the `machineNetwor
 `machineNetwork.CIDR` needs to match the IP range specified by `os_subnet_range` in the `inventory.yaml` file.
 
 When the installer creates the manifest files from an existing `install-config.yaml` file, it validates that the
-`apiVIP` and `ingressVIP` fall within the IP range specified by `machineNetwork.CIDR`. If they do not, it errors out.
-If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIP` and `ingressVIP` values still fall within
-the new range. There are two options for setting the `apiVIP` and `ingressVIP`. If you know the values you want to use,
+`apiVIPs` and `ingressVIPs` fall within the IP range specified by `machineNetwork.CIDR`. If they do not, it errors out.
+If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIPs` and `ingressVIPs` values still fall within
+the new range. There are two options for setting the `apiVIPs` and `ingressVIPs`. If you know the values you want to use,
 you can specify them in the `install-config.yaml` file. If you want the installer to pick the 5th and 7th IP addresses in the
-new range, you need to remove the `apiVIP` and `ingressVIP` entries from the `install-config.yaml` file.
+new range, you need to remove the `apiVIPs` and `ingressVIPs` entries from the `install-config.yaml` file.
 
 To illustrate the process, we will use '192.0.2.0/24' as an example. It defines a usable IP range from
 192.0.2.1 to 192.0.2.254. There are some IP addresses that should be avoided because they are usually taken up or
@@ -345,7 +345,7 @@ installconfig_path = "install-config.yaml"
 installconfig = yaml.safe_load(open(installconfig_path))
 inventory = yaml.safe_load(open("inventory.yaml"))
 inventory_subnet_range = inventory["all"]["hosts"]["localhost"]["os_subnet_range"]
-installconfig["networking"]["machineNetwork"][0]["cidr"] = inventory_subnet_range
+installconfig["networking"]["machineNetwork"][0]["cidr"] = [inventory_subnet_range]
 open(installconfig_path, "w").write(yaml.dump(installconfig, default_flow_style=False))'
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
@@ -360,10 +360,10 @@ $ python -c 'import yaml
 import sys
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
-if "apiVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["apiVIP"]
-if "ingressVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["ingressVIP"]
+if "apiVIPs" in data["platform"]["openstack"]:
+   del data["platform"]["openstack"]["apiVIPs"]
+if "ingressVIPs" in data["platform"]["openstack"]:
+   del data["platform"]["openstack"]["ingressVIPs"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
@@ -376,10 +376,10 @@ $ python -c 'import yaml
 import sys
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
-if "apiVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8"
-if "ingressVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9"
+if "apiVIPs" in data["platform"]["openstack"]:
+   data["platform"]["openstack"]["apiVIPs"] = ["192.0.2.8"]
+if "ingressVIPs" in data["platform"]["openstack"]:
+   data["platform"]["openstack"]["ingressVIPs"] = ["192.0.2.9"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
@@ -762,9 +762,9 @@ if ca_cert_path:
 else:
     exit()
 
-infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
+infra_id = os.environ.get('INFRA_ID', 'openshift')
 
-bootstrap_ignition_shim = infra_id+'-bootstrap-ignition.json'
+bootstrap_ignition_shim = infra_id + '-bootstrap-ignition.json'
 
 with open(bootstrap_ignition_shim, 'r') as f:
     ignition_data = json.load(f)
