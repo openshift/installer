@@ -8,12 +8,14 @@ all:
       os_subnet_range: '10.0.0.0/16'
       # uncomment for dual stack
       # os_subnet6_range: 'fd2e:6f44:5dd8:c956::/64'
+      # modes are one of: slaac, dhcpv6-stateful or dhcpv6-stateless
       os_subnet6_address_mode: slaac
       os_subnet6_router_advertisements_mode: slaac
 
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
+
       # Service subnet cidr
       svc_subnet_range: '172.30.0.0/16'
       os_svc_network_range: '172.30.0.0/15'
@@ -70,8 +72,12 @@ all:
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       os_apiVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(5) }}"
+      # Uncomment for DualStack with dhcpv6-stateful mode
+      #os_apiVIP6: "{{ os_subnet6_range | ansible.utils.next_nth_usable(5) }}"
 
       # An IP address that will be assigned to the ingress VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
       os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"
+      # Uncomment for DualStack with dhcpv6-stateful mode
+      #os_ingressVIP6: "{{ os_subnet6_range | ansible.utils.next_nth_usable(7) }}"

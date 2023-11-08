@@ -344,8 +344,10 @@ $ python -c 'import yaml
 installconfig_path = "install-config.yaml"
 installconfig = yaml.safe_load(open(installconfig_path))
 inventory = yaml.safe_load(open("inventory.yaml"))
-inventory_subnet_range = inventory["all"]["hosts"]["localhost"]["os_subnet_range"]
-installconfig["networking"]["machineNetwork"][0]["cidr"] = [inventory_subnet_range]
+inventory_subnet_range = [inventory["all"]["hosts"]["localhost"]["os_subnet_range"]]
+if inventory["all"]["hosts"]["localhost"].get("os_subnet6_range"):
+    inventory_subnet_range.append(inventory["all"]["hosts"]["localhost"].get("os_subnet6_range"))
+installconfig["networking"]["machineNetwork"] = [{"cidr": v} for v in inventory_subnet_range]
 open(installconfig_path, "w").write(yaml.dump(installconfig, default_flow_style=False))'
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
@@ -733,7 +735,7 @@ Add the base64-encoded certificate to the ignition shim:
       "tls": {
         "certificateAuthorities": [
           {
-            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
+            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>"
           }
         ]
       }
