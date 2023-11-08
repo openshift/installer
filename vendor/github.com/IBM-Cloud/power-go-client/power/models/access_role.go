@@ -78,6 +78,7 @@ func (m *AccessRole) ContextValidate(ctx context.Context, formats strfmt.Registr
 func (m *AccessRole) contextValidatePermissions(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Permissions != nil {
+
 		if err := m.Permissions.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("permissions")

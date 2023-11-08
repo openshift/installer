@@ -128,6 +128,11 @@ func (m *VPNConnectionCreateResponse) ContextValidate(ctx context.Context, forma
 func (m *VPNConnectionCreateResponse) contextValidateJobRef(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.JobRef != nil {
+
+		if swag.IsZero(m.JobRef) { // not required
+			return nil
+		}
+
 		if err := m.JobRef.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("jobRef")

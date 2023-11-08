@@ -75,6 +75,7 @@ func (m *Options) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 func (m *Options) contextValidateVpnaasOptions(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.VpnaasOptions != nil {
+
 		if err := m.VpnaasOptions.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vpnaasOptions")

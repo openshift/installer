@@ -52,10 +52,12 @@ func NewPcloudDhcpDeleteParamsWithHTTPClient(client *http.Client) *PcloudDhcpDel
 	}
 }
 
-/* PcloudDhcpDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud dhcp delete operation.
+/*
+PcloudDhcpDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud dhcp delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudDhcpDeleteParams struct {
 

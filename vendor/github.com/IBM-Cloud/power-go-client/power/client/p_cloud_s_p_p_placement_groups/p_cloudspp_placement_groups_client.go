@@ -46,7 +46,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudSppplacementgroupsDelete deletes a shared processor pool placement group from a cloud instance
+PcloudSppplacementgroupsDelete deletes a shared processor pool placement group from a cloud instance
 */
 func (a *Client) PcloudSppplacementgroupsDelete(params *PcloudSppplacementgroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -85,7 +85,7 @@ func (a *Client) PcloudSppplacementgroupsDelete(params *PcloudSppplacementgroups
 }
 
 /*
-  PcloudSppplacementgroupsGet gets the detail of a shared processor pool placement group for a cloud instance
+PcloudSppplacementgroupsGet gets the detail of a shared processor pool placement group for a cloud instance
 */
 func (a *Client) PcloudSppplacementgroupsGet(params *PcloudSppplacementgroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -124,7 +124,7 @@ func (a *Client) PcloudSppplacementgroupsGet(params *PcloudSppplacementgroupsGet
 }
 
 /*
-  PcloudSppplacementgroupsGetall gets the list of shared processor pool placement groups for a cloud instance
+PcloudSppplacementgroupsGetall gets the list of shared processor pool placement groups for a cloud instance
 */
 func (a *Client) PcloudSppplacementgroupsGetall(params *PcloudSppplacementgroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -163,7 +163,7 @@ func (a *Client) PcloudSppplacementgroupsGetall(params *PcloudSppplacementgroups
 }
 
 /*
-  PcloudSppplacementgroupsMembersDelete deletes shared processor pool member from a shared processor pool placement group
+PcloudSppplacementgroupsMembersDelete deletes shared processor pool member from a shared processor pool placement group
 */
 func (a *Client) PcloudSppplacementgroupsMembersDelete(params *PcloudSppplacementgroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsMembersDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -202,7 +202,7 @@ func (a *Client) PcloudSppplacementgroupsMembersDelete(params *PcloudSppplacemen
 }
 
 /*
-  PcloudSppplacementgroupsMembersPost adds shared processor pool as a member of a shared processor pool placement group
+PcloudSppplacementgroupsMembersPost adds shared processor pool as a member of a shared processor pool placement group
 */
 func (a *Client) PcloudSppplacementgroupsMembersPost(params *PcloudSppplacementgroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsMembersPostOK, error) {
 	// TODO: Validate the params before sending
@@ -241,7 +241,7 @@ func (a *Client) PcloudSppplacementgroupsMembersPost(params *PcloudSppplacementg
 }
 
 /*
-  PcloudSppplacementgroupsPost creates a new shared processor pool placement group
+PcloudSppplacementgroupsPost creates a new shared processor pool placement group
 */
 func (a *Client) PcloudSppplacementgroupsPost(params *PcloudSppplacementgroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSppplacementgroupsPostOK, error) {
 	// TODO: Validate the params before sending

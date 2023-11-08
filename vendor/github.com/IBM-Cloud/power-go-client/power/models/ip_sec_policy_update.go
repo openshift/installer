@@ -398,6 +398,10 @@ func (m *IPSecPolicyUpdate) ContextValidate(ctx context.Context, formats strfmt.
 
 func (m *IPSecPolicyUpdate) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.Authentication) { // not required
+		return nil
+	}
+
 	if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("authentication")
@@ -411,6 +415,10 @@ func (m *IPSecPolicyUpdate) contextValidateAuthentication(ctx context.Context, f
 }
 
 func (m *IPSecPolicyUpdate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.KeyLifetime) { // not required
+		return nil
+	}
 
 	if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {

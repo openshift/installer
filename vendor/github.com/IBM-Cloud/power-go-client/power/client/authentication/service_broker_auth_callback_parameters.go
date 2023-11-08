@@ -52,10 +52,12 @@ func NewServiceBrokerAuthCallbackParamsWithHTTPClient(client *http.Client) *Serv
 	}
 }
 
-/* ServiceBrokerAuthCallbackParams contains all the parameters to send to the API endpoint
-   for the service broker auth callback operation.
+/*
+ServiceBrokerAuthCallbackParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker auth callback operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthCallbackParams struct {
 	timeout    time.Duration

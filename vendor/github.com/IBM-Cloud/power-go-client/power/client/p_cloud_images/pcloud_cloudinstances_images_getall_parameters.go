@@ -52,10 +52,12 @@ func NewPcloudCloudinstancesImagesGetallParamsWithHTTPClient(client *http.Client
 	}
 }
 
-/* PcloudCloudinstancesImagesGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud cloudinstances images getall operation.
+/*
+PcloudCloudinstancesImagesGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud cloudinstances images getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesImagesGetallParams struct {
 

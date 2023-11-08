@@ -52,10 +52,12 @@ func NewPcloudTasksDeleteParamsWithHTTPClient(client *http.Client) *PcloudTasksD
 	}
 }
 
-/* PcloudTasksDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud tasks delete operation.
+/*
+PcloudTasksDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud tasks delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudTasksDeleteParams struct {
 

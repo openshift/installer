@@ -52,10 +52,12 @@ func NewPcloudIkepoliciesDeleteParamsWithHTTPClient(client *http.Client) *Pcloud
 	}
 }
 
-/* PcloudIkepoliciesDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud ikepolicies delete operation.
+/*
+PcloudIkepoliciesDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud ikepolicies delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudIkepoliciesDeleteParams struct {
 

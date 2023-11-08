@@ -66,7 +66,7 @@ func (o *PcloudIpsecpoliciesGetReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}] pcloud.ipsecpolicies.get", response, response.Code())
 	}
 }
 
@@ -75,7 +75,8 @@ func NewPcloudIpsecpoliciesGetOK() *PcloudIpsecpoliciesGetOK {
 	return &PcloudIpsecpoliciesGetOK{}
 }
 
-/* PcloudIpsecpoliciesGetOK describes a response with status code 200, with default header values.
+/*
+PcloudIpsecpoliciesGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -83,9 +84,44 @@ type PcloudIpsecpoliciesGetOK struct {
 	Payload *models.IPSecPolicy
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get o k response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get o k response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get o k response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get o k response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get o k response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get o k response
+func (o *PcloudIpsecpoliciesGetOK) Code() int {
+	return 200
+}
+
 func (o *PcloudIpsecpoliciesGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetOK) GetPayload() *models.IPSecPolicy {
 	return o.Payload
 }
@@ -107,7 +143,8 @@ func NewPcloudIpsecpoliciesGetBadRequest() *PcloudIpsecpoliciesGetBadRequest {
 	return &PcloudIpsecpoliciesGetBadRequest{}
 }
 
-/* PcloudIpsecpoliciesGetBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudIpsecpoliciesGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -115,9 +152,44 @@ type PcloudIpsecpoliciesGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get bad request response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get bad request response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get bad request response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get bad request response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get bad request response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get bad request response
+func (o *PcloudIpsecpoliciesGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudIpsecpoliciesGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -139,7 +211,8 @@ func NewPcloudIpsecpoliciesGetUnauthorized() *PcloudIpsecpoliciesGetUnauthorized
 	return &PcloudIpsecpoliciesGetUnauthorized{}
 }
 
-/* PcloudIpsecpoliciesGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudIpsecpoliciesGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -147,9 +220,44 @@ type PcloudIpsecpoliciesGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get unauthorized response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get unauthorized response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get unauthorized response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get unauthorized response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get unauthorized response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get unauthorized response
+func (o *PcloudIpsecpoliciesGetUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudIpsecpoliciesGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -171,7 +279,8 @@ func NewPcloudIpsecpoliciesGetForbidden() *PcloudIpsecpoliciesGetForbidden {
 	return &PcloudIpsecpoliciesGetForbidden{}
 }
 
-/* PcloudIpsecpoliciesGetForbidden describes a response with status code 403, with default header values.
+/*
+PcloudIpsecpoliciesGetForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -179,9 +288,44 @@ type PcloudIpsecpoliciesGetForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get forbidden response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get forbidden response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get forbidden response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get forbidden response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get forbidden response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get forbidden response
+func (o *PcloudIpsecpoliciesGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudIpsecpoliciesGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +347,8 @@ func NewPcloudIpsecpoliciesGetNotFound() *PcloudIpsecpoliciesGetNotFound {
 	return &PcloudIpsecpoliciesGetNotFound{}
 }
 
-/* PcloudIpsecpoliciesGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudIpsecpoliciesGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -211,9 +356,44 @@ type PcloudIpsecpoliciesGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get not found response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get not found response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get not found response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get not found response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get not found response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get not found response
+func (o *PcloudIpsecpoliciesGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudIpsecpoliciesGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +415,8 @@ func NewPcloudIpsecpoliciesGetUnprocessableEntity() *PcloudIpsecpoliciesGetUnpro
 	return &PcloudIpsecpoliciesGetUnprocessableEntity{}
 }
 
-/* PcloudIpsecpoliciesGetUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudIpsecpoliciesGetUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -243,9 +424,44 @@ type PcloudIpsecpoliciesGetUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get unprocessable entity response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get unprocessable entity response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get unprocessable entity response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get unprocessable entity response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get unprocessable entity response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get unprocessable entity response
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudIpsecpoliciesGetUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +483,8 @@ func NewPcloudIpsecpoliciesGetInternalServerError() *PcloudIpsecpoliciesGetInter
 	return &PcloudIpsecpoliciesGetInternalServerError{}
 }
 
-/* PcloudIpsecpoliciesGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudIpsecpoliciesGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -275,9 +492,44 @@ type PcloudIpsecpoliciesGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud ipsecpolicies get internal server error response has a 2xx status code
+func (o *PcloudIpsecpoliciesGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies get internal server error response has a 3xx status code
+func (o *PcloudIpsecpoliciesGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies get internal server error response has a 4xx status code
+func (o *PcloudIpsecpoliciesGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies get internal server error response has a 5xx status code
+func (o *PcloudIpsecpoliciesGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud ipsecpolicies get internal server error response a status code equal to that given
+func (o *PcloudIpsecpoliciesGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get internal server error response
+func (o *PcloudIpsecpoliciesGetInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudIpsecpoliciesGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudIpsecpoliciesGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudIpsecpoliciesGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -170,8 +170,8 @@ github.com/IBM-Cloud/bluemix-go/models
 github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
-# github.com/IBM-Cloud/power-go-client v1.2.0
-## explicit; go 1.17
+# github.com/IBM-Cloud/power-go-client v1.5.3
+## explicit; go 1.20
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
 github.com/IBM-Cloud/power-go-client/helpers
@@ -180,6 +180,7 @@ github.com/IBM-Cloud/power-go-client/power/client
 github.com/IBM-Cloud/power-go-client/power/client/authentication
 github.com/IBM-Cloud/power-go-client/power/client/bluemix_service_instances
 github.com/IBM-Cloud/power-go-client/power/client/catalog
+github.com/IBM-Cloud/power-go-client/power/client/datacenters
 github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
 github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_instances
@@ -196,12 +197,14 @@ github.com/IBM-Cloud/power-go-client/power/client/p_cloud_jobs
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_networks
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_p_vm_instances
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_placement_groups
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_pod_capacity
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_s_a_p
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_s_p_p_placement_groups
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_service_d_h_c_p
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_shared_processor_pools
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_snapshots
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_storage_capacity
+github.com/IBM-Cloud/power-go-client/power/client/p_cloud_storage_tiers
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_system_pools
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tasks
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_tenants
@@ -215,9 +218,10 @@ github.com/IBM-Cloud/power-go-client/power/client/service_bindings
 github.com/IBM-Cloud/power-go-client/power/client/service_instances
 github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
+github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM/go-sdk-core/v5 v5.13.2
-## explicit; go 1.18
+# github.com/IBM/go-sdk-core/v5 v5.14.1
+## explicit; go 1.19
 github.com/IBM/go-sdk-core/v5/core
 # github.com/IBM/networking-go-sdk v0.42.2
 ## explicit; go 1.19
@@ -459,7 +463,7 @@ github.com/go-logr/stdr
 # github.com/go-logr/zapr v1.2.4
 ## explicit; go 1.16
 github.com/go-logr/zapr
-# github.com/go-openapi/analysis v0.21.2
+# github.com/go-openapi/analysis v0.21.4
 ## explicit; go 1.13
 github.com/go-openapi/analysis
 github.com/go-openapi/analysis/internal/debug
@@ -468,7 +472,7 @@ github.com/go-openapi/analysis/internal/flatten/operations
 github.com/go-openapi/analysis/internal/flatten/replace
 github.com/go-openapi/analysis/internal/flatten/schutils
 github.com/go-openapi/analysis/internal/flatten/sortref
-# github.com/go-openapi/errors v0.20.3
+# github.com/go-openapi/errors v0.20.4
 ## explicit; go 1.14
 github.com/go-openapi/errors
 # github.com/go-openapi/jsonpointer v0.19.6
@@ -478,11 +482,11 @@ github.com/go-openapi/jsonpointer
 ## explicit; go 1.13
 github.com/go-openapi/jsonreference
 github.com/go-openapi/jsonreference/internal
-# github.com/go-openapi/loads v0.21.1
+# github.com/go-openapi/loads v0.21.2
 ## explicit; go 1.13
 github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.23.0
-## explicit; go 1.15
+# github.com/go-openapi/runtime v0.26.0
+## explicit; go 1.18
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
 github.com/go-openapi/runtime/logger
@@ -492,16 +496,16 @@ github.com/go-openapi/runtime/middleware/header
 github.com/go-openapi/runtime/middleware/untyped
 github.com/go-openapi/runtime/security
 github.com/go-openapi/runtime/yamlpc
-# github.com/go-openapi/spec v0.20.7
+# github.com/go-openapi/spec v0.20.8
 ## explicit; go 1.13
 github.com/go-openapi/spec
-# github.com/go-openapi/strfmt v0.21.5
-## explicit; go 1.13
+# github.com/go-openapi/strfmt v0.21.7
+## explicit; go 1.19
 github.com/go-openapi/strfmt
-# github.com/go-openapi/swag v0.22.3
+# github.com/go-openapi/swag v0.22.4
 ## explicit; go 1.18
 github.com/go-openapi/swag
-# github.com/go-openapi/validate v0.22.0
+# github.com/go-openapi/validate v0.22.1
 ## explicit; go 1.14
 github.com/go-openapi/validate
 # github.com/go-playground/locales v0.14.1
@@ -9046,6 +9050,8 @@ go.opentelemetry.io/otel/internal/attribute
 go.opentelemetry.io/otel/internal/baggage
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
+go.opentelemetry.io/otel/semconv/internal
+go.opentelemetry.io/otel/semconv/v1.12.0
 # go.opentelemetry.io/otel/metric v1.19.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/metric

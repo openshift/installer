@@ -52,10 +52,12 @@ func NewPcloudV2ImagesExportGetParamsWithHTTPClient(client *http.Client) *Pcloud
 	}
 }
 
-/* PcloudV2ImagesExportGetParams contains all the parameters to send to the API endpoint
-   for the pcloud v2 images export get operation.
+/*
+PcloudV2ImagesExportGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud v2 images export get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudV2ImagesExportGetParams struct {
 

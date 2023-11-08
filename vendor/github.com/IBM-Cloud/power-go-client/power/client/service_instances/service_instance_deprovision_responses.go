@@ -47,6 +47,18 @@ func (o *ServiceInstanceDeprovisionReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewServiceInstanceDeprovisionForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceInstanceDeprovisionNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewServiceInstanceDeprovisionGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +72,7 @@ func (o *ServiceInstanceDeprovisionReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /v2/service_instances/{instance_id}] serviceInstance.deprovision", response, response.Code())
 	}
 }
 
@@ -69,7 +81,8 @@ func NewServiceInstanceDeprovisionOK() *ServiceInstanceDeprovisionOK {
 	return &ServiceInstanceDeprovisionOK{}
 }
 
-/* ServiceInstanceDeprovisionOK describes a response with status code 200, with default header values.
+/*
+ServiceInstanceDeprovisionOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +90,44 @@ type ServiceInstanceDeprovisionOK struct {
 	Payload models.Object
 }
 
+// IsSuccess returns true when this service instance deprovision o k response has a 2xx status code
+func (o *ServiceInstanceDeprovisionOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance deprovision o k response has a 3xx status code
+func (o *ServiceInstanceDeprovisionOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision o k response has a 4xx status code
+func (o *ServiceInstanceDeprovisionOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance deprovision o k response has a 5xx status code
+func (o *ServiceInstanceDeprovisionOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision o k response a status code equal to that given
+func (o *ServiceInstanceDeprovisionOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the service instance deprovision o k response
+func (o *ServiceInstanceDeprovisionOK) Code() int {
+	return 200
+}
+
 func (o *ServiceInstanceDeprovisionOK) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionOK) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionOK) GetPayload() models.Object {
 	return o.Payload
 }
@@ -99,7 +147,8 @@ func NewServiceInstanceDeprovisionAccepted() *ServiceInstanceDeprovisionAccepted
 	return &ServiceInstanceDeprovisionAccepted{}
 }
 
-/* ServiceInstanceDeprovisionAccepted describes a response with status code 202, with default header values.
+/*
+ServiceInstanceDeprovisionAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -107,9 +156,44 @@ type ServiceInstanceDeprovisionAccepted struct {
 	Payload *models.AsyncOperation
 }
 
+// IsSuccess returns true when this service instance deprovision accepted response has a 2xx status code
+func (o *ServiceInstanceDeprovisionAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance deprovision accepted response has a 3xx status code
+func (o *ServiceInstanceDeprovisionAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision accepted response has a 4xx status code
+func (o *ServiceInstanceDeprovisionAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance deprovision accepted response has a 5xx status code
+func (o *ServiceInstanceDeprovisionAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision accepted response a status code equal to that given
+func (o *ServiceInstanceDeprovisionAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the service instance deprovision accepted response
+func (o *ServiceInstanceDeprovisionAccepted) Code() int {
+	return 202
+}
+
 func (o *ServiceInstanceDeprovisionAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionAccepted  %+v", 202, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionAccepted) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionAccepted  %+v", 202, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionAccepted) GetPayload() *models.AsyncOperation {
 	return o.Payload
 }
@@ -131,7 +215,8 @@ func NewServiceInstanceDeprovisionBadRequest() *ServiceInstanceDeprovisionBadReq
 	return &ServiceInstanceDeprovisionBadRequest{}
 }
 
-/* ServiceInstanceDeprovisionBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceInstanceDeprovisionBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -139,9 +224,44 @@ type ServiceInstanceDeprovisionBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance deprovision bad request response has a 2xx status code
+func (o *ServiceInstanceDeprovisionBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision bad request response has a 3xx status code
+func (o *ServiceInstanceDeprovisionBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision bad request response has a 4xx status code
+func (o *ServiceInstanceDeprovisionBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision bad request response has a 5xx status code
+func (o *ServiceInstanceDeprovisionBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision bad request response a status code equal to that given
+func (o *ServiceInstanceDeprovisionBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service instance deprovision bad request response
+func (o *ServiceInstanceDeprovisionBadRequest) Code() int {
+	return 400
+}
+
 func (o *ServiceInstanceDeprovisionBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -163,7 +283,8 @@ func NewServiceInstanceDeprovisionUnauthorized() *ServiceInstanceDeprovisionUnau
 	return &ServiceInstanceDeprovisionUnauthorized{}
 }
 
-/* ServiceInstanceDeprovisionUnauthorized describes a response with status code 401, with default header values.
+/*
+ServiceInstanceDeprovisionUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -171,9 +292,44 @@ type ServiceInstanceDeprovisionUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance deprovision unauthorized response has a 2xx status code
+func (o *ServiceInstanceDeprovisionUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision unauthorized response has a 3xx status code
+func (o *ServiceInstanceDeprovisionUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision unauthorized response has a 4xx status code
+func (o *ServiceInstanceDeprovisionUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision unauthorized response has a 5xx status code
+func (o *ServiceInstanceDeprovisionUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision unauthorized response a status code equal to that given
+func (o *ServiceInstanceDeprovisionUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service instance deprovision unauthorized response
+func (o *ServiceInstanceDeprovisionUnauthorized) Code() int {
+	return 401
+}
+
 func (o *ServiceInstanceDeprovisionUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -190,12 +346,149 @@ func (o *ServiceInstanceDeprovisionUnauthorized) readResponse(response runtime.C
 	return nil
 }
 
+// NewServiceInstanceDeprovisionForbidden creates a ServiceInstanceDeprovisionForbidden with default headers values
+func NewServiceInstanceDeprovisionForbidden() *ServiceInstanceDeprovisionForbidden {
+	return &ServiceInstanceDeprovisionForbidden{}
+}
+
+/*
+ServiceInstanceDeprovisionForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceInstanceDeprovisionForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance deprovision forbidden response has a 2xx status code
+func (o *ServiceInstanceDeprovisionForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision forbidden response has a 3xx status code
+func (o *ServiceInstanceDeprovisionForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision forbidden response has a 4xx status code
+func (o *ServiceInstanceDeprovisionForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision forbidden response has a 5xx status code
+func (o *ServiceInstanceDeprovisionForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision forbidden response a status code equal to that given
+func (o *ServiceInstanceDeprovisionForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service instance deprovision forbidden response
+func (o *ServiceInstanceDeprovisionForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceInstanceDeprovisionForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceDeprovisionForbidden) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceDeprovisionForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceDeprovisionForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceDeprovisionNotFound creates a ServiceInstanceDeprovisionNotFound with default headers values
+func NewServiceInstanceDeprovisionNotFound() *ServiceInstanceDeprovisionNotFound {
+	return &ServiceInstanceDeprovisionNotFound{}
+}
+
+/*
+ServiceInstanceDeprovisionNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceInstanceDeprovisionNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance deprovision not found response has a 2xx status code
+func (o *ServiceInstanceDeprovisionNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision not found response has a 3xx status code
+func (o *ServiceInstanceDeprovisionNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision not found response has a 4xx status code
+func (o *ServiceInstanceDeprovisionNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision not found response has a 5xx status code
+func (o *ServiceInstanceDeprovisionNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision not found response a status code equal to that given
+func (o *ServiceInstanceDeprovisionNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service instance deprovision not found response
+func (o *ServiceInstanceDeprovisionNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceInstanceDeprovisionNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceDeprovisionNotFound) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceDeprovisionNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceDeprovisionNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewServiceInstanceDeprovisionGone creates a ServiceInstanceDeprovisionGone with default headers values
 func NewServiceInstanceDeprovisionGone() *ServiceInstanceDeprovisionGone {
 	return &ServiceInstanceDeprovisionGone{}
 }
 
-/* ServiceInstanceDeprovisionGone describes a response with status code 410, with default header values.
+/*
+ServiceInstanceDeprovisionGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -203,9 +496,44 @@ type ServiceInstanceDeprovisionGone struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance deprovision gone response has a 2xx status code
+func (o *ServiceInstanceDeprovisionGone) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision gone response has a 3xx status code
+func (o *ServiceInstanceDeprovisionGone) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision gone response has a 4xx status code
+func (o *ServiceInstanceDeprovisionGone) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision gone response has a 5xx status code
+func (o *ServiceInstanceDeprovisionGone) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision gone response a status code equal to that given
+func (o *ServiceInstanceDeprovisionGone) IsCode(code int) bool {
+	return code == 410
+}
+
+// Code gets the status code for the service instance deprovision gone response
+func (o *ServiceInstanceDeprovisionGone) Code() int {
+	return 410
+}
+
 func (o *ServiceInstanceDeprovisionGone) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionGone  %+v", 410, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionGone) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionGone  %+v", 410, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionGone) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -227,7 +555,8 @@ func NewServiceInstanceDeprovisionUnprocessableEntity() *ServiceInstanceDeprovis
 	return &ServiceInstanceDeprovisionUnprocessableEntity{}
 }
 
-/* ServiceInstanceDeprovisionUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+ServiceInstanceDeprovisionUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -235,9 +564,44 @@ type ServiceInstanceDeprovisionUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance deprovision unprocessable entity response has a 2xx status code
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance deprovision unprocessable entity response has a 3xx status code
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance deprovision unprocessable entity response has a 4xx status code
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance deprovision unprocessable entity response has a 5xx status code
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance deprovision unprocessable entity response a status code equal to that given
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
+// Code gets the status code for the service instance deprovision unprocessable entity response
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *ServiceInstanceDeprovisionUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *ServiceInstanceDeprovisionUnprocessableEntity) String() string {
+	return fmt.Sprintf("[DELETE /v2/service_instances/{instance_id}][%d] serviceInstanceDeprovisionUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *ServiceInstanceDeprovisionUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
