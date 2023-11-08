@@ -32,9 +32,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
 	}
-	if platform.PVSNetworkName != "" {
-		network = platform.PVSNetworkName
-	}
 
 	total := int64(1)
 	if pool.Replicas != nil {

@@ -26,7 +26,6 @@ type config struct {
 	DNSInstanceGUID       string `json:"powervs_dns_guid"`
 	ImageBucketName       string `json:"powervs_image_bucket_name"`
 	ImageBucketFileName   string `json:"powervs_image_bucket_file_name"`
-	NetworkName           string `json:"powervs_network_name"`
 	VPCName               string `json:"powervs_vpc_name"`
 	VPCSubnetName         string `json:"powervs_vpc_subnet_name"`
 	VPCPermitted          bool   `json:"powervs_vpc_permitted"`
@@ -52,7 +51,6 @@ type TFVarsSources struct {
 	Zone                  string
 	ImageBucketName       string
 	ImageBucketFileName   string
-	NetworkName           string
 	PowerVSResourceGroup  string
 	CISInstanceCRN        string
 	DNSInstanceCRN        string
@@ -121,9 +119,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:       string(sources.PublishStrategy),
 		EnableSNAT:            sources.EnableSNAT,
 		TransitGatewayEnabled: sources.TransitGatewayEnabled,
-	}
-	if masterConfig.Network.Name != nil {
-		cfg.NetworkName = *masterConfig.Network.Name
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

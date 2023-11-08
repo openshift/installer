@@ -38,7 +38,6 @@ module "pi_network" {
   cluster_id              = var.cluster_id
   cloud_instance_id       = module.iaas.si_guid
   resource_group          = var.powervs_resource_group
-  pvs_network_name        = var.powervs_network_name
   machine_cidr            = var.machine_v4_cidrs[0]
   vpc_crn                 = module.vpc.vpc_crn
   dns_server              = module.dns.dns_server

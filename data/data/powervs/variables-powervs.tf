@@ -70,12 +70,6 @@ variable "powervs_wait_for_vpc" {
   default     = "60s"
 }
 
-variable "powervs_network_name" {
-  type        = string
-  description = "The name of a pre-created Power VS DHCP network"
-  default     = ""
-}
-
 variable "powervs_vpc_name" {
   type        = string
   description = "The name of a pre-created IBM Cloud VPC. Must be in $powervs_vpc_region"

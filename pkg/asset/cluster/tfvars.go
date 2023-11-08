@@ -890,7 +890,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PowerVSResourceGroup:  installConfig.Config.PowerVS.PowerVSResourceGroup,
 				ImageBucketName:       osImage[0],
 				ImageBucketFileName:   osImage[1],
-				NetworkName:           installConfig.Config.PowerVS.PVSNetworkName,
 				VPCRegion:             vpcRegion,
 				VPCZone:               vpcZone,
 				VPCName:               vpcName,

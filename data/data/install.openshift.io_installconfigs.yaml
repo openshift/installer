@@ -4166,10 +4166,6 @@ spec:
                     description: PowerVSResourceGroup is the resource group in which
                       Power VS resources will be created.
                     type: string
-                  pvsNetworkName:
-                    description: PVSNetworkName specifies an existing network within
-                      the Power VS Service Instance.
-                    type: string
                   region:
                     description: Region specifies the IBM Cloud colo region where
                       the cluster will be created.
