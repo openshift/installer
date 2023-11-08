@@ -301,4 +301,14 @@ var (
 		ResponsiblePerson:   "miciah",
 		OwningProduct:       ocpSpecific,
 	}
+
+	FeatureGateVSphereControlPlaneMachineset = FeatureGateName("VSphereControlPlaneMachineSet")
+	vSphereControlPlaneMachineset            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateVSphereControlPlaneMachineset,
+		},
+		OwningJiraComponent: "splat",
+		ResponsiblePerson:   "rvanderp3",
+		OwningProduct:       ocpSpecific,
+	}
 )

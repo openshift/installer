@@ -627,7 +627,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				logrus.Debug("Generating worker machines with static IPs.")
 				templateName := clusterID.InfraID + "-rhcos"
 
-				machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+				machines, _, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
 				if err != nil {
 					return errors.Wrap(err, "failed to create worker machine objects")
 				}

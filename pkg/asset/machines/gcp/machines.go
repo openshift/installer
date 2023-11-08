@@ -106,7 +106,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			Template: machinev1.ControlPlaneMachineSetTemplate{
 				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
 				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
-					FailureDomains: machinev1.FailureDomains{
+					FailureDomains: &machinev1.FailureDomains{
 						Platform: v1.GCPPlatformType,
 						GCP:      &failureDomains,
 					},
