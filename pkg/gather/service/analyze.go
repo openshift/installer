@@ -77,7 +77,7 @@ func analyzeGatherBundle(bundleFile io.Reader) error {
 		optional bool
 	}{
 		{name: "release-image", check: checkReleaseImageDownload, optional: false},
-		{name: "bootkube", check: checkAPIURLs, optional: false},
+		{name: "bootkube", check: checkBootkubeService, optional: false},
 	}
 	for _, check := range analysisChecks {
 		a := serviceAnalyses[check.name]
@@ -112,13 +112,12 @@ func checkReleaseImageDownload(a analysis) bool {
 // failure to resolve either the API URL or API-Int URL or both. If that changes and if
 // any other stage in the bootkube service starts reporting a failure, we need to revisit
 // this. At that point verification of the URLs could be moved to its own service.
-func checkAPIURLs(a analysis) bool {
+func checkBootkubeService(a analysis) bool {
 	if a.successful {
 		return true
 	}
 	// Note: Even when there is a stage failure, we are not returning false here. That is
 	// intentional because we donot want to report this as an error in the "analyze" output.
-	logrus.Warn("The bootstrap machine is unable to resolve API and/or API-Int Server URLs")
 	a.logLastError()
 	return true
 }
