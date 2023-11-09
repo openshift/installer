@@ -6,7 +6,7 @@ metadata:
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: Default
+    release.openshift.io/feature-set: TechPreviewNoUpgrade
   name: authentications.config.openshift.io
 spec:
   group: config.openshift.io
@@ -18,8 +18,12 @@ spec:
   scope: Cluster
   versions:
     - name: v1
-      schema:
-        openAPIV3Schema:
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      "schema":
+        "openAPIV3Schema":
           description: "Authentication specifies cluster-wide settings for authentication (like OAuth and webhook token authenticators). The canonical name of an instance is `cluster`. \n Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer)."
           type: object
           required:
@@ -46,6 +50,122 @@ spec:
                     name:
                       description: name is the metadata.name of the referenced config map
                       type: string
+                oidcProviders:
+                  description: "OIDCProviders are OIDC identity providers that can issue tokens for this cluster Can only be set if \"Type\" is set to \"OIDC\". \n At most one provider can be configured."
+                  type: array
+                  maxItems: 1
+                  items:
+                    type: object
+                    required:
+                      - issuer
+                      - name
+                    properties:
+                      claimMappings:
+                        description: ClaimMappings describes rules on how to transform information from an ID token into a cluster identity
+                        type: object
+                        properties:
+                          groups:
+                            description: Groups is a name of the claim that should be used to construct groups for the cluster identity. The referenced claim must use array of strings values.
+                            type: object
+                            required:
+                              - claim
+                            properties:
+                              claim:
+                                description: Claim is a JWT token claim to be used in the mapping
+                                type: string
+                              prefix:
+                                description: "Prefix is a string to prefix the value from the token in the result of the claim mapping. \n By default, no prefixing occurs. \n Example: if `prefix` is set to \"myoidc:\"\" and the `claim` in JWT contains an array of strings \"a\", \"b\" and  \"c\", the mapping will result in an array of string \"myoidc:a\", \"myoidc:b\" and \"myoidc:c\"."
+                                type: string
+                          username:
+                            description: "Username is a name of the claim that should be used to construct usernames for the cluster identity. \n Default value: \"sub\""
+                            type: object
+                            required:
+                              - claim
+                            properties:
+                              claim:
+                                description: Claim is a JWT token claim to be used in the mapping
+                                type: string
+                              prefix:
+                                type: object
+                                required:
+                                  - prefixString
+                                properties:
+                                  prefixString:
+                                    type: string
+                                    minLength: 1
+                              prefixPolicy:
+                                description: "PrefixPolicy specifies how a prefix should apply. \n By default, claims other than `email` will be prefixed with the issuer URL to prevent naming clashes with other plugins. \n Set to \"NoPrefix\" to disable prefixing. \n Example: (1) `prefix` is set to \"myoidc:\" and `claim` is set to \"username\". If the JWT claim `username` contains value `userA`, the resulting mapped value will be \"myoidc:userA\". (2) `prefix` is set to \"myoidc:\" and `claim` is set to \"email\". If the JWT `email` claim contains value \"userA@myoidc.tld\", the resulting mapped value will be \"myoidc:userA@myoidc.tld\". (3) `prefix` is unset, `issuerURL` is set to `https://myoidc.tld`, the JWT claims include \"username\":\"userA\" and \"email\":\"userA@myoidc.tld\", and `claim` is set to: (a) \"username\": the mapped value will be \"https://myoidc.tld#userA\" (b) \"email\": the mapped value will be \"userA@myoidc.tld\""
+                                type: string
+                                enum:
+                                  - ""
+                                  - NoPrefix
+                                  - Prefix
+                            x-kubernetes-validations:
+                              - rule: 'has(self.prefixPolicy) && self.prefixPolicy == ''Prefix'' ? (has(self.prefix) && size(self.prefix.prefixString) > 0) : !has(self.prefix)'
+                                message: prefix must be set if prefixPolicy is 'Prefix', but must remain unset otherwise
+                      claimValidationRules:
+                        description: ClaimValidationRules are rules that are applied to validate token claims to authenticate users.
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            requiredClaim:
+                              description: RequiredClaim allows configuring a required claim name and its expected value
+                              type: object
+                              required:
+                                - claim
+                                - requiredValue
+                              properties:
+                                claim:
+                                  description: Claim is a name of a required claim. Only claims with string values are supported.
+                                  type: string
+                                  minLength: 1
+                                requiredValue:
+                                  description: RequiredValue is the required value for the claim.
+                                  type: string
+                                  minLength: 1
+                            type:
+                              description: Type sets the type of the validation rule
+                              type: string
+                              default: RequiredClaim
+                              enum:
+                                - RequiredClaim
+                        x-kubernetes-list-type: atomic
+                      issuer:
+                        description: Issuer describes atributes of the OIDC token issuer
+                        type: object
+                        required:
+                          - audiences
+                          - issuerURL
+                        properties:
+                          audiences:
+                            description: Audiences is an array of audiences that the token was issued for. Valid tokens must include at least one of these values in their "aud" claim. Must be set to exactly one value.
+                            type: array
+                            maxItems: 1
+                            items:
+                              type: string
+                              minLength: 1
+                            x-kubernetes-list-type: set
+                          issuerCertificateAuthority:
+                            description: CertificateAuthority is a reference to a config map in the configuration namespace. The .data of the configMap must contain the "ca-bundle.crt" key. If unset, system trust is used instead.
+                            type: object
+                            required:
+                              - name
+                            properties:
+                              name:
+                                description: name is the metadata.name of the referenced config map
+                                type: string
+                          issuerURL:
+                            description: URL is the serving URL of the token issuer. Must use the https:// scheme.
+                            type: string
+                            pattern: ^https:\/\/[^\s]
+                      name:
+                        description: Name of the OIDC provider
+                        type: string
+                        minLength: 1
+                  x-kubernetes-list-map-keys:
+                    - name
+                  x-kubernetes-list-type: map
                 serviceAccountIssuer:
                   description: 'serviceAccountIssuer is the identifier of the bound service account token issuer. The default is https://kubernetes.default.svc WARNING: Updating this field will not result in immediate invalidation of all bound tokens with the previous issuer value. Instead, the tokens issued by previous service account issuer will continue to be trusted for a time period chosen by the platform (currently set to 24h). This time period is subject to change over time. This allows internal components to transition to use new service account issuer without service distruption.'
                   type: string
@@ -97,7 +217,3 @@ spec:
                     name:
                       description: name is the metadata.name of the referenced config map
                       type: string
-      served: true
-      storage: true
-      subresources:
-        status: {}
