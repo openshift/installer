@@ -27,7 +27,7 @@ RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
       azure-cli-2.49.0-1.el8 \
       gettext \
-      google-cloud-cli \
+      google-cloud-cli-447.0.0-1 \
       gzip \
       jq \
       unzip \
