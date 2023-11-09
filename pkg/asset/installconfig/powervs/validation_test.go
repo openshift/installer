@@ -5,13 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
@@ -36,7 +34,6 @@ var (
 	validPublicSubnetUSSouth2ID  = "public-subnet-us-south-2-id"
 	validPrivateSubnetUSSouth1ID = "private-subnet-us-south-1-id"
 	validPrivateSubnetUSSouth2ID = "private-subnet-us-south-2-id"
-	validServiceInstanceID       = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	validSubnets                 = []string{
 		validPublicSubnetUSSouth1ID,
 		validPublicSubnetUSSouth2ID,
@@ -146,7 +143,6 @@ func validMinimalPlatform() *powervstypes.Platform {
 	return &powervstypes.Platform{
 		PowerVSResourceGroup: validPowerVSResourceGroup,
 		Region:               validRegion,
-		ServiceInstanceID:    validServiceInstanceID,
 		UserID:               validUserID,
 		Zone:                 validZone,
 	}
@@ -473,163 +469,6 @@ func createComputes(numComputes int32, compute *machinev1.PowerVSMachineProvider
 	}
 
 	return computes
-}
-
-func TestSystemPool(t *testing.T) {
-	setMockEnvVars()
-
-	dedicatedControlPlane := machinev1.PowerVSMachineProviderConfig{
-		TypeMeta:      metav1.TypeMeta{Kind: "PowerVSMachineProviderConfig", APIVersion: "machine.openshift.io/v1"},
-		KeyPairName:   "rdr-hamzy-test3-syd04-vcwtz-key",
-		SystemType:    "e980",
-		ProcessorType: "Dedicated",
-		Processors:    intstr.IntOrString{Type: intstr.Int, IntVal: 1},
-		MemoryGiB:     32,
-	}
-
-	dedicatedControlPlanes := createControlPlanes(5, &dedicatedControlPlane)
-
-	dedicatedCompute := machinev1.PowerVSMachineProviderConfig{
-		TypeMeta:      metav1.TypeMeta{Kind: "PowerVSMachineProviderConfig", APIVersion: "machine.openshift.io/v1"},
-		KeyPairName:   "rdr-hamzy-test3-syd04-vcwtz-key",
-		SystemType:    "e980",
-		ProcessorType: "Dedicated",
-		Processors:    intstr.IntOrString{Type: intstr.Int, IntVal: 1},
-		MemoryGiB:     32,
-	}
-
-	dedicatedComputes := createComputes(3, &dedicatedCompute)
-
-	systemPoolNEComputeCores := &models.System{
-		Cores:  func(f float64) *float64 { return &f }(2),
-		ID:     1,
-		Memory: func(i int64) *int64 { return &i }(256),
-	}
-	systemPoolsNEComputeCores := models.SystemPools{
-		"NotEnoughComputeCores": models.SystemPool{
-			Capacity:           systemPoolNEComputeCores,
-			CoreMemoryRatio:    float64(1.0),
-			MaxAvailable:       systemPoolNEComputeCores,
-			MaxCoresAvailable:  systemPoolNEComputeCores,
-			MaxMemoryAvailable: systemPoolNEComputeCores,
-			SharedCoreRatio: &models.MinMaxDefault{
-				Default: func(f float64) *float64 { return &f }(4),
-				Max:     func(f float64) *float64 { return &f }(4),
-				Min:     func(f float64) *float64 { return &f }(1),
-			},
-			Systems: []*models.System{
-				systemPoolNEComputeCores,
-			},
-			Type: "e980",
-		},
-	}
-	systemPoolNEWorkerCores := &models.System{
-		Cores:  func(f float64) *float64 { return &f }(6),
-		ID:     1,
-		Memory: func(i int64) *int64 { return &i }(256),
-	}
-	systemPoolsNEWorkerCores := models.SystemPools{
-		"NotEnoughWorkerCores": models.SystemPool{
-			Capacity:           systemPoolNEWorkerCores,
-			CoreMemoryRatio:    float64(1.0),
-			MaxAvailable:       systemPoolNEWorkerCores,
-			MaxCoresAvailable:  systemPoolNEWorkerCores,
-			MaxMemoryAvailable: systemPoolNEWorkerCores,
-			SharedCoreRatio: &models.MinMaxDefault{
-				Default: func(f float64) *float64 { return &f }(4),
-				Max:     func(f float64) *float64 { return &f }(4),
-				Min:     func(f float64) *float64 { return &f }(1),
-			},
-			Systems: []*models.System{
-				systemPoolNEWorkerCores,
-			},
-			Type: "e980",
-		},
-	}
-	systemPoolNEComputeMemory := &models.System{
-		Cores:  func(f float64) *float64 { return &f }(8),
-		ID:     1,
-		Memory: func(i int64) *int64 { return &i }(32),
-	}
-	systemPoolsNEComputeMemory := models.SystemPools{
-		"NotEnoughComputeMemory": models.SystemPool{
-			Capacity:           systemPoolNEComputeMemory,
-			CoreMemoryRatio:    float64(1.0),
-			MaxAvailable:       systemPoolNEComputeMemory,
-			MaxCoresAvailable:  systemPoolNEComputeMemory,
-			MaxMemoryAvailable: systemPoolNEComputeMemory,
-			SharedCoreRatio: &models.MinMaxDefault{
-				Default: func(f float64) *float64 { return &f }(4),
-				Max:     func(f float64) *float64 { return &f }(4),
-				Min:     func(f float64) *float64 { return &f }(1),
-			},
-			Systems: []*models.System{
-				systemPoolNEComputeMemory,
-			},
-			Type: "e980",
-		},
-	}
-	systemPoolNEWorkerMemory := &models.System{
-		Cores:  func(f float64) *float64 { return &f }(8),
-		ID:     1,
-		Memory: func(i int64) *int64 { return &i }(192),
-	}
-	systemPoolsNEWorkerMemory := models.SystemPools{
-		"NotEnoughWorkerMemory": models.SystemPool{
-			Capacity:           systemPoolNEWorkerMemory,
-			CoreMemoryRatio:    float64(1.0),
-			MaxAvailable:       systemPoolNEWorkerMemory,
-			MaxCoresAvailable:  systemPoolNEWorkerMemory,
-			MaxMemoryAvailable: systemPoolNEWorkerMemory,
-			SharedCoreRatio: &models.MinMaxDefault{
-				Default: func(f float64) *float64 { return &f }(4),
-				Max:     func(f float64) *float64 { return &f }(4),
-				Min:     func(f float64) *float64 { return &f }(1),
-			},
-			Systems: []*models.System{
-				systemPoolNEWorkerMemory,
-			},
-			Type: "e980",
-		},
-	}
-	systemPoolGood := &models.System{
-		Cores:  func(f float64) *float64 { return &f }(8),
-		ID:     1,
-		Memory: func(i int64) *int64 { return &i }(256),
-	}
-	systemPoolsGood := models.SystemPools{
-		"Enough": models.SystemPool{
-			Capacity:           systemPoolGood,
-			CoreMemoryRatio:    float64(1.0),
-			MaxAvailable:       systemPoolGood,
-			MaxCoresAvailable:  systemPoolGood,
-			MaxMemoryAvailable: systemPoolGood,
-			SharedCoreRatio: &models.MinMaxDefault{
-				Default: func(f float64) *float64 { return &f }(4),
-				Max:     func(f float64) *float64 { return &f }(4),
-				Min:     func(f float64) *float64 { return &f }(1),
-			},
-			Systems: []*models.System{
-				systemPoolGood,
-			},
-			Type: "e980",
-		},
-	}
-
-	err := powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeCores)
-	assert.EqualError(t, err, "not enough cores available (2) for the compute nodes (need 5)")
-
-	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerCores)
-	assert.EqualError(t, err, "not enough cores available (1) for the worker nodes (need 3)")
-
-	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEComputeMemory)
-	assert.EqualError(t, err, "not enough memory available (32) for the compute nodes (need 160)")
-
-	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsNEWorkerMemory)
-	assert.EqualError(t, err, "not enough memory available (32) for the worker nodes (need 96)")
-
-	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsGood)
-	assert.Empty(t, err)
 }
 
 func setMockEnvVars() {

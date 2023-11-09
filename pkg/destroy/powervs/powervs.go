@@ -57,6 +57,9 @@ func leftInContext(ctx context.Context) time.Duration {
 }
 
 const (
+	// resource Id for Power Systems Virtual Server in the Global catalog.
+	powerIAASResourceID = "abd259f0-9990-11e8-acc8-b9f54a8f1661"
+
 	// cisServiceID is the Cloud Internet Services' catalog service ID.
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
 )
@@ -203,7 +206,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Region = %v", metadata.ClusterPlatformMetadata.PowerVS.Region)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
-	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -225,7 +227,6 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		CISInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN,
 		DNSInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.DNSInstanceCRN,
 		Region:             metadata.ClusterPlatformMetadata.PowerVS.Region,
-		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 		VPCRegion:          metadata.ClusterPlatformMetadata.PowerVS.VPCRegion,
 		Zone:               metadata.ClusterPlatformMetadata.PowerVS.Zone,
 		pendingItemTracker: newPendingItemTracker(),
@@ -451,9 +452,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		ctrlv2                controllerv2.ResourceControllerAPIV2
 		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
 		authenticator         core.Authenticator
-		serviceInstances      cloudResources
 		versionDate           = "2023-07-04"
 		tgOptions             *transitgatewayapisv1.TransitGatewayApisV1Options
+		serviceName           string
 	)
 
 	defer func() {
@@ -686,21 +687,13 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 	}
 
-	o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
-	// Try and recover a service GUID if not present in the metadata
-	if o.ServiceGUID == "" {
-		// Find matching instances based on our cluster id
-		serviceInstances, err = o.listServiceInstances()
-		if err != nil {
-			return fmt.Errorf("loadSDKServices: listServiceInstances: %w", err)
-		}
-		if len(serviceInstances.list()) == 1 {
-			// The status field has been reused with the GUID
-			o.ServiceGUID = serviceInstances.list()[0].status
-			o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
-		}
-	}
+	serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
+	o.Logger.Debugf("loadSDKServices: serviceName = %v", serviceName)
 
+	o.ServiceGUID, err = o.ServiceInstanceNameToGUID(context.Background(), serviceName)
+	if err != nil {
+		return fmt.Errorf("loadSDKServices: ServiceInstanceNameToGUID: %w", err)
+	}
 	if o.ServiceGUID == "" {
 		// The rest of this function relies on o.ServiceGUID, so finish now!
 		return nil
@@ -737,6 +730,83 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// ServiceInstanceNameToGUID returns the GUID of the matching service instance name which was passed in.
+func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name string) (string, error) {
+	var (
+		options   *resourcecontrollerv2.ListResourceInstancesOptions
+		resources *resourcecontrollerv2.ResourceInstancesList
+		err       error
+		perPage   int64 = 10
+		moreData        = true
+		nextURL   *string
+		groupID   = o.resourceGroupID
+	)
+
+	// If the user passes in a human readable group id, then we need to convert it to a UUID
+	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
+	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
+	if err != nil {
+		return "", fmt.Errorf("failed to list resource groups: %w", err)
+	}
+	for _, group := range groups.Resources {
+		if *group.Name == groupID {
+			groupID = *group.ID
+		}
+	}
+
+	options = o.controllerSvc.NewListResourceInstancesOptions()
+	options.SetResourceGroupID(groupID)
+	// resource ID for Power Systems Virtual Server in the Global catalog
+	options.SetResourceID(powerIAASResourceID)
+	options.SetLimit(perPage)
+
+	for moreData {
+		resources, _, err = o.controllerSvc.ListResourceInstancesWithContext(ctx, options)
+		if err != nil {
+			return "", fmt.Errorf("failed to list resource instances: %w", err)
+		}
+
+		for _, resource := range resources.Resources {
+			var (
+				getResourceOptions *resourcecontrollerv2.GetResourceInstanceOptions
+				resourceInstance   *resourcecontrollerv2.ResourceInstance
+				response           *core.DetailedResponse
+			)
+
+			getResourceOptions = o.controllerSvc.NewGetResourceInstanceOptions(*resource.ID)
+
+			resourceInstance, response, err = o.controllerSvc.GetResourceInstance(getResourceOptions)
+			if err != nil {
+				return "", fmt.Errorf("failed to get instance: %w", err)
+			}
+			if response != nil && response.StatusCode == gohttp.StatusNotFound || response.StatusCode == gohttp.StatusInternalServerError {
+				return "", fmt.Errorf("failed to get instance, response is: %v", response)
+			}
+
+			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+				if resourceInstance.GUID != nil && *resourceInstance.Name == name {
+					return *resourceInstance.GUID, nil
+				}
+			}
+		}
+
+		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
+		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
+		if err != nil {
+			return "", fmt.Errorf("failed to GetQueryParam on start: %w", err)
+		}
+		if nextURL == nil {
+			options.SetStart("")
+		} else {
+			options.SetStart(*nextURL)
+		}
+
+		moreData = *resources.RowsCount == perPage
+	}
+
+	return "", nil
 }
 
 func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {

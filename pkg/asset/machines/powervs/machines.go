@@ -32,9 +32,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if platform.ClusterOSImage != "" {
 		image = platform.ClusterOSImage
 	}
-	if platform.PVSNetworkName != "" {
-		network = platform.PVSNetworkName
-	}
 
 	total := int64(1)
 	if pool.Replicas != nil {
@@ -121,6 +118,8 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 
 	dhcpNetRegex := fmt.Sprintf("^DHCPSERVER.*%s.*_Private$", clusterID)
 
+	serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
+
 	//Setting only the mandatory parameters
 	config := &machinev1.PowerVSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -129,8 +128,8 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 		},
 		ObjectMeta: metav1.ObjectMeta{},
 		ServiceInstance: machinev1.PowerVSResource{
-			Type: machinev1.PowerVSResourceTypeID,
-			ID:   &platform.ServiceInstanceID,
+			Type: machinev1.PowerVSResourceTypeName,
+			Name: &serviceName,
 		},
 		Image: machinev1.PowerVSResource{
 			Type: machinev1.PowerVSResourceTypeName,

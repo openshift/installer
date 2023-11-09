@@ -157,29 +157,6 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create a new PISession")
 		}
-
-		transitGatewayEnabled := configpowervs.TransitGatewayEnabledZone(ic.Config.Platform.PowerVS.Zone)
-
-		if !transitGatewayEnabled {
-			err = bxCli.ValidateCloudConnectionInPowerVSRegion(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
-			if err != nil {
-				return fmt.Errorf("failed to meet the prerequisite for Cloud Connections: %w", err)
-			}
-		}
-
-		err = bxCli.ValidateCapacity(context.TODO(), masters, workers, ic.Config.Platform.PowerVS.ServiceInstanceID)
-		if err != nil {
-			return err
-		}
-
-		if !transitGatewayEnabled {
-			if ic.Config.Platform.PowerVS.PVSNetworkName == "" {
-				err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID, ic.Config.MachineNetwork)
-				if err != nil {
-					return fmt.Errorf("failed to meet the prerequisite of one DHCP service per Power VS instance: %w", err)
-				}
-			}
-		}
 	case alibabacloud.Name, azure.Name, baremetal.Name, ibmcloud.Name, libvirt.Name, external.Name, none.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no special provisioning requirements to check
 	default:
