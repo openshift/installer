@@ -21,6 +21,20 @@
       - ip_address: "{{ os_ingressVIP }}"
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
     register: ports
+    when: os_subnet6_range is not defined
+
+  - name: 'Create the dualstack Compute ports'
+    openstack.cloud.port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      network: "{{ os_dualstack_network }}"
+      security_groups:
+      - "{{ os_sg_worker }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_ingressVIP }}"
+      - ip_address: "{{ os_ingressVIP6 }}"
+    with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
+    register: ports
+    when: os_subnet6_range is defined
 
   - name: 'Set Compute ports tag'
     ansible.builtin.command:
