@@ -22,16 +22,6 @@ var Regions = map[string]Region{
 		VPCRegion:   "us-south",
 		Zones:       []string{"dal10"},
 	},
-	"mon": {
-		Description: "Montreal, Canada",
-		VPCRegion:   "ca-tor",
-		Zones:       []string{"mon01"},
-	},
-	"osa": {
-		Description: "Osaka, Japan",
-		VPCRegion:   "jp-osa",
-		Zones:       []string{"osa21"},
-	},
 }
 
 // VPCRegionForPowerVSRegion returns the VPC region for the specified PowerVS region.
