@@ -118,7 +118,6 @@ func checkAPIURLs(a analysis) bool {
 	}
 	// Note: Even when there is a stage failure, we are not returning false here. That is
 	// intentional because we donot want to report this as an error in the "analyze" output.
-	logrus.Warn("The bootstrap machine is unable to resolve API and/or API-Int Server URLs")
 	a.logLastError()
 	return true
 }
@@ -180,6 +179,6 @@ func analyzeService(r io.Reader) (analysis, error) {
 
 func (a analysis) logLastError() {
 	for _, l := range strings.Split(a.lastError, "\n") {
-		logrus.Info(l)
+		logrus.Warn(l)
 	}
 }
