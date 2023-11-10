@@ -30,7 +30,7 @@ RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
       azure-cli \
       gettext \
-      google-cloud-sdk \
+      google-cloud-sdk-447.0.0-1 \
       gzip \
       jq \
       unzip \
