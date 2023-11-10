@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func TestAgentClusterInstall_Generate(t *testing.T) {
@@ -122,6 +123,22 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodBaremetalPlatformBMCACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"baremetal":{"hosts":[{"name":"control-0.example.org","bmc":{"username":"bmc-user","password":"password","address":"172.22.0.10","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:01","hardwareProfile":""},{"name":"control-1.example.org","bmc":{"username":"user2","password":"foo","address":"172.22.0.11","disableCertificateVerification":false},"role":"master","bootMACAddress":"98:af:65:a5:8d:02","hardwareProfile":""},{"name":"control-2.example.org","bmc":{"username":"admin","password":"bar","address":"172.22.0.12","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:03","hardwareProfile":""}],"clusterProvisioningIP":"172.22.0.3","provisioningNetwork":"Managed","provisioningNetworkInterface":"eth0","provisioningNetworkCIDR":"172.22.0.0/24","provisioningDHCPRange":"172.22.0.10,172.22.0.254"}}}`,
 	})
+
+	installConfigWVsphereUserManagedLB := getValidOptionalInstallConfig()
+	installConfigWVsphereUserManagedLB.Config.Platform = types.Platform{
+		VSphere: &vsphere.Platform{
+			LoadBalancer: &configv1.VSpherePlatformLoadBalancer{
+				Type: configv1.LoadBalancerTypeUserManaged,
+			},
+		},
+	}
+
+	goodVsphereUserManagedLB := getGoodACI()
+	goodVsphereUserManagedLB.Spec.APIVIPs = nil
+	goodVsphereUserManagedLB.Spec.IngressVIPs = nil
+	val = true
+	goodVsphereUserManagedLB.Spec.Networking.UserManagedNetworking = &val
+	goodVsphereUserManagedLB.Spec.PlatformType = hiveext.VSpherePlatformType
 
 	cases := []struct {
 		name           string
@@ -232,6 +249,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				getAgentHostsWithBMCConfig(),
 			},
 			expectedConfig: goodBaremetalPlatformBMCACI,
+		},
+		{
+			name: "valid configuration vsphere UserManaged LB",
+			dependencies: []asset.Asset{
+				installConfigWVsphereUserManagedLB,
+				&agentconfig.AgentHosts{},
+			},
+			expectedConfig: goodVsphereUserManagedLB,
 		},
 	}
 	for _, tc := range cases {

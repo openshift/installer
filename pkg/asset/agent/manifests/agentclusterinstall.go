@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	v1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -277,8 +278,12 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					VSphere: &vspherePlatform,
 				}
 			}
-			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
-			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+			if installConfig.Config.Platform.VSphere.LoadBalancer != nil && installConfig.Config.Platform.VSphere.LoadBalancer.Type == v1.LoadBalancerTypeUserManaged {
+				agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
+			} else {
+				agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
+				agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
+			}
 		} else if installConfig.Config.Platform.External != nil {
 			icOverridden = true
 			icOverrides.Platform = &agentClusterInstallPlatform{
