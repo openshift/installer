@@ -41,7 +41,8 @@ resource "google_project_iam_member" "bootstrap-storage-admin" {
 }
 
 resource "avgcp_gcs_object_url_sign_blob" "bootstrap" {
-  google_access_id = google_service_account.bootstrap-node-sa[0].email
+  # Null is presently not used, a service account will always be created.
+  google_access_id = var.gcp_create_bootstrap_sa ? google_service_account.bootstrap-node-sa[0].email : null
   bucket           = google_storage_bucket.ignition.name
   path             = "bootstrap.ign"
 }

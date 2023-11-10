@@ -126,7 +126,12 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	// A private key is needed to sign the URL for bootstrap ignition.
 	// If there is no key in the credentials, we need to generate a new SA.
-	_, foundKey := serviceAccount["private_key"]
+	// _, foundKey := serviceAccount["private_key"]
+
+	// Google Storage Sign Blob Libraries Require the use of a Service Account.
+	// It also needs to be able to auto-detect the name of the Service Account from the environment.
+	// Setting to Always Create Service Account since not all Environments are Compatible with auto-detection,
+	_, foundKey := "", false
 	cfg.CreateBootstrapSA = !foundKey
 
 	return json.MarshalIndent(cfg, "", "  ")
