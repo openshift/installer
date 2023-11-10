@@ -71,6 +71,9 @@ const (
 	ExternalPublishingStrategy PublishingStrategy = "External"
 	// InternalPublishingStrategy exposes the endpoints for the cluster to the private network only.
 	InternalPublishingStrategy PublishingStrategy = "Internal"
+	// MixedPublishingStrategy allows for the api server and the ingress to be configured individually for exposure to
+	// private network or Internet.
+	MixedPublishingStrategy PublishingStrategy = "Mixed"
 )
 
 // PolicyType is for usage polices that are applied to additionalTrustBundle.
@@ -154,6 +157,9 @@ type InstallConfig struct {
 	// +kubebuilder:default=External
 	// +optional
 	Publish PublishingStrategy `json:"publish,omitempty"`
+
+	// OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
+	OperatorPublishingStrategy *OperatorPublishingStrategy `json:"operatorPublishingStrategy,omitempty"`
 
 	// FIPS configures https://www.nist.gov/itl/fips-general-information
 	//
@@ -311,6 +317,22 @@ type Platform struct {
 	// Nutanix is the configuration used when installing on Nutanix.
 	// +optional
 	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
+}
+
+// OperatorPublishingStrategy is used to control the visibility of the components which can be used to have a mix of public
+// and private resources.
+type OperatorPublishingStrategy struct {
+	// Ingress sets the visibility of the created dns resources.
+	// +kubebuilder:validation:Enum="";External;Internal
+	// +kubebuilder:default=External
+	// +optional
+	Ingress string `json:"ingress,omitempty"`
+
+	// APIServer sets the visibility of the load balancers servicing the APIserver.
+	// +kubebuilder:validation:Enum="";External;Internal
+	// +kubebuilder:default=External
+	// +optional
+	APIServer string `json:"apiserver,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if

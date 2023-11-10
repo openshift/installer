@@ -96,6 +96,7 @@ type TFVarsSources struct {
 	InfrastructureName              string
 	KeyVault                        azure.KeyVault
 	UserAssignedIdentityKey         string
+	LBPrivate                       bool
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -170,7 +171,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeSize:                              masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                                sources.ImageURL,
 		ImageRelease:                            sources.ImageRelease,
-		Private:                                 sources.Publish == types.InternalPublishingStrategy,
+		Private:                                 sources.Publish == types.InternalPublishingStrategy || sources.LBPrivate,
 		OutboundType:                            string(sources.OutboundType),
 		ResourceGroupName:                       sources.ResourceGroupName,
 		BaseDomainResourceGroupName:             sources.BaseDomainResourceGroupName,

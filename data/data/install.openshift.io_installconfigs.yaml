@@ -2182,6 +2182,28 @@ spec:
                 description: Deprecated name for NetworkType
                 type: string
             type: object
+          operatorPublishingStrategy:
+            description: OperatorPublishingStrategy controls the visibility of ingress
+              and apiserver. Defaults to public.
+            properties:
+              apiserver:
+                default: External
+                description: APIServer sets the visibility of the load balancers servicing
+                  the APIserver.
+                enum:
+                - ""
+                - External
+                - Internal
+                type: string
+              ingress:
+                default: External
+                description: Ingress sets the visibility of the created dns resources.
+                enum:
+                - ""
+                - External
+                - Internal
+                type: string
+            type: object
           platform:
             description: Platform is the configuration for the specific platform upon
               which to perform the installation.

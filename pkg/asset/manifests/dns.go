@@ -135,7 +135,8 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy ||
+			(installConfig.Config.Publish == types.MixedPublishingStrategy && installConfig.Config.OperatorPublishingStrategy.Ingress != "Internal") {
 			//currently, this guesses the azure resource IDs from known parameter.
 			config.Spec.PublicZone = &configv1.DNSZone{
 				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
