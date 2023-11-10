@@ -17,7 +17,8 @@ step is required because the agent-tui and nmstate libraries are too big to fit 
 * assisted-service-pod - pod containing the assisted-service REST-API and database
 * assisted-service - assisted-service REST-API
 * assisted-service-db - postgresql database where assisted-service stores data
-* create-cluster-and-infraenv - reads the ZTP manifests located at /etc/assisted/manifests and registers the cluster and infraenv
+* agent-register-cluster - reads the ZTP manifests located at /etc/assisted/manifests and registers the cluster
+* agent-register-infraenv - reads the ZTP manifests located at /etc/assisted/manifests and registers the infraenv
 * install-status - determines the current install status and writes it out to /etc/issue.d/
 * apply-host-config - applies root device hints and roles specified in agent-config.yaml
 * start-cluster-installation - calls assisted-service REST-API to start cluster installation when all hosts are in ready state and have passed validations
