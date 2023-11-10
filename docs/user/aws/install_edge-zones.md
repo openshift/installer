@@ -10,7 +10,8 @@ This document is split into the following sections:
   - [Install a cluster into existing VPC with Local Zone subnets](#ipi-localzones-existing-vpc) (4.13+)
   - [Extend worker nodes to AWS Local Zones in existing clusters [Day 2]](#day2-localzones)
 - [Wavelength Zones](#wavelength-zones)
-  - [Install a cluster extending nodes to the Wavelength Zone [new VPC]](#ipi-wavelength) (4.15+)
+  - [Install a cluster extending nodes to the Wavelength Zone [new VPC]](#ipi-wavelength-auto)
+  - [Install a cluster on AWS in existing VPC with subnets in Wavelength Zone](#ipi-wavelength-byovpc)
 - [Use Cases](#use-cases)
 
 ## Prerequisites for edge zones
@@ -472,12 +473,12 @@ The default EBS for Local Zone locations is `gp2`, different than the default wo
 
 The preferred list of instance types follows the same order of worker pools, depending
 on the availability of the location, one of those instances will be chosen*:
-> Note: This list can be updated over the time
+> Note: This list can be updated over time
 - `m6i.xlarge`
 - `m5.xlarge`
 - `c5d.2xlarge`
 
-The `edge` compute pool will also create new labels to help developers to
+The `edge` compute pool will also create new labels to help developers
 deploy their applications onto those locations. The new labels introduced are:
     - `node-role.kubernetes.io/edge=''`
     - `zone_type=local-zone`
@@ -610,7 +611,7 @@ aws cloudformation delete-stack \
 
 ## Extend worker nodes to AWS Local Zones in existing clusters [Day 2] <a name="#day2-localzones"></a>
 
-To create worker nodes in AWS Local Zones in existing clusters it is required those steps:
+The following steps are required to create worker nodes in AWS Local Zones:
 
 - Make sure the overlay network MTU is set correctly to support the AWS Local Zone limitations
 - Create subnets in AWS Local Zones, and dependencies (subnet association)
@@ -618,7 +619,7 @@ To create worker nodes in AWS Local Zones in existing clusters it is required th
 
 When the cluster is installed using the edge compute pool, the MTU for the overlay network is automatically adjusted depending on the network plugin used.
 
-When the cluster was already installed without the edge compute pool, without Local Zone support, the required dependencies must be satisfied. The steps below cover both scenarios.
+When the cluster was already installed without the edge compute pool, and without Local Zone support, the required dependencies must be satisfied. The steps below cover both scenarios.
 
 ### Adjust the MTU of the overlay network
 
@@ -627,8 +628,6 @@ When the cluster was already installed without the edge compute pool, without Lo
 The [KCS](https://access.redhat.com/solutions/6996487) covers the required step to change the MTU from the overlay network.
 
 ***Example changing the default MTU (9001) to the maximum allowed for network plugin OVN-Kubernetes***:
-
-> TODO: need to check if can omit the `spec.migration.mtu.machine` on the process.
 
 ```bash
 
@@ -726,7 +725,7 @@ aws ec2 modify-availability-zone-group \
     --opt-in-status opted-in
 ```
 
-The request will be processed in background, it could take a few minutes. Check if the field `OptInStatus` has the value `opted-in` before proceeding:
+The request will be processed in the background, it could take a few minutes. Check if the field `OptInStatus` has the value `opted-in` before proceeding:
 
 ```bash
 aws --region us-east-1 ec2 describe-availability-zones \
@@ -735,13 +734,13 @@ aws --region us-east-1 ec2 describe-availability-zones \
   --query "AvailabilityZones[].OptInStatus"
 ```
 
-## Install a cluster extending nodes to the Wavelength Zone [new VPC] <a name="#ipi-wavelength"></a>
+## Install a cluster extending nodes to the Wavelength Zone [new VPC] <a name="#ipi-wavelength-auto"></a>
 
 ### Prerequisites
 
 #### Additional AWS Permissions
 
-IAM Permissions when installer fully automate the Wavelength zones creation, and deletion.
+IAM Permissions when the installer fully automates the creation and deletion of subnets in Wavelength zones.
 
 - [Opt-int permissions](#pre-iam-opt-in)
 
@@ -749,17 +748,17 @@ IAM Permissions when installer fully automate the Wavelength zones creation, and
 
 ```json
 {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Action": [
-				"ec2:DeleteCarrierGateway",
-				"ec2:CreateCarrierGateway"
-			],
-			"Resource": "*"
-		}
-	]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DeleteCarrierGateway",
+        "ec2:CreateCarrierGateway"
+      ],
+      "Resource": "*"
+    }
+  ]
 }
 ```
 
@@ -804,6 +803,203 @@ EOF
 
 ```bash
 ./openshift-install destroy cluster --dir ${$INSTALL_DIR}
+```
+
+## Install a cluster on AWS in existing VPC with subnets in Wavelength Zone <a name="#ipi-wavelength-byovpc"></a>
+
+This section describes how to create the CloudFormation stack to provision VPC and subnets in Wavelength Zones, and then install an OpenShift cluster into an existing network.
+
+### Prerequisites
+
+- [Opt-into AWS Wavelength Zone](#opt-into-aws-wavelength-zone)
+
+### Create the Network Stack (VPC and subnets)
+
+Steps:
+
+- Export the general variables for the cluster, and adapt them according to your environment:
+
+```sh
+export CLUSTER_REGION=us-east-1
+export CLUSTER_NAME=wlz-byovpc
+export PULL_SECRET_FILE=${HOME}/path/to/pull-secret.json
+export BASE_DOMAIN=example.com
+export SSH_PUB_KEY_FILE=$HOME/.ssh/id_rsa.pub
+
+export CIDR_VPC="10.0.0.0/16"
+
+# Set the Wavelength Zone to create subnets
+export ZONE_NAME="us-east-1-wl1-nyc-wlz-1"
+export SUBNET_CIDR_PUB="10.0.128.0/24"
+export SUBNET_CIDR_PVT="10.0.129.0/24"
+```
+
+- Export the CloudFormation template path (assuming you are in the root of the installer repository):
+
+```sh
+TEMPLATE_NAME_VPC="upi/aws/cloudformation/01_vpc.yaml"
+TEMPLATE_NAME_CARRIER_GW="upi/aws/cloudformation/01_vpc_01_carrier_gateway.yaml"
+TEMPLATE_NAME_SUBNET="upi/aws/cloudformation/01_vpc_99_subnet.yaml"
+```
+
+- Create the CloudFormation stack for VPC:
+
+```sh
+export STACK_VPC=${CLUSTER_NAME}-vpc
+aws cloudformation create-stack \
+  --region ${CLUSTER_REGION} \
+  --stack-name ${STACK_VPC} \
+  --template-body file://$TEMPLATE_NAME_VPC \
+  --parameters \
+    ParameterKey=VpcCidr,ParameterValue="${CIDR_VPC}" \
+    ParameterKey=AvailabilityZoneCount,ParameterValue=3 \
+    ParameterKey=SubnetBits,ParameterValue=12
+
+aws --region $CLUSTER_REGION cloudformation wait stack-create-complete --stack-name ${STACK_VPC}
+aws --region $CLUSTER_REGION cloudformation describe-stacks --stack-name ${STACK_VPC}
+
+export VPC_ID=$(aws --region $CLUSTER_REGION cloudformation describe-stacks \
+  --stack-name ${STACK_VPC} \
+  | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="VpcId").OutputValue' )
+```
+
+- Create the Carrier Gateway:
+
+```sh
+export STACK_CAGW=${CLUSTER_NAME}-cagw
+aws cloudformation create-stack \
+  --region ${CLUSTER_REGION} \
+  --stack-name ${STACK_CAGW} \
+  --template-body file://$TEMPLATE_NAME_CARRIER_GW \
+  --parameters \
+    ParameterKey=VpcId,ParameterValue="${VPC_ID}" \
+    ParameterKey=ClusterName,ParameterValue="${CLUSTER_NAME}"
+
+aws --region $CLUSTER_REGION cloudformation wait stack-create-complete --stack-name ${STACK_CAGW}
+aws --region $CLUSTER_REGION cloudformation describe-stacks --stack-name ${STACK_CAGW}
+```
+
+- Extract the variables to create the subnets
+
+```sh
+export ZONE_SUFFIX=$(echo ${ZONE_NAME/${CLUSTER_REGION}-/})
+
+export ROUTE_TABLE_PUB=$(aws --region $CLUSTER_REGION cloudformation describe-stacks \
+  --stack-name ${STACK_CAGW} \
+  | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue' )
+
+export ROUTE_TABLE_PVT=$(aws --region $CLUSTER_REGION cloudformation describe-stacks \
+  --stack-name ${STACK_VPC} \
+  | jq -r '.Stacks[0].Outputs[]
+    | select(.OutputKey=="PrivateRouteTableIds").OutputValue
+    | split(",")[0] | split("=")[1]' \
+)
+
+# Review the variables (optional)
+cat <<EOF
+CLUSTER_REGION=$CLUSTER_REGION
+VPC_ID=$VPC_ID
+AZ_NAME=$AZ_NAME
+AZ_SUFFIX=$AZ_SUFFIX
+ZONE_GROUP_NAME=$ZONE_GROUP_NAME
+ROUTE_TABLE_PUB=$ROUTE_TABLE_PUB
+ROUTE_TABLE_PVT=$ROUTE_TABLE_PVT
+SUBNET_CIDR_PUB=$SUBNET_CIDR_PUB
+SUBNET_CIDR_PVT=$SUBNET_CIDR_PVT
+EOF
+```
+
+- Create the CloudFormation stack to provision the public and private subnets:
+
+```sh
+export STACK_SUBNET=${CLUSTER_NAME}-subnets-${AZ_SUFFIX}
+aws cloudformation create-stack \
+  --region ${CLUSTER_REGION} \
+  --stack-name ${STACK_SUBNET} \
+  --template-body file://$TEMPLATE_NAME_SUBNET \
+  --parameters \
+    ParameterKey=VpcId,ParameterValue="${VPC_ID}" \
+    ParameterKey=ClusterName,ParameterValue="${CLUSTER_NAME}" \
+    ParameterKey=ZoneName,ParameterValue="${AZ_NAME}" \
+    ParameterKey=PublicRouteTableId,ParameterValue="${ROUTE_TABLE_PUB}" \
+    ParameterKey=PublicSubnetCidr,ParameterValue="${SUBNET_CIDR_PUB}" \
+    ParameterKey=PrivateRouteTableId,ParameterValue="${ROUTE_TABLE_PVT}" \
+    ParameterKey=PrivateSubnetCidr,ParameterValue="${SUBNET_CIDR_PVT}"
+
+aws --region $CLUSTER_REGION cloudformation wait stack-create-complete --stack-name ${STACK_SUBNET}
+aws --region $CLUSTER_REGION cloudformation describe-stacks --stack-name ${STACK_SUBNET}
+```
+
+### Create the cluster
+
+- Extract the subnets to be used in the install-config.yaml:
+
+```sh
+# Regular Availability Zones (public and private) from VPC CloudFormation Stack
+mapfile -t SUBNETS < <(aws --region $CLUSTER_REGION cloudformation describe-stacks   --stack-name "${STACK_VPC}" --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnetIds'].OutputValue" --output text | tr ',' '\n')
+
+mapfile -t -O "${#SUBNETS[@]}" SUBNETS < <(aws --region $CLUSTER_REGION cloudformation describe-stacks   --stack-name "${STACK_VPC}" --query "Stacks[0].Outputs[?OutputKey=='PublicSubnetIds'].OutputValue" --output text | tr ',' '\n')
+
+# Private subnet for Wavelenth Zones from subnets CloudFormation Stack
+mapfile -t -O "${#SUBNETS[@]}" SUBNETS < <(aws --region $CLUSTER_REGION cloudformation describe-stacks   --stack-name "${STACK_SUBNET}" --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnetIds'].OutputValue" --output text | tr ',' '\n')
+```
+
+- Create install-config.yaml:
+
+```sh
+cat <<EOF > ./install-config.yaml
+apiVersion: v1
+publish: External
+baseDomain: ${BASE_DOMAIN}
+metadata:
+  name: "${CLUSTER_NAME}"
+platform:
+  aws:
+    region: ${CLUSTER_REGION}
+    subnets:
+$(for SB in ${SUBNETS[*]}; do echo "    - $SB"; done)
+pullSecret: '$(cat ${PULL_SECRET_FILE} | awk -v ORS= -v OFS= '{$1=$1}1')'
+sshKey: |
+  $(cat ${SSH_PUB_KEY_FILE})
+EOF
+```
+
+- Create the cluster:
+
+```sh
+./openshift-install create cluster
+```
+
+### Destroy the cluster and network dependencies
+
+- Destroy the cluster:
+
+```sh
+./openshift-install destroy cluster
+```
+
+- Destroy the subnet stack:
+
+```sh
+aws cloudformation delete-stack \
+    --region ${AWS_REGION} \
+    --stack-name ${STACK_SUBNET}
+```
+
+- Destroy the Carrier Gateway stack:
+
+```sh
+aws cloudformation delete-stack \
+    --region ${AWS_REGION} \
+    --stack-name ${STACK_CAGW}
+```
+
+- Destroy the VPC Stack:
+
+```sh
+aws cloudformation delete-stack \
+    --region ${AWS_REGION} \
+    --stack-name ${STACK_VPC}
 ```
 
 ___
