@@ -245,7 +245,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig, clusterID.InfraID)
+		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig)
+
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
 			cloudProviderConfigMapKey = "vsphere.conf"
 		}

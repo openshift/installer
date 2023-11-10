@@ -178,7 +178,6 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		with(vSphereStaticIPs).
 		with(routeExternalCertificate).
 		with(automatedEtcdBackup).
-		with(vSphereControlPlaneMachineset).
 		without(machineAPIOperatorDisableMachineHealthCheckController).
 		with(adminNetworkPolicy).
 		with(dnsNameResolver).
