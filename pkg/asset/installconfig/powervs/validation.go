@@ -253,3 +253,26 @@ func ValidateResourceGroup(client API, ic *types.InstallConfig) error {
 
 	return nil
 }
+
+// ValidateSystemTypeForRegion checks if the specified sysType is available in the target region.
+func ValidateSystemTypeForRegion(client API, ic *types.InstallConfig) error {
+	if ic.ControlPlane == nil || ic.ControlPlane.Platform.PowerVS == nil || ic.ControlPlane.Platform.PowerVS.SysType == "" {
+		return nil
+	}
+	availableOnes, err := powervstypes.AvailableSysTypes(ic.PowerVS.Region)
+	if err != nil {
+		return fmt.Errorf("failed to obtain available SysTypes for: %s", ic.PowerVS.Region)
+	}
+	requested := ic.ControlPlane.Platform.PowerVS.SysType
+	found := false
+	for i := range availableOnes {
+		if requested == availableOnes[i] {
+			found = true
+			break
+		}
+	}
+	if found {
+		return nil
+	}
+	return fmt.Errorf("%s is not available in: %s", requested, ic.PowerVS.Region)
+}

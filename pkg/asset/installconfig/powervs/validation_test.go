@@ -130,6 +130,9 @@ var (
 		"disaster-recover-site": true,
 		"power-vpn-connections": false,
 	}
+	defaultSysType = "s922"
+	newSysType     = "s1022"
+	invalidRegion  = "foo"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -547,6 +550,89 @@ func TestValidatePERAvailability(t *testing.T) {
 			}
 
 			aggregatedErrors := powervs.ValidatePERAvailability(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateSystemTypeForRegion(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Unknown Region specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Region = invalidRegion
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
+				},
+			},
+			errorMsg: fmt.Sprintf("failed to obtain available SysTypes for: %s", invalidRegion),
+		},
+		{
+			name: "No Platform block",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.PowerVS = nil
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Structure present, but no SysType specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Unavailable SysType specified for Dallas Region",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Region = validRegion
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = newSysType
+				},
+			},
+			errorMsg: fmt.Sprintf("%s is not available in: %s", newSysType, validRegion),
+		},
+		{
+			name: "Good Region/SysType combo specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Region = validRegion
+					ic.ControlPlane.Platform.PowerVS = validMachinePool()
+					ic.ControlPlane.Platform.PowerVS.SysType = defaultSysType
+				},
+			},
+			errorMsg: "",
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateSystemTypeForRegion(powervsClient, editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
