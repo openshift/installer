@@ -128,6 +128,21 @@ func (mr *MockAPIMockRecorder) GetDNSZones(ctx, publish interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZones", reflect.TypeOf((*MockAPI)(nil).GetDNSZones), ctx, publish)
 }
 
+// GetDatacenterCapabilities mocks base method.
+func (m *MockAPI) GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDatacenterCapabilities", ctx, region)
+	ret0, _ := ret[0].(map[string]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDatacenterCapabilities indicates an expected call of GetDatacenterCapabilities.
+func (mr *MockAPIMockRecorder) GetDatacenterCapabilities(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatacenterCapabilities", reflect.TypeOf((*MockAPI)(nil).GetDatacenterCapabilities), ctx, region)
+}
+
 // GetPublicGatewayByVPC mocks base method.
 func (m *MockAPI) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error) {
 	m.ctrl.T.Helper()

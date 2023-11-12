@@ -47,6 +47,12 @@ func (o *PcloudVolumeOnboardingPostReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVolumeOnboardingPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudVolumeOnboardingPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudVolumeOnboardingPostReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding] pcloud.volume.onboarding.post", response, response.Code())
 	}
 }
 
@@ -69,7 +75,8 @@ func NewPcloudVolumeOnboardingPostAccepted() *PcloudVolumeOnboardingPostAccepted
 	return &PcloudVolumeOnboardingPostAccepted{}
 }
 
-/* PcloudVolumeOnboardingPostAccepted describes a response with status code 202, with default header values.
+/*
+PcloudVolumeOnboardingPostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -77,9 +84,44 @@ type PcloudVolumeOnboardingPostAccepted struct {
 	Payload *models.VolumeOnboardingCreateResponse
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post accepted response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post accepted response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post accepted response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud volume onboarding post accepted response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post accepted response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud volume onboarding post accepted response
+func (o *PcloudVolumeOnboardingPostAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudVolumeOnboardingPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostAccepted) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostAccepted) GetPayload() *models.VolumeOnboardingCreateResponse {
 	return o.Payload
 }
@@ -101,7 +143,8 @@ func NewPcloudVolumeOnboardingPostBadRequest() *PcloudVolumeOnboardingPostBadReq
 	return &PcloudVolumeOnboardingPostBadRequest{}
 }
 
-/* PcloudVolumeOnboardingPostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudVolumeOnboardingPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +152,44 @@ type PcloudVolumeOnboardingPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post bad request response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post bad request response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post bad request response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volume onboarding post bad request response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post bad request response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud volume onboarding post bad request response
+func (o *PcloudVolumeOnboardingPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVolumeOnboardingPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +211,8 @@ func NewPcloudVolumeOnboardingPostUnauthorized() *PcloudVolumeOnboardingPostUnau
 	return &PcloudVolumeOnboardingPostUnauthorized{}
 }
 
-/* PcloudVolumeOnboardingPostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudVolumeOnboardingPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +220,44 @@ type PcloudVolumeOnboardingPostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post unauthorized response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post unauthorized response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post unauthorized response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volume onboarding post unauthorized response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post unauthorized response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud volume onboarding post unauthorized response
+func (o *PcloudVolumeOnboardingPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudVolumeOnboardingPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -165,7 +279,8 @@ func NewPcloudVolumeOnboardingPostForbidden() *PcloudVolumeOnboardingPostForbidd
 	return &PcloudVolumeOnboardingPostForbidden{}
 }
 
-/* PcloudVolumeOnboardingPostForbidden describes a response with status code 403, with default header values.
+/*
+PcloudVolumeOnboardingPostForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -173,9 +288,44 @@ type PcloudVolumeOnboardingPostForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post forbidden response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post forbidden response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post forbidden response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volume onboarding post forbidden response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post forbidden response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud volume onboarding post forbidden response
+func (o *PcloudVolumeOnboardingPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVolumeOnboardingPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -192,12 +342,81 @@ func (o *PcloudVolumeOnboardingPostForbidden) readResponse(response runtime.Clie
 	return nil
 }
 
+// NewPcloudVolumeOnboardingPostNotFound creates a PcloudVolumeOnboardingPostNotFound with default headers values
+func NewPcloudVolumeOnboardingPostNotFound() *PcloudVolumeOnboardingPostNotFound {
+	return &PcloudVolumeOnboardingPostNotFound{}
+}
+
+/*
+PcloudVolumeOnboardingPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVolumeOnboardingPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volume onboarding post not found response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post not found response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post not found response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volume onboarding post not found response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post not found response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud volume onboarding post not found response
+func (o *PcloudVolumeOnboardingPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVolumeOnboardingPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumeOnboardingPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumeOnboardingPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumeOnboardingPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudVolumeOnboardingPostConflict creates a PcloudVolumeOnboardingPostConflict with default headers values
 func NewPcloudVolumeOnboardingPostConflict() *PcloudVolumeOnboardingPostConflict {
 	return &PcloudVolumeOnboardingPostConflict{}
 }
 
-/* PcloudVolumeOnboardingPostConflict describes a response with status code 409, with default header values.
+/*
+PcloudVolumeOnboardingPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -205,9 +424,44 @@ type PcloudVolumeOnboardingPostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post conflict response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post conflict response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post conflict response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volume onboarding post conflict response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volume onboarding post conflict response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud volume onboarding post conflict response
+func (o *PcloudVolumeOnboardingPostConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudVolumeOnboardingPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostConflict  %+v", 409, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostConflict) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostConflict  %+v", 409, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +483,8 @@ func NewPcloudVolumeOnboardingPostInternalServerError() *PcloudVolumeOnboardingP
 	return &PcloudVolumeOnboardingPostInternalServerError{}
 }
 
-/* PcloudVolumeOnboardingPostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudVolumeOnboardingPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +492,44 @@ type PcloudVolumeOnboardingPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud volume onboarding post internal server error response has a 2xx status code
+func (o *PcloudVolumeOnboardingPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volume onboarding post internal server error response has a 3xx status code
+func (o *PcloudVolumeOnboardingPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volume onboarding post internal server error response has a 4xx status code
+func (o *PcloudVolumeOnboardingPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud volume onboarding post internal server error response has a 5xx status code
+func (o *PcloudVolumeOnboardingPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud volume onboarding post internal server error response a status code equal to that given
+func (o *PcloudVolumeOnboardingPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud volume onboarding post internal server error response
+func (o *PcloudVolumeOnboardingPostInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudVolumeOnboardingPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudVolumeOnboardingPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/onboarding][%d] pcloudVolumeOnboardingPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudVolumeOnboardingPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

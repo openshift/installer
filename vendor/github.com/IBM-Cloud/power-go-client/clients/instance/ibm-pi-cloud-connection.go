@@ -26,12 +26,15 @@ func NewIBMPICloudConnectionClient(ctx context.Context, sess *ibmpisession.IBMPI
 
 // Create a Cloud Connection
 func (f *IBMPICloudConnectionClient) Create(body *models.CloudConnectionCreate) (*models.CloudConnection, *models.CloudConnectionCreateResponse, error) {
+	if f.session.IsOnPrem() {
+		return nil, nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, postcreated, postaccepted, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, nil, fmt.Errorf(errors.CreateCloudConnectionOperationFailed, f.cloudInstanceID, err)
+		return nil, nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateCloudConnectionOperationFailed, f.cloudInstanceID, err))
 	}
 	if postok != nil && postok.Payload != nil {
 		return postok.Payload, nil, nil
@@ -47,12 +50,15 @@ func (f *IBMPICloudConnectionClient) Create(body *models.CloudConnectionCreate) 
 
 // Get a Cloud Connection
 func (f *IBMPICloudConnectionClient) Get(id string) (*models.CloudConnection, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id)
 	resp, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetCloudConnectionOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetCloudConnectionOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform Get Cloud Connections Operation for cloudconnectionid %s", id)
@@ -62,12 +68,15 @@ func (f *IBMPICloudConnectionClient) Get(id string) (*models.CloudConnection, er
 
 // Get All Cloud Connections
 func (f *IBMPICloudConnectionClient) GetAll() (*models.CloudConnections, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all Cloud Connections: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all Cloud Connections: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Cloud Connections")
@@ -77,13 +86,16 @@ func (f *IBMPICloudConnectionClient) GetAll() (*models.CloudConnections, error) 
 
 // Update a Cloud Connection
 func (f *IBMPICloudConnectionClient) Update(id string, body *models.CloudConnectionUpdate) (*models.CloudConnection, *models.JobReference, error) {
+	if f.session.IsOnPrem() {
+		return nil, nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id).
 		WithBody(body)
 	putok, putaccepted, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, nil, fmt.Errorf(errors.UpdateCloudConnectionOperationFailed, id, err)
+		return nil, nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.UpdateCloudConnectionOperationFailed, id, err))
 	}
 	if putok != nil && putok.Payload != nil {
 		return putok.Payload, nil, nil
@@ -96,12 +108,15 @@ func (f *IBMPICloudConnectionClient) Update(id string, body *models.CloudConnect
 
 // Delete a Cloud Connection
 func (f *IBMPICloudConnectionClient) Delete(id string) (*models.JobReference, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id)
 	_, delaccepted, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.DeleteCloudConnectionOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.DeleteCloudConnectionOperationFailed, id, err))
 	}
 	if delaccepted != nil && delaccepted.Payload != nil {
 		return delaccepted.Payload, nil
@@ -111,13 +126,16 @@ func (f *IBMPICloudConnectionClient) Delete(id string) (*models.JobReference, er
 
 // Add a Network to a Cloud Connection
 func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (models.Object, *models.JobReference, error) {
+	if f.session.IsOnPrem() {
+		return nil, nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id).
 		WithNetworkID(networkID)
 	respok, respAccepted, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsNetworksPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to Add Network %s to Cloud Connection %s: %w", networkID, id, err)
+		return nil, nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Add Network %s to Cloud Connection %s: %w", networkID, id, err))
 	}
 	if respok != nil && respok.Payload != nil {
 		return respok.Payload, nil, nil
@@ -130,13 +148,16 @@ func (f *IBMPICloudConnectionClient) AddNetwork(id, networkID string) (models.Ob
 
 // Delete a Network from a Cloud Connection
 func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (models.Object, *models.JobReference, error) {
+	if f.session.IsOnPrem() {
+		return nil, nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsNetworksDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithCloudConnectionID(id).
 		WithNetworkID(networkID)
 	respok, respAccepted, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsNetworksDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to Delete Network %s from Cloud Connection %s: %w", networkID, id, err)
+		return nil, nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Delete Network %s from Cloud Connection %s: %w", networkID, id, err))
 	}
 	if respok != nil && respok.Payload != nil {
 		return respok.Payload, nil, nil
@@ -149,13 +170,16 @@ func (f *IBMPICloudConnectionClient) DeleteNetwork(id, networkID string) (models
 
 // Get all VPCs for a Cloud Instance
 func (f *IBMPICloudConnectionClient) GetVPC() (*models.CloudConnectionVirtualPrivateClouds, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_cloud_connections.NewPcloudCloudconnectionsVirtualprivatecloudsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
 
 	resp, err := f.session.Power.PCloudCloudConnections.PcloudCloudconnectionsVirtualprivatecloudsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to perform the get vpc operation: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to perform the get vpc operation: %w", err))
 	}
 	if resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform the get vpc operation")

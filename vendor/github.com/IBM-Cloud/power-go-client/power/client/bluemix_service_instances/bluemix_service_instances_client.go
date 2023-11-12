@@ -38,7 +38,7 @@ type ClientService interface {
 }
 
 /*
-  BluemixServiceInstanceGet gets the current state information associated with the service instance
+BluemixServiceInstanceGet gets the current state information associated with the service instance
 */
 func (a *Client) BluemixServiceInstanceGet(params *BluemixServiceInstanceGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*BluemixServiceInstanceGetOK, error) {
 	// TODO: Validate the params before sending
@@ -77,7 +77,7 @@ func (a *Client) BluemixServiceInstanceGet(params *BluemixServiceInstanceGetPara
 }
 
 /*
-  BluemixServiceInstancePut updates disable or enable the state of a provisioned service instance
+BluemixServiceInstancePut updates disable or enable the state of a provisioned service instance
 */
 func (a *Client) BluemixServiceInstancePut(params *BluemixServiceInstancePutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*BluemixServiceInstancePutOK, error) {
 	// TODO: Validate the params before sending

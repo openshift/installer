@@ -85,6 +85,11 @@ func (m *CloudConnectionVirtualPrivateClouds) contextValidateVirtualPrivateCloud
 	for i := 0; i < len(m.VirtualPrivateClouds); i++ {
 
 		if m.VirtualPrivateClouds[i] != nil {
+
+			if swag.IsZero(m.VirtualPrivateClouds[i]) { // not required
+				return nil
+			}
+
 			if err := m.VirtualPrivateClouds[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("virtualPrivateClouds" + "." + strconv.Itoa(i))

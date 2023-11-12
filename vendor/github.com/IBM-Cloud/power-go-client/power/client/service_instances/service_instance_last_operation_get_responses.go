@@ -35,6 +35,24 @@ func (o *ServiceInstanceLastOperationGetReader) ReadResponse(response runtime.Cl
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceInstanceLastOperationGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceInstanceLastOperationGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceInstanceLastOperationGetNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewServiceInstanceLastOperationGetGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -42,7 +60,7 @@ func (o *ServiceInstanceLastOperationGetReader) ReadResponse(response runtime.Cl
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /v2/service_instances/{instance_id}/last_operation] serviceInstance.lastOperation.get", response, response.Code())
 	}
 }
 
@@ -51,7 +69,8 @@ func NewServiceInstanceLastOperationGetOK() *ServiceInstanceLastOperationGetOK {
 	return &ServiceInstanceLastOperationGetOK{}
 }
 
-/* ServiceInstanceLastOperationGetOK describes a response with status code 200, with default header values.
+/*
+ServiceInstanceLastOperationGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -59,9 +78,44 @@ type ServiceInstanceLastOperationGetOK struct {
 	Payload *models.LastOperationResource
 }
 
+// IsSuccess returns true when this service instance last operation get o k response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service instance last operation get o k response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get o k response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service instance last operation get o k response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get o k response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the service instance last operation get o k response
+func (o *ServiceInstanceLastOperationGetOK) Code() int {
+	return 200
+}
+
 func (o *ServiceInstanceLastOperationGetOK) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetOK) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetOK) GetPayload() *models.LastOperationResource {
 	return o.Payload
 }
@@ -83,7 +137,8 @@ func NewServiceInstanceLastOperationGetBadRequest() *ServiceInstanceLastOperatio
 	return &ServiceInstanceLastOperationGetBadRequest{}
 }
 
-/* ServiceInstanceLastOperationGetBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceInstanceLastOperationGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -91,9 +146,44 @@ type ServiceInstanceLastOperationGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance last operation get bad request response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get bad request response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get bad request response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get bad request response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get bad request response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service instance last operation get bad request response
+func (o *ServiceInstanceLastOperationGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *ServiceInstanceLastOperationGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -110,12 +200,217 @@ func (o *ServiceInstanceLastOperationGetBadRequest) readResponse(response runtim
 	return nil
 }
 
+// NewServiceInstanceLastOperationGetUnauthorized creates a ServiceInstanceLastOperationGetUnauthorized with default headers values
+func NewServiceInstanceLastOperationGetUnauthorized() *ServiceInstanceLastOperationGetUnauthorized {
+	return &ServiceInstanceLastOperationGetUnauthorized{}
+}
+
+/*
+ServiceInstanceLastOperationGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceInstanceLastOperationGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance last operation get unauthorized response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get unauthorized response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get unauthorized response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get unauthorized response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get unauthorized response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service instance last operation get unauthorized response
+func (o *ServiceInstanceLastOperationGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceInstanceLastOperationGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceLastOperationGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceLastOperationGetForbidden creates a ServiceInstanceLastOperationGetForbidden with default headers values
+func NewServiceInstanceLastOperationGetForbidden() *ServiceInstanceLastOperationGetForbidden {
+	return &ServiceInstanceLastOperationGetForbidden{}
+}
+
+/*
+ServiceInstanceLastOperationGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceInstanceLastOperationGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance last operation get forbidden response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get forbidden response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get forbidden response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get forbidden response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get forbidden response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service instance last operation get forbidden response
+func (o *ServiceInstanceLastOperationGetForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceInstanceLastOperationGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceLastOperationGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceLastOperationGetNotFound creates a ServiceInstanceLastOperationGetNotFound with default headers values
+func NewServiceInstanceLastOperationGetNotFound() *ServiceInstanceLastOperationGetNotFound {
+	return &ServiceInstanceLastOperationGetNotFound{}
+}
+
+/*
+ServiceInstanceLastOperationGetNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceInstanceLastOperationGetNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance last operation get not found response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get not found response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get not found response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get not found response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get not found response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service instance last operation get not found response
+func (o *ServiceInstanceLastOperationGetNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceInstanceLastOperationGetNotFound) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceLastOperationGetNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceLastOperationGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewServiceInstanceLastOperationGetGone creates a ServiceInstanceLastOperationGetGone with default headers values
 func NewServiceInstanceLastOperationGetGone() *ServiceInstanceLastOperationGetGone {
 	return &ServiceInstanceLastOperationGetGone{}
 }
 
-/* ServiceInstanceLastOperationGetGone describes a response with status code 410, with default header values.
+/*
+ServiceInstanceLastOperationGetGone describes a response with status code 410, with default header values.
 
 Gone
 */
@@ -123,9 +418,44 @@ type ServiceInstanceLastOperationGetGone struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service instance last operation get gone response has a 2xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance last operation get gone response has a 3xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance last operation get gone response has a 4xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance last operation get gone response has a 5xx status code
+func (o *ServiceInstanceLastOperationGetGone) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance last operation get gone response a status code equal to that given
+func (o *ServiceInstanceLastOperationGetGone) IsCode(code int) bool {
+	return code == 410
+}
+
+// Code gets the status code for the service instance last operation get gone response
+func (o *ServiceInstanceLastOperationGetGone) Code() int {
+	return 410
+}
+
 func (o *ServiceInstanceLastOperationGetGone) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
 }
+
+func (o *ServiceInstanceLastOperationGetGone) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}/last_operation][%d] serviceInstanceLastOperationGetGone  %+v", 410, o.Payload)
+}
+
 func (o *ServiceInstanceLastOperationGetGone) GetPayload() *models.Error {
 	return o.Payload
 }

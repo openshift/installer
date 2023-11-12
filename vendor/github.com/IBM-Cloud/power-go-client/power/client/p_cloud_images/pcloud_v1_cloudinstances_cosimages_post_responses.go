@@ -47,6 +47,12 @@ func (o *PcloudV1CloudinstancesCosimagesPostReader) ReadResponse(response runtim
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudV1CloudinstancesCosimagesPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudV1CloudinstancesCosimagesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -66,7 +72,7 @@ func (o *PcloudV1CloudinstancesCosimagesPostReader) ReadResponse(response runtim
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images] pcloud.v1.cloudinstances.cosimages.post", response, response.Code())
 	}
 }
 
@@ -75,7 +81,8 @@ func NewPcloudV1CloudinstancesCosimagesPostAccepted() *PcloudV1CloudinstancesCos
 	return &PcloudV1CloudinstancesCosimagesPostAccepted{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostAccepted describes a response with status code 202, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostAccepted describes a response with status code 202, with default header values.
 
 Accepted, cos-image import successfully added to the jobs queue
 */
@@ -83,9 +90,44 @@ type PcloudV1CloudinstancesCosimagesPostAccepted struct {
 	Payload *models.JobReference
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post accepted response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post accepted response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post accepted response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post accepted response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post accepted response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post accepted response
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) GetPayload() *models.JobReference {
 	return o.Payload
 }
@@ -107,7 +149,8 @@ func NewPcloudV1CloudinstancesCosimagesPostBadRequest() *PcloudV1CloudinstancesC
 	return &PcloudV1CloudinstancesCosimagesPostBadRequest{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -115,9 +158,44 @@ type PcloudV1CloudinstancesCosimagesPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post bad request response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post bad request response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post bad request response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post bad request response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post bad request response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post bad request response
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -139,7 +217,8 @@ func NewPcloudV1CloudinstancesCosimagesPostUnauthorized() *PcloudV1Cloudinstance
 	return &PcloudV1CloudinstancesCosimagesPostUnauthorized{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -147,9 +226,44 @@ type PcloudV1CloudinstancesCosimagesPostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post unauthorized response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post unauthorized response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post unauthorized response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post unauthorized response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post unauthorized response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post unauthorized response
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -171,7 +285,8 @@ func NewPcloudV1CloudinstancesCosimagesPostForbidden() *PcloudV1CloudinstancesCo
 	return &PcloudV1CloudinstancesCosimagesPostForbidden{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostForbidden describes a response with status code 403, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -179,9 +294,44 @@ type PcloudV1CloudinstancesCosimagesPostForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post forbidden response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post forbidden response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post forbidden response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post forbidden response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post forbidden response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post forbidden response
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -198,12 +348,81 @@ func (o *PcloudV1CloudinstancesCosimagesPostForbidden) readResponse(response run
 	return nil
 }
 
+// NewPcloudV1CloudinstancesCosimagesPostNotFound creates a PcloudV1CloudinstancesCosimagesPostNotFound with default headers values
+func NewPcloudV1CloudinstancesCosimagesPostNotFound() *PcloudV1CloudinstancesCosimagesPostNotFound {
+	return &PcloudV1CloudinstancesCosimagesPostNotFound{}
+}
+
+/*
+PcloudV1CloudinstancesCosimagesPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudV1CloudinstancesCosimagesPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post not found response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post not found response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post not found response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post not found response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post not found response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post not found response
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudV1CloudinstancesCosimagesPostConflict creates a PcloudV1CloudinstancesCosimagesPostConflict with default headers values
 func NewPcloudV1CloudinstancesCosimagesPostConflict() *PcloudV1CloudinstancesCosimagesPostConflict {
 	return &PcloudV1CloudinstancesCosimagesPostConflict{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostConflict describes a response with status code 409, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -211,9 +430,44 @@ type PcloudV1CloudinstancesCosimagesPostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post conflict response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post conflict response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post conflict response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post conflict response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post conflict response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post conflict response
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostConflict  %+v", 409, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostConflict  %+v", 409, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +489,8 @@ func NewPcloudV1CloudinstancesCosimagesPostUnprocessableEntity() *PcloudV1Cloudi
 	return &PcloudV1CloudinstancesCosimagesPostUnprocessableEntity{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -243,9 +498,44 @@ type PcloudV1CloudinstancesCosimagesPostUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post unprocessable entity response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post unprocessable entity response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post unprocessable entity response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post unprocessable entity response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post unprocessable entity response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post unprocessable entity response
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +557,8 @@ func NewPcloudV1CloudinstancesCosimagesPostInternalServerError() *PcloudV1Cloudi
 	return &PcloudV1CloudinstancesCosimagesPostInternalServerError{}
 }
 
-/* PcloudV1CloudinstancesCosimagesPostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudV1CloudinstancesCosimagesPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -275,9 +566,44 @@ type PcloudV1CloudinstancesCosimagesPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post internal server error response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post internal server error response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post internal server error response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post internal server error response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post internal server error response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post internal server error response
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

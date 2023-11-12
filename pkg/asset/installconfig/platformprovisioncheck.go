@@ -160,6 +160,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
+		err = powervsconfig.ValidatePERAvailability(client, ic.Config)
+		if err != nil {
+			return err
+		}
+
 		err = powervsconfig.ValidatePreExistingDNS(client, ic.Config, ic.PowerVS)
 		if err != nil {
 			return err

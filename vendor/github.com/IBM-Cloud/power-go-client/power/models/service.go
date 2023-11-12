@@ -246,6 +246,11 @@ func (m *Service) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 func (m *Service) contextValidateDashboardClient(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.DashboardClient != nil {
+
+		if swag.IsZero(m.DashboardClient) { // not required
+			return nil
+		}
+
 		if err := m.DashboardClient.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("dashboard_client")
@@ -264,6 +269,11 @@ func (m *Service) contextValidatePlans(ctx context.Context, formats strfmt.Regis
 	for i := 0; i < len(m.Plans); i++ {
 
 		if m.Plans[i] != nil {
+
+			if swag.IsZero(m.Plans[i]) { // not required
+				return nil
+			}
+
 			if err := m.Plans[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("plans" + "." + strconv.Itoa(i))

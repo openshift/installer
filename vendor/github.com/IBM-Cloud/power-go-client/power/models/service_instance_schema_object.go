@@ -102,6 +102,11 @@ func (m *ServiceInstanceSchemaObject) ContextValidate(ctx context.Context, forma
 func (m *ServiceInstanceSchemaObject) contextValidateCreate(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Create != nil {
+
+		if swag.IsZero(m.Create) { // not required
+			return nil
+		}
+
 		if err := m.Create.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("create")
@@ -118,6 +123,11 @@ func (m *ServiceInstanceSchemaObject) contextValidateCreate(ctx context.Context,
 func (m *ServiceInstanceSchemaObject) contextValidateUpdate(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Update != nil {
+
+		if swag.IsZero(m.Update) { // not required
+			return nil
+		}
+
 		if err := m.Update.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("update")

@@ -52,10 +52,12 @@ func NewPcloudCloudinstancesDeleteParamsWithHTTPClient(client *http.Client) *Pcl
 	}
 }
 
-/* PcloudCloudinstancesDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud cloudinstances delete operation.
+/*
+PcloudCloudinstancesDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud cloudinstances delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudCloudinstancesDeleteParams struct {
 

@@ -119,6 +119,11 @@ func (m *VolumeGroupDetails) ContextValidate(ctx context.Context, formats strfmt
 func (m *VolumeGroupDetails) contextValidateStatusDescription(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.StatusDescription != nil {
+
+		if swag.IsZero(m.StatusDescription) { // not required
+			return nil
+		}
+
 		if err := m.StatusDescription.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("statusDescription")

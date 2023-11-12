@@ -41,6 +41,18 @@ func (o *PcloudPvminstancesPutReader) ReadResponse(response runtime.ClientRespon
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudPvminstancesPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +66,7 @@ func (o *PcloudPvminstancesPutReader) ReadResponse(response runtime.ClientRespon
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}] pcloud.pvminstances.put", response, response.Code())
 	}
 }
 
@@ -63,7 +75,8 @@ func NewPcloudPvminstancesPutAccepted() *PcloudPvminstancesPutAccepted {
 	return &PcloudPvminstancesPutAccepted{}
 }
 
-/* PcloudPvminstancesPutAccepted describes a response with status code 202, with default header values.
+/*
+PcloudPvminstancesPutAccepted describes a response with status code 202, with default header values.
 
 Accepted (this is a long running operation)
 */
@@ -71,9 +84,44 @@ type PcloudPvminstancesPutAccepted struct {
 	Payload *models.PVMInstanceUpdateResponse
 }
 
+// IsSuccess returns true when this pcloud pvminstances put accepted response has a 2xx status code
+func (o *PcloudPvminstancesPutAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud pvminstances put accepted response has a 3xx status code
+func (o *PcloudPvminstancesPutAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put accepted response has a 4xx status code
+func (o *PcloudPvminstancesPutAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances put accepted response has a 5xx status code
+func (o *PcloudPvminstancesPutAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put accepted response a status code equal to that given
+func (o *PcloudPvminstancesPutAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud pvminstances put accepted response
+func (o *PcloudPvminstancesPutAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudPvminstancesPutAccepted) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudPvminstancesPutAccepted) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudPvminstancesPutAccepted) GetPayload() *models.PVMInstanceUpdateResponse {
 	return o.Payload
 }
@@ -95,7 +143,8 @@ func NewPcloudPvminstancesPutBadRequest() *PcloudPvminstancesPutBadRequest {
 	return &PcloudPvminstancesPutBadRequest{}
 }
 
-/* PcloudPvminstancesPutBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudPvminstancesPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +152,44 @@ type PcloudPvminstancesPutBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances put bad request response has a 2xx status code
+func (o *PcloudPvminstancesPutBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put bad request response has a 3xx status code
+func (o *PcloudPvminstancesPutBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put bad request response has a 4xx status code
+func (o *PcloudPvminstancesPutBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances put bad request response has a 5xx status code
+func (o *PcloudPvminstancesPutBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put bad request response a status code equal to that given
+func (o *PcloudPvminstancesPutBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances put bad request response
+func (o *PcloudPvminstancesPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudPvminstancesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudPvminstancesPutBadRequest) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudPvminstancesPutBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +211,8 @@ func NewPcloudPvminstancesPutUnauthorized() *PcloudPvminstancesPutUnauthorized {
 	return &PcloudPvminstancesPutUnauthorized{}
 }
 
-/* PcloudPvminstancesPutUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudPvminstancesPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +220,44 @@ type PcloudPvminstancesPutUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances put unauthorized response has a 2xx status code
+func (o *PcloudPvminstancesPutUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put unauthorized response has a 3xx status code
+func (o *PcloudPvminstancesPutUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put unauthorized response has a 4xx status code
+func (o *PcloudPvminstancesPutUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances put unauthorized response has a 5xx status code
+func (o *PcloudPvminstancesPutUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put unauthorized response a status code equal to that given
+func (o *PcloudPvminstancesPutUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud pvminstances put unauthorized response
+func (o *PcloudPvminstancesPutUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudPvminstancesPutUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudPvminstancesPutUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -154,12 +274,149 @@ func (o *PcloudPvminstancesPutUnauthorized) readResponse(response runtime.Client
 	return nil
 }
 
+// NewPcloudPvminstancesPutForbidden creates a PcloudPvminstancesPutForbidden with default headers values
+func NewPcloudPvminstancesPutForbidden() *PcloudPvminstancesPutForbidden {
+	return &PcloudPvminstancesPutForbidden{}
+}
+
+/*
+PcloudPvminstancesPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances put forbidden response has a 2xx status code
+func (o *PcloudPvminstancesPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put forbidden response has a 3xx status code
+func (o *PcloudPvminstancesPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put forbidden response has a 4xx status code
+func (o *PcloudPvminstancesPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances put forbidden response has a 5xx status code
+func (o *PcloudPvminstancesPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put forbidden response a status code equal to that given
+func (o *PcloudPvminstancesPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances put forbidden response
+func (o *PcloudPvminstancesPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesPutNotFound creates a PcloudPvminstancesPutNotFound with default headers values
+func NewPcloudPvminstancesPutNotFound() *PcloudPvminstancesPutNotFound {
+	return &PcloudPvminstancesPutNotFound{}
+}
+
+/*
+PcloudPvminstancesPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances put not found response has a 2xx status code
+func (o *PcloudPvminstancesPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put not found response has a 3xx status code
+func (o *PcloudPvminstancesPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put not found response has a 4xx status code
+func (o *PcloudPvminstancesPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances put not found response has a 5xx status code
+func (o *PcloudPvminstancesPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put not found response a status code equal to that given
+func (o *PcloudPvminstancesPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances put not found response
+func (o *PcloudPvminstancesPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudPvminstancesPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudPvminstancesPutUnprocessableEntity creates a PcloudPvminstancesPutUnprocessableEntity with default headers values
 func NewPcloudPvminstancesPutUnprocessableEntity() *PcloudPvminstancesPutUnprocessableEntity {
 	return &PcloudPvminstancesPutUnprocessableEntity{}
 }
 
-/* PcloudPvminstancesPutUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudPvminstancesPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -167,9 +424,44 @@ type PcloudPvminstancesPutUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances put unprocessable entity response has a 2xx status code
+func (o *PcloudPvminstancesPutUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put unprocessable entity response has a 3xx status code
+func (o *PcloudPvminstancesPutUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put unprocessable entity response has a 4xx status code
+func (o *PcloudPvminstancesPutUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances put unprocessable entity response has a 5xx status code
+func (o *PcloudPvminstancesPutUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances put unprocessable entity response a status code equal to that given
+func (o *PcloudPvminstancesPutUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
+// Code gets the status code for the pcloud pvminstances put unprocessable entity response
+func (o *PcloudPvminstancesPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudPvminstancesPutUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudPvminstancesPutUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +483,8 @@ func NewPcloudPvminstancesPutInternalServerError() *PcloudPvminstancesPutInterna
 	return &PcloudPvminstancesPutInternalServerError{}
 }
 
-/* PcloudPvminstancesPutInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudPvminstancesPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +492,44 @@ type PcloudPvminstancesPutInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances put internal server error response has a 2xx status code
+func (o *PcloudPvminstancesPutInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances put internal server error response has a 3xx status code
+func (o *PcloudPvminstancesPutInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances put internal server error response has a 4xx status code
+func (o *PcloudPvminstancesPutInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances put internal server error response has a 5xx status code
+func (o *PcloudPvminstancesPutInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud pvminstances put internal server error response a status code equal to that given
+func (o *PcloudPvminstancesPutInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances put internal server error response
+func (o *PcloudPvminstancesPutInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudPvminstancesPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudPvminstancesPutInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudPvminstancesPutInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

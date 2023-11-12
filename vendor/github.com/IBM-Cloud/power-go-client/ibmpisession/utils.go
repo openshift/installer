@@ -37,14 +37,19 @@ func fetchAuthorizationData(a core.Authenticator) (string, error) {
 // Usage:
 // `crn := fmt.Sprintf(crnBuilder(useraccount, regionZone, host), <cloudInstanceID>)`
 func crnBuilder(useraccount, zone, host string) string {
+	// TODO: after combined services, review this code to remove ppc-aas references
 	var service string
-	if strings.Contains(host, ".power-iaas.cloud.ibm.com") {
+	if strings.Contains(host, ".power-iaas.cloud.ibm.com") || strings.Contains(host, ".ppc-aas.cloud.ibm.com") {
 		service = "bluemix"
 	} else {
 		service = "staging"
 	}
-	crn := fmt.Sprintf("crn:v1:%s:public:power-iaas:%s:a/%s:", service, zone, useraccount)
-	return crn + "%s::"
+
+	// Return crn
+	if strings.Contains(host, "ppc-aas") {
+		return fmt.Sprintf("crn:v1:%s:public:ppc-aas:%s:a/%s:", service, zone, useraccount) + "%s::"
+	}
+	return fmt.Sprintf("crn:v1:%s:public:power-iaas:%s:a/%s:", service, zone, useraccount) + "%s::"
 }
 
 func powerJSONConsumer() runtime.Consumer {
@@ -63,7 +68,10 @@ func powerJSONConsumer() runtime.Consumer {
 
 // getPIClient generates a PowerIaas client
 func getPIClient(debug bool, host string, scheme string) *client.PowerIaasAPI {
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: false}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: false,
+		MinVersion:         tls.VersionTLS12,
+	}
 	if scheme == "" {
 		scheme = SCHEME_HTTPS
 	}
@@ -87,4 +95,14 @@ func costructRegionFromZone(zone string) string {
 
 	reg, _ := regexp.Compile(regex)
 	return reg.ReplaceAllString(zone, "")
+}
+
+// SDKFailWithAPIError returns a custom error message if a HTTP error response 500 or greater is found
+func SDKFailWithAPIError(err error, origErr error) error {
+	if apierr, ok := err.(*runtime.APIError); ok {
+		if apierr.Code >= 500 {
+			return fmt.Errorf("error: %w The server has encountered an unexpected error and is unable to fulfill the request", err)
+		}
+	}
+	return origErr
 }

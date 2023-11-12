@@ -85,6 +85,11 @@ func (m *TransitGatewayLocations) contextValidateTransitGatewayLocations(ctx con
 	for i := 0; i < len(m.TransitGatewayLocations); i++ {
 
 		if m.TransitGatewayLocations[i] != nil {
+
+			if swag.IsZero(m.TransitGatewayLocations[i]) { // not required
+				return nil
+			}
+
 			if err := m.TransitGatewayLocations[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("transitGatewayLocations" + "." + strconv.Itoa(i))

@@ -85,6 +85,11 @@ func (m *PowerVSInstances) contextValidatePowerVsInstances(ctx context.Context, 
 	for i := 0; i < len(m.PowerVsInstances); i++ {
 
 		if m.PowerVsInstances[i] != nil {
+
+			if swag.IsZero(m.PowerVsInstances[i]) { // not required
+				return nil
+			}
+
 			if err := m.PowerVsInstances[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("powerVsInstances" + "." + strconv.Itoa(i))

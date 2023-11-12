@@ -42,7 +42,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBrokerHealth gets current server health
+ServiceBrokerHealth gets current server health
 */
 func (a *Client) ServiceBrokerHealth(params *ServiceBrokerHealthParams, opts ...ClientOption) (*ServiceBrokerHealthOK, error) {
 	// TODO: Validate the params before sending
@@ -80,7 +80,7 @@ func (a *Client) ServiceBrokerHealth(params *ServiceBrokerHealthParams, opts ...
 }
 
 /*
-  ServiceBrokerHealthHead gets current server health
+ServiceBrokerHealthHead gets current server health
 */
 func (a *Client) ServiceBrokerHealthHead(params *ServiceBrokerHealthHeadParams, opts ...ClientOption) (*ServiceBrokerHealthHeadOK, error) {
 	// TODO: Validate the params before sending
@@ -118,7 +118,7 @@ func (a *Client) ServiceBrokerHealthHead(params *ServiceBrokerHealthHeadParams, 
 }
 
 /*
-  ServiceBrokerTestTimeout gets current server version
+ServiceBrokerTestTimeout gets current server version
 */
 func (a *Client) ServiceBrokerTestTimeout(params *ServiceBrokerTestTimeoutParams, opts ...ClientOption) (*ServiceBrokerTestTimeoutOK, error) {
 	// TODO: Validate the params before sending
@@ -156,7 +156,7 @@ func (a *Client) ServiceBrokerTestTimeout(params *ServiceBrokerTestTimeoutParams
 }
 
 /*
-  ServiceBrokerVersion gets current server version
+ServiceBrokerVersion gets current server version
 */
 func (a *Client) ServiceBrokerVersion(params *ServiceBrokerVersionParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerVersionOK, error) {
 	// TODO: Validate the params before sending

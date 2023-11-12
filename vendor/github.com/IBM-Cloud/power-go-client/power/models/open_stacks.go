@@ -85,6 +85,11 @@ func (m *OpenStacks) contextValidateOpenStacks(ctx context.Context, formats strf
 	for i := 0; i < len(m.OpenStacks); i++ {
 
 		if m.OpenStacks[i] != nil {
+
+			if swag.IsZero(m.OpenStacks[i]) { // not required
+				return nil
+			}
+
 			if err := m.OpenStacks[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("openStacks" + "." + strconv.Itoa(i))
