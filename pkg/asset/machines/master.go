@@ -473,15 +473,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
-		machines, controlPlaneMachineSet, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-
-		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
-			controlPlaneMachineSet = nil
-		}
-
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
 	case powervstypes.Name:
 		mpool := defaultPowerVSMachinePoolPlatform()

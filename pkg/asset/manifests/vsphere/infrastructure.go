@@ -1,14 +1,12 @@
 package vsphere
 
 import (
-	"fmt"
-
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 // GetInfraPlatformSpec constructs VSpherePlatformSpec for the infrastructure spec
-func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *configv1.VSpherePlatformSpec {
+func GetInfraPlatformSpec(ic *installconfig.InstallConfig) *configv1.VSpherePlatformSpec {
 	var platformSpec configv1.VSpherePlatformSpec
 	icPlatformSpec := ic.Config.VSphere
 
@@ -23,11 +21,6 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 	for _, failureDomain := range icPlatformSpec.FailureDomains {
 		topology := failureDomain.Topology
 		if topology.ComputeCluster != "" && topology.Networks[0] != "" {
-			template := topology.Template
-			if len(template) == 0 {
-				template = fmt.Sprintf("/%s/vm/%s-rhcos-%s-%s", topology.Datacenter, clusterID, failureDomain.Region, failureDomain.Zone)
-			}
-
 			platformSpec.FailureDomains = append(platformSpec.FailureDomains, configv1.VSpherePlatformFailureDomainSpec{
 				Name:   failureDomain.Name,
 				Region: failureDomain.Region,
@@ -40,7 +33,6 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig, clusterID string) *co
 					Datastore:      topology.Datastore,
 					ResourcePool:   topology.ResourcePool,
 					Folder:         topology.Folder,
-					Template:       template,
 				},
 			})
 		}
