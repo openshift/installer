@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -34,7 +33,7 @@ func Metadata(config *types.InstallConfig) *azure.Metadata {
 func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
 	session, err := installConfig.Azure.Session()
 	if err != nil {
-		return errors.Wrap(err, "failed to get session")
+		return fmt.Errorf("failed to get session: %w", err)
 	}
 
 	if err := tagResourceGroup(ctx, clusterID, installConfig, session); err != nil {
@@ -54,7 +53,7 @@ func tagVNet(ctx context.Context, clusterID string, installConfig *installconfig
 
 	vnetClient, err := armnetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID, session.TokenCreds, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to get the virtual network client")
+		return fmt.Errorf("failed to get the virtual network client: %w", err)
 	}
 
 	vnetResp, err := vnetClient.Get(ctx, resourceGroupName, installConfig.Config.Azure.VirtualNetwork, nil)
@@ -95,7 +94,7 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 
 	group, err := client.Get(ctx, installConfig.Config.Azure.ResourceGroupName)
 	if err != nil {
-		return errors.Wrap(err, "failed to get the resource group")
+		return fmt.Errorf("failed to get the resource group: %w", err)
 	}
 
 	if group.Tags == nil {
@@ -117,7 +116,7 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 		Tags: group.Tags,
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to tag the resource group %s", installConfig.Config.Azure.ResourceGroupName)
+		return fmt.Errorf("failed to tag the resource group %q: %w", installConfig.Config.Azure.ResourceGroupName, err)
 	}
 	return nil
 }
