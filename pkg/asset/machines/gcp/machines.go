@@ -245,6 +245,7 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	providerSpec.TargetPools = targetPools
 	return nil
 }
+
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {
 		return fmt.Sprintf("%s-network", clusterID), fmt.Sprintf("%s-%s-subnet", clusterID, role), nil
