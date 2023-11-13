@@ -130,8 +130,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 	case types.ArchitectureAMD64:
 	case types.ArchitectureARM64:
 	case types.ArchitecturePPC64LE:
+	case types.ArchitectureS390X:
 	default:
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE}))
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE, types.ArchitectureS390X}))
 	}
 
 	for i, compute := range installConfig.Compute {
@@ -141,8 +142,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 		case types.ArchitectureAMD64:
 		case types.ArchitectureARM64:
 		case types.ArchitecturePPC64LE:
+		case types.ArchitectureS390X:
 		default:
-			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE}))
+			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE, types.ArchitectureS390X}))
 		}
 	}
 

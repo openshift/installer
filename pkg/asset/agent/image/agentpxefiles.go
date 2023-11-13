@@ -92,9 +92,12 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	if err != nil {
 		return err
 	}
-
-	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch))
-	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
+	kernelFileType := "vmlinuz"
+	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
+		kernelFileType = "kernel.img"
+	}
+	agentVmlinuzFile := filepath.Join(bootArtifactsFullPath, fmt.Sprintf("agent.%s-%s", a.cpuArch, kernelFileType))
+	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", kernelFileType))
 	if err != nil {
 		return err
 	}
