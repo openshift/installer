@@ -9,12 +9,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -68,7 +70,9 @@ func Destroy(dir string) (err error) {
 		logrus.Debugf("generated ibm endpoint overrides file: %s", endpointsFilePath)
 	}
 
-	provider, err := infra.ProviderForPlatform(platform)
+	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
+
+	provider, err := infra.ProviderForPlatform(platform, fg)
 	if err != nil {
 		return fmt.Errorf("error getting infrastructure provider: %w", err)
 	}

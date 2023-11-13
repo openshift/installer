@@ -109,7 +109,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		tfvarsFiles = append(tfvarsFiles, file)
 	}
 
-	provider, err := infra.ProviderForPlatform(platform)
+	provider, err := infra.ProviderForPlatform(platform, installConfig.Config.EnabledFeatureGates())
 	if err != nil {
 		return fmt.Errorf("error getting infrastructure provider: %w", err)
 	}

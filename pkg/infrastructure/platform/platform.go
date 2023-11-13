@@ -25,6 +25,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	externaltypes "github.com/openshift/installer/pkg/types/external"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -37,7 +38,7 @@ import (
 )
 
 // ProviderForPlatform returns the stages to run to provision the infrastructure for the specified platform.
-func ProviderForPlatform(platform string) (infrastructure.Provider, error) {
+func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastructure.Provider, error) {
 	switch platform {
 	case alibabacloudtypes.Name:
 		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
