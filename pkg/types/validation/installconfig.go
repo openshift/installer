@@ -336,8 +336,11 @@ func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType Kuryr is not supported on OpenShift later than 4.14"))
 	}
 
-	if singleNodeOpenShift && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is currently not supported on Single Node OpenShift"))
+	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+		logrus.Warningln("networkType OpenShiftSDN is going to be deprecated for new clusters in 4.15, please consider using OVNKubernetes")
+		if singleNodeOpenShift {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is currently not supported on Single Node OpenShift"))
+		}
 	}
 
 	if len(n.MachineNetwork) > 0 {
