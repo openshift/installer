@@ -45,13 +45,6 @@ type AgentClusterInstall struct {
 	Config *hiveext.AgentClusterInstall
 }
 
-type agentClusterInstallOnPremExternalPlatform struct {
-	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
-	PlatformName string `json:"platformName,omitempty"`
-	// CloudControllerManager when set to external, this property will enable an external cloud provider.
-	CloudControllerManager external.CloudControllerManager `json:"cloudControllerManager,omitempty"`
-}
-
 type agentClusterInstallOnPremPlatform struct {
 	// APIVIPs contains the VIP(s) to use for internal API communication. In
 	// dual stack clusters it contains an IPv4 and IPv6 address, otherwise only
@@ -61,6 +54,13 @@ type agentClusterInstallOnPremPlatform struct {
 	// IngressVIPs contains the VIP(s) to use for ingress traffic. In dual stack
 	// clusters it contains an IPv4 and IPv6 address, otherwise only one VIP
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
+}
+
+type agentClusterInstallOnPremExternalPlatform struct {
+	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
+	PlatformName string `json:"platformName,omitempty"`
+	// CloudControllerManager when set to external, this property will enable an external cloud provider.
+	CloudControllerManager external.CloudControllerManager `json:"cloudControllerManager,omitempty"`
 }
 
 type agentClusterInstallPlatform struct {
