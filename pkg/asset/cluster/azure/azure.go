@@ -124,6 +124,17 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 	tagKey, tagValue := ownedTag(clusterID)
 	group.Tags[tagKey] = tagValue
 	logrus.Debugf("Tagging resource group %s with %s: %s", installConfig.Config.Azure.ResourceGroupName, tagKey, *tagValue)
+
+	// Save metadata needed to destroy cluster into tags
+	config := installConfig.Config.Azure
+	group.Tags[azure.TagMetadataRegion] = to.StringPtr(config.Region)
+	if len(config.BaseDomainResourceGroupName) > 0 {
+		group.Tags[azure.TagMetadataBaseDomainRG] = to.StringPtr(config.BaseDomainResourceGroupName)
+	}
+	if len(config.NetworkResourceGroupName) > 0 {
+		group.Tags[azure.TagMetadataNetworkRG] = to.StringPtr(config.NetworkResourceGroupName)
+	}
+
 	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{
 		Tags: group.Tags,
 	})
