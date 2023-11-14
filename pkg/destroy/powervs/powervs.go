@@ -156,21 +156,20 @@ type ClusterUninstaller struct {
 	VPCRegion      string
 	Zone           string
 
-	managementSvc         *resourcemanagerv2.ResourceManagerV2
-	controllerSvc         *resourcecontrollerv2.ResourceControllerV2
-	vpcSvc                *vpcv1.VpcV1
-	zonesSvc              *zonesv1.ZonesV1
-	dnsRecordsSvc         *dnsrecordsv1.DnsRecordsV1
-	dnsZonesSvc           *dnszonesv1.DnsZonesV1
-	resourceRecordsSvc    *resourcerecordsv1.ResourceRecordsV1
-	piSession             *ibmpisession.IBMPISession
-	instanceClient        *instance.IBMPIInstanceClient
-	imageClient           *instance.IBMPIImageClient
-	jobClient             *instance.IBMPIJobClient
-	keyClient             *instance.IBMPIKeyClient
-	cloudConnectionClient *instance.IBMPICloudConnectionClient
-	dhcpClient            *instance.IBMPIDhcpClient
-	tgClient              *transitgatewayapisv1.TransitGatewayApisV1
+	managementSvc      *resourcemanagerv2.ResourceManagerV2
+	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
+	vpcSvc             *vpcv1.VpcV1
+	zonesSvc           *zonesv1.ZonesV1
+	dnsRecordsSvc      *dnsrecordsv1.DnsRecordsV1
+	dnsZonesSvc        *dnszonesv1.DnsZonesV1
+	resourceRecordsSvc *resourcerecordsv1.ResourceRecordsV1
+	piSession          *ibmpisession.IBMPISession
+	instanceClient     *instance.IBMPIInstanceClient
+	imageClient        *instance.IBMPIImageClient
+	jobClient          *instance.IBMPIJobClient
+	keyClient          *instance.IBMPIKeyClient
+	dhcpClient         *instance.IBMPIDhcpClient
+	tgClient           *transitgatewayapisv1.TransitGatewayApisV1
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -312,8 +311,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Public Gateways", execute: o.destroyPublicGateways},
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
-	}, {
-		{name: "Cloud Connections", execute: o.destroyCloudConnections},
 	}, {
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
@@ -468,7 +465,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		o.Logger.Debugf("loadSDKServices: o.imageClient = %v", o.imageClient)
 		o.Logger.Debugf("loadSDKServices: o.jobClient = %v", o.jobClient)
 		o.Logger.Debugf("loadSDKServices: o.keyClient = %v", o.keyClient)
-		o.Logger.Debugf("loadSDKServices: o.cloudConnectionClient = %v", o.cloudConnectionClient)
 		o.Logger.Debugf("loadSDKServices: o.vpcSvc = %v", o.vpcSvc)
 		o.Logger.Debugf("loadSDKServices: o.managementSvc = %v", o.managementSvc)
 		o.Logger.Debugf("loadSDKServices: o.controllerSvc = %v", o.controllerSvc)
@@ -717,11 +713,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.keyClient = instance.NewIBMPIKeyClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.keyClient == nil {
 		return fmt.Errorf("loadSDKServices: o.keyClient is nil")
-	}
-
-	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.cloudConnectionClient == nil {
-		return fmt.Errorf("loadSDKServices: o.cloudConnectionClient is nil")
 	}
 
 	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
