@@ -260,7 +260,7 @@ func TestStoreFetch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
-			store, err := newStore(t.TempDir())
+			store, err := newStore(t.TempDir(), true)
 			assert.NoError(t, err, "error creating store")
 			assets := make(map[string]asset.Asset, len(tc.assets))
 			for name := range tc.assets {
@@ -388,7 +388,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 	tempDir := t.TempDir()
 
 	for i := 0; i < 2; i++ {
-		store, err := newStore(tempDir)
+		store, err := newStore(tempDir, true)
 		if !assert.NoError(t, err, "(loop %d) unexpected error creating store", i) {
 			t.Fatal()
 		}
