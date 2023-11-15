@@ -1,6 +1,9 @@
 package defaults
 
 import (
+	"github.com/sirupsen/logrus"
+
+	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -90,6 +93,11 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		} else if c.Platform.PowerVS != nil {
 			c.CredentialsMode = types.ManualCredentialsMode
 		}
+	}
+
+	if len(c.FeatureSet) == 0 && len(c.FeatureGates) > 0 {
+		c.FeatureSet = configv1.CustomNoUpgrade
+		logrus.Warn("Feature gates were provided in the Install Config without a feature set: setting FeatureSet to CustomNoUpgrade")
 	}
 
 	switch {
