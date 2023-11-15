@@ -27,15 +27,6 @@ func NewAssetsFetcher(storeDir string) AssetsFetcher {
 	}
 }
 
-func asFileWriter(a asset.WritableAsset) asset.FileWriter {
-	switch v := a.(type) {
-	case asset.FileWriter:
-		return v
-	default:
-		return asset.NewDefaultFileWriter(a)
-	}
-}
-
 // Fetchs all the writable assets from the configured assets store.
 func (f *fetcher) FetchAndPersist(ctx context.Context, assets []asset.WritableAsset) error {
 	assetStore, err := NewStore(f.storeDir)
@@ -49,7 +40,7 @@ func (f *fetcher) FetchAndPersist(ctx context.Context, assets []asset.WritableAs
 			err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 		}
 
-		err2 := asFileWriter(a).PersistToFile(f.storeDir)
+		err2 := assetStore.PersistToFile(a)
 		if err2 != nil {
 			err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
 			if err != nil {

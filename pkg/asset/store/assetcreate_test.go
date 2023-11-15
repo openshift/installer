@@ -105,7 +105,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 					t.Fatalf("failed to fetch %q: %v", a.Name(), err)
 				}
 
-				if err := asset.PersistToFile(a, tempDir); err != nil {
+				if err := assetStore.PersistToFile(a); err != nil {
 					t.Fatalf("failed to write asset %q to disk: %v", a.Name(), err)
 				}
 			}
