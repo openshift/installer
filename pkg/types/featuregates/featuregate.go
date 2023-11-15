@@ -3,8 +3,6 @@ package featuregates
 // source: https://github.com/openshift/library-go/blob/c515269de16e5e239bd6e93e1f9821a976bb460b/pkg/operator/configobserver/featuregates/featuregate.go#L23-L28
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -46,12 +44,5 @@ func newFeatureGate(enabled, disabled []configv1.FeatureGateName) FeatureGate {
 // Enabled returns true if the provided feature gate is enabled
 // in the active feature sets.
 func (f *featureGate) Enabled(key configv1.FeatureGateName) bool {
-	if f.enabled.Has(key) {
-		return true
-	}
-	if f.disabled.Has(key) {
-		return false
-	}
-
-	panic(fmt.Errorf("feature %q is not registered in FeatureGates", key))
+	return f.enabled.Has(key)
 }
