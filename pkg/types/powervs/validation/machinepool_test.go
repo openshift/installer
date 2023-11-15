@@ -142,7 +142,7 @@ func TestValidateMachinePool(t *testing.T) {
 			pool: &powervs.MachinePool{
 				SysType: "p922",
 			},
-			expected: `^test-path\.sysType: Invalid value: "p922": system type must be one of {e980,s922}$`,
+			expected: `^test-path\.sysType: Invalid value: "p922": unknown system type specified$`,
 		},
 	}
 	for _, tc := range cases {

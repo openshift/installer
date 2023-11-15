@@ -179,6 +179,11 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
+		err = powervsconfig.ValidateSystemTypeForRegion(client, ic.Config)
+		if err != nil {
+			return err
+		}
 	case external.Name, libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:

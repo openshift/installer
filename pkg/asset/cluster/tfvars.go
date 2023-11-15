@@ -877,6 +877,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
+		cpStanza := installConfig.Config.ControlPlane
+		if cpStanza == nil || cpStanza.Platform.PowerVS == nil || cpStanza.Platform.PowerVS.SysType == "" {
+			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region)
+			if err != nil {
+				return err
+			}
+			for i := range masters {
+				masterConfigs[i].SystemType = sysTypes[0]
+			}
+		}
+
 		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
 
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)

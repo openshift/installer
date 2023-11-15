@@ -2,6 +2,8 @@ package powervs
 
 import (
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 // Since there is no API to query these, we have to hard-code them here.
@@ -13,6 +15,7 @@ type Region struct {
 	Description string
 	VPCRegion   string
 	Zones       []string
+	SysTypes    []string
 }
 
 // Regions holds the regions for IBM Power VS, and descriptions used during the survey.
@@ -21,6 +24,7 @@ var Regions = map[string]Region{
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
 		Zones:       []string{"dal10"},
+		SysTypes:    []string{"s922", "e980"},
 	},
 }
 
@@ -89,4 +93,22 @@ func RegionFromZone(zone string) string {
 		}
 	}
 	return ""
+}
+
+// AvailableSysTypes returns the default system type for the zone.
+func AvailableSysTypes(region string) ([]string, error) {
+	knownRegion, ok := Regions[region]
+	if !ok {
+		return nil, fmt.Errorf("unknown region name provided")
+	}
+	return knownRegion.SysTypes, nil
+}
+
+// AllKnownSysTypes returns aggregated known system types from all regions.
+func AllKnownSysTypes() sets.Set[string] {
+	sysTypes := sets.New[string]()
+	for _, region := range Regions {
+		sysTypes.Insert(region.SysTypes...)
+	}
+	return sysTypes
 }
