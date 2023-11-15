@@ -94,7 +94,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				}
 			}
 
-			assetStore, err := newStore(tempDir)
+			assetStore, err := newStore(tempDir, true)
 			if err != nil {
 				t.Fatalf("failed to create asset store: %v", err)
 			}
@@ -109,7 +109,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				}
 			}
 
-			newAssetStore, err := newStore(tempDir)
+			newAssetStore, err := newStore(tempDir, true)
 			if err != nil {
 				t.Fatalf("failed to create new asset store: %v", err)
 			}
