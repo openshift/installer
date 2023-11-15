@@ -351,7 +351,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: supported values: \"amd64\", \"arm64\", \"ppc64le\", \"s390x\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", \"ppc64le\"]",
+			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: supported values: \"amd64\", \"arm64\", \"ppc64le\", \"s390x\", Compute[0].Architecture: Unsupported value: \"unsupportedArch\": supported values: \"amd64\", \"arm64\", \"ppc64le\", \"s390x\"]",
 		},
 		{
 			name: "invalid platform.baremetal for architecture ppc64le",
@@ -429,7 +429,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Platform: CPU architecture \"s390x\" only supports platform \"baremetal\".",
+			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
 		},
 		{
 			name: "unsupported platformName for external platform",
