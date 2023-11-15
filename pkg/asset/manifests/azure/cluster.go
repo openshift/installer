@@ -6,6 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
@@ -13,7 +14,7 @@ import (
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
-	manifests := capiutils.Manifests{}
+	manifests := []*asset.RuntimeFile{}
 	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
 
 	session, err := installConfig.Azure.Session()
@@ -28,7 +29,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
-	manifests = append(manifests, &capiutils.Manifest{Object: azureNamespace, Filename: "00_azure-namespace.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: azureNamespace,
+		File:   asset.File{Filename: "00_azure-namespace.yaml"},
+	})
 
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,7 +83,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
-	manifests = append(manifests, &capiutils.Manifest{Object: azureCluster, Filename: "02_azure-cluster.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: azureCluster,
+		File:   asset.File{Filename: "02_azure-cluster.yaml"},
+	})
 
 	azureClientSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -90,7 +97,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			"clientSecret": session.Credentials.ClientSecret,
 		},
 	}
-	manifests = append(manifests, &capiutils.Manifest{Object: azureClientSecret, Filename: "01_azure-client-secret.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: azureClientSecret,
+		File:   asset.File{Filename: "01_azure-client-secret.yaml"},
+	})
 
 	id := &capz.AzureClusterIdentity{
 		ObjectMeta: metav1.ObjectMeta{
@@ -108,7 +118,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			TenantID: session.Credentials.TenantID,
 		},
 	}
-	manifests = append(manifests, &capiutils.Manifest{Object: id, Filename: "01_aws-cluster-controller-identity-default.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: id,
+		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
+	})
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,

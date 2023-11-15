@@ -11,13 +11,14 @@ import (
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
-	manifests := capiutils.Manifests{}
+	manifests := []*asset.RuntimeFile{}
 	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
 
 	zones, err := installConfig.AWS.AvailabilityZones(context.TODO())
@@ -200,7 +201,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	manifests = append(manifests, &capiutils.Manifest{Object: awsCluster, Filename: "02_infra-cluster.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: awsCluster,
+		File:   asset.File{Filename: "02_infra-cluster.yaml"},
+	})
 
 	id := &capa.AWSClusterControllerIdentity{
 		ObjectMeta: metav1.ObjectMeta{
@@ -213,7 +217,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
-	manifests = append(manifests, &capiutils.Manifest{Object: id, Filename: "01_aws-cluster-controller-identity-default.yaml"})
+	manifests = append(manifests, &asset.RuntimeFile{
+		Object: id,
+		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
+	})
 
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
