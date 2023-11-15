@@ -400,7 +400,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 			if !assert.NoError(t, err, "(loop %d) unexpected error fetching asset %q", a.Name()) {
 				t.Fatal()
 			}
-			err = asset.PersistToFile(a, tempDir)
+			err = store.PersistToFile(a)
 			if !assert.NoError(t, err, "(loop %d) unexpected error persisting asset %q", a.Name()) {
 				t.Fatal()
 			}

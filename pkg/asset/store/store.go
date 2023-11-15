@@ -372,3 +372,16 @@ func (s *storeImpl) Load(a asset.Asset) (asset.Asset, error) {
 
 	return s.assets[reflect.TypeOf(a)].asset, nil
 }
+
+func asFileWriter(a asset.WritableAsset) asset.FileWriter {
+	switch v := a.(type) {
+	case asset.FileWriter:
+		return v
+	default:
+		return asset.NewDefaultFileWriter(a)
+	}
+}
+
+func (s *storeImpl) PersistToFile(wa asset.WritableAsset) error {
+	return asFileWriter(wa).PersistToFile(s.directory)
+}
