@@ -2,6 +2,7 @@ package azure
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -143,7 +144,11 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 
 // IsARO returns true if ARO-only modifications are enabled
 func (p *Platform) IsARO() bool {
-	// XXX: return true for testing, change when complete
-	return true
-	//return aro
+	return aro
+}
+
+func init() {
+	if strings.EqualFold(os.Getenv("OPENSHIFT_INSTALL_INVOKER"), "aro") == true {
+		aro = true
+	}
 }
