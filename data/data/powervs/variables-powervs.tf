@@ -116,11 +116,6 @@ variable "powervs_enable_snat" {
   default     = true
 }
 
-variable "powervs_transit_gateway_enabled" {
-  type        = bool
-  description = "Boolean indicating if Transit Gateways should be used."
-  default     = false
-}
 
 variable "powervs_attached_transit_gateway" {
   type        = string
