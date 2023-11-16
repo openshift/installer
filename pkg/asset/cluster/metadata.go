@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
@@ -28,6 +29,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	externaltypes "github.com/openshift/installer/pkg/types/external"
+	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -71,10 +73,18 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(clusterID, installConfig)
 
+	featureSet := installConfig.Config.FeatureSet
+	var customFS *configv1.CustomFeatureGates
+	if featureSet == configv1.CustomNoUpgrade {
+		customFS = featuregates.GenerateCustomFeatures(installConfig.Config.FeatureGates)
+	}
+
 	metadata := &types.ClusterMetadata{
-		ClusterName: installConfig.Config.ObjectMeta.Name,
-		ClusterID:   clusterID.UUID,
-		InfraID:     clusterID.InfraID,
+		ClusterName:      installConfig.Config.ObjectMeta.Name,
+		ClusterID:        clusterID.UUID,
+		InfraID:          clusterID.InfraID,
+		FeatureSet:       featureSet,
+		CustomFeatureSet: customFS,
 	}
 
 	switch installConfig.Config.Platform.Name() {
