@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBrokerHardwareplatformsGet availables hardware statistics and limits
+ServiceBrokerHardwareplatformsGet availables hardware statistics and limits
 */
 func (a *Client) ServiceBrokerHardwareplatformsGet(params *ServiceBrokerHardwareplatformsGetParams, opts ...ClientOption) (*ServiceBrokerHardwareplatformsGetOK, error) {
 	// TODO: Validate the params before sending

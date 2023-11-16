@@ -128,6 +128,7 @@ func (m *PVMInstanceOperation) ContextValidate(ctx context.Context, formats strf
 func (m *PVMInstanceOperation) contextValidateOperation(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Operation != nil {
+
 		if err := m.Operation.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("operation")

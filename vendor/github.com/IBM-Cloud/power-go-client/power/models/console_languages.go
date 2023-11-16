@@ -85,6 +85,11 @@ func (m *ConsoleLanguages) contextValidateConsoleLanguages(ctx context.Context, 
 	for i := 0; i < len(m.ConsoleLanguages); i++ {
 
 		if m.ConsoleLanguages[i] != nil {
+
+			if swag.IsZero(m.ConsoleLanguages[i]) { // not required
+				return nil
+			}
+
 			if err := m.ConsoleLanguages[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("consoleLanguages" + "." + strconv.Itoa(i))

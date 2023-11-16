@@ -40,7 +40,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudVolumeOnboardingGet gets the information of volume onboarding operation
+PcloudVolumeOnboardingGet gets the information of volume onboarding operation
 */
 func (a *Client) PcloudVolumeOnboardingGet(params *PcloudVolumeOnboardingGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingGetOK, error) {
 	// TODO: Validate the params before sending
@@ -79,7 +79,7 @@ func (a *Client) PcloudVolumeOnboardingGet(params *PcloudVolumeOnboardingGetPara
 }
 
 /*
-  PcloudVolumeOnboardingGetall lists all volume onboardings for this cloud instance
+PcloudVolumeOnboardingGetall lists all volume onboardings for this cloud instance
 */
 func (a *Client) PcloudVolumeOnboardingGetall(params *PcloudVolumeOnboardingGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -118,7 +118,7 @@ func (a *Client) PcloudVolumeOnboardingGetall(params *PcloudVolumeOnboardingGeta
 }
 
 /*
-  PcloudVolumeOnboardingPost onboards auxiliary volumes to target site
+PcloudVolumeOnboardingPost onboards auxiliary volumes to target site
 */
 func (a *Client) PcloudVolumeOnboardingPost(params *PcloudVolumeOnboardingPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumeOnboardingPostAccepted, error) {
 	// TODO: Validate the params before sending

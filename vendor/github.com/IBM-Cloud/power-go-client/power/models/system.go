@@ -20,15 +20,29 @@ import (
 type System struct {
 
 	// The host available Processor units
+	AvailableCores float64 `json:"availableCores,omitempty"`
+
+	// The host available RAM memory in GiB
+	AvailableMemory int64 `json:"availableMemory,omitempty"`
+
+	// The host available Processor units
 	// Required: true
 	Cores *float64 `json:"cores"`
 
 	// The host identifier
 	ID int64 `json:"id,omitempty"`
 
-	// The host available RAM memory in GiB
+	// The host total RAM memory in GiB
 	// Required: true
 	Memory *int64 `json:"memory"`
+
+	// The host total Processor units
+	// Required: true
+	TotalCores *float64 `json:"totalCores"`
+
+	// The host total RAM memory in GiB
+	// Required: true
+	TotalMemory *int64 `json:"totalMemory"`
 }
 
 // Validate validates this system
@@ -40,6 +54,14 @@ func (m *System) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMemory(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalCores(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTotalMemory(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -61,6 +83,24 @@ func (m *System) validateCores(formats strfmt.Registry) error {
 func (m *System) validateMemory(formats strfmt.Registry) error {
 
 	if err := validate.Required("memory", "body", m.Memory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *System) validateTotalCores(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalCores", "body", m.TotalCores); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *System) validateTotalMemory(formats strfmt.Registry) error {
+
+	if err := validate.Required("totalMemory", "body", m.TotalMemory); err != nil {
 		return err
 	}
 

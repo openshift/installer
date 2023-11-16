@@ -236,6 +236,11 @@ func (m *SystemPool) ContextValidate(ctx context.Context, formats strfmt.Registr
 func (m *SystemPool) contextValidateCapacity(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Capacity != nil {
+
+		if swag.IsZero(m.Capacity) { // not required
+			return nil
+		}
+
 		if err := m.Capacity.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("capacity")
@@ -252,6 +257,11 @@ func (m *SystemPool) contextValidateCapacity(ctx context.Context, formats strfmt
 func (m *SystemPool) contextValidateMaxAvailable(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.MaxAvailable != nil {
+
+		if swag.IsZero(m.MaxAvailable) { // not required
+			return nil
+		}
+
 		if err := m.MaxAvailable.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("maxAvailable")
@@ -268,6 +278,11 @@ func (m *SystemPool) contextValidateMaxAvailable(ctx context.Context, formats st
 func (m *SystemPool) contextValidateMaxCoresAvailable(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.MaxCoresAvailable != nil {
+
+		if swag.IsZero(m.MaxCoresAvailable) { // not required
+			return nil
+		}
+
 		if err := m.MaxCoresAvailable.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("maxCoresAvailable")
@@ -284,6 +299,11 @@ func (m *SystemPool) contextValidateMaxCoresAvailable(ctx context.Context, forma
 func (m *SystemPool) contextValidateMaxMemoryAvailable(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.MaxMemoryAvailable != nil {
+
+		if swag.IsZero(m.MaxMemoryAvailable) { // not required
+			return nil
+		}
+
 		if err := m.MaxMemoryAvailable.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("maxMemoryAvailable")
@@ -300,6 +320,11 @@ func (m *SystemPool) contextValidateMaxMemoryAvailable(ctx context.Context, form
 func (m *SystemPool) contextValidateSharedCoreRatio(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.SharedCoreRatio != nil {
+
+		if swag.IsZero(m.SharedCoreRatio) { // not required
+			return nil
+		}
+
 		if err := m.SharedCoreRatio.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("sharedCoreRatio")
@@ -318,6 +343,11 @@ func (m *SystemPool) contextValidateSystems(ctx context.Context, formats strfmt.
 	for i := 0; i < len(m.Systems); i++ {
 
 		if m.Systems[i] != nil {
+
+			if swag.IsZero(m.Systems[i]) { // not required
+				return nil
+			}
+
 			if err := m.Systems[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("systems" + "." + strconv.Itoa(i))

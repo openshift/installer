@@ -60,7 +60,7 @@ func (o *PcloudVpnconnectionsDeleteReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}] pcloud.vpnconnections.delete", response, response.Code())
 	}
 }
 
@@ -69,7 +69,8 @@ func NewPcloudVpnconnectionsDeleteAccepted() *PcloudVpnconnectionsDeleteAccepted
 	return &PcloudVpnconnectionsDeleteAccepted{}
 }
 
-/* PcloudVpnconnectionsDeleteAccepted describes a response with status code 202, with default header values.
+/*
+PcloudVpnconnectionsDeleteAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -77,9 +78,44 @@ type PcloudVpnconnectionsDeleteAccepted struct {
 	Payload *models.JobReference
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete accepted response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete accepted response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete accepted response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete accepted response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections delete accepted response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud vpnconnections delete accepted response
+func (o *PcloudVpnconnectionsDeleteAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudVpnconnectionsDeleteAccepted) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteAccepted) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteAccepted) GetPayload() *models.JobReference {
 	return o.Payload
 }
@@ -101,7 +137,8 @@ func NewPcloudVpnconnectionsDeleteBadRequest() *PcloudVpnconnectionsDeleteBadReq
 	return &PcloudVpnconnectionsDeleteBadRequest{}
 }
 
-/* PcloudVpnconnectionsDeleteBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudVpnconnectionsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +146,44 @@ type PcloudVpnconnectionsDeleteBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete bad request response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete bad request response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete bad request response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete bad request response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections delete bad request response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud vpnconnections delete bad request response
+func (o *PcloudVpnconnectionsDeleteBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVpnconnectionsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +205,8 @@ func NewPcloudVpnconnectionsDeleteUnauthorized() *PcloudVpnconnectionsDeleteUnau
 	return &PcloudVpnconnectionsDeleteUnauthorized{}
 }
 
-/* PcloudVpnconnectionsDeleteUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudVpnconnectionsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +214,44 @@ type PcloudVpnconnectionsDeleteUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete unauthorized response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete unauthorized response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete unauthorized response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete unauthorized response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections delete unauthorized response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud vpnconnections delete unauthorized response
+func (o *PcloudVpnconnectionsDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudVpnconnectionsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -165,7 +273,8 @@ func NewPcloudVpnconnectionsDeleteForbidden() *PcloudVpnconnectionsDeleteForbidd
 	return &PcloudVpnconnectionsDeleteForbidden{}
 }
 
-/* PcloudVpnconnectionsDeleteForbidden describes a response with status code 403, with default header values.
+/*
+PcloudVpnconnectionsDeleteForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -173,9 +282,44 @@ type PcloudVpnconnectionsDeleteForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete forbidden response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete forbidden response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete forbidden response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete forbidden response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections delete forbidden response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud vpnconnections delete forbidden response
+func (o *PcloudVpnconnectionsDeleteForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVpnconnectionsDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +341,8 @@ func NewPcloudVpnconnectionsDeleteNotFound() *PcloudVpnconnectionsDeleteNotFound
 	return &PcloudVpnconnectionsDeleteNotFound{}
 }
 
-/* PcloudVpnconnectionsDeleteNotFound describes a response with status code 404, with default header values.
+/*
+PcloudVpnconnectionsDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -205,9 +350,44 @@ type PcloudVpnconnectionsDeleteNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete not found response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete not found response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete not found response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete not found response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections delete not found response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud vpnconnections delete not found response
+func (o *PcloudVpnconnectionsDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVpnconnectionsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +409,8 @@ func NewPcloudVpnconnectionsDeleteInternalServerError() *PcloudVpnconnectionsDel
 	return &PcloudVpnconnectionsDeleteInternalServerError{}
 }
 
-/* PcloudVpnconnectionsDeleteInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudVpnconnectionsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +418,44 @@ type PcloudVpnconnectionsDeleteInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections delete internal server error response has a 2xx status code
+func (o *PcloudVpnconnectionsDeleteInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections delete internal server error response has a 3xx status code
+func (o *PcloudVpnconnectionsDeleteInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections delete internal server error response has a 4xx status code
+func (o *PcloudVpnconnectionsDeleteInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud vpnconnections delete internal server error response has a 5xx status code
+func (o *PcloudVpnconnectionsDeleteInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud vpnconnections delete internal server error response a status code equal to that given
+func (o *PcloudVpnconnectionsDeleteInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud vpnconnections delete internal server error response
+func (o *PcloudVpnconnectionsDeleteInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudVpnconnectionsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsDeleteInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsDeleteInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -46,7 +46,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudPlacementgroupsDelete deletes server placement group
+PcloudPlacementgroupsDelete deletes server placement group
 */
 func (a *Client) PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -85,7 +85,7 @@ func (a *Client) PcloudPlacementgroupsDelete(params *PcloudPlacementgroupsDelete
 }
 
 /*
-  PcloudPlacementgroupsGet gets server placement group detail
+PcloudPlacementgroupsGet gets server placement group detail
 */
 func (a *Client) PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -124,7 +124,7 @@ func (a *Client) PcloudPlacementgroupsGet(params *PcloudPlacementgroupsGetParams
 }
 
 /*
-  PcloudPlacementgroupsGetall gets all server placement groups
+PcloudPlacementgroupsGetall gets all server placement groups
 */
 func (a *Client) PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -163,7 +163,7 @@ func (a *Client) PcloudPlacementgroupsGetall(params *PcloudPlacementgroupsGetall
 }
 
 /*
-  PcloudPlacementgroupsMembersDelete removes server from placement group
+PcloudPlacementgroupsMembersDelete removes server from placement group
 */
 func (a *Client) PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroupsMembersDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -202,7 +202,7 @@ func (a *Client) PcloudPlacementgroupsMembersDelete(params *PcloudPlacementgroup
 }
 
 /*
-  PcloudPlacementgroupsMembersPost adds server to placement group
+PcloudPlacementgroupsMembersPost adds server to placement group
 */
 func (a *Client) PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsMembersPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsMembersPostOK, error) {
 	// TODO: Validate the params before sending
@@ -241,7 +241,7 @@ func (a *Client) PcloudPlacementgroupsMembersPost(params *PcloudPlacementgroupsM
 }
 
 /*
-  PcloudPlacementgroupsPost creates a new server placement group
+PcloudPlacementgroupsPost creates a new server placement group
 */
 func (a *Client) PcloudPlacementgroupsPost(params *PcloudPlacementgroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPlacementgroupsPostOK, error) {
 	// TODO: Validate the params before sending

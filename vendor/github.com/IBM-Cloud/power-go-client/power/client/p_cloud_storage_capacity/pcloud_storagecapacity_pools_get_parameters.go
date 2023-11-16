@@ -52,10 +52,12 @@ func NewPcloudStoragecapacityPoolsGetParamsWithHTTPClient(client *http.Client) *
 	}
 }
 
-/* PcloudStoragecapacityPoolsGetParams contains all the parameters to send to the API endpoint
-   for the pcloud storagecapacity pools get operation.
+/*
+PcloudStoragecapacityPoolsGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud storagecapacity pools get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudStoragecapacityPoolsGetParams struct {
 

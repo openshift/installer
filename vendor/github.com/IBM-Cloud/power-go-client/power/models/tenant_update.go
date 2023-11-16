@@ -85,6 +85,11 @@ func (m *TenantUpdate) contextValidatePeeringNetworks(ctx context.Context, forma
 	for i := 0; i < len(m.PeeringNetworks); i++ {
 
 		if m.PeeringNetworks[i] != nil {
+
+			if swag.IsZero(m.PeeringNetworks[i]) { // not required
+				return nil
+			}
+
 			if err := m.PeeringNetworks[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("peeringNetworks" + "." + strconv.Itoa(i))
