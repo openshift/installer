@@ -427,20 +427,6 @@ Next, create a file called `compute-nodes.yaml` with this Ansible script:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"
 
-  - name: 'List the Compute Trunks'
-    command:
-      cmd: "openstack network trunk list"
-    when: os_networking_type == "Kuryr"
-    register: compute_trunks
-
-  - name: 'Create the Compute trunks'
-    command:
-      cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_compute_trunk_name }}-{{ item.0 }}"
-    with_indexed_items: "{{ ports.results }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - "os_compute_trunk_name|string not in compute_trunks.stdout"
-
   - name: ‘Call additional-port processing’
     include_tasks: additional-ports.yaml
 

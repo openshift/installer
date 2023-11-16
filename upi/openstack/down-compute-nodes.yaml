@@ -37,20 +37,6 @@
     when:
     - server_group_id is defined
 
-  - name: 'List the Compute trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk list -c Name -f value"
-    when: os_networking_type == "Kuryr"
-    register: trunks
-
-  - name: 'Remove the Compute trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk delete {{ item.1 }}-{{ item.0 }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - (item.1|string + '-' + item.0|string) in trunks.stdout_lines|list
-    with_indexed_items: "{{ [os_compute_trunk_name] * os_compute_nodes_number }}"
-
   - name: 'Remove the Compute ports'
     openstack.cloud.port:
       name: "{{ item.1 }}-{{ item.0 }}"

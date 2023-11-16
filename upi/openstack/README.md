@@ -6,8 +6,6 @@ This directory contains the Ansible scripts expected to automate most of the com
 
 Customize the cluster properties in the [Inventory](./inventory.yaml) file.
 
-**NOTE:** To deploy with Kuryr SDN, update the `os_networking_type` field to `Kuryr`.
-
 The playbooks in this directory are designed to reproduce an IPI installation, but are highly customizable. Please be aware of changes made to the install playbooks that may require changes to the teardown playbooks.
 
 Every step can be run like this:

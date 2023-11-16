@@ -1,7 +1,7 @@
 # OpenStack Platform Support
 
 This document discusses the requirements, current expected behavior, and how to try out what exists so far.
-In addition, it covers the installation with the default CNI (OVNKubernetes), as well as with the Kuryr SDN.
+It covers the installation with the default CNI (OVNKubernetes).
 
 ## Table of Contents
 
@@ -57,7 +57,6 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Privileges](privileges.md)
 - [Control plane machine set](control-plane-machine-set.md)
 - [Known Issues and Workarounds](known-issues.md)
-- [Using the OSP 4 installer with Kuryr](kuryr.md)
 - [Troubleshooting your cluster](troubleshooting.md)
 - [Customizing your install](customization.md)
 - [Installing OpenShift on OpenStack User-Provisioned Infrastructure](install_upi.md)
@@ -88,10 +87,7 @@ services being available:
   - Swift
   - Cinder
 
-When deploying with the [Kuryr SDN](kuryr.md), the Octavia Load Balancing
-service becomes a hard requirement.
-
-In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. If you are planning on using Kuryr, or want to learn more about it, please read through the [Kuryr documentation](kuryr.md).
+In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation.
 
 For a successful installation it is required:
 
@@ -432,7 +428,7 @@ Even if the installer times out, the OpenShift cluster should still come up. Onc
 
 ### Running a Deployment
 
-To run the installer, you have the option of using the interactive wizard, or providing your own `install-config.yaml` file for it. The wizard is the easier way to run the installer, but passing your own `install-config.yaml` enables you to use more fine grained customizations. If you are going to create your own `install-config.yaml`, read through the available [OpenStack customizations](customization.md). For information on running the installer with Kuryr, see the [Kuryr docs](kuryr.md).
+To run the installer, you have the option of using the interactive wizard, or providing your own `install-config.yaml` file for it. The wizard is the easier way to run the installer, but passing your own `install-config.yaml` enables you to use more fine grained customizations. If you are going to create your own `install-config.yaml`, read through the available [OpenStack customizations](customization.md).
 
 ```sh
 ./openshift-install create cluster --dir ostest
@@ -602,11 +598,6 @@ MachineSet.
 In order to use Availability Zones, create one MachineSet per target
 Availability Zone, and set the Availability Zone in the `availabilityZone`
 property of the MachineSet.
-
-> **Note**
-> When deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it.
-> In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider,
-> all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
 [server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
 
