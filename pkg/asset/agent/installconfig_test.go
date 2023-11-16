@@ -54,7 +54,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
@@ -270,34 +270,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
 		},
 		{
-			name: "invalid networkType for SNO cluster",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OpenShiftSDN
-compute:
-  - architecture: amd64
-    hyperthreading: Enabled
-    name: worker
-    platform: {}
-    replicas: 0
-controlPlane:
-  architecture: amd64
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 1
-platform:
-  none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: Networking.NetworkType: Invalid value: \"OpenShiftSDN\": Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster",
-		},
-		{
 			name: "invalid platform for SNO cluster",
 			data: `
 apiVersion: v1
@@ -305,7 +277,7 @@ metadata:
   name: test-cluster
 baseDomain: test-domain
 networking:
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
 compute:
   - architecture: amd64
     hyperthreading: Enabled
@@ -637,7 +609,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
@@ -700,7 +672,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
 					},
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -798,7 +770,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork: 
@@ -843,7 +815,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
 					},
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -916,7 +888,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
@@ -952,7 +924,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
