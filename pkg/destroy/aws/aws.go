@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/efs"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
@@ -158,12 +157,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	iamClient := iam.New(awsSession)
-	iamRoleSearch := &iamRoleSearch{
-		client:  iamClient,
-		filters: o.Filters,
-		logger:  o.Logger,
+	iamRoleSearch := &IamRoleSearch{
+		Client:  iamClient,
+		Filters: o.Filters,
+		Logger:  o.Logger,
 	}
-	iamUserSearch := &iamUserSearch{
+	iamUserSearch := &IamUserSearch{
 		client:  iamClient,
 		filters: o.Filters,
 		logger:  o.Logger,
@@ -180,45 +179,12 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		}
 	}
 
-	tracker := new(errorTracker)
+	tracker := new(ErrorTracker)
 
 	// Terminate EC2 instances. The instances need to be terminated first so that we can ensure that there is nothing
 	// running on the cluster creating new resources while we are attempting to delete resources, which could leak
 	// the new resources.
-	ec2Client := ec2.New(awsSession)
-	lastTerminateTime := time.Now()
-	err = wait.PollImmediateUntil(
-		time.Second*10,
-		func() (done bool, err error) {
-			instancesRunning, instancesNotTerminated, err := findEC2Instances(ctx, ec2Client, deleted, o.Filters, o.Logger)
-			if err != nil {
-				o.Logger.WithError(err).Info("error while finding EC2 instances to delete")
-				if err := ctx.Err(); err != nil {
-					return false, err
-				}
-			}
-			if len(instancesNotTerminated) == 0 && len(instancesRunning) == 0 && err == nil {
-				return true, nil
-			}
-			instancesToDelete := instancesRunning
-			if time.Since(lastTerminateTime) > 10*time.Minute {
-				instancesToDelete = instancesNotTerminated
-				lastTerminateTime = time.Now()
-			}
-			newlyDeleted, err := o.deleteResources(ctx, awsSession, instancesToDelete, tracker)
-			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
-			// returned if the context is completed.
-			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
-			deleted = deleted.Union(newlyDeleted)
-			if err != nil {
-				if err := ctx.Err(); err != nil {
-					return false, err
-				}
-			}
-			return false, nil
-		},
-		ctx.Done(),
-	)
+	err = DeleteEC2Instances(ctx, o.Logger, awsSession, o.Filters, resourcesToDelete, deleted, tracker)
 	if err != nil {
 		return resourcesToDelete.UnsortedList(), err
 	}
@@ -227,7 +193,7 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	err = wait.PollImmediateUntil(
 		time.Second*10,
 		func() (done bool, err error) {
-			newlyDeleted, loopError := o.deleteResources(ctx, awsSession, resourcesToDelete.UnsortedList(), tracker)
+			newlyDeleted, loopError := DeleteResources(ctx, o.Logger, awsSession, resourcesToDelete.UnsortedList(), tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			resourcesToDelete = resourcesToDelete.Difference(newlyDeleted)
@@ -292,14 +258,43 @@ func (o *ClusterUninstaller) findUntaggableResources(ctx context.Context, iamCli
 
 // findResourcesToDelete returns the resources that should be deleted.
 //
-//	tagClients - clients of the tagging API to use to search for resources.
-//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+// tagClients - clients of the tagging API to use to search for resources.
+// deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
 func (o *ClusterUninstaller) findResourcesToDelete(
 	ctx context.Context,
 	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
 	iamClient *iam.IAM,
-	iamRoleSearch *iamRoleSearch,
-	iamUserSearch *iamUserSearch,
+	iamRoleSearch *IamRoleSearch,
+	iamUserSearch *IamUserSearch,
+	deleted sets.Set[string],
+) (sets.Set[string], []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
+	var errs []error
+	resources, tagClients, err := FindTaggedResourcesToDelete(ctx, o.Logger, tagClients, o.Filters, iamRoleSearch, iamUserSearch, deleted)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	// Find untaggable resources
+	untaggableResources, err := o.findUntaggableResources(ctx, iamClient, deleted)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	resources = resources.Union(untaggableResources)
+
+	return resources, tagClients, utilerrors.NewAggregate(errs)
+}
+
+// FindTaggedResourcesToDelete returns the tagged resources that should be deleted.
+//
+//	tagClients - clients of the tagging API to use to search for resources.
+//	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
+func FindTaggedResourcesToDelete(
+	ctx context.Context,
+	logger logrus.FieldLogger,
+	tagClients []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	filters []Filter,
+	iamRoleSearch *IamRoleSearch,
+	iamUserSearch *IamUserSearch,
 	deleted sets.Set[string],
 ) (sets.Set[string], []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI, error) {
 	resources := sets.New[string]()
@@ -308,7 +303,7 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 
 	// Find resources by tag
 	for _, tagClient := range tagClients {
-		resourcesInTagClient, err := o.findResourcesByTag(ctx, tagClient, deleted)
+		resourcesInTagClient, err := findResourcesByTag(ctx, logger, tagClient, filters, deleted)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -318,30 +313,27 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 		if len(resourcesInTagClient) > 0 || err != nil {
 			tagClientsWithResources = append(tagClientsWithResources, tagClient)
 		} else {
-			o.Logger.Debugf("no deletions from %s, removing client", *tagClient.Config.Region)
+			logger.Debugf("no deletions from %s, removing client", *tagClient.Config.Region)
 		}
 	}
 
 	// Find IAM roles
-	iamRoleResources, err := findIAMRoles(ctx, iamRoleSearch, deleted, o.Logger)
-	if err != nil {
-		errs = append(errs, err)
+	if iamRoleSearch != nil {
+		iamRoleResources, err := findIAMRoles(ctx, iamRoleSearch, deleted, logger)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		resources = resources.Union(iamRoleResources)
 	}
-	resources = resources.Union(iamRoleResources)
 
 	// Find IAM users
-	iamUserResources, err := findIAMUsers(ctx, iamUserSearch, deleted, o.Logger)
-	if err != nil {
-		errs = append(errs, err)
+	if iamUserSearch != nil {
+		iamUserResources, err := findIAMUsers(ctx, iamUserSearch, deleted, logger)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		resources = resources.Union(iamUserResources)
 	}
-	resources = resources.Union(iamUserResources)
-
-	// Find untaggable resources
-	untaggableResources, err := o.findUntaggableResources(ctx, iamClient, deleted)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	resources = resources.Union(untaggableResources)
 
 	return resources, tagClientsWithResources, utilerrors.NewAggregate(errs)
 }
@@ -350,14 +342,16 @@ func (o *ClusterUninstaller) findResourcesToDelete(
 //
 //	tagClients - clients of the tagging API to use to search for resources.
 //	deleted - the resources that have already been deleted. Any resources specified in this set will be ignored.
-func (o *ClusterUninstaller) findResourcesByTag(
+func findResourcesByTag(
 	ctx context.Context,
+	logger logrus.FieldLogger,
 	tagClient *resourcegroupstaggingapi.ResourceGroupsTaggingAPI,
+	filters []Filter,
 	deleted sets.Set[string],
 ) (sets.Set[string], error) {
 	resources := sets.New[string]()
-	for _, filter := range o.Filters {
-		o.Logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
+	for _, filter := range filters {
+		logger.Debugf("search for matching resources by tag in %s matching %#+v", *tagClient.Config.Region, filter)
 		tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
 		for key, value := range filter {
 			tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
@@ -380,29 +374,29 @@ func (o *ClusterUninstaller) findResourcesByTag(
 		)
 		if err != nil {
 			err = errors.Wrap(err, "get tagged resources")
-			o.Logger.Info(err)
+			logger.Info(err)
 			return resources, err
 		}
 	}
 	return resources, nil
 }
 
-// deleteResources deletes the specified resources.
+// DeleteResources deletes the specified resources.
 //
 //	resources - the resources to be deleted.
 //
 // The first return is the ARNs of the resources that were successfully deleted
-func (o *ClusterUninstaller) deleteResources(ctx context.Context, awsSession *session.Session, resources []string, tracker *errorTracker) (sets.Set[string], error) {
+func DeleteResources(ctx context.Context, logger logrus.FieldLogger, awsSession *session.Session, resources []string, tracker *ErrorTracker) (sets.Set[string], error) {
 	deleted := sets.New[string]()
 	for _, arnString := range resources {
-		logger := o.Logger.WithField("arn", arnString)
+		l := logger.WithField("arn", arnString)
 		parsedARN, err := arn.Parse(arnString)
 		if err != nil {
-			logger.WithError(err).Debug("could not parse ARN")
+			l.WithError(err).Debug("could not parse ARN")
 			continue
 		}
-		if err := deleteARN(ctx, awsSession, parsedARN, o.Logger); err != nil {
-			tracker.suppressWarning(arnString, err, logger)
+		if err := deleteARN(ctx, awsSession, parsedARN, logger); err != nil {
+			tracker.suppressWarning(arnString, err, l)
 			if err := ctx.Err(); err != nil {
 				return deleted, err
 			}

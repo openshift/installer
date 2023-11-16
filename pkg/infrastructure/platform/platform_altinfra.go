@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/infrastructure/aws"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -16,8 +17,7 @@ import (
 func ProviderForPlatform(platform string) (infrastructure.Provider, error) {
 	switch platform {
 	case awstypes.Name:
-		panic("not implemented")
-		return nil, nil
+		return aws.InitializeProvider(), nil
 	case azuretypes.Name:
 		panic("not implemented")
 		return nil, nil
