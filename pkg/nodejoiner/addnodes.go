@@ -36,7 +36,7 @@ func NewAddNodesCommand(directory string, kubeConfig string, generatePXE *bool) 
 
 	ctx := workflowreport.Context(string(workflow.AgentWorkflowTypeAddNodes), directory)
 
-	fetcher := store.NewAssetsFetcher(directory)
+	fetcher := store.NewAssetsFetcher(directory, true)
 	err = fetcher.FetchAndPersist(ctx, assets)
 
 	if reportErr := workflowreport.GetReport(ctx).Complete(err); reportErr != nil {
