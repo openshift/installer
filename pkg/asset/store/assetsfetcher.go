@@ -17,19 +17,21 @@ type AssetsFetcher interface {
 }
 
 type fetcher struct {
-	storeDir string
+	storeDir     string
+	consumeFiles bool
 }
 
 // NewAssetsFetcher creates a new AssetsFetcher instance for the specified assets store folder.
-func NewAssetsFetcher(storeDir string) AssetsFetcher {
+func NewAssetsFetcher(storeDir string, consumeFiles bool) AssetsFetcher {
 	return &fetcher{
-		storeDir: storeDir,
+		storeDir:     storeDir,
+		consumeFiles: consumeFiles,
 	}
 }
 
 // Fetchs all the writable assets from the configured assets store.
 func (f *fetcher) FetchAndPersist(ctx context.Context, assets []asset.WritableAsset) error {
-	assetStore, err := NewStore(f.storeDir)
+	assetStore, err := NewStoreWithConsumption(f.storeDir, f.consumeFiles)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}

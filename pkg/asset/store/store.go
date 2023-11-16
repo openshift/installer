@@ -59,6 +59,12 @@ func NewStore(dir string) (asset.Store, error) {
 	return newStore(dir, true)
 }
 
+// NewStoreWithConsumption returns an asset store that implements the asset.Store
+// interface, configured to either consume input files or allow them to persist.
+func NewStoreWithConsumption(dir string, consumeFiles bool) (asset.Store, error) {
+	return newStore(dir, consumeFiles)
+}
+
 func newStore(dir string, consumeFiles bool) (*storeImpl, error) {
 	modTracker := newModificationTracker()
 	store := &storeImpl{
