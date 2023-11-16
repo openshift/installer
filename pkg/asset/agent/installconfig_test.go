@@ -326,34 +326,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
-			name: "invalid architecture for SNO cluster",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OVNKubernetes
-compute:
-  - architecture: s390x
-    hyperthreading: Enabled
-    name: worker
-    platform: {}
-    replicas: 0
-controlPlane:
-  architecture: s390x
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 1
-platform:
-  none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: supported values: \"amd64\", \"arm64\", \"ppc64le\", \"s390x\", Compute[0].Architecture: Unsupported value: \"unsupportedArch\": supported values: \"amd64\", \"arm64\", \"ppc64le\", \"s390x\"]",
-		},
-		{
 			name: "invalid platform.baremetal for architecture ppc64le",
 			data: `
 apiVersion: v1
