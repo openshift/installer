@@ -260,10 +260,8 @@ func TestStoreFetch(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
-			store := &storeImpl{
-				directory: t.TempDir(),
-				assets:    map[reflect.Type]*assetState{},
-			}
+			store, err := newStore(t.TempDir())
+			assert.NoError(t, err, "error creating store")
 			assets := make(map[string]asset.Asset, len(tc.assets))
 			for name := range tc.assets {
 				assets[name] = newTestStoreAsset(name)
@@ -282,7 +280,7 @@ func TestStoreFetch(t *testing.T) {
 					source: generatedSource,
 				}
 			}
-			err := store.Fetch(context.Background(), assets[tc.target])
+			err = store.Fetch(context.Background(), assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 		})
