@@ -6,7 +6,9 @@ package platform
 import (
 	"fmt"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/infrastructure"
+	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
@@ -43,6 +45,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case alibabacloudtypes.Name:
 		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
 	case awstypes.Name:
+		if fg.Enabled(configv1.FeatureGateInstallAlternateInfrastructureAWS) {
+			return awsinfra.InitializeProvider(), nil
+		}
 		return terraform.InitializeProvider(aws.PlatformStages), nil
 	case azuretypes.Name:
 		return terraform.InitializeProvider(azure.PlatformStages), nil
