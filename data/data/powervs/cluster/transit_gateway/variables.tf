@@ -8,12 +8,6 @@ variable "resource_group" {
   description = "The name of the Power VS resource group to which the user belongs."
 }
 
-variable "transit_gateway_enabled" {
-  type        = bool
-  description = "Boolean indicating if Transit Gateways should be used."
-  default     = false
-}
-
 variable "service_instance_crn" {
   type        = string
   description = "The CRN of the service instance."

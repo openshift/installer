@@ -35,8 +35,3 @@ variable "enable_snat" {
   default     = true
 }
 
-variable "transit_gateway_enabled" {
-  type        = bool
-  description = "Boolean indicating if Transit Gateways should be used."
-  default     = false
-}
