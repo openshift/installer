@@ -736,6 +736,10 @@ type SageMakerAPI interface {
 	GetSagemakerServicecatalogPortfolioStatusWithContext(aws.Context, *sagemaker.GetSagemakerServicecatalogPortfolioStatusInput, ...request.Option) (*sagemaker.GetSagemakerServicecatalogPortfolioStatusOutput, error)
 	GetSagemakerServicecatalogPortfolioStatusRequest(*sagemaker.GetSagemakerServicecatalogPortfolioStatusInput) (*request.Request, *sagemaker.GetSagemakerServicecatalogPortfolioStatusOutput)
 
+	GetScalingConfigurationRecommendation(*sagemaker.GetScalingConfigurationRecommendationInput) (*sagemaker.GetScalingConfigurationRecommendationOutput, error)
+	GetScalingConfigurationRecommendationWithContext(aws.Context, *sagemaker.GetScalingConfigurationRecommendationInput, ...request.Option) (*sagemaker.GetScalingConfigurationRecommendationOutput, error)
+	GetScalingConfigurationRecommendationRequest(*sagemaker.GetScalingConfigurationRecommendationInput) (*request.Request, *sagemaker.GetScalingConfigurationRecommendationOutput)
+
 	GetSearchSuggestions(*sagemaker.GetSearchSuggestionsInput) (*sagemaker.GetSearchSuggestionsOutput, error)
 	GetSearchSuggestionsWithContext(aws.Context, *sagemaker.GetSearchSuggestionsInput, ...request.Option) (*sagemaker.GetSearchSuggestionsOutput, error)
 	GetSearchSuggestionsRequest(*sagemaker.GetSearchSuggestionsInput) (*request.Request, *sagemaker.GetSearchSuggestionsOutput)
@@ -1140,6 +1144,13 @@ type SageMakerAPI interface {
 
 	ListProjectsPages(*sagemaker.ListProjectsInput, func(*sagemaker.ListProjectsOutput, bool) bool) error
 	ListProjectsPagesWithContext(aws.Context, *sagemaker.ListProjectsInput, func(*sagemaker.ListProjectsOutput, bool) bool, ...request.Option) error
+
+	ListResourceCatalogs(*sagemaker.ListResourceCatalogsInput) (*sagemaker.ListResourceCatalogsOutput, error)
+	ListResourceCatalogsWithContext(aws.Context, *sagemaker.ListResourceCatalogsInput, ...request.Option) (*sagemaker.ListResourceCatalogsOutput, error)
+	ListResourceCatalogsRequest(*sagemaker.ListResourceCatalogsInput) (*request.Request, *sagemaker.ListResourceCatalogsOutput)
+
+	ListResourceCatalogsPages(*sagemaker.ListResourceCatalogsInput, func(*sagemaker.ListResourceCatalogsOutput, bool) bool) error
+	ListResourceCatalogsPagesWithContext(aws.Context, *sagemaker.ListResourceCatalogsInput, func(*sagemaker.ListResourceCatalogsOutput, bool) bool, ...request.Option) error
 
 	ListSpaces(*sagemaker.ListSpacesInput) (*sagemaker.ListSpacesOutput, error)
 	ListSpacesWithContext(aws.Context, *sagemaker.ListSpacesInput, ...request.Option) (*sagemaker.ListSpacesOutput, error)
