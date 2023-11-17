@@ -724,7 +724,7 @@ Add the base64-encoded certificate to the ignition shim:
       "tls": {
         "certificateAuthorities": [
           {
-            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>",
+            "source": "data:text/plain;charset=utf-8;base64,<base64_encoded_certificate>"
           }
         ]
       }
@@ -753,7 +753,7 @@ if ca_cert_path:
 else:
     exit()
 
-infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
+infra_id = os.environ.get('INFRA_ID', 'openshift')
 
 bootstrap_ignition_shim = infra_id+'-bootstrap-ignition.json'
 
@@ -762,8 +762,8 @@ with open(bootstrap_ignition_shim, 'r') as f:
 
 ignition = ignition_data.get('ignition', {})
 security = ignition.get('security', {})
-tls = storage.get('tls', {})
-certificateAuthorities = storage.get('certificateAuthorities', [])
+tls = security.get('tls', {})
+certificateAuthorities = tls.get('certificateAuthorities', [])
 
 certificateAuthorities.append(certificateAuthority)
 tls['certificateAuthorities'] = certificateAuthorities
