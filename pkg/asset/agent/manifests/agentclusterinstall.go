@@ -201,6 +201,8 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			}
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.BareMetal.IngressVIPs[0]
+			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.BareMetal.APIVIPs
+			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.BareMetal.IngressVIPs
 		} else if installConfig.Config.Platform.VSphere != nil {
 			vspherePlatform := vsphere.Platform{}
 			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 1 {
@@ -229,6 +231,8 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			}
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.VSphere.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
+			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.VSphere.APIVIPs
+			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.VSphere.IngressVIPs
 		} else if installConfig.Config.Platform.External != nil {
 			icOverridden = true
 			icOverrides.Platform = &agentClusterInstallPlatform{
