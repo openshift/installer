@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/infrastructure"
+	"github.com/openshift/installer/pkg/infrastructure/aws"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
-	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/baremetal"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
@@ -42,7 +42,7 @@ func ProviderForPlatform(platform string) (infrastructure.Provider, error) {
 	case alibabacloudtypes.Name:
 		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
 	case awstypes.Name:
-		return terraform.InitializeProvider(aws.PlatformStages), nil
+		return aws.InitializeProvider(), nil
 	case azuretypes.Name:
 		return terraform.InitializeProvider(azure.PlatformStages), nil
 	case azuretypes.StackTerraformName:
