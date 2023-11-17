@@ -181,6 +181,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 	}
 
+	lengthBootstrapFile := int64(len(bootstrapIgn))
+	if installConfig.Config.Platform.Azure != nil && installConfig.Config.Platform.Azure.CustomerManagedKey != nil &&
+		installConfig.Config.Platform.Azure.CustomerManagedKey.UserAssignedIdentityKey != "" {
+		if lengthBootstrapFile%512 != 0 {
+			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
+		}
+	}
+
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
@@ -190,6 +198,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		useIPv4,
 		useIPv6,
 		bootstrapIgn,
+		lengthBootstrapFile,
 		masterIgn,
 		masterCount,
 		mastersSchedulable,
@@ -382,6 +391,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			bootstrapIgnStub = string(shim)
 		}
 
+		managedKeys := azure.CustomerManagedKey{}
+		if installConfig.Config.Azure.CustomerManagedKey != nil {
+			managedKeys.KeyVault = azure.KeyVault{
+				ResourceGroup: installConfig.Config.Azure.CustomerManagedKey.KeyVault.ResourceGroup,
+				Name:          installConfig.Config.Azure.CustomerManagedKey.KeyVault.Name,
+				KeyName:       installConfig.Config.Azure.CustomerManagedKey.KeyVault.KeyName,
+			}
+			managedKeys.UserAssignedIdentityKey = installConfig.Config.Azure.CustomerManagedKey.UserAssignedIdentityKey
+		}
+
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                            auth,
@@ -401,6 +420,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
+				KeyVault:                        managedKeys.KeyVault,
+				UserAssignedIdentityKey:         managedKeys.UserAssignedIdentityKey,
 			},
 		)
 		if err != nil {
