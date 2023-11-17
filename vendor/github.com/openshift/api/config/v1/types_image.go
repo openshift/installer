@@ -64,10 +64,12 @@ type ImageSpec struct {
 }
 
 type ImageStatus struct {
+
 	// internalRegistryHostname sets the hostname for the default internal image
 	// registry. The value must be in "hostname[:port]" format.
 	// This value is set by the image registry operator which controls the internal registry
-	// hostname.
+	// hostname. For backward compatibility, users can still use OPENSHIFT_DEFAULT_REGISTRY
+	// environment variable but this setting overrides the environment variable.
 	// +optional
 	InternalRegistryHostname string `json:"internalRegistryHostname,omitempty"`
 
