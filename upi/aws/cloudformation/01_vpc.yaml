@@ -289,3 +289,23 @@ Outputs:
   PublicRouteTableId:
     Description: Public Route table ID
     Value: !Ref PublicRouteTable
+  PrivateRouteTableIds:
+    Description: Private Route table IDs
+    Value:
+      !Join [
+        ",",
+        [
+          !Join ["=", [
+            !Select [0, "Fn::GetAZs": !Ref "AWS::Region"],
+            !Ref PrivateRouteTable
+          ]],
+          !If [DoAz2,
+               !Join ["=", [!Select [1, "Fn::GetAZs": !Ref "AWS::Region"], !Ref PrivateRouteTable2]],
+               !Ref "AWS::NoValue"
+          ],
+          !If [DoAz3,
+               !Join ["=", [!Select [2, "Fn::GetAZs": !Ref "AWS::Region"], !Ref PrivateRouteTable3]],
+               !Ref "AWS::NoValue"
+          ]
+        ]
+      ]
