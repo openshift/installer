@@ -1,5 +1,5 @@
-//go:build !(altinfra || aro)
-// +build !altinfra,!aro
+//go:build !altinfra
+// +build !altinfra
 
 package platform
 
