@@ -2,15 +2,21 @@
 
 package v1
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // OpenStackPlatformStatusApplyConfiguration represents an declarative configuration of the OpenStackPlatformStatus type for use
 // with apply.
 type OpenStackPlatformStatusApplyConfiguration struct {
-	APIServerInternalIP  *string  `json:"apiServerInternalIP,omitempty"`
-	APIServerInternalIPs []string `json:"apiServerInternalIPs,omitempty"`
-	CloudName            *string  `json:"cloudName,omitempty"`
-	IngressIP            *string  `json:"ingressIP,omitempty"`
-	IngressIPs           []string `json:"ingressIPs,omitempty"`
-	NodeDNSIP            *string  `json:"nodeDNSIP,omitempty"`
+	APIServerInternalIP  *string                                          `json:"apiServerInternalIP,omitempty"`
+	APIServerInternalIPs []string                                         `json:"apiServerInternalIPs,omitempty"`
+	CloudName            *string                                          `json:"cloudName,omitempty"`
+	IngressIP            *string                                          `json:"ingressIP,omitempty"`
+	IngressIPs           []string                                         `json:"ingressIPs,omitempty"`
+	NodeDNSIP            *string                                          `json:"nodeDNSIP,omitempty"`
+	LoadBalancer         *OpenStackPlatformLoadBalancerApplyConfiguration `json:"loadBalancer,omitempty"`
+	MachineNetworks      []configv1.CIDR                                  `json:"machineNetworks,omitempty"`
 }
 
 // OpenStackPlatformStatusApplyConfiguration constructs an declarative configuration of the OpenStackPlatformStatus type for use with
@@ -68,5 +74,23 @@ func (b *OpenStackPlatformStatusApplyConfiguration) WithIngressIPs(values ...str
 // If called multiple times, the NodeDNSIP field is set to the value of the last call.
 func (b *OpenStackPlatformStatusApplyConfiguration) WithNodeDNSIP(value string) *OpenStackPlatformStatusApplyConfiguration {
 	b.NodeDNSIP = &value
+	return b
+}
+
+// WithLoadBalancer sets the LoadBalancer field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LoadBalancer field is set to the value of the last call.
+func (b *OpenStackPlatformStatusApplyConfiguration) WithLoadBalancer(value *OpenStackPlatformLoadBalancerApplyConfiguration) *OpenStackPlatformStatusApplyConfiguration {
+	b.LoadBalancer = value
+	return b
+}
+
+// WithMachineNetworks adds the given value to the MachineNetworks field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the MachineNetworks field.
+func (b *OpenStackPlatformStatusApplyConfiguration) WithMachineNetworks(values ...configv1.CIDR) *OpenStackPlatformStatusApplyConfiguration {
+	for i := range values {
+		b.MachineNetworks = append(b.MachineNetworks, values[i])
+	}
 	return b
 }
