@@ -8800,8 +8800,8 @@ github.com/openshift/assisted-service/client/versions
 # github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20230831114549-1922eda29cf8
 ## explicit; go 1.18
 github.com/openshift/assisted-service/models
-# github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
-## explicit; go 1.18
+# github.com/openshift/client-go v0.0.0-20231121143148-910ca30a1a9a
+## explicit; go 1.20
 github.com/openshift/client-go/config/applyconfigurations/config/v1
 github.com/openshift/client-go/config/applyconfigurations/config/v1alpha1
 github.com/openshift/client-go/config/applyconfigurations/internal
