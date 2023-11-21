@@ -137,9 +137,11 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	waitCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	wait.UntilWithContext(
+	err = wait.PollUntilContextCancel(
 		waitCtx,
-		func(ctx context.Context) {
+		1*time.Second,
+		true,
+		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting public records")
 			if o.CloudName == azure.StackCloud {
 				err = deleteAzureStackPublicRecords(ctx, o)
@@ -149,79 +151,65 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
-					cancel()
 					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting public DNS records"))
+					return true, err
 				}
-				return
+				return false, nil
 			}
-			cancel()
+			return true, nil
 		},
-		1*time.Second,
 	)
-	err = waitCtx.Err()
-	if err != nil && err != context.Canceled {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		errs = append(errs, errors.Wrap(err, "failed to delete public DNS records"))
 		o.Logger.Debug(err)
 	}
 
-	deadline, _ := waitCtx.Deadline()
-	diff := time.Until(deadline)
-	if diff > 0 {
-		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
-	}
-
-	wait.UntilWithContext(
+	err = wait.PollUntilContextCancel(
 		waitCtx,
-		func(ctx context.Context) {
+		1*time.Second,
+		true,
+		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting resource group")
 			err = deleteResourceGroup(ctx, o.resourceGroupsClient, o.Logger, o.ResourceGroupName)
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
-					cancel()
 					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting resource group"))
+					return true, err
 				} else if isResourceGroupBlockedError(err) {
-					cancel()
 					errs = append(errs, errors.Wrap(err, "unable to delete resource group, resources in the group are in use by others"))
+					return true, err
 				}
-				return
+				return false, nil
 			}
-			cancel()
+			return true, nil
 		},
-		1*time.Second,
 	)
-	err = waitCtx.Err()
-	if err != nil && err != context.Canceled {
+	if err != nil && errors.Is(err, context.Canceled) {
 		errs = append(errs, errors.Wrap(err, "failed to delete resource group"))
 		o.Logger.Debug(err)
 	}
 
-	deadline, _ = waitCtx.Deadline()
-	diff = time.Until(deadline)
-	if diff > 0 {
-		waitCtx, cancel = context.WithTimeout(context.Background(), diff)
-	}
-
-	wait.UntilWithContext(
+	err = wait.PollUntilContextCancel(
 		waitCtx,
-		func(ctx context.Context) {
+		1*time.Second,
+		true,
+		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting application registrations")
 			err = deleteApplicationRegistrations(ctx, o.msgraphClient, o.Logger, o.InfraID)
 			if err != nil {
 				oDataErr := extractODataError(err)
 				o.Logger.Debug(oDataErr)
 				if isAuthError(err) {
-					cancel()
 					errs = append(errs, errors.Wrap(oDataErr, "unable to authenticate when deleting application registrations and their service principals"))
+					return true, err
 				}
-				return
+				return false, nil
 			}
-			cancel()
+			return true, nil
 		},
-		1*time.Second,
 	)
-	err = waitCtx.Err()
-	if err != nil && err != context.Canceled {
+	if err != nil && errors.Is(err, context.Canceled) {
 		errs = append(errs, errors.Wrap(err, "failed to delete application registrations and their service principals"))
 		o.Logger.Debug(err)
 	}
