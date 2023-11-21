@@ -47,6 +47,12 @@ func (o *PcloudV1CloudinstancesCosimagesPostReader) ReadResponse(response runtim
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudV1CloudinstancesCosimagesPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudV1CloudinstancesCosimagesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -66,7 +72,7 @@ func (o *PcloudV1CloudinstancesCosimagesPostReader) ReadResponse(response runtim
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images] pcloud.v1.cloudinstances.cosimages.post", response, response.Code())
 	}
 }
 
@@ -107,6 +113,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud v1 cloudinstances cosimages post accepted response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post accepted response
+func (o *PcloudV1CloudinstancesCosimagesPostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostAccepted) Error() string {
@@ -172,6 +183,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post bad request response
+func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +249,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud v1 cloudinstances cosimages post unauthorized response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post unauthorized response
+func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostUnauthorized) Error() string {
@@ -298,6 +319,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post forbidden response
+func (o *PcloudV1CloudinstancesCosimagesPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostForbidden  %+v", 403, o.Payload)
 }
@@ -311,6 +337,74 @@ func (o *PcloudV1CloudinstancesCosimagesPostForbidden) GetPayload() *models.Erro
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV1CloudinstancesCosimagesPostNotFound creates a PcloudV1CloudinstancesCosimagesPostNotFound with default headers values
+func NewPcloudV1CloudinstancesCosimagesPostNotFound() *PcloudV1CloudinstancesCosimagesPostNotFound {
+	return &PcloudV1CloudinstancesCosimagesPostNotFound{}
+}
+
+/*
+PcloudV1CloudinstancesCosimagesPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudV1CloudinstancesCosimagesPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages post not found response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages post not found response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages post not found response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages post not found response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages post not found response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post not found response
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV1CloudinstancesCosimagesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -359,6 +453,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud v1 cloudinstances cosimages post conflict response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post conflict response
+func (o *PcloudV1CloudinstancesCosimagesPostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostConflict) Error() string {
@@ -424,6 +523,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) IsCode(code int
 	return code == 422
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post unprocessable entity response
+func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudV1CloudinstancesCosimagesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +589,11 @@ func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsServerError()
 // IsCode returns true when this pcloud v1 cloudinstances cosimages post internal server error response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages post internal server error response
+func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudV1CloudinstancesCosimagesPostInternalServerError) Error() string {

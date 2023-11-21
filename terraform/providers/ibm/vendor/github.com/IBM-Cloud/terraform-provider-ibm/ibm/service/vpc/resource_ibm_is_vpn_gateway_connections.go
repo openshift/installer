@@ -39,6 +39,7 @@ const (
 	isVPNGatewayConnectionTunnels                   = "tunnels"
 	isVPNGatewayConnectionResourcetype              = "resource_type"
 	isVPNGatewayConnectionCreatedat                 = "created_at"
+	isVPNGatewayConnectionStatusreasons             = "status_reasons"
 )
 
 func ResourceIBMISVPNGatewayConnection() *schema.Resource {
@@ -152,7 +153,30 @@ func ResourceIBMISVPNGatewayConnection() *schema.Resource {
 				Computed:    true,
 				Description: "VPN gateway connection status",
 			},
-
+			isVPNGatewayConnectionStatusreasons: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current status (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the status reason.",
+						},
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the status reason.",
+						},
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about this status reason.",
+						},
+					},
+				},
+			},
 			flex.RelatedCRN: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -404,6 +428,9 @@ func vpngwconGet(d *schema.ResourceData, meta interface{}, gID, gConnID string) 
 	}
 	if vpnGatewayConnection.Status != nil {
 		d.Set(isVPNGatewayConnectionStatus, *vpnGatewayConnection.Status)
+	}
+	if err := d.Set(isVPNGatewayConnectionStatusreasons, resourceVPNGatewayConnectionFlattenLifecycleReasons(vpnGatewayConnection.StatusReasons)); err != nil {
+		return fmt.Errorf("[ERROR] Error setting status_reasons: %s", err)
 	}
 	if vpnGatewayConnection.ResourceType != nil {
 		d.Set(isVPNGatewayConnectionResourcetype, *vpnGatewayConnection.ResourceType)
@@ -676,4 +703,20 @@ func vpngwconExists(d *schema.ResourceData, meta interface{}, gID, gConnID strin
 		return false, fmt.Errorf("[ERROR] Error getting Vpn Gateway Connection: %s\n%s", err, response)
 	}
 	return true, nil
+}
+
+func resourceVPNGatewayConnectionFlattenLifecycleReasons(statusReasons []vpcv1.VPNGatewayConnectionStatusReason) (statusReasonsList []map[string]interface{}) {
+	statusReasonsList = make([]map[string]interface{}, 0)
+	for _, lr := range statusReasons {
+		currentLR := map[string]interface{}{}
+		if lr.Code != nil && lr.Message != nil {
+			currentLR[isInstanceLifecycleReasonsCode] = *lr.Code
+			currentLR[isInstanceLifecycleReasonsMessage] = *lr.Message
+			if lr.MoreInfo != nil {
+				currentLR[isInstanceLifecycleReasonsMoreInfo] = *lr.MoreInfo
+			}
+			statusReasonsList = append(statusReasonsList, currentLR)
+		}
+	}
+	return statusReasonsList
 }

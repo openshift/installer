@@ -29,6 +29,12 @@ func (o *PcloudV1CloudinstancesCosimagesGetReader) ReadResponse(response runtime
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudV1CloudinstancesCosimagesGetBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudV1CloudinstancesCosimagesGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudV1CloudinstancesCosimagesGetReader) ReadResponse(response runtime
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images] pcloud.v1.cloudinstances.cosimages.get", response, response.Code())
 	}
 }
 
@@ -97,6 +103,11 @@ func (o *PcloudV1CloudinstancesCosimagesGetOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get o k response
+func (o *PcloudV1CloudinstancesCosimagesGetOK) Code() int {
+	return 200
+}
+
 func (o *PcloudV1CloudinstancesCosimagesGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetOK  %+v", 200, o.Payload)
 }
@@ -112,6 +123,74 @@ func (o *PcloudV1CloudinstancesCosimagesGetOK) GetPayload() *models.Job {
 func (o *PcloudV1CloudinstancesCosimagesGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Job)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV1CloudinstancesCosimagesGetBadRequest creates a PcloudV1CloudinstancesCosimagesGetBadRequest with default headers values
+func NewPcloudV1CloudinstancesCosimagesGetBadRequest() *PcloudV1CloudinstancesCosimagesGetBadRequest {
+	return &PcloudV1CloudinstancesCosimagesGetBadRequest{}
+}
+
+/*
+PcloudV1CloudinstancesCosimagesGetBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudV1CloudinstancesCosimagesGetBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v1 cloudinstances cosimages get bad request response has a 2xx status code
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v1 cloudinstances cosimages get bad request response has a 3xx status code
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v1 cloudinstances cosimages get bad request response has a 4xx status code
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v1 cloudinstances cosimages get bad request response has a 5xx status code
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v1 cloudinstances cosimages get bad request response a status code equal to that given
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get bad request response
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV1CloudinstancesCosimagesGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -158,6 +237,11 @@ func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud v1 cloudinstances cosimages get unauthorized response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get unauthorized response
+func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetUnauthorized) Error() string {
@@ -223,6 +307,11 @@ func (o *PcloudV1CloudinstancesCosimagesGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get forbidden response
+func (o *PcloudV1CloudinstancesCosimagesGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV1CloudinstancesCosimagesGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetForbidden  %+v", 403, o.Payload)
 }
@@ -286,6 +375,11 @@ func (o *PcloudV1CloudinstancesCosimagesGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get not found response
+func (o *PcloudV1CloudinstancesCosimagesGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudV1CloudinstancesCosimagesGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cos-images][%d] pcloudV1CloudinstancesCosimagesGetNotFound  %+v", 404, o.Payload)
 }
@@ -347,6 +441,11 @@ func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) IsServerError() 
 // IsCode returns true when this pcloud v1 cloudinstances cosimages get internal server error response a status code equal to that given
 func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud v1 cloudinstances cosimages get internal server error response
+func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudV1CloudinstancesCosimagesGetInternalServerError) Error() string {

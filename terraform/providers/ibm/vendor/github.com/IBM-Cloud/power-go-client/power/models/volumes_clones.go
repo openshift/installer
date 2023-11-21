@@ -82,6 +82,11 @@ func (m *VolumesClones) contextValidateVolumesClone(ctx context.Context, formats
 	for i := 0; i < len(m.VolumesClone); i++ {
 
 		if m.VolumesClone[i] != nil {
+
+			if swag.IsZero(m.VolumesClone[i]) { // not required
+				return nil
+			}
+
 			if err := m.VolumesClone[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("volumesClone" + "." + strconv.Itoa(i))

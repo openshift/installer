@@ -31,7 +31,7 @@ func (f *IBMPIJobClient) Get(id string) (*models.Job, error) {
 		WithCloudInstanceID(f.cloudInstanceID).WithJobID(id)
 	resp, err := f.session.Power.PCloudJobs.PcloudCloudinstancesJobsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetJobOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetJobOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform get Job operation for job id %s", id)
@@ -46,7 +46,7 @@ func (f *IBMPIJobClient) GetAll() (*models.Jobs, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudJobs.PcloudCloudinstancesJobsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetAllJobsOperationFailed, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetAllJobsOperationFailed, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform get all jobs")

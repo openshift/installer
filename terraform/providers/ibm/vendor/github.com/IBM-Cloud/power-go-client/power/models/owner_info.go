@@ -207,6 +207,11 @@ func (m *OwnerInfo) contextValidateSoftlayerSubscriptions(ctx context.Context, f
 	for i := 0; i < len(m.SoftlayerSubscriptions); i++ {
 
 		if m.SoftlayerSubscriptions[i] != nil {
+
+			if swag.IsZero(m.SoftlayerSubscriptions[i]) { // not required
+				return nil
+			}
+
 			if err := m.SoftlayerSubscriptions[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("softlayerSubscriptions" + "." + strconv.Itoa(i))

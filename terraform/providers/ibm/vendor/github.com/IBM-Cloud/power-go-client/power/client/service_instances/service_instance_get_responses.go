@@ -29,6 +29,24 @@ func (o *ServiceInstanceGetReader) ReadResponse(response runtime.ClientResponse,
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewServiceInstanceGetBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 401:
+		result := NewServiceInstanceGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceInstanceGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewServiceInstanceGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -36,7 +54,7 @@ func (o *ServiceInstanceGetReader) ReadResponse(response runtime.ClientResponse,
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /v2/service_instances/{instance_id}] serviceInstance.get", response, response.Code())
 	}
 }
 
@@ -79,6 +97,11 @@ func (o *ServiceInstanceGetOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the service instance get o k response
+func (o *ServiceInstanceGetOK) Code() int {
+	return 200
+}
+
 func (o *ServiceInstanceGetOK) Error() string {
 	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetOK  %+v", 200, o.Payload)
 }
@@ -94,6 +117,210 @@ func (o *ServiceInstanceGetOK) GetPayload() *models.ServiceInstanceResource {
 func (o *ServiceInstanceGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.ServiceInstanceResource)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceGetBadRequest creates a ServiceInstanceGetBadRequest with default headers values
+func NewServiceInstanceGetBadRequest() *ServiceInstanceGetBadRequest {
+	return &ServiceInstanceGetBadRequest{}
+}
+
+/*
+ServiceInstanceGetBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type ServiceInstanceGetBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance get bad request response has a 2xx status code
+func (o *ServiceInstanceGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance get bad request response has a 3xx status code
+func (o *ServiceInstanceGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance get bad request response has a 4xx status code
+func (o *ServiceInstanceGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance get bad request response has a 5xx status code
+func (o *ServiceInstanceGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance get bad request response a status code equal to that given
+func (o *ServiceInstanceGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service instance get bad request response
+func (o *ServiceInstanceGetBadRequest) Code() int {
+	return 400
+}
+
+func (o *ServiceInstanceGetBadRequest) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceInstanceGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceInstanceGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceGetUnauthorized creates a ServiceInstanceGetUnauthorized with default headers values
+func NewServiceInstanceGetUnauthorized() *ServiceInstanceGetUnauthorized {
+	return &ServiceInstanceGetUnauthorized{}
+}
+
+/*
+ServiceInstanceGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceInstanceGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance get unauthorized response has a 2xx status code
+func (o *ServiceInstanceGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance get unauthorized response has a 3xx status code
+func (o *ServiceInstanceGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance get unauthorized response has a 4xx status code
+func (o *ServiceInstanceGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance get unauthorized response has a 5xx status code
+func (o *ServiceInstanceGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance get unauthorized response a status code equal to that given
+func (o *ServiceInstanceGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service instance get unauthorized response
+func (o *ServiceInstanceGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceInstanceGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceGetForbidden creates a ServiceInstanceGetForbidden with default headers values
+func NewServiceInstanceGetForbidden() *ServiceInstanceGetForbidden {
+	return &ServiceInstanceGetForbidden{}
+}
+
+/*
+ServiceInstanceGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceInstanceGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance get forbidden response has a 2xx status code
+func (o *ServiceInstanceGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance get forbidden response has a 3xx status code
+func (o *ServiceInstanceGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance get forbidden response has a 4xx status code
+func (o *ServiceInstanceGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance get forbidden response has a 5xx status code
+func (o *ServiceInstanceGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance get forbidden response a status code equal to that given
+func (o *ServiceInstanceGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service instance get forbidden response
+func (o *ServiceInstanceGetForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceInstanceGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceGetForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/service_instances/{instance_id}][%d] serviceInstanceGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -140,6 +367,11 @@ func (o *ServiceInstanceGetNotFound) IsServerError() bool {
 // IsCode returns true when this service instance get not found response a status code equal to that given
 func (o *ServiceInstanceGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the service instance get not found response
+func (o *ServiceInstanceGetNotFound) Code() int {
+	return 404
 }
 
 func (o *ServiceInstanceGetNotFound) Error() string {

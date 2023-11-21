@@ -24,12 +24,15 @@ func NewIBMPISAPInstanceClient(ctx context.Context, sess *ibmpisession.IBMPISess
 
 // Create a SAP Instance
 func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInstanceList, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_s_a_p.NewPcloudSapPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, postcreated, postAccepted, err := f.session.Power.PCloudsap.PcloudSapPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Create SAP Instance: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Create SAP Instance: %w", err))
 	}
 	if postok != nil && len(postok.Payload) > 0 {
 		return &postok.Payload, nil
@@ -45,12 +48,15 @@ func (f *IBMPISAPInstanceClient) Create(body *models.SAPCreate) (*models.PVMInst
 
 // Get a SAP Profile
 func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_s_a_p.NewPcloudSapGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithSapProfileID(id)
 	resp, err := f.session.Power.PCloudsap.PcloudSapGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get sap profile %s : %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get sap profile %s : %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get sap profile %s", id)
@@ -60,12 +66,15 @@ func (f *IBMPISAPInstanceClient) GetSAPProfile(id string) (*models.SAPProfile, e
 
 // Get All SAP Profiles
 func (f *IBMPISAPInstanceClient) GetAllSAPProfiles(cloudInstanceID string) (*models.SAPProfiles, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_s_a_p.NewPcloudSapGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudsap.PcloudSapGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all sap profiles for power instance %s: %w", cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get all sap profiles for power instance %s: %w", cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get all sap profiles for power instance %s", cloudInstanceID)

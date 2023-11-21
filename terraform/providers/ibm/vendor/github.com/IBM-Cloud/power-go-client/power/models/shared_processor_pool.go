@@ -180,6 +180,11 @@ func (m *SharedProcessorPool) contextValidateSharedProcessorPoolPlacementGroups(
 	for i := 0; i < len(m.SharedProcessorPoolPlacementGroups); i++ {
 
 		if m.SharedProcessorPoolPlacementGroups[i] != nil {
+
+			if swag.IsZero(m.SharedProcessorPoolPlacementGroups[i]) { // not required
+				return nil
+			}
+
 			if err := m.SharedProcessorPoolPlacementGroups[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sharedProcessorPoolPlacementGroups" + "." + strconv.Itoa(i))

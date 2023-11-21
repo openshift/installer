@@ -25,10 +25,10 @@ var (
 )
 
 func min(x, y int) int {
-    if x < y {
-        return x
-    }
-    return y
+	if x < y {
+		return x
+	}
+	return y
 }
 
 // Encode encodes data as snappy with no framing header.
@@ -48,14 +48,14 @@ func EncodeStream(dst, src []byte) []byte {
 
 	// Snappy encode in blocks of maximum 32KB
 	var (
-		max = len(src)
+		max       = len(src)
 		blockSize = 32 * 1024
-		pos   = 0
-		chunk []byte
+		pos       = 0
+		chunk     []byte
 	)
 
 	for pos < max {
-		newPos := min(pos + blockSize, max)
+		newPos := min(pos+blockSize, max)
 		chunk = master.Encode(chunk[:cap(chunk)], src[pos:newPos])
 
 		// First encode the compressed size (big-endian)
@@ -83,13 +83,23 @@ func Decode(src []byte) ([]byte, error) {
 // for use by this function. If `dst` is nil *or* insufficiently large to hold
 // the decoded `src`, new space will be allocated.
 func DecodeInto(dst, src []byte) ([]byte, error) {
+	if len(src) < 8 || !bytes.Equal(src[:8], xerialHeader) {
+		dst, err := master.Decode(dst[:cap(dst)], src)
+		if err != nil && len(src) < len(xerialHeader) {
+			// Keep compatibility and return ErrMalformed when there is a
+			// short or truncated header.
+			return nil, ErrMalformed
+		}
+		return dst, err
+	}
+
 	var max = len(src)
 	if max < len(xerialHeader) {
 		return nil, ErrMalformed
 	}
 
-	if !bytes.Equal(src[:8], xerialHeader) {
-		return master.Decode(dst[:cap(dst)], src)
+	if max == sizeOffset {
+		return []byte{}, nil
 	}
 
 	if max < sizeOffset+sizeBytes {
@@ -104,7 +114,7 @@ func DecodeInto(dst, src []byte) ([]byte, error) {
 	var (
 		pos   = sizeOffset
 		chunk []byte
-		err       error
+		err   error
 	)
 
 	for pos+sizeBytes <= max {

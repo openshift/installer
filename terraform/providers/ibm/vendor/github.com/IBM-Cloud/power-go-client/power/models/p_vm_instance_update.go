@@ -205,6 +205,10 @@ func (m *PVMInstanceUpdate) ContextValidate(ctx context.Context, formats strfmt.
 
 func (m *PVMInstanceUpdate) contextValidatePinPolicy(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.PinPolicy) { // not required
+		return nil
+	}
+
 	if err := m.PinPolicy.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("pinPolicy")
@@ -220,6 +224,11 @@ func (m *PVMInstanceUpdate) contextValidatePinPolicy(ctx context.Context, format
 func (m *PVMInstanceUpdate) contextValidateSoftwareLicenses(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.SoftwareLicenses != nil {
+
+		if swag.IsZero(m.SoftwareLicenses) { // not required
+			return nil
+		}
+
 		if err := m.SoftwareLicenses.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("softwareLicenses")
@@ -236,6 +245,11 @@ func (m *PVMInstanceUpdate) contextValidateSoftwareLicenses(ctx context.Context,
 func (m *PVMInstanceUpdate) contextValidateVirtualCores(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.VirtualCores != nil {
+
+		if swag.IsZero(m.VirtualCores) { // not required
+			return nil
+		}
+
 		if err := m.VirtualCores.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("virtualCores")

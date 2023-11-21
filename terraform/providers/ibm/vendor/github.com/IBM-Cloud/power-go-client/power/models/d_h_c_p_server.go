@@ -109,6 +109,7 @@ func (m *DHCPServer) ContextValidate(ctx context.Context, formats strfmt.Registr
 func (m *DHCPServer) contextValidateNetwork(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Network != nil {
+
 		if err := m.Network.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("network")

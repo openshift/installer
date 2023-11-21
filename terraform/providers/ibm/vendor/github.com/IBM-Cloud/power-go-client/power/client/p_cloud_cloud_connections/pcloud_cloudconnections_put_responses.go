@@ -47,6 +47,12 @@ func (o *PcloudCloudconnectionsPutReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudconnectionsPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudconnectionsPutNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -83,8 +89,14 @@ func (o *PcloudCloudconnectionsPutReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 503:
+		result := NewPcloudCloudconnectionsPutServiceUnavailable()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}] pcloud.cloudconnections.put", response, response.Code())
 	}
 }
 
@@ -125,6 +137,11 @@ func (o *PcloudCloudconnectionsPutOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudconnections put o k response a status code equal to that given
 func (o *PcloudCloudconnectionsPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudconnections put o k response
+func (o *PcloudCloudconnectionsPutOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudconnectionsPutOK) Error() string {
@@ -190,6 +207,11 @@ func (o *PcloudCloudconnectionsPutAccepted) IsCode(code int) bool {
 	return code == 202
 }
 
+// Code gets the status code for the pcloud cloudconnections put accepted response
+func (o *PcloudCloudconnectionsPutAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudCloudconnectionsPutAccepted) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutAccepted  %+v", 202, o.Payload)
 }
@@ -251,6 +273,11 @@ func (o *PcloudCloudconnectionsPutBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud cloudconnections put bad request response a status code equal to that given
 func (o *PcloudCloudconnectionsPutBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud cloudconnections put bad request response
+func (o *PcloudCloudconnectionsPutBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudCloudconnectionsPutBadRequest) Error() string {
@@ -316,6 +343,11 @@ func (o *PcloudCloudconnectionsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud cloudconnections put unauthorized response
+func (o *PcloudCloudconnectionsPutUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudCloudconnectionsPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutUnauthorized  %+v", 401, o.Payload)
 }
@@ -329,6 +361,74 @@ func (o *PcloudCloudconnectionsPutUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudconnectionsPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsPutForbidden creates a PcloudCloudconnectionsPutForbidden with default headers values
+func NewPcloudCloudconnectionsPutForbidden() *PcloudCloudconnectionsPutForbidden {
+	return &PcloudCloudconnectionsPutForbidden{}
+}
+
+/*
+PcloudCloudconnectionsPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudconnectionsPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections put forbidden response has a 2xx status code
+func (o *PcloudCloudconnectionsPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections put forbidden response has a 3xx status code
+func (o *PcloudCloudconnectionsPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections put forbidden response has a 4xx status code
+func (o *PcloudCloudconnectionsPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections put forbidden response has a 5xx status code
+func (o *PcloudCloudconnectionsPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections put forbidden response a status code equal to that given
+func (o *PcloudCloudconnectionsPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudconnections put forbidden response
+func (o *PcloudCloudconnectionsPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudconnectionsPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -377,6 +477,11 @@ func (o *PcloudCloudconnectionsPutNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud cloudconnections put not found response a status code equal to that given
 func (o *PcloudCloudconnectionsPutNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudconnections put not found response
+func (o *PcloudCloudconnectionsPutNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudCloudconnectionsPutNotFound) Error() string {
@@ -442,6 +547,11 @@ func (o *PcloudCloudconnectionsPutMethodNotAllowed) IsCode(code int) bool {
 	return code == 405
 }
 
+// Code gets the status code for the pcloud cloudconnections put method not allowed response
+func (o *PcloudCloudconnectionsPutMethodNotAllowed) Code() int {
+	return 405
+}
+
 func (o *PcloudCloudconnectionsPutMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutMethodNotAllowed  %+v", 405, o.Payload)
 }
@@ -503,6 +613,11 @@ func (o *PcloudCloudconnectionsPutRequestTimeout) IsServerError() bool {
 // IsCode returns true when this pcloud cloudconnections put request timeout response a status code equal to that given
 func (o *PcloudCloudconnectionsPutRequestTimeout) IsCode(code int) bool {
 	return code == 408
+}
+
+// Code gets the status code for the pcloud cloudconnections put request timeout response
+func (o *PcloudCloudconnectionsPutRequestTimeout) Code() int {
+	return 408
 }
 
 func (o *PcloudCloudconnectionsPutRequestTimeout) Error() string {
@@ -568,6 +683,11 @@ func (o *PcloudCloudconnectionsPutConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud cloudconnections put conflict response
+func (o *PcloudCloudconnectionsPutConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudCloudconnectionsPutConflict) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutConflict  %+v", 409, o.Payload)
 }
@@ -629,6 +749,11 @@ func (o *PcloudCloudconnectionsPutUnprocessableEntity) IsServerError() bool {
 // IsCode returns true when this pcloud cloudconnections put unprocessable entity response a status code equal to that given
 func (o *PcloudCloudconnectionsPutUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
+}
+
+// Code gets the status code for the pcloud cloudconnections put unprocessable entity response
+func (o *PcloudCloudconnectionsPutUnprocessableEntity) Code() int {
+	return 422
 }
 
 func (o *PcloudCloudconnectionsPutUnprocessableEntity) Error() string {
@@ -694,6 +819,11 @@ func (o *PcloudCloudconnectionsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
 }
 
+// Code gets the status code for the pcloud cloudconnections put internal server error response
+func (o *PcloudCloudconnectionsPutInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudCloudconnectionsPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutInternalServerError  %+v", 500, o.Payload)
 }
@@ -707,6 +837,74 @@ func (o *PcloudCloudconnectionsPutInternalServerError) GetPayload() *models.Erro
 }
 
 func (o *PcloudCloudconnectionsPutInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsPutServiceUnavailable creates a PcloudCloudconnectionsPutServiceUnavailable with default headers values
+func NewPcloudCloudconnectionsPutServiceUnavailable() *PcloudCloudconnectionsPutServiceUnavailable {
+	return &PcloudCloudconnectionsPutServiceUnavailable{}
+}
+
+/*
+PcloudCloudconnectionsPutServiceUnavailable describes a response with status code 503, with default header values.
+
+Service Unavailable
+*/
+type PcloudCloudconnectionsPutServiceUnavailable struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections put service unavailable response has a 2xx status code
+func (o *PcloudCloudconnectionsPutServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections put service unavailable response has a 3xx status code
+func (o *PcloudCloudconnectionsPutServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections put service unavailable response has a 4xx status code
+func (o *PcloudCloudconnectionsPutServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud cloudconnections put service unavailable response has a 5xx status code
+func (o *PcloudCloudconnectionsPutServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud cloudconnections put service unavailable response a status code equal to that given
+func (o *PcloudCloudconnectionsPutServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
+// Code gets the status code for the pcloud cloudconnections put service unavailable response
+func (o *PcloudCloudconnectionsPutServiceUnavailable) Code() int {
+	return 503
+}
+
+func (o *PcloudCloudconnectionsPutServiceUnavailable) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutServiceUnavailable  %+v", 503, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPutServiceUnavailable) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsPutServiceUnavailable  %+v", 503, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPutServiceUnavailable) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPutServiceUnavailable) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -917,8 +917,7 @@ func dataSourceWorkspaceResponseTemplateDataToMap(templateDataItem schematicsv1.
 	if templateDataItem.ValuesMetadata != nil {
 		valuesMetadata := []map[string]interface{}{}
 		for _, valuesMetadataItem := range templateDataItem.ValuesMetadata {
-			valuesMetadataItemMap := dataSourceIbmSchematicsWorkspaceVariableMetadataToMap(&valuesMetadataItem)
-			valuesMetadata = append(valuesMetadata, valuesMetadataItemMap)
+			valuesMetadata = append(valuesMetadata, valuesMetadataItem)
 		}
 		templateDataMap["values_metadata"] = valuesMetadata
 	}

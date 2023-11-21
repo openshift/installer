@@ -99,6 +99,11 @@ func (m *ServiceInstanceUpdateRequest) ContextValidate(ctx context.Context, form
 func (m *ServiceInstanceUpdateRequest) contextValidatePreviousValues(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.PreviousValues != nil {
+
+		if swag.IsZero(m.PreviousValues) { // not required
+			return nil
+		}
+
 		if err := m.PreviousValues.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("previous_values")

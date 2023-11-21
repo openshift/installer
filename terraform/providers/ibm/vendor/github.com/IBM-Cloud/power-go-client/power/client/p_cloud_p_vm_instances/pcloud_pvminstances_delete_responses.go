@@ -66,7 +66,7 @@ func (o *PcloudPvminstancesDeleteReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}] pcloud.pvminstances.delete", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudPvminstancesDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances delete o k response a status code equal to that given
 func (o *PcloudPvminstancesDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances delete o k response
+func (o *PcloudPvminstancesDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesDeleteOK) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudPvminstancesDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances delete bad request response a status code equal to that given
 func (o *PcloudPvminstancesDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances delete bad request response
+func (o *PcloudPvminstancesDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesDeleteBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudPvminstancesDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances delete unauthorized response
+func (o *PcloudPvminstancesDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudPvminstancesDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances delete forbidden response a status code equal to that given
 func (o *PcloudPvminstancesDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances delete forbidden response
+func (o *PcloudPvminstancesDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesDeleteForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudPvminstancesDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances delete not found response
+func (o *PcloudPvminstancesDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudPvminstancesDeleteGone) IsCode(code int) bool {
 	return code == 410
 }
 
+// Code gets the status code for the pcloud pvminstances delete gone response
+func (o *PcloudPvminstancesDeleteGone) Code() int {
+	return 410
+}
+
 func (o *PcloudPvminstancesDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesDeleteGone  %+v", 410, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudPvminstancesDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances delete internal server error response a status code equal to that given
 func (o *PcloudPvminstancesDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances delete internal server error response
+func (o *PcloudPvminstancesDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesDeleteInternalServerError) Error() string {

@@ -77,6 +77,10 @@ func DataSourceIBMKMSkeys() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"description": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"key_ring_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -199,8 +203,18 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["name"] = key.Name
 		keyInstance["crn"] = key.CRN
 		keyInstance["standard_key"] = key.Extractable
+		keyInstance["description"] = key.Description
 		keyInstance["aliases"] = key.Aliases
 		keyInstance["key_ring_id"] = key.KeyRingID
+		policies, err := api.GetPolicies(context.Background(), key.ID)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Failed to read policies: %s", err)
+		}
+		if len(policies) == 0 {
+			log.Printf("No Policy Configurations read\n")
+		} else {
+			keyInstance["policies"] = flex.FlattenKeyPolicies(policies)
+		}
 		keyMap = append(keyMap, keyInstance)
 		d.Set("keys", keyMap)
 
@@ -215,6 +229,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["name"] = key.Name
 		keyInstance["crn"] = key.CRN
 		keyInstance["standard_key"] = key.Extractable
+		keyInstance["description"] = key.Description
 		keyInstance["aliases"] = key.Aliases
 		keyInstance["key_ring_id"] = key.KeyRingID
 		policies, err := api.GetPolicies(context.Background(), key.ID)
@@ -278,6 +293,9 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 		}
+		if len(totalKeys) == 0 {
+			return fmt.Errorf("[ERROR] No keys in instance %s", instanceID)
+		}
 		var keyName string
 		var matchKeys []kp.Key
 		if v, ok := d.GetOk("key_name"); ok {
@@ -303,6 +321,7 @@ func dataSourceIBMKMSKeysRead(d *schema.ResourceData, meta interface{}) error {
 			keyInstance["name"] = key.Name
 			keyInstance["crn"] = key.CRN
 			keyInstance["standard_key"] = key.Extractable
+			keyInstance["description"] = key.Description
 			keyInstance["aliases"] = key.Aliases
 			keyInstance["key_ring_id"] = key.KeyRingID
 			keyMap = append(keyMap, keyInstance)

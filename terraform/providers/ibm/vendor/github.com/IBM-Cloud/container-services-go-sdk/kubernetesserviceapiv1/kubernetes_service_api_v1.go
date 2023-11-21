@@ -11157,9 +11157,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) GetVolumesWithContext(ctx co
 	return
 }
 
-// CreateAssignment : Create an assignment to a Satellite storage configuration
+// CreateAssignment : Create an assignment using a Satellite storage configuration for the cluster group(s).
 // Create an assignment to install the storage driver that is described by the version of the storage configuration on
-// the cluster group. Then, apps that run in the clusters can use the storage.
+// the cluster group(s). Then, apps that run in the clusters, part of cluster group(s), can use the storage.
 func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignment(createAssignmentOptions *CreateAssignmentOptions) (result *CreateSubscriptionData, response *core.DetailedResponse, err error) {
 	return kubernetesServiceApi.CreateAssignmentWithContext(context.Background(), createAssignmentOptions)
 }
@@ -11195,11 +11195,8 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignmentWithContext(
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createAssignmentOptions.ChannelName != nil {
-		body["channelName"] = createAssignmentOptions.ChannelName
-	}
-	if createAssignmentOptions.Cluster != nil {
-		body["cluster"] = createAssignmentOptions.Cluster
+	if createAssignmentOptions.Config != nil {
+		body["config"] = createAssignmentOptions.Config
 	}
 	if createAssignmentOptions.Groups != nil {
 		body["groups"] = createAssignmentOptions.Groups
@@ -11207,8 +11204,79 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignmentWithContext(
 	if createAssignmentOptions.Name != nil {
 		body["name"] = createAssignmentOptions.Name
 	}
-	if createAssignmentOptions.Version != nil {
-		body["version"] = createAssignmentOptions.Version
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = kubernetesServiceApi.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateSubscriptionData)
+	if err != nil {
+		return
+	}
+	response.Result = result
+
+	return
+}
+
+// CreateAssignmentByCluster : Create an assignment using a Satellite storage configuration for a Satellite cluster or service cluster.
+// Create an assignment to install the storage driver described by the version of the storage configuration on
+// the Satellite cluster or service cluster. Then, apps that run in the cluster can use the storage.
+func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignmentByCluster(createAssignmentOptions *CreateAssignmentOptions) (result *CreateSubscriptionData, response *core.DetailedResponse, err error) {
+	return kubernetesServiceApi.CreateAssignmentByClusterWithContext(context.Background(), createAssignmentOptions)
+}
+
+// CreateAssignmentWithContext is an alternate form of the CreateAssignment method which supports a Context parameter
+func (kubernetesServiceApi *KubernetesServiceApiV1) CreateAssignmentByClusterWithContext(ctx context.Context, createAssignmentOptions *CreateAssignmentOptions) (result *CreateSubscriptionData, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createAssignmentOptions, "createAssignmentOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createAssignmentOptions, "createAssignmentOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = kubernetesServiceApi.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(kubernetesServiceApi.Service.Options.URL, `/v2/storage/satellite/createAssignmentByCluster`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("kubernetes_service_api", "V1", "CreateAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createAssignmentOptions.Cluster != nil {
+		body["cluster"] = createAssignmentOptions.Cluster
+	}
+	if createAssignmentOptions.Config != nil {
+		body["config"] = createAssignmentOptions.Config
+	}
+	if createAssignmentOptions.Controller != nil {
+		body["controller"] = createAssignmentOptions.Controller
+	}
+	if createAssignmentOptions.Name != nil {
+		body["name"] = createAssignmentOptions.Name
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -11256,7 +11324,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateStorageConfigurationWi
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = kubernetesServiceApi.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(kubernetesServiceApi.Service.Options.URL, `/v2/storage/satellite/createStorageConfiguration`, nil)
+	_, err = builder.ResolveRequestURL(kubernetesServiceApi.Service.Options.URL, `/v2/storage/satellite/createStorageConfigurationByController`, nil)
 	if err != nil {
 		return
 	}
@@ -11279,8 +11347,8 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateStorageConfigurationWi
 	if createStorageConfigurationOptions.ConfigVersion != nil {
 		body["config-version"] = createStorageConfigurationOptions.ConfigVersion
 	}
-	if createStorageConfigurationOptions.Location != nil {
-		body["location"] = createStorageConfigurationOptions.Location
+	if createStorageConfigurationOptions.Controller != nil {
+		body["controller"] = createStorageConfigurationOptions.Controller
 	}
 	if createStorageConfigurationOptions.SourceBranch != nil {
 		body["source-branch"] = createStorageConfigurationOptions.SourceBranch
@@ -11322,6 +11390,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateStorageConfigurationWi
 		return
 	}
 	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCreateConfigurationData)
+
 	if err != nil {
 		return
 	}
@@ -11697,7 +11766,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) GetStorageConfigurationWithC
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	builder.AddQuery("name", fmt.Sprint(*getStorageConfigurationOptions.Name))
+	builder.AddQuery("config-name", fmt.Sprint(*getStorageConfigurationOptions.Name))
 
 	request, err := builder.Build()
 	if err != nil {
@@ -11986,11 +12055,6 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) RemoveStorageConfigurationWi
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalErrorResponse)
-	if err != nil {
-		return
-	}
-	response.Result = result
 
 	return
 }
@@ -12041,6 +12105,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) UpdateAssignmentWithContext(
 	}
 	if updateAssignmentOptions.UUID != nil {
 		body["uuid"] = updateAssignmentOptions.UUID
+	}
+	if updateAssignmentOptions.UpdateConfigVersion != nil {
+		body["updateConfigVersion"] = updateAssignmentOptions.UpdateConfigVersion
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -12154,7 +12221,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) UpdateStorageConfigurationWi
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = kubernetesServiceApi.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(kubernetesServiceApi.Service.Options.URL, `/v2/storage/satellite/updateStorageConfiguration`, nil)
+	_, err = builder.ResolveRequestURL(kubernetesServiceApi.Service.Options.URL, `/v2/storage/satellite/updateStorageConfigurationByController`, nil)
 	if err != nil {
 		return
 	}
@@ -12177,8 +12244,8 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) UpdateStorageConfigurationWi
 	if updateStorageConfigurationOptions.ConfigVersion != nil {
 		body["config-version"] = updateStorageConfigurationOptions.ConfigVersion
 	}
-	if updateStorageConfigurationOptions.Location != nil {
-		body["location"] = updateStorageConfigurationOptions.Location
+	if updateStorageConfigurationOptions.Controller != nil {
+		body["controller"] = updateStorageConfigurationOptions.Controller
 	}
 	if updateStorageConfigurationOptions.SourceBranch != nil {
 		body["source-branch"] = updateStorageConfigurationOptions.SourceBranch
@@ -12219,11 +12286,6 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) UpdateStorageConfigurationWi
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalErrorResponse)
-	if err != nil {
-		return
-	}
-	response.Result = result
 
 	return
 }
@@ -17780,10 +17842,10 @@ func (options *CleanupMigrationOptions) SetCluster(cluster string) *CleanupMigra
 }
 
 // SetOptions : Allow user to set Options
-// func (options *CleanupMigrationOptions) SetOptions(options []string) *CleanupMigrationOptions {
-// 	options.Options = options
-// 	return options
-// }
+func (options *CleanupMigrationOptions) SetOptions(optionsField []string) *CleanupMigrationOptions {
+	options.Options = optionsField
+	return options
+}
 
 // SetHeaders : Allow user to set Headers
 func (options *CleanupMigrationOptions) SetHeaders(param map[string]string) *CleanupMigrationOptions {
@@ -18932,7 +18994,7 @@ func (options *CreateALBSecretOptions) SetHeaders(param map[string]string) *Crea
 
 // CreateAssignmentOptions : The CreateAssignment options.
 type CreateAssignmentOptions struct {
-	ChannelName *string
+	Config *string
 
 	Cluster *string
 
@@ -18940,7 +19002,7 @@ type CreateAssignmentOptions struct {
 
 	Name *string
 
-	Version *string
+	Controller *string
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -18951,9 +19013,9 @@ func (*KubernetesServiceApiV1) NewCreateAssignmentOptions() *CreateAssignmentOpt
 	return &CreateAssignmentOptions{}
 }
 
-// SetChannelName : Allow user to set ChannelName
-func (options *CreateAssignmentOptions) SetChannelName(channelName string) *CreateAssignmentOptions {
-	options.ChannelName = core.StringPtr(channelName)
+// SetConfig : Allow user to set ConfigName
+func (options *CreateAssignmentOptions) SetConfig(channelName string) *CreateAssignmentOptions {
+	options.Config = core.StringPtr(channelName)
 	return options
 }
 
@@ -18976,8 +19038,8 @@ func (options *CreateAssignmentOptions) SetName(name string) *CreateAssignmentOp
 }
 
 // SetVersion : Allow user to set Version
-func (options *CreateAssignmentOptions) SetVersion(version string) *CreateAssignmentOptions {
-	options.Version = core.StringPtr(version)
+func (options *CreateAssignmentOptions) SetController(controller string) *CreateAssignmentOptions {
+	options.Controller = core.StringPtr(controller)
 	return options
 }
 
@@ -20723,7 +20785,7 @@ type CreateStorageConfigurationOptions struct {
 
 	ConfigVersion *string
 
-	Location *string
+	Controller *string
 
 	SourceBranch *string
 
@@ -20762,9 +20824,9 @@ func (options *CreateStorageConfigurationOptions) SetConfigVersion(configVersion
 	return options
 }
 
-// SetLocation : Allow user to set Location
-func (options *CreateStorageConfigurationOptions) SetLocation(location string) *CreateStorageConfigurationOptions {
-	options.Location = core.StringPtr(location)
+// SetController : Allow user to set Location
+func (options *CreateStorageConfigurationOptions) SetController(controller string) *CreateStorageConfigurationOptions {
+	options.Controller = core.StringPtr(controller)
 	return options
 }
 
@@ -30960,10 +31022,10 @@ func (options *StartMigrationOptions) SetCluster(cluster string) *StartMigration
 }
 
 // // SetOptions : Allow user to set Options
-// func (options *StartMigrationOptions) SetOptions(options []string) *StartMigrationOptions {
-// 	options.Options = options
-// 	return options
-// }
+func (options *StartMigrationOptions) SetOptions(optionsField []string) *StartMigrationOptions {
+	options.Options = optionsField
+	return options
+}
 
 // SetHeaders : Allow user to set Headers
 func (options *StartMigrationOptions) SetHeaders(param map[string]string) *StartMigrationOptions {
@@ -31255,6 +31317,8 @@ type Subscription struct {
 	Version *string `json:"version,omitempty"`
 
 	VersionUUID *string `json:"versionUuid,omitempty"`
+
+	IsAssignmentUpgradeAvailable *bool `json:"isAssignmentUpgradeAvailable,omitempty"`
 }
 
 // UnmarshalSubscription unmarshals an instance of Subscription from the specified map of raw messages.
@@ -31329,6 +31393,10 @@ func UnmarshalSubscription(m map[string]json.RawMessage, result interface{}) (er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "versionUuid", &obj.VersionUUID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "isAssignmentUpgradeAvailable", &obj.IsAssignmentUpgradeAvailable)
 	if err != nil {
 		return
 	}
@@ -31694,6 +31762,8 @@ type UpdateAssignmentOptions struct {
 
 	UUID *string
 
+	UpdateConfigVersion *bool
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -31718,6 +31788,12 @@ func (options *UpdateAssignmentOptions) SetName(name string) *UpdateAssignmentOp
 // SetUUID : Allow user to set UUID
 func (options *UpdateAssignmentOptions) SetUUID(uuid string) *UpdateAssignmentOptions {
 	options.UUID = core.StringPtr(uuid)
+	return options
+}
+
+// SetUpdateConfigVersion : Allow user to update the config version
+func (options *UpdateAssignmentOptions) SetUpdateConfigVersion(updateConfigVersion bool) *UpdateAssignmentOptions {
+	options.UpdateConfigVersion = core.BoolPtr(updateConfigVersion)
 	return options
 }
 
@@ -32625,7 +32701,7 @@ type UpdateStorageConfigurationOptions struct {
 
 	ConfigVersion *string
 
-	Location *string
+	Controller *string
 
 	SourceBranch *string
 
@@ -32664,9 +32740,9 @@ func (options *UpdateStorageConfigurationOptions) SetConfigVersion(configVersion
 	return options
 }
 
-// SetLocation : Allow user to set Location
-func (options *UpdateStorageConfigurationOptions) SetLocation(location string) *UpdateStorageConfigurationOptions {
-	options.Location = core.StringPtr(location)
+// SetController : Allow user to set Location
+func (options *UpdateStorageConfigurationOptions) SetController(controller string) *UpdateStorageConfigurationOptions {
+	options.Controller = core.StringPtr(controller)
 	return options
 }
 

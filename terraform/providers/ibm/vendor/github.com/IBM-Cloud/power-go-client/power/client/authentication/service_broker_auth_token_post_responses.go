@@ -35,8 +35,20 @@ func (o *ServiceBrokerAuthTokenPostReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceBrokerAuthTokenPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewServiceBrokerAuthTokenPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceBrokerAuthTokenPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -54,7 +66,7 @@ func (o *ServiceBrokerAuthTokenPostReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /auth/v1/token] serviceBroker.auth.token.post", response, response.Code())
 	}
 }
 
@@ -97,6 +109,11 @@ func (o *ServiceBrokerAuthTokenPostOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the service broker auth token post o k response
+func (o *ServiceBrokerAuthTokenPostOK) Code() int {
+	return 200
+}
+
 func (o *ServiceBrokerAuthTokenPostOK) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostOK  %+v", 200, o.Payload)
 }
@@ -129,7 +146,7 @@ func NewServiceBrokerAuthTokenPostBadRequest() *ServiceBrokerAuthTokenPostBadReq
 /*
 ServiceBrokerAuthTokenPostBadRequest describes a response with status code 400, with default header values.
 
-Authorization pending
+Bad Request
 */
 type ServiceBrokerAuthTokenPostBadRequest struct {
 	Payload *models.Error
@@ -160,6 +177,11 @@ func (o *ServiceBrokerAuthTokenPostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the service broker auth token post bad request response
+func (o *ServiceBrokerAuthTokenPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *ServiceBrokerAuthTokenPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostBadRequest  %+v", 400, o.Payload)
 }
@@ -184,6 +206,74 @@ func (o *ServiceBrokerAuthTokenPostBadRequest) readResponse(response runtime.Cli
 	return nil
 }
 
+// NewServiceBrokerAuthTokenPostUnauthorized creates a ServiceBrokerAuthTokenPostUnauthorized with default headers values
+func NewServiceBrokerAuthTokenPostUnauthorized() *ServiceBrokerAuthTokenPostUnauthorized {
+	return &ServiceBrokerAuthTokenPostUnauthorized{}
+}
+
+/*
+ServiceBrokerAuthTokenPostUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceBrokerAuthTokenPostUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth token post unauthorized response has a 2xx status code
+func (o *ServiceBrokerAuthTokenPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth token post unauthorized response has a 3xx status code
+func (o *ServiceBrokerAuthTokenPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth token post unauthorized response has a 4xx status code
+func (o *ServiceBrokerAuthTokenPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth token post unauthorized response has a 5xx status code
+func (o *ServiceBrokerAuthTokenPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth token post unauthorized response a status code equal to that given
+func (o *ServiceBrokerAuthTokenPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service broker auth token post unauthorized response
+func (o *ServiceBrokerAuthTokenPostUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceBrokerAuthTokenPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerAuthTokenPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerAuthTokenPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthTokenPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewServiceBrokerAuthTokenPostForbidden creates a ServiceBrokerAuthTokenPostForbidden with default headers values
 func NewServiceBrokerAuthTokenPostForbidden() *ServiceBrokerAuthTokenPostForbidden {
 	return &ServiceBrokerAuthTokenPostForbidden{}
@@ -192,7 +282,7 @@ func NewServiceBrokerAuthTokenPostForbidden() *ServiceBrokerAuthTokenPostForbidd
 /*
 ServiceBrokerAuthTokenPostForbidden describes a response with status code 403, with default header values.
 
-User refused grant
+Forbidden
 */
 type ServiceBrokerAuthTokenPostForbidden struct {
 	Payload *models.Error
@@ -223,6 +313,11 @@ func (o *ServiceBrokerAuthTokenPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the service broker auth token post forbidden response
+func (o *ServiceBrokerAuthTokenPostForbidden) Code() int {
+	return 403
+}
+
 func (o *ServiceBrokerAuthTokenPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostForbidden  %+v", 403, o.Payload)
 }
@@ -236,6 +331,74 @@ func (o *ServiceBrokerAuthTokenPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *ServiceBrokerAuthTokenPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthTokenPostNotFound creates a ServiceBrokerAuthTokenPostNotFound with default headers values
+func NewServiceBrokerAuthTokenPostNotFound() *ServiceBrokerAuthTokenPostNotFound {
+	return &ServiceBrokerAuthTokenPostNotFound{}
+}
+
+/*
+ServiceBrokerAuthTokenPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceBrokerAuthTokenPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth token post not found response has a 2xx status code
+func (o *ServiceBrokerAuthTokenPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth token post not found response has a 3xx status code
+func (o *ServiceBrokerAuthTokenPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth token post not found response has a 4xx status code
+func (o *ServiceBrokerAuthTokenPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth token post not found response has a 5xx status code
+func (o *ServiceBrokerAuthTokenPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth token post not found response a status code equal to that given
+func (o *ServiceBrokerAuthTokenPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service broker auth token post not found response
+func (o *ServiceBrokerAuthTokenPostNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceBrokerAuthTokenPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthTokenPostNotFound) String() string {
+	return fmt.Sprintf("[POST /auth/v1/token][%d] serviceBrokerAuthTokenPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthTokenPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthTokenPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -284,6 +447,11 @@ func (o *ServiceBrokerAuthTokenPostTooManyRequests) IsServerError() bool {
 // IsCode returns true when this service broker auth token post too many requests response a status code equal to that given
 func (o *ServiceBrokerAuthTokenPostTooManyRequests) IsCode(code int) bool {
 	return code == 429
+}
+
+// Code gets the status code for the service broker auth token post too many requests response
+func (o *ServiceBrokerAuthTokenPostTooManyRequests) Code() int {
+	return 429
 }
 
 func (o *ServiceBrokerAuthTokenPostTooManyRequests) Error() string {
@@ -347,6 +515,11 @@ func (o *ServiceBrokerAuthTokenPostInternalServerError) IsServerError() bool {
 // IsCode returns true when this service broker auth token post internal server error response a status code equal to that given
 func (o *ServiceBrokerAuthTokenPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the service broker auth token post internal server error response
+func (o *ServiceBrokerAuthTokenPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *ServiceBrokerAuthTokenPostInternalServerError) Error() string {

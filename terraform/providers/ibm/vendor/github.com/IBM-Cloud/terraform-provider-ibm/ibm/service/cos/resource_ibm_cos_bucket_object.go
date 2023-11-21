@@ -146,6 +146,11 @@ func ResourceIBMCOSBucketObject() *schema.Resource {
 				ValidateFunc: validation.IsRFC3339Time,
 				Description:  "An object cannot be deleted when the current time is earlier than the retainUntilDate. After this date, the object can be deleted.",
 			},
+			"website_redirect": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Redirect a request to another object or an URL",
+			},
 		},
 	}
 }
@@ -202,6 +207,10 @@ func resourceIBMCOSBucketObjectCreate(ctx context.Context, d *schema.ResourceDat
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 		Body:   body,
+	}
+	//if website redirect location if given for a an object
+	if v, ok := d.GetOk("website_redirect"); ok {
+		putInput.WebsiteRedirectLocation = aws.String(v.(string))
 	}
 
 	if _, err := s3Client.PutObject(putInput); err != nil {
@@ -328,6 +337,9 @@ func resourceIBMCOSBucketObjectRead(ctx context.Context, d *schema.ResourceData,
 	if out.ObjectLockLegalHoldStatus != nil {
 		d.Set("object_lock_legal_hold_status", out.ObjectLockLegalHoldStatus)
 	}
+	if out.WebsiteRedirectLocation != nil {
+		d.Set("website_redirect", out.WebsiteRedirectLocation)
+	}
 	d.Set("key", objectKey)
 	d.Set("version_id", out.VersionId)
 	d.Set("object_sql_url", "cos://"+bucketLocation+"/"+bucketName+"/"+objectKey)
@@ -386,6 +398,11 @@ func resourceIBMCOSBucketObjectUpdate(ctx context.Context, d *schema.ResourceDat
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(objectKey),
 			Body:   body,
+		}
+		if d.HasChange("website_redirect") {
+			if v, ok := d.GetOk("website_redirect"); ok {
+				putInput.WebsiteRedirectLocation = aws.String(v.(string))
+			}
 		}
 
 		if _, err := s3Client.PutObject(putInput); err != nil {

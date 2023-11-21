@@ -34,6 +34,12 @@ type VolumesCloneExecute struct {
 	// True, Execute failure rolls back clone activity and removes the prepared snapshot
 	//
 	RollbackPrepare bool `json:"rollbackPrepare,omitempty"`
+
+	// Target storage tier for the cloned volumes. Use to clone a set of volumes from one storage tier
+	// to a different storage tier. Cloned volumes must remain in the same storage pool as
+	// the source volumes.
+	//
+	TargetStorageTier string `json:"targetStorageTier,omitempty"`
 }
 
 // Validate validates this volumes clone execute

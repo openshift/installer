@@ -60,7 +60,7 @@ func (o *PcloudPvminstancesConsoleGetReader) ReadResponse(response runtime.Clien
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console] pcloud.pvminstances.console.get", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudPvminstancesConsoleGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances console get o k response a status code equal to that given
 func (o *PcloudPvminstancesConsoleGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances console get o k response
+func (o *PcloudPvminstancesConsoleGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesConsoleGetOK) Error() string {
@@ -166,6 +171,11 @@ func (o *PcloudPvminstancesConsoleGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud pvminstances console get bad request response
+func (o *PcloudPvminstancesConsoleGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudPvminstancesConsoleGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsoleGetBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *PcloudPvminstancesConsoleGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances console get unauthorized response a status code equal to that given
 func (o *PcloudPvminstancesConsoleGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud pvminstances console get unauthorized response
+func (o *PcloudPvminstancesConsoleGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudPvminstancesConsoleGetUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *PcloudPvminstancesConsoleGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud pvminstances console get forbidden response
+func (o *PcloudPvminstancesConsoleGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudPvminstancesConsoleGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsoleGetForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *PcloudPvminstancesConsoleGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances console get not found response
+func (o *PcloudPvminstancesConsoleGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesConsoleGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsoleGetNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *PcloudPvminstancesConsoleGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances console get internal server error response a status code equal to that given
 func (o *PcloudPvminstancesConsoleGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances console get internal server error response
+func (o *PcloudPvminstancesConsoleGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesConsoleGetInternalServerError) Error() string {

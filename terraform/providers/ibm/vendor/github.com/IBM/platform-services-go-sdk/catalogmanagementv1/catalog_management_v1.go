@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.68.2-ac7def68-20230310-195410
+ * IBM OpenAPI SDK Code Generator Version: 3.77.0-42417df0-20230811-192318
  */
 
 // Package catalogmanagementv1 : Operations and models for the CatalogManagementV1 service
@@ -600,6 +600,9 @@ func (catalogManagement *CatalogManagementV1) CreateCatalogWithContext(ctx conte
 	if createCatalogOptions.Metadata != nil {
 		body["metadata"] = createCatalogOptions.Metadata
 	}
+	if createCatalogOptions.TargetAccountContexts != nil {
+		body["target_account_contexts"] = createCatalogOptions.TargetAccountContexts
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -777,6 +780,9 @@ func (catalogManagement *CatalogManagementV1) ReplaceCatalogWithContext(ctx cont
 	}
 	if replaceCatalogOptions.Metadata != nil {
 		body["metadata"] = replaceCatalogOptions.Metadata
+	}
+	if replaceCatalogOptions.TargetAccountContexts != nil {
+		body["target_account_contexts"] = replaceCatalogOptions.TargetAccountContexts
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -2103,7 +2109,7 @@ func (catalogManagement *CatalogManagementV1) ReplaceOfferingWithContext(ctx con
 }
 
 // UpdateOffering : Update offering
-// Update an offering.
+// Update an offering using a JSONPatch document as defined by RFC 6902.
 func (catalogManagement *CatalogManagementV1) UpdateOffering(updateOfferingOptions *UpdateOfferingOptions) (result *Offering, response *core.DetailedResponse, err error) {
 	return catalogManagement.UpdateOfferingWithContext(context.Background(), updateOfferingOptions)
 }
@@ -2911,6 +2917,12 @@ func (catalogManagement *CatalogManagementV1) GetOfferingUpdatesWithContext(ctx 
 	if getOfferingUpdatesOptions.AllNamespaces != nil {
 		builder.AddQuery("all_namespaces", fmt.Sprint(*getOfferingUpdatesOptions.AllNamespaces))
 	}
+	if getOfferingUpdatesOptions.Flavor != nil {
+		builder.AddQuery("flavor", fmt.Sprint(*getOfferingUpdatesOptions.Flavor))
+	}
+	if getOfferingUpdatesOptions.InstallType != nil {
+		builder.AddQuery("install_type", fmt.Sprint(*getOfferingUpdatesOptions.InstallType))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -3373,6 +3385,54 @@ func (catalogManagement *CatalogManagementV1) ConsumableVersionWithContext(ctx c
 	}
 
 	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "ConsumableVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = catalogManagement.Service.Request(request, nil)
+
+	return
+}
+
+// PrereleaseVersion : Make version prerelease for sharing
+// Set the version as prerelease in order to inherit the offering sharing permissions.
+func (catalogManagement *CatalogManagementV1) PrereleaseVersion(prereleaseVersionOptions *PrereleaseVersionOptions) (response *core.DetailedResponse, err error) {
+	return catalogManagement.PrereleaseVersionWithContext(context.Background(), prereleaseVersionOptions)
+}
+
+// PrereleaseVersionWithContext is an alternate form of the PrereleaseVersion method which supports a Context parameter
+func (catalogManagement *CatalogManagementV1) PrereleaseVersionWithContext(ctx context.Context, prereleaseVersionOptions *PrereleaseVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(prereleaseVersionOptions, "prereleaseVersionOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(prereleaseVersionOptions, "prereleaseVersionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"version_loc_id": *prereleaseVersionOptions.VersionLocID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = catalogManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(catalogManagement.Service.Options.URL, `/versions/{version_loc_id}/prerelease-publish`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range prereleaseVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("catalog_management", "V1", "PrereleaseVersion")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -4571,6 +4631,10 @@ func (catalogManagement *CatalogManagementV1) ValidateInstallWithContext(ctx con
 		builder.AddHeader("X-Auth-Refresh-Token", fmt.Sprint(*validateInstallOptions.XAuthRefreshToken))
 	}
 
+	if validateInstallOptions.TargetContextName != nil {
+		builder.AddQuery("targetContextName", fmt.Sprint(*validateInstallOptions.TargetContextName))
+	}
+
 	body := make(map[string]interface{})
 	if validateInstallOptions.ClusterID != nil {
 		body["cluster_id"] = validateInstallOptions.ClusterID
@@ -4672,6 +4736,10 @@ func (catalogManagement *CatalogManagementV1) GetValidationStatusWithContext(ctx
 	builder.AddHeader("Accept", "application/json")
 	if getValidationStatusOptions.XAuthRefreshToken != nil {
 		builder.AddHeader("X-Auth-Refresh-Token", fmt.Sprint(*getValidationStatusOptions.XAuthRefreshToken))
+	}
+
+	if getValidationStatusOptions.TargetContextName != nil {
+		builder.AddQuery("targetContextName", fmt.Sprint(*getValidationStatusOptions.TargetContextName))
 	}
 
 	request, err := builder.Build()
@@ -7423,6 +7491,9 @@ type Catalog struct {
 
 	// Catalog specific metadata.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+
+	// List of target accounts contexts on this catalog.
+	TargetAccountContexts []TargetAccountContext `json:"target_account_contexts,omitempty"`
 }
 
 // UnmarshalCatalog unmarshals an instance of Catalog from the specified map of raw messages.
@@ -7513,6 +7584,10 @@ func UnmarshalCatalog(m map[string]json.RawMessage, result interface{}) (err err
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "target_account_contexts", &obj.TargetAccountContexts, UnmarshalTargetAccountContext)
 	if err != nil {
 		return
 	}
@@ -7711,6 +7786,54 @@ func UnmarshalCategoryFilter(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// ClaimedControl : Claimed control.
+type ClaimedControl struct {
+	// SCC Profile.
+	Profile *SccProfile `json:"profile,omitempty"`
+
+	// Names.
+	Names []string `json:"names,omitempty"`
+}
+
+// UnmarshalClaimedControl unmarshals an instance of ClaimedControl from the specified map of raw messages.
+func UnmarshalClaimedControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ClaimedControl)
+	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "names", &obj.Names)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Claims : SCC Claims.
+type Claims struct {
+	// Profiles.
+	Profiles []SccProfile `json:"profiles,omitempty"`
+
+	// Controls.
+	Controls []ClaimedControl `json:"controls,omitempty"`
+}
+
+// UnmarshalClaims unmarshals an instance of Claims from the specified map of raw messages.
+func UnmarshalClaims(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Claims)
+	err = core.UnmarshalModel(m, "profiles", &obj.Profiles, UnmarshalSccProfile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "controls", &obj.Controls, UnmarshalClaimedControl)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ClusterInfo : Cluster information.
 type ClusterInfo struct {
 	// Resource Group ID.
@@ -7805,116 +7928,30 @@ func (options *CommitVersionOptions) SetHeaders(param map[string]string) *Commit
 	return options
 }
 
-// ComplianceControl : Control that can be added to a version.
-type ComplianceControl struct {
-	// SCC profile.
-	SccProfile *ComplianceControlSccProfile `json:"scc_profile,omitempty"`
+// Compliance : Compliance info for a version.
+type Compliance struct {
+	// Authority.
+	Authority *string `json:"authority,omitempty"`
 
-	// Control family.
-	Family *ComplianceControlFamily `json:"family,omitempty"`
+	// SCC Claims.
+	Claims *Claims `json:"claims,omitempty"`
 
-	// Control goals.
-	Goals []Goal `json:"goals,omitempty"`
-
-	// Control validation.
-	Validation *ComplianceControlValidation `json:"validation,omitempty"`
+	// Evaluations.
+	Evaluations []Evaluation `json:"evaluations,omitempty"`
 }
 
-// UnmarshalComplianceControl unmarshals an instance of ComplianceControl from the specified map of raw messages.
-func UnmarshalComplianceControl(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ComplianceControl)
-	err = core.UnmarshalModel(m, "scc_profile", &obj.SccProfile, UnmarshalComplianceControlSccProfile)
+// UnmarshalCompliance unmarshals an instance of Compliance from the specified map of raw messages.
+func UnmarshalCompliance(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Compliance)
+	err = core.UnmarshalPrimitive(m, "authority", &obj.Authority)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "family", &obj.Family, UnmarshalComplianceControlFamily)
+	err = core.UnmarshalModel(m, "claims", &obj.Claims, UnmarshalClaims)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "goals", &obj.Goals, UnmarshalGoal)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "validation", &obj.Validation, UnmarshalComplianceControlValidation)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ComplianceControlFamily : Control family.
-type ComplianceControlFamily struct {
-	// ID.
-	ID *string `json:"id,omitempty"`
-
-	// External ID.
-	ExternalID *string `json:"external_id,omitempty"`
-
-	// Description.
-	Description *string `json:"description,omitempty"`
-
-	// UI href.
-	UIHref *string `json:"ui_href,omitempty"`
-}
-
-// UnmarshalComplianceControlFamily unmarshals an instance of ComplianceControlFamily from the specified map of raw messages.
-func UnmarshalComplianceControlFamily(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ComplianceControlFamily)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "external_id", &obj.ExternalID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ComplianceControlSccProfile : SCC profile.
-type ComplianceControlSccProfile struct {
-	// Profile type.
-	Type *string `json:"type,omitempty"`
-}
-
-// UnmarshalComplianceControlSccProfile unmarshals an instance of ComplianceControlSccProfile from the specified map of raw messages.
-func UnmarshalComplianceControlSccProfile(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ComplianceControlSccProfile)
-	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ComplianceControlValidation : Control validation.
-type ComplianceControlValidation struct {
-	// Validation certified bool.
-	Certified *bool `json:"certified,omitempty"`
-
-	// Map of validation results.
-	Results map[string]interface{} `json:"results,omitempty"`
-}
-
-// UnmarshalComplianceControlValidation unmarshals an instance of ComplianceControlValidation from the specified map of raw messages.
-func UnmarshalComplianceControlValidation(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ComplianceControlValidation)
-	err = core.UnmarshalPrimitive(m, "certified", &obj.Certified)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "results", &obj.Results)
+	err = core.UnmarshalModel(m, "evaluations", &obj.Evaluations, UnmarshalEvaluation)
 	if err != nil {
 		return
 	}
@@ -8558,6 +8595,9 @@ type CreateCatalogOptions struct {
 	// Catalog specific metadata.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
+	// List of target accounts contexts on this catalog.
+	TargetAccountContexts []TargetAccountContext `json:"target_account_contexts,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -8654,6 +8694,12 @@ func (_options *CreateCatalogOptions) SetKind(kind string) *CreateCatalogOptions
 // SetMetadata : Allow user to set Metadata
 func (_options *CreateCatalogOptions) SetMetadata(metadata map[string]interface{}) *CreateCatalogOptions {
 	_options.Metadata = metadata
+	return _options
+}
+
+// SetTargetAccountContexts : Allow user to set TargetAccountContexts
+func (_options *CreateCatalogOptions) SetTargetAccountContexts(targetAccountContexts []TargetAccountContext) *CreateCatalogOptions {
+	_options.TargetAccountContexts = targetAccountContexts
 	return _options
 }
 
@@ -10081,6 +10127,9 @@ type DeployRequestBodyEnvironmentVariablesItem struct {
 
 	// Does this variable contain a secure value.
 	Secure *bool `json:"secure,omitempty"`
+
+	// Environment variable is hidden.
+	Hidden *bool `json:"hidden,omitempty"`
 }
 
 // UnmarshalDeployRequestBodyEnvironmentVariablesItem unmarshals an instance of DeployRequestBodyEnvironmentVariablesItem from the specified map of raw messages.
@@ -10095,6 +10144,10 @@ func UnmarshalDeployRequestBodyEnvironmentVariablesItem(m map[string]json.RawMes
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "secure", &obj.Secure)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "hidden", &obj.Hidden)
 	if err != nil {
 		return
 	}
@@ -10291,79 +10344,6 @@ func UnmarshalDeployRequestBodySchematics(m map[string]json.RawMessage, result i
 	return
 }
 
-// Deployment : Deployment for offering.
-type Deployment struct {
-	// unique id.
-	ID *string `json:"id,omitempty"`
-
-	// Display Name in the requested language.
-	Label *string `json:"label,omitempty"`
-
-	// The programmatic name of this offering.
-	Name *string `json:"name,omitempty"`
-
-	// Short description in the requested language.
-	ShortDescription *string `json:"short_description,omitempty"`
-
-	// Long description in the requested language.
-	LongDescription *string `json:"long_description,omitempty"`
-
-	// open ended metadata information.
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-
-	// list of tags associated with this catalog.
-	Tags []string `json:"tags,omitempty"`
-
-	// the date'time this catalog was created.
-	Created *strfmt.DateTime `json:"created,omitempty"`
-
-	// the date'time this catalog was last updated.
-	Updated *strfmt.DateTime `json:"updated,omitempty"`
-}
-
-// UnmarshalDeployment unmarshals an instance of Deployment from the specified map of raw messages.
-func UnmarshalDeployment(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Deployment)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // DeprecateOfferingOptions : The DeprecateOffering options.
 type DeprecateOfferingOptions struct {
 	// Catalog identifier.
@@ -10493,6 +10473,124 @@ func (_options *DeprecateVersionOptions) SetVersionLocID(versionLocID string) *D
 func (options *DeprecateVersionOptions) SetHeaders(param map[string]string) *DeprecateVersionOptions {
 	options.Headers = param
 	return options
+}
+
+// EvaluatedControl : Evaluated control.
+type EvaluatedControl struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// Name.
+	Name *string `json:"name,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// Specifications.
+	Specifications []SccSpecification `json:"specifications,omitempty"`
+
+	// Child controls.
+	ChildControls []EvaluatedControl `json:"child_controls,omitempty"`
+
+	// Failure count.
+	FailureCount *int64 `json:"failure_count,omitempty"`
+
+	// Pass count.
+	PassCount *int64 `json:"pass_count,omitempty"`
+
+	// SCC Control.
+	Parent *SccControl `json:"parent,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalEvaluatedControl unmarshals an instance of EvaluatedControl from the specified map of raw messages.
+func UnmarshalEvaluatedControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EvaluatedControl)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "specifications", &obj.Specifications, UnmarshalSccSpecification)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "child_controls", &obj.ChildControls, UnmarshalEvaluatedControl)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "failure_count", &obj.FailureCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pass_count", &obj.PassCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "parent", &obj.Parent, UnmarshalSccControl)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Evaluation : Evaluation.
+type Evaluation struct {
+	// Scan ID.
+	ScanID *string `json:"scan_id,omitempty"`
+
+	// Account ID.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// SCC Profile.
+	Profile *SccProfile `json:"profile,omitempty"`
+
+	// Result.
+	Result *Result `json:"result,omitempty"`
+
+	// Controls.
+	Controls []EvaluatedControl `json:"controls,omitempty"`
+}
+
+// UnmarshalEvaluation unmarshals an instance of Evaluation from the specified map of raw messages.
+func UnmarshalEvaluation(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Evaluation)
+	err = core.UnmarshalPrimitive(m, "scan_id", &obj.ScanID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "controls", &obj.Controls, UnmarshalEvaluatedControl)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // Feature : Feature information.
@@ -11884,6 +11982,12 @@ type GetOfferingUpdatesOptions struct {
 	// Optionally indicate that the current version was installed in all namespaces.
 	AllNamespaces *bool `json:"all_namespaces,omitempty"`
 
+	// The programmatic flavor name of the version that was installed.
+	Flavor *string `json:"flavor,omitempty"`
+
+	// The install type of the version that was installed.
+	InstallType *string `json:"install_type,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -11979,6 +12083,18 @@ func (_options *GetOfferingUpdatesOptions) SetNamespaces(namespaces []string) *G
 // SetAllNamespaces : Allow user to set AllNamespaces
 func (_options *GetOfferingUpdatesOptions) SetAllNamespaces(allNamespaces bool) *GetOfferingUpdatesOptions {
 	_options.AllNamespaces = core.BoolPtr(allNamespaces)
+	return _options
+}
+
+// SetFlavor : Allow user to set Flavor
+func (_options *GetOfferingUpdatesOptions) SetFlavor(flavor string) *GetOfferingUpdatesOptions {
+	_options.Flavor = core.StringPtr(flavor)
+	return _options
+}
+
+// SetInstallType : Allow user to set InstallType
+func (_options *GetOfferingUpdatesOptions) SetInstallType(installType string) *GetOfferingUpdatesOptions {
+	_options.InstallType = core.StringPtr(installType)
 	return _options
 }
 
@@ -12117,6 +12233,9 @@ type GetValidationStatusOptions struct {
 	// IAM Refresh token.
 	XAuthRefreshToken *string `json:"X-Auth-Refresh-Token" validate:"required"`
 
+	// The name of a target account context on a catalog.
+	TargetContextName *string `json:"targetContextName,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -12138,6 +12257,12 @@ func (_options *GetValidationStatusOptions) SetVersionLocID(versionLocID string)
 // SetXAuthRefreshToken : Allow user to set XAuthRefreshToken
 func (_options *GetValidationStatusOptions) SetXAuthRefreshToken(xAuthRefreshToken string) *GetValidationStatusOptions {
 	_options.XAuthRefreshToken = core.StringPtr(xAuthRefreshToken)
+	return _options
+}
+
+// SetTargetContextName : Allow user to set TargetContextName
+func (_options *GetValidationStatusOptions) SetTargetContextName(targetContextName string) *GetValidationStatusOptions {
+	_options.TargetContextName = core.StringPtr(targetContextName)
 	return _options
 }
 
@@ -12173,37 +12298,6 @@ func (_options *GetVersionOptions) SetVersionLocID(versionLocID string) *GetVers
 func (options *GetVersionOptions) SetHeaders(param map[string]string) *GetVersionOptions {
 	options.Headers = param
 	return options
-}
-
-// Goal : Compliance control goal.
-type Goal struct {
-	// Goal ID.
-	ID *string `json:"id,omitempty"`
-
-	// Goal description.
-	Description *string `json:"description,omitempty"`
-
-	// Goal UI href.
-	UIHref *string `json:"ui_href,omitempty"`
-}
-
-// UnmarshalGoal unmarshals an instance of Goal from the specified map of raw messages.
-func UnmarshalGoal(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Goal)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
 }
 
 // IamPermission : IAM Permission definition.
@@ -13347,9 +13441,6 @@ type Kind struct {
 
 	// list of versions.
 	Versions []Version `json:"versions,omitempty"`
-
-	// list of plans.
-	Plans []Plan `json:"plans,omitempty"`
 }
 
 // UnmarshalKind unmarshals an instance of Kind from the specified map of raw messages.
@@ -13392,10 +13483,6 @@ func UnmarshalKind(m map[string]json.RawMessage, result interface{}) (err error)
 		return
 	}
 	err = core.UnmarshalModel(m, "versions", &obj.Versions, UnmarshalVersion)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalPlan)
 	if err != nil {
 		return
 	}
@@ -15310,93 +15397,6 @@ func UnmarshalPaginationTokenLink(m map[string]json.RawMessage, result interface
 	return
 }
 
-// Plan : Offering plan.
-type Plan struct {
-	// unique id.
-	ID *string `json:"id,omitempty"`
-
-	// Display Name in the requested language.
-	Label *string `json:"label,omitempty"`
-
-	// The programmatic name of this offering.
-	Name *string `json:"name,omitempty"`
-
-	// Short description in the requested language.
-	ShortDescription *string `json:"short_description,omitempty"`
-
-	// Long description in the requested language.
-	LongDescription *string `json:"long_description,omitempty"`
-
-	// open ended metadata information.
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-
-	// list of tags associated with this catalog.
-	Tags []string `json:"tags,omitempty"`
-
-	// list of features associated with this offering.
-	AdditionalFeatures []Feature `json:"additional_features,omitempty"`
-
-	// the date'time this catalog was created.
-	Created *strfmt.DateTime `json:"created,omitempty"`
-
-	// the date'time this catalog was last updated.
-	Updated *strfmt.DateTime `json:"updated,omitempty"`
-
-	// list of deployments.
-	Deployments []Deployment `json:"deployments,omitempty"`
-}
-
-// UnmarshalPlan unmarshals an instance of Plan from the specified map of raw messages.
-func UnmarshalPlan(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Plan)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "short_description", &obj.ShortDescription)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "long_description", &obj.LongDescription)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "metadata", &obj.Metadata)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "tags", &obj.Tags)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "additional_features", &obj.AdditionalFeatures, UnmarshalFeature)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "created", &obj.Created)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "updated", &obj.Updated)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "deployments", &obj.Deployments, UnmarshalDeployment)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // PreinstallVersionOptions : The PreinstallVersion options.
 type PreinstallVersionOptions struct {
 	// A dotted value of `catalogID`.`versionID`.
@@ -15566,6 +15566,34 @@ func (_options *PreinstallVersionOptions) SetVcenterDatastore(vcenterDatastore s
 
 // SetHeaders : Allow user to set Headers
 func (options *PreinstallVersionOptions) SetHeaders(param map[string]string) *PreinstallVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// PrereleaseVersionOptions : The PrereleaseVersion options.
+type PrereleaseVersionOptions struct {
+	// A dotted value of `catalogID`.`versionID`.
+	VersionLocID *string `json:"version_loc_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewPrereleaseVersionOptions : Instantiate PrereleaseVersionOptions
+func (*CatalogManagementV1) NewPrereleaseVersionOptions(versionLocID string) *PrereleaseVersionOptions {
+	return &PrereleaseVersionOptions{
+		VersionLocID: core.StringPtr(versionLocID),
+	}
+}
+
+// SetVersionLocID : Allow user to set VersionLocID
+func (_options *PrereleaseVersionOptions) SetVersionLocID(versionLocID string) *PrereleaseVersionOptions {
+	_options.VersionLocID = core.StringPtr(versionLocID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PrereleaseVersionOptions) SetHeaders(param map[string]string) *PrereleaseVersionOptions {
 	options.Headers = param
 	return options
 }
@@ -16280,6 +16308,9 @@ type ReplaceCatalogOptions struct {
 	// Catalog specific metadata.
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 
+	// List of target accounts contexts on this catalog.
+	TargetAccountContexts []TargetAccountContext `json:"target_account_contexts,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -16396,6 +16427,12 @@ func (_options *ReplaceCatalogOptions) SetKind(kind string) *ReplaceCatalogOptio
 // SetMetadata : Allow user to set Metadata
 func (_options *ReplaceCatalogOptions) SetMetadata(metadata map[string]interface{}) *ReplaceCatalogOptions {
 	_options.Metadata = metadata
+	return _options
+}
+
+// SetTargetAccountContexts : Allow user to set TargetAccountContexts
+func (_options *ReplaceCatalogOptions) SetTargetAccountContexts(targetAccountContexts []TargetAccountContext) *ReplaceCatalogOptions {
+	_options.TargetAccountContexts = targetAccountContexts
 	return _options
 }
 
@@ -17226,6 +17263,299 @@ func UnmarshalResource(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Result : Result.
+type Result struct {
+	// Total (assessment) errors against claimed controls.
+	FailureCount *int64 `json:"failure_count,omitempty"`
+
+	// When the scan took place.
+	ScanTime *strfmt.DateTime `json:"scan_time,omitempty"`
+
+	// Error message, empty implies no error.
+	ErrorMessage *string `json:"error_message,omitempty"`
+
+	// False if just a subset of (profile) controls will be looked at for this DA.
+	CompleteScan *bool `json:"complete_scan,omitempty"`
+
+	// List of un-scanned resource IDs.
+	UnscannedResources []string `json:"unscanned_resources,omitempty"`
+}
+
+// UnmarshalResult unmarshals an instance of Result from the specified map of raw messages.
+func UnmarshalResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Result)
+	err = core.UnmarshalPrimitive(m, "failure_count", &obj.FailureCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "scan_time", &obj.ScanTime)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "error_message", &obj.ErrorMessage)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "complete_scan", &obj.CompleteScan)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "unscanned_resources", &obj.UnscannedResources)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SccAssessment : SCC Assessment.
+type SccAssessment struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// Version.
+	Version *string `json:"version,omitempty"`
+
+	// Type.
+	Type *string `json:"type,omitempty"`
+
+	// Method.
+	Method *string `json:"method,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalSccAssessment unmarshals an instance of SccAssessment from the specified map of raw messages.
+func UnmarshalSccAssessment(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SccAssessment)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "method", &obj.Method)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SccControl : SCC Control.
+type SccControl struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// Name.
+	Name *string `json:"name,omitempty"`
+
+	// Version.
+	Version *string `json:"version,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// SCC Profile.
+	Profile *SccProfile `json:"profile,omitempty"`
+
+	// SCC Control.
+	Parent *SccControl `json:"parent,omitempty"`
+
+	// Parent name.
+	ParentName *string `json:"parent_name,omitempty"`
+
+	// Specifications.
+	Specifications []SccSpecification `json:"specifications,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalSccControl unmarshals an instance of SccControl from the specified map of raw messages.
+func UnmarshalSccControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SccControl)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalSccProfile)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "parent", &obj.Parent, UnmarshalSccControl)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "parent_name", &obj.ParentName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "specifications", &obj.Specifications, UnmarshalSccSpecification)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SccProfile : SCC Profile.
+type SccProfile struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// Name.
+	Name *string `json:"name,omitempty"`
+
+	// Version.
+	Version *string `json:"version,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// Type.
+	Type *string `json:"type,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalSccProfile unmarshals an instance of SccProfile from the specified map of raw messages.
+func UnmarshalSccProfile(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SccProfile)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "version", &obj.Version)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SccSpecification : SCC Specification.
+type SccSpecification struct {
+	// ID.
+	ID *string `json:"id,omitempty"`
+
+	// Description.
+	Description *string `json:"description,omitempty"`
+
+	// Component name.
+	ComponentName *string `json:"component_name,omitempty"`
+
+	// Assessments.
+	Assessments []SccAssessment `json:"assessments,omitempty"`
+
+	// UI href.
+	UIHref *string `json:"ui_href,omitempty"`
+}
+
+// UnmarshalSccSpecification unmarshals an instance of SccSpecification from the specified map of raw messages.
+func UnmarshalSccSpecification(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SccSpecification)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "component_name", &obj.ComponentName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "assessments", &obj.Assessments, UnmarshalSccAssessment)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ui_href", &obj.UIHref)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SchematicsEnvValues : Environment values to be passed to Schematics Workspace on creation.
+type SchematicsEnvValues struct {
+	// JSON string containing an array of values in Environment Variable format defined by the Schematics service.
+	Value *string `json:"value,omitempty"`
+
+	// JSON encoded value of $ref:#/components/schemas/SecretInstance, prefixed with `cmsm_v1:`, where the secret value in
+	// Secrets Manager specifies a JSON string, which contains an array of values in the Environment Variable foramt
+	// defined by the Schematics service.
+	SmRef *string `json:"sm_ref,omitempty"`
+}
+
+// UnmarshalSchematicsEnvValues unmarshals an instance of SchematicsEnvValues from the specified map of raw messages.
+func UnmarshalSchematicsEnvValues(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SchematicsEnvValues)
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sm_ref", &obj.SmRef)
 	if err != nil {
 		return
 	}
@@ -18183,6 +18513,89 @@ func UnmarshalSyndicationResource(m map[string]json.RawMessage, result interface
 	return
 }
 
+// TargetAccountContext : Target account context.
+type TargetAccountContext struct {
+	// API Key.
+	APIKey *string `json:"api_key,omitempty"`
+
+	// Trusted profile info.
+	TrustedProfile *TrustedProfileInfo `json:"trusted_profile,omitempty"`
+
+	// Unique identifier/name.
+	Name *string `json:"name,omitempty"`
+
+	// Display name.
+	Label *string `json:"label,omitempty"`
+
+	// Project ID.
+	ProjectID *string `json:"project_id,omitempty"`
+}
+
+// UnmarshalTargetAccountContext unmarshals an instance of TargetAccountContext from the specified map of raw messages.
+func UnmarshalTargetAccountContext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TargetAccountContext)
+	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "trusted_profile", &obj.TrustedProfile, UnmarshalTrustedProfileInfo)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "project_id", &obj.ProjectID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// TrustedProfileInfo : Trusted profile info.
+type TrustedProfileInfo struct {
+	// Trusted profile ID.
+	TrustedProfileID *string `json:"trusted_profile_id,omitempty"`
+
+	// Catalog CRN.
+	CatalogCRN *string `json:"catalog_crn,omitempty"`
+
+	// Catalog name.
+	CatalogName *string `json:"catalog_name,omitempty"`
+
+	// Target service ID.
+	TargetServiceID *string `json:"target_service_id,omitempty"`
+}
+
+// UnmarshalTrustedProfileInfo unmarshals an instance of TrustedProfileInfo from the specified map of raw messages.
+func UnmarshalTrustedProfileInfo(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(TrustedProfileInfo)
+	err = core.UnmarshalPrimitive(m, "trusted_profile_id", &obj.TrustedProfileID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_crn", &obj.CatalogCRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "catalog_name", &obj.CatalogName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "target_service_id", &obj.TargetServiceID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // URLProxy : Offering URL proxy information.
 type URLProxy struct {
 	// URL of the specified media item being proxied.
@@ -18369,6 +18782,9 @@ type ValidateInstallOptions struct {
 	// VCenter Datastore.
 	VcenterDatastore *string `json:"vcenter_datastore,omitempty"`
 
+	// The name of a target account context on a catalog.
+	TargetContextName *string `json:"targetContextName,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -18480,6 +18896,12 @@ func (_options *ValidateInstallOptions) SetVcenterPassword(vcenterPassword strin
 // SetVcenterDatastore : Allow user to set VcenterDatastore
 func (_options *ValidateInstallOptions) SetVcenterDatastore(vcenterDatastore string) *ValidateInstallOptions {
 	_options.VcenterDatastore = core.StringPtr(vcenterDatastore)
+	return _options
+}
+
+// SetTargetContextName : Allow user to set TargetContextName
+func (_options *ValidateInstallOptions) SetTargetContextName(targetContextName string) *ValidateInstallOptions {
+	_options.TargetContextName = core.StringPtr(targetContextName)
 	return _options
 }
 
@@ -18609,6 +19031,9 @@ type Version struct {
 	// Denotes if single instance can be deployed to a given cluster.
 	SingleInstance *bool `json:"single_instance,omitempty"`
 
+	// Environment values to be passed to Schematics Workspace on creation.
+	SchematicsEnvValues *SchematicsEnvValues `json:"schematics_env_values,omitempty"`
+
 	// Script information.
 	Install *Script `json:"install,omitempty"`
 
@@ -18657,8 +19082,8 @@ type Version struct {
 	// Is the version able to be shared.
 	IsConsumable *bool `json:"is_consumable,omitempty"`
 
-	// List of links to sec./compliance controls.
-	Compliance []ComplianceControl `json:"compliance,omitempty"`
+	// Compliance info for a version.
+	ComplianceV3 *Compliance `json:"compliance_v3,omitempty"`
 }
 
 // UnmarshalVersion unmarshals an instance of Version from the specified map of raw messages.
@@ -18752,6 +19177,10 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalModel(m, "schematics_env_values", &obj.SchematicsEnvValues, UnmarshalSchematicsEnvValues)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "install", &obj.Install, UnmarshalScript)
 	if err != nil {
 		return
@@ -18816,7 +19245,7 @@ func UnmarshalVersion(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "compliance", &obj.Compliance, UnmarshalComplianceControl)
+	err = core.UnmarshalModel(m, "compliance_v3", &obj.ComplianceV3, UnmarshalCompliance)
 	if err != nil {
 		return
 	}

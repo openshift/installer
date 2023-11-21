@@ -73,7 +73,7 @@ func DataSourceIBMCdToolchainToolHostedgit() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Tool name.",
+				Description: "Name of the tool.",
 			},
 			"updated_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -260,10 +260,10 @@ func dataSourceIBMCdToolchainToolHostedgitRead(context context.Context, d *schem
 func dataSourceIBMCdToolchainToolHostedgitToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = *model.UIHref
+		modelMap["ui_href"] = model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = *model.APIHref
+		modelMap["api_href"] = model.APIHref
 	}
 	return modelMap, nil
 }

@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.70.0-7df966bf-20230419-195904
+ * IBM OpenAPI SDK Code Generator Version: 3.79.0-2eb6af3d-20230905-174838
  */
 
 // Package globalsearchv2 : Operations and models for the GlobalSearchV2 service
@@ -38,7 +38,7 @@ import (
 // the IBM Cloud platform. The search repository stores and searches cloud resources attributes, which categorize or
 // classify resources. A resource is a physical or logical component that can be created or reserved for an application
 // or service instance. They are owned by resource providers, such as Cloud Foundry, IBM Kubernetes Service, or resource
-// controller in IBM Cloud. Resources are uniquely identified by a Cloud Resource Name (CRN)  or by an IMS ID. The
+// controller in IBM Cloud. Resources are uniquely identified by a Cloud Resource Name (CRN) or by an IMS ID. The
 // properties of a resource include tags and system properties. Both properties are defined in an IBM Cloud billing
 // account, and span across many regions.
 //
@@ -213,6 +213,12 @@ func (globalSearch *GlobalSearchV2) SearchWithContext(ctx context.Context, searc
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
+	if searchOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*searchOptions.XRequestID))
+	}
+	if searchOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*searchOptions.XCorrelationID))
+	}
 	if searchOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*searchOptions.TransactionID))
 	}
@@ -398,8 +404,24 @@ type SearchOptions struct {
 	// items. If the search returns no items, then the search_cursor is not present in the response.
 	SearchCursor *string `json:"search_cursor,omitempty"`
 
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The account ID to filter resources.
@@ -505,7 +527,20 @@ func (_options *SearchOptions) SetSearchCursor(searchCursor string) *SearchOptio
 	return _options
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *SearchOptions) SetXRequestID(xRequestID string) *SearchOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *SearchOptions) SetXCorrelationID(xCorrelationID string) *SearchOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *SearchOptions) SetTransactionID(transactionID string) *SearchOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options

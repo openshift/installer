@@ -35,8 +35,26 @@ func (o *BluemixServiceInstanceGetReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewBluemixServiceInstanceGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewBluemixServiceInstanceGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewBluemixServiceInstanceGetNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /bluemix_v1/service_instances/{instance_id}] bluemix.serviceInstance.get", response, response.Code())
 	}
 }
 
@@ -77,6 +95,11 @@ func (o *BluemixServiceInstanceGetOK) IsServerError() bool {
 // IsCode returns true when this bluemix service instance get o k response a status code equal to that given
 func (o *BluemixServiceInstanceGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the bluemix service instance get o k response
+func (o *BluemixServiceInstanceGetOK) Code() int {
+	return 200
 }
 
 func (o *BluemixServiceInstanceGetOK) Error() string {
@@ -142,6 +165,11 @@ func (o *BluemixServiceInstanceGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the bluemix service instance get bad request response
+func (o *BluemixServiceInstanceGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *BluemixServiceInstanceGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetBadRequest  %+v", 400, o.Payload)
 }
@@ -155,6 +183,210 @@ func (o *BluemixServiceInstanceGetBadRequest) GetPayload() *models.Error {
 }
 
 func (o *BluemixServiceInstanceGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewBluemixServiceInstanceGetUnauthorized creates a BluemixServiceInstanceGetUnauthorized with default headers values
+func NewBluemixServiceInstanceGetUnauthorized() *BluemixServiceInstanceGetUnauthorized {
+	return &BluemixServiceInstanceGetUnauthorized{}
+}
+
+/*
+BluemixServiceInstanceGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type BluemixServiceInstanceGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this bluemix service instance get unauthorized response has a 2xx status code
+func (o *BluemixServiceInstanceGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bluemix service instance get unauthorized response has a 3xx status code
+func (o *BluemixServiceInstanceGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bluemix service instance get unauthorized response has a 4xx status code
+func (o *BluemixServiceInstanceGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bluemix service instance get unauthorized response has a 5xx status code
+func (o *BluemixServiceInstanceGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bluemix service instance get unauthorized response a status code equal to that given
+func (o *BluemixServiceInstanceGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the bluemix service instance get unauthorized response
+func (o *BluemixServiceInstanceGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *BluemixServiceInstanceGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *BluemixServiceInstanceGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewBluemixServiceInstanceGetForbidden creates a BluemixServiceInstanceGetForbidden with default headers values
+func NewBluemixServiceInstanceGetForbidden() *BluemixServiceInstanceGetForbidden {
+	return &BluemixServiceInstanceGetForbidden{}
+}
+
+/*
+BluemixServiceInstanceGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type BluemixServiceInstanceGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this bluemix service instance get forbidden response has a 2xx status code
+func (o *BluemixServiceInstanceGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bluemix service instance get forbidden response has a 3xx status code
+func (o *BluemixServiceInstanceGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bluemix service instance get forbidden response has a 4xx status code
+func (o *BluemixServiceInstanceGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bluemix service instance get forbidden response has a 5xx status code
+func (o *BluemixServiceInstanceGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bluemix service instance get forbidden response a status code equal to that given
+func (o *BluemixServiceInstanceGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the bluemix service instance get forbidden response
+func (o *BluemixServiceInstanceGetForbidden) Code() int {
+	return 403
+}
+
+func (o *BluemixServiceInstanceGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetForbidden) String() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *BluemixServiceInstanceGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewBluemixServiceInstanceGetNotFound creates a BluemixServiceInstanceGetNotFound with default headers values
+func NewBluemixServiceInstanceGetNotFound() *BluemixServiceInstanceGetNotFound {
+	return &BluemixServiceInstanceGetNotFound{}
+}
+
+/*
+BluemixServiceInstanceGetNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type BluemixServiceInstanceGetNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this bluemix service instance get not found response has a 2xx status code
+func (o *BluemixServiceInstanceGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bluemix service instance get not found response has a 3xx status code
+func (o *BluemixServiceInstanceGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bluemix service instance get not found response has a 4xx status code
+func (o *BluemixServiceInstanceGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bluemix service instance get not found response has a 5xx status code
+func (o *BluemixServiceInstanceGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bluemix service instance get not found response a status code equal to that given
+func (o *BluemixServiceInstanceGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the bluemix service instance get not found response
+func (o *BluemixServiceInstanceGetNotFound) Code() int {
+	return 404
+}
+
+func (o *BluemixServiceInstanceGetNotFound) Error() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetNotFound  %+v", 404, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetNotFound) String() string {
+	return fmt.Sprintf("[GET /bluemix_v1/service_instances/{instance_id}][%d] bluemixServiceInstanceGetNotFound  %+v", 404, o.Payload)
+}
+
+func (o *BluemixServiceInstanceGetNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *BluemixServiceInstanceGetNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

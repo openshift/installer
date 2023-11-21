@@ -66,7 +66,7 @@ func (o *PcloudPvminstancesPutReader) ReadResponse(response runtime.ClientRespon
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}] pcloud.pvminstances.put", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudPvminstancesPutAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances put accepted response a status code equal to that given
 func (o *PcloudPvminstancesPutAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud pvminstances put accepted response
+func (o *PcloudPvminstancesPutAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudPvminstancesPutAccepted) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudPvminstancesPutBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud pvminstances put bad request response
+func (o *PcloudPvminstancesPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudPvminstancesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudPvminstancesPutUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances put unauthorized response a status code equal to that given
 func (o *PcloudPvminstancesPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud pvminstances put unauthorized response
+func (o *PcloudPvminstancesPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudPvminstancesPutUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudPvminstancesPutForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud pvminstances put forbidden response
+func (o *PcloudPvminstancesPutForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudPvminstancesPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudPvminstancesPutNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances put not found response a status code equal to that given
 func (o *PcloudPvminstancesPutNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances put not found response
+func (o *PcloudPvminstancesPutNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudPvminstancesPutNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudPvminstancesPutUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud pvminstances put unprocessable entity response
+func (o *PcloudPvminstancesPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}][%d] pcloudPvminstancesPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudPvminstancesPutInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances put internal server error response a status code equal to that given
 func (o *PcloudPvminstancesPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances put internal server error response
+func (o *PcloudPvminstancesPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesPutInternalServerError) Error() string {

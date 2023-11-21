@@ -192,6 +192,11 @@ func (m *Thresholds) ContextValidate(ctx context.Context, formats strfmt.Registr
 func (m *Thresholds) contextValidateCapacity(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Capacity != nil {
+
+		if swag.IsZero(m.Capacity) { // not required
+			return nil
+		}
+
 		if err := m.Capacity.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("capacity")
@@ -208,6 +213,11 @@ func (m *Thresholds) contextValidateCapacity(ctx context.Context, formats strfmt
 func (m *Thresholds) contextValidateOvercommit(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Overcommit != nil {
+
+		if swag.IsZero(m.Overcommit) { // not required
+			return nil
+		}
+
 		if err := m.Overcommit.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("overcommit")
@@ -224,6 +234,11 @@ func (m *Thresholds) contextValidateOvercommit(ctx context.Context, formats strf
 func (m *Thresholds) contextValidatePhysicalCapacity(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.PhysicalCapacity != nil {
+
+		if swag.IsZero(m.PhysicalCapacity) { // not required
+			return nil
+		}
+
 		if err := m.PhysicalCapacity.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("physicalCapacity")
@@ -240,6 +255,11 @@ func (m *Thresholds) contextValidatePhysicalCapacity(ctx context.Context, format
 func (m *Thresholds) contextValidateVdiskCapacity(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.VdiskCapacity != nil {
+
+		if swag.IsZero(m.VdiskCapacity) { // not required
+			return nil
+		}
+
 		if err := m.VdiskCapacity.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vdiskCapacity")
@@ -256,6 +276,11 @@ func (m *Thresholds) contextValidateVdiskCapacity(ctx context.Context, formats s
 func (m *Thresholds) contextValidateVdiskLimit(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.VdiskLimit != nil {
+
+		if swag.IsZero(m.VdiskLimit) { // not required
+			return nil
+		}
+
 		if err := m.VdiskLimit.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vdiskLimit")

@@ -19,6 +19,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -37,7 +38,11 @@ import (
 
 const (
 	// IAMHTTPtimeout -
-	IAMHTTPtimeout = 10 * time.Second
+	IAMHTTPtimeout            = 10 * time.Second
+	VirtualPrivateEndpoint    = "vpe"
+	PrivateServiceEndpoint    = "private"
+	VirtualPrivateEndpointDNS = ".vpe.private"
+	PrivateEndpointDNS        = ".private"
 )
 
 // Frame -
@@ -104,21 +109,20 @@ func NormalizeName(name string) (string, error) {
 }
 
 // logInAndFillOCToken will update kubeConfig with an Openshift token, if one is not there
-func (r *clusters) FetchOCTokenForKubeConfig(kubecfg []byte, cMeta *ClusterInfo, skipSSLVerification bool) (kubecfgEdited []byte, rerr error) {
+func (r *clusters) FetchOCTokenForKubeConfig(kubecfg []byte, cMeta *ClusterInfo, skipSSLVerification bool, endpointType string) (kubecfgEdited []byte, host string, rerr error) {
 	// TODO: this is not a a standard manner to login ... using propriatary OC cli reverse engineering
 	defer func() {
 		err := PanicCatch(recover())
 		if err != nil {
-			rerr = fmt.Errorf("Could not login to openshift account %s", err)
+			rerr = fmt.Errorf("could not login to openshift account %s", err)
 		}
 	}()
 
 	var cfg map[string]interface{}
 	err := yaml.Unmarshal(kubecfg, &cfg)
 	if err != nil {
-		return kubecfg, err
+		return kubecfg, "", err
 	}
-
 	var token, passcode string
 	if r.client.Config.BluemixAPIKey == "" {
 		trace.Logger.Println("Creating user passcode to login for getting oc token")
@@ -132,10 +136,33 @@ func (r *clusters) FetchOCTokenForKubeConfig(kubecfg []byte, cMeta *ClusterInfo,
 			}
 
 			if err != nil && try == 3 {
-				return kubecfg, err
+				return kubecfg, "", err
 			}
 
 			time.Sleep(1 * time.Second)
+		}
+	}
+
+	// honor the endpointType parameter if the current parameter is different
+	switch endpointType {
+	case PrivateServiceEndpoint:
+		if !strings.Contains(cMeta.ServerURL, PrivateEndpointDNS) || strings.Contains(cMeta.ServerURL, VirtualPrivateEndpointDNS) {
+			// Could be changed to private only if the cluster's private service endpoint is enabled and public is enabled
+			if cMeta.ServiceEndpoints.PrivateServiceEndpointEnabled && cMeta.ServiceEndpoints.PrivateServiceEndpointURL != "" && !cMeta.ServiceEndpoints.PublicServiceEndpointEnabled {
+				// As this is Openshift, we need to use the URL with the signed certificate (-e) (the right URL is not available in getCluster response)
+				urlParts := strings.Split(cMeta.ServiceEndpoints.PrivateServiceEndpointURL, ".")
+				cMeta.ServerURL = urlParts[0] + "-e." + strings.Join(urlParts[1:], ".")
+			} else {
+				trace.Logger.Println("Ignore endpoint parameter and use default ServerURL - currently unsupported scenario")
+			}
+		}
+	case VirtualPrivateEndpoint:
+		if !strings.Contains(cMeta.ServerURL, VirtualPrivateEndpointDNS) && !cMeta.ServiceEndpoints.PublicServiceEndpointEnabled {
+			if cMeta.VirtualPrivateEndpointURL != "" {
+				cMeta.ServerURL = cMeta.VirtualPrivateEndpointURL
+			} else {
+				return kubecfg, "", fmt.Errorf("virtual private endpoint is not supported by the cluster")
+			}
 		}
 	}
 
@@ -153,21 +180,27 @@ func (r *clusters) FetchOCTokenForKubeConfig(kubecfg []byte, cMeta *ClusterInfo,
 		defer resp.Body.Close()
 		if resp.StatusCode > 299 {
 			msg, _ := ioutil.ReadAll(resp.Body)
-			return nil, fmt.Errorf("Bad status code [%d] returned when fetching Cluster authentication endpoints: %s", resp.StatusCode, msg)
+			return nil, fmt.Errorf("bad status code [%d] returned when fetching Cluster authentication endpoints: %s", resp.StatusCode, msg)
+		}
+		if endpointType != "" {
+			auth.AuthorizationEndpoint, err = reconfigureAuthorizationEndpoint(auth.AuthorizationEndpoint, endpointType, meta)
+			if err != nil {
+				return &auth, err
+			}
 		}
 		auth.ServerURL = meta.ServerURL
 		return &auth, nil
 	}(cMeta)
 
 	if err != nil {
-		return kubecfg, err
+		return kubecfg, "", err
 	}
 
-	trace.Logger.Println("Got authentication end points for getting oc token")
+	trace.Logger.Println("Got authentication endpoints for getting oc token")
 	token, uname, err := r.openShiftAuthorizePasscode(authEP, passcode, cMeta.IsStagingSatelliteCluster())
 
 	if err != nil {
-		return kubecfg, err
+		return kubecfg, "", err
 	}
 
 	trace.Logger.Println("Got the token and user ", uname)
@@ -196,10 +229,10 @@ func (r *clusters) FetchOCTokenForKubeConfig(kubecfg []byte, cMeta *ClusterInfo,
 
 	bytes, err := yaml.Marshal(cfg)
 	if err != nil {
-		return kubecfg, err
+		return kubecfg, "", err
 	}
 	kubecfg = bytes
-	return kubecfg, nil
+	return kubecfg, cMeta.ServerURL, nil
 }
 
 // Never redirect. Let caller handle. This is an http.Client callback method (CheckRedirect)
@@ -238,8 +271,8 @@ func (r *clusters) openShiftAuthorizePasscode(authEP *authEndpoints, passcode st
 		defer resp.Body.Close()
 		if resp.StatusCode > 399 {
 			if try >= 3 {
-				msg, _ := ioutil.ReadAll(resp.Body)
-				return "", "", fmt.Errorf("Bad status code [%d] returned when openshift login: %s", resp.StatusCode, string(msg))
+				msg, _ := io.ReadAll(resp.Body)
+				return "", "", fmt.Errorf("bad status code [%d] returned when openshift login: %s", resp.StatusCode, string(msg))
 			}
 			time.Sleep(200 * time.Millisecond)
 		} else {
@@ -275,9 +308,54 @@ func (r *clusters) getOpenShiftUser(authEP *authEndpoints, token string) (string
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 299 {
-		msg, _ := ioutil.ReadAll(resp.Body)
-		return "", fmt.Errorf("Bad status code [%d] returned when fetching OpenShift user Details: %s", resp.StatusCode, string(msg))
+		msg, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("bad status code [%d] returned when fetching OpenShift user Details: %s", resp.StatusCode, string(msg))
 	}
 
 	return user.Metadata.Name, nil
+}
+
+// honor endpointType for OauthServer if the current parameter is different
+func reconfigureAuthorizationEndpoint(originalAuthEndpoint string, endpointType string, clusterInfo *ClusterInfo) (string, error) {
+	urlDefault, err := url.ParseRequestURI(originalAuthEndpoint)
+	if err != nil || urlDefault.Host == "" {
+		return "", fmt.Errorf("could not parse original auth endpoint raw url: %s, error: %v", originalAuthEndpoint, err)
+	}
+	switch endpointType {
+	case PrivateServiceEndpoint:
+		if (!strings.Contains(originalAuthEndpoint, PrivateEndpointDNS) || strings.Contains(originalAuthEndpoint, VirtualPrivateEndpointDNS)) &&
+			!clusterInfo.ServiceEndpoints.PublicServiceEndpointEnabled &&
+			clusterInfo.ServiceEndpoints.PrivateServiceEndpointEnabled {
+			urlPrivate, err := url.ParseRequestURI(clusterInfo.ServiceEndpoints.PrivateServiceEndpointURL)
+			if err != nil || urlPrivate.Host == "" {
+				return "", fmt.Errorf("could not parse private service endpoint raw url, cluster may not support it: %s, error: %v", clusterInfo.ServiceEndpoints.PrivateServiceEndpointURL, err)
+			}
+			// As this is Openshift, we need to use the URL with the signed certificate (the right URL is not available in getCluster response)
+			hostNameParts := strings.Split(urlPrivate.Hostname(), ".")
+			hostName := hostNameParts[0] + "-e." + strings.Join(hostNameParts[1:], ".")
+
+			u := url.URL{
+				Scheme: urlDefault.Scheme,
+				Host:   hostName + ":" + urlDefault.Port(),
+				Path:   urlDefault.Path,
+			}
+			return u.String(), nil
+		} else {
+			trace.Logger.Println("Ignore endpoint parameter and use default OauthServerURL - currently unsupported scenario")
+		}
+	case VirtualPrivateEndpoint:
+		if !strings.Contains(originalAuthEndpoint, VirtualPrivateEndpointDNS) && !clusterInfo.ServiceEndpoints.PublicServiceEndpointEnabled {
+			urlVPE, err := url.ParseRequestURI(clusterInfo.VirtualPrivateEndpointURL)
+			if err != nil || urlVPE.Host == "" {
+				return "", fmt.Errorf("could not parse virtual private endpoint raw url, cluster may not support it: %s, error: %v", clusterInfo.VirtualPrivateEndpointURL, err)
+			}
+			u := url.URL{
+				Scheme: urlDefault.Scheme,
+				Host:   urlVPE.Hostname() + ":" + urlDefault.Port(),
+				Path:   urlDefault.Path,
+			}
+			return u.String(), nil
+		}
+	}
+	return originalAuthEndpoint, nil
 }

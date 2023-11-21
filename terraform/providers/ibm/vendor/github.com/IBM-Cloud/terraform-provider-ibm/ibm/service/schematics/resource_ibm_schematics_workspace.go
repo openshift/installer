@@ -576,7 +576,7 @@ func ResourceIBMSchematicsWorkspaceValidator() *validate.ResourceValidator {
 			Identifier:                 schematicsWorkspaceTemplateType,
 			ValidateFunctionIdentifier: validate.ValidateRegexp,
 			Type:                       validate.TypeString,
-			Regexp:                     `^terraform_v(?:0\.11|0\.12|0\.13|0\.14|0\.15|1\.0|1\.1|1\.2|1\.3)(?:\.\d+)?$`,
+			Regexp:                     `^terraform_v(?:0\.11|0\.12|0\.13|0\.14|0\.15|1\.0|1\.1|1\.2|1\.3|1\.4|1\.5)(?:\.\d+)?$`,
 			Default:                    "[]",
 			Optional:                   true})
 
@@ -807,9 +807,9 @@ func resourceIBMSchematicsWorkspaceMapToSharedTargetData(sharedTargetDataMap map
 		sharedTargetData.ClusterType = core.StringPtr(sharedTargetDataMap["cluster_type"].(string))
 	}
 	if sharedTargetDataMap["entitlement_keys"] != nil {
-		entitlementKeys := []interface{}{}
-		for _, entitlementKeysItem := range sharedTargetDataMap["entitlement_keys"].([]interface{}) {
-			entitlementKeys = append(entitlementKeys, entitlementKeysItem.(interface{}))
+		entitlementKeys := []map[string]interface{}{}
+		for _, entitlementKeysItem := range sharedTargetDataMap["entitlement_keys"].([]map[string]interface{}) {
+			entitlementKeys = append(entitlementKeys, entitlementKeysItem)
 		}
 		sharedTargetData.EntitlementKeys = entitlementKeys
 	}
@@ -836,9 +836,9 @@ func resourceIBMSchematicsWorkspaceMapToTemplateSourceDataRequest(templateSource
 	templateSourceDataRequest := schematicsv1.TemplateSourceDataRequest{}
 
 	if templateSourceDataRequestMap["env_values"] != nil {
-		envValues := []interface{}{}
-		for _, envValuesItem := range templateSourceDataRequestMap["env_values"].([]interface{}) {
-			envValues = append(envValues, envValuesItem.(interface{}))
+		envValues := []map[string]interface{}{}
+		for _, envValuesItem := range templateSourceDataRequestMap["env_values"].([]map[string]interface{}) {
+			envValues = append(envValues, envValuesItem)
 		}
 		templateSourceDataRequest.EnvValues = envValues
 	}
@@ -861,10 +861,9 @@ func resourceIBMSchematicsWorkspaceMapToTemplateSourceDataRequest(templateSource
 		templateSourceDataRequest.Values = core.StringPtr(templateSourceDataRequestMap["values"].(string))
 	}
 	if templateSourceDataRequestMap["values_metadata"] != nil {
-		valuesMetadata := make([]schematicsv1.VariableMetadata, 0)
-		for _, valuesMetadataItem := range templateSourceDataRequestMap["values_metadata"].([]interface{}) {
-			valuesMetadataItemModel := resourceIBMSchematicsWorkspaceMapToWorkspaceValuesMetadataRequest(valuesMetadataItem.(map[string]interface{}))
-			valuesMetadata = append(valuesMetadata, valuesMetadataItemModel)
+		valuesMetadata := []map[string]interface{}{}
+		for _, valuesMetadataItem := range templateSourceDataRequestMap["values_metadata"].([]map[string]interface{}) {
+			valuesMetadata = append(valuesMetadata, valuesMetadataItem)
 		}
 		templateSourceDataRequest.ValuesMetadata = valuesMetadata
 	}
@@ -1435,8 +1434,7 @@ func resourceIBMSchematicsWorkspaceTemplateSourceDataResponseToMap(templateSourc
 	if templateSourceDataResponse.ValuesMetadata != nil {
 		valuesMetadata := []map[string]interface{}{}
 		for _, valuesMetadataItem := range templateSourceDataResponse.ValuesMetadata {
-			valuesMetadataItemMap := dataSourceIbmSchematicsWorkspaceVariableMetadataToMap(&valuesMetadataItem)
-			valuesMetadata = append(valuesMetadata, valuesMetadataItemMap)
+			valuesMetadata = append(valuesMetadata, valuesMetadataItem)
 		}
 		templateSourceDataResponseMap["values_metadata"] = valuesMetadata
 	}

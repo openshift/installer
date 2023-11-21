@@ -169,6 +169,11 @@ func (m *VolumeOnboarding) ContextValidate(ctx context.Context, formats strfmt.R
 func (m *VolumeOnboarding) contextValidateResults(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Results != nil {
+
+		if swag.IsZero(m.Results) { // not required
+			return nil
+		}
+
 		if err := m.Results.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("results")
@@ -271,6 +276,11 @@ func (m *VolumeOnboardingResults) contextValidateVolumeOnboardingFailures(ctx co
 	for i := 0; i < len(m.VolumeOnboardingFailures); i++ {
 
 		if m.VolumeOnboardingFailures[i] != nil {
+
+			if swag.IsZero(m.VolumeOnboardingFailures[i]) { // not required
+				return nil
+			}
+
 			if err := m.VolumeOnboardingFailures[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("results" + "." + "volumeOnboardingFailures" + "." + strconv.Itoa(i))

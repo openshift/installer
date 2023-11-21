@@ -203,6 +203,7 @@ func (m *VPNaaSOptions) ContextValidate(ctx context.Context, formats strfmt.Regi
 func (m *VPNaaSOptions) contextValidateDeadPeerDetection(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.DeadPeerDetection != nil {
+
 		if err := m.DeadPeerDetection.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("deadPeerDetection")
@@ -219,6 +220,7 @@ func (m *VPNaaSOptions) contextValidateDeadPeerDetection(ctx context.Context, fo
 func (m *VPNaaSOptions) contextValidateIkePolicyOptions(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IkePolicyOptions != nil {
+
 		if err := m.IkePolicyOptions.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ikePolicyOptions")
@@ -235,6 +237,7 @@ func (m *VPNaaSOptions) contextValidateIkePolicyOptions(ctx context.Context, for
 func (m *VPNaaSOptions) contextValidateIkePolicyTemplate(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IkePolicyTemplate != nil {
+
 		if err := m.IkePolicyTemplate.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ikePolicyTemplate")
@@ -251,6 +254,7 @@ func (m *VPNaaSOptions) contextValidateIkePolicyTemplate(ctx context.Context, fo
 func (m *VPNaaSOptions) contextValidateIPSecPolicyOptions(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IPSecPolicyOptions != nil {
+
 		if err := m.IPSecPolicyOptions.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ipSecPolicyOptions")
@@ -267,6 +271,7 @@ func (m *VPNaaSOptions) contextValidateIPSecPolicyOptions(ctx context.Context, f
 func (m *VPNaaSOptions) contextValidateIPSecPolicyTemplate(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IPSecPolicyTemplate != nil {
+
 		if err := m.IPSecPolicyTemplate.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ipSecPolicyTemplate")

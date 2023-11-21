@@ -1061,7 +1061,11 @@ func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStart
 }
 
 /*
-PcloudVolumesClonePost creates a volume clone for specified volumes
+	PcloudVolumesClonePost creates a volume clone for specified volumes
+
+	This API is deprecated, use v2 clone API to perform the volume clone.
+
+>*Note*: Support for this API will be available till 31st March 2023.
 */
 func (a *Client) PcloudVolumesClonePost(params *PcloudVolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumesClonePostOK, error) {
 	// TODO: Validate the params before sending

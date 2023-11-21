@@ -27,12 +27,22 @@ func ResourceIBMIsBackupPolicy() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"match_resource_types": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Computed:    true,
-				Set:         schema.HashString,
-				Description: "A resource type this backup policy applies to. Resources that have both a matching type and a matching user tag will be subject to the backup policy.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Computed:      true,
+				Set:           schema.HashString,
+				Deprecated:    "match_resource_types is being deprecated. Use match_resource_type instead",
+				Description:   "A resource type this backup policy applies to. Resources that have both a matching type and a matching user tag will be subject to the backup policy.",
+				ConflictsWith: []string{"match_resource_type"},
+				Elem:          &schema.Schema{Type: schema.TypeString},
+			},
+			"match_resource_type": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Default:       "volume",
+				ConflictsWith: []string{"match_resource_types"},
+				ValidateFunc:  validate.InvokeValidator("ibm_is_backup_policy", "match_resource_types"),
+				Description:   "A resource type this backup policy applies to. Resources that have both a matching type and a matching user tag will be subject to the backup policy.",
 			},
 			"match_user_tags": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -88,6 +98,61 @@ func ResourceIBMIsBackupPolicy() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"health_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current health_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource",
+			},
+			"scope": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "The scope for this backup policy.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The CRN for this enterprise.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this enterprise or account.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -118,7 +183,7 @@ func ResourceIBMIsBackupPolicyValidator() *validate.ResourceValidator {
 	)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "match_resource_types",
+			Identifier:                 "match_resource_type",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
@@ -139,9 +204,14 @@ func resourceIBMIsBackupPolicyCreate(context context.Context, d *schema.Resource
 
 	createBackupPolicyOptions := &vpcv1.CreateBackupPolicyOptions{}
 
-	if _, ok := d.GetOk("match_resource_types"); ok {
+	if matchResourceType, ok := d.GetOk("match_resource_type"); ok {
+		matchResourceTypes := matchResourceType.(string)
+		matchResourceTypesList := []string{matchResourceTypes}
+		createBackupPolicyOptions.SetMatchResourceTypes(matchResourceTypesList)
+	} else if _, ok := d.GetOk("match_resource_types"); ok {
 		createBackupPolicyOptions.SetMatchResourceTypes(flex.ExpandStringList((d.Get("match_resource_types").(*schema.Set)).List()))
 	}
+
 	if _, ok := d.GetOk("match_user_tags"); ok {
 		createBackupPolicyOptions.SetMatchUserTags((flex.ExpandStringList((d.Get("match_user_tags").(*schema.Set)).List())))
 	}
@@ -154,6 +224,17 @@ func resourceIBMIsBackupPolicyCreate(context context.Context, d *schema.Resource
 			ID: &resourceGroupStr,
 		}
 		createBackupPolicyOptions.SetResourceGroup(&resourceGroup)
+	}
+
+	if _, ok := d.GetOk("scope"); ok {
+		bkpPolicyScopePrototypeMap := d.Get("scope.0").(map[string]interface{})
+		bkpPolicyScopePrototype := vpcv1.BackupPolicyScopePrototype{}
+		if bkpPolicyScopePrototypeMap["crn"] != nil {
+			if crnStr := bkpPolicyScopePrototypeMap["crn"].(string); crnStr != "" {
+				bkpPolicyScopePrototype.CRN = core.StringPtr(crnStr)
+			}
+		}
+		createBackupPolicyOptions.SetScope(&bkpPolicyScopePrototype)
 	}
 
 	backupPolicy, response, err := vpcClient.CreateBackupPolicyWithContext(context, createBackupPolicyOptions)
@@ -190,6 +271,13 @@ func resourceIBMIsBackupPolicyRead(context context.Context, d *schema.ResourceDa
 	if backupPolicy.MatchResourceTypes != nil {
 		if err = d.Set("match_resource_types", backupPolicy.MatchResourceTypes); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_types: %s", err))
+		}
+	}
+	if backupPolicy.MatchResourceTypes != nil {
+		for _, matchResourceTypes := range backupPolicy.MatchResourceTypes {
+			if err = d.Set("match_resource_type", matchResourceTypes); err != nil {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_type: %s", err))
+			}
 		}
 	}
 	if backupPolicy.MatchUserTags != nil {
@@ -244,11 +332,50 @@ func resourceIBMIsBackupPolicyRead(context context.Context, d *schema.ResourceDa
 		}
 	}
 
+	if backupPolicy.HealthReasons != nil {
+		healthReasonsList := make([]map[string]interface{}, 0)
+		for _, sr := range backupPolicy.HealthReasons {
+			currentSR := map[string]interface{}{}
+			if sr.Code != nil && sr.Message != nil {
+				currentSR["code"] = *sr.Code
+				currentSR["message"] = *sr.Message
+				if sr.MoreInfo != nil {
+					currentSR["more_info"] = *sr.Message
+				}
+				healthReasonsList = append(healthReasonsList, currentSR)
+			}
+		}
+		d.Set("health_reasons", healthReasonsList)
+	}
+	if err = d.Set("health_state", backupPolicy.HealthState); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_state: %s", err))
+	}
+
+	if backupPolicy.Scope != nil {
+		scope := []map[string]interface{}{}
+		scopeMap := resourceIbmIsBackupPolicyScopeToMap(*backupPolicy.Scope.(*vpcv1.BackupPolicyScope))
+		scope = append(scope, scopeMap)
+
+		if err = d.Set("scope", scope); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting scope: %s", err))
+		}
+	}
+
 	if err = d.Set("version", response.Headers.Get("Etag")); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting version: %s", err))
 	}
 
 	return nil
+}
+
+func resourceIbmIsBackupPolicyScopeToMap(scope vpcv1.BackupPolicyScope) map[string]interface{} {
+	scopeMap := map[string]interface{}{}
+
+	scopeMap["crn"] = scope.CRN
+	scopeMap["id"] = scope.ID
+	scopeMap["resource_type"] = scope.ResourceType
+
+	return scopeMap
 }
 
 func resourceIBMIsBackupPolicyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

@@ -66,7 +66,7 @@ func (o *PcloudNetworksPortsPutReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}] pcloud.networks.ports.put", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudNetworksPortsPutOK) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports put o k response a status code equal to that given
 func (o *PcloudNetworksPortsPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud networks ports put o k response
+func (o *PcloudNetworksPortsPutOK) Code() int {
+	return 200
 }
 
 func (o *PcloudNetworksPortsPutOK) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudNetworksPortsPutBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud networks ports put bad request response
+func (o *PcloudNetworksPortsPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudNetworksPortsPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsPutBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudNetworksPortsPutUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports put unauthorized response a status code equal to that given
 func (o *PcloudNetworksPortsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud networks ports put unauthorized response
+func (o *PcloudNetworksPortsPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudNetworksPortsPutUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudNetworksPortsPutForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud networks ports put forbidden response
+func (o *PcloudNetworksPortsPutForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudNetworksPortsPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsPutForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudNetworksPortsPutNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports put not found response a status code equal to that given
 func (o *PcloudNetworksPortsPutNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud networks ports put not found response
+func (o *PcloudNetworksPortsPutNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudNetworksPortsPutNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudNetworksPortsPutUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud networks ports put unprocessable entity response
+func (o *PcloudNetworksPortsPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudNetworksPortsPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudNetworksPortsPutInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports put internal server error response a status code equal to that given
 func (o *PcloudNetworksPortsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud networks ports put internal server error response
+func (o *PcloudNetworksPortsPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudNetworksPortsPutInternalServerError) Error() string {
