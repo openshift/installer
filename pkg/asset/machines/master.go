@@ -747,6 +747,21 @@ func IsMachineManifest(file *asset.File) bool {
 	} else if matched {
 		return true
 	}
+	if matched, err := filepath.Match(secretFileNamePattern, filename); err != nil {
+		panic("bad format for secret file name pattern")
+	} else if matched {
+		return true
+	}
+	if matched, err := filepath.Match(networkConfigSecretFileNamePattern, filename); err != nil {
+		panic("bad format for network config secret file name pattern")
+	} else if matched {
+		return true
+	}
+	if matched, err := filepath.Match(hostFileNamePattern, filename); err != nil {
+		panic("bad format for host file name pattern")
+	} else if matched {
+		return true
+	}
 	if matched, err := filepath.Match(masterMachineFileNamePattern, filename); err != nil {
 		panic("bad format for master machine file name pattern")
 	} else if matched {
