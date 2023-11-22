@@ -132,7 +132,7 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	if len(matches) != 0 {
-		return true, errors.Errorf("terraform state files alread exist.  There may already be a running cluster")
+		return true, errors.Errorf("terraform state files alread exist.  There may already be a running cluster ")
 	}
 
 	return false, nil
