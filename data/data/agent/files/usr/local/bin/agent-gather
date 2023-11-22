@@ -80,6 +80,21 @@ function gather_storage_data() {
 	( >&2 echo " Done")
 }
 
+function gather_crio_data() {
+	( >&2 echo  -n "Gathering crio data" )
+	if ! command -v crictl >/dev/null; then
+		( >&2 echo  -n "crictl not available" )
+		return
+	fi
+	mkdir -p "${ARTIFACTS_DIR}/crio"
+	crictl ps --all --output json | jq -r '.containers[] | [.id, .metadata.name] | join(" ")' | \
+	while read -r C_ID C_NAME; do
+		(crictl logs "$C_ID" 2>&1) | sed -f <(redact_pull_secret_sed) \
+			> "${ARTIFACTS_DIR}/crio/${C_NAME}_${C_ID}.log"
+	done
+	( >&2 echo " Done")
+}
+
 function Help()
 {
 	echo "Gathers the necessary data for troubleshooting OpenShift's agent based installation"
@@ -120,6 +135,7 @@ gather_agent_data
 gather_config_status
 gather_network_data
 gather_storage_data
+gather_crio_data
 
 # Set permissions so regular users can delete the extracted content
 find "$ARTIFACTS_DIR" -type d -exec chmod a+rwx "{}" \;
