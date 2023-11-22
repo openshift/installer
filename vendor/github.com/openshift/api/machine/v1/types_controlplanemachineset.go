@@ -138,7 +138,7 @@ type OpenShiftMachineV1Beta1MachineTemplate struct {
 	// This will be merged into the ProviderSpec given in the template.
 	// This field is optional on platforms that do not require placement information.
 	// +optional
-	FailureDomains FailureDomains `json:"failureDomains,omitempty"`
+	FailureDomains *FailureDomains `json:"failureDomains,omitempty"`
 
 	// ObjectMeta is the standard object metadata
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata

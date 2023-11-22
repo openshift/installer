@@ -18,7 +18,7 @@ class ControlPlaneMachineSet(unittest.TestCase):
 
     def test_compute_zones(self):
         """Assert that the OpenStack CPMS failureDomains value is empty."""
-        self.assertNotIn("openstack", self.cpms["spec"]["template"]["machines_v1beta1_machine_openshift_io"]["failureDomains"])
+        self.assertIsNone(self.cpms["spec"]["template"]["machines_v1beta1_machine_openshift_io"].get("failureDomains"))
 
 
 if __name__ == '__main__':
