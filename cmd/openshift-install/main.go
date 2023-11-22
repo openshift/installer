@@ -69,6 +69,10 @@ func installerMain() {
 	}
 }
 
+var (
+	forceConsumeInputs = false
+)
+
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:              filepath.Base(os.Args[0]),
@@ -78,8 +82,10 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors:    true,
 		SilenceUsage:     true,
 	}
+	cmd.PersistentFlags().SortFlags = false
 	cmd.PersistentFlags().StringVar(&command.RootOpts.Dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&command.RootOpts.LogLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
+	cmd.PersistentFlags().BoolVar(&forceConsumeInputs, "consume", false, "remove input files after they are read (default)")
 	return cmd
 }
 
