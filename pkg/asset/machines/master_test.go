@@ -310,6 +310,7 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 }
 
 func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
+	t.Helper()
 	assert.Equal(t, a.Filename, eFilename)
 	var host v1alpha1.BareMetalHost
 	assert.NoError(t, yaml.Unmarshal(a.Data, &host))
@@ -317,6 +318,7 @@ func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
 }
 
 func verifySecret(t *testing.T, a *asset.File, eFilename, eName, eData string) {
+	t.Helper()
 	assert.Equal(t, a.Filename, eFilename)
 	var secret corev1.Secret
 	assert.NoError(t, yaml.Unmarshal(a.Data, &secret))
