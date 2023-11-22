@@ -61,7 +61,7 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 
 // getFlavorNames gets a list of valid flavor names.
 func getFlavorNames(cloud string) ([]string, error) {
-	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("compute", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
