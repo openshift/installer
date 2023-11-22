@@ -140,7 +140,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	err = wait.PollUntilContextCancel(
 		waitCtx,
 		1*time.Second,
-		true,
+		false,
 		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting public records")
 			if o.CloudName == azure.StackCloud {
@@ -159,7 +159,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			return true, nil
 		},
 	)
-	if err != nil && !errors.Is(err, context.Canceled) {
+	if err != nil {
 		errs = append(errs, errors.Wrap(err, "failed to delete public DNS records"))
 		o.Logger.Debug(err)
 	}
@@ -167,7 +167,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	err = wait.PollUntilContextCancel(
 		waitCtx,
 		1*time.Second,
-		true,
+		false,
 		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting resource group")
 			err = deleteResourceGroup(ctx, o.resourceGroupsClient, o.Logger, o.ResourceGroupName)
@@ -185,7 +185,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			return true, nil
 		},
 	)
-	if err != nil && errors.Is(err, context.Canceled) {
+	if err != nil {
 		errs = append(errs, errors.Wrap(err, "failed to delete resource group"))
 		o.Logger.Debug(err)
 	}
@@ -193,7 +193,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	err = wait.PollUntilContextCancel(
 		waitCtx,
 		1*time.Second,
-		true,
+		false,
 		func(ctx context.Context) (bool, error) {
 			o.Logger.Debugf("deleting application registrations")
 			err = deleteApplicationRegistrations(ctx, o.msgraphClient, o.Logger, o.InfraID)
@@ -209,7 +209,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			return true, nil
 		},
 	)
-	if err != nil && errors.Is(err, context.Canceled) {
+	if err != nil {
 		errs = append(errs, errors.Wrap(err, "failed to delete application registrations and their service principals"))
 		o.Logger.Debug(err)
 	}
