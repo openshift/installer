@@ -979,6 +979,10 @@ spec:
                           description: Processors defines the processing units for
                             the instance.
                           x-kubernetes-int-or-string: true
+                        smtLevel:
+                          description: SMTLevel specifies the level of SMT to set
+                            the control plane and worker nodes to.
+                          type: string
                         sysType:
                           description: SysType defines the system type for instance.
                           type: string
@@ -1906,6 +1910,10 @@ spec:
                         description: Processors defines the processing units for the
                           instance.
                         x-kubernetes-int-or-string: true
+                      smtLevel:
+                        description: SMTLevel specifies the level of SMT to set the
+                          control plane and worker nodes to.
+                        type: string
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
@@ -4152,6 +4160,10 @@ spec:
                         description: Processors defines the processing units for the
                           instance.
                         x-kubernetes-int-or-string: true
+                      smtLevel:
+                        description: SMTLevel specifies the level of SMT to set the
+                          control plane and worker nodes to.
+                        type: string
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
