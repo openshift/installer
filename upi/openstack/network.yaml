@@ -30,9 +30,7 @@
       ip_version: 6
       ipv6_address_mode: "{{ os_subnet6_address_mode }}"
       ipv6_ra_mode: "{{ os_subnet6_router_advertisements_mode }}"
-    when:
-    - os_subnet6_range is defined
-    - os_subnet6_range|ansible.utils.ipv6
+    when: os_subnet6 is defined
 
   - name: 'Create the service network'
     openstack.cloud.network:
@@ -118,8 +116,7 @@
       - "{{ os_subnet }}"
       - "{{ os_subnet6 }}"
     when:
-    - os_subnet6_range is defined
-    - os_subnet6_range|ansible.utils.ipv6
+    - os_subnet6 is defined
     - os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
@@ -130,8 +127,7 @@
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_apiVIP }}"
     register: _api_ports
-    when:
-    - os_subnet6_range is not defined
+    when: os_subnet6 is not defined
 
   - set_fact:
       api_ports: "{{ _api_ports }}"
@@ -142,9 +138,7 @@
       name: "{{ os_port_api }}"
       network: "{{ os_network }}"
     register: _api_ports
-    when:
-    - os_subnet6_range is defined
-    - os_subnet6_range|ansible.utils.ipv6
+    when: os_subnet6 is defined
 
   - set_fact:
       api_ports: "{{ _api_ports }}"
@@ -158,8 +152,7 @@
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_ingressVIP }}"
     register: _ingress_ports
-    when:
-    - os_subnet6_range is not defined
+    when: os_subnet6 is not defined
 
   - set_fact:
       ingress_ports: "{{ _ingress_ports }}"
@@ -170,9 +163,7 @@
       name: "{{ os_port_ingress }}"
       network: "{{ os_network }}"
     register: _ingress_ports
-    when:
-    - os_subnet6_range is defined
-    - os_subnet6_range|ansible.utils.ipv6
+    when: os_subnet6 is defined
 
   - set_fact:
       ingress_ports: "{{ _ingress_ports }}"
