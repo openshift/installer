@@ -27,6 +27,7 @@ of this method of installation.
   - [OpenShift Configuration Directory](#openshift-configuration-directory)
   - [Red Hat Enterprise Linux CoreOS (RHCOS)](#red-hat-enterprise-linux-coreos-rhcos)
   - [API and Ingress Floating IP Addresses](#api-and-ingress-floating-ip-addresses)
+  - [Create network, API and ingress ports](#create-network-api-and-ingress-ports)
   - [Install Config](#install-config)
     - [Configure the machineNetwork.CIDR apiVIP and ingressVIP](#configure-the-machinenetworkcidr-apivip-and-ingressvip)
     - [Empty Compute Pools](#empty-compute-pools)
@@ -45,7 +46,7 @@ of this method of installation.
     - [Master Ignition](#master-ignition)
   - [Network Topology](#network-topology)
     - [Security Groups](#security-groups)
-    - [Network, Subnet and external router](#network-subnet-and-external-router)
+    - [Update Network, Subnet, Router and ports](#update-network-subnet-router-and-ports)
     - [Subnet DNS (optional)](#subnet-dns-optional)
   - [Bootstrap](#bootstrap)
   - [Control Plane](#control-plane)
@@ -62,7 +63,7 @@ of this method of installation.
 
 ## Prerequisites
 
-The file `inventory.yaml` contains the variables most likely to need customization.
+The `inventory.yaml` file contains variables which should be reviewed and adjusted if needed.
 
 > **Note**
 > Some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
@@ -160,7 +161,7 @@ Make sure that `python` points to Python3:
 sudo alternatives --set python /usr/bin/python3
 ```
 
-To avoid packages not found or mismatchs, we use pip to install the dependencies:
+To avoid packages not found or mismatches, we use pip to install the dependencies:
 ```sh
 python3 -m pip install --upgrade pip
 python3 -m pip install yq openstackclient openstacksdk netaddr
@@ -238,7 +239,7 @@ access between OpenStack KVM hypervisors and the cluster nodes.
 To enable this feature, you must add the `hw_qemu_guest_agent=yes` property to the image:
 
 ```
-$ openstack image "rhcos-${CLUSTER_NAME}" update --property hw_qemu_guest_agent=yes
+$ openstack image set --property hw_qemu_guest_agent=yes "rhcos-${CLUSTER_NAME}"
 ```
 
 Finally validate that the image was successfully created:
@@ -280,6 +281,19 @@ api.openshift.example.com.    A 203.0.113.23
 
 They will need to be available to your developers, end users as well as the OpenShift installer process later in this guide.
 
+## Create network, API and ingress ports
+
+Please note that value of the API and Ingress VIPs fields will be overwritten in the `inventory.yaml` with the respective addresses assigned to the Ports. Run the following playbook to create necessary resources:
+
+<!--- e2e-openstack-upi: INCLUDE START --->
+```sh
+$ ansible-playbook -i inventory.yaml network.yaml
+```
+<!--- e2e-openstack-upi: INCLUDE END --->
+
+> **Note**
+> These OpenStack resources will be deleted by the `down-network.yaml` playbook.
+
 ## Install Config
 
 Run the `create install-config` subcommand and fill in the desired entries:
@@ -315,76 +329,51 @@ $ tree
 ```
 
 ### Configure the machineNetwork.CIDR apiVIP and ingressVIP
+
 The `machineNetwork` represents the OpenStack network which will be used to connect all the OpenShift cluster nodes.
 The `machineNetwork.CIDR` defines the IP range, in CIDR notation, from which the installer will choose what IP addresses
-to assign the nodes.  The `apiVIP` and `ingressVIP` are the IP addresses the installer will assign to the cluster API and
+to assign the nodes.  The `apiVIPs` and `ingressVIPs` are the IP addresses the installer will assign to the cluster API and
 ingress VIPs, respectively.
-In the previous steps, the installer added default values for the `machineNetwork.CIDR`, and then it picked the
-5th and 7th IP addresses from that range to assign to `apiVIP` and `ingressVIP`.
-`machineNetwork.CIDR` needs to match the IP range specified by `os_subnet_range` in the `inventory.yaml` file.
 
-When the installer creates the manifest files from an existing `install-config.yaml` file, it validates that the
-`apiVIP` and `ingressVIP` fall within the IP range specified by `machineNetwork.CIDR`. If they do not, it errors out.
-If you change the value of `machineNetwork.CIDR` you must make sure the `apiVIP` and `ingressVIP` values still fall within
-the new range. There are two options for setting the `apiVIP` and `ingressVIP`. If you know the values you want to use,
-you can specify them in the `install-config.yaml` file. If you want the installer to pick the 5th and 7th IP addresses in the
-new range, you need to remove the `apiVIP` and `ingressVIP` entries from the `install-config.yaml` file.
+In the previous step, ansible playbook added default values for the
+`machineNetwork.CIDR`, and then it assigned selected by Neutron IP addresses for
+`apiVIPs` and `ingressVIPs` to appropriate fields inventory file - os_ingressVIP
+and os_apiVIP for single stack installation, and additionally os_ingressVIP6 and
+os_apiVIP6 for dualstack out of `machineNetwork.CIDR`.
 
-To illustrate the process, we will use '192.0.2.0/24' as an example. It defines a usable IP range from
-192.0.2.1 to 192.0.2.254. There are some IP addresses that should be avoided because they are usually taken up or
-reserved. For example, the first address (.1) is usually assigned to a router. The DHCP and DNS servers will use a few
-more addresses, usually .2, .3, .11 and .12. The actual addresses used by these services depend on the configuration of
-the OpenStack deployment in use. You should check your OpenStack deployment.
+Following script will fill into `intall-config.yaml` the value for `machineNetwork`, `apiVIPs`, `ingressVIPs`, `controlPlanePort`
+for single-stack and dual-stack and `networkType`, `clusterNetwork` and `serviceNetwork` only for dual-stack, using `inventory.yaml`
+values:
 
-
-The following script modifies the value of `machineNetwork.CIDR` in the `install-config.yaml` file to match the `os_subnet_range` defined in `inventory.yaml`.
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
 $ python -c 'import yaml
-installconfig_path = "install-config.yaml"
-installconfig = yaml.safe_load(open(installconfig_path))
-inventory = yaml.safe_load(open("inventory.yaml"))
-inventory_subnet_range = inventory["all"]["hosts"]["localhost"]["os_subnet_range"]
-installconfig["networking"]["machineNetwork"][0]["cidr"] = inventory_subnet_range
-open(installconfig_path, "w").write(yaml.dump(installconfig, default_flow_style=False))'
-```
-<!--- e2e-openstack-upi: INCLUDE END --->
-
-Next, we need to correct the `apiVIP` and `ingressVIP` values.
-
-The following script will clear the values from the `install-config.yaml` file so that the installer will pick
-the 5th and 7th IP addresses in the new range, 192.0.2.5 and 192.0.2.7.
-<!--- e2e-openstack-upi: INCLUDE START --->
-```sh
-$ python -c 'import yaml
-import sys
 path = "install-config.yaml"
 data = yaml.safe_load(open(path))
-if "apiVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["apiVIP"]
-if "ingressVIP" in data["platform"]["openstack"]:
-   del data["platform"]["openstack"]["ingressVIP"]
+inventory = yaml.safe_load(open("inventory.yaml"))["all"]["hosts"]["localhost"]
+machine_net = [{"cidr": inventory["os_subnet_range"]}]
+api_vips = [inventory["os_apiVIP"]]
+ingress_vips = [inventory["os_ingressVIP"]]
+ctrl_plane_port = {"network": {"name": inventory["os_network"]}, "fixedIPs": [{"subnet": {"name": inventory["os_subnet"]}}]}
+if inventory.get("os_subnet6"):
+    machine_net.append({"cidr": inventory["os_subnet6_range"]})
+    api_vips.append(inventory["os_apiVIP6"])
+    ingress_vips.append(inventory["os_ingressVIP6"])
+    data["networking"]["networkType"] = "OVNKubernetes"
+    data["networking"]["clusterNetwork"].append({"cidr": inventory["cluster_network6_cidr"], "hostPrefix": inventory["cluster_network6_prefix"]})
+    data["networking"]["serviceNetwork"].append(inventory["service_subnet6_range"])
+    ctrl_plane_port["fixedIPs"].append({"subnet": {"name": inventory["os_subnet6"]}})
+data["networking"]["machineNetwork"] = machine_net
+data["platform"]["openstack"]["apiVIPs"] = api_vips
+data["platform"]["openstack"]["ingressVIPs"] = ingress_vips
+data["platform"]["openstack"]["controlPlanePort"] = ctrl_plane_port
+del data["platform"]["openstack"]["externalDNS"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
-
-If you want to specify the values yourself, you can use the following script, which sets them to 192.0.2.8
-and 192.0.2.9.
-
-```sh
-$ python -c 'import yaml
-import sys
-path = "install-config.yaml"
-data = yaml.safe_load(open(path))
-if "apiVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["apiVIP"] = "192.0.2.8"
-if "ingressVIP" in data["platform"]["openstack"]:
-   data["platform"]["openstack"]["ingressVIP"] = "192.0.2.9"
-open(path, "w").write(yaml.dump(data, default_flow_style=False))'
-```
 
 > **Note**
-> All the scripts in this guide work with Python 3 as well as Python 2.
+> All the scripts in this guide work only with Python 3.
 > You can also choose to edit the `install-config.yaml` file by hand.
 
 ### Empty Compute Pools
@@ -409,7 +398,7 @@ open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 
 By default the `networkType` is set to `OVNKubernetes` on the `install-config.yaml`.
 
-If an installation with Kuryr is desired, you must modify the `networkType` field.
+If an installation with OpenShift SDN is desired, you must modify the `networkType` field. Note, that dual-stack only supports `OVNKubernetes` network type.
 
 This command will do it for you:
 
@@ -698,12 +687,12 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
     "config": {
       "merge": [
         {
-	  "httpHeaders": [
-	    {
-	      "name": "X-Auth-Token",
-	      "value": "${GLANCE_TOKEN}"
-	    }
-	  ],
+          "httpHeaders": [
+            {
+              "name": "X-Auth-Token",
+              "value": "${GLANCE_TOKEN}"
+            }
+          ],
           "source": "${BOOTSTRAP_URL}"
         }
       ]
@@ -764,7 +753,7 @@ else:
 
 infra_id = os.environ.get('INFRA_ID', 'openshift').encode()
 
-bootstrap_ignition_shim = infra_id+'-bootstrap-ignition.json'
+bootstrap_ignition_shim = infra_id + '-bootstrap-ignition.json'
 
 with open(bootstrap_ignition_shim, 'r') as f:
     ignition_data = json.load(f)
@@ -830,18 +819,14 @@ $ ansible-playbook -i inventory.yaml security-groups.yaml
 <!--- e2e-openstack-upi: INCLUDE END --->
 
 The playbook creates one Security group for the Control Plane and one for the Compute nodes, then attaches rules for enabling communication between the nodes.
-### Network, Subnet and external router
+### Update Network, Subnet, Router and ports
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ ansible-playbook -i inventory.yaml network.yaml
+$ ansible-playbook -i inventory.yaml update-network-resources.yaml
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
-The playbook creates a network and a subnet. The subnet obeys `os_subnet_range`; however the first ten IP addresses are removed from the allocation pool. These addresses will be used for the VRRP addresses managed by keepalived for high availability. For more information, read the [networking infrastructure design document][net-infra].
-
-Outside connectivity will be provided by attaching the floating IP addresses (IPs in the inventory) to the corresponding routers.
-
-[net-infra]: https://github.com/openshift/installer/blob/master/docs/design/openstack/networking-infrastructure.md
+The playbook sets tags to network, subnets, ports and router. It also attaches the floating IP to the API and Ingress ports and set the security group on those ports.
 
 ### Subnet DNS (optional)
 
