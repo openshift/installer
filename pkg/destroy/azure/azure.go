@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -22,7 +23,6 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -151,7 +151,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
-					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting public DNS records"))
+					errs = append(errs, fmt.Errorf("unable to authenticate when deleting public DNS records: %w", err))
 					return true, err
 				}
 				return false, nil
@@ -160,7 +160,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		},
 	)
 	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to delete public DNS records"))
+		errs = append(errs, fmt.Errorf("failed to delete public DNS records: %w", err))
 		o.Logger.Debug(err)
 	}
 
@@ -174,10 +174,10 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 			if err != nil {
 				o.Logger.Debug(err)
 				if isAuthError(err) {
-					errs = append(errs, errors.Wrap(err, "unable to authenticate when deleting resource group"))
+					errs = append(errs, fmt.Errorf("unable to authenticate when deleting resource group: %w", err))
 					return true, err
 				} else if isResourceGroupBlockedError(err) {
-					errs = append(errs, errors.Wrap(err, "unable to delete resource group, resources in the group are in use by others"))
+					errs = append(errs, fmt.Errorf("unable to delete resource group, resources in the group are in use by others: %w", err))
 					return true, err
 				}
 				return false, nil
@@ -186,7 +186,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		},
 	)
 	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to delete resource group"))
+		errs = append(errs, fmt.Errorf("failed to delete resource group: %w", err))
 		o.Logger.Debug(err)
 	}
 
@@ -201,7 +201,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 				oDataErr := extractODataError(err)
 				o.Logger.Debug(oDataErr)
 				if isAuthError(err) {
-					errs = append(errs, errors.Wrap(oDataErr, "unable to authenticate when deleting application registrations and their service principals"))
+					errs = append(errs, fmt.Errorf("unable to authenticate when deleting application registrations and their service principals: %w", oDataErr))
 					return true, err
 				}
 				return false, nil
@@ -210,7 +210,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		},
 	)
 	if err != nil {
-		errs = append(errs, errors.Wrap(err, "failed to delete application registrations and their service principals"))
+		errs = append(errs, fmt.Errorf("failed to delete application registrations and their service principals: %w", err))
 		o.Logger.Debug(err)
 	}
 
@@ -239,7 +239,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 			logger.Debug("already deleted the AzureStack zones")
 			return utilerrors.NewAggregate(errs)
 		}
-		errs = append(errs, errors.Wrap(err, "failed to list dns zone"))
+		errs = append(errs, fmt.Errorf("failed to list dns zone: %w", err))
 		if isAuthError(err) {
 			return err
 		}
@@ -248,7 +248,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	allZones := sets.NewString()
 	for ; zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
-			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
+			errs = append(errs, fmt.Errorf("failed to advance to next dns zone: %w", err))
 			continue
 		}
 		for _, zone := range zonesPage.Values() {
@@ -272,7 +272,7 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
 							continue
 						}
-						return errors.Wrapf(err, "failed to delete record %s in zone %s", to.String(record.Name), zone)
+						return fmt.Errorf("failed to delete record %s in zone %s: %w", to.String(record.Name), zone, err)
 					}
 					logger.WithField("record", to.String(record.Name)).Info("deleted")
 				}
@@ -296,7 +296,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 			logger.Debug("already deleted")
 			return utilerrors.NewAggregate(errs)
 		}
-		errs = append(errs, errors.Wrap(err, "failed to list dns zone"))
+		errs = append(errs, fmt.Errorf("failed to list dns zone: %w", err))
 		if isAuthError(err) {
 			return err
 		}
@@ -305,7 +305,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 	pageCount := 0
 	for ; zonesPage.NotDone(); err = zonesPage.NextWithContext(ctx) {
 		if err != nil {
-			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
+			errs = append(errs, fmt.Errorf("failed to advance to next dns zone: %w", err))
 			continue
 		}
 		pageCount++
@@ -313,7 +313,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 		for _, zone := range zonesPage.Values() {
 			if zone.ZoneType == dns.Private {
 				if err := deletePublicRecordsForZone(ctx, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
-					errs = append(errs, errors.Wrapf(err, "failed to delete public records for %s", to.String(zone.Name)))
+					errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
 					if isAuthError(err) {
 						return err
 					}
@@ -329,7 +329,7 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 			logger.Debug("already deleted")
 			return utilerrors.NewAggregate(errs)
 		}
-		errs = append(errs, errors.Wrap(err, "failed to list private dns zone"))
+		errs = append(errs, fmt.Errorf("failed to list private dns zone: %w", err))
 		if isAuthError(err) {
 			return err
 		}
@@ -337,14 +337,14 @@ func deletePublicRecords(ctx context.Context, dnsClient dns.ZonesClient, records
 
 	for ; privateZonesPage.NotDone(); err = privateZonesPage.NextWithContext(ctx) {
 		if err != nil {
-			errs = append(errs, errors.Wrap(err, "failed to advance to next dns zone"))
+			errs = append(errs, fmt.Errorf("failed to advance to next dns zone: %w", err))
 			continue
 		}
 		pageCount++
 
 		for _, zone := range privateZonesPage.Values() {
 			if err := deletePublicRecordsForPrivateZone(ctx, privateRecordsClient, dnsClient, recordsClient, logger, rgName, to.String(zone.Name)); err != nil {
-				errs = append(errs, errors.Wrapf(err, "failed to delete public records for %s", to.String(zone.Name)))
+				errs = append(errs, fmt.Errorf("failed to delete public records for %s: %w", to.String(zone.Name), err))
 				if isAuthError(err) {
 					return err
 				}
@@ -399,7 +399,7 @@ func deletePublicRecordsForPrivateZone(ctx context.Context, privateRecordsClient
 func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient dns.ZonesClient, recordsClient dns.RecordSetsClient, logger logrus.FieldLogger, privateRecords sets.String, zoneName string) error {
 	sharedZones, err := getSharedDNSZones(ctx, dnsClient, zoneName)
 	if err != nil {
-		return errors.Wrapf(err, "failed to find shared zone for %s", zoneName)
+		return fmt.Errorf("failed to find shared zone for %s: %w", zoneName, err)
 	}
 	for _, sharedZone := range sharedZones {
 		logger.Debugf("removing matching private records from %s", sharedZone.Name)
@@ -415,7 +415,7 @@ func deletePublicRecordsMatchingZoneName(ctx context.Context, dnsClient dns.Zone
 							logger.WithField("record", to.String(record.Name)).Debug("already deleted")
 							continue
 						}
-						return errors.Wrapf(err, "failed to delete record %s in zone %s", to.String(record.Name), sharedZone.Name)
+						return fmt.Errorf("failed to delete record %s in zone %s: %w", to.String(record.Name), sharedZone.Name, err)
 					}
 					logger.WithField("record", to.String(record.Name)).Info("deleted")
 				}
@@ -489,7 +489,7 @@ func deleteResourceGroup(ctx context.Context, client resources.GroupsClient, log
 			logger.Debug("already deleted")
 			return nil
 		}
-		return errors.Wrapf(err, "failed to delete %s", name)
+		return fmt.Errorf("failed to delete %s: %w", name, err)
 	}
 	logger.Info("deleted")
 	return nil
@@ -505,16 +505,14 @@ func isNotFoundError(err error) bool {
 	}
 
 	var dErr autorest.DetailedError
-	errors.As(err, &dErr)
+	if errors.As(err, &dErr) {
+		if dErr.StatusCode == http.StatusNotFound {
+			return true
+		}
 
-	if dErr.StatusCode == http.StatusNotFound {
-		return true
-	}
-
-	if dErr.StatusCode == 0 {
-		serviceErr, ok := dErr.Original.(*azureenv.ServiceError)
-		if ok {
-			if strings.HasSuffix(serviceErr.Code, "NotFound") {
+		if dErr.StatusCode == 0 {
+			var serviceErr *azureenv.ServiceError
+			if errors.As(dErr.Original, &serviceErr) && strings.HasSuffix(serviceErr.Code, "NotFound") {
 				return true
 			}
 		}
@@ -586,7 +584,7 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
 	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
 	if err != nil {
-		return errors.Wrap(err, "failed to gather list of Service Principals by tag")
+		return fmt.Errorf("failed to gather list of Service Principals by tag: %w", err)
 	}
 	// msgraphsdk can return a `nil` response even if no errors occurred
 	if servicePrincipals == nil {
