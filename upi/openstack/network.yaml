@@ -5,21 +5,15 @@
 # openstacksdk
 # netaddr
 
-- ansible.builtin.import_playbook: common.yaml
-
 - hosts: all
   gather_facts: no
 
   tasks:
-  - name: 'Create the primary cluster network'
+  - name: 'Create the cluster network'
     openstack.cloud.network:
       name: "{{ os_network }}"
 
-  - name: 'Set tags on the  primary cluster network'
-    ansible.builtin.command:
-      cmd: "openstack network set --tag {{ primary_cluster_network_tag }} --tag {{ cluster_id_tag }} {{ os_network }}"
-
-  - name: 'Create the primary cluster subnet'
+  - name: 'Create the cluster IPv4 subnet'
     openstack.cloud.subnet:
       name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
@@ -28,9 +22,17 @@
       allocation_pool_end: "{{ os_subnet_range | ansible.utils.ipaddr('last_usable') }}"
       dns_nameservers: "{{ os_external_dns }}"
 
-  - name: 'Set tags on  primary cluster subnet'
-    ansible.builtin.command:
-      cmd: "openstack subnet set --tag {{ cluster_id_tag }} {{ os_subnet }}"
+  - name: 'Create the cluster IPv6 subnet'
+    openstack.cloud.subnet:
+      name: "{{ os_subnet6 }}"
+      network_name: "{{ os_network }}"
+      cidr: "{{ os_subnet6_range }}"
+      ip_version: 6
+      ipv6_address_mode: "{{ os_subnet6_address_mode }}"
+      ipv6_ra_mode: "{{ os_subnet6_router_advertisements_mode }}"
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
 
   - name: 'Create external router'
     openstack.cloud.router:
@@ -40,49 +42,107 @@
       - "{{ os_subnet }}"
     when: os_external_network is defined and os_external_network|length>0
 
-  - name: 'Set external router tag'
-    ansible.builtin.command:
-      cmd: "openstack router set --tag {{ cluster_id_tag }} {{ os_router }}"
-    when: os_external_network is defined and os_external_network|length>0
+  - name: 'Add IPv6 subnet to the external router'
+    openstack.cloud.router:
+      name: "{{ os_router }}"
+      interfaces:
+      - "{{ os_subnet }}"
+      - "{{ os_subnet6 }}"
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
+    - os_external_network is defined and os_external_network|length>0
 
   - name: 'Create the API port'
     openstack.cloud.port:
       name: "{{ os_port_api }}"
       network: "{{ os_network }}"
-      security_groups:
-      - "{{ os_sg_master }}"
       fixed_ips:
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_apiVIP }}"
+    register: _api_ports
+    when:
+    - os_subnet6_range is not defined
 
-  - name: 'Set API port tag'
-    ansible.builtin.command:
-      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_api }}"
+  - set_fact:
+      api_ports: "{{ _api_ports }}"
+    when: _api_ports.changed
+
+  - name: 'Create the dualstack API port'
+    openstack.cloud.port:
+      name: "{{ os_port_api }}"
+      network: "{{ os_network }}"
+    register: _api_ports
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
+
+  - set_fact:
+      api_ports: "{{ _api_ports }}"
+    when: _api_ports.changed
 
   - name: 'Create the Ingress port'
     openstack.cloud.port:
       name: "{{ os_port_ingress }}"
       network: "{{ os_network }}"
-      security_groups:
-      - "{{ os_sg_worker }}"
       fixed_ips:
       - subnet: "{{ os_subnet }}"
         ip_address: "{{ os_ingressVIP }}"
+    register: _ingress_ports
+    when:
+    - os_subnet6_range is not defined
 
-  - name: 'Set the Ingress port tag'
-    ansible.builtin.command:
-      cmd: "openstack port set --tag {{ cluster_id_tag }} {{ os_port_ingress }}"
+  - set_fact:
+      ingress_ports: "{{ _ingress_ports }}"
+    when: _ingress_ports.changed
 
-  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
-  # ports, let's use the CLI instead
-  - name: 'Attach the API floating IP to API port'
-    ansible.builtin.command:
-      cmd: "openstack floating ip set --port {{ os_port_api }} {{ os_api_fip }}"
-    when: os_api_fip is defined and os_api_fip|length>0
+  - name: 'Create the dualstack Ingress port'
+    openstack.cloud.port:
+      name: "{{ os_port_ingress }}"
+      network: "{{ os_network }}"
+    register: _ingress_ports
+    when:
+    - os_subnet6_range is defined
+    - os_subnet6_range|ansible.utils.ipv6
 
-  # NOTE: openstack ansible module doesn't allow attaching Floating IPs to
-  # ports, let's use the CLI instead
-  - name: 'Attach the Ingress floating IP to Ingress port'
-    ansible.builtin.command:
-      cmd: "openstack floating ip set --port {{ os_port_ingress }} {{ os_ingress_fip }}"
-    when: os_ingress_fip is defined and os_ingress_fip|length>0
+  - set_fact:
+      ingress_ports: "{{ _ingress_ports }}"
+    when: _ingress_ports.changed
+
+  - name: 'Populate inventory with API addresses'
+    shell: |
+      python -c 'import yaml
+      path = "inventory.yaml"
+      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
+      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      if ipv4 != "False":
+        key = "os_apiVIP"
+        ip = ipv4
+      else:
+        key = "os_apiVIP6"
+        ip = ipv6
+      data = yaml.safe_load(open(path))
+      data["all"]["hosts"]["localhost"][key] = ip
+      open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+    when:
+    - api_ports.port is defined
+    loop: "{{ api_ports.port.fixed_ips }}"
+
+  - name: 'Populate inventory with Ingress addresses'
+    shell: |
+      python -c 'import yaml
+      path = "inventory.yaml"
+      ipv4 = "{{ item.ip_address|ansible.utils.ipv4 }}"
+      ipv6 = "{{ item.ip_address|ansible.utils.ipv6 }}"
+      if ipv4 != "False":
+        key = "os_ingressVIP"
+        ip = ipv4
+      else:
+        key = "os_ingressVIP6"
+        ip = ipv6
+      data = yaml.safe_load(open(path))
+      data["all"]["hosts"]["localhost"][key] = ip
+      open(path, "w").write(yaml.dump(data, default_flow_style=False))'
+    when:
+    - ingress_ports.port is defined
+    loop: "{{ ingress_ports.port.fixed_ips }}"
