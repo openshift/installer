@@ -10,12 +10,6 @@
       cluster_id_tag: "openshiftClusterID={{ infraID }}"
       primary_cluster_network_tag: "{{ infraID }}-primaryClusterNetwork"
       os_infra_id: "{{ infraID }}"
-      os_network: "{{ infraID }}-network"
-      os_subnet: "{{ infraID }}-nodes"
-      os_router: "{{ infraID }}-external-router"
-      # Port names
-      os_port_api: "{{ infraID }}-api-port"
-      os_port_ingress: "{{ infraID }}-ingress-port"
       os_port_bootstrap: "{{ infraID }}-bootstrap-port"
       os_port_master: "{{ infraID }}-master-port"
       os_port_worker: "{{ infraID }}-worker-port"
