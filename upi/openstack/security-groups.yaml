@@ -373,5 +373,4 @@
       when: os_master_schedulable is defined and os_master_schedulable
 
     when:
-    - os_subnet6_range is defined
-    - os_subnet6_range|ansible.utils.ipv6
+      when: os_subnet6 is defined
