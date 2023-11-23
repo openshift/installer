@@ -1,6 +1,7 @@
 package image
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,9 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+
+	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -79,7 +83,13 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
+	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
+		logrus.Infof("Updating the cdboot.img with the ignition content")
+		err = a.updateCdBootImg(agentArtifacts.IgnitionByte)
+	} else {
+		logrus.Infof("Updating the ignition.img with the ignition content")
+		err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
+	}
 	if err != nil {
 		return err
 	}
@@ -124,6 +134,74 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	_, err = ignitionImg.Write(ignitionBuff)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (a *AgentImage) updateCdBootImg(ignition []byte) error {
+
+	type IgnInfo struct {
+		File   string `json:"file"`
+		Length int64  `json:"length"`
+		Offset int64  `json:"offset"`
+	}
+	var ignInfo IgnInfo
+
+	ignInfoJsonPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
+	ignInfoJsonData, err := os.ReadFile(ignInfoJsonPath)
+	if err != nil {
+		logrus.Debugf("Failed to read json %s", ignInfoJsonPath)
+		return err
+	}
+	if err := json.Unmarshal(ignInfoJsonData, &ignInfo); err != nil {
+		logrus.Debugf("Failed to umarshal json: %s", err)
+		return err
+	}
+
+	cdBootImgPath := filepath.Join(a.tmpPath, ignInfo.File)
+	ignStartOffset := int64(ignInfo.Offset)
+	ignMaxLength := int64(ignInfo.Length)
+
+	ca := NewCpioArchive()
+	err = ca.StoreBytes("config.ign", ignition, 0o644)
+	if err != nil {
+		return err
+	}
+	ignitionBuff, err := ca.SaveBuffer()
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(cdBootImgPath, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Seek(ignStartOffset, 0)
+	if err != nil {
+		return err
+	}
+
+	// Verify that the current compressed ignition archive does not exceed the
+	// embed area (usually 256 Kb)
+	if int64(len(ignitionBuff)) > ignMaxLength {
+		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
+	} else {
+		_, err = file.Write(ignitionBuff)
+		if err != nil {
+			return err
+		}
+
+		paddingLength := ignMaxLength - int64(len(ignitionBuff))
+		if paddingLength > 0 {
+			padding := make([]byte, paddingLength)
+			_, err = file.Write(padding)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
