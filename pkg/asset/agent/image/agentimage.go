@@ -148,21 +148,23 @@ func (a *AgentImage) updateCdBootImg(ignition []byte) error {
 	}
 	var ignInfo IgnInfo
 
-	ignInfoJsonPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
-	ignInfoJsonData, err := os.ReadFile(ignInfoJsonPath)
+	// Reading the ignition details from the json file
+	ignInfoJSONPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
+	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
 	if err != nil {
-		logrus.Debugf("Failed to read json %s", ignInfoJsonPath)
+		logrus.Debugf("Failed to read json %s", ignInfoJSONPath)
 		return err
 	}
-	if err := json.Unmarshal(ignInfoJsonData, &ignInfo); err != nil {
+	if err := json.Unmarshal(ignInfoJSONData, &ignInfo); err != nil {
 		logrus.Debugf("Failed to umarshal json: %s", err)
 		return err
 	}
 
 	cdBootImgPath := filepath.Join(a.tmpPath, ignInfo.File)
-	ignStartOffset := int64(ignInfo.Offset)
-	ignMaxLength := int64(ignInfo.Length)
+	ignStartOffset := ignInfo.Offset
+	ignMaxLength := ignInfo.Length
 
+	// Saving the ignition buffer into archive
 	ca := NewCpioArchive()
 	err = ca.StoreBytes("config.ign", ignition, 0o644)
 	if err != nil {
@@ -173,34 +175,36 @@ func (a *AgentImage) updateCdBootImg(ignition []byte) error {
 		return err
 	}
 
-	file, err := os.OpenFile(cdBootImgPath, os.O_RDWR, 0644)
+	cdBootImgFile, err := os.OpenFile(cdBootImgPath, os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer cdBootImgFile.Close()
 
-	_, err = file.Seek(ignStartOffset, 0)
+	// Adjusting the cdbooot image file to the offset of ignition content
+	_, err = cdBootImgFile.Seek(ignStartOffset, 0)
 	if err != nil {
 		return err
 	}
 
-	// Verify that the current compressed ignition archive does not exceed the
-	// embed area (usually 256 Kb)
+	// Verify that the current compressed ignition archive does not exceed the embed area (usually 256 Kb)
 	if int64(len(ignitionBuff)) > ignMaxLength {
 		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
-	} else {
-		_, err = file.Write(ignitionBuff)
+	}
+
+	// Writing the ignition buffer to the cdboot.img file
+	_, err = cdBootImgFile.Write(ignitionBuff)
+	if err != nil {
+		return err
+	}
+
+	// Padding 0's at the end if the ignition content has less bytes in the cdboot.img file
+	paddingLength := ignMaxLength - int64(len(ignitionBuff))
+	if paddingLength > 0 {
+		padding := make([]byte, paddingLength)
+		_, err = cdBootImgFile.Write(padding)
 		if err != nil {
 			return err
-		}
-
-		paddingLength := ignMaxLength - int64(len(ignitionBuff))
-		if paddingLength > 0 {
-			padding := make([]byte, paddingLength)
-			_, err = file.Write(padding)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
