@@ -36,6 +36,13 @@ func OvnKubeConfig(cns []configv1.ClusterNetworkEntry, sn []string, useHostRouti
 				OVNKubernetesConfig: &operatorv1.OVNKubernetesConfig{
 					GatewayConfig: &operatorv1.GatewayConfig{
 						RoutingViaHost: useHostRouting,
+						// (chocobomb) This is only for test, to see if the Network CRD contains this field.
+						// If yes, this will succeed. If not, it will crash with "field not declared in schema".
+						// Used to debug https://github.com/openshift/installer/pull/7748 together with
+						// https://github.com/openshift/cluster-network-operator/pull/2118.
+						IPv4: operatorv1.IPv4GatewayConfig{
+							InternalMasqueradeSubnet: "169.254.169.0/29",
+						},
 					},
 				},
 			},
