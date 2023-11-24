@@ -9,7 +9,11 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/services/preview/dns/mgmt/2018-03-01-preview/dns"
 	"github.com/Azure/azure-sdk-for-go/services/privatedns/mgmt/2018-09-01/privatedns"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources"
@@ -49,12 +53,16 @@ type ClusterUninstaller struct {
 
 	Logger logrus.FieldLogger
 
+	tokenCreds azcore.TokenCredential
+
 	resourceGroupsClient    resources.GroupsClient
 	zonesClient             dns.ZonesClient
 	recordsClient           dns.RecordSetsClient
 	privateRecordSetsClient privatedns.RecordSetsClient
 	privateZonesClient      privatedns.PrivateZonesClient
 	msgraphClient           *msgraphsdk.GraphServiceClient
+	resourceGraphClient     *armresourcegraph.Client
+	tagsClient              *armresources.TagsClient
 }
 
 func (o *ClusterUninstaller) configureClients() error {
@@ -89,6 +97,18 @@ func (o *ClusterUninstaller) configureClients() error {
 	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
+	rgClient, err := armresourcegraph.NewClient(o.tokenCreds, nil)
+	if err != nil {
+		return err
+	}
+	o.resourceGraphClient = rgClient
+
+	tagsClient, err := armresources.NewTagsClient(o.SubscriptionID, o.tokenCreds, nil)
+	if err != nil {
+		return err
+	}
+	o.tagsClient = tagsClient
+
 	return nil
 }
 
@@ -114,6 +134,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Authorizer:                  session.Authorizer,
 		Environment:                 session.Environment,
 		AuthProvider:                session.AuthProvider,
+		tokenCreds:                  session.TokenCreds,
 		InfraID:                     metadata.InfraID,
 		ResourceGroupName:           group,
 		Logger:                      logger,
@@ -214,7 +235,92 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		o.Logger.Debug(err)
 	}
 
+	if err := removeSharedTags(
+		waitCtx, o.resourceGraphClient, o.tagsClient, o.InfraID, o.SubscriptionID, o.Logger,
+	); err != nil {
+		errs = append(errs, fmt.Errorf("failed to remove shared tags: %w", err))
+		o.Logger.Debug(err)
+	}
+
 	return nil, utilerrors.NewAggregate(errs)
+}
+
+func removeSharedTags(
+	ctx context.Context,
+	graphClient *armresourcegraph.Client,
+	tagsClient *armresources.TagsClient,
+	infraID, subscriptionID string,
+	logger logrus.FieldLogger,
+) error {
+	tagKey := fmt.Sprintf("kubernetes.io_cluster.%s", infraID)
+	query := fmt.Sprintf(
+		"resources | where tags.['%s'] == 'shared' | project id, name, type",
+		tagKey,
+	)
+	results, err := graphClient.Resources(ctx,
+		armresourcegraph.QueryRequest{
+			Query: &query,
+			Subscriptions: []*string{
+				&subscriptionID,
+			},
+			Options: &armresourcegraph.QueryRequestOptions{
+				ResultFormat: azcoreto.Ptr(armresourcegraph.ResultFormatObjectArray),
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to query resources with shared tag: %w", err)
+	}
+
+	tagsParam := armresources.TagsPatchResource{
+		Operation: azcoreto.Ptr(armresources.TagsPatchOperationDelete),
+		Properties: &armresources.Tags{
+			Tags: map[string]*string{
+				tagKey: to.StringPtr("shared"),
+			},
+		},
+	}
+
+	m, ok := results.Data.([]any)
+	if !ok {
+		logger.Debugf("could not cast results data (of type %T) to []any, skipping", results.Data)
+		return nil
+	}
+
+	var errs []error
+	for _, r := range m {
+		items, ok := r.(map[string]any)
+		if !ok {
+			logger.Debugf("could not cast items (of type %T) to map[strin]any, skipping", items)
+			continue
+		}
+		resourceName, ok := items["name"].(string)
+		if !ok {
+			logger.Debugf("could not cast resource name (of type %T) to string, skipping", items["name"])
+			continue
+		}
+		resourceType, ok := items["type"].(string)
+		if !ok {
+			logger.Debugf("could not cast resource type (of type %T) to string, skipping", items["type"])
+			continue
+		}
+		resourceID, ok := items["id"].(string)
+		if !ok {
+			logger.Debugf("could not cast resource id (of type %T) to string, skipping", items["id"])
+			continue
+		}
+		logger := logger.WithFields(logrus.Fields{
+			"resource": resourceName,
+			"type":     resourceType,
+		})
+		logger.Debugf("removing shared tag from resource %q", resourceName)
+		if _, err := tagsClient.UpdateAtScope(ctx, resourceID, tagsParam, nil); err != nil {
+			errs = append(errs, fmt.Errorf("failed to remove shared tag from %s: %w", resourceName, err))
+		}
+		logger.Infoln("removed shared tag")
+	}
+	return utilerrors.NewAggregate(errs)
 }
 
 func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) error {
