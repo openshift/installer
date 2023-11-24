@@ -827,17 +827,25 @@ func validateMarketplaceImage(client API, region string, instanceHyperVGenSet se
 		return field.Invalid(osImageFieldPath, osImage.SKU, errMsg)
 	}
 
-	// Images with no purchase plan have no terms to be accepted
-	if osImage.Plan == aztypes.ImageNoPurchasePlan {
-		return nil
+	// Image has license terms to be accepted
+	osImagePlan := osImage.Plan
+	if len(osImagePlan) == 0 {
+		// Use the default if not set in the install-config
+		osImagePlan = aztypes.ImageWithPurchasePlan
 	}
-
-	termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), osImage.Publisher, osImage.Offer, osImage.SKU)
-	if err != nil {
-		return field.Invalid(osImageFieldPath, osImage, fmt.Sprintf("could not determine if the license terms for the marketplace image have been accepted: %v", err))
-	}
-	if !termsAccepted {
-		return field.Invalid(osImageFieldPath, osImage, "the license terms for the marketplace image have not been accepted")
+	if plan := vmImage.Plan; plan != nil {
+		if osImagePlan == aztypes.ImageNoPurchasePlan {
+			return field.Invalid(osImageFieldPath, osImage, "marketplace image requires license terms to be accepted")
+		}
+		termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), osImage.Publisher, osImage.Offer, osImage.SKU)
+		if err != nil {
+			return field.Invalid(osImageFieldPath, osImage, fmt.Sprintf("could not determine if the license terms for the marketplace image have been accepted: %v", err))
+		}
+		if !termsAccepted {
+			return field.Invalid(osImageFieldPath, osImage, "the license terms for the marketplace image have not been accepted")
+		}
+	} else if osImagePlan == aztypes.ImageWithPurchasePlan {
+		return field.Invalid(osImageFieldPath, osImage, "image has no license terms. Set Plan to \"NoPurchasePlan\" to continue.")
 	}
 
 	return nil
