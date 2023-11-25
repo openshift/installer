@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const floatingIPTypeName = "floating ip"
@@ -20,7 +20,7 @@ func (o *ClusterUninstaller) listFloatingIPs() (cloudResources, error) {
 	resources, _, err := o.vpcSvc.ListFloatingIpsWithContext(ctx, options)
 
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list floating IPs")
+		return nil, fmt.Errorf("failed to list floating IPs: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -60,7 +60,7 @@ func (o *ClusterUninstaller) deleteFloatingIP(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete floating IP %s", item.name)
+		return fmt.Errorf("Failed to delete floating IP %s: %w", item.name, err)
 	}
 
 	return nil
@@ -90,7 +90,7 @@ func (o *ClusterUninstaller) destroyFloatingIPs() error {
 	}
 
 	if items = o.getPendingItems(floatingIPTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const loadBalancerTypeName = "load balancer"
@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listLoadBalancers() (cloudResources, error) {
 	options := o.vpcSvc.NewListLoadBalancersOptions()
 	resources, _, err := o.vpcSvc.ListLoadBalancersWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list load balancers")
+		return nil, fmt.Errorf("failed to list load balancers: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) deleteLoadBalancer(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete load balancer %s", item.name)
+		return fmt.Errorf("Failed to delete load balancer %s: %w", item.name, err)
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func (o *ClusterUninstaller) destroyLoadBalancers() error {
 	}
 
 	if items = o.getPendingItems(loadBalancerTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

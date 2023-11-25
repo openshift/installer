@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
-	"github.com/pkg/errors"
 )
 
 const iamAuthorizationTypeName = "iam authorization"
@@ -20,7 +20,7 @@ func (o *ClusterUninstaller) listIAMAuthorizations() (cloudResources, error) {
 	options.SetType("authorization")
 	resources, _, err := o.iamPolicyManagementSvc.ListPoliciesWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to list IAM authorizations")
+		return nil, fmt.Errorf("Failed to list IAM authorizations: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -90,7 +90,7 @@ func (o *ClusterUninstaller) deleteIAMAuthorization(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete IAM authorization %s", item.name)
+		return fmt.Errorf("Failed to delete IAM authorization %s: %w", item.name, err)
 	}
 
 	return nil
@@ -119,7 +119,7 @@ func (o *ClusterUninstaller) destroyIAMAuthorizations() error {
 	}
 
 	if items = o.getPendingItems(iamAuthorizationTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

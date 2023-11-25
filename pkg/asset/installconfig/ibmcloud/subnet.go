@@ -2,8 +2,7 @@ package ibmcloud
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // Subnet represents an IBM Cloud VPC Subnet
@@ -22,31 +21,31 @@ func getSubnets(ctx context.Context, client API, region string, subnetNames []st
 	for _, name := range subnetNames {
 		results, err := client.GetSubnetByName(ctx, name, region)
 		if err != nil {
-			return nil, errors.Wrapf(err, "getting subnet %s", name)
+			return nil, fmt.Errorf("getting subnet %s: %w", name, err)
 		}
 
 		if results.ID == nil {
-			return nil, errors.Errorf("%s has no ID", name)
+			return nil, fmt.Errorf("%s has no ID", name)
 		}
 
 		if results.Ipv4CIDRBlock == nil {
-			return nil, errors.Errorf("%s has no Ipv4CIDRBlock", *results.ID)
+			return nil, fmt.Errorf("%s has no Ipv4CIDRBlock", *results.ID)
 		}
 
 		if results.CRN == nil {
-			return nil, errors.Errorf("%s has no CRN", *results.ID)
+			return nil, fmt.Errorf("%s has no CRN", *results.ID)
 		}
 
 		if results.Name == nil {
-			return nil, errors.Errorf("%s has no Name", *results.ID)
+			return nil, fmt.Errorf("%s has no Name", *results.ID)
 		}
 
 		if results.VPC == nil {
-			return nil, errors.Errorf("%s has no VPC", *results.ID)
+			return nil, fmt.Errorf("%s has no VPC", *results.ID)
 		}
 
 		if results.Zone == nil {
-			return nil, errors.Errorf("%s has no Zone", *results.ID)
+			return nil, fmt.Errorf("%s has no Zone", *results.ID)
 		}
 
 		subnets[*results.ID] = Subnet{

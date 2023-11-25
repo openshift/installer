@@ -17,7 +17,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/types"
@@ -91,7 +90,7 @@ func NewClient() (*Client, error) {
 	}
 
 	if err := client.loadSDKServices(); err != nil {
-		return nil, errors.Wrap(err, "failed to load IBM SDK services")
+		return nil, fmt.Errorf("failed to load IBM SDK services: %w", err)
 	}
 
 	return client, nil
@@ -151,7 +150,7 @@ func (c *Client) getInstance(ctx context.Context, crnstr string, iType InstanceT
 	options := c.controllerAPI.NewGetResourceInstanceOptions(crnstr)
 	resourceInstance, _, err := c.controllerAPI.GetResourceInstance(options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get %s instances", iType)
+		return nil, fmt.Errorf("failed to get %s instances: %w", iType, err)
 	}
 
 	return resourceInstance, nil
@@ -195,7 +194,7 @@ func (c *Client) GetDedicatedHostByName(ctx context.Context, name string, region
 	options := c.vpcAPI.NewListDedicatedHostsOptions()
 	dhosts, _, err := c.vpcAPI.ListDedicatedHostsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list dedicated hosts")
+		return nil, fmt.Errorf("failed to list dedicated hosts: %w", err)
 	}
 
 	for _, dhost := range dhosts.DedicatedHosts {
@@ -245,7 +244,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 		Name: core.StringPtr(recordName),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "could not retrieve DNS records")
+		return nil, fmt.Errorf("could not retrieve DNS records: %w", err)
 	}
 
 	return records.Result, nil
@@ -284,7 +283,7 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get dns instance")
+		return nil, fmt.Errorf("failed to get dns instance: %w", err)
 	}
 
 	var allZones []responses.DNSZoneResponse
@@ -297,7 +296,7 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to list DNS zones")
+			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 		}
 
 		options := dnsZoneService.NewListDnszonesOptions(*instance.GUID)
@@ -332,7 +331,7 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get cis instance")
+		return nil, fmt.Errorf("failed to get cis instance: %w", err)
 	}
 
 	var allZones []responses.DNSZoneResponse
@@ -347,7 +346,7 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 			Crn:           crnstr,
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to list DNS zones")
+			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 		}
 
 		options := zonesService.NewListZonesOptions()
@@ -460,7 +459,7 @@ func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, e
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
 	profiles, _, err := c.vpcAPI.ListInstanceProfilesWithContext(ctx, listInstanceProfilesOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc vsi profiles")
+		return nil, fmt.Errorf("failed to list vpc vsi profiles: %w", err)
 	}
 	return profiles.Profiles, nil
 }
@@ -478,7 +477,7 @@ func (c *Client) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 	for _, region := range regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to set vpc api service url")
+			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
 
 		if vpc, detailedResponse, err := c.vpcAPI.GetVPC(c.vpcAPI.NewGetVPCOptions(vpcID)); err != nil {
@@ -500,7 +499,7 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 
 	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to set vpc api service url")
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 	}
 
 	allVPCs := []vpcv1.VPC{}
@@ -527,7 +526,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	for _, region := range regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to set vpc api service url")
+			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
 
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
@@ -569,7 +568,7 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 	listRegionsOptions := c.vpcAPI.NewListRegionsOptions()
 	listRegionsResponse, _, err := c.vpcAPI.ListRegionsWithContext(ctx, listRegionsOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc regions")
+		return nil, fmt.Errorf("failed to list vpc regions: %w", err)
 	}
 
 	return listRegionsResponse.Regions, nil

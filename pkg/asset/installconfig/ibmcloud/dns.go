@@ -8,7 +8,6 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -34,10 +33,10 @@ func GetDNSZone() (*Zone, error) {
 	// TODO(cjschaef): Consider also offering Internal (DNS) based domains as well
 	publicZones, err := client.GetDNSZones(ctx, types.ExternalPublishingStrategy)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not retrieve base domains")
+		return nil, fmt.Errorf("could not retrieve base domains: %w", err)
 	}
 	if len(publicZones) == 0 {
-		return nil, errors.New("no domain names found in project")
+		return nil, fmt.Errorf("no domain names found in project")
 	}
 
 	var options []string
@@ -65,12 +64,12 @@ func GetDNSZone() (*Zone, error) {
 			choice := ans.(core.OptionAnswer).Value
 			i := sort.SearchStrings(options, choice)
 			if i == len(publicZones) || options[i] != choice {
-				return errors.Errorf("invalid base domain %q", choice)
+				return fmt.Errorf("invalid base domain %q", choice)
 			}
 			return nil
 		}),
 	); err != nil {
-		return nil, errors.Wrap(err, "failed UserInput")
+		return nil, fmt.Errorf("failed UserInput: %w", err)
 	}
 
 	return optionToZoneMap[zoneChoice], nil

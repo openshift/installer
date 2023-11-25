@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const imageTypeName = "image"
@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 	options := o.vpcSvc.NewListImagesOptions()
 	resources, _, err := o.vpcSvc.ListImagesWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list images")
+		return nil, fmt.Errorf("failed to list images: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) deleteImage(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete image %s", item.name)
+		return fmt.Errorf("Failed to delete image %s: %w", item.name, err)
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func (o *ClusterUninstaller) destroyImages() error {
 	}
 
 	if items = o.getPendingItems(imageTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

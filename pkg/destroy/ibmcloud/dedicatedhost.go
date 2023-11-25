@@ -1,12 +1,12 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -99,7 +99,7 @@ func (o *ClusterUninstaller) deleteDedicatedHost(item cloudResource) error {
 	getOpts := o.vpcSvc.NewGetDedicatedHostOptions(item.id)
 	resource, _, err := o.vpcSvc.GetDedicatedHostWithContext(ctx, getOpts)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get dedicated host %q", item.name)
+		return fmt.Errorf("Failed to get dedicated host %q: %w", item.name, err)
 	}
 
 	if *resource.InstancePlacementEnabled {
@@ -121,7 +121,7 @@ func (o *ClusterUninstaller) deleteDedicatedHost(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete dedicated host %q", item.name)
+		return fmt.Errorf("Failed to delete dedicated host %q: %w", item.name, err)
 	}
 
 	return nil
@@ -145,7 +145,7 @@ func (o *ClusterUninstaller) deleteDedicatedHostGroup(item cloudResource) error 
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete dedicated host group %q", item.name)
+		return fmt.Errorf("Failed to delete dedicated host group %q: %w", item.name, err)
 	}
 
 	return nil
@@ -162,7 +162,7 @@ func (o *ClusterUninstaller) disableDedicatedHost(item cloudResource) error {
 	})
 	_, _, err := o.vpcSvc.UpdateDedicatedHostWithContext(ctx, options)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to disable dedicated host %q", item.name)
+		return fmt.Errorf("Failed to disable dedicated host %q: %w", item.name, err)
 	}
 
 	return nil
@@ -191,7 +191,7 @@ func (o *ClusterUninstaller) destroyDedicatedHosts() error {
 	}
 
 	if items = o.getPendingItems(dedicatedHostTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }
@@ -219,7 +219,7 @@ func (o *ClusterUninstaller) destroyDedicatedHostGroups() error {
 	}
 
 	if items = o.getPendingItems(dedicatedHostGroupTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

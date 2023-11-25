@@ -1,9 +1,8 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 const resourceGroupTypeName = "resource group"
@@ -18,7 +17,7 @@ func (o *ClusterUninstaller) listResourceGroups() (cloudResources, error) {
 	options.SetAccountID(o.AccountID)
 	resources, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to list resource groups")
+		return nil, fmt.Errorf("Failed to list resource groups: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -53,7 +52,7 @@ func (o *ClusterUninstaller) deleteResourceGroup(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete resource group %s", item.name)
+		return fmt.Errorf("Failed to delete resource group %s: %w", item.name, err)
 	}
 
 	return nil
@@ -88,7 +87,7 @@ func (o *ClusterUninstaller) destroyResourceGroups() error {
 	}
 
 	if items = o.getPendingItems(resourceGroupTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

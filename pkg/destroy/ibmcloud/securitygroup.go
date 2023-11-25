@@ -1,12 +1,12 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -23,7 +23,7 @@ func (o *ClusterUninstaller) listSecurityGroups() (cloudResources, error) {
 	options := o.vpcSvc.NewListSecurityGroupsOptions()
 	resources, _, err := o.vpcSvc.ListSecurityGroupsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to list security groups")
+		return nil, fmt.Errorf("Failed to list security groups: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -50,7 +50,7 @@ func (o *ClusterUninstaller) listSecurityGroupRules(securityGroupID string) (clo
 	options := o.vpcSvc.NewListSecurityGroupRulesOptions(securityGroupID)
 	resources, _, err := o.vpcSvc.ListSecurityGroupRulesWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to list security group rules for %q", securityGroupID)
+		return nil, fmt.Errorf("Failed to list security group rules for %q: %w", securityGroupID, err)
 	}
 
 	result := []cloudResource{}
@@ -126,7 +126,7 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	}
 
 	if rules = o.getPendingItems(securityGroupRuleTypeName); len(rules) > 0 {
-		return errors.Errorf("%d items pending", len(rules))
+		return fmt.Errorf("%d items pending", len(rules))
 	}
 
 	options := o.vpcSvc.NewDeleteSecurityGroupOptions(item.id)
@@ -140,7 +140,7 @@ func (o *ClusterUninstaller) deleteSecurityGroup(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete security group %s", item.name)
+		return fmt.Errorf("Failed to delete security group %s: %w", item.name, err)
 	}
 
 	return nil
@@ -161,7 +161,7 @@ func (o *ClusterUninstaller) deleteSecurityGroupRule(item cloudResource, securit
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete security group rule %s", item.name)
+		return fmt.Errorf("Failed to delete security group rule %s: %w", item.name, err)
 	}
 
 	return nil
@@ -196,7 +196,7 @@ func (o *ClusterUninstaller) destroySecurityGroups() error {
 	}
 
 	if items = o.getPendingItems(securityGroupTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

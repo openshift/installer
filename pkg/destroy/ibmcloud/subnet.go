@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const subnetTypeName = "subnet"
@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	options := o.vpcSvc.NewListSubnetsOptions()
 	resources, _, err := o.vpcSvc.ListSubnetsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list subnets")
+		return nil, fmt.Errorf("failed to list subnets: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete subnet %s", item.name)
+		return fmt.Errorf("Failed to delete subnet %s: %w", item.name, err)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 	}
 
 	if items = o.getPendingItems(subnetTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

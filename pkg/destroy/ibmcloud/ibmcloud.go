@@ -18,7 +18,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -118,7 +117,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 
 	err = o.destroyCluster()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to destroy cluster")
+		return nil, fmt.Errorf("failed to destroy cluster: %w", err)
 	}
 
 	return nil, nil
@@ -292,7 +291,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			}
 		}
 		if zoneID == "" {
-			return errors.Errorf("Could not determine CIS DNS zone ID from base domain %q", o.BaseDomain)
+			return fmt.Errorf("Could not determine CIS DNS zone ID from base domain %q", o.BaseDomain)
 		}
 
 		// DnsRecordsV1
@@ -338,7 +337,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			}
 		}
 		if zoneID == "" {
-			return errors.Errorf("Could not determine DNS Services DNS zone ID from base domain %q", o.BaseDomain)
+			return fmt.Errorf("Could not determine DNS Services DNS zone ID from base domain %q", o.BaseDomain)
 		}
 		o.Logger.Debugf("Found DNS Services DNS zone ID for base domain %q: %s", o.BaseDomain, zoneID)
 		o.zoneID = zoneID
@@ -382,7 +381,7 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 
 	// If no ResourceGroupName is available, raise an error
 	if o.ResourceGroupName == "" {
-		return "", errors.Errorf("No ResourceGroupName provided")
+		return "", fmt.Errorf("No ResourceGroupName provided")
 	}
 
 	ctx, cancel := o.contextWithTimeout()
@@ -396,9 +395,9 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 		return "", err
 	}
 	if len(resources.Resources) == 0 {
-		return "", errors.Errorf("ResourceGroup '%q' not found", o.ResourceGroupName)
+		return "", fmt.Errorf("ResourceGroup '%q' not found", o.ResourceGroupName)
 	} else if len(resources.Resources) > 1 {
-		return "", errors.Errorf("Too many resource groups matched name %q", o.ResourceGroupName)
+		return "", fmt.Errorf("Too many resource groups matched name %q", o.ResourceGroupName)
 	}
 
 	o.SetResourceGroupID(*resources.Resources[0].ID)
@@ -431,7 +430,7 @@ func aggregateError(errs []error, pending ...int) error {
 		return err
 	}
 	if len(pending) > 0 && pending[0] > 0 {
-		return errors.Errorf("%d items pending", pending[0])
+		return fmt.Errorf("%d items pending", pending[0])
 	}
 	return nil
 }

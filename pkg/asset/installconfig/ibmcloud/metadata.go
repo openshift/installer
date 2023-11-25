@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -148,7 +147,7 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (b
 	if m.dnsInstance == nil {
 		_, err := m.DNSInstance(ctx)
 		if err != nil {
-			return false, errors.Wrap(err, "cannot collect DNS permitted networks without DNS Instance")
+			return false, fmt.Errorf("cannot collect DNS permitted networks without DNS Instance: %w", err)
 		}
 	}
 

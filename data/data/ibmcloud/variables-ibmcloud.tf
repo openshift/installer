@@ -3,9 +3,8 @@
 #######################################
 
 variable "ibmcloud_api_key" {
-  type = string
-  # TODO: Supported on tf 0.14
-  # sensitive   = true
+  type        = string
+  sensitive   = true
   description = "The IAM API key for authenticating with IBM Cloud APIs."
 }
 
@@ -70,7 +69,7 @@ variable "ibmcloud_vpc_permitted" {
 variable "ibmcloud_vpc" {
   type        = string
   description = "The name of an existing cluster VPC."
-  default     = null
+  default     = ""
 }
 
 variable "ibmcloud_control_plane_subnets" {
@@ -110,11 +109,6 @@ variable "ibmcloud_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
   default = "External"
-  # TODO: Supported on tf 0.13
-  # validation {
-  #   condition     = "External" || "Internal"
-  #   error_message = "The ibmcloud_publish_strategy value must be \"External\" or \"Internal\"."
-  # }
 }
 
 variable "ibmcloud_network_resource_group_name" {

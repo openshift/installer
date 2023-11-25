@@ -3,7 +3,6 @@ package ibmcloud
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,7 +35,7 @@ func Machines(clusterID string, config *types.InstallConfig, subnets map[string]
 		azIndex := int(idx) % len(azs)
 		provider, err := provider(clusterID, platform, subnets, mpool, azIndex, role, userDataSecret)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, fmt.Errorf("failed to create provider: %w", err)
 		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{

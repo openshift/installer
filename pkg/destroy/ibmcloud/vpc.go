@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const vpcTypeName = "vpc"
@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listVPCs() (cloudResources, error) {
 	options := o.vpcSvc.NewListVpcsOptions()
 	resources, _, err := o.vpcSvc.ListVpcsWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list vpcs")
+		return nil, fmt.Errorf("failed to list vpcs: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) deleteVPC(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete VOC %s", item.name)
+		return fmt.Errorf("Failed to delete VPC %s: %w", item.name, err)
 	}
 
 	return nil
@@ -93,7 +93,7 @@ func (o *ClusterUninstaller) destroyVPCs() error {
 	}
 
 	if items = o.getPendingItems(vpcTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

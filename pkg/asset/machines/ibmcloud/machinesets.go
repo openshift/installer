@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -39,7 +38,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, subnets map[stri
 
 		provider, err := provider(clusterID, platform, subnets, mpool, idx, role, userDataSecret)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, fmt.Errorf("failed to create provider: %w", err)
 		}
 		name := fmt.Sprintf("%s-%s-%s", clusterID, pool.Name, strings.TrimPrefix(az, fmt.Sprintf("%s-", platform.Region)))
 		mset := &machineapi.MachineSet{

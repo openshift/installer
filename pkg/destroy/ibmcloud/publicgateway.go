@@ -1,11 +1,11 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const publicGatewayTypeName = "public gateway"
@@ -19,7 +19,7 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 	options := o.vpcSvc.NewListPublicGatewaysOptions()
 	resources, _, err := o.vpcSvc.ListPublicGatewaysWithContext(ctx, options)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list public gateways")
+		return nil, fmt.Errorf("failed to list public gateways: %w", err)
 	}
 
 	result := []cloudResource{}
@@ -59,7 +59,7 @@ func (o *ClusterUninstaller) deletePublicGateway(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete public gateway %s", item.name)
+		return fmt.Errorf("Failed to delete public gateway %s: %w", item.name, err)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (o *ClusterUninstaller) destroyPublicGateways() error {
 	}
 
 	if items = o.getPendingItems(publicGatewayTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

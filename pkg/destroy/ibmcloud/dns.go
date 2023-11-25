@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-
-	"github.com/pkg/errors"
 )
 
 const dnsRecordTypeName = "dns record"
@@ -31,7 +29,7 @@ func (o *ClusterUninstaller) listCISDNSRecords() (cloudResources, error) {
 		resources, _, err := o.dnsRecordsSvc.ListAllDnsRecordsWithContext(ctx, options)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to list DNS records")
+			return nil, fmt.Errorf("Failed to list DNS records: %w", err)
 		}
 
 		for _, record := range resources.Result {
@@ -72,7 +70,7 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 		resources, _, err := o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
 
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to list DNS records")
+			return nil, fmt.Errorf("Failed to list DNS records: %w", err)
 		}
 
 		for _, record := range resources.ResourceRecords {
@@ -121,7 +119,7 @@ func (o *ClusterUninstaller) deleteCISDNSRecord(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete DNS record %s", item.name)
+		return fmt.Errorf("Failed to delete DNS record %s: %w", item.name, err)
 	}
 
 	return nil
@@ -144,7 +142,7 @@ func (o *ClusterUninstaller) deleteDNSSvcDNSRecord(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete DNS record %s", item.name)
+		return fmt.Errorf("Failed to delete DNS record %s: %w", item.name, err)
 	}
 	return nil
 }
@@ -179,7 +177,7 @@ func (o *ClusterUninstaller) destroyDNSRecords() error {
 	}
 
 	if items = o.getPendingItems(dnsRecordTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

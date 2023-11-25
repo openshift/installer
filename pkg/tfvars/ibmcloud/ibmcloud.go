@@ -2,8 +2,7 @@ package ibmcloud
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
@@ -65,7 +64,7 @@ type TFVarsSources struct {
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
+		return nil, fmt.Errorf("failed to use cached ibmcloud image: %w", err)
 	}
 
 	masterConfig := sources.MasterConfigs[0]

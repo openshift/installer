@@ -1,10 +1,9 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
@@ -20,7 +19,7 @@ func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
 		options.SetLimit(100)
 		resources, _, err := o.vpcSvc.ListVolumesWithContext(ctx, options)
 		if err != nil {
-			return nil, errors.Wrap(err, "Listing disks failed")
+			return nil, fmt.Errorf("Listing disks failed: %w", err)
 		}
 
 		for _, volume := range resources.Volumes {
@@ -59,7 +58,7 @@ func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
 	details, err := o.vpcSvc.DeleteVolumeWithContext(ctx, options)
 
 	if err != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s", item.name, item.id, item.id)
+		return fmt.Errorf("Failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s: %w", item.name, item.id, item.id, err)
 	}
 
 	if err != nil && details.StatusCode == http.StatusNotFound {
@@ -93,7 +92,7 @@ func (o *ClusterUninstaller) waitForDiskDeletion(item cloudResource) error {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted disk %s", item.id)
 	} else {
-		return errors.Wrapf(err, "Failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s", item.name, item.id, item.id)
+		return fmt.Errorf("Failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s: %w", item.name, item.id, item.id, err)
 	}
 
 	return err
@@ -122,7 +121,7 @@ func (o *ClusterUninstaller) destroyDisks() error {
 	}
 
 	if items = o.getPendingItems("disk"); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }

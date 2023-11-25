@@ -7,7 +7,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -69,7 +68,7 @@ func (o *ClusterUninstaller) stopInstances() error {
 	}
 
 	if items = o.getPendingItems(instanceActionTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }
@@ -97,7 +96,7 @@ func (o *ClusterUninstaller) stopInstance(item cloudResource) error {
 
 	_, _, err := o.vpcSvc.CreateInstanceActionWithContext(ctx, options)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to stop instance %q", item.name)
+		return fmt.Errorf("Failed to stop instance %q: %w", item.name, err)
 	}
 
 	return nil
@@ -124,7 +123,7 @@ func (o *ClusterUninstaller) deleteInstance(item cloudResource) error {
 	}
 
 	if err != nil && details != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete instance %q", item.name)
+		return fmt.Errorf("Failed to delete instance %q: %w", item.name, err)
 	}
 
 	return nil
@@ -153,7 +152,7 @@ func (o *ClusterUninstaller) destroyInstances() error {
 	}
 
 	if items = o.getPendingItems(instanceTypeName); len(items) > 0 {
-		return errors.Errorf("%d items pending", len(items))
+		return fmt.Errorf("%d items pending", len(items))
 	}
 	return nil
 }
