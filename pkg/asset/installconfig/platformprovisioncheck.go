@@ -123,11 +123,12 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case ibmcloud.Name:
-		client, err := ibmcloudconfig.NewClient()
+		client, err := ibmcloudconfig.NewClient(ic.Config.Platform.IBMCloud.ServiceEndpoints)
 		if err != nil {
 			return err
 		}
-		err = ibmcloudconfig.ValidatePreExistingPublicDNS(client, ic.Config, ic.IBMCloud)
+		metadata := ibmcloudconfig.NewMetadata(ic.Config)
+		err = ibmcloudconfig.ValidatePreExistingPublicDNS(client, ic.Config, metadata)
 		if err != nil {
 			return err
 		}

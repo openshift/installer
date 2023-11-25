@@ -89,7 +89,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	case gcptypes.Name:
 		metadata.ClusterPlatformMetadata.GCP = gcp.Metadata(installConfig.Config)
 	case ibmcloudtypes.Name:
-		metadata.ClusterPlatformMetadata.IBMCloud = ibmcloud.Metadata(clusterID.InfraID, installConfig.Config, installConfig.IBMCloud)
+		metadata.ClusterPlatformMetadata.IBMCloud = ibmcloud.Metadata(clusterID.InfraID, installConfig.Config)
 	case baremetaltypes.Name:
 		metadata.ClusterPlatformMetadata.BareMetal = baremetal.Metadata(installConfig.Config)
 	case ovirttypes.Name:

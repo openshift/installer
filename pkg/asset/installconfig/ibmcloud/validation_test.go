@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -189,6 +190,8 @@ var (
 		},
 	}
 	noDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{}
+
+	unittestURL = "e2e.unittest.local"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -835,7 +838,14 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 
 	dnsRecordName := fmt.Sprintf("api.%s.%s", validClusterName, validBaseDomain)
 
-	metadata := NewMetadata(validBaseDomain, "us-south", nil, nil)
+	metadata := NewMetadata(&types.InstallConfig{
+		BaseDomain: validBaseDomain,
+		Platform: types.Platform{
+			IBMCloud: &ibmcloudtypes.Platform{
+				Region: "us-south",
+			},
+		},
+	})
 	metadata.cisInstanceCRN = validCISInstanceCRN
 
 	// Mocks: no pre-existing External DNS records
@@ -860,6 +870,157 @@ func TestValidatePreExistingPublicDNS(t *testing.T) {
 				validInstallConfig.Publish = types.InternalPublishingStrategy
 			}
 			aggregatedErrors := ValidatePreExistingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateServiceEndpoints(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "empty service endpoints",
+		},
+		{
+			name: "single valid service endpoint",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+		},
+		{
+			name: "single invalid override service endpoint",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: "invalid-service",
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.serviceEndpoints[0].name: Invalid value: "invalid-service": not a supported override service\E`,
+		},
+		{
+			name: "single invalid URI service endpoint",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  "/invalid/uri/format",
+						},
+					}
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.serviceEndpoints[0].url: Invalid value: "/invalid/uri/format": Head "/invalid/uri/format": unsupported protocol scheme ""\E`,
+		},
+		{
+			name: "multiple valid service endpoint",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  unittestURL,
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+		},
+		{
+			name: "multiple invalid duplicate service endpoints",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  unittestURL,
+						},
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.serviceEndpoints[1].name: Duplicate value: "IAM"\E`,
+		},
+		{
+			name: "multiple invalid service endpoints",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: "invalid-service",
+							URL:  unittestURL,
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  "/invalid/uri/format",
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+			errorMsg: `\Q[platform.ibmcloud.serviceEndpoints[0].name: Invalid value: "invalid-service": not a supported override service, platform.ibmcloud.serviceEndpoints[1].url: Invalid value: "/invalid/uri/format": Head "/invalid/uri/format": unsupported protocol scheme "", platform.ibmcloud.serviceEndpoints[2].name: Duplicate value: "COS"]\E`,
+		},
+		{
+			name: "multiple mixed validity service endpoints",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  unittestURL,
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  unittestURL,
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  "/invalid/uri/format",
+						},
+						{
+							Name: "invalid-service",
+							URL:  unittestURL,
+						},
+					}
+				},
+			},
+			errorMsg: `\Qplatform.ibmcloud.serviceEndpoints[2].name: Duplicate value: "COS", platform.ibmcloud.serviceEndpoints[3].name: Invalid value: "invalid-service": not a supported override service\E`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+			aggregatedErrors := ValidateServiceEndpoints(editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

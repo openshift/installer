@@ -3364,6 +3364,49 @@ spec:
                       resource group where the cluster should be installed. If empty,
                       a new resource group will be created for the cluster.
                     type: string
+                  serviceEndpoints:
+                    description: ServiceEndpoints is a list which contains custom
+                      endpoints to override default service endpoints of IBM Cloud
+                      Services. There must only be one ServiceEndpoint for a service
+                      (no duplicates).
+                    items:
+                      description: IBMCloudServiceEndpoint stores the configuration
+                        of a custom url to override existing defaults of IBM Cloud
+                        Services.
+                      properties:
+                        name:
+                          description: 'name is the name of the IBM Cloud service.
+                            Possible values are: CIS, COS, DNSServices, GlobalSearch,
+                            GlobalTagging, HyperProtect, IAM, KeyProtect, ResourceController,
+                            ResourceManager, or VPC. For example, the IBM Cloud Private
+                            IAM service could be configured with the service `name`
+                            of `IAM` and `url` of `https://private.iam.cloud.ibm.com`
+                            Whereas the IBM Cloud Private VPC service for US South
+                            (Dallas) could be configured with the service `name` of
+                            `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`'
+                          enum:
+                          - CIS
+                          - COS
+                          - DNSServices
+                          - GlobalSearch
+                          - GlobalTagging
+                          - HyperProtect
+                          - IAM
+                          - KeyProtect
+                          - ResourceController
+                          - ResourceManager
+                          - VPC
+                          type: string
+                        url:
+                          description: url is fully qualified URI with scheme https,
+                            that overrides the default generated endpoint for a client.
+                            This must be provided and cannot be empty.
+                          type: string
+                      required:
+                      - name
+                      - url
+                      type: object
+                    type: array
                   vpcName:
                     description: VPCName is the name of an already existing VPC to
                       be used during cluster creation.

@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 type editMetadata []func(m *Metadata)
@@ -170,7 +171,14 @@ var (
 )
 
 func baseMetadata() *Metadata {
-	return NewMetadata(goodDomain, region, nil, nil)
+	return NewMetadata(&types.InstallConfig{
+		BaseDomain: goodDomain,
+		Platform: types.Platform{
+			IBMCloud: &ibmcloudtypes.Platform{
+				Region: region,
+			},
+		},
+	})
 }
 
 func TestAccountID(t *testing.T) {

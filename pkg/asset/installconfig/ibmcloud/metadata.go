@@ -8,6 +8,7 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -26,6 +27,7 @@ type Metadata struct {
 	computeSubnets      map[string]Subnet
 	controlPlaneSubnets map[string]Subnet
 	dnsInstance         *DNSInstance
+	serviceEndpoints    []configv1.IBMCloudServiceEndpoint
 
 	mutex       sync.Mutex
 	clientMutex sync.Mutex
@@ -39,12 +41,13 @@ type DNSInstance struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string, region string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
+func NewMetadata(config *types.InstallConfig) *Metadata {
 	return &Metadata{
-		BaseDomain:              baseDomain,
-		ComputeSubnetNames:      computeSubnets,
-		ControlPlaneSubnetNames: controlPlaneSubnets,
-		Region:                  region,
+		BaseDomain:              config.BaseDomain,
+		ComputeSubnetNames:      config.Platform.IBMCloud.ComputeSubnets,
+		ControlPlaneSubnetNames: config.Platform.IBMCloud.ControlPlaneSubnets,
+		Region:                  config.Platform.IBMCloud.Region,
+		serviceEndpoints:        config.Platform.IBMCloud.ServiceEndpoints,
 	}
 }
 
@@ -222,7 +225,7 @@ func (m *Metadata) Client() (API, error) {
 	m.clientMutex.Lock()
 	defer m.clientMutex.Unlock()
 
-	client, err := NewClient()
+	client, err := NewClient(m.serviceEndpoints)
 	if err != nil {
 		return nil, err
 	}
@@ -235,6 +238,9 @@ func (m *Metadata) Client() (API, error) {
 }
 
 // NewIamAuthenticator returns a new IamAuthenticator for using IBM Cloud services.
-func NewIamAuthenticator(apiKey string) (*core.IamAuthenticator, error) {
+func NewIamAuthenticator(apiKey string, iamServiceEndpointOverride string) (*core.IamAuthenticator, error) {
+	if iamServiceEndpointOverride != "" {
+		return core.NewIamAuthenticatorBuilder().SetApiKey(apiKey).SetURL(iamServiceEndpointOverride).Build()
+	}
 	return core.NewIamAuthenticatorBuilder().SetApiKey(apiKey).Build()
 }
