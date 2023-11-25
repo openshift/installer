@@ -55,6 +55,12 @@ variable "ibmcloud_image_filepath" {
 # Top-level module variables (optional)
 #######################################
 
+variable "ibmcloud_endpoints_json_file" {
+  type        = string
+  description = "JSON file containing IBM Cloud service endpoints"
+  default     = ""
+}
+
 variable "ibmcloud_preexisting_vpc" {
   type        = bool
   description = "Specifies whether an existing VPC should be used or a new one created for installation."

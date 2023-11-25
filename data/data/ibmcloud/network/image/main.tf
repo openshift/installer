@@ -1,9 +1,18 @@
 locals {
-  prefix = var.cluster_id
+  # Use the direct COS endpoint if IBM Cloud Service Endpoints are being overridden,
+  # as public and private may not be available. The direct endpoint requires
+  # additional IBM Cloud Account configuration, which must be configured when using
+  # Service Endpoint overrides.
+  cos_endpoint_type = var.endpoint_visibility == "private" ? "direct" : "public"
+  prefix            = var.cluster_id
 }
 
 resource "ibm_cos_bucket" "images" {
-  bucket_name          = "${local.prefix}-vsi-image"
+  bucket_name = "${local.prefix}-vsi-image"
+  # Use the direct COS endpoint if IBM Cloud Service endpoints are being overridden,
+  # as public and private may not be available. Direct requires additional IBM Cloud
+  # Account configuration
+  endpoint_type        = local.cos_endpoint_type
   resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.region
   storage_class        = "smart"
@@ -13,6 +22,7 @@ resource "ibm_cos_bucket_object" "file" {
   bucket_crn      = ibm_cos_bucket.images.crn
   bucket_location = ibm_cos_bucket.images.region_location
   content_file    = var.image_filepath
+  endpoint_type   = local.cos_endpoint_type
   key             = basename(var.image_filepath)
 }
 

@@ -1,9 +1,18 @@
+locals {
+  # Use the direct COS endpoint if IBM Cloud Service Endpoints are being overridden,
+  # as public and private may not be available. The direct endpoint requires
+  # additional IBM Cloud Account configuration, which must be configured when using
+  # Service Endpoint overrides.
+  cos_endpoint_type = local.endpoint_visibility == "private" ? "direct" : "public"
+}
+
 ############################################
 # COS bucket
 ############################################
 
 resource "ibm_cos_bucket" "bootstrap_ignition" {
   bucket_name          = "${local.prefix}-bootstrap-ignition"
+  endpoint_type        = local.cos_endpoint_type
   resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.ibmcloud_region
   storage_class        = "smart"
@@ -16,9 +25,10 @@ resource "ibm_cos_bucket" "bootstrap_ignition" {
 resource "ibm_cos_bucket_object" "bootstrap_ignition" {
   bucket_crn      = ibm_cos_bucket.bootstrap_ignition.crn
   bucket_location = ibm_cos_bucket.bootstrap_ignition.region_location
-  key             = "bootstrap.ign"
   content_file    = var.ignition_bootstrap_file
+  endpoint_type   = local.cos_endpoint_type
   etag            = filemd5(var.ignition_bootstrap_file)
+  key             = "bootstrap.ign"
 }
 
 ############################################
