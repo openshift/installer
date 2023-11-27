@@ -15,9 +15,6 @@ import (
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
-
-	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -83,13 +80,8 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	if a.cpuArch == arch.RpmArch(types.ArchitectureS390X) {
-		logrus.Infof("Updating the cdboot.img with the ignition content")
-		err = a.updateCdBootImg(agentArtifacts.IgnitionByte)
-	} else {
-		logrus.Infof("Updating the ignition.img with the ignition content")
-		err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
-	}
+	logrus.Infof("Updating the ignition data in the image file")
+	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
 	if err != nil {
 		return err
 	}
@@ -102,7 +94,10 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
+// Update the ignition image file with the ignition data
 func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
+
+	// Saving the ignition buffer into archive
 	ca := NewCpioArchive()
 	err := ca.StoreBytes("config.ign", ignition, 0o644)
 	if err != nil {
@@ -113,34 +108,7 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
-	fi, err := os.Stat(ignitionImgPath)
-	if err != nil {
-		return err
-	}
-
-	// Verify that the current compressed ignition archive does not exceed the
-	// embed area (usually 256 Kb)
-	if len(ignitionBuff) > int(fi.Size()) {
-		return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fi.Size())
-	}
-
-	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer ignitionImg.Close()
-
-	_, err = ignitionImg.Write(ignitionBuff)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *AgentImage) updateCdBootImg(ignition []byte) error {
-
+	// Defining a struct for the ignition info
 	type IgnInfo struct {
 		File   string `json:"file"`
 		Length int64  `json:"length"`
@@ -148,7 +116,7 @@ func (a *AgentImage) updateCdBootImg(ignition []byte) error {
 	}
 	var ignInfo IgnInfo
 
-	// Reading the ignition details from the json file
+	// Reading the ignition details from igninfo.json file into the struct
 	ignInfoJSONPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
 	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
 	if err != nil {
@@ -160,49 +128,52 @@ func (a *AgentImage) updateCdBootImg(ignition []byte) error {
 		return err
 	}
 
-	cdBootImgPath := filepath.Join(a.tmpPath, ignInfo.File)
+	// Fetching the ignition details from the struct
+	ignImagePath := filepath.Join(a.tmpPath, ignInfo.File)
 	ignStartOffset := ignInfo.Offset
 	ignMaxLength := ignInfo.Length
 
-	// Saving the ignition buffer into archive
-	ca := NewCpioArchive()
-	err = ca.StoreBytes("config.ign", ignition, 0o644)
+	// Verify that the compressed ignition buffer archive does not exceed the embed area (usually 256 Kb)
+	if ignMaxLength == 0 {
+		// Checking the file size if no ignition length is provided
+		fileInfo, err := os.Stat(ignImagePath)
+		if err != nil {
+			return err
+		}
+
+		if len(ignitionBuff) > int(fileInfo.Size()) {
+			return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fileInfo.Size())
+		}
+	} else {
+		if int64(len(ignitionBuff)) > ignMaxLength {
+			return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
+		}
+	}
+
+	// Open the image file with permissions to seek and write the ignition content
+	ignitionImg, err := os.OpenFile(ignImagePath, os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
-	ignitionBuff, err := ca.SaveBuffer()
-	if err != nil {
-		return err
-	}
+	defer ignitionImg.Close()
 
-	cdBootImgFile, err := os.OpenFile(cdBootImgPath, os.O_RDWR, 0644)
-	if err != nil {
-		return err
-	}
-	defer cdBootImgFile.Close()
-
-	// Adjusting the cdbooot image file to the offset of ignition content
-	_, err = cdBootImgFile.Seek(ignStartOffset, 0)
-	if err != nil {
-		return err
-	}
-
-	// Verify that the current compressed ignition archive does not exceed the embed area (usually 256 Kb)
-	if int64(len(ignitionBuff)) > ignMaxLength {
-		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
-	}
-
-	// Writing the ignition buffer to the cdboot.img file
-	_, err = cdBootImgFile.Write(ignitionBuff)
+	// Adjusting the ignition image file to the offset of ignition content (in case of cdboot.img)
+	_, err = ignitionImg.Seek(ignStartOffset, 0)
 	if err != nil {
 		return err
 	}
 
-	// Padding 0's at the end if the ignition content has less bytes in the cdboot.img file
+	// Write the ignition content into the image file
+	_, err = ignitionImg.Write(ignitionBuff)
+	if err != nil {
+		return err
+	}
+
+	// Padding 0's at the end if the ignition content has less bytes in the image file (in case of cdboot.img)
 	paddingLength := ignMaxLength - int64(len(ignitionBuff))
 	if paddingLength > 0 {
 		padding := make([]byte, paddingLength)
-		_, err = cdBootImgFile.Write(padding)
+		_, err = ignitionImg.Write(padding)
 		if err != nil {
 			return err
 		}
