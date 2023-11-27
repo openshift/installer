@@ -28,21 +28,37 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
-// System creates a local capi control plane
+var (
+	sys = &system{}
+)
+
+// Interface is the interface for the cluster-api system.
+type Interface interface {
+	Run(ctx context.Context, installConfig *installconfig.InstallConfig) error
+	Client() client.Client
+	Teardown()
+}
+
+// System returns the cluster-api system.
+func System() Interface {
+	return sys
+}
+
+// system creates a local capi control plane
 // to use as a management cluster.
-type System struct {
-	Client client.Client
+type system struct {
+	client client.Client
 
 	componentDir string
 	lcp          *localControlPlane
 
-	wg     sync.WaitGroup
-	once   sync.Once
-	cancel context.CancelFunc
+	wg           sync.WaitGroup
+	teardownOnce sync.Once
+	cancel       context.CancelFunc
 }
 
 // Run launches the cluster-api system.
-func (c *System) Run(ctx context.Context, installConfig *installconfig.InstallConfig) (err error) {
+func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallConfig) error {
 	// Setup the context with a cancel function.
 	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
@@ -52,7 +68,7 @@ func (c *System) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	if err := c.lcp.Run(ctx); err != nil {
 		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
-	c.Client = c.lcp.Client
+	c.client = c.lcp.Client
 
 	// Create a temporary directory to unpack the cluster-api assets
 	// and use it as the working directory for the envtest environment.
@@ -69,7 +85,7 @@ func (c *System) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	controllers := []*controller{
 		{
 			Name:       "Cluster API",
-			Path:       fmt.Sprintf("%s/cluster-api", binDir),
+			Path:       fmt.Sprintf("%s/cluster-api", c.lcp.BinDir),
 			Components: []string{c.componentDir + "/core-components.yaml"},
 			Args: []string{
 				"-v=2",
@@ -184,8 +200,13 @@ func (c *System) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	return nil
 }
 
+// Client returns the client for the local control plane.
+func (c *system) Client() client.Client {
+	return c.client
+}
+
 // Teardown shuts down the local capi control plane and all its controllers.
-func (c *System) Teardown() {
+func (c *system) Teardown() {
 	if c.lcp == nil {
 		return
 	}
@@ -194,7 +215,7 @@ func (c *System) Teardown() {
 	defer os.RemoveAll(c.lcp.BinDir)
 
 	// Proceed to shutdown.
-	c.once.Do(func() {
+	c.teardownOnce.Do(func() {
 		c.cancel()
 		logrus.Info("Shutting down local Cluster API control plane...")
 		ch := make(chan struct{})
@@ -218,7 +239,7 @@ func (c *System) Teardown() {
 // and have the name `cluster-api-provider-<name>`.
 //
 // While the manifests can be optional, we expect them to be in the manifests directory and named `<name>-infrastructure-components.yaml`.
-func (c *System) getInfrastructureController(provider *Provider, args []string, env map[string]string) *controller {
+func (c *system) getInfrastructureController(provider *Provider, args []string, env map[string]string) *controller {
 	manifests := []string{}
 	defaultManifestPath := filepath.Join(c.componentDir, fmt.Sprintf("/%s-infrastructure-components.yaml", provider.Name))
 	if _, err := os.Stat(defaultManifestPath); err == nil {
@@ -227,7 +248,7 @@ func (c *System) getInfrastructureController(provider *Provider, args []string, 
 	return &controller{
 		Provider:   provider,
 		Name:       fmt.Sprintf("%s infrastructure provider", provider.Name),
-		Path:       fmt.Sprintf("%s/cluster-api-provider-%s", binDir, provider.Name),
+		Path:       fmt.Sprintf("%s/cluster-api-provider-%s", c.lcp.BinDir, provider.Name),
 		Components: manifests,
 		Args:       args,
 		Env:        env,
@@ -248,10 +269,10 @@ type controller struct {
 }
 
 // runController configures the controller, and waits for it to be ready.
-func (c *System) runController(ctx context.Context, ct *controller) error {
+func (c *system) runController(ctx context.Context, ct *controller) error {
 	// If the provider is not empty, we extract it to the binaries directory.
 	if ct.Provider != nil {
-		if err := ct.Provider.Extract(binDir); err != nil {
+		if err := ct.Provider.Extract(c.lcp.BinDir); err != nil {
 			logrus.Fatal(err)
 		}
 	}

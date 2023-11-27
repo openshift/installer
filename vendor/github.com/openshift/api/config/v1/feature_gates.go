@@ -53,16 +53,6 @@ var (
 		OwningProduct:       ocpSpecific,
 	}
 
-	FeatureGateRetroactiveDefaultStorageClass = FeatureGateName("RetroactiveDefaultStorageClass")
-	retroactiveDefaultStorageClass            = FeatureGateDescription{
-		FeatureGateAttributes: FeatureGateAttributes{
-			Name: FeatureGateRetroactiveDefaultStorageClass,
-		},
-		OwningJiraComponent: "storage",
-		ResponsiblePerson:   "RomanBednar",
-		OwningProduct:       kubernetes,
-	}
-
 	FeatureGateExternalCloudProvider = FeatureGateName("ExternalCloudProvider")
 	externalCloudProvider            = FeatureGateDescription{
 		FeatureGateAttributes: FeatureGateAttributes{
@@ -299,6 +289,56 @@ var (
 		},
 		OwningJiraComponent: "dns",
 		ResponsiblePerson:   "miciah",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateVSphereControlPlaneMachineset = FeatureGateName("VSphereControlPlaneMachineSet")
+	vSphereControlPlaneMachineset            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateVSphereControlPlaneMachineset,
+		},
+		OwningJiraComponent: "splat",
+		ResponsiblePerson:   "rvanderp3",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateMachineConfigNodes = FeatureGateName("MachineConfigNodes")
+	machineConfigNodes            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateMachineConfigNodes,
+		},
+		OwningJiraComponent: "MachineConfigOperator",
+		ResponsiblePerson:   "cdoern",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateClusterAPIInstall = FeatureGateName("ClusterAPIInstall")
+	clusterAPIInstall            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateClusterAPIInstall,
+		},
+		OwningJiraComponent: "Installer",
+		ResponsiblePerson:   "vincepri",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateMetricsServer = FeatureGateName("MetricsServer")
+	metricsServer            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateMetricsServer,
+		},
+		OwningJiraComponent: "Monitoring",
+		ResponsiblePerson:   "slashpai",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateInstallAlternateInfrastructureAWS = FeatureGateName("InstallAlternateInfrastructureAWS")
+	installAlternateInfrastructureAWS            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateInstallAlternateInfrastructureAWS,
+		},
+		OwningJiraComponent: "Installer",
+		ResponsiblePerson:   "padillon",
 		OwningProduct:       ocpSpecific,
 	}
 )

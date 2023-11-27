@@ -268,6 +268,12 @@ spec:
                                     maxLength: 2048
                                     pattern: ^/.*?/host/.*?/Resources.*
                                     type: string
+                                  template:
+                                    description: "template is the full inventory path of the virtual machine or template that will be cloned when creating new machines in this failure domain. The maximum length of the path is 2048 characters. \n When omitted, the template will be calculated by the control plane machineset operator based on the region and zone defined in VSpherePlatformFailureDomainSpec. For example, for zone=zonea, region=region1, and infrastructure name=test, the template path would be calculated as /<datacenter>/vm/test-rhcos-region1-zonea."
+                                    maxLength: 2048
+                                    minLength: 1
+                                    pattern: ^/.*?/vm/.*?
+                                    type: string
                                 required:
                                   - computeCluster
                                   - datacenter
@@ -744,9 +750,19 @@ spec:
                             description: IBMCloudServiceEndpoint stores the configuration of a custom url to override existing defaults of IBM Cloud Services.
                             properties:
                               name:
-                                description: name is the name of the IBM Cloud service. For example, the IBM Cloud Private IAM service could be configured with the service `name` of `IAM` and `url` of `https://private.iam.cloud.ibm.com` Whereas the IBM Cloud Private VPC service for US South (Dallas) could be configured with the service `name` of `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`
-                                maxLength: 32
-                                pattern: ^[a-zA-Z0-9-]+$
+                                description: 'name is the name of the IBM Cloud service. Possible values are: CIS, COS, DNSServices, GlobalSearch, GlobalTagging, HyperProtect, IAM, KeyProtect, ResourceController, ResourceManager, or VPC. For example, the IBM Cloud Private IAM service could be configured with the service `name` of `IAM` and `url` of `https://private.iam.cloud.ibm.com` Whereas the IBM Cloud Private VPC service for US South (Dallas) could be configured with the service `name` of `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`'
+                                enum:
+                                  - CIS
+                                  - COS
+                                  - DNSServices
+                                  - GlobalSearch
+                                  - GlobalTagging
+                                  - HyperProtect
+                                  - IAM
+                                  - KeyProtect
+                                  - ResourceController
+                                  - ResourceManager
+                                  - VPC
                                 type: string
                               url:
                                 description: url is fully qualified URI with scheme https, that overrides the default generated endpoint for a client. This must be provided and cannot be empty.
