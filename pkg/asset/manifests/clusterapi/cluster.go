@@ -1,6 +1,7 @@
 package clusterapi
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
@@ -168,6 +170,13 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 
 	// Append the infrastructure manifests.
 	c.FileList = append(c.FileList, out.Manifests...)
+
+	// Generate the machines for the cluster, and append them to the list of manifests.
+	mc, err := machines.GenerateClusterAPI(context.TODO(), installConfig, clusterID, rhcosImage)
+	if err != nil {
+		return errors.Wrap(err, "failed to generate machines")
+	}
+	c.FileList = append(c.FileList, mc.Manifests...)
 
 	// Create the infrastructure manifests.
 	for _, m := range c.FileList {
