@@ -235,6 +235,7 @@ func validIPv4NetworkingConfig() *types.Networking {
 				HostPrefix: 28,
 			},
 		},
+		ClusterNetworkMTU: 0,
 	}
 }
 
@@ -502,6 +503,86 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: ``,
+		},
+		{
+			name: "networking clusterNetworkMTU - valid high limit ovn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8901
+				fmt.Println(c.Platform.Name())
+				return c
+			}(),
+		},
+		{
+			name: "networking clusterNetworkMTU - valid low limit",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 1000
+				return c
+			}(),
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid value lower",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetworkMTU = 999
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 999: cluster network MTU is lower than the minimum value of 1000$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid value ovn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8951
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 8951: cluster network MTU exceeds the maximum value with the network plugin OVNKubernetes of 8901$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid jumbo value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetworkMTU = 9002
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 9002: cluster network MTU exceeds the maximum value of 9001$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid for non-aws",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8901
+				c.Platform = types.Platform{
+					None: &none.Platform{},
+				}
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 8901: cluster network MTU is allowed only in AWS deployments`,
+		},
+		{
+			name: "networking clusterNetworkMTU - unsupported network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+				c.Networking.ClusterNetworkMTU = 8000
+				return c
+			}(),
+			expectedError: `networking\.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin OpenShiftSDN$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - unsupported network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeKuryr)
+				c.Networking.ClusterNetworkMTU = 8000
+				return c
+			}(),
+			expectedError: `networking\.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin Kuryr\]$`,
 		},
 		{
 			name: "missing control plane",

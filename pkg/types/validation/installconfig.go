@@ -112,6 +112,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		allErrs = append(allErrs, validateNetworking(c.Networking, c.IsSingleNodeOpenShift(), field.NewPath("networking"))...)
 		allErrs = append(allErrs, validateNetworkingIPVersion(c.Networking, &c.Platform)...)
 		allErrs = append(allErrs, validateNetworkingForPlatform(c.Networking, &c.Platform, field.NewPath("networking"))...)
+		allErrs = append(allErrs, validateNetworkingClusterNetworkMTU(c, field.NewPath("networking", "clusterNetworkMTU"))...)
 		allErrs = append(allErrs, validateVIPsForPlatform(c.Networking, &c.Platform, field.NewPath("platform"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
@@ -455,6 +456,88 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostPrefix"), cn.HostPrefix, "cluster network host subnetwork prefix must be 64 for IPv6 networks"))
 		}
 	}
+	return allErrs
+}
+
+func validateNetworkingClusterNetworkMTU(c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	// higherLimitMTUVPC is the MTU limit for AWS VPC.
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html#jumbo_frame_instances
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/network_mtu.html
+	const higherLimitMTUVPC uint32 = uint32(9001)
+
+	// lowerLimitMTUVPC is the lower limit to prevent users setting too low values impacting in the
+	// cluster network performance. Tested values with 1100 decreases 70% in the network performance
+	// in AWS deployments:
+	const lowerLimitMTUVPC uint32 = uint32(1000)
+
+	// higherLimitMTUEdge defines the maximium generally supported MTU in AWS Local and Wavelength Zones.
+	// Mostly AWS Local or Wavelength zones have limited MTU between those and in the Region.
+	// It is required to raise a warning message when the user-defined MTU is higher than general supported.
+	// https://docs.aws.amazon.com/local-zones/latest/ug/how-local-zones-work.html#considerations
+	// https://docs.aws.amazon.com/wavelength/latest/developerguide/how-wavelengths-work.html
+	const higherLimitMTUEdge uint32 = uint32(1300)
+
+	// MTU overhead for the network plugin OVNKubernetes.
+	// https://docs.openshift.com/container-platform/4.14/networking/changing-cluster-network-mtu.html#mtu-value-selection_changing-cluster-network-mtu
+	const minOverheadOVN uint32 = uint32(100)
+
+	allErrs := field.ErrorList{}
+
+	if c.Networking == nil {
+		return nil
+	}
+
+	if c.Networking.ClusterNetworkMTU == 0 {
+		return nil
+	}
+
+	if c.Platform.Name() != aws.Name {
+		return append(allErrs, field.Invalid(fldPath, int(c.Networking.ClusterNetworkMTU), "cluster network MTU is allowed only in AWS deployments"))
+	}
+
+	network := c.NetworkType
+	mtu := c.Networking.ClusterNetworkMTU
+
+	// Calculating the MTU limits considering the base overhead for each network plugin.
+	limitEdgeOVNKubernetes := higherLimitMTUEdge - minOverheadOVN
+	limitOVNKubernetes := higherLimitMTUVPC - minOverheadOVN
+
+	if mtu > higherLimitMTUVPC {
+		return append(allErrs, field.Invalid(fldPath, int(mtu), fmt.Sprintf("cluster network MTU exceeds the maximum value of %d", higherLimitMTUVPC)))
+	}
+
+	// Prevent too low MTU values.
+	// Tests in AWS Local Zones with MTU of 1100 decreased the network
+	// performance in 70%. The check protects the cluster stability from
+	// user defining too lower numbers.
+	// https://issues.redhat.com/browse/OCPBUGS-11098
+	if mtu < lowerLimitMTUVPC {
+		return append(allErrs, field.Invalid(fldPath, int(mtu), fmt.Sprintf("cluster network MTU is lower than the minimum value of %d", lowerLimitMTUVPC)))
+	}
+
+	hasEdgePool := false
+	warnEdgePool := false
+	for _, compute := range c.Compute {
+		if compute.Name == types.MachinePoolEdgeRoleName {
+			hasEdgePool = true
+			break
+		}
+	}
+
+	if network != string(operv1.NetworkTypeOVNKubernetes) {
+		return append(allErrs, field.Invalid(fldPath, int(mtu), fmt.Sprintf("cluster network MTU is not valid with network plugin %s", network)))
+	}
+
+	if mtu > limitOVNKubernetes {
+		return append(allErrs, field.Invalid(fldPath, int(mtu), fmt.Sprintf("cluster network MTU exceeds the maximum value with the network plugin %s of %d", network, limitOVNKubernetes)))
+	}
+	if hasEdgePool && (mtu > limitEdgeOVNKubernetes) {
+		warnEdgePool = true
+	}
+	if warnEdgePool {
+		logrus.Warnf("networking.ClusterNetworkMTU exceeds the maximum value generally supported by AWS Local or Wavelength zones. Please ensure all AWS Zones defined in the edge compute pool accepts the MTU %d bytes between nodes (EC2) in the zone and in the Region.", mtu)
+	}
+
 	return allErrs
 }
 
