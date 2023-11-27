@@ -10,6 +10,8 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
@@ -92,13 +94,19 @@ func (o *ClusterUninstaller) configureClients() error {
 	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
-	rgClient, err := armresourcegraph.NewClient(o.Session.TokenCreds, nil)
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: o.Session.CloudConfig,
+		},
+	}
+
+	rgClient, err := armresourcegraph.NewClient(o.Session.TokenCreds, clientOpts)
 	if err != nil {
 		return err
 	}
 	o.resourceGraphClient = rgClient
 
-	tagsClient, err := armresources.NewTagsClient(subscriptionID, o.Session.TokenCreds, nil)
+	tagsClient, err := armresources.NewTagsClient(o.Session.Credentials.SubscriptionID, o.Session.TokenCreds, clientOpts)
 	if err != nil {
 		return err
 	}

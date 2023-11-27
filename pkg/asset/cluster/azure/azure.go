@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/sirupsen/logrus"
@@ -50,8 +52,13 @@ func tagVNet(ctx context.Context, clusterID string, installConfig *installconfig
 	}
 
 	resourceGroupName := installConfig.Config.Azure.NetworkResourceGroupName
+	clientOpts := &arm.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: session.CloudConfig,
+		},
+	}
 
-	vnetClient, err := armnetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID, session.TokenCreds, nil)
+	vnetClient, err := armnetwork.NewVirtualNetworksClient(session.Credentials.SubscriptionID, session.TokenCreds, clientOpts)
 	if err != nil {
 		return fmt.Errorf("failed to get the virtual network client: %w", err)
 	}
