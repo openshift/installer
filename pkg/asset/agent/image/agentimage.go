@@ -94,7 +94,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-// Update the ignition image file with the ignition data
+// Update the ignition image file with the ignition data.
 func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 
 	// Saving the ignition buffer into archive
@@ -144,10 +144,8 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		if len(ignitionBuff) > int(fileInfo.Size()) {
 			return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fileInfo.Size())
 		}
-	} else {
-		if int64(len(ignitionBuff)) > ignMaxLength {
-			return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
-		}
+	} else if int64(len(ignitionBuff)) > ignMaxLength {
+		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
 	}
 
 	// Open the image file with permissions to seek and write the ignition content
