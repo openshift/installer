@@ -575,7 +575,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.IBMCloud)
 			if len(mpool.Zones) == 0 {
-				azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region)
+				azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}

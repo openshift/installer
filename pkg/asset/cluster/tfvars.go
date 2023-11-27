@@ -34,6 +34,7 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -518,7 +519,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ibmcloud.Name:
-		client, err := installConfig.IBMCloud.Client()
+		meta := ibmcloudconfig.NewMetadata(installConfig.Config)
+		client, err := meta.Client()
 		if err != nil {
 			return err
 		}
@@ -601,8 +603,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		vpcPermitted := false
 
 		if installConfig.Config.Publish == types.InternalPublishingStrategy {
-			// Get DNSInstanceCRN from InstallConfig metadata
-			dnsInstance, err := installConfig.IBMCloud.DNSInstance(ctx)
+			// Get DNSInstanceCRN from metadata
+			dnsInstance, err := meta.DNSInstance(ctx)
 			if err != nil {
 				return err
 			}
@@ -611,17 +613,38 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
 			if preexistingVPC {
-				vpcPermitted, err = installConfig.IBMCloud.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
+				vpcPermitted, err = meta.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			// Get CISInstanceCRN from InstallConfig metadata
-			cisCRN, err = installConfig.IBMCloud.CISInstanceCRN(ctx)
+			// Get CISInstanceCRN from metadata
+			cisCRN, err = meta.CISInstanceCRN(ctx)
 			if err != nil {
 				return err
 			}
+		}
+
+		// NOTE(cjschaef): If one or more ServiceEndpoint's are supplied, attempt to build the Terraform endpoint_file_path
+		// https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/guides/custom-service-endpoints#file-structure-for-endpoints-file
+		var endpointsJSONFile string
+		if len(installConfig.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			endpointData, err := ibmcloudtfvars.CreateEndpointJSON(installConfig.Config.Platform.IBMCloud.ServiceEndpoints, installConfig.Config.Platform.IBMCloud.Region)
+			if err != nil {
+				return err
+			}
+			// While we should have already confirmed there are ServiceEndpoints, we can verify data did get created, requiring the JSON file gets created and passed along
+			if endpointData == nil {
+				return fmt.Errorf("failed to generate endpoint JSON with provided IBM Cloud ServiceEndpoints")
+			}
+
+			// Add endpoint JSON data to list of generated files for Terraform
+			t.FileList = append(t.FileList, &asset.File{
+				Filename: ibmcloudtfvars.IBMCloudEndpointJSONFileName,
+				Data:     endpointData,
+			})
+			endpointsJSONFile = ibmcloudtfvars.IBMCloudEndpointJSONFileName
 		}
 
 		data, err = ibmcloudtfvars.TFVars(
@@ -629,6 +652,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Auth:                     auth,
 				CISInstanceCRN:           cisCRN,
 				DNSInstanceID:            dnsID,
+				EndpointsJSONFile:        endpointsJSONFile,
 				ImageURL:                 string(*rhcosImage),
 				MasterConfigs:            masterConfigs,
 				MasterDedicatedHosts:     masterDedicatedHosts,

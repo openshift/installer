@@ -216,7 +216,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		compute.Set(installConfig.Config.WorkerMachinePool().Platform.IBMCloud)
 
 		if len(controlPlane.Zones) == 0 || len(compute.Zones) == 0 {
-			zones, err := ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region)
+			zones, err := ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region, installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
 			if err != nil {
 				return errors.Wrapf(err, "could not get availability zones for %s", installConfig.Config.IBMCloud.Region)
 			}
@@ -237,6 +237,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			subnetNames,
 			controlPlane.Zones,
 			compute.Zones,
+			installConfig.Config.Platform.IBMCloud.ServiceEndpoints,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")

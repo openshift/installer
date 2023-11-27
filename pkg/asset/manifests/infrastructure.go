@@ -215,6 +215,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			CISInstanceCRN:    cisInstanceCRN,
 			DNSInstanceCRN:    dnsInstanceCRN,
 			ProviderType:      configv1.IBMCloudProviderTypeVPC,
+			ServiceEndpoints:  installConfig.Config.Platform.IBMCloud.ServiceEndpoints,
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType

@@ -3,14 +3,19 @@ package bootstrap
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
+	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -40,6 +45,27 @@ func Destroy(dir string) (err error) {
 	// Azure Stack uses the Azure platform but has its own Terraform configuration.
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
+	}
+
+	// IBM Cloud allows override of service endpoints, which would be required during bootstrap destroy.
+	// Create a JSON file with overrides, if these endpoints are present
+	if platform == ibmcloudtypes.Name && metadata.IBMCloud != nil && len(metadata.IBMCloud.ServiceEndpoints) > 0 {
+		// Build the JSON containing the endpoint overrides for IBM Cloud Services.
+		jsonData, err := ibmcloudtfvars.CreateEndpointJSON(metadata.IBMCloud.ServiceEndpoints, metadata.IBMCloud.Region)
+		if err != nil {
+			return fmt.Errorf("failed generating endpoint override JSON data for bootstrap destroy: %w", err)
+		}
+		// Since there are ServiceEndpoints, we expect JSON data to be generated.
+		if jsonData == nil {
+			return fmt.Errorf("no endpoint override JSON data generated for set of endpoint overrides")
+		}
+
+		// If JSON data was generated, create the JSON file for IBM Cloud Terraform provider to use during destroy.
+		endpointsFilePath := filepath.Join(dir, ibmcloudtfvars.IBMCloudEndpointJSONFileName)
+		if err := os.WriteFile(endpointsFilePath, jsonData, 0o600); err != nil {
+			return fmt.Errorf("failed to write IBM Cloud service endpoint override JSON file for bootstrap destroy: %w", err)
+		}
+		logrus.Debugf("generated ibm endpoint overrides file: %s", endpointsFilePath)
 	}
 
 	provider, err := infra.ProviderForPlatform(platform)
