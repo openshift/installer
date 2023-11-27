@@ -2,9 +2,9 @@ package nutanix
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -24,8 +24,11 @@ func Validate(ic *types.InstallConfig) error {
 // provisioned infrastructure. In this case, self-hosted networking is a requirement
 // when the installer creates infrastructure for nutanix clusters.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	errList := field.ErrorList{}
+	parentPath := field.NewPath("platform", "nutanix")
+
 	if ic.Platform.Nutanix == nil {
-		return field.Required(field.NewPath("platform", "nutanix"), "nutanix validation requires a nutanix platform configuration")
+		return field.Required(parentPath, "nutanix validation requires a nutanix platform configuration")
 	}
 
 	p := ic.Platform.Nutanix
@@ -35,14 +38,14 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		p.PrismCentral.Username,
 		p.PrismCentral.Password)
 	if err != nil {
-		return field.InternalError(field.NewPath("platform", "nutanix"), errors.Wrapf(err, "unable to connect to Prism Central %q", p.PrismCentral.Endpoint.Address))
+		return field.Invalid(parentPath.Child("prismCentral"), p.PrismCentral.Endpoint.Address, fmt.Sprintf("failed to connect to the prism-central with the configured credentials: %v", err))
 	}
 
 	// validate whether a prism element with the UUID actually exists
 	for _, pe := range p.PrismElements {
 		_, err = nc.V3.GetCluster(pe.UUID)
 		if err != nil {
-			return field.InternalError(field.NewPath("platform", "nutanix", "prismElements"), errors.Wrapf(err, "prism element UUID %s does not correspond to a valid prism element in Prism", pe.UUID))
+			errList = append(errList, field.Invalid(parentPath.Child("prismElements"), pe.UUID, fmt.Sprintf("the prism element %s's UUID does not correspond to a valid prism element in Prism: %v", pe.Name, err)))
 		}
 	}
 
@@ -50,9 +53,28 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	for _, subnetUUID := range p.SubnetUUIDs {
 		_, err = nc.V3.GetSubnet(subnetUUID)
 		if err != nil {
-			return field.InternalError(field.NewPath("platform", "nutanix", "subnetUUIDs"), errors.Wrapf(err, "subnet UUID %s does not correspond to a valid subnet in Prism", subnetUUID))
+			errList = append(errList, field.Invalid(parentPath.Child("subnetUUIDs"), subnetUUID, fmt.Sprintf("the subnet UUID does not correspond to a valid subnet in Prism: %v", err)))
 		}
 	}
 
-	return nil
+	// validate each FailureDomain configuration
+	for _, fd := range p.FailureDomains {
+		// validate whether the prism element with the UUID exists
+		_, err = nc.V3.GetCluster(fd.PrismElement.UUID)
+		if err != nil {
+			errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "prismElements"), fd.PrismElement.UUID,
+				fmt.Sprintf("the failure domain %s configured prism element UUID does not correspond to a valid prism element in Prism: %v", fd.Name, err)))
+		}
+
+		// validate whether a subnet with the UUID actually exists
+		for _, subnetUUID := range fd.SubnetUUIDs {
+			_, err = nc.V3.GetSubnet(subnetUUID)
+			if err != nil {
+				errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "subnetUUIDs"), subnetUUID,
+					fmt.Sprintf("the failure domain %s configured subnet UUID does not correspond to a valid subnet in Prism: %v", fd.Name, err)))
+			}
+		}
+	}
+
+	return errList.ToAggregate()
 }

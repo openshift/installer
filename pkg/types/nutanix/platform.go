@@ -1,20 +1,29 @@
 package nutanix
 
 import (
+	"fmt"
+
 	configv1 "github.com/openshift/api/config/v1"
 )
+
+// CredentialsSecretName is the default nutanix credentials secret name.
+//
+//nolint:gosec
+const CredentialsSecretName = "nutanix-credentials"
 
 // Platform stores any global configuration used for Nutanix platforms.
 type Platform struct {
 	// PrismCentral is the endpoint (address and port) and credentials to
 	// connect to the Prism Central.
+	// This serves as the default Prism-Central.
 	PrismCentral PrismCentral `json:"prismCentral"`
 
 	// PrismElements holds a list of Prism Elements (clusters). A Prism Element encompasses all Nutanix resources (VMs, subnets, etc.)
 	// used to host the OpenShift cluster. Currently only a single Prism Element may be defined.
+	// This serves as the default Prism-Element.
 	PrismElements []PrismElement `json:"prismElements"`
 
-	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS Image
+	// ClusterOSImage overrides the url provided in rhcos.json to download the RHCOS Image.
 	//
 	// +optional
 	ClusterOSImage string `json:"clusterOSImage,omitempty"`
@@ -65,6 +74,10 @@ type Platform struct {
 	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.NutanixPlatformLoadBalancer `json:"loadBalancer,omitempty"`
+
+	// FailureDomains configures failure domains for the Nutanix platform.
+	// +optional
+	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
 }
 
 // PrismCentral holds the endpoint and credentials data used to connect to the Prism Central
@@ -85,7 +98,8 @@ type PrismElement struct {
 	UUID string `json:"uuid"`
 
 	// Endpoint holds the address and port of the Prism Element
-	Endpoint PrismEndpoint `json:"endpoint"`
+	// +optional
+	Endpoint PrismEndpoint `json:"endpoint,omitempty"`
 
 	// Name is prism endpoint Name
 	Name string `json:"name,omitempty"`
@@ -98,4 +112,40 @@ type PrismEndpoint struct {
 
 	// port is the port number to access the Nutanix Prism Central or Element (cluster)
 	Port int32 `json:"port"`
+}
+
+// FailureDomain configures failure domain information for the Nutanix platform.
+type FailureDomain struct {
+	// Name defines the unique name of a failure domain.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=`^[0-9A-Za-z_.-@/]+$`
+	Name string `json:"name"`
+
+	// prismElement holds the identification (name, uuid) and the optional endpoint address and port of the Nutanix Prism Element.
+	// When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy.
+	// Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the
+	// proxy spec.noProxy list.
+	// +kubebuilder:validation:Required
+	PrismElement PrismElement `json:"prismElement"`
+
+	// SubnetUUIDs identifies the network subnets of the Prism Element.
+	// Currently we only support one subnet for a failure domain.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
+	SubnetUUIDs []string `json:"subnetUUIDs"`
+}
+
+// GetFailureDomainByName returns the NutanixFailureDomain pointer with the input name.
+// Returns nil if not found.
+func (p Platform) GetFailureDomainByName(fdName string) (*FailureDomain, error) {
+	for _, fd := range p.FailureDomains {
+		if fd.Name == fdName {
+			return &fd, nil
+		}
+	}
+
+	return nil, fmt.Errorf("not found the defined failure domain with name %q", fdName)
 }

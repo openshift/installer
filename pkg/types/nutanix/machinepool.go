@@ -54,6 +54,12 @@ type MachinePool struct {
 	// +listMapKey=key
 	// +optional
 	Categories []machinev1.NutanixCategory `json:"categories,omitempty"`
+
+	// FailureDomains optionally configures a list of failure domain names
+	// that will be applied to the MachinePool
+	// +listType=set
+	// +optional
+	FailureDomains []string `json:"failureDomains,omitempty"`
 }
 
 // OSDisk defines the disk for a virtual machine.
@@ -96,6 +102,10 @@ func (p *MachinePool) Set(required *MachinePool) {
 
 	if len(required.Categories) > 0 {
 		p.Categories = required.Categories
+	}
+
+	if len(required.FailureDomains) > 0 {
+		p.FailureDomains = required.FailureDomains
 	}
 }
 
@@ -166,6 +176,14 @@ func (p *MachinePool) ValidateConfig(platform *Platform) error {
 				errMsg = fmt.Sprintf("Failed to find the category with key %q and value %q. error: %v", category.Key, category.Value, err)
 				errList = append(errList, field.Invalid(fldPath.Child("categories"), category, errMsg))
 			}
+		}
+	}
+
+	// validate FailureDomains if configured
+	for _, fdName := range p.FailureDomains {
+		_, err := platform.GetFailureDomainByName(fdName)
+		if err != nil {
+			errList = append(errList, field.Invalid(fldPath.Child("failureDomains"), fdName, fmt.Sprintf("The failure domain is not defined: %v", err)))
 		}
 	}
 
