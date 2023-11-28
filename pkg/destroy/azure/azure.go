@@ -10,7 +10,6 @@ import (
 	"time"
 
 	azurestackdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	azcoreto "github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph"
@@ -21,7 +20,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/to"
-	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
@@ -40,20 +38,14 @@ import (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
-	SubscriptionID string
-	TenantID       string
-	Authorizer     autorest.Authorizer
-	AuthProvider   *azurekiota.AzureIdentityAuthenticationProvider
-	Environment    azureenv.Environment
-	CloudName      azure.CloudEnvironment
+	CloudName azure.CloudEnvironment
+	Session   *azuresession.Session
 
 	InfraID                     string
 	ResourceGroupName           string
 	BaseDomainResourceGroupName string
 
 	Logger logrus.FieldLogger
-
-	tokenCreds azcore.TokenCredential
 
 	resourceGroupsClient    resources.GroupsClient
 	zonesClient             dns.ZonesClient
@@ -66,44 +58,47 @@ type ClusterUninstaller struct {
 }
 
 func (o *ClusterUninstaller) configureClients() error {
-	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	o.resourceGroupsClient.Authorizer = o.Authorizer
+	subscriptionID := o.Session.Credentials.SubscriptionID
+	endpoint := o.Session.Environment.ResourceManagerEndpoint
 
-	o.zonesClient = dns.NewZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	o.zonesClient.Authorizer = o.Authorizer
+	o.resourceGroupsClient = resources.NewGroupsClientWithBaseURI(endpoint, subscriptionID)
+	o.resourceGroupsClient.Authorizer = o.Session.Authorizer
 
-	o.recordsClient = dns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	o.recordsClient.Authorizer = o.Authorizer
+	o.zonesClient = dns.NewZonesClientWithBaseURI(endpoint, subscriptionID)
+	o.zonesClient.Authorizer = o.Session.Authorizer
 
-	o.privateZonesClient = privatedns.NewPrivateZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	o.privateZonesClient.Authorizer = o.Authorizer
+	o.recordsClient = dns.NewRecordSetsClientWithBaseURI(endpoint, subscriptionID)
+	o.recordsClient.Authorizer = o.Session.Authorizer
 
-	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	o.privateRecordSetsClient.Authorizer = o.Authorizer
+	o.privateZonesClient = privatedns.NewPrivateZonesClientWithBaseURI(endpoint, subscriptionID)
+	o.privateZonesClient.Authorizer = o.Session.Authorizer
 
-	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.AuthProvider)
+	o.privateRecordSetsClient = privatedns.NewRecordSetsClientWithBaseURI(endpoint, subscriptionID)
+	o.privateRecordSetsClient.Authorizer = o.Session.Authorizer
+
+	adapter, err := msgraphsdk.NewGraphRequestAdapter(o.Session.AuthProvider)
 	if err != nil {
 		return err
 	}
 	// This can be empty for StackCloud
-	if o.Environment.MicrosoftGraphEndpoint != "" {
+	if o.Session.Environment.MicrosoftGraphEndpoint != "" {
 		// Set the service root to the Microsoft Graph for the appropriate
 		// cloud endpoint (e.g, GovCloud). Failing to do so results in an
 		// unhelpful `context deadline exceeded` error.
 		// NOTE: The API version must be included in the URL
 		// See https://issues.redhat.com/browse/OCPBUGS-4549
 		// See https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
-		adapter.SetBaseUrl(fmt.Sprintf("%s/v1.0", o.Environment.MicrosoftGraphEndpoint))
+		adapter.SetBaseUrl(fmt.Sprintf("%s/v1.0", o.Session.Environment.MicrosoftGraphEndpoint))
 	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
-	rgClient, err := armresourcegraph.NewClient(o.tokenCreds, nil)
+	rgClient, err := armresourcegraph.NewClient(o.Session.TokenCreds, nil)
 	if err != nil {
 		return err
 	}
 	o.resourceGraphClient = rgClient
 
-	tagsClient, err := armresources.NewTagsClient(o.SubscriptionID, o.tokenCreds, nil)
+	tagsClient, err := armresources.NewTagsClient(subscriptionID, o.Session.TokenCreds, nil)
 	if err != nil {
 		return err
 	}
@@ -129,12 +124,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		SubscriptionID:              session.Credentials.SubscriptionID,
-		TenantID:                    session.Credentials.TenantID,
-		Authorizer:                  session.Authorizer,
-		Environment:                 session.Environment,
-		AuthProvider:                session.AuthProvider,
-		tokenCreds:                  session.TokenCreds,
+		Session:                     session,
 		InfraID:                     metadata.InfraID,
 		ResourceGroupName:           group,
 		Logger:                      logger,
@@ -236,7 +226,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	}
 
 	if err := removeSharedTags(
-		waitCtx, o.resourceGraphClient, o.tagsClient, o.InfraID, o.SubscriptionID, o.Logger,
+		waitCtx, o.resourceGraphClient, o.tagsClient, o.InfraID, o.Session.Credentials.SubscriptionID, o.Logger,
 	); err != nil {
 		errs = append(errs, fmt.Errorf("failed to remove shared tags: %w", err))
 		o.Logger.Debug(err)
@@ -330,11 +320,11 @@ func deleteAzureStackPublicRecords(ctx context.Context, o *ClusterUninstaller) e
 	logger := o.Logger
 	rgName := o.BaseDomainResourceGroupName
 
-	dnsClient := azurestackdns.NewZonesClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	dnsClient.Authorizer = o.Authorizer
+	dnsClient := azurestackdns.NewZonesClientWithBaseURI(o.Session.Environment.ResourceManagerEndpoint, o.Session.Credentials.SubscriptionID)
+	dnsClient.Authorizer = o.Session.Authorizer
 
-	recordsClient := azurestackdns.NewRecordSetsClientWithBaseURI(o.Environment.ResourceManagerEndpoint, o.SubscriptionID)
-	recordsClient.Authorizer = o.Authorizer
+	recordsClient := azurestackdns.NewRecordSetsClientWithBaseURI(o.Session.Environment.ResourceManagerEndpoint, o.Session.Credentials.SubscriptionID)
+	recordsClient.Authorizer = o.Session.Authorizer
 
 	var errs []error
 
