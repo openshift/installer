@@ -7,15 +7,15 @@ GO_BUILD_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-build.$(DIR),$(
 GO_CLEAN_TARGETS:=	$(foreach DIR,$(TFSUBDIRS), $(subst $(DIR),go-clean.$(DIR),$(DIR)))
 TERRAFORM_PROVIDER_TARGETS := $(foreach DIR,$(TFSUBDIRS), bin/$(TARGET_OS_ARCH)/terraform-provider-$(DIR).zip)
 
-
-
-LDFLAGS:= "-s -w"
+LDFLAGS:= -s -w
 GCFLAGS:= ""
 
 ifeq ($(MODE), dev)
-LDFLAGS:= ""
+LDFLAGS:=
 GCFLAGS:= "all=-N -l"
 endif
+
+MODINFOKEY:= main.builtGoModHash
 
 .PHONY: all
 all: go-build
@@ -34,7 +34,7 @@ $(GO_BUILD_TARGETS): go-build.%: bin/$(TARGET_OS_ARCH)/terraform-provider-%.zip
 $(TERRAFORM_PROVIDER_TARGETS): bin/$(TARGET_OS_ARCH)/terraform-provider-%.zip: providers/%/go.mod
 	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$* "$$path" && \
+	go build -gcflags $(GCFLAGS) -ldflags "$(LDFLAGS) -X $(MODINFOKEY)=$$(git hash-object go.mod)" -o ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$* "$$path" && \
 	zip -1j ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$*.zip ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$*;
 
 .PHONY: go-build-terraform
@@ -42,7 +42,7 @@ go-build-terraform: bin/$(TARGET_OS_ARCH)/terraform
 
 bin/$(TARGET_OS_ARCH)/terraform: terraform/go.mod
 	cd terraform; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../bin/$(TARGET_OS_ARCH)/terraform ./vendor/github.com/hashicorp/terraform
+	go build -gcflags $(GCFLAGS) -ldflags "$(LDFLAGS) -X $(MODINFOKEY)=$$(git hash-object go.mod)" -o ../bin/$(TARGET_OS_ARCH)/terraform ./vendor/github.com/hashicorp/terraform
 
 .PHONY: go-clean
 go-clean: go-clean-providers go-clean-terraform
