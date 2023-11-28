@@ -130,27 +130,27 @@ variable "ignition" {
 }
 
 variable "availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
 }
 
 variable "private" {
-  type = bool
+  type        = bool
   description = "This value determines if this is a private cluster or not."
 }
 
 variable "use_ipv4" {
-  type = bool
+  type        = bool
   description = "This value determines if this is cluster should use IPv4 networking."
 }
 
 variable "use_ipv6" {
-  type = bool
+  type        = bool
   description = "This value determines if this is cluster should use IPv6 networking."
 }
 
 variable "outbound_type" {
-  type = string
+  type    = string
   default = "Loadbalancer"
 
   description = <<EOF
@@ -176,7 +176,7 @@ EOF
 }
 
 variable "security_encryption_type" {
-  type = string
+  type    = string
   default = null
 
   description = <<EOF
@@ -197,13 +197,13 @@ EOF
 }
 
 variable "secure_boot" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Defines whether secure boot should be enabled on the virtual machine."
 }
 
 variable "virtualized_trusted_platform_module" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Defines whether vTPM should be enabled on the virtual machine."
 }

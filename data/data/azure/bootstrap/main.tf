@@ -75,7 +75,7 @@ data "ignition_config" "redirect" {
 }
 
 resource "azurerm_public_ip" "bootstrap_public_ip_v4" {
-  count = var.azure_private || ! var.use_ipv4 ? 0 : 1
+  count = var.azure_private || !var.use_ipv4 ? 0 : 1
 
   sku                 = "Standard"
   location            = var.azure_region
@@ -93,7 +93,7 @@ data "azurerm_public_ip" "bootstrap_public_ip_v4" {
 }
 
 resource "azurerm_public_ip" "bootstrap_public_ip_v6" {
-  count = var.azure_private || ! var.use_ipv6 ? 0 : 1
+  count = var.azure_private || !var.use_ipv6 ? 0 : 1
 
   sku                 = "Standard"
   location            = var.azure_region
@@ -105,7 +105,7 @@ resource "azurerm_public_ip" "bootstrap_public_ip_v6" {
 }
 
 data "azurerm_public_ip" "bootstrap_public_ip_v6" {
-  count = var.azure_private || ! var.use_ipv6 ? 0 : 1
+  count = var.azure_private || !var.use_ipv6 ? 0 : 1
 
   name                = azurerm_public_ip.bootstrap_public_ip_v6[0].name
   resource_group_name = var.resource_group_name
@@ -127,10 +127,10 @@ resource "azurerm_network_interface" "bootstrap" {
         include : var.use_ipv4 || var.use_ipv6,
       },
       {
-        primary : ! var.use_ipv4,
+        primary : !var.use_ipv4,
         name : local.bootstrap_nic_ip_v6_configuration_name,
         ip_address_version : "IPv6",
-        public_ip_id : var.azure_private || ! var.use_ipv6 ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
+        public_ip_id : var.azure_private || !var.use_ipv6 ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
         include : var.use_ipv6,
       },
       ] : {
@@ -157,7 +157,7 @@ resource "azurerm_network_interface" "bootstrap" {
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
   // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
   // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
-  count = (! var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
+  count = (!var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v4_id
@@ -167,7 +167,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "public_lb
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v6" {
   // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
   // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
-  count = var.use_ipv6 && (! var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
+  count = var.use_ipv6 && (!var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v6_id

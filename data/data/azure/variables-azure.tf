@@ -9,28 +9,28 @@ EOF
 }
 
 variable "azure_environment" {
-  type = string
+  type        = string
   description = "The target Azure cloud environment for the cluster."
 }
 
 variable "azure_region" {
-  type = string
+  type        = string
   description = "The target Azure region for the cluster."
 }
 
 variable "azure_master_vm_type" {
-  type = string
+  type        = string
   description = "Instance type for the master node(s). Example: `Standard_D8s_v3`."
 }
 
 variable "azure_master_disk_encryption_set_id" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "The ID of the Disk Encryption Set which should be used to encrypt OS disk for the master node(s)."
 }
 
 variable "azure_master_encryption_at_host_enabled" {
-  type = bool
+  type        = bool
   description = "Enables encryption at the VM host for the master node(s)."
 }
 
@@ -92,58 +92,58 @@ EOF
 }
 
 variable "azure_subscription_id" {
-  type = string
+  type        = string
   description = "The subscription that should be used to interact with Azure API"
 }
 
 variable "azure_client_id" {
-  type = string
+  type        = string
   description = "The app ID that should be used to interact with Azure API"
-  default = ""
+  default     = ""
 }
 
 variable "azure_client_secret" {
-  type = string
+  type        = string
   description = "The password that should be used to interact with Azure API"
-  default = ""
+  default     = ""
 }
 
 variable "azure_certificate_path" {
-  type = string
+  type        = string
   description = "The location of the Azure Service Principal client certificates"
-  default = ""
+  default     = ""
 }
 
 variable "azure_certificate_password" {
-  type = string
+  type        = string
   description = "The password for the provided Azure Service Principal client certificates"
-  default = ""
+  default     = ""
 }
 
 variable "azure_tenant_id" {
-  type = string
+  type        = string
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
 variable "azure_use_msi" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Specifies if we are to use a managed identity for authentication"
 }
 
 variable "azure_master_availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "azure_preexisting_network" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Specifies whether an existing network should be used or a new one created for installation."
 }
 
 variable "azure_resource_group_name" {
-  type = string
+  type        = string
   description = <<EOF
 The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
 otherwise a new resource group will be created using cluster id.
@@ -186,7 +186,7 @@ EOF
 }
 
 variable "azure_hypervgeneration_version" {
-  type = string
+  type        = string
   description = <<EOF
 This determines the HyperVGeneration disk type to use for the control plane VMs.
 EOF
@@ -258,7 +258,7 @@ EOF
 }
 
 variable "azure_master_secure_vm_disk_encryption_set_id" {
-  type = string
+  type    = string
   default = null
 
   description = <<EOF
