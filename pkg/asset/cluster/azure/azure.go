@@ -78,7 +78,7 @@ func tagVNet(ctx context.Context, clusterID string, installConfig *installconfig
 		Tags: vnet.Tags,
 	}
 
-	logrus.Debugf("Tagging %s with %s: %s", installConfig.Config.Azure.VirtualNetwork, tagKey, *tagValue)
+	logrus.Debugf("Tagging vnet %s with %s: %s", installConfig.Config.Azure.VirtualNetwork, tagKey, *tagValue)
 
 	if _, err := vnetClient.UpdateTags(
 		ctx, resourceGroupName, installConfig.Config.Azure.VirtualNetwork, tags, nil,
@@ -118,7 +118,7 @@ func tagResourceGroup(ctx context.Context, clusterID string, installConfig *inst
 	// We read existing tags from the resource group and add `kubernetes.io_cluster_<infraID>=owned` to it when sending an update for the resource group.
 	tagKey, tagValue := ownedTag(clusterID)
 	group.Tags[tagKey] = tagValue
-	logrus.Debugf("Tagging %s with kubernetes.io/cluster/%s: shared", installConfig.Config.Azure.ResourceGroupName, clusterID)
+	logrus.Debugf("Tagging resource group %s with %s: %s", installConfig.Config.Azure.ResourceGroupName, tagKey, *tagValue)
 	_, err = client.Update(ctx, installConfig.Config.Azure.ResourceGroupName, resources.GroupPatchable{
 		Tags: group.Tags,
 	})
