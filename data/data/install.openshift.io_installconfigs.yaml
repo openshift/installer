@@ -740,6 +740,13 @@ spec:
                             cores to assign a vm.
                           format: int64
                           type: integer
+                        failureDomains:
+                          description: FailureDomains optionally configures a list
+                            of failure domain names that will be applied to the MachinePool
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: set
                         memoryMiB:
                           description: Memory is the size of a VM's memory in MiB.
                           format: int64
@@ -1674,6 +1681,13 @@ spec:
                           cores to assign a vm.
                         format: int64
                         type: integer
+                      failureDomains:
+                        description: FailureDomains optionally configures a list of
+                          failure domain names that will be applied to the MachinePool
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
                       memoryMiB:
                         description: Memory is the size of a VM's memory in MiB.
                         format: int64
@@ -3483,7 +3497,7 @@ spec:
                     uniqueItems: true
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
-                      to download the RHCOS Image
+                      to download the RHCOS Image.
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
@@ -3544,6 +3558,13 @@ spec:
                           cores to assign a vm.
                         format: int64
                         type: integer
+                      failureDomains:
+                        description: FailureDomains optionally configures a list of
+                          failure domain names that will be applied to the MachinePool
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
                       memoryMiB:
                         description: Memory is the size of a VM's memory in MiB.
                         format: int64
@@ -3577,6 +3598,70 @@ spec:
                         - type
                         type: object
                     type: object
+                  failureDomains:
+                    description: FailureDomains configures failure domains for the
+                      Nutanix platform.
+                    items:
+                      description: FailureDomain configures failure domain information
+                        for the Nutanix platform.
+                      properties:
+                        name:
+                          description: Name defines the unique name of a failure domain.
+                          maxLength: 64
+                          minLength: 1
+                          pattern: ^[0-9A-Za-z_.-@/]+$
+                          type: string
+                        prismElement:
+                          description: prismElement holds the identification (name,
+                            uuid) and the optional endpoint address and port of the
+                            Nutanix Prism Element. When a cluster-wide proxy is installed,
+                            by default, this endpoint will be accessed via the proxy.
+                            Should you wish for communication with this endpoint not
+                            to be proxied, please add the endpoint to the proxy spec.noProxy
+                            list.
+                          properties:
+                            endpoint:
+                              description: Endpoint holds the address and port of
+                                the Prism Element
+                              properties:
+                                address:
+                                  description: address is the endpoint address (DNS
+                                    name or IP address) of the Nutanix Prism Central
+                                    or Element (cluster)
+                                  type: string
+                                port:
+                                  description: port is the port number to access the
+                                    Nutanix Prism Central or Element (cluster)
+                                  format: int32
+                                  type: integer
+                              required:
+                              - address
+                              - port
+                              type: object
+                            name:
+                              description: Name is prism endpoint Name
+                              type: string
+                            uuid:
+                              description: UUID is the UUID of the Prism Element (cluster)
+                              type: string
+                          required:
+                          - uuid
+                          type: object
+                        subnetUUIDs:
+                          description: SubnetUUIDs identifies the network subnets
+                            of the Prism Element. Currently we only support one subnet
+                            for a failure domain.
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - name
+                      - prismElement
+                      - subnetUUIDs
+                      type: object
+                    type: array
                   ingressVIP:
                     description: 'DeprecatedIngressVIP is the virtual IP address for
                       ingress Deprecated: use IngressVIPs'
@@ -3615,7 +3700,8 @@ spec:
                     type: object
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
-                      credentials to connect to the Prism Central.
+                      credentials to connect to the Prism Central. This serves as
+                      the default Prism-Central.
                     properties:
                       endpoint:
                         description: Endpoint holds the address and port of the Prism
@@ -3652,7 +3738,7 @@ spec:
                     description: PrismElements holds a list of Prism Elements (clusters).
                       A Prism Element encompasses all Nutanix resources (VMs, subnets,
                       etc.) used to host the OpenShift cluster. Currently only a single
-                      Prism Element may be defined.
+                      Prism Element may be defined. This serves as the default Prism-Element.
                     items:
                       description: PrismElement holds the uuid, endpoint of the Prism
                         Element (cluster)
@@ -3682,7 +3768,6 @@ spec:
                           description: UUID is the UUID of the Prism Element (cluster)
                           type: string
                       required:
-                      - endpoint
                       - uuid
                       type: object
                     type: array

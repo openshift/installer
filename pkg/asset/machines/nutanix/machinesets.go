@@ -4,9 +4,9 @@ package nutanix
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -24,57 +24,104 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	platform := config.Platform.Nutanix
 	mpool := pool.Platform.Nutanix
-
 	total := int32(0)
 	if pool.Replicas != nil {
 		total = int32(*pool.Replicas)
 	}
+
 	var machinesets []*machineapi.MachineSet
-	provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create provider")
+	numOfFDs := int32(len(mpool.FailureDomains))
+	numOfMachineSets := numOfFDs
+	if numOfMachineSets == 0 {
+		numOfMachineSets = 1
+	} else if numOfMachineSets > total {
+		numOfMachineSets = total
+	}
+	fdName2ReplicasMap := make(map[string]int32, numOfMachineSets)
+	fdName2FDsMap := make(map[string]*nutanix.FailureDomain, numOfFDs)
+	var fdName string
+	var idx, replica int32
+
+	if numOfFDs == 0 {
+		fdName2ReplicasMap[""] = total
+	} else {
+		// When failure domains is configured for the workers, evenly distribute
+		// the machineset replicas to the failure domains, based on order.
+		for _, fdName = range mpool.FailureDomains {
+			fd, err := platform.GetFailureDomainByName(fdName)
+			if err != nil {
+				return nil, err
+			}
+			fdName2FDsMap[fdName] = fd
+		}
+
+		for i := int32(0); i < total; i++ {
+			idx = i % numOfFDs
+			fdName = mpool.FailureDomains[idx]
+			replica = 1
+			if ra, ok := fdName2ReplicasMap[fdName]; ok {
+				replica = ra + 1
+			}
+			fdName2ReplicasMap[fdName] = replica
+		}
 	}
 
-	name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
-	mset := &machineapi.MachineSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "machine.openshift.io/v1beta1",
-			Kind:       "MachineSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "openshift-machine-api",
-			Name:      name,
-			Labels: map[string]string{
-				"machine.openshift.io/cluster-api-cluster": clusterID,
+	idx = 0
+	for fdName, replica = range fdName2ReplicasMap {
+		name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
+
+		var failureDomain *nutanix.FailureDomain
+		if fdName != "" {
+			failureDomain = fdName2FDsMap[fdName]
+			name = fmt.Sprintf("%s-%v", name, idx)
+		}
+
+		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret, failureDomain)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create provider: %w", err)
+		}
+
+		mset := &machineapi.MachineSet{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "machine.openshift.io/v1beta1",
+				Kind:       "MachineSet",
 			},
-		},
-		Spec: machineapi.MachineSetSpec{
-			Replicas: &total,
-			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"machine.openshift.io/cluster-api-machineset": name,
-					"machine.openshift.io/cluster-api-cluster":    clusterID,
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "openshift-machine-api",
+				Name:      name,
+				Labels: map[string]string{
+					"machine.openshift.io/cluster-api-cluster": clusterID,
 				},
 			},
-			Template: machineapi.MachineTemplateSpec{
-				ObjectMeta: machineapi.ObjectMeta{
-					Labels: map[string]string{
-						"machine.openshift.io/cluster-api-machineset":   name,
-						"machine.openshift.io/cluster-api-cluster":      clusterID,
-						"machine.openshift.io/cluster-api-machine-role": role,
-						"machine.openshift.io/cluster-api-machine-type": role,
+			Spec: machineapi.MachineSetSpec{
+				Replicas: ptr.To[int32](replica),
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"machine.openshift.io/cluster-api-machineset": name,
+						"machine.openshift.io/cluster-api-cluster":    clusterID,
 					},
 				},
-				Spec: machineapi.MachineSpec{
-					ProviderSpec: machineapi.ProviderSpec{
-						Value: &runtime.RawExtension{Object: provider},
+				Template: machineapi.MachineTemplateSpec{
+					ObjectMeta: machineapi.ObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-machineset":   name,
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
 					},
-					// we don't need to set Versions, because we control those via cluster operators.
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: provider},
+						},
+						// we don't need to set Versions, because we control those via cluster operators.
+					},
 				},
 			},
-		},
+		}
+		machinesets = append(machinesets, mset)
+		idx++
 	}
-	machinesets = append(machinesets, mset)
 
 	return machinesets, nil
 }
