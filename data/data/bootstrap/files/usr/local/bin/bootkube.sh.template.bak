@@ -1,0 +1,836 @@
+#!/usr/bin/env bash
+set -euoE pipefail ## -E option will cause functions to inherit trap
+
+. /usr/local/bin/bootstrap-service-record.sh
+
+. /usr/local/bin/release-image.sh
+. /usr/local/bin/bootstrap-cluster-gather.sh
+. /usr/local/bin/bootstrap-verify-api-server-urls.sh
+
+mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
+
+{{- if .BootstrapInPlace }}
+BOOTSTRAP_INPLACE=true
+{{ else }}
+BOOTSTRAP_INPLACE=false
+{{ end -}}
+
+ETCD_ENDPOINTS=
+
+bootkube_podman_run() {
+    # we run all commands in the host-network to prevent IP conflicts with
+    # end-user infrastructure.
+    podman run --quiet --net=host --rm "${@}"
+}
+
+wait_for_etcd_cluster() {
+    until bootkube_podman_run \
+        --name etcdctl \
+        --env ETCDCTL_API=3 \
+        --volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
+        --entrypoint etcdctl \
+        "${MACHINE_CONFIG_ETCD_IMAGE}" \
+        --dial-timeout=10m \
+        --cacert=/opt/openshift/tls/etcd-ca-bundle.crt \
+        --cert=/opt/openshift/tls/etcd-client.crt \
+        --key=/opt/openshift/tls/etcd-client.key \
+        --endpoints="${ETCD_ENDPOINTS}" \
+        endpoint health
+    do
+        echo "etcdctl failed. Retrying in 5 seconds..."
+        sleep 5
+    done
+}
+
+MACHINE_CONFIG_OPERATOR_IMAGE=$(image_for machine-config-operator)
+MACHINE_CONFIG_ETCD_IMAGE=$(image_for etcd)
+MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
+
+CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
+CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
+KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
+INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
+NODE_TUNING_OPERATOR_IMAGE=$(image_for cluster-node-tuning-operator)
+
+CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
+
+OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
+OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
+
+CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
+
+mkdir --parents ./{bootstrap-manifests,manifests}
+
+if [ ! -f openshift-manifests.done ]
+then
+    record_service_stage_start "openshift-manifests"
+	echo "Moving OpenShift manifests in with the rest of them"
+	cp openshift/* manifests/
+	touch openshift-manifests.done
+    record_service_stage_success
+fi
+
+ICSP_MANIFEST_FILE="$PWD/manifests/image-content-source-policy.yaml"
+IDMS_MANIFEST_FILE="$PWD/manifests/image-digest-mirror-set.yaml"
+
+MIRROR_FLAG=""
+if [ -f $ICSP_MANIFEST_FILE ]; then
+    MIRROR_FLAG="--icsp-file=$ICSP_MANIFEST_FILE"
+elif [ -f $IDMS_MANIFEST_FILE ]; then
+    # Requires https://issues.redhat.com/browse/OCPNODE-1656
+    MIRROR_FLAG="--idms-file=$IDMS_MANIFEST_FILE"
+fi
+
+VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
+
+if [ ! -f config-bootstrap.done ]
+then
+    record_service_stage_start "config-bootstrap"
+	echo "Rendering cluster config manifests..."
+
+	rm --recursive --force config-bootstrap
+
+	ADDITIONAL_FLAGS=()
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
+	fi
+
+	bootkube_podman_run \
+		--name config-render \
+		--volume "$PWD:/assets:z" \
+		"${CONFIG_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-config-operator render \
+		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
+		--config-output-file=/assets/config-bootstrap/config \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/config-bootstrap \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION \
+		"${ADDITIONAL_FLAGS[@]}"
+
+	cp config-bootstrap/manifests/* manifests/
+
+	touch config-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f cvo-bootstrap.done ]
+then
+    record_service_stage_start "cvo-bootstrap"
+	echo "Rendering Cluster Version Operator Manifests..."
+
+	rm --recursive --force cvo-bootstrap
+
+	bootkube_podman_run \
+		--name cvo-render \
+		--volume "$PWD:/assets:z" \
+{{- if .ClusterProfile}}
+		--env CLUSTER_PROFILE="{{.ClusterProfile}}" \
+{{- end}}
+		"${RELEASE_IMAGE_DIGEST}" \
+		render \
+			--output-dir=/assets/cvo-bootstrap \
+			--release-image="${RELEASE_IMAGE_DIGEST}"
+
+	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
+	cp cvo-bootstrap/manifests/* manifests/
+	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
+	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
+
+	touch cvo-bootstrap.done
+    record_service_stage_success
+fi
+
+ETCD_ENDPOINTS=https://localhost:2379
+if [ ! -f etcd-bootstrap.done ]
+then
+    record_service_stage_start "etcd-bootstrap"
+	echo "Rendering CEO Manifests..."
+
+	rm --recursive --force etcd-bootstrap
+
+	bootkube_podman_run \
+		--name etcd-render \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-etcd-operator render \
+		--asset-output-dir=/assets/etcd-bootstrap \
+		--cluster-configmap-file=/assets/manifests/cluster-config.yaml \
+		--etcd-image="${MACHINE_CONFIG_ETCD_IMAGE}" \
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--network-config-file=/assets/manifests/cluster-network-02-config.yml
+
+	# Copy configuration required to start etcd
+	cp --recursive etcd-bootstrap/etc-kubernetes/* /etc/kubernetes/
+	# Copy manifests to apply to the bootstrap apiserver
+	cp etcd-bootstrap/manifests/* manifests/
+	# Copy the ca bundle and client certificate required by the bootstrap apiserver and wait_for_etcd_cluster
+	cp etcd-bootstrap/tls/* tls/
+
+	touch etcd-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-apiserver-bootstrap.done ]
+then
+    record_service_stage_start "kube-apiserver-bootstrap"
+	echo "Rendering Kubernetes API server core manifests..."
+
+	rm --recursive --force kube-apiserver-bootstrap
+
+	bootkube_podman_run  \
+		--name kube-apiserver-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-apiserver-operator render \
+		--manifest-etcd-serving-ca=etcd-ca-bundle.crt \
+		--manifest-etcd-server-urls="${ETCD_ENDPOINTS}" \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--manifest-operator-image="${KUBE_APISERVER_OPERATOR_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-apiserver-bootstrap \
+		--config-output-file=/assets/kube-apiserver-bootstrap/config \
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
+		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
+
+	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-apiserver-bootstrap/manifests/* manifests/
+
+	touch kube-apiserver-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-controller-manager-bootstrap.done ]
+then
+    record_service_stage_start "kube-controller-manager-bootstrap"
+	echo "Rendering Kubernetes Controller Manager core manifests..."
+
+	rm --recursive --force kube-controller-manager-bootstrap
+
+
+	bootkube_podman_run \
+		--name kube-controller-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-controller-manager-operator render \
+		--cluster-policy-controller-image="${OPENSHIFT_CLUSTER_POLICY_IMAGE}" \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
+		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
+		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
+		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
+
+	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
+	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
+	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-controller-manager-bootstrap/manifests/* manifests/
+
+	# Temporary check to provide forwards compatibility with ckcmo taking
+	# over responsibility for rendering the token signing keypair.
+	if [ -d kube-controller-manager-bootstrap/tls ]
+	then
+		# Copy the service account signing keypair for use by the
+		# bootstrap controller manager and apiserver.
+		cp kube-controller-manager-bootstrap/tls/* tls/
+	fi
+
+	touch kube-controller-manager-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f kube-scheduler-bootstrap.done ]
+then
+    record_service_stage_start "kube-scheduler-bootstrap"
+	echo "Rendering Kubernetes Scheduler core manifests..."
+
+	rm --recursive --force kube-scheduler-bootstrap
+
+	bootkube_podman_run \
+		--name kube-scheduler-render \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-scheduler-operator render \
+		--manifest-image="${OPENSHIFT_HYPERKUBE_IMAGE}" \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-scheduler-bootstrap \
+		--config-output-file=/assets/kube-scheduler-bootstrap/config
+
+	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
+	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-scheduler-bootstrap/manifests/* manifests/
+
+	touch kube-scheduler-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f ingress-operator-bootstrap.done ]
+then
+    record_service_stage_start "ingress-operator-bootstrap"
+	echo "Rendering Ingress Operator core manifests..."
+
+	rm --recursive --force ingress-operator-bootstrap
+
+	bootkube_podman_run \
+		--name ingress-render \
+		--volume "$PWD:/assets:z" \
+		"${INGRESS_OPERATOR_IMAGE}" \
+		render \
+		--prefix=cluster-ingress- \
+		--output-dir=/assets/ingress-operator-manifests
+
+	cp ingress-operator-manifests/* manifests/
+
+	touch ingress-operator-bootstrap.done
+    record_service_stage_success
+fi
+
+
+
+# if [ ! -f remove-performance-src.done ]
+# then
+#     record_service_stage_start "remove-performance-src"
+# 	rm manifests/10-pp.yaml || TRUE
+# 	rm manifests/tuned.yaml || TRUE
+# 	rm manifests/mcp-master.yaml || TRUE
+# 	rm openshift/10-pp.yaml || TRUE
+# 	rm openshift/tuned.yaml || TRUE
+# 	rm openshift/mcp-master.yaml || TRUE
+# 	touch remove-performance-src.done
+#     record_service_stage_success
+# fi
+
+
+if [ ! -f node-tuning-bootstrap.done ]
+then
+    record_service_stage_start "node-tuning-bootstrap"
+	echo "Rendering Node Tuning core manifests..."
+
+	rm --recursive --force node-tuning-bootstrap
+	
+
+	bootkube_podman_run \
+		--name node-tuning-render \
+		--volume "$PWD:/assets:z" \
+		"${NODE_TUNING_OPERATOR_IMAGE}" \
+		render \
+		--asset-input-dir=/assets/manifests \
+		--asset-output-dir=/assets/node-tuning-bootstrap
+
+	# Copy over manifests if they were generated by NTO
+	if [ -n "$(ls -A node-tuning-bootstrap)" ]; then
+		cp node-tuning-bootstrap/* manifests/
+		cp node-tuning-bootstrap/* openshift/
+	fi
+
+	touch node-tuning-bootstrap.done
+    record_service_stage_success
+fi
+
+if [ ! -f node-tuning-bootstrap-performance.done ]
+then
+    record_service_stage_start "node-tuning-bootstrap-performance"
+	echo "Rendering Node Tuning core manifests..."
+
+	rm --recursive --force node-tuning-bootstrap-performance
+	mkdir node-tuning-bootstrap-performance
+
+
+	/bin/cat<<EOFFF>node-tuning-bootstrap-performance/50-nto-master.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 50-nto-master
+spec:
+  baseOSExtensionsContainerImage: ""
+  fips: false
+  kernelArguments:
+  - skew_tick=1
+  - tsc=reliable
+  - rcupdate.rcu_normal_after_boot=1
+  - nohz=on
+  - rcu_nocbs=4-47
+  - tuned.non_isolcpus=0000000f
+  - systemd.cpu_affinity=0,1,2,3
+  - intel_iommu=on
+  - iommu=pt
+  - isolcpus=managed_irq,4-47
+  - nohz_full=4-47
+  - tsc=reliable
+  - nosoftlockup
+  - nmi_watchdog=0
+  - mce=off
+  - skew_tick=1
+  - rcutree.kthread_prio=11
+  - default_hugepagesz=1G
+  - hugepagesz=1G
+  - hugepages=32
+  - rcupdate.rcu_normal_after_boot=0
+  - efi=runtime
+  - vfio_pci.enable_sriov=1
+  - vfio_pci.disable_idle_d3=1
+  - module_blacklist=irdma
+  - intel_pstate=disable
+  - nohz_full=4-47
+  kernelType: ""
+  osImageURL: ""
+
+EOFFF
+
+
+# 	/bin/cat<<EOF>node-tuning-bootstrap-performance/openshift-node-performance-profile_kubeletconfig.yaml
+# apiVersion: machineconfiguration.openshift.io/v1
+# kind: KubeletConfig
+# metadata:
+#   name: performance-openshift-node-performance-profile
+# spec:
+#   kubeletConfig:
+#     apiVersion: kubelet.config.k8s.io/v1beta1
+#     authentication:
+#       anonymous: {}
+#       webhook:
+#         cacheTTL: 0s
+#       x509: {}
+#     authorization:
+#       webhook:
+#         cacheAuthorizedTTL: 0s
+#         cacheUnauthorizedTTL: 0s
+#     containerRuntimeEndpoint: ""
+#     cpuManagerPolicy: static
+#     cpuManagerReconcilePeriod: 5s
+#     evictionHard:
+#       imagefs.available: 15%
+#       memory.available: 100Mi
+#       nodefs.available: 10%
+#       nodefs.inodesFree: 5%
+#     evictionPressureTransitionPeriod: 0s
+#     fileCheckFrequency: 0s
+#     httpCheckFrequency: 0s
+#     imageMinimumGCAge: 0s
+#     kind: KubeletConfiguration
+#     kubeReserved:
+#       memory: 500Mi
+#     logging:
+#       flushFrequency: 0
+#       options:
+#         json:
+#           infoBufferSize: "0"
+#       verbosity: 0
+#     memoryManagerPolicy: Static
+#     memorySwap: {}
+#     nodeStatusReportFrequency: 0s
+#     nodeStatusUpdateFrequency: 0s
+#     reservedMemory:
+#     - limits:
+#         memory: 1100Mi
+#       numaNode: 0
+#     reservedSystemCPUs: 0-3
+#     runtimeRequestTimeout: 0s
+#     shutdownGracePeriod: 0s
+#     shutdownGracePeriodCriticalPods: 0s
+#     streamingConnectionIdleTimeout: 0s
+#     syncFrequency: 0s
+#     systemReserved:
+#       memory: 500Mi
+#     topologyManagerPolicy: restricted
+#     volumeStatsAggPeriod: 0s
+#   machineConfigPoolSelector:
+#     matchLabels:
+#       pools.operator.machineconfiguration.openshift.io/master: ""
+
+# EOF
+
+# 	/bin/cat<<EOF>node-tuning-bootstrap-performance/openshift-node-performance-profile_machineconfig.yaml
+# apiVersion: machineconfiguration.openshift.io/v1
+# kind: MachineConfig
+# metadata:
+#   labels:
+#     machineconfiguration.openshift.io/role: master
+#   name: 50-performance-openshift-node-performance-profile
+# spec:
+#   baseOSExtensionsContainerImage: ""
+#   config:
+#     ignition:
+#       config:
+#         replace:
+#           verification: {}
+#       proxy: {}
+#       security:
+#         tls: {}
+#       timeouts: {}
+#       version: 3.2.0
+#     passwd: {}
+#     storage:
+#       files:
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyEvdXNyL2Jpbi9lbnYgYmFzaAoKc2V0IC1ldW8gcGlwZWZhaWwKCm5vZGVzX3BhdGg9Ii9zeXMvZGV2aWNlcy9zeXN0ZW0vbm9kZSIKaHVnZXBhZ2VzX2ZpbGU9IiR7bm9kZXNfcGF0aH0vbm9kZSR7TlVNQV9OT0RFfS9odWdlcGFnZXMvaHVnZXBhZ2VzLSR7SFVHRVBBR0VTX1NJWkV9a0IvbnJfaHVnZXBhZ2VzIgoKaWYgWyAhIC1mICIke2h1Z2VwYWdlc19maWxlfSIgXTsgdGhlbgogIGVjaG8gIkVSUk9SOiAke2h1Z2VwYWdlc19maWxlfSBkb2VzIG5vdCBleGlzdCIKICBleGl0IDEKZmkKCnRpbWVvdXQ9NjAKc2FtcGxlPTEKY3VycmVudF90aW1lPTAKd2hpbGUgWyAiJChjYXQgIiR7aHVnZXBhZ2VzX2ZpbGV9IikiIC1uZSAiJHtIVUdFUEFHRVNfQ09VTlR9IiBdOyBkbwogIGVjaG8gIiR7SFVHRVBBR0VTX0NPVU5UfSIgPiIke2h1Z2VwYWdlc19maWxlfSIKCiAgY3VycmVudF90aW1lPSQoKGN1cnJlbnRfdGltZSArIHNhbXBsZSkpCiAgaWYgWyAkY3VycmVudF90aW1lIC1ndCAkdGltZW91dCBdOyB0aGVuCiAgICBlY2hvICJFUlJPUjogJHtodWdlcGFnZXNfZmlsZX0gZG9lcyBub3QgaGF2ZSB0aGUgZXhwZWN0ZWQgbnVtYmVyIG9mIGh1Z2VwYWdlcyAke0hVR0VQQUdFU19DT1VOVH0iCiAgICBleGl0IDEKICBmaQoKICBzbGVlcCAkc2FtcGxlCmRvbmUK
+#           verification: {}
+#         group: {}
+#         mode: 448
+#         path: /usr/local/bin/hugepages-allocation.sh
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyEvdXNyL2Jpbi9lbnYgYmFzaAoKcGF0aD0kezF9ClsgLW4gIiR7cGF0aH0iIF0gfHwgeyBlY2hvICJUaGUgZGV2aWNlIHBhdGggYXJndW1lbnQgaXMgbWlzc2luZyIgPiYyIDsgZXhpdCAxOyB9CgptYXNrPSR7Mn0KWyAtbiAiJHttYXNrfSIgXSB8fCB7IGVjaG8gIlRoZSBtYXNrIGFyZ3VtZW50IGlzIG1pc3NpbmciID4mMiA7IGV4aXQgMTsgfQoKcXVldWVfcGF0aD0ke3BhdGglcngqfQoKcXVldWVfbnVtPSR7cGF0aCMqcXVldWVzL30KIyByZXBsYWNlICcvJyB3aXRoICctJwpxdWV1ZV9udW09IiR7cXVldWVfbnVtL1wvLy19IgoKIyBzZXQgcnBzIGFmZmluaXR5IGZvciB0aGUgcXVldWUKZWNobyAiJHttYXNrfSIgPiAiL3N5cyR7cXVldWVfcGF0aH0ke3F1ZXVlX251bX0vcnBzX2NwdXMi
+#           verification: {}
+#         group: {}
+#         mode: 448
+#         path: /usr/local/bin/set-rps-mask.sh
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyEvdXNyL2Jpbi9iYXNoCgpzZXQgLWV1byBwaXBlZmFpbAoKZm9yIGNwdSBpbiAke09GRkxJTkVfQ1BVUy8vLC8gfTsKICBkbwogICAgb25saW5lX2NwdV9maWxlPSIvc3lzL2RldmljZXMvc3lzdGVtL2NwdS9jcHUkY3B1L29ubGluZSIKICAgIGlmIFsgISAtZiAiJHtvbmxpbmVfY3B1X2ZpbGV9IiBdOyB0aGVuCiAgICAgIGVjaG8gIkVSUk9SOiAke29ubGluZV9jcHVfZmlsZX0gZG9lcyBub3QgZXhpc3QsIGFib3J0IHNjcmlwdCBleGVjdXRpb24iCiAgICAgIGV4aXQgMQogICAgZmkKICBkb25lCgplY2hvICJBbGwgY3B1cyBvZmZsaW5lZCBleGlzdHMsIHNldCB0aGVtIG9mZmxpbmUiCgpmb3IgY3B1IGluICR7T0ZGTElORV9DUFVTLy8sLyB9OwogIGRvCiAgICBvbmxpbmVfY3B1X2ZpbGU9Ii9zeXMvZGV2aWNlcy9zeXN0ZW0vY3B1L2NwdSRjcHUvb25saW5lIgogICAgZWNobyAwID4gIiR7b25saW5lX2NwdV9maWxlfSIKICAgIGVjaG8gIm9mZmxpbmUgY3B1IG51bSAkY3B1IgogIGRvbmUKCg==
+#           verification: {}
+#         group: {}
+#         mode: 448
+#         path: /usr/local/bin/set-cpus-offline.sh
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyEvdXNyL2Jpbi9lbnYgYmFzaApzZXQgLWV1byBwaXBlZmFpbApzZXQgLXgKCiMgY29uc3QKU0VEPSIvdXNyL2Jpbi9zZWQiCiMgdHVuYWJsZSAtIG92ZXJyaWRhYmxlIGZvciB0ZXN0aW5nIHB1cnBvc2VzCklSUUJBTEFOQ0VfQ09ORj0iJHsxOi0vZXRjL3N5c2NvbmZpZy9pcnFiYWxhbmNlfSIKQ1JJT19PUklHX0JBTk5FRF9DUFVTPSIkezI6LS9ldGMvc3lzY29uZmlnL29yaWdfaXJxX2Jhbm5lZF9jcHVzfSIKClsgISAtZiAke0lSUUJBTEFOQ0VfQ09ORn0gXSAmJiBleGl0IDAKCiR7U0VEfSAtaSAnL15ccypJUlFCQUxBTkNFX0JBTk5FRF9DUFVTXGIvZCcgJHtJUlFCQUxBTkNFX0NPTkZ9IHx8IGV4aXQgMAplY2hvICJJUlFCQUxBTkNFX0JBTk5FRF9DUFVTPSIgPj4gJHtJUlFCQUxBTkNFX0NPTkZ9CgojIHdlIG5vdyBvd24gdGhpcyBjb25maWd1cmF0aW9uLiBCdXQgQ1JJLU8gaGFzIGNvZGUgdG8gcmVzdG9yZSB0aGUgY29uZmlndXJhdGlvbiwKIyBhbmQgdW50aWwgaXQgZ2FpbnMgdGhlIG9wdGlvbiB0byBkaXNhYmxlIHRoaXMgcmVzdG9yZSBmbG93LCB3ZSBuZWVkIHRvIG1ha2UKIyB0aGUgY29uZmlndXJhdGlvbiBjb25zaXN0ZW50IHN1Y2ggYXMgdGhlIENSSS1PIHJlc3RvcmUgd2lsbCBkbyBub3RoaW5nLgppZiBbIC1uICR7Q1JJT19PUklHX0JBTk5FRF9DUFVTfSBdICYmIFsgLWYgJHtDUklPX09SSUdfQkFOTkVEX0NQVVN9IF07IHRoZW4KCXRydWUgPiAke0NSSU9fT1JJR19CQU5ORURfQ1BVU30KZmkK
+#           verification: {}
+#         group: {}
+#         mode: 448
+#         path: /usr/local/bin/clear-irqbalance-banned-cpus.sh
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,CltjcmlvLnJ1bnRpbWVdCmluZnJhX2N0cl9jcHVzZXQgPSAiMC0zIgoKCiMgV2Ugc2hvdWxkIGNvcHkgcGFzdGUgdGhlIGRlZmF1bHQgcnVudGltZSBiZWNhdXNlIHRoaXMgc25pcHBldCB3aWxsIG92ZXJyaWRlIHRoZSB3aG9sZSBydW50aW1lcyBzZWN0aW9uCltjcmlvLnJ1bnRpbWUucnVudGltZXMucnVuY10KcnVudGltZV9wYXRoID0gIiIKcnVudGltZV90eXBlID0gIm9jaSIKcnVudGltZV9yb290ID0gIi9ydW4vcnVuYyIKCiMgVGhlIENSSS1PIHdpbGwgY2hlY2sgdGhlIGFsbG93ZWRfYW5ub3RhdGlvbnMgdW5kZXIgdGhlIHJ1bnRpbWUgaGFuZGxlciBhbmQgYXBwbHkgaGlnaC1wZXJmb3JtYW5jZSBob29rcyB3aGVuIG9uZSBvZgojIGhpZ2gtcGVyZm9ybWFuY2UgYW5ub3RhdGlvbnMgcHJlc2VudHMgdW5kZXIgaXQuCiMgV2Ugc2hvdWxkIHByb3ZpZGUgdGhlIHJ1bnRpbWVfcGF0aCBiZWNhdXNlIHdlIG5lZWQgdG8gaW5mb3JtIHRoYXQgd2Ugd2FudCB0byByZS11c2UgcnVuYyBiaW5hcnkgYW5kIHdlCiMgZG8gbm90IGhhdmUgaGlnaC1wZXJmb3JtYW5jZSBiaW5hcnkgdW5kZXIgdGhlICRQQVRIIHRoYXQgd2lsbCBwb2ludCB0byBpdC4KW2NyaW8ucnVudGltZS5ydW50aW1lcy5oaWdoLXBlcmZvcm1hbmNlXQpydW50aW1lX3BhdGggPSAiL2Jpbi9ydW5jIgpydW50aW1lX3R5cGUgPSAib2NpIgpydW50aW1lX3Jvb3QgPSAiL3J1bi9ydW5jIgphbGxvd2VkX2Fubm90YXRpb25zID0gWyJjcHUtbG9hZC1iYWxhbmNpbmcuY3Jpby5pbyIsICJjcHUtcXVvdGEuY3Jpby5pbyIsICJpcnEtbG9hZC1iYWxhbmNpbmcuY3Jpby5pbyIsICJjcHUtYy1zdGF0ZXMuY3Jpby5pbyIsICJjcHUtZnJlcS1nb3Zlcm5vci5jcmlvLmlvIl0K
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/crio/crio.conf.d/99-runtimes.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyBBcHBseSB0aGUgUlBTIG1hc2sgb24gdGhlIHZpcnR1YWwgaW50ZXJmYWNlcyBvZiB0aGUgaG9zdCBieSBkZWZhdWx0LCBiZWNhc3VlCiMgZnJvbSB0aGUgY29udGFpbmVyIHBlcnNwZWN0aXZlIHRoZSBSUFMgbWFzayB0aGUgd2lsbCBiZSBjb25zdWx0ZWQsIGlzIHRoZSBvbmUgb24gdGhlIFJYIHNpZGUgb2YgdGhlIHZldGggaW4gdGhlIGhvc3QuCiMgQ29uc2lkZXIgdGhlIGZvbGxvd2luZyBkaWFncmFtOgojIFBvZCBBIDx2ZXRoMSAtIHZldGgyPiBob3N0IDx2ZXRoMyAtIHZldGg0PiBQb2QgQgojICB2ZXRoMidzIFJQUyBhZmZpbml0eSBpcyB0aGUgb25lIGRldGVybWluaW5nIHRoZSBDUFVzIHRoYXQgYXJlIGhhbmRsaW5nIHRoZSBwYWNrZXQgcHJvY2Vzc2luZyB3aGVuIHNlbmRpbmcgZGF0YSBmcm9tIFBvZCBBIHRvIHBvZCBCLgojIEFkZGl0aW9uYWwgY29tbW9uIHNjZW5hcmlvczoKIyAxLiBQb2QgQSA9IHNlbmRlciwgaG9zdCA9IHJlY2VpdmVyCiMgIFRoZSBSUFMgYWZmaW5pdHkgb2YgdGhlIGhvc3Qgc2lkZSBzaG91bGQgYmUgY29uc3VsdGVkIChiZWNhdXNlIGl04oCZcyB0aGUgcmVjZWl2ZXIpIGFuZCBpdCBzaG91bGQgYmUgc2V0IHRvIGNwdXMgbm90IHNlbnNpdGl2ZSB0byBwcmVlbXB0aW9uIChyZXNlcnZlZCBwb29sKS4KIyAyLiBQb2QgQSA9IHJlY2VpdmVyLCBob3N0ID0gc2VuZGVyCiMgIEluIGNhc2Ugb2Ygbm8gUlBTIG1hc2sgb24gdGhlIHJlY2VpdmVyIHNpZGUsIHRoZSBzZW5kZXIgbmVlZHMgdG8gcGF5IHRoZSBwcmljZSBhbmQgZG8gYWxsIHRoZSBwcm9jZXNzaW5nIG9uIGl0cyBjb3Jlcy4KbmV0LmNvcmUucnBzX2RlZmF1bHRfbWFzayA9IDAwMDAwMDBmCg==
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/sysctl.d/99-default-rps-mask.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,U1VCU1lTVEVNPT0icXVldWVzIiwgQUNUSU9OPT0iYWRkIiwgRU5We0RFVlBBVEh9PT0iL2RldmljZXMvcGNpKi9xdWV1ZXMvcngqIiwgVEFHKz0ic3lzdGVtZCIsIEVOVntTWVNURU1EX1dBTlRTfT0idXBkYXRlLXJwc0AlcC5zZXJ2aWNlIg==
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/udev/rules.d/99-netdev-physical-rps.rules
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,CltjcmlvLnJ1bnRpbWUud29ya2xvYWRzLm1hbmFnZW1lbnRdCmFjdGl2YXRpb25fYW5ub3RhdGlvbiA9ICJ0YXJnZXQud29ya2xvYWQub3BlbnNoaWZ0LmlvL21hbmFnZW1lbnQiCmFubm90YXRpb25fcHJlZml4ID0gInJlc291cmNlcy53b3JrbG9hZC5vcGVuc2hpZnQuaW8iCnJlc291cmNlcyA9IHsgImNwdXNoYXJlcyIgPSAwLCAiY3B1c2V0IiA9ICIwLTMiIH0K
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/crio/crio.conf.d/99-workload-pinning.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,CnsKICAibWFuYWdlbWVudCI6IHsKICAgICJjcHVzZXQiOiAiMC0zIgogIH0KfQo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/kubernetes/openshift-workload-pinning
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyEvYmluL2Jhc2gKCiMgY3B1c2V0LWNvbmZpZ3VyZS5zaCBjb25maWd1cmVzIHRocmVlIGNwdXNldHMgaW4gcHJlcGFyYXRpb24gZm9yIGFsbG93aW5nIGNvbnRhaW5lcnMgdG8gaGF2ZSBjcHUgbG9hZCBiYWxhbmNpbmcgZGlzYWJsZWQuCiMgVG8gY29uZmlndXJlIGEgY3B1c2V0IHRvIGhhdmUgbG9hZCBiYWxhbmNlIGRpc2FibGVkIChvbiBjZ3JvdXAgdjEpLCBhIGNwdXNldCBjZ3JvdXAgbXVzdCBoYXZlIGBjcHVzZXQuc2NoZWRfbG9hZF9iYWxhbmNlYAojIHNldCB0byAwIChkaXNhYmxlKSwgYW5kIGFueSBjcHVzZXQgdGhhdCBjb250YWlucyB0aGUgc2FtZSBzZXQgYXMgYGNwdXNldC5jcHVzYCBtdXN0IGFsc28gaGF2ZSBgY3B1c2V0LnNjaGVkX2xvYWRfYmFsYW5jZWAgc2V0IHRvIGRpc2FibGVkLgoKc2V0IC1ldW8gcGlwZWZhaWwKCnJvb3Q9L3N5cy9mcy9jZ3JvdXAvY3B1c2V0CnN5c3RlbT0iJHJvb3QiL3N5c3RlbS5zbGljZQptYWNoaW5lPSIkcm9vdCIvbWFjaGluZS5zbGljZQoKb3Zzc2xpY2U9IiR7cm9vdH0vb3ZzLnNsaWNlIgpvdnNzbGljZV9zeXN0ZW1kPSIvc3lzL2ZzL2Nncm91cC9waWRzL292cy5zbGljZSIKCiMgQXMgc3VjaCwgdGhlIHJvb3QgY2dyb3VwIG5lZWRzIHRvIGhhdmUgY3B1c2V0LnNjaGVkX2xvYWRfYmFsYW5jZT0wLiAKZWNobyAwID4gIiRyb290Ii9jcHVzZXQuc2NoZWRfbG9hZF9iYWxhbmNlCgojIEhvd2V2ZXIsIHRoaXMgd291bGQgcHJlc2VudCBhIHByb2JsZW0gZm9yIHN5c3RlbSBkYWVtb25zLCB3aGljaCBzaG91bGQgaGF2ZSBsb2FkIGJhbGFuY2luZyBlbmFibGVkLgojIEFzIHN1Y2gsIGEgc2Vjb25kIGNwdXNldCBtdXN0IGJlIGNyZWF0ZWQsIGhlcmUgZHViYmVkIGBzeXN0ZW1gLCB3aGljaCB3aWxsIHRha2UgYWxsIHN5c3RlbSBkYWVtb25zLgojIFNpbmNlIHN5c3RlbWQgc3RhcnRzIGl0cyBjaGlsZHJlbiB3aXRoIHRoZSBjcHVzZXQgaXQgaXMgaW4sIG1vdmluZyBzeXN0ZW1kIHdpbGwgZW5zdXJlIGFsbCBwcm9jZXNzZXMgc3lzdGVtZCBiZWdpbnMgd2lsbCBiZSBpbiB0aGUgY29ycmVjdCBjZ3JvdXAuCm1rZGlyIC1wICIkc3lzdGVtIgojIGNwdXNldC5tZW1zIG11c3QgYmUgaW5pdGlhbGl6ZWQgb3IgcHJvY2Vzc2VzIHdpbGwgZmFpbCB0byBiZSBtb3ZlZCBpbnRvIGl0LgpjYXQgIiRyb290L2NwdXNldC5tZW1zIiA+ICIkc3lzdGVtIi9jcHVzZXQubWVtcwojIFJldHJpZXZlIHRoZSBjcHVzZXQgb2Ygc3lzdGVtZCwgYW5kIHdyaXRlIGl0IHRvIGNwdXNldC5jcHVzIG9mIHRoZSBzeXN0ZW0gY2dyb3VwLgpyZXNlcnZlZF9zZXQ9JCh0YXNrc2V0IC1jcCAgMSAgfCBhd2sgJ05GeyBwcmludCAkTkYgfScpCmVjaG8gIiRyZXNlcnZlZF9zZXQiID4gIiRzeXN0ZW0iL2NwdXNldC5jcHVzCgojIEFuZCBtb3ZlIHRoZSBzeXN0ZW0gcHJvY2Vzc2VzIGludG8gaXQuCiMgTm90ZSwgc29tZSBrZXJuZWwgdGhyZWFkcyB3aWxsIGZhaWwgdG8gYmUgbW92ZWQgd2l0aCAiSW52YWxpZCBBcmd1bWVudCIuIFRoaXMgc2hvdWxkIGJlIGlnbm9yZWQuCmZvciBwcm9jZXNzIGluICQoY2F0ICIkcm9vdCIvY2dyb3VwLnByb2NzIHwgc29ydCAtcik7IGRvCgllY2hvICRwcm9jZXNzID4gIiRzeXN0ZW0iL2Nncm91cC5wcm9jcyAyPiYxIHwgZ3JlcCAtdiAiSW52YWxpZCBBcmd1bWVudCIgfHwgdHJ1ZTsKZG9uZQoKIyBGaW5hbGx5LCBhIHRoZSBgbWFjaGluZS5zbGljZWAgY2dyb3VwIG11c3QgYmUgcHJlY29uZmlndXJlZC4gUG9kbWFuIHdpbGwgY3JlYXRlIGNvbnRhaW5lcnMgYW5kIG1vdmUgdGhlbSBpbnRvIHRoZSBgbWFjaGluZS5zbGljZWAsIGJ1dCB0aGVyZSdzCiMgbm8gd2F5IHRvIHRlbGwgcG9kbWFuIHRvIHVwZGF0ZSBtYWNoaW5lLnNsaWNlIHRvIG5vdCBoYXZlIHRoZSBmdWxsIHNldCBvZiBjcHVzLiBJbnN0ZWFkIG9mIGRpc2FibGluZyBsb2FkIGJhbGFuY2luZyBpbiBpdCwgd2UgY2FuIHByZS1jcmVhdGUgaXQuCiMgd2l0aCB0aGUgcmVzZXJ2ZWQgQ1BVcyBzZXQgYWhlYWQgb2YgdGltZSwgc28gd2hlbiBpc29sYXRlZCBwcm9jZXNzZXMgYmVnaW4sIHRoZSBjZ3JvdXAgZG9lcyBub3QgaGF2ZSBhbiBvdmVybGFwcGluZyBjcHVzZXQgYmV0d2VlbiBtYWNoaW5lLnNsaWNlIGFuZCBpc29sYXRlZCBjb250YWluZXJzLgpta2RpciAtcCAiJG1hY2hpbmUiCgojIEl0J3MgdW5saWtlbHksIGJ1dCBwb3NzaWJsZSwgdGhhdCB0aGlzIGNwdXNldCBhbHJlYWR5IGV4aXN0ZWQuIEl0ZXJhdGUganVzdCBpbiBjYXNlLgpmb3IgZmlsZSBpbiAkKGZpbmQgIiRtYWNoaW5lIiAtbmFtZSBjcHVzZXQuY3B1cyB8IHNvcnQgLXIpOyBkbyBlY2hvICIkcmVzZXJ2ZWRfc2V0IiA+ICIkZmlsZSI7IGRvbmUKCiMgT1ZTIGlzIHJ1bm5pbmcgaW4gaXRzIG93biBzbGljZSB0aGF0IHNwYW5zIGFsbCBjcHVzLiBUaGUgcmVhbCBhZmZpbml0eSBpcyBtYW5hZ2VkIGJ5IE9WTi1LIG92bmt1YmUtbm9kZSBkYWVtb25zZXQKIyBNYWtlIHN1cmUgdGhpcyBzbGljZSB3aWxsIG5vdCBlbmFibGUgY3B1IGJhbGFuY2luZyBmb3Igb3RoZXIgc2xpY2UgY29uZmlndXJlZCBieSB0aGlzIHNjcmlwdC4KIyBUaGlzIG1pZ2h0IHNlZW0gY291bnRlci1pbnR1aXRpdmUsIGJ1dCB0aGlzIHdpbGwgYWN0dWFsbHkgTk9UIGRpc2FibGUgY3B1IGJhbGFuY2luZyBmb3IgT1ZTIGl0c2VsZi4KIyAtIE9WUyBoYXMgYWNjZXNzIHRvIHJlc2VydmVkIGNwdXMsIGJ1dCB0aG9zZSBoYXZlIGJhbGFuY2luZyBlbmFibGVkIHZpYSB0aGUgYHN5c3RlbWAgY2dyb3VwIGNyZWF0ZWQgYWJvdmUKIyAtIE9WUyBoYXMgYWNjZXNzIHRvIGlzb2xhdGVkIGNwdXMgdGhhdCBhcmUgY3VycmVudGx5IG5vdCBhc3NpZ25lZCB0byBwaW5uZWQgcG9kcy4gVGhvc2UgaGF2ZSBiYWxhbmNpbmcgZW5hYmxlZCBieSB0aGUKIyAgIHBvZHMgcnVubmluZyB0aGVyZSAoYnVyc3RhYmxlIGFuZCBiZXN0LWVmZm9ydCBwb2RzIGhhdmUgYmFsYW5jaW5nIGVuYWJsZWQgaW4gdGhlIGNvbnRhaW5lciBjZ3JvdXAgYW5kIGFjY2VzcyB0byBhbGwKIyAgIHVucGlubmVkIGNwdXMpLgoKIyBzeXN0ZW1kIGRvZXMgbm90IG1hbmFnZSB0aGUgY3B1c2V0IGNncm91cCBjb250cm9sbGVyLCBzbyBtb3ZlIGV2ZXJ5dGhpbmcgZnJvbSB0aGUgbWFuYWdlZCBwaWRzIGNvbnRyb2xsZXIncyBvdnMuc2xpY2UKIyB0byB0aGUgY3B1c2V0IGNvbnRyb2xsZXIuCgojIENyZWF0ZSB0aGUgb3ZzLnNsaWNlCm1rZGlyIC1wICIkb3Zzc2xpY2UiCmVjaG8gMCA+ICIkb3Zzc2xpY2UiL2NwdXNldC5zY2hlZF9sb2FkX2JhbGFuY2UKY2F0ICIkcm9vdCIvY3B1c2V0LmNwdXMgPiAiJG92c3NsaWNlIi9jcHVzZXQuY3B1cwpjYXQgIiRyb290Ii9jcHVzZXQubWVtcyA+ICIkb3Zzc2xpY2UiL2NwdXNldC5tZW1zCgojIE1vdmUgT1ZTIG92ZXIKZm9yIHByb2Nlc3MgaW4gJChjYXQgIiRvdnNzbGljZV9zeXN0ZW1kIi8qL2Nncm91cC5wcm9jcyB8IHNvcnQgLXIpOyBkbwogICAgICAgIGVjaG8gJHByb2Nlc3MgPiAiJG92c3NsaWNlIi9jZ3JvdXAucHJvY3MgMj4mMSB8IGdyZXAgLXYgIkludmFsaWQgQXJndW1lbnQiIHx8IHRydWU7CmRvbmU=
+#           verification: {}
+#         group: {}
+#         mode: 448
+#         path: /usr/local/bin/cpuset-configure.sh
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,W1VuaXRdCkRlc2NyaXB0aW9uPVRvcCBsZXZlbCBzbGljZSB1c2VkIHRvIGdpdmUgb3BlbnZzd2l0Y2ggYWNjZXNzIHRvIGFuIHVucmVzdHJpY3RlZCBzZXQgb2YgY3B1cwoKW1NsaWNlXQo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/systemd/system/ovs.slice
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,W1NlcnZpY2VdClNsaWNlPW92cy5zbGljZQo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/systemd/system/openvswitch.service.d/01-use-ovs-slice.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,W1NlcnZpY2VdClNsaWNlPW92cy5zbGljZQo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/systemd/system/ovs-vswitchd.service.d/01-use-ovs-slice.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,W1NlcnZpY2VdClNsaWNlPW92cy5zbGljZQo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /etc/systemd/system/ovsdb-server.service.d/01-use-ovs-slice.conf
+#         user: {}
+#       - contents:
+#           source: data:text/plain;charset=utf-8;base64,IyBUaGlzIGZpbGUgZW5hYmxlcyB0aGUgZHluYW1pYyBjcHUgYWZmaW5pdHkgbWFuYWdlbWVudCBvZiB0aGUgT1ZTIHNlcnZpY2VzCiMKIyBJdCBpcyByZWFkIGJ5IHRoZSBPVk4ncyBvdm5rdWJlLW5vZGUgRGFlbW9uU2V0IGNvbnRhaW5lciBhbmQgdGhlIGZlYXR1cmUKIyBpcyBlbmFibGVkIHdoZW4gdGhpcyBmaWxlIGV4aXN0cyBhbmQgaXMgbm90IGVtcHR5ICh0aGlzIGNvbW1lbnRhcnkgdGV4dAojIGVuc3VyZXMgdGhhdCkKIwojIEZvciBkaXNhYmxpbmcgdGhpcyBmZWF0dXJlIGluIGVtZXJnZW5jaWVzLCBlaXRoZXI6CiMgMSkgZGVsZXRlIHRoaXMgZmlsZSBhbmQgc2V0IHRoZSBjcHUgYWZmaW5pdHkgb2YgT1ZTIHNlcnZpY2VzIG1hbnVhbGx5CiMgMikgb3IgcmVwbGFjZSB0aGUgY29udGVudHMgb2YgdGhpcyBmaWxlIHdpdGggYW4gZW1wdHkgc3RyaW5nCiMgICAgdmlhIGEgTWFjaGluZUNvbmZpZwo=
+#           verification: {}
+#         group: {}
+#         mode: 420
+#         path: /var/lib/ovn-ic/etc/enable_dynamic_cpu_affinity
+#         user: {}
+#     systemd:
+#       units:
+#       - contents: |
+#           [Unit]
+#           Description=Sets network devices RPS mask
+
+#           [Service]
+#           Type=oneshot
+#           ExecStart=/usr/local/bin/set-rps-mask.sh %I 0
+#         name: update-rps@.service
+#       - contents: |
+#           [Unit]
+#           Description=Move services to reserved cpuset
+#           Before=network-online.target
+
+#           [Service]
+#           Type=oneshot
+#           ExecStart=/usr/local/bin/cpuset-configure.sh
+
+#           [Install]
+#           WantedBy=multi-user.target crio.service
+#         enabled: true
+#         name: cpuset-configure.service
+#       - contents: |
+#           [Unit]
+#           Description=Clear the IRQBalance Banned CPU mask early in the boot
+#           Before=kubelet.service
+#           Before=irqbalance.service
+
+#           [Service]
+#           Type=oneshot
+#           RemainAfterExit=true
+#           ExecStart=/usr/local/bin/clear-irqbalance-banned-cpus.sh
+
+#           [Install]
+#           WantedBy=multi-user.target
+#         enabled: true
+#         name: clear-irqbalance-banned-cpus.service
+#   fips: false
+#   kernelArguments: null
+#   kernelType: realtime
+#   osImageURL: ""
+
+
+# EOF
+
+
+
+	# Copy over manifests if they were generated by NTO
+	if [ -n "$(ls -A node-tuning-bootstrap-performance)" ]; then
+		cp node-tuning-bootstrap-performance/* manifests/
+		cp node-tuning-bootstrap-performance/* openshift/
+	fi
+	
+	touch node-tuning-bootstrap-performance.done
+	record_service_stage_success
+fi
+
+if [ ! -f mco-bootstrap.done ]
+then
+    record_service_stage_start "mco-bootstrap"
+	echo "Rendering MCO manifests..."
+
+	rm --recursive --force mco-bootstrap
+
+	ADDITIONAL_FLAGS=""
+	if [ -f "/opt/openshift/tls/cloud-ca-cert.pem" ]; then
+		ADDITIONAL_FLAGS="--cloud-provider-ca-file=/assets/tls/cloud-ca-cert.pem"
+	fi
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --cloud-config-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml"
+	fi
+
+	# Dump out image reference file so MCO can consume multiple/additional image references
+	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
+
+	# NOTICE: If you change this, you probably also want to change https://github.com/openshift/hypershift/blob/f7e79bf1dc7e90000984bf9ffeafa740defbee0a/ignition-server/controllers/local_ignitionprovider.go
+	bootkube_podman_run \
+		--name mco-render \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
+		bootstrap \
+			--root-ca=/assets/tls/root-ca.crt \
+			--kube-ca=/assets/tls/kube-apiserver-complete-client-ca-bundle.crt \
+			--config-file=/assets/manifests/cluster-config.yaml \
+			--dest-dir=/assets/mco-bootstrap \
+			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
+			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--image-references=assets/image-references \
+			--payload-version="${VERSION}" \
+			${ADDITIONAL_FLAGS}
+
+	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
+	# 1. read the controller config rendered by MachineConfigOperator
+	# 2. read the default MachineConfigPools rendered by MachineConfigOperator
+	# 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
+	mkdir --parents /etc/mcc/bootstrap /etc/mcs/bootstrap /etc/kubernetes/manifests /etc/kubernetes/static-pod-resources
+	cp mco-bootstrap/bootstrap/manifests/* /etc/mcc/bootstrap/
+	cp openshift/* /etc/mcc/bootstrap/
+	# 4. read ImageContentSourcePolicy objects generated by the installer
+	cp manifests/* /etc/mcc/bootstrap/
+	cp auth/kubeconfig-kubelet /etc/mcs/kubeconfig
+	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
+
+	copy_static_resources_for() {
+	  # copy static resources from mco based on platform folder
+	  local platform=$1
+	  if [ -d mco-bootstrap/${platform}/manifests ]; then
+	    cp mco-bootstrap/${platform}/manifests/* /etc/kubernetes/manifests/
+	    cp --recursive mco-bootstrap/${platform}/static-pod-resources/* /etc/kubernetes/static-pod-resources/
+	  fi
+	}
+
+	copy_static_resources_for baremetal
+	copy_static_resources_for openstack
+	copy_static_resources_for ovirt
+	copy_static_resources_for vsphere
+	copy_static_resources_for nutanix
+
+	cp mco-bootstrap/manifests/* manifests/
+
+	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.
+	mkdir --parents /etc/ssl/mcs/
+	cp tls/machine-config-server.crt /etc/ssl/mcs/tls.crt
+	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
+
+	touch mco-bootstrap.done
+    record_service_stage_success
+fi
+
+# Check if the API and API_INT Server URLs can be resolved.
+echo "Check if API and API-Int URLs are resolvable during bootstrap"
+API_SERVER_URL="{{.APIServerURL}}"
+API_INT_SERVER_URL="{{.APIIntServerURL}}" 
+
+resolve_url "API_URL" "${API_SERVER_URL}"
+resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"
+
+if [ ! -f cco-bootstrap.done ]
+then
+    record_service_stage_start "cco-bootstrap"
+	echo "Rendering CCO manifests..."
+
+	rm --recursive --force cco-bootstrap
+
+	# shellcheck disable=SC2154
+	bootkube_podman_run \
+		--name cco-render \
+		--quiet \
+		--user 0 \
+		--volume "$PWD:/assets:z" \
+		${CLOUD_CREDENTIAL_OPERATOR_IMAGE} \
+		render \
+			--dest-dir=/assets/cco-bootstrap \
+			--manifests-dir=/assets/manifests \
+			--cloud-credential-operator-image=${CLOUD_CREDENTIAL_OPERATOR_IMAGE}
+
+	cp cco-bootstrap/manifests/* manifests/
+	# skip copy if static pod manifest does not exist (ie CCO has been disabled)
+	if [ -f cco-bootstrap/bootstrap-manifests/cloud-credential-operator-pod.yaml ]; then
+		cp cco-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	fi
+
+	touch cco-bootstrap.done
+    record_service_stage_success
+fi
+
+# in case of single node, if we removed etcd, there is no point to wait for it on restart
+if [ ! -f stop-etcd.done ]
+then
+    record_service_stage_start "wait-for-etcd"
+	# Wait for the etcd cluster to come up.
+	wait_for_etcd_cluster
+    record_service_stage_success
+fi
+
+REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
+if [ "$BOOTSTRAP_INPLACE" = true ]
+then
+    REQUIRED_PODS=""
+fi
+
+echo "Starting cluster-bootstrap..."
+run_cluster_bootstrap() {
+	record_service_stage_start "cb-bootstrap"
+	bootkube_podman_run \
+        --name cluster-bootstrap \
+        --volume "$PWD:/assets:z" \
+        --volume /etc/kubernetes:/etc/kubernetes:z \
+        "${CLUSTER_BOOTSTRAP_IMAGE}" \
+        start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
+}
+    
+if [ ! -f cb-bootstrap.done ]
+then
+    if run_cluster_bootstrap
+    then
+        touch cb-bootstrap.done
+        record_service_stage_success
+    else
+        ret=$?
+        set +u
+        cluster_bootstrap_gather
+        exit $ret
+    fi
+fi
+
+if [ "$BOOTSTRAP_INPLACE" = true ]
+then
+    . /usr/local/bin/bootstrap-in-place.sh "${CLUSTER_BOOTSTRAP_IMAGE}"
+else
+    if [ ! -f cvo-overrides.done ]
+    then
+        record_service_stage_start "cvo-overrides"
+        # remove overrides for installer manifests and restore any user-supplied overrides
+        echo "Restoring CVO overrides"
+        until \
+            oc patch clusterversion.config.openshift.io version \
+                --kubeconfig=/opt/openshift/auth/kubeconfig \
+                --type=merge \
+                --patch-file=/opt/openshift/original_cvo_overrides.patch
+        do
+            sleep 10
+            echo "Trying again to restore CVO overrides"
+        done
+        touch cvo-overrides.done
+        record_service_stage_success
+    fi
+
+    rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
+
+    if [ ! -z "$CLUSTER_ETCD_OPERATOR_IMAGE" ]
+    then
+        record_service_stage_start "wait-for-ceo"
+        echo "Waiting for CEO to finish..."
+        bootkube_podman_run \
+            --name wait-for-ceo \
+            --volume "$PWD:/assets:z" \
+            "${CLUSTER_ETCD_OPERATOR_IMAGE}" \
+            /usr/bin/cluster-etcd-operator \
+            wait-for-ceo \
+            --kubeconfig /assets/auth/kubeconfig
+        record_service_stage_success
+    fi
+fi
+
+# Check if the API and API_INT Server URLs can be reached.
+echo "Check if API and API-Int URLs are reachable during bootstrap"
+
+check_url "API_URL" "${API_SERVER_URL}"
+check_url "API_INT_URL" "${API_INT_SERVER_URL}"
+
+# Workaround for https://github.com/opencontainers/runc/pull/1807
+touch /opt/openshift/.bootkube.done
+echo "bootkube.service complete"
