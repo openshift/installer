@@ -152,6 +152,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
+			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+				Method: "install_coreos",
+			}
 			numMasters++
 		}
 
