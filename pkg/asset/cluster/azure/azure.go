@@ -42,7 +42,12 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 		return err
 	}
 
-	err = tagVNet(ctx, clusterID, installConfig, session)
+	// removing shared tags relies on an api that isn't available
+	// on azure stack hub, so we do not tag them as to not leak
+	// the tags. see pkg/destroy/azure/azure.go for more.
+	if installConfig.Azure.CloudName != azure.StackCloud {
+		err = tagVNet(ctx, clusterID, installConfig, session)
+	}
 	return err
 }
 

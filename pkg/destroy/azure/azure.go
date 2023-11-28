@@ -233,11 +233,15 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		o.Logger.Debug(err)
 	}
 
-	if err := removeSharedTags(
-		waitCtx, o.resourceGraphClient, o.tagsClient, o.InfraID, o.Session.Credentials.SubscriptionID, o.Logger,
-	); err != nil {
-		errs = append(errs, fmt.Errorf("failed to remove shared tags: %w", err))
-		o.Logger.Debug(err)
+	// do not attempt to remove shared tags on azure stack hub,
+	// as the resource graph api is not supported there.
+	if o.CloudName != azure.StackCloud {
+		if err := removeSharedTags(
+			waitCtx, o.resourceGraphClient, o.tagsClient, o.InfraID, o.Session.Credentials.SubscriptionID, o.Logger,
+		); err != nil {
+			errs = append(errs, fmt.Errorf("failed to remove shared tags: %w", err))
+			o.Logger.Debug(err)
+		}
 	}
 
 	return nil, utilerrors.NewAggregate(errs)
