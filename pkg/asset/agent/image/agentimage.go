@@ -80,7 +80,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	logrus.Infof("Updating the ignition data in the image file")
+	logrus.Debugf("Updating the ignition data in the image file")
 	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
 	if err != nil {
 		return err
@@ -120,11 +120,11 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	ignInfoJSONPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
 	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
 	if err != nil {
-		logrus.Debugf("Failed to read json %s", ignInfoJSONPath)
+		logrus.Warnf("Failed to read json %s", ignInfoJSONPath)
 		return err
 	}
 	if err := json.Unmarshal(ignInfoJSONData, &ignInfo); err != nil {
-		logrus.Debugf("Failed to umarshal json: %s", err)
+		logrus.Warnf("Failed to umarshal json: %s", err)
 		return err
 	}
 
