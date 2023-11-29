@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	ibmcrn "github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/go-sdk-core/v5/core"
+	kpclient "github.com/IBM/keyprotect-go-client"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
@@ -78,6 +80,20 @@ const (
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
 	// dnsServiceID is the DNS Services' catalog service ID.
 	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
+
+	// hyperProtectCRNServiceName is the service name within the IBM Cloud CRN for the Hyper Protect service.
+	hyperProtectCRNServiceName = "hs-crypto"
+	// keyProtectCRNServiceName is the service name within the IBM Cloud CRN for the Key Protect service.
+	keyProtectCRNServiceName = "kms"
+
+	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
+	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
+	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
+	iamTokenDefaultURL = "https://iam.cloud.ibm.com/identity/token" // #nosec G101 // this is the URL for IBM Cloud IAM tokens, not a credential
+	// iamTokenPath is the URL path, to add to override IAM endpoints, for the IBM Cloud IAM token service.
+	iamTokenPath = "identity/token" // #nosec G101 // this is the URI path for IBM Cloud IAM tokens, not a credential
+	// keyProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Key Protect service.
+	keyProtectDefaultURLTemplate = "https://%s.kms.cloud.ibm.com"
 )
 
 // VPCResourceNotFoundError represents an error for a VPC resoruce that is not found.
@@ -433,8 +449,35 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 // GetEncryptionKey gets data for an encryption key
 func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error) {
-	// TODO: IBM: Call KMS / Hyperprotect Crpyto APIs.
-	return &responses.EncryptionKeyResponse{}, nil
+	// Parse out the IBM Cloud details from CRN
+	crn, err := ibmcrn.Parse(keyCRN)
+	if err != nil {
+		return nil, err
+	}
+
+	var keyResponse *responses.EncryptionKeyResponse
+
+	keyAPI, err := c.getKeyServiceAPI(crn)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := keyAPI.GetKey(ctx, crn.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	if key != nil {
+		keyResponse = &responses.EncryptionKeyResponse{
+			ID:      key.ID,
+			Type:    key.Type,
+			CRN:     key.CRN,
+			State:   key.State,
+			Deleted: key.Deleted,
+		}
+	}
+
+	return keyResponse, nil
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
@@ -686,6 +729,47 @@ func (c *Client) loadVPCV1API() error {
 	}
 	c.vpcAPI = vpcService
 	return nil
+}
+
+func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
+	var clientConfig kpclient.ClientConfig
+
+	switch crn.ServiceName {
+	case hyperProtectCRNServiceName:
+		clientConfig = kpclient.ClientConfig{
+			BaseURL:    fmt.Sprintf(hyperProtectDefaultURLTemplate, crn.Region),
+			APIKey:     c.apiKey,
+			TokenURL:   iamTokenDefaultURL,
+			InstanceID: crn.ServiceInstance,
+		}
+
+		// Override HyperProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceHyperProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
+	case keyProtectCRNServiceName:
+		clientConfig = kpclient.ClientConfig{
+			BaseURL:    fmt.Sprintf(keyProtectDefaultURLTemplate, crn.Region),
+			APIKey:     c.apiKey,
+			TokenURL:   iamTokenDefaultURL,
+			InstanceID: crn.ServiceInstance,
+		}
+
+		// Override KeyProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceKeyProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
+	default:
+		return nil, fmt.Errorf("unknown key service for provided encryption key: %s", crn)
+	}
+
+	// Override IAM token URL, if an IAM service override URL was provided
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, c.serviceEndpoints); overrideURL != "" {
+		// Construct the token URL using the overridden IAM URL and the token path
+		clientConfig.TokenURL = fmt.Sprintf("%s/%s", overrideURL, iamTokenPath)
+	}
+
+	return kpclient.New(clientConfig, kpclient.DefaultTransport())
 }
 
 // SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources

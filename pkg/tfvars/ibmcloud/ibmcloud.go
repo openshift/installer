@@ -28,27 +28,28 @@ type DedicatedHost struct {
 }
 
 type config struct {
-	Auth                     `json:",inline"`
-	BootstrapInstanceType    string          `json:"ibmcloud_bootstrap_instance_type,omitempty"`
-	CISInstanceCRN           string          `json:"ibmcloud_cis_crn,omitempty"`
-	ComputeSubnets           []string        `json:"ibmcloud_compute_subnets,omitempty"`
-	ControlPlaneSubnets      []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
-	DNSInstanceID            string          `json:"ibmcloud_dns_id,omitempty"`
-	EndpointsJSONFile        string          `json:"ibmcloud_endpoints_json_file,omitempty"`
-	ExtraTags                []string        `json:"ibmcloud_extra_tags,omitempty"`
-	ImageFilePath            string          `json:"ibmcloud_image_filepath,omitempty"`
-	MasterAvailabilityZones  []string        `json:"ibmcloud_master_availability_zones"`
-	MasterInstanceType       string          `json:"ibmcloud_master_instance_type,omitempty"`
-	MasterDedicatedHosts     []DedicatedHost `json:"ibmcloud_master_dedicated_hosts,omitempty"`
-	NetworkResourceGroupName string          `json:"ibmcloud_network_resource_group_name,omitempty"`
-	PreexistingVPC           bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
-	PublishStrategy          string          `json:"ibmcloud_publish_strategy,omitempty"`
-	Region                   string          `json:"ibmcloud_region,omitempty"`
-	ResourceGroupName        string          `json:"ibmcloud_resource_group_name,omitempty"`
-	VPC                      string          `json:"ibmcloud_vpc,omitempty"`
-	VPCPermitted             bool            `json:"ibmcloud_vpc_permitted,omitempty"`
-	WorkerAvailabilityZones  []string        `json:"ibmcloud_worker_availability_zones"`
-	WorkerDedicatedHosts     []DedicatedHost `json:"ibmcloud_worker_dedicated_hosts,omitempty"`
+	Auth                      `json:",inline"`
+	BootstrapInstanceType     string          `json:"ibmcloud_bootstrap_instance_type,omitempty"`
+	CISInstanceCRN            string          `json:"ibmcloud_cis_crn,omitempty"`
+	ComputeSubnets            []string        `json:"ibmcloud_compute_subnets,omitempty"`
+	ControlPlaneBootVolumeKey string          `json:"ibmcloud_control_plane_boot_volume_key"`
+	ControlPlaneSubnets       []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
+	DNSInstanceID             string          `json:"ibmcloud_dns_id,omitempty"`
+	EndpointsJSONFile         string          `json:"ibmcloud_endpoints_json_file,omitempty"`
+	ExtraTags                 []string        `json:"ibmcloud_extra_tags,omitempty"`
+	ImageFilePath             string          `json:"ibmcloud_image_filepath,omitempty"`
+	MasterAvailabilityZones   []string        `json:"ibmcloud_master_availability_zones"`
+	MasterInstanceType        string          `json:"ibmcloud_master_instance_type,omitempty"`
+	MasterDedicatedHosts      []DedicatedHost `json:"ibmcloud_master_dedicated_hosts,omitempty"`
+	NetworkResourceGroupName  string          `json:"ibmcloud_network_resource_group_name,omitempty"`
+	PreexistingVPC            bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
+	PublishStrategy           string          `json:"ibmcloud_publish_strategy,omitempty"`
+	Region                    string          `json:"ibmcloud_region,omitempty"`
+	ResourceGroupName         string          `json:"ibmcloud_resource_group_name,omitempty"`
+	VPC                       string          `json:"ibmcloud_vpc,omitempty"`
+	VPCPermitted              bool            `json:"ibmcloud_vpc_permitted,omitempty"`
+	WorkerAvailabilityZones   []string        `json:"ibmcloud_worker_availability_zones"`
+	WorkerDedicatedHosts      []DedicatedHost `json:"ibmcloud_worker_dedicated_hosts,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -101,26 +102,27 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		Auth:                     sources.Auth,
-		BootstrapInstanceType:    masterConfig.Profile,
-		CISInstanceCRN:           sources.CISInstanceCRN,
-		ComputeSubnets:           workerSubnets,
-		ControlPlaneSubnets:      masterSubnets,
-		DNSInstanceID:            sources.DNSInstanceID,
-		EndpointsJSONFile:        sources.EndpointsJSONFile,
-		ImageFilePath:            cachedImage,
-		MasterAvailabilityZones:  masterAvailabilityZones,
-		MasterDedicatedHosts:     sources.MasterDedicatedHosts,
-		MasterInstanceType:       masterConfig.Profile,
-		NetworkResourceGroupName: sources.NetworkResourceGroupName,
-		PreexistingVPC:           sources.PreexistingVPC,
-		PublishStrategy:          string(sources.PublishStrategy),
-		Region:                   masterConfig.Region,
-		ResourceGroupName:        sources.ResourceGroupName,
-		VPC:                      vpc,
-		VPCPermitted:             sources.VPCPermitted,
-		WorkerAvailabilityZones:  workerAvailabilityZones,
-		WorkerDedicatedHosts:     sources.WorkerDedicatedHosts,
+		Auth:                      sources.Auth,
+		BootstrapInstanceType:     masterConfig.Profile,
+		CISInstanceCRN:            sources.CISInstanceCRN,
+		ComputeSubnets:            workerSubnets,
+		ControlPlaneBootVolumeKey: masterConfig.BootVolume.EncryptionKey,
+		ControlPlaneSubnets:       masterSubnets,
+		DNSInstanceID:             sources.DNSInstanceID,
+		EndpointsJSONFile:         sources.EndpointsJSONFile,
+		ImageFilePath:             cachedImage,
+		MasterAvailabilityZones:   masterAvailabilityZones,
+		MasterDedicatedHosts:      sources.MasterDedicatedHosts,
+		MasterInstanceType:        masterConfig.Profile,
+		NetworkResourceGroupName:  sources.NetworkResourceGroupName,
+		PreexistingVPC:            sources.PreexistingVPC,
+		PublishStrategy:           string(sources.PublishStrategy),
+		Region:                    masterConfig.Region,
+		ResourceGroupName:         sources.ResourceGroupName,
+		VPC:                       vpc,
+		VPCPermitted:              sources.VPCPermitted,
+		WorkerAvailabilityZones:   workerAvailabilityZones,
+		WorkerDedicatedHosts:      sources.WorkerDedicatedHosts,
 
 		// TODO: IBM: Future support
 		// ExtraTags:               masterConfig.Tags,

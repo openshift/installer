@@ -25,4 +25,19 @@ type DNSZoneResponse struct {
 }
 
 // EncryptionKeyResponse represents an encryption key response.
-type EncryptionKeyResponse struct{}
+type EncryptionKeyResponse struct {
+	// ID is the key's instance Id.
+	ID string
+
+	// Type is the type of key (root, standard).
+	Type string
+
+	// CRN is the IBM Cloud CRN representation of the key.
+	CRN string
+
+	// State is an integer representing whether the key is enabled.
+	State int
+
+	// Deleted is whether the key has been deleted.
+	Deleted *bool
+}
