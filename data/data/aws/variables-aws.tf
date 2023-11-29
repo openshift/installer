@@ -211,3 +211,19 @@ variable "aws_master_security_groups" {
   description = "(optional) List of additional security group IDs to attach to the master nodes"
   default     = []
 }
+
+variable "aws_edge_zones_type" {
+  type    = map(string)
+  default = {}
+
+  description = <<EOF
+(optional) A map of the Edge's Zones type indexed by zone name. Subnets in Wavelength Zone requires to be associated to
+a route table with a Carrier Gateway to: 1) ingress the traffic from the zone, 2) allow carrier public IPs associated to
+the EC2 running in Wavelength Zone.
+If a zone type with value 'wavelength-zone' is detected, the following resources is created: a Carrier Gateway,
+a Public Route Table and the default route entry pointing to the carrier gateway, then any edge subnet with available zone type
+'wavelength-zone' is associated on that route table.
+
+Example: `{ "us-east-1-nyc-1a"=local-zone, "us-east-1-wl1-nyc-wlz-1"=wavelength-zone }`
+EOF
+}

@@ -28,6 +28,7 @@ type Config struct {
 	WorkerAvailabilityZones         []string          `json:"aws_worker_availability_zones"`
 	EdgeLocalZones                  []string          `json:"aws_edge_local_zones,omitempty"`
 	EdgeZonesGatewayIndex           map[string]int    `json:"aws_edge_parent_zones_index,omitempty"`
+	EdgeZonesType                   map[string]string `json:"aws_edge_zones_type,omitempty"`
 	IOPS                            int64             `json:"aws_master_root_volume_iops"`
 	Size                            int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type                            string            `json:"aws_master_root_volume_type,omitempty"`
@@ -111,7 +112,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		if _, ok := sources.AvailabilityZones[zoneName]; !ok {
 			return nil, errors.New(fmt.Sprintf("unable to find the zone when generating terraform vars: %s", zoneName))
 		}
-		if sources.AvailabilityZones[zoneName].Type == typesaws.LocalZoneType {
+		if sources.AvailabilityZones[zoneName].Type == typesaws.LocalZoneType || sources.AvailabilityZones[zoneName].Type == typesaws.WavelengtyZoneType {
 			edgeLocalZoneMap[zoneName] = exists
 			continue
 		}
@@ -143,6 +144,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	sort.Strings(allAvailabilityZones)
 	edgeLocalZones := make([]string, 0, len(edgeLocalZoneMap))
 	edgeZonesGatewayIndexMap := make(map[string]int, len(edgeLocalZoneMap))
+	edgeZonesType := make(map[string]string, len(edgeLocalZoneMap))
 	// new VPC
 	if len(sources.PrivateSubnets) == 0 {
 		for zone := range edgeLocalZoneMap {
@@ -156,6 +158,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 			}
 			edgeLocalZones = append(edgeLocalZones, zone)
 			edgeZonesGatewayIndexMap[zone] = gwIndex
+			edgeZonesType[zone] = sources.AvailabilityZones[zone].Type
 		}
 	}
 
@@ -188,6 +191,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		WorkerAvailabilityZones:   workerAvailabilityZones,
 		EdgeLocalZones:            edgeLocalZones,
 		EdgeZonesGatewayIndex:     edgeZonesGatewayIndexMap,
+		EdgeZonesType:             edgeZonesType,
 		BootstrapInstanceType:     masterConfig.InstanceType,
 		MasterInstanceType:        masterConfig.InstanceType,
 		Size:                      *rootVolume.EBS.VolumeSize,
