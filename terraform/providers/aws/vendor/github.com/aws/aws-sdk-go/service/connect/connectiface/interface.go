@@ -224,9 +224,17 @@ type ConnectAPI interface {
 	DeletePromptWithContext(aws.Context, *connect.DeletePromptInput, ...request.Option) (*connect.DeletePromptOutput, error)
 	DeletePromptRequest(*connect.DeletePromptInput) (*request.Request, *connect.DeletePromptOutput)
 
+	DeleteQueue(*connect.DeleteQueueInput) (*connect.DeleteQueueOutput, error)
+	DeleteQueueWithContext(aws.Context, *connect.DeleteQueueInput, ...request.Option) (*connect.DeleteQueueOutput, error)
+	DeleteQueueRequest(*connect.DeleteQueueInput) (*request.Request, *connect.DeleteQueueOutput)
+
 	DeleteQuickConnect(*connect.DeleteQuickConnectInput) (*connect.DeleteQuickConnectOutput, error)
 	DeleteQuickConnectWithContext(aws.Context, *connect.DeleteQuickConnectInput, ...request.Option) (*connect.DeleteQuickConnectOutput, error)
 	DeleteQuickConnectRequest(*connect.DeleteQuickConnectInput) (*request.Request, *connect.DeleteQuickConnectOutput)
+
+	DeleteRoutingProfile(*connect.DeleteRoutingProfileInput) (*connect.DeleteRoutingProfileOutput, error)
+	DeleteRoutingProfileWithContext(aws.Context, *connect.DeleteRoutingProfileInput, ...request.Option) (*connect.DeleteRoutingProfileOutput, error)
+	DeleteRoutingProfileRequest(*connect.DeleteRoutingProfileInput) (*request.Request, *connect.DeleteRoutingProfileOutput)
 
 	DeleteRule(*connect.DeleteRuleInput) (*connect.DeleteRuleOutput, error)
 	DeleteRuleWithContext(aws.Context, *connect.DeleteRuleInput, ...request.Option) (*connect.DeleteRuleOutput, error)
@@ -732,6 +740,13 @@ type ConnectAPI interface {
 
 	SearchQuickConnectsPages(*connect.SearchQuickConnectsInput, func(*connect.SearchQuickConnectsOutput, bool) bool) error
 	SearchQuickConnectsPagesWithContext(aws.Context, *connect.SearchQuickConnectsInput, func(*connect.SearchQuickConnectsOutput, bool) bool, ...request.Option) error
+
+	SearchResourceTags(*connect.SearchResourceTagsInput) (*connect.SearchResourceTagsOutput, error)
+	SearchResourceTagsWithContext(aws.Context, *connect.SearchResourceTagsInput, ...request.Option) (*connect.SearchResourceTagsOutput, error)
+	SearchResourceTagsRequest(*connect.SearchResourceTagsInput) (*request.Request, *connect.SearchResourceTagsOutput)
+
+	SearchResourceTagsPages(*connect.SearchResourceTagsInput, func(*connect.SearchResourceTagsOutput, bool) bool) error
+	SearchResourceTagsPagesWithContext(aws.Context, *connect.SearchResourceTagsInput, func(*connect.SearchResourceTagsOutput, bool) bool, ...request.Option) error
 
 	SearchRoutingProfiles(*connect.SearchRoutingProfilesInput) (*connect.SearchRoutingProfilesOutput, error)
 	SearchRoutingProfilesWithContext(aws.Context, *connect.SearchRoutingProfilesInput, ...request.Option) (*connect.SearchRoutingProfilesOutput, error)
