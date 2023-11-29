@@ -174,6 +174,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		without(eventedPleg).
 		with(sigstoreImageVerification).
 		with(gcpLabelsTags).
+		with(gcpClusterHostedDNS).
 		with(vSphereStaticIPs).
 		with(routeExternalCertificate).
 		with(automatedEtcdBackup).
@@ -183,7 +184,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		with(dnsNameResolver).
 		with(machineConfigNodes).
 		with(metricsServer).
-		without(installAlternateInfrastructureAWS).
+		with(installAlternateInfrastructureAWS).
 		without(clusterAPIInstall).
 		toFeatures(defaultFeatures),
 	LatencySensitive: newDefaultFeatures().

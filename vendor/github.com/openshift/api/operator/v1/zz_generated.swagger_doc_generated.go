@@ -420,10 +420,11 @@ func (AzureDiskEncryptionSet) SwaggerDoc() map[string]string {
 
 var map_CSIDriverConfigSpec = map[string]string{
 	"":           "CSIDriverConfigSpec defines configuration spec that can be used to optionally configure a specific CSI Driver.",
-	"driverType": "driverType indicates type of CSI driver for which the driverConfig is being applied to. Valid values are: AWS, Azure, GCP, vSphere and omitted. Consumers should treat unknown values as a NO-OP.",
+	"driverType": "driverType indicates type of CSI driver for which the driverConfig is being applied to. Valid values are: AWS, Azure, GCP, IBMCloud, vSphere and omitted. Consumers should treat unknown values as a NO-OP.",
 	"aws":        "aws is used to configure the AWS CSI driver.",
 	"azure":      "azure is used to configure the Azure CSI driver.",
 	"gcp":        "gcp is used to configure the GCP CSI driver.",
+	"ibmcloud":   "ibmcloud is used to configure the IBM Cloud CSI driver.",
 	"vSphere":    "vsphere is used to configure the vsphere CSI driver.",
 }
 
@@ -488,6 +489,15 @@ var map_GCPKMSKeyReference = map[string]string{
 
 func (GCPKMSKeyReference) SwaggerDoc() map[string]string {
 	return map_GCPKMSKeyReference
+}
+
+var map_IBMCloudCSIDriverConfigSpec = map[string]string{
+	"":                 "IBMCloudCSIDriverConfigSpec defines the properties that can be configured for the IBM Cloud CSI driver.",
+	"encryptionKeyCRN": "encryptionKeyCRN is the IBM Cloud CRN of the customer-managed root key to use for disk encryption of volumes for the default storage classes.",
+}
+
+func (IBMCloudCSIDriverConfigSpec) SwaggerDoc() map[string]string {
+	return map_IBMCloudCSIDriverConfigSpec
 }
 
 var map_VSphereCSIDriverConfigSpec = map[string]string{

@@ -341,4 +341,14 @@ var (
 		ResponsiblePerson:   "padillon",
 		OwningProduct:       ocpSpecific,
 	}
+
+	FeatureGateGCPClusterHostedDNS = FeatureGateName("GCPClusterHostedDNS")
+	gcpClusterHostedDNS            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateGCPClusterHostedDNS,
+		},
+		OwningJiraComponent: "Installer",
+		ResponsiblePerson:   "barbacbd",
+		OwningProduct:       ocpSpecific,
+	}
 )
