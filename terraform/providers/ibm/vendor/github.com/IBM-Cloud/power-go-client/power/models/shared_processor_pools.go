@@ -82,6 +82,11 @@ func (m *SharedProcessorPools) contextValidateSharedProcessorPools(ctx context.C
 	for i := 0; i < len(m.SharedProcessorPools); i++ {
 
 		if m.SharedProcessorPools[i] != nil {
+
+			if swag.IsZero(m.SharedProcessorPools[i]) { // not required
+				return nil
+			}
+
 			if err := m.SharedProcessorPools[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sharedProcessorPools" + "." + strconv.Itoa(i))

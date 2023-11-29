@@ -68,6 +68,11 @@ func DataSourceIBMISEndpointGateway() *schema.Resource {
 				Set:         schema.HashString,
 				Description: "Endpoint gateway securitygroups list",
 			},
+			isVirtualEndpointGatewayAllowDnsResolutionBinding: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether to allow this endpoint gateway to participate in DNS resolution bindings with a VPC that has dns.enable_hub set to true.",
+			},
 			isVirtualEndpointGatewayIPs: {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -163,6 +168,7 @@ func dataSourceIBMISEndpointGatewayRead(
 	result := allrecs[0]
 	d.SetId(*result.ID)
 	d.Set(isVirtualEndpointGatewayName, result.Name)
+	d.Set(isVirtualEndpointGatewayAllowDnsResolutionBinding, result.AllowDnsResolutionBinding)
 	d.Set(isVirtualEndpointGatewayCRN, result.CRN)
 	d.Set(isVirtualEndpointGatewayHealthState, result.HealthState)
 	d.Set(isVirtualEndpointGatewayCreatedAt, result.CreatedAt.String())

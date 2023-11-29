@@ -281,7 +281,7 @@ func DataSourceIBMCdTektonPipeline() *schema.Resource {
 						"worker": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.",
+							Description: "Details of the worker used to run the trigger.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"name": &schema.Schema{
@@ -311,6 +311,11 @@ func DataSourceIBMCdTektonPipeline() *schema.Resource {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "Flag whether the trigger is enabled.",
+						},
+						"favorite": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Mark the trigger as a favorite.",
 						},
 						"source": &schema.Schema{
 							Type:        schema.TypeList,
@@ -437,7 +442,7 @@ func DataSourceIBMCdTektonPipeline() *schema.Resource {
 			"worker": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Default pipeline worker used to run the pipeline.",
+				Description: "Details of the worker used to run the pipeline.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -779,6 +784,9 @@ func dataSourceIBMCdTektonPipelineTriggerToMap(model cdtektonpipelinev2.TriggerI
 		if model.Enabled != nil {
 			modelMap["enabled"] = model.Enabled
 		}
+		if model.Favorite != nil {
+			modelMap["favorite"] = model.Favorite
+		}
 		if model.Source != nil {
 			sourceMap, err := dataSourceIBMCdTektonPipelineTriggerSourceToMap(model.Source)
 			if err != nil {
@@ -928,6 +936,9 @@ func dataSourceIBMCdTektonPipelineTriggerManualTriggerToMap(model *cdtektonpipel
 		modelMap["max_concurrent_runs"] = flex.IntValue(model.MaxConcurrentRuns)
 	}
 	modelMap["enabled"] = model.Enabled
+	if model.Favorite != nil {
+		modelMap["favorite"] = model.Favorite
+	}
 	return modelMap, nil
 }
 
@@ -965,6 +976,9 @@ func dataSourceIBMCdTektonPipelineTriggerScmTriggerToMap(model *cdtektonpipeline
 		modelMap["max_concurrent_runs"] = flex.IntValue(model.MaxConcurrentRuns)
 	}
 	modelMap["enabled"] = model.Enabled
+	if model.Favorite != nil {
+		modelMap["favorite"] = model.Favorite
+	}
 	if model.Source != nil {
 		sourceMap, err := dataSourceIBMCdTektonPipelineTriggerSourceToMap(model.Source)
 		if err != nil {
@@ -1012,6 +1026,9 @@ func dataSourceIBMCdTektonPipelineTriggerTimerTriggerToMap(model *cdtektonpipeli
 		modelMap["max_concurrent_runs"] = flex.IntValue(model.MaxConcurrentRuns)
 	}
 	modelMap["enabled"] = model.Enabled
+	if model.Favorite != nil {
+		modelMap["favorite"] = model.Favorite
+	}
 	if model.Cron != nil {
 		modelMap["cron"] = model.Cron
 	}
@@ -1055,6 +1072,9 @@ func dataSourceIBMCdTektonPipelineTriggerGenericTriggerToMap(model *cdtektonpipe
 		modelMap["max_concurrent_runs"] = flex.IntValue(model.MaxConcurrentRuns)
 	}
 	modelMap["enabled"] = model.Enabled
+	if model.Favorite != nil {
+		modelMap["favorite"] = model.Favorite
+	}
 	if model.Secret != nil {
 		secretMap, err := dataSourceIBMCdTektonPipelineGenericSecretToMap(model.Secret)
 		if err != nil {

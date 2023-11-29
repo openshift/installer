@@ -98,7 +98,67 @@ func DataSourceIBMISVPNGateways() *schema.Resource {
 							Computed:    true,
 							Description: "The status of the VPN gateway",
 						},
+						isVPNGatewayHealthState: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource.- `ok`: Healthy- `degraded`: Suffering from compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+						},
+						isVPNGatewayHealthReasons: {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
 
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+						isVPNGatewayLifecycleState: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The lifecycle state of the VPN route.",
+						},
+						isVPNGatewayLifecycleReasons: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current lifecycle_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+									},
+
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this lifecycle state.",
+									},
+
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this lifecycle state.",
+									},
+								},
+							},
+						},
 						isVPNGatewaySubnet: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -218,7 +278,10 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 		gateway[isVPNGatewayName] = *data.Name
 		gateway[isVPNGatewayCreatedAt] = data.CreatedAt.String()
 		gateway[isVPNGatewayResourceType] = *data.ResourceType
-		gateway[isVPNGatewayStatus] = *data.Status
+		gateway[isVPNGatewayHealthState] = *data.HealthState
+		gateway[isVPNGatewayHealthReasons] = resourceVPNGatewayRouteFlattenHealthReasons(data.HealthReasons)
+		gateway[isVPNGatewayLifecycleState] = *data.LifecycleState
+		gateway[isVPNGatewayLifecycleReasons] = resourceVPNGatewayFlattenLifecycleReasons(data.LifecycleReasons)
 		gateway[isVPNGatewayMode] = *data.Mode
 		gateway[isVPNGatewayResourceGroup] = *data.ResourceGroup.ID
 		gateway[isVPNGatewaySubnet] = *data.Subnet.ID
@@ -243,7 +306,6 @@ func dataSourceIBMVPNGatewaysRead(d *schema.ResourceData, meta interface{}) erro
 				if memberIP.PublicIP != nil {
 					currentMemberIP["address"] = *memberIP.PublicIP.Address
 					currentMemberIP["role"] = *memberIP.Role
-					currentMemberIP["status"] = *memberIP.Status
 					vpcMembersIpsList = append(vpcMembersIpsList, currentMemberIP)
 				}
 				if memberIP.PrivateIP != nil && memberIP.PrivateIP.Address != nil {

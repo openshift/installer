@@ -66,7 +66,7 @@ func (o *PcloudPvminstancesActionPostReader) ReadResponse(response runtime.Clien
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action] pcloud.pvminstances.action.post", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudPvminstancesActionPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances action post o k response a status code equal to that given
 func (o *PcloudPvminstancesActionPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances action post o k response
+func (o *PcloudPvminstancesActionPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesActionPostOK) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudPvminstancesActionPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances action post bad request response a status code equal to that given
 func (o *PcloudPvminstancesActionPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances action post bad request response
+func (o *PcloudPvminstancesActionPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesActionPostBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudPvminstancesActionPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances action post unauthorized response
+func (o *PcloudPvminstancesActionPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesActionPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudPvminstancesActionPostForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances action post forbidden response a status code equal to that given
 func (o *PcloudPvminstancesActionPostForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances action post forbidden response
+func (o *PcloudPvminstancesActionPostForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesActionPostForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudPvminstancesActionPostNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances action post not found response
+func (o *PcloudPvminstancesActionPostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesActionPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudPvminstancesActionPostConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud pvminstances action post conflict response
+func (o *PcloudPvminstancesActionPostConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudPvminstancesActionPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/action][%d] pcloudPvminstancesActionPostConflict  %+v", 409, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudPvminstancesActionPostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances action post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesActionPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances action post internal server error response
+func (o *PcloudPvminstancesActionPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesActionPostInternalServerError) Error() string {

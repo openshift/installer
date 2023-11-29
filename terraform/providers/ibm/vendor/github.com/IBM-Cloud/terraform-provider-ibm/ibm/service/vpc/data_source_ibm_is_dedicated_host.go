@@ -250,6 +250,39 @@ func DataSourceIbmIsDedicatedHost() *schema.Resource {
 				Computed:    true,
 				Description: "The total amount of memory in gibibytes for this host.",
 			},
+			"numa": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The dedicated host NUMA configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The total number of NUMA nodes for this dedicated host",
+						},
+						"nodes": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The NUMA nodes for this dedicated host.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"available_vcpu": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The available VCPU for this NUMA node.",
+									},
+									"vcpu": {
+										Type:        schema.TypeInt,
+										Computed:    true,
+										Description: "The total VCPU capacity for this NUMA node.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"profile": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -430,7 +463,11 @@ func dataSourceIbmIsDedicatedHostRead(context context.Context, d *schema.Resourc
 		if err = d.Set("name", dedicatedHost.Name); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
 		}
-
+		if dedicatedHost.Numa != nil {
+			if err = d.Set("numa", dataSourceDedicatedHostFlattenNumaNodes(*dedicatedHost.Numa)); err != nil {
+				return diag.FromErr(fmt.Errorf("[ERROR] Error setting numa nodes: %s", err))
+			}
+		}
 		if dedicatedHost.Profile != nil {
 			err = d.Set("profile", dataSourceDedicatedHostFlattenProfile(*dedicatedHost.Profile))
 			if err != nil {
@@ -601,6 +638,35 @@ func dataSourceDedicatedHostInstancesDeletedToMap(deletedItem vpcv1.InstanceRefe
 	}
 
 	return deletedMap
+}
+
+func dataSourceDedicatedHostFlattenNumaNodes(nodeItem vpcv1.DedicatedHostNuma) (numaNodes []map[string]interface{}) {
+	numaNodeMap := map[string]interface{}{}
+
+	if nodeItem.Count != nil {
+		numaNodeMap["count"] = *nodeItem.Count
+	}
+	if nodeItem.Nodes != nil {
+		nodesList := []map[string]interface{}{}
+		for _, nodeItem := range nodeItem.Nodes {
+			nodesList = append(nodesList, dataSourceDedicatedHostNodesToMap(nodeItem))
+		}
+		numaNodeMap["nodes"] = nodesList
+	}
+	numaNodes = append(numaNodes, numaNodeMap)
+	return numaNodes
+}
+
+func dataSourceDedicatedHostNodesToMap(nodes vpcv1.DedicatedHostNumaNode) (node map[string]interface{}) {
+	node = map[string]interface{}{}
+
+	if nodes.AvailableVcpu != nil {
+		node["available_vcpu"] = nodes.AvailableVcpu
+	}
+	if nodes.Vcpu != nil {
+		node["vcpu"] = nodes.Vcpu
+	}
+	return node
 }
 
 func dataSourceDedicatedHostFlattenProfile(result vpcv1.DedicatedHostProfileReference) (finalList []map[string]interface{}) {

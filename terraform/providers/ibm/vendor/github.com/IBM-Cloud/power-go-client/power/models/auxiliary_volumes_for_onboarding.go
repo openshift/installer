@@ -102,6 +102,11 @@ func (m *AuxiliaryVolumesForOnboarding) contextValidateAuxiliaryVolumes(ctx cont
 	for i := 0; i < len(m.AuxiliaryVolumes); i++ {
 
 		if m.AuxiliaryVolumes[i] != nil {
+
+			if swag.IsZero(m.AuxiliaryVolumes[i]) { // not required
+				return nil
+			}
+
 			if err := m.AuxiliaryVolumes[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("auxiliaryVolumes" + "." + strconv.Itoa(i))

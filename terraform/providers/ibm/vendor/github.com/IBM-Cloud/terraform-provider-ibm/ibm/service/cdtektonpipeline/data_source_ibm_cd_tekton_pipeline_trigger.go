@@ -104,7 +104,7 @@ func DataSourceIBMCdTektonPipelineTrigger() *schema.Resource {
 			"worker": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.",
+				Description: "Details of the worker used to run the trigger.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
@@ -134,6 +134,11 @@ func DataSourceIBMCdTektonPipelineTrigger() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Flag whether the trigger is enabled.",
+			},
+			"favorite": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Mark the trigger as a favorite.",
 			},
 			"source": &schema.Schema{
 				Type:        schema.TypeList,
@@ -338,6 +343,10 @@ func dataSourceIBMCdTektonPipelineTriggerRead(context context.Context, d *schema
 
 	if err = d.Set("enabled", trigger.Enabled); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting enabled: %s", err))
+	}
+
+	if err = d.Set("favorite", trigger.Favorite); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting favorite: %s", err))
 	}
 
 	source := []map[string]interface{}{}

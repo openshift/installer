@@ -29,6 +29,30 @@ func (o *ServiceBrokerAuthLogoutReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewServiceBrokerAuthLogoutBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 401:
+		result := NewServiceBrokerAuthLogoutUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceBrokerAuthLogoutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceBrokerAuthLogoutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewServiceBrokerAuthLogoutInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -36,7 +60,7 @@ func (o *ServiceBrokerAuthLogoutReader) ReadResponse(response runtime.ClientResp
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /auth/v1/logout] serviceBroker.auth.logout", response, response.Code())
 	}
 }
 
@@ -79,6 +103,11 @@ func (o *ServiceBrokerAuthLogoutOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the service broker auth logout o k response
+func (o *ServiceBrokerAuthLogoutOK) Code() int {
+	return 200
+}
+
 func (o *ServiceBrokerAuthLogoutOK) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutOK  %+v", 200, o.Payload)
 }
@@ -95,6 +124,278 @@ func (o *ServiceBrokerAuthLogoutOK) readResponse(response runtime.ClientResponse
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthLogoutBadRequest creates a ServiceBrokerAuthLogoutBadRequest with default headers values
+func NewServiceBrokerAuthLogoutBadRequest() *ServiceBrokerAuthLogoutBadRequest {
+	return &ServiceBrokerAuthLogoutBadRequest{}
+}
+
+/*
+ServiceBrokerAuthLogoutBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type ServiceBrokerAuthLogoutBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth logout bad request response has a 2xx status code
+func (o *ServiceBrokerAuthLogoutBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth logout bad request response has a 3xx status code
+func (o *ServiceBrokerAuthLogoutBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth logout bad request response has a 4xx status code
+func (o *ServiceBrokerAuthLogoutBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth logout bad request response has a 5xx status code
+func (o *ServiceBrokerAuthLogoutBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth logout bad request response a status code equal to that given
+func (o *ServiceBrokerAuthLogoutBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service broker auth logout bad request response
+func (o *ServiceBrokerAuthLogoutBadRequest) Code() int {
+	return 400
+}
+
+func (o *ServiceBrokerAuthLogoutBadRequest) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutBadRequest) String() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthLogoutBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthLogoutUnauthorized creates a ServiceBrokerAuthLogoutUnauthorized with default headers values
+func NewServiceBrokerAuthLogoutUnauthorized() *ServiceBrokerAuthLogoutUnauthorized {
+	return &ServiceBrokerAuthLogoutUnauthorized{}
+}
+
+/*
+ServiceBrokerAuthLogoutUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceBrokerAuthLogoutUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth logout unauthorized response has a 2xx status code
+func (o *ServiceBrokerAuthLogoutUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth logout unauthorized response has a 3xx status code
+func (o *ServiceBrokerAuthLogoutUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth logout unauthorized response has a 4xx status code
+func (o *ServiceBrokerAuthLogoutUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth logout unauthorized response has a 5xx status code
+func (o *ServiceBrokerAuthLogoutUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth logout unauthorized response a status code equal to that given
+func (o *ServiceBrokerAuthLogoutUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service broker auth logout unauthorized response
+func (o *ServiceBrokerAuthLogoutUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceBrokerAuthLogoutUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutUnauthorized) String() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthLogoutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthLogoutForbidden creates a ServiceBrokerAuthLogoutForbidden with default headers values
+func NewServiceBrokerAuthLogoutForbidden() *ServiceBrokerAuthLogoutForbidden {
+	return &ServiceBrokerAuthLogoutForbidden{}
+}
+
+/*
+ServiceBrokerAuthLogoutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceBrokerAuthLogoutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth logout forbidden response has a 2xx status code
+func (o *ServiceBrokerAuthLogoutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth logout forbidden response has a 3xx status code
+func (o *ServiceBrokerAuthLogoutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth logout forbidden response has a 4xx status code
+func (o *ServiceBrokerAuthLogoutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth logout forbidden response has a 5xx status code
+func (o *ServiceBrokerAuthLogoutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth logout forbidden response a status code equal to that given
+func (o *ServiceBrokerAuthLogoutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service broker auth logout forbidden response
+func (o *ServiceBrokerAuthLogoutForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceBrokerAuthLogoutForbidden) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutForbidden) String() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthLogoutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthLogoutNotFound creates a ServiceBrokerAuthLogoutNotFound with default headers values
+func NewServiceBrokerAuthLogoutNotFound() *ServiceBrokerAuthLogoutNotFound {
+	return &ServiceBrokerAuthLogoutNotFound{}
+}
+
+/*
+ServiceBrokerAuthLogoutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceBrokerAuthLogoutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth logout not found response has a 2xx status code
+func (o *ServiceBrokerAuthLogoutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth logout not found response has a 3xx status code
+func (o *ServiceBrokerAuthLogoutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth logout not found response has a 4xx status code
+func (o *ServiceBrokerAuthLogoutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth logout not found response has a 5xx status code
+func (o *ServiceBrokerAuthLogoutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth logout not found response a status code equal to that given
+func (o *ServiceBrokerAuthLogoutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service broker auth logout not found response
+func (o *ServiceBrokerAuthLogoutNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceBrokerAuthLogoutNotFound) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutNotFound) String() string {
+	return fmt.Sprintf("[GET /auth/v1/logout][%d] serviceBrokerAuthLogoutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthLogoutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthLogoutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 
@@ -138,6 +439,11 @@ func (o *ServiceBrokerAuthLogoutInternalServerError) IsServerError() bool {
 // IsCode returns true when this service broker auth logout internal server error response a status code equal to that given
 func (o *ServiceBrokerAuthLogoutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the service broker auth logout internal server error response
+func (o *ServiceBrokerAuthLogoutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *ServiceBrokerAuthLogoutInternalServerError) Error() string {

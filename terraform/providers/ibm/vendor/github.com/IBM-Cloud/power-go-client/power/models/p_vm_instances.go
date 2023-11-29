@@ -85,6 +85,11 @@ func (m *PVMInstances) contextValidatePvmInstances(ctx context.Context, formats 
 	for i := 0; i < len(m.PvmInstances); i++ {
 
 		if m.PvmInstances[i] != nil {
+
+			if swag.IsZero(m.PvmInstances[i]) { // not required
+				return nil
+			}
+
 			if err := m.PvmInstances[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))

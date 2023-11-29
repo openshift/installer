@@ -66,7 +66,7 @@ func (o *InternalV1StorageRegionsThresholdsPutReader) ReadResponse(response runt
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds] internal.v1.storage.regions.thresholds.put", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsServerError() bool {
 // IsCode returns true when this internal v1 storage regions thresholds put accepted response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsPutAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds put accepted response
+func (o *InternalV1StorageRegionsThresholdsPutAccepted) Code() int {
+	return 202
 }
 
 func (o *InternalV1StorageRegionsThresholdsPutAccepted) Error() string {
@@ -172,6 +177,11 @@ func (o *InternalV1StorageRegionsThresholdsPutBadRequest) IsCode(code int) bool 
 	return code == 400
 }
 
+// Code gets the status code for the internal v1 storage regions thresholds put bad request response
+func (o *InternalV1StorageRegionsThresholdsPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsServerError() bool
 // IsCode returns true when this internal v1 storage regions thresholds put unauthorized response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds put unauthorized response
+func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *InternalV1StorageRegionsThresholdsPutUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *InternalV1StorageRegionsThresholdsPutForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the internal v1 storage regions thresholds put forbidden response
+func (o *InternalV1StorageRegionsThresholdsPutForbidden) Code() int {
+	return 403
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *InternalV1StorageRegionsThresholdsPutConflict) IsServerError() bool {
 // IsCode returns true when this internal v1 storage regions thresholds put conflict response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsPutConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds put conflict response
+func (o *InternalV1StorageRegionsThresholdsPutConflict) Code() int {
+	return 409
 }
 
 func (o *InternalV1StorageRegionsThresholdsPutConflict) Error() string {
@@ -424,6 +449,11 @@ func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) IsCode(code i
 	return code == 422
 }
 
+// Code gets the status code for the internal v1 storage regions thresholds put unprocessable entity response
+func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *InternalV1StorageRegionsThresholdsPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsServerError
 // IsCode returns true when this internal v1 storage regions thresholds put internal server error response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds put internal server error response
+func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *InternalV1StorageRegionsThresholdsPutInternalServerError) Error() string {

@@ -166,6 +166,59 @@ func DataSourceIBMIsBackupPolicies() *schema.Resource {
 							Computed:    true,
 							Description: "The type of resource referenced.",
 						},
+						"health_reasons": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current health_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
+						"health_state": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource",
+						},
+						"scope": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The scope for this backup policy.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this enterprise.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this enterprise or account.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -298,8 +351,56 @@ func dataSourceBackupPolicyCollectionBackupPoliciesToMap(backupPoliciesItem vpcv
 	if backupPoliciesItem.ResourceType != nil {
 		backupPoliciesMap["resource_type"] = backupPoliciesItem.ResourceType
 	}
+	if backupPoliciesItem.HealthReasons != nil {
+		healthReasonsList := []map[string]interface{}{}
+		for _, healthReasonsItem := range backupPoliciesItem.HealthReasons {
+			healthReasonsList = append(healthReasonsList, dataSourceBackupPolicyCollectionPoliciesHealthReasonsToMap(healthReasonsItem))
+		}
+		backupPoliciesMap["health_reasons"] = healthReasonsList
+	}
+	if backupPoliciesItem.HealthState != nil {
+		backupPoliciesMap["health_state"] = backupPoliciesItem.HealthState
+	}
+	if backupPoliciesItem.Scope != nil {
+		scopeList := []map[string]interface{}{}
+		scopeMap := dataSourceBackupPolicyCollectionBackupPoliciesScopeToMap(*backupPoliciesItem.Scope.(*vpcv1.BackupPolicyScope))
+		scopeList = append(scopeList, scopeMap)
+		backupPoliciesMap["scope"] = scopeList
+	}
 
 	return backupPoliciesMap
+}
+
+func dataSourceBackupPolicyCollectionPoliciesHealthReasonsToMap(statusReasonsItem vpcv1.BackupPolicyHealthReason) (healthReasonsMap map[string]interface{}) {
+	healthReasonsMap = map[string]interface{}{}
+
+	if statusReasonsItem.Code != nil {
+		healthReasonsMap["code"] = statusReasonsItem.Code
+	}
+	if statusReasonsItem.Message != nil {
+		healthReasonsMap["message"] = statusReasonsItem.Message
+	}
+	if statusReasonsItem.MoreInfo != nil {
+		healthReasonsMap["more_info"] = statusReasonsItem.MoreInfo
+	}
+
+	return healthReasonsMap
+}
+
+func dataSourceBackupPolicyCollectionBackupPoliciesScopeToMap(scopeItem vpcv1.BackupPolicyScope) (scopeMap map[string]interface{}) {
+	scopeMap = map[string]interface{}{}
+
+	if scopeItem.CRN != nil {
+		scopeMap["crn"] = scopeItem.CRN
+	}
+	if scopeItem.ID != nil {
+		scopeMap["id"] = scopeItem.ID
+	}
+	if scopeItem.ResourceType != nil {
+		scopeMap["resource_type"] = scopeItem.ResourceType
+	}
+
+	return scopeMap
 }
 
 func dataSourceBackupPolicyCollectionBackupPoliciesPlansToMap(plansItem vpcv1.BackupPolicyPlanReference) (plansMap map[string]interface{}) {

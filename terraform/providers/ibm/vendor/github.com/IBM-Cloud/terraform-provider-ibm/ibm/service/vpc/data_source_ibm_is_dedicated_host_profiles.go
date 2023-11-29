@@ -245,6 +245,11 @@ func DataSourceIbmIsDedicatedHostProfiles() *schema.Resource {
 								},
 							},
 						},
+						"status": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The status of the dedicated host profile.",
+						},
 						"vcpu_architecture": {
 							Type: schema.TypeList,
 
@@ -466,6 +471,9 @@ func dataSourceDedicatedHostProfileCollectionProfilesToMap(profilesItem vpcv1.De
 		socketCountMap := dataSourceDedicatedHostProfileCollectionProfilesSocketCountToMap(*profilesItem.SocketCount.(*vpcv1.DedicatedHostProfileSocket))
 		socketCountList = append(socketCountList, socketCountMap)
 		profilesMap["socket_count"] = socketCountList
+	}
+	if profilesItem.Status != nil {
+		profilesMap["status"] = *profilesItem.Status
 	}
 	if profilesItem.SupportedInstanceProfiles != nil {
 		supportedInstanceProfilesList := []map[string]interface{}{}

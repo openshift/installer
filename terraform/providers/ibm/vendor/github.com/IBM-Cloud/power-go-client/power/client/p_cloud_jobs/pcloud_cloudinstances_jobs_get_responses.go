@@ -60,7 +60,7 @@ func (o *PcloudCloudinstancesJobsGetReader) ReadResponse(response runtime.Client
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}] pcloud.cloudinstances.jobs.get", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudCloudinstancesJobsGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs get o k response a status code equal to that given
 func (o *PcloudCloudinstancesJobsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs get o k response
+func (o *PcloudCloudinstancesJobsGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesJobsGetOK) Error() string {
@@ -166,6 +171,11 @@ func (o *PcloudCloudinstancesJobsGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs get bad request response
+func (o *PcloudCloudinstancesJobsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudCloudinstancesJobsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsGetBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *PcloudCloudinstancesJobsGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs get unauthorized response a status code equal to that given
 func (o *PcloudCloudinstancesJobsGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs get unauthorized response
+func (o *PcloudCloudinstancesJobsGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudCloudinstancesJobsGetUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *PcloudCloudinstancesJobsGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs get forbidden response
+func (o *PcloudCloudinstancesJobsGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudCloudinstancesJobsGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsGetForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *PcloudCloudinstancesJobsGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs get not found response
+func (o *PcloudCloudinstancesJobsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudCloudinstancesJobsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsGetNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *PcloudCloudinstancesJobsGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs get internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesJobsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs get internal server error response
+func (o *PcloudCloudinstancesJobsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesJobsGetInternalServerError) Error() string {

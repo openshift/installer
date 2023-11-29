@@ -41,6 +41,18 @@ func (o *PcloudPvminstancesClonePostReader) ReadResponse(response runtime.Client
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesClonePostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesClonePostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudPvminstancesClonePostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +72,7 @@ func (o *PcloudPvminstancesClonePostReader) ReadResponse(response runtime.Client
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone] pcloud.pvminstances.clone.post", response, response.Code())
 	}
 }
 
@@ -101,6 +113,11 @@ func (o *PcloudPvminstancesClonePostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances clone post accepted response a status code equal to that given
 func (o *PcloudPvminstancesClonePostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud pvminstances clone post accepted response
+func (o *PcloudPvminstancesClonePostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudPvminstancesClonePostAccepted) Error() string {
@@ -166,6 +183,11 @@ func (o *PcloudPvminstancesClonePostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud pvminstances clone post bad request response
+func (o *PcloudPvminstancesClonePostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudPvminstancesClonePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostBadRequest  %+v", 400, o.Payload)
 }
@@ -229,6 +251,11 @@ func (o *PcloudPvminstancesClonePostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances clone post unauthorized response
+func (o *PcloudPvminstancesClonePostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesClonePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostUnauthorized  %+v", 401, o.Payload)
 }
@@ -242,6 +269,142 @@ func (o *PcloudPvminstancesClonePostUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudPvminstancesClonePostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesClonePostForbidden creates a PcloudPvminstancesClonePostForbidden with default headers values
+func NewPcloudPvminstancesClonePostForbidden() *PcloudPvminstancesClonePostForbidden {
+	return &PcloudPvminstancesClonePostForbidden{}
+}
+
+/*
+PcloudPvminstancesClonePostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesClonePostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances clone post forbidden response has a 2xx status code
+func (o *PcloudPvminstancesClonePostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances clone post forbidden response has a 3xx status code
+func (o *PcloudPvminstancesClonePostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances clone post forbidden response has a 4xx status code
+func (o *PcloudPvminstancesClonePostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances clone post forbidden response has a 5xx status code
+func (o *PcloudPvminstancesClonePostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances clone post forbidden response a status code equal to that given
+func (o *PcloudPvminstancesClonePostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances clone post forbidden response
+func (o *PcloudPvminstancesClonePostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesClonePostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesClonePostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesClonePostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesClonePostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesClonePostNotFound creates a PcloudPvminstancesClonePostNotFound with default headers values
+func NewPcloudPvminstancesClonePostNotFound() *PcloudPvminstancesClonePostNotFound {
+	return &PcloudPvminstancesClonePostNotFound{}
+}
+
+/*
+PcloudPvminstancesClonePostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesClonePostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances clone post not found response has a 2xx status code
+func (o *PcloudPvminstancesClonePostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances clone post not found response has a 3xx status code
+func (o *PcloudPvminstancesClonePostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances clone post not found response has a 4xx status code
+func (o *PcloudPvminstancesClonePostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances clone post not found response has a 5xx status code
+func (o *PcloudPvminstancesClonePostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances clone post not found response a status code equal to that given
+func (o *PcloudPvminstancesClonePostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances clone post not found response
+func (o *PcloudPvminstancesClonePostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudPvminstancesClonePostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesClonePostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesClonePostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesClonePostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -290,6 +453,11 @@ func (o *PcloudPvminstancesClonePostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances clone post conflict response a status code equal to that given
 func (o *PcloudPvminstancesClonePostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud pvminstances clone post conflict response
+func (o *PcloudPvminstancesClonePostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudPvminstancesClonePostConflict) Error() string {
@@ -355,6 +523,11 @@ func (o *PcloudPvminstancesClonePostUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud pvminstances clone post unprocessable entity response
+func (o *PcloudPvminstancesClonePostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesClonePostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/clone][%d] pcloudPvminstancesClonePostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -416,6 +589,11 @@ func (o *PcloudPvminstancesClonePostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances clone post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesClonePostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances clone post internal server error response
+func (o *PcloudPvminstancesClonePostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesClonePostInternalServerError) Error() string {

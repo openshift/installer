@@ -45,6 +45,9 @@ func ResourceIBMContainerIngressSecretOpaque() *schema.Resource {
 				Required:    true,
 				Description: "Secret name",
 				ForceNew:    true,
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_ingress_secret_opaque",
+					"secret_name"),
 			},
 			"secret_namespace": {
 				Type:        schema.TypeString,
@@ -72,6 +75,16 @@ func ResourceIBMContainerIngressSecretOpaque() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of the secret",
+			},
+			"update_secret": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Updates secret from secrets manager if value is changed (increment each usage)",
+			},
+			"last_updated_timestamp": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Timestamp secret was last updated",
 			},
 			"fields": {
 				Type:        schema.TypeSet,
@@ -121,6 +134,16 @@ func ResourceIBMContainerIngressSecretOpaqueValidator() *validate.ResourceValida
 			Required:                   true,
 			CloudDataType:              "cluster",
 			CloudDataRange:             []string{"resolved_to:id"}})
+
+	validateSchema = append(validateSchema, validate.ValidateSchema{
+		Identifier:                 "secret_name",
+		ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+		Type:                       validate.TypeString,
+		Required:                   true,
+		Regexp:                     `^([a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)$`,
+		MinValueLength:             1,
+		MaxValueLength:             63,
+	})
 
 	iBMContainerIngressInstanceValidator := validate.ResourceValidator{ResourceName: "ibm_container_ingress_secret_opaque", Schema: validateSchema}
 	return &iBMContainerIngressInstanceValidator
@@ -205,6 +228,7 @@ func resourceIBMContainerIngressSecretOpaqueRead(d *schema.ResourceData, meta in
 	d.Set("persistence", ingressSecretConfig.Persistence)
 	d.Set("user_managed", ingressSecretConfig.UserManaged)
 	d.Set("status", ingressSecretConfig.Status)
+	d.Set("last_updated_timestamp", ingressSecretConfig.LastUpdatedTimestamp)
 
 	if len(ingressSecretConfig.Fields) > 0 {
 		d.Set("fields", flex.FlattenOpaqueSecret(ingressSecretConfig.Fields))
@@ -261,6 +285,7 @@ func resourceIBMContainerIngressSecretOpaqueUpdate(d *schema.ResourceData, meta 
 		Namespace: secretNamespace,
 	}
 
+	ingressAPI := ingressClient.Ingresses()
 	if d.HasChange("fields") {
 		oldList, newList := d.GetChange("fields")
 
@@ -276,7 +301,6 @@ func resourceIBMContainerIngressSecretOpaqueUpdate(d *schema.ResourceData, meta 
 		remove := os.Difference(ns).List()
 		add := ns.Difference(os).List()
 
-		ingressAPI := ingressClient.Ingresses()
 		if len(remove) > 0 {
 			actualSecret, err := ingressAPI.GetIngressSecret(cluster, secretName, secretNamespace)
 			if err != nil {
@@ -342,8 +366,13 @@ func resourceIBMContainerIngressSecretOpaqueUpdate(d *schema.ResourceData, meta 
 				return err
 			}
 		}
+	} else if d.HasChange("update_secret") {
+		// user wants to force an upstream secret update from secrets manager onto kube cluster w/out changing crn
+		_, err = ingressAPI.UpdateIngressSecret(params)
+		if err != nil {
+			return err
+		}
 	}
-
 	return resourceIBMContainerIngressSecretOpaqueRead(d, meta)
 }
 

@@ -12,7 +12,6 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/vpc-beta-go-sdk/vpcbetav1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -127,7 +126,7 @@ func resourceIBMISSecurityGroupTargetCreate(d *schema.ResourceData, meta interfa
 			return errsgt
 		}
 	} else if crn != nil && *crn != "" && strings.Contains(*crn, "virtual_network_interfaces") {
-		vpcClient, err := meta.(conns.ClientSession).VpcV1BetaAPI()
+		vpcClient, err := meta.(conns.ClientSession).VpcV1API()
 		if err != nil {
 			return err
 		}
@@ -338,7 +337,7 @@ func isLBSgTargetRefreshFunc(sess *vpcv1.VpcV1, lbId string) resource.StateRefre
 	}
 }
 
-func isWaitForVNISgTargetCreateAvailable(sess *vpcbetav1.VpcbetaV1, vniId string, timeout time.Duration) (interface{}, error) {
+func isWaitForVNISgTargetCreateAvailable(sess *vpcv1.VpcV1, vniId string, timeout time.Duration) (interface{}, error) {
 	log.Printf("Waiting for virtual network interface (%s) to be available.", vniId)
 
 	stateConf := &resource.StateChangeConf{
@@ -353,10 +352,10 @@ func isWaitForVNISgTargetCreateAvailable(sess *vpcbetav1.VpcbetaV1, vniId string
 	return stateConf.WaitForState()
 }
 
-func isVNISgTargetRefreshFunc(vpcClient *vpcbetav1.VpcbetaV1, vniId string) resource.StateRefreshFunc {
+func isVNISgTargetRefreshFunc(vpcClient *vpcv1.VpcV1, vniId string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 
-		getVNIOptions := &vpcbetav1.GetVirtualNetworkInterfaceOptions{
+		getVNIOptions := &vpcv1.GetVirtualNetworkInterfaceOptions{
 			ID: &vniId,
 		}
 		vni, response, err := vpcClient.GetVirtualNetworkInterface(getVNIOptions)

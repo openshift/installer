@@ -61,10 +61,66 @@ func DataSourceIBMIsVPNServerRoute() *schema.Resource {
 				Computed:    true,
 				Description: "The URL for this VPN route.",
 			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource.- `ok`: Healthy- `degraded`: Suffering from compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+			},
+			"health_reasons": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
 			"lifecycle_state": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The lifecycle state of the VPN route.",
+			},
+			"lifecycle_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
 			},
 			"resource_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -154,8 +210,21 @@ func dataSourceIBMIsVPNServerRouteRead(context context.Context, d *schema.Resour
 	if err = d.Set("href", vpnServerRoute.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting href: %s", err))
 	}
+	if err = d.Set("health_state", vpnServerRoute.HealthState); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_state: %s", err))
+	}
+	if vpnServerRoute.HealthReasons != nil {
+		if err := d.Set("health_reasons", resourceVPNServerRouteFlattenHealthReasons(vpnServerRoute.HealthReasons)); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_reasons: %s", err))
+		}
+	}
 	if err = d.Set("lifecycle_state", vpnServerRoute.LifecycleState); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_state: %s", err))
+	}
+	if vpnServerRoute.LifecycleReasons != nil {
+		if err := d.Set("lifecycle_reasons", resourceVPNServerRouteFlattenLifecycleReasons(vpnServerRoute.LifecycleReasons)); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_reasons: %s", err))
+		}
 	}
 	if err = d.Set("name", vpnServerRoute.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))

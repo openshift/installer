@@ -88,6 +88,11 @@ func DataSourceIBMContainerClusterConfig() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 			},
+			"endpoint_type": {
+				Description: "It can specify what kind of server URL will be used for the cluster context",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 			"config_file_path": {
 				Description: "The absolute path to the kubernetes config yml file ",
 				Type:        schema.TypeString,
@@ -151,6 +156,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 	admin := d.Get("admin").(bool)
 	configDir := d.Get("config_dir").(string)
 	network := d.Get("network").(bool)
+	endpointType := d.Get("endpoint_type").(string)
 
 	clusterId := "Cluster_Config_" + name
 	conns.IbmMutexKV.Lock(clusterId)
@@ -170,7 +176,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 		expectedDir := v1.ComputeClusterConfigDir(configDir, name, admin)
 		configPath = filepath.Join(expectedDir, "config.yml")
 		if !helpers.FileExists(configPath) {
-			return fmt.Errorf(`[ERROR] Couldn't  find the cluster config at expected path %s. Please set "download" to true to download the new config`, configPath)
+			return fmt.Errorf(`[ERROR] Couldn't find the cluster config at expected path %s. Please set "download" to true to download the new config`, configPath)
 		}
 		d.Set("config_file_path", configPath)
 
@@ -185,7 +191,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 			var clusterKeyDetails v1.ClusterKeyInfo
 			err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 				var err error
-				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv)
+				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv, endpointType)
 				if err != nil {
 					log.Printf("[DEBUG] Failed to fetch cluster config err %s", err)
 					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
@@ -200,7 +206,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 				return nil
 			})
 			if conns.IsResourceTimeoutError(err) {
-				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv)
+				calicoConfigFilePath, clusterKeyDetails, err = csAPI.StoreConfigDetail(name, configDir, admin || true, network, targetEnv, endpointType)
 			}
 			if err != nil {
 				return fmt.Errorf("[ERROR] Error downloading the cluster config [%s]: %s", name, err)
@@ -217,7 +223,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 			var clusterKeyDetails v1.ClusterKeyInfo
 			err = resource.Retry(5*time.Minute, func() *resource.RetryError {
 				var err error
-				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv)
+				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv, endpointType)
 				if err != nil {
 					log.Printf("[DEBUG] Failed to fetch cluster config err %s", err)
 					if strings.Contains(err.Error(), "Could not login to openshift account runtime error:") {
@@ -232,7 +238,7 @@ func dataSourceIBMContainerClusterConfigRead(d *schema.ResourceData, meta interf
 				return nil
 			})
 			if conns.IsResourceTimeoutError(err) {
-				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv)
+				clusterKeyDetails, err = csAPI.GetClusterConfigDetail(name, configDir, admin, targetEnv, endpointType)
 			}
 			if err != nil {
 				return fmt.Errorf("[ERROR] Error downloading the cluster config [%s]: %s", name, err)

@@ -36,7 +36,7 @@ func ResourceIBMMetricsRouterTarget() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_metrics_router_target", "destination_crn"),
-				Description:  "The CRN of a destination service instance or resource.",
+				Description:  "The CRN of a destination service instance or resource. Ensure you have a service authorization between IBM Cloud Metrics Routing and your Cloud resource. Read [S2S authorization](https://cloud.ibm.com/docs/metrics-router?topic=metrics-router-target-monitoring&interface=ui#target-monitoring-ui) for details.",
 			},
 			"region": &schema.Schema{
 				Type:         schema.TypeString,

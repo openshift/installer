@@ -41,6 +41,24 @@ func (o *ServiceInstanceUpdateReader) ReadResponse(response runtime.ClientRespon
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceInstanceUpdateUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceInstanceUpdateForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceInstanceUpdateNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewServiceInstanceUpdateUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -48,7 +66,7 @@ func (o *ServiceInstanceUpdateReader) ReadResponse(response runtime.ClientRespon
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PATCH /v2/service_instances/{instance_id}] serviceInstance.update", response, response.Code())
 	}
 }
 
@@ -89,6 +107,11 @@ func (o *ServiceInstanceUpdateOK) IsServerError() bool {
 // IsCode returns true when this service instance update o k response a status code equal to that given
 func (o *ServiceInstanceUpdateOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the service instance update o k response
+func (o *ServiceInstanceUpdateOK) Code() int {
+	return 200
 }
 
 func (o *ServiceInstanceUpdateOK) Error() string {
@@ -150,6 +173,11 @@ func (o *ServiceInstanceUpdateAccepted) IsServerError() bool {
 // IsCode returns true when this service instance update accepted response a status code equal to that given
 func (o *ServiceInstanceUpdateAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the service instance update accepted response
+func (o *ServiceInstanceUpdateAccepted) Code() int {
+	return 202
 }
 
 func (o *ServiceInstanceUpdateAccepted) Error() string {
@@ -215,6 +243,11 @@ func (o *ServiceInstanceUpdateBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the service instance update bad request response
+func (o *ServiceInstanceUpdateBadRequest) Code() int {
+	return 400
+}
+
 func (o *ServiceInstanceUpdateBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateBadRequest  %+v", 400, o.Payload)
 }
@@ -228,6 +261,210 @@ func (o *ServiceInstanceUpdateBadRequest) GetPayload() *models.Error {
 }
 
 func (o *ServiceInstanceUpdateBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceUpdateUnauthorized creates a ServiceInstanceUpdateUnauthorized with default headers values
+func NewServiceInstanceUpdateUnauthorized() *ServiceInstanceUpdateUnauthorized {
+	return &ServiceInstanceUpdateUnauthorized{}
+}
+
+/*
+ServiceInstanceUpdateUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceInstanceUpdateUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance update unauthorized response has a 2xx status code
+func (o *ServiceInstanceUpdateUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance update unauthorized response has a 3xx status code
+func (o *ServiceInstanceUpdateUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance update unauthorized response has a 4xx status code
+func (o *ServiceInstanceUpdateUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance update unauthorized response has a 5xx status code
+func (o *ServiceInstanceUpdateUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance update unauthorized response a status code equal to that given
+func (o *ServiceInstanceUpdateUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service instance update unauthorized response
+func (o *ServiceInstanceUpdateUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceInstanceUpdateUnauthorized) Error() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceUpdateUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceUpdateForbidden creates a ServiceInstanceUpdateForbidden with default headers values
+func NewServiceInstanceUpdateForbidden() *ServiceInstanceUpdateForbidden {
+	return &ServiceInstanceUpdateForbidden{}
+}
+
+/*
+ServiceInstanceUpdateForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceInstanceUpdateForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance update forbidden response has a 2xx status code
+func (o *ServiceInstanceUpdateForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance update forbidden response has a 3xx status code
+func (o *ServiceInstanceUpdateForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance update forbidden response has a 4xx status code
+func (o *ServiceInstanceUpdateForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance update forbidden response has a 5xx status code
+func (o *ServiceInstanceUpdateForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance update forbidden response a status code equal to that given
+func (o *ServiceInstanceUpdateForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service instance update forbidden response
+func (o *ServiceInstanceUpdateForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceInstanceUpdateForbidden) Error() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceUpdateForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceUpdateNotFound creates a ServiceInstanceUpdateNotFound with default headers values
+func NewServiceInstanceUpdateNotFound() *ServiceInstanceUpdateNotFound {
+	return &ServiceInstanceUpdateNotFound{}
+}
+
+/*
+ServiceInstanceUpdateNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceInstanceUpdateNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance update not found response has a 2xx status code
+func (o *ServiceInstanceUpdateNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance update not found response has a 3xx status code
+func (o *ServiceInstanceUpdateNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance update not found response has a 4xx status code
+func (o *ServiceInstanceUpdateNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance update not found response has a 5xx status code
+func (o *ServiceInstanceUpdateNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance update not found response a status code equal to that given
+func (o *ServiceInstanceUpdateNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service instance update not found response
+func (o *ServiceInstanceUpdateNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceInstanceUpdateNotFound) Error() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/service_instances/{instance_id}][%d] serviceInstanceUpdateNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceUpdateNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceUpdateNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -276,6 +513,11 @@ func (o *ServiceInstanceUpdateUnprocessableEntity) IsServerError() bool {
 // IsCode returns true when this service instance update unprocessable entity response a status code equal to that given
 func (o *ServiceInstanceUpdateUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
+}
+
+// Code gets the status code for the service instance update unprocessable entity response
+func (o *ServiceInstanceUpdateUnprocessableEntity) Code() int {
+	return 422
 }
 
 func (o *ServiceInstanceUpdateUnprocessableEntity) Error() string {

@@ -7,14 +7,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 func ResourceIBMCdToolchainToolGitlab() *schema.Resource {
@@ -33,6 +36,12 @@ func ResourceIBMCdToolchainToolGitlab() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_gitlab", "toolchain_id"),
 				Description:  "ID of the toolchain to bind the tool to.",
 			},
+			"name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_gitlab", "name"),
+				Description:  "Name of the tool.",
+			},
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				MinItems:    1,
@@ -44,7 +53,7 @@ func ResourceIBMCdToolchainToolGitlab() *schema.Resource {
 						"git_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Set this value to 'gitlab' for gitlab.com, the GUID of an existing custom GitLab server, or 'gitlabcustom'.",
+							Description: "Set this value to 'gitlab' for gitlab.com, or 'gitlabcustom' for a custom GitLab server.",
 						},
 						"title": &schema.Schema{
 							Type:        schema.TypeString,
@@ -155,7 +164,7 @@ func ResourceIBMCdToolchainToolGitlab() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
-							Description: "Set this value to 'gitlab' for gitlab.com, the GUID of an existing custom GitLab server, or 'gitlabcustom'.",
+							Description: "Set this value to 'gitlab' for gitlab.com, or 'gitlabcustom' for a custom GitLab server.",
 						},
 						"title": &schema.Schema{
 							Type:        schema.TypeString,
@@ -215,12 +224,6 @@ func ResourceIBMCdToolchainToolGitlab() *schema.Resource {
 						},
 					},
 				},
-			},
-			"name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_gitlab", "name"),
-				Description:  "Name of the tool.",
 			},
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -353,7 +356,21 @@ func resourceIBMCdToolchainToolGitlabRead(context context.Context, d *schema.Res
 	getToolByIDOptions.SetToolchainID(parts[0])
 	getToolByIDOptions.SetToolID(parts[1])
 
-	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	var toolchainTool *cdtoolchainv2.ToolchainTool
+	var response *core.DetailedResponse
+	err = resource.RetryContext(context, 10*time.Second, func() *resource.RetryError {
+		toolchainTool, response, err = cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+		if err != nil || toolchainTool == nil {
+			if response != nil && response.StatusCode == 404 {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if conns.IsResourceTimeoutError(err) {
+		toolchainTool, response, err = cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	}
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -366,15 +383,17 @@ func resourceIBMCdToolchainToolGitlabRead(context context.Context, d *schema.Res
 	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
 	}
+	if !core.IsNil(toolchainTool.Name) {
+		if err = d.Set("name", toolchainTool.Name); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		}
+	}
 	remapFields := map[string]string{
 		"toolchain_issues_enabled": "has_issues",
 	}
 	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolGitlab(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
-	}
-	if err = d.Set("name", toolchainTool.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
@@ -431,17 +450,17 @@ func resourceIBMCdToolchainToolGitlabUpdate(context context.Context, d *schema.R
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "toolchain_id"))
 	}
+	if d.HasChange("name") {
+		newName := d.Get("name").(string)
+		patchVals.Name = &newName
+		hasChange = true
+	}
 	if d.HasChange("parameters") {
 		remapFields := map[string]string{
 			"toolchain_issues_enabled": "has_issues",
 		}
 		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolGitlab(), remapFields)
 		patchVals.Parameters = parameters
-		hasChange = true
-	}
-	if d.HasChange("name") {
-		newName := d.Get("name").(string)
-		patchVals.Name = &newName
 		hasChange = true
 	}
 

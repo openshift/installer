@@ -149,6 +149,11 @@ func (m *DHCPServerDetail) contextValidateLeases(ctx context.Context, formats st
 	for i := 0; i < len(m.Leases); i++ {
 
 		if m.Leases[i] != nil {
+
+			if swag.IsZero(m.Leases[i]) { // not required
+				return nil
+			}
+
 			if err := m.Leases[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("leases" + "." + strconv.Itoa(i))
@@ -167,6 +172,7 @@ func (m *DHCPServerDetail) contextValidateLeases(ctx context.Context, formats st
 func (m *DHCPServerDetail) contextValidateNetwork(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Network != nil {
+
 		if err := m.Network.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("network")

@@ -66,7 +66,7 @@ func (o *PcloudPvminstancesVolumesPostReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}] pcloud.pvminstances.volumes.post", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudPvminstancesVolumesPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes post o k response a status code equal to that given
 func (o *PcloudPvminstancesVolumesPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances volumes post o k response
+func (o *PcloudPvminstancesVolumesPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesVolumesPostOK) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudPvminstancesVolumesPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes post bad request response a status code equal to that given
 func (o *PcloudPvminstancesVolumesPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances volumes post bad request response
+func (o *PcloudPvminstancesVolumesPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesVolumesPostBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudPvminstancesVolumesPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances volumes post unauthorized response
+func (o *PcloudPvminstancesVolumesPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesVolumesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudPvminstancesVolumesPostForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes post forbidden response a status code equal to that given
 func (o *PcloudPvminstancesVolumesPostForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances volumes post forbidden response
+func (o *PcloudPvminstancesVolumesPostForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesVolumesPostForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudPvminstancesVolumesPostNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances volumes post not found response
+func (o *PcloudPvminstancesVolumesPostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesVolumesPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesPostNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudPvminstancesVolumesPostConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud pvminstances volumes post conflict response
+func (o *PcloudPvminstancesVolumesPostConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudPvminstancesVolumesPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesPostConflict  %+v", 409, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudPvminstancesVolumesPostInternalServerError) IsServerError() bool 
 // IsCode returns true when this pcloud pvminstances volumes post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesVolumesPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances volumes post internal server error response
+func (o *PcloudPvminstancesVolumesPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesVolumesPostInternalServerError) Error() string {

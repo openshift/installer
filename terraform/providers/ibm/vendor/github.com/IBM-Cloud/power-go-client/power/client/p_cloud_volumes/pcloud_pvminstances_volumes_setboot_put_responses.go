@@ -60,7 +60,7 @@ func (o *PcloudPvminstancesVolumesSetbootPutReader) ReadResponse(response runtim
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot] pcloud.pvminstances.volumes.setboot.put", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes setboot put o k response a status code equal to that given
 func (o *PcloudPvminstancesVolumesSetbootPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances volumes setboot put o k response
+func (o *PcloudPvminstancesVolumesSetbootPutOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutOK) Error() string {
@@ -162,6 +167,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes setboot put bad request response a status code equal to that given
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances volumes setboot put bad request response
+func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutBadRequest) Error() string {
@@ -227,6 +237,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) IsCode(code int) bool 
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances volumes setboot put unauthorized response
+func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesVolumesSetbootPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutUnauthorized  %+v", 401, o.Payload)
 }
@@ -288,6 +303,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes setboot put forbidden response a status code equal to that given
 func (o *PcloudPvminstancesVolumesSetbootPutForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances volumes setboot put forbidden response
+func (o *PcloudPvminstancesVolumesSetbootPutForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutForbidden) Error() string {
@@ -353,6 +373,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances volumes setboot put not found response
+func (o *PcloudPvminstancesVolumesSetbootPutNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesVolumesSetbootPutNotFound) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}/setboot][%d] pcloudPvminstancesVolumesSetbootPutNotFound  %+v", 404, o.Payload)
 }
@@ -414,6 +439,11 @@ func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) IsServerError()
 // IsCode returns true when this pcloud pvminstances volumes setboot put internal server error response a status code equal to that given
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances volumes setboot put internal server error response
+func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesVolumesSetbootPutInternalServerError) Error() string {

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022, 2023 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtoolchain
@@ -34,7 +34,7 @@ func DataSourceIBMCdToolchain() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Toolchain description.",
+				Description: "Describes the toolchain.",
 			},
 			"account_id": &schema.Schema{
 				Type:        schema.TypeString,

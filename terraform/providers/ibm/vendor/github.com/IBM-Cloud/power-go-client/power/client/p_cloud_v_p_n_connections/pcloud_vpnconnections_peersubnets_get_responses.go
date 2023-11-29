@@ -60,7 +60,7 @@ func (o *PcloudVpnconnectionsPeersubnetsGetReader) ReadResponse(response runtime
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets] pcloud.vpnconnections.peersubnets.get", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections peersubnets get o k response a status code equal to that given
 func (o *PcloudVpnconnectionsPeersubnetsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud vpnconnections peersubnets get o k response
+func (o *PcloudVpnconnectionsPeersubnetsGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudVpnconnectionsPeersubnetsGetOK) Error() string {
@@ -166,6 +171,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud vpnconnections peersubnets get bad request response
+func (o *PcloudVpnconnectionsPeersubnetsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVpnconnectionsPeersubnetsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsGetBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections peersubnets get unauthorized response a status code equal to that given
 func (o *PcloudVpnconnectionsPeersubnetsGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud vpnconnections peersubnets get unauthorized response
+func (o *PcloudVpnconnectionsPeersubnetsGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudVpnconnectionsPeersubnetsGetUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud vpnconnections peersubnets get forbidden response
+func (o *PcloudVpnconnectionsPeersubnetsGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVpnconnectionsPeersubnetsGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsGetForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud vpnconnections peersubnets get not found response
+func (o *PcloudVpnconnectionsPeersubnetsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVpnconnectionsPeersubnetsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsGetNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *PcloudVpnconnectionsPeersubnetsGetInternalServerError) IsServerError() 
 // IsCode returns true when this pcloud vpnconnections peersubnets get internal server error response a status code equal to that given
 func (o *PcloudVpnconnectionsPeersubnetsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud vpnconnections peersubnets get internal server error response
+func (o *PcloudVpnconnectionsPeersubnetsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVpnconnectionsPeersubnetsGetInternalServerError) Error() string {

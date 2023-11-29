@@ -392,6 +392,7 @@ func (m *VPNConnection) ContextValidate(ctx context.Context, formats strfmt.Regi
 func (m *VPNConnection) contextValidateDeadPeerDetection(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.DeadPeerDetection != nil {
+
 		if err := m.DeadPeerDetection.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("deadPeerDetection")
@@ -408,6 +409,7 @@ func (m *VPNConnection) contextValidateDeadPeerDetection(ctx context.Context, fo
 func (m *VPNConnection) contextValidateIkePolicy(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IkePolicy != nil {
+
 		if err := m.IkePolicy.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ikePolicy")
@@ -424,6 +426,7 @@ func (m *VPNConnection) contextValidateIkePolicy(ctx context.Context, formats st
 func (m *VPNConnection) contextValidateIPSecPolicy(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.IPSecPolicy != nil {
+
 		if err := m.IPSecPolicy.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ipSecPolicy")
@@ -440,6 +443,7 @@ func (m *VPNConnection) contextValidateIPSecPolicy(ctx context.Context, formats 
 func (m *VPNConnection) contextValidatePeerGatewayAddress(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.PeerGatewayAddress != nil {
+
 		if err := m.PeerGatewayAddress.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("peerGatewayAddress")

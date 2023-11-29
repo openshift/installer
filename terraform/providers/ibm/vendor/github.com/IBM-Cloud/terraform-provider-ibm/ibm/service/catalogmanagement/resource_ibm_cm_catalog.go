@@ -360,6 +360,67 @@ func ResourceIBMCmCatalog() *schema.Resource {
 				Computed:    true,
 				Description: "The date-time this catalog was last updated.",
 			},
+			"target_account_contexts": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of target accounts contexts on this catalog.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"api_key": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "API key of the target account.",
+							Sensitive:   true,
+						},
+						"trusted_profile": &schema.Schema{
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							Description: "Trusted profile information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"trusted_profile_id": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Trusted profile ID.",
+									},
+									"catalog_crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "CRN of this catalog.",
+									},
+									"catalog_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of this catalog.",
+									},
+									"target_service_id": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "Target service ID.",
+									},
+								},
+							},
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Unique identifier/name for this target account context.",
+						},
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Label for this target account context.",
+						},
+						"project_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Project ID.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -425,6 +486,18 @@ func resourceIBMCmCatalogCreate(context context.Context, d *schema.ResourceData,
 	if _, ok := d.GetOk("kind"); ok {
 		createCatalogOptions.SetKind(d.Get("kind").(string))
 	}
+	if _, ok := d.GetOk("target_account_contexts"); ok {
+		var target_account_contexts []catalogmanagementv1.TargetAccountContext
+		for _, e := range d.Get("target_account_contexts").([]interface{}) {
+			value := e.(map[string]interface{})
+			targetAccountContextsItem, err := resourceIBMCmCatalogMapToTargetAccountContexts(nil, value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			target_account_contexts = append(target_account_contexts, *targetAccountContextsItem)
+		}
+		createCatalogOptions.SetTargetAccountContexts(target_account_contexts)
+	}
 
 	catalog, response, err := catalogManagementClient.CreateCatalogWithContext(context, createCatalogOptions)
 	if err != nil {
@@ -444,7 +517,6 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 	}
 
 	getCatalogOptions := &catalogmanagementv1.GetCatalogOptions{}
-
 	getCatalogOptions.SetCatalogIdentifier(d.Id())
 
 	catalog, response, err := catalogManagementClient.GetCatalogWithContext(context, getCatalogOptions)
@@ -457,6 +529,9 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("GetCatalogWithContext failed %s\n%s", err, response))
 	}
 
+	if err = d.Set("rev", catalog.Rev); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting rev: %s", err))
+	}
 	if err = d.Set("label", catalog.Label); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting label: %s", err))
 	}
@@ -535,6 +610,19 @@ func resourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData, m
 	if err = d.Set("updated", flex.DateTimeToString(catalog.Updated)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated: %s", err))
 	}
+	targetAccountContexts := []map[string]interface{}{}
+	if catalog.TargetAccountContexts != nil {
+		for _, tacItem := range catalog.TargetAccountContexts {
+			tacItemMap, err := resourceIBMCmCatalogTargetAccountContextToMap(&tacItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			targetAccountContexts = append(targetAccountContexts, tacItemMap)
+		}
+	}
+	if err = d.Set("target_account_contexts", targetAccountContexts); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting target_account_contexts: %s", err))
+	}
 
 	return nil
 }
@@ -545,10 +633,24 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	replaceCatalogOptions := &catalogmanagementv1.ReplaceCatalogOptions{}
+	getCatalogOptions := &catalogmanagementv1.GetCatalogOptions{}
+	getCatalogOptions.SetCatalogIdentifier(d.Id())
 
-	replaceCatalogOptions.SetCatalogIdentifier(d.Id())
-	replaceCatalogOptions.SetID(d.Id())
+	catalog, response, err := catalogManagementClient.GetCatalogWithContext(context, getCatalogOptions)
+	if err != nil {
+		if response != nil && response.StatusCode == 404 {
+			d.SetId("")
+			return nil
+		}
+		log.Printf("[DEBUG] GetCatalogWithContext failed %s\n%s", err, response)
+		return diag.FromErr(fmt.Errorf("GetCatalogWithContext failed %s\n%s", err, response))
+	}
+
+	replaceCatalogOptions := &catalogmanagementv1.ReplaceCatalogOptions{}
+	replaceCatalogOptions.SetCatalogIdentifier(*catalog.ID)
+	replaceCatalogOptions.SetID(*catalog.ID)
+	replaceCatalogOptions.SetRev(*catalog.Rev)
+
 	if _, ok := d.GetOk("label"); ok {
 		replaceCatalogOptions.SetLabel(d.Get("label").(string))
 	}
@@ -562,7 +664,7 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 		replaceCatalogOptions.SetCatalogBannerURL(d.Get("catalog_banner_url").(string))
 	}
 	if _, ok := d.GetOk("tags"); ok {
-		replaceCatalogOptions.SetTags(d.Get("tags").([]string))
+		replaceCatalogOptions.SetTags(SIToSS(d.Get("tags").([]interface{})))
 	}
 	if _, ok := d.GetOk("features"); ok {
 		var features []catalogmanagementv1.Feature
@@ -602,8 +704,20 @@ func resourceIBMCmCatalogUpdate(context context.Context, d *schema.ResourceData,
 	if _, ok := d.GetOk("kind"); ok {
 		replaceCatalogOptions.SetKind(d.Get("kind").(string))
 	}
+	if _, ok := d.GetOk("target_account_contexts"); ok {
+		var target_account_contexts []catalogmanagementv1.TargetAccountContext
+		for _, e := range d.Get("target_account_contexts").([]interface{}) {
+			value := e.(map[string]interface{})
+			targetAccountContextsItem, err := resourceIBMCmCatalogMapToTargetAccountContexts(catalog, value)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			target_account_contexts = append(target_account_contexts, *targetAccountContextsItem)
+		}
+		replaceCatalogOptions.SetTargetAccountContexts(target_account_contexts)
+	}
 
-	_, response, err := catalogManagementClient.ReplaceCatalogWithContext(context, replaceCatalogOptions)
+	_, response, err = catalogManagementClient.ReplaceCatalogWithContext(context, replaceCatalogOptions)
 	if err != nil {
 		log.Printf("[DEBUG] ReplaceCatalogWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("ReplaceCatalogWithContext failed %s\n%s", err, response))
@@ -640,6 +754,56 @@ func resourceIBMCmCatalogMapToFeature(modelMap map[string]interface{}) (*catalog
 	}
 	if modelMap["description"] != nil && modelMap["description"].(string) != "" {
 		model.Description = core.StringPtr(modelMap["description"].(string))
+	}
+	return model, nil
+}
+
+func resourceIBMCmCatalogMapToTargetAccountContexts(catalog *catalogmanagementv1.Catalog, modelMap map[string]interface{}) (*catalogmanagementv1.TargetAccountContext, error) {
+	model := &catalogmanagementv1.TargetAccountContext{}
+	if modelMap["api_key"] != nil && modelMap["api_key"].(string) != "" {
+		model.APIKey = core.StringPtr(modelMap["api_key"].(string))
+	}
+	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
+		model.Name = core.StringPtr(modelMap["name"].(string))
+	}
+	if modelMap["label"] != nil && modelMap["label"].(string) != "" {
+		model.Label = core.StringPtr(modelMap["label"].(string))
+	}
+	if modelMap["project_id"] != nil && modelMap["project_id"].(string) != "" {
+		model.ProjectID = core.StringPtr(modelMap["project_id"].(string))
+	}
+	if modelMap["trusted_profile"] != nil && len(modelMap["trusted_profile"].([]interface{})) > 0 {
+		var trustedProfile *catalogmanagementv1.TrustedProfileInfo
+		var err error
+		if modelMap["trusted_profile"].([]interface{})[0] != nil {
+			trustedProfile, err = resourceIBMCmCatalogMapToTrustedProfile(catalog, modelMap["trusted_profile"].([]interface{})[0].(map[string]interface{}))
+			if err != nil {
+				return model, err
+			}
+		}
+		model.TrustedProfile = trustedProfile
+	}
+	return model, nil
+}
+
+func resourceIBMCmCatalogMapToTrustedProfile(catalog *catalogmanagementv1.Catalog, modelMap map[string]interface{}) (*catalogmanagementv1.TrustedProfileInfo, error) {
+	model := &catalogmanagementv1.TrustedProfileInfo{}
+	if catalog != nil {
+		model.CatalogCRN = catalog.CRN
+		model.CatalogName = catalog.Label
+	} else {
+		if modelMap["catalog_crn"] != nil && modelMap["catalog_crn"].(string) != "" {
+			model.CatalogCRN = core.StringPtr(modelMap["catalog_crn"].(string))
+		}
+		if modelMap["catalog_name"] != nil && modelMap["catalog_name"].(string) != "" {
+			model.CatalogName = core.StringPtr(modelMap["catalog_name"].(string))
+		}
+	}
+	if modelMap["trusted_profile_id"] != nil && modelMap["trusted_profile_id"].(string) != "" {
+		model.TrustedProfileID = core.StringPtr(modelMap["trusted_profile_id"].(string))
+	}
+	if modelMap["target_service_id"] != nil && modelMap["target_service_id"].(string) != "" {
+		model.TargetServiceID = core.StringPtr(modelMap["target_service_id"].(string))
 	}
 	return model, nil
 }
@@ -820,6 +984,47 @@ func resourceIBMCmCatalogFeatureToMap(model *catalogmanagementv1.Feature) (map[s
 	}
 	if model.Description != nil {
 		modelMap["description"] = model.Description
+	}
+	return modelMap, nil
+}
+
+func resourceIBMCmCatalogTargetAccountContextToMap(model *catalogmanagementv1.TargetAccountContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.APIKey != nil {
+		modelMap["api_key"] = model.APIKey
+	}
+	if model.Name != nil {
+		modelMap["name"] = model.Name
+	}
+	if model.Label != nil {
+		modelMap["label"] = model.Label
+	}
+	if model.ProjectID != nil {
+		modelMap["project_id"] = model.ProjectID
+	}
+	if model.TrustedProfile != nil {
+		trustedProfileMap, err := resourceIBMCmCatalogTrustedProfileToMap(model.TrustedProfile)
+		if err != nil {
+			return modelMap, err
+		}
+		modelMap["trusted_profile"] = []map[string]interface{}{trustedProfileMap}
+	}
+	return modelMap, nil
+}
+
+func resourceIBMCmCatalogTrustedProfileToMap(model *catalogmanagementv1.TrustedProfileInfo) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.TrustedProfileID != nil {
+		modelMap["trusted_profile_id"] = model.TrustedProfileID
+	}
+	if model.CatalogCRN != nil {
+		modelMap["catalog_crn"] = model.CatalogCRN
+	}
+	if model.CatalogName != nil {
+		modelMap["catalog_name"] = model.CatalogName
+	}
+	if model.TargetServiceID != nil {
+		modelMap["target_service_id"] = model.TargetServiceID
 	}
 	return modelMap, nil
 }

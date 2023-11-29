@@ -2888,17 +2888,6 @@ func dataSourceIBMCmOfferingKindToMap(model *catalogmanagementv1.Kind) (map[stri
 		}
 		modelMap["versions"] = versions
 	}
-	if model.Plans != nil {
-		plans := []map[string]interface{}{}
-		for _, plansItem := range model.Plans {
-			plansItemMap, err := dataSourceIBMCmOfferingPlanToMap(&plansItem)
-			if err != nil {
-				return modelMap, err
-			}
-			plans = append(plans, plansItemMap)
-		}
-		modelMap["plans"] = plans
-	}
 	return modelMap, nil
 }
 
@@ -3761,98 +3750,6 @@ func dataSourceIBMCmOfferingDependencyToMap(model *catalogmanagementv1.OfferingR
 	}
 	if model.Flavors != nil {
 		modelMap["flavors"] = model.Flavors
-	}
-	return modelMap, nil
-}
-
-func dataSourceIBMCmOfferingPlanToMap(model *catalogmanagementv1.Plan) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.ID != nil {
-		modelMap["id"] = *model.ID
-	}
-	if model.Label != nil {
-		modelMap["label"] = *model.Label
-	}
-	if model.Name != nil {
-		modelMap["name"] = *model.Name
-	}
-	if model.ShortDescription != nil {
-		modelMap["short_description"] = *model.ShortDescription
-	}
-	if model.LongDescription != nil {
-		modelMap["long_description"] = *model.LongDescription
-	}
-	if model.Metadata != nil {
-		metadataMap := make(map[string]interface{}, len(model.Metadata))
-		// for k, v := range model.Metadata {
-		// }
-		modelMap["metadata"] = flex.Flatten(metadataMap)
-	}
-	if model.Tags != nil {
-		modelMap["tags"] = model.Tags
-	}
-	if model.AdditionalFeatures != nil {
-		additionalFeatures := []map[string]interface{}{}
-		for _, additionalFeaturesItem := range model.AdditionalFeatures {
-			additionalFeaturesItemMap, err := dataSourceIBMCmOfferingFeatureToMap(&additionalFeaturesItem)
-			if err != nil {
-				return modelMap, err
-			}
-			additionalFeatures = append(additionalFeatures, additionalFeaturesItemMap)
-		}
-		modelMap["additional_features"] = additionalFeatures
-	}
-	if model.Created != nil {
-		modelMap["created"] = model.Created.String()
-	}
-	if model.Updated != nil {
-		modelMap["updated"] = model.Updated.String()
-	}
-	if model.Deployments != nil {
-		deployments := []map[string]interface{}{}
-		for _, deploymentsItem := range model.Deployments {
-			deploymentsItemMap, err := dataSourceIBMCmOfferingDeploymentToMap(&deploymentsItem)
-			if err != nil {
-				return modelMap, err
-			}
-			deployments = append(deployments, deploymentsItemMap)
-		}
-		modelMap["deployments"] = deployments
-	}
-	return modelMap, nil
-}
-
-func dataSourceIBMCmOfferingDeploymentToMap(model *catalogmanagementv1.Deployment) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.ID != nil {
-		modelMap["id"] = *model.ID
-	}
-	if model.Label != nil {
-		modelMap["label"] = *model.Label
-	}
-	if model.Name != nil {
-		modelMap["name"] = *model.Name
-	}
-	if model.ShortDescription != nil {
-		modelMap["short_description"] = *model.ShortDescription
-	}
-	if model.LongDescription != nil {
-		modelMap["long_description"] = *model.LongDescription
-	}
-	if model.Metadata != nil {
-		metadataMap := make(map[string]interface{}, len(model.Metadata))
-		// for k, v := range model.Metadata {
-		// }
-		modelMap["metadata"] = flex.Flatten(metadataMap)
-	}
-	if model.Tags != nil {
-		modelMap["tags"] = model.Tags
-	}
-	if model.Created != nil {
-		modelMap["created"] = model.Created.String()
-	}
-	if model.Updated != nil {
-		modelMap["updated"] = model.Updated.String()
 	}
 	return modelMap, nil
 }

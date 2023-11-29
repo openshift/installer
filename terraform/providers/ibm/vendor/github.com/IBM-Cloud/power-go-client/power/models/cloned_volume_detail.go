@@ -107,6 +107,7 @@ func (m *ClonedVolumeDetail) ContextValidate(ctx context.Context, formats strfmt
 func (m *ClonedVolumeDetail) contextValidateClone(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Clone != nil {
+
 		if err := m.Clone.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("clone")
@@ -123,6 +124,7 @@ func (m *ClonedVolumeDetail) contextValidateClone(ctx context.Context, formats s
 func (m *ClonedVolumeDetail) contextValidateSource(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Source != nil {
+
 		if err := m.Source.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("source")

@@ -80,6 +80,10 @@ func DataSourceIBMKMSkey() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"description": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"standard_key": {
 							Type:     schema.TypeBool,
 							Computed: true,
@@ -232,7 +236,7 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if len(totalKeys) == 0 {
-			return fmt.Errorf("[ERROR] No keys in instance  %s", instanceID)
+			return fmt.Errorf("[ERROR] No keys in instance %s", instanceID)
 		}
 		var keyName string
 		var matchKeys []kp.Key
@@ -260,6 +264,7 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 			keyInstance["standard_key"] = key.Extractable
 			keyInstance["aliases"] = key.Aliases
 			keyInstance["key_ring_id"] = key.KeyRingID
+			keyInstance["description"] = key.Description
 			policies, err := api.GetPolicies(context.Background(), key.ID)
 			if err != nil {
 				return fmt.Errorf("[ERROR] Failed to read policies: %s", err)
@@ -286,6 +291,7 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["name"] = key.Name
 		keyInstance["crn"] = key.CRN
 		keyInstance["standard_key"] = key.Extractable
+		keyInstance["description"] = key.Description
 		keyInstance["aliases"] = key.Aliases
 		keyInstance["key_ring_id"] = key.KeyRingID
 		policies, err := api.GetPolicies(context.Background(), key.ID)
@@ -314,6 +320,7 @@ func dataSourceIBMKMSKeyRead(d *schema.ResourceData, meta interface{}) error {
 		keyInstance["name"] = key.Name
 		keyInstance["crn"] = key.CRN
 		keyInstance["standard_key"] = key.Extractable
+		keyInstance["description"] = key.Description
 		keyInstance["aliases"] = key.Aliases
 		keyInstance["key_ring_id"] = key.KeyRingID
 		policies, err := api.GetPolicies(context.Background(), key.ID)

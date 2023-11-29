@@ -168,7 +168,7 @@ func (a *Client) PcloudCloudconnectionsGetall(params *PcloudCloudconnectionsGeta
 }
 
 /*
-PcloudCloudconnectionsNetworksDelete deletes a network from a cloud connection
+PcloudCloudconnectionsNetworksDelete detaches a network from a cloud connection
 */
 func (a *Client) PcloudCloudconnectionsNetworksDelete(params *PcloudCloudconnectionsNetworksDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudconnectionsNetworksDeleteOK, *PcloudCloudconnectionsNetworksDeleteAccepted, error) {
 	// TODO: Validate the params before sending
@@ -208,7 +208,7 @@ func (a *Client) PcloudCloudconnectionsNetworksDelete(params *PcloudCloudconnect
 }
 
 /*
-PcloudCloudconnectionsNetworksPut adds a network to the cloud connection
+PcloudCloudconnectionsNetworksPut attaches a network to the cloud connection
 */
 func (a *Client) PcloudCloudconnectionsNetworksPut(params *PcloudCloudconnectionsNetworksPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudconnectionsNetworksPutOK, *PcloudCloudconnectionsNetworksPutAccepted, error) {
 	// TODO: Validate the params before sending

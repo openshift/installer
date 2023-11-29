@@ -82,6 +82,11 @@ func (m *SPPPlacementGroups) contextValidateSppPlacementGroups(ctx context.Conte
 	for i := 0; i < len(m.SppPlacementGroups); i++ {
 
 		if m.SppPlacementGroups[i] != nil {
+
+			if swag.IsZero(m.SppPlacementGroups[i]) { // not required
+				return nil
+			}
+
 			if err := m.SppPlacementGroups[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sppPlacementGroups" + "." + strconv.Itoa(i))

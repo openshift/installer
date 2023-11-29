@@ -42,7 +42,7 @@ func (o *InternalV1PowervsInstancesGetReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /internal/v1/powervs/instances] internal.v1.powervs.instances.get", response, response.Code())
 	}
 }
 
@@ -83,6 +83,11 @@ func (o *InternalV1PowervsInstancesGetOK) IsServerError() bool {
 // IsCode returns true when this internal v1 powervs instances get o k response a status code equal to that given
 func (o *InternalV1PowervsInstancesGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the internal v1 powervs instances get o k response
+func (o *InternalV1PowervsInstancesGetOK) Code() int {
+	return 200
 }
 
 func (o *InternalV1PowervsInstancesGetOK) Error() string {
@@ -148,6 +153,11 @@ func (o *InternalV1PowervsInstancesGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the internal v1 powervs instances get forbidden response
+func (o *InternalV1PowervsInstancesGetForbidden) Code() int {
+	return 403
+}
+
 func (o *InternalV1PowervsInstancesGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/powervs/instances][%d] internalV1PowervsInstancesGetForbidden  %+v", 403, o.Payload)
 }
@@ -209,6 +219,11 @@ func (o *InternalV1PowervsInstancesGetInternalServerError) IsServerError() bool 
 // IsCode returns true when this internal v1 powervs instances get internal server error response a status code equal to that given
 func (o *InternalV1PowervsInstancesGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the internal v1 powervs instances get internal server error response
+func (o *InternalV1PowervsInstancesGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *InternalV1PowervsInstancesGetInternalServerError) Error() string {

@@ -4,15 +4,17 @@
 package eventstreams
 
 import (
+	"context"
 	"fmt"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func DataSourceIBMEventStreamsTopic() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIBMEventStreamsTopicRead,
+		ReadContext: dataSourceIBMEventStreamsTopicRead,
 		Schema: map[string]*schema.Schema{
 			"resource_instance_id": {
 				Type:        schema.TypeString,
@@ -49,16 +51,16 @@ func DataSourceIBMEventStreamsTopic() *schema.Resource {
 	}
 }
 
-func dataSourceIBMEventStreamsTopicRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceIBMEventStreamsTopicRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	adminClient, instanceCRN, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG]dataSourceIBMEventStreamsTopicRead createSaramaAdminClient err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topics, err := adminClient.ListTopics()
 	if err != nil {
 		log.Printf("[DEBUG]dataSourceIBMEventStreamsTopicRead ListTopics err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topicName := d.Get("name").(string)
 	for name := range topics {
@@ -71,5 +73,5 @@ func dataSourceIBMEventStreamsTopicRead(d *schema.ResourceData, meta interface{}
 		}
 	}
 	log.Printf("[DEBUG]dataSourceIBMEventStreamsTopicRead topic %s does not exist", topicName)
-	return fmt.Errorf("topic %s does not exist", topicName)
+	return diag.FromErr(fmt.Errorf("topic %s does not exist", topicName))
 }

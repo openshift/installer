@@ -99,7 +99,11 @@ func (a *Client) PcloudCloudinstancesImagesDelete(params *PcloudCloudinstancesIm
 }
 
 /*
-PcloudCloudinstancesImagesExportPost exports an image
+	PcloudCloudinstancesImagesExportPost exports an image
+
+	This API is deprecated for /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export.
+
+>*Note*: Support for this API is available till Oct 2022.
 */
 func (a *Client) PcloudCloudinstancesImagesExportPost(params *PcloudCloudinstancesImagesExportPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesImagesExportPostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -334,7 +338,11 @@ func (a *Client) PcloudCloudinstancesStockimagesGetall(params *PcloudCloudinstan
 }
 
 /*
-PcloudImagesGet deprecateds for pcloud v1 cloud instances cloud instance id stock images image id detailed info of an available stock image
+	PcloudImagesGet detaileds info of an image in the image catalog
+
+	This API is deprecated for /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images/{image_id}.
+
+>*Note*: Support for this API will be available till 31st March 2023.
 */
 func (a *Client) PcloudImagesGet(params *PcloudImagesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudImagesGetOK, error) {
 	// TODO: Validate the params before sending
@@ -373,7 +381,11 @@ func (a *Client) PcloudImagesGet(params *PcloudImagesGetParams, authInfo runtime
 }
 
 /*
-PcloudImagesGetall deprecateds for pcloud v1 cloud instances cloud instance id stock images list all available stock images
+	PcloudImagesGetall lists all the images in the image catalog
+
+	This API is deprecated for /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images.
+
+>*Note*: Support for this API will be available till 31st March 2023.
 */
 func (a *Client) PcloudImagesGetall(params *PcloudImagesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudImagesGetallOK, error) {
 	// TODO: Validate the params before sending

@@ -45,7 +45,7 @@ The Program includes some or all of the following that IBM obtained under the BS
 
 MIT License
 The Program includes some or all of the following that IBM obtained under the MIT License:
-* github.com/Shopify/sarama
+* github.com/IBM/sarama
 * github.com/apparentlymart/go-cidr
 * github.com/ghodss/yaml
 * github.com/golang-jwt/jwt

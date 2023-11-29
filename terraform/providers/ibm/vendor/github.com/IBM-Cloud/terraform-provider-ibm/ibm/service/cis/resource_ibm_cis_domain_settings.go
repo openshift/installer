@@ -127,7 +127,6 @@ func ResourceIBMCISSettings() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator(
 					ibmCISDomainSettings,
 					cisDomainSettingsTLSVersionValidatorID),
-				Default: "1.1",
 			},
 			cisDomainSettingsCNAMEFlattening: {
 				Type:        schema.TypeString,
