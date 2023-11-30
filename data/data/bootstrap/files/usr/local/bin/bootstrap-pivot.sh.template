@@ -65,6 +65,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
     # Load new systemd unit files and configuration such as crio.service after mounting the content of OKD/FCOS Machine
     # OS over /usr and copying new files to /etc
     systemctl daemon-reload
+    systemctl preset-all
 
     # On OKD/FCOS prior to commit e859a66 [0] systemd-resolved is used by default and NetworkManager's DNS handling is
     # disabled. In this case, CoreDNS fails to listen to 127.0.0.53:53 when Agent-based Installer boots its the
