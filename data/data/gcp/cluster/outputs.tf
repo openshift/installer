@@ -37,3 +37,7 @@ output "compute_image" {
 output "control_plane_ips" {
   value = module.master.ip_addresses
 }
+
+output "user_provisioned_dns" {
+  value = var.gcp_user_provisioned_dns
+}

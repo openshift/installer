@@ -3281,6 +3281,15 @@ spec:
                       - value
                       type: object
                     type: array
+                  userProvisionedDNS:
+                    default: Disabled
+                    description: UserProvisionedDNS indicates if the customer is providing
+                      their own DNS solution in place of the default provisioned by
+                      the Installer.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   userTags:
                     description: userTags has additional keys and values that the
                       installer will add as tags to all resources that it creates
