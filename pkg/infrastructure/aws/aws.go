@@ -131,6 +131,7 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		tags:             tags,
 		privateSubnetIDs: clusterAWSConfig.PrivateSubnets,
 		edgeZones:        clusterAWSConfig.EdgeLocalZones,
+		edgeZonesType:    clusterAWSConfig.EdgeZonesType,
 		edgeParentMap:    clusterAWSConfig.EdgeZonesGatewayIndex,
 	}
 	if clusterAWSConfig.PublicSubnets != nil {

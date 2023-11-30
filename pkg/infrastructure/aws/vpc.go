@@ -16,6 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
 var (
@@ -34,6 +36,7 @@ const (
 	errNatGatewayIDNotFound = "InvalidNatGatewayID.NotFound"
 	errInvalidEIPNotFound   = "InvalidElasticIpID.NotFound"
 	errRouteTableIDNotFound = "InvalidRouteTableId.NotFound"
+	errCarrierGwIDNotFound  = "InvalidCarrierGatewayId.NotFound"
 	errInvalidSubnet        = "InvalidSubnet"
 	errAuthFailure          = "AuthFailure"
 	errIPAddrInUse          = "InvalidIPAddress.InUse"
@@ -51,6 +54,7 @@ type vpcInputOptions struct {
 	publicSubnetIDs  []string
 	privateSubnetIDs []string
 	edgeParentMap    map[string]int
+	edgeZonesType    map[string]string
 	tags             map[string]string
 }
 
@@ -154,18 +158,35 @@ func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Clien
 		privateRouteTables = append(privateRouteTables, privateRouteTable)
 	}
 
-	_, err = state.ensureVPCS3Endpoint(ctx, logger, ec2Client, endpointRouteTableIDs)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create VPC S3 endpoint: %w", err)
-	}
-
 	if len(vpcInput.edgeZones) > 0 {
-		_, _, err := state.ensureEdgePublicSubnets(ctx, logger, ec2Client, networks.edge.public, publicRouteTable)
+		hasWavelengthZones := false
+		for _, typ := range vpcInput.edgeZonesType {
+			if typ == awstypes.WavelengthZoneType {
+				hasWavelengthZones = true
+				break
+			}
+		}
+
+		var carrierTable *ec2.RouteTable
+		if hasWavelengthZones {
+			cagw, err := state.ensureCarrierGateway(ctx, logger, ec2Client)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create carrier gateway: %w", err)
+			}
+
+			carrierTable, err = state.ensureCarrierRouteTable(ctx, logger, ec2Client, cagw.CarrierGatewayId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create carrier route table: %w", err)
+			}
+			endpointRouteTableIDs = append(endpointRouteTableIDs, carrierTable.RouteTableId)
+		}
+
+		_, publicZoneMap, err := state.ensureEdgePublicSubnets(ctx, logger, ec2Client, networks.edge.public)
 		if err != nil {
 			return nil, err
 		}
 
-		_, subnetZoneMap, err := state.ensureEdgePrivateSubnets(ctx, logger, ec2Client, networks.edge.private)
+		_, privateZoneMap, err := state.ensureEdgePrivateSubnets(ctx, logger, ec2Client, networks.edge.private)
 		if err != nil {
 			return nil, err
 		}
@@ -181,11 +202,29 @@ func createVPCResources(ctx context.Context, logger logrus.FieldLogger, ec2Clien
 				tableIdx = 0
 			}
 			table := privateRouteTables[tableIdx]
-			subnetID := subnetZoneMap[zone]
+			subnetID := privateZoneMap[zone]
 			if err := addSubnetToRouteTable(ctx, logger, ec2Client, table, subnetID); err != nil {
 				return nil, fmt.Errorf("failed to associate edge subnet (%s) to route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(table.RouteTableId), err)
 			}
+
+			// Associate public subnet with either the public or carrier route
+			// table depending on the zone type
+			table = publicRouteTable
+			tableType := "public"
+			if zoneType, ok := vpcInput.edgeZonesType[zone]; ok && zoneType == awstypes.WavelengthZoneType {
+				table = carrierTable
+				tableType = "carrier"
+			}
+			publicSubnetID := publicZoneMap[zone]
+			if err := addSubnetToRouteTable(ctx, logger, ec2Client, table, publicSubnetID); err != nil {
+				return nil, fmt.Errorf("failed to associate edge subnet (%s) to %s route table (%s): %w", aws.StringValue(subnetID), tableType, aws.StringValue(table.RouteTableId), err)
+			}
 		}
+	}
+
+	_, err = state.ensureVPCS3Endpoint(ctx, logger, ec2Client, endpointRouteTableIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create VPC S3 endpoint: %w", err)
 	}
 
 	return &vpcOutput{
@@ -634,18 +673,11 @@ func (o *vpcState) ensurePrivateSubnets(ctx context.Context, logger logrus.Field
 	return ids, zoneMap, nil
 }
 
-func (o *vpcState) ensureEdgePublicSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet, publicTable *ec2.RouteTable) ([]*string, map[string]*string, error) {
+func (o *vpcState) ensureEdgePublicSubnets(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, network *net.IPNet) ([]*string, map[string]*string, error) {
 	ids, zoneMap, err := o.ensureSubnets(ctx, logger, client, network, "public", o.input.edgeZones, o.input.tags)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create public edge subnets: %w", err)
 	}
-
-	for _, subnetID := range ids {
-		if err = addSubnetToRouteTable(ctx, logger, client, publicTable, subnetID); err != nil {
-			return nil, nil, fmt.Errorf("failed to associate public edge subnet (%s) with public route table (%s): %w", aws.StringValue(subnetID), aws.StringValue(publicTable.RouteTableId), err)
-		}
-	}
-
 	return ids, zoneMap, nil
 }
 
@@ -978,6 +1010,106 @@ func existingVPCEndpoint(ctx context.Context, client ec2iface.EC2API, filters []
 		return endpoint, nil
 	}
 	return nil, errNotFound
+}
+
+func (o *vpcState) ensureCarrierGateway(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API) (*ec2.CarrierGateway, error) {
+	name := fmt.Sprintf("%s-cagw", o.input.infraID)
+	l := logger.WithField("carrier gateway", name)
+	filters := ec2Filters(o.input.infraID, name)
+	createdOrFoundMsg := "Found existing Carrier Gateway"
+	cagw, err := existingCarrierGateway(ctx, client, filters)
+	if err != nil {
+		if !errors.Is(err, errNotFound) {
+			return nil, err
+		}
+		createdOrFoundMsg = "Created Carrier Gateway"
+		tags := mergeTags(o.input.tags, map[string]string{"Name": name})
+		res, err := client.CreateCarrierGatewayWithContext(ctx, &ec2.CreateCarrierGatewayInput{
+			VpcId: o.vpcID,
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("carrier-gateway"),
+					Tags:         ec2Tags(tags),
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create carrier gateway: %w", err)
+		}
+		cagw = res.CarrierGateway
+	}
+	l.WithField("id", aws.StringValue(cagw.CarrierGatewayId)).Infoln(createdOrFoundMsg)
+
+	return cagw, nil
+}
+
+func existingCarrierGateway(ctx context.Context, client ec2iface.EC2API, filters []*ec2.Filter) (*ec2.CarrierGateway, error) {
+	res, err := client.DescribeCarrierGatewaysWithContext(ctx, &ec2.DescribeCarrierGatewaysInput{
+		Filters: filters,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list carrier gateways: %w", err)
+	}
+	for _, cagw := range res.CarrierGateways {
+		state := aws.StringValue(cagw.State)
+		if state == "deleted" || state == "deleting" || state == "failed" {
+			continue
+		}
+		return cagw, nil
+	}
+	return nil, errNotFound
+}
+
+func (o *vpcState) ensureCarrierRouteTable(ctx context.Context, logger logrus.FieldLogger, client ec2iface.EC2API, cagwID *string) (*ec2.RouteTable, error) {
+	tableName := fmt.Sprintf("%s-public-carrier", o.input.infraID)
+	l := logger.WithField("carrier route table", tableName)
+	table, err := o.ensureRouteTable(ctx, l, client, tableName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create carrier route table: %w", err)
+	}
+	l = l.WithField("id", aws.StringValue(table.RouteTableId))
+
+	createdOrFoundMsg := "Found existing route to Carrier gateway"
+	if !hasCarrierGatewayRoute(table, cagwID) {
+		createdOrFoundMsg = "Created route to Carrier gateway"
+		if err := createCarrierGatewayRoute(ctx, client, cagwID, table.RouteTableId); err != nil {
+			return nil, fmt.Errorf("failed to create route to carrier gateway (%s): %w", aws.StringValue(cagwID), err)
+		}
+	}
+	l.WithField("carrier gateway", aws.StringValue(cagwID)).Infoln(createdOrFoundMsg)
+
+	return table, nil
+}
+
+func hasCarrierGatewayRoute(table *ec2.RouteTable, cagwID *string) bool {
+	for _, route := range table.Routes {
+		if aws.StringValue(route.CarrierGatewayId) == aws.StringValue(cagwID) && aws.StringValue(route.DestinationCidrBlock) == quadZeroRoute {
+			return true
+		}
+	}
+	return false
+}
+
+func createCarrierGatewayRoute(ctx context.Context, client ec2iface.EC2API, cagwID *string, tableID *string) error {
+	return wait.ExponentialBackoffWithContext(
+		ctx,
+		defaultBackoff,
+		func(ctx context.Context) (bool, error) {
+			_, err := client.CreateRouteWithContext(ctx, &ec2.CreateRouteInput{
+				CarrierGatewayId:     cagwID,
+				RouteTableId:         tableID,
+				DestinationCidrBlock: aws.String(quadZeroRoute),
+			})
+			if err != nil {
+				var awsErr awserr.Error
+				if errors.As(err, &awsErr) && (strings.EqualFold(awsErr.Code(), errCarrierGwIDNotFound) || strings.EqualFold(awsErr.Code(), errRouteTableIDNotFound)) {
+					return false, nil
+				}
+				return true, err
+			}
+			return true, nil
+		},
+	)
 }
 
 type splitOutput struct {
