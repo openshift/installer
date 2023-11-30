@@ -914,6 +914,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
 
+		// If a service instance GUID was passed in the install-config.yaml file, then
+		// find the corresponding name for it.  Otherwise, we expect our Terraform to
+		// dynamically create one.
+		serviceInstanceName, err := client.ServiceInstanceGUIDToName(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
+		if err != nil {
+			return err
+		}
+
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -937,6 +945,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublishStrategy:       installConfig.Config.Publish,
 				EnableSNAT:            len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
 				TransitGatewayEnabled: transitGatewayEnabled,
+				ServiceInstanceName:   serviceInstanceName,
 			},
 		)
 		if err != nil {

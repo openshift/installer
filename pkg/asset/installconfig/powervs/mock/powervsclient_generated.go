@@ -233,19 +233,19 @@ func (mr *MockAPIMockRecorder) ListServiceInstances(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceInstances", reflect.TypeOf((*MockAPI)(nil).ListServiceInstances), ctx)
 }
 
-// ServiceInstanceIDToCRN mocks base method.
-func (m *MockAPI) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
+// ServiceInstanceGUIDToName mocks base method.
+func (m *MockAPI) ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ServiceInstanceIDToCRN", ctx, id)
+	ret := m.ctrl.Call(m, "ServiceInstanceGUIDToName", ctx, id)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ServiceInstanceIDToCRN indicates an expected call of ServiceInstanceIDToCRN.
-func (mr *MockAPIMockRecorder) ServiceInstanceIDToCRN(ctx, id interface{}) *gomock.Call {
+// ServiceInstanceGUIDToName indicates an expected call of ServiceInstanceGUIDToName.
+func (mr *MockAPIMockRecorder) ServiceInstanceGUIDToName(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceIDToCRN", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceIDToCRN), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceGUIDToName", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceGUIDToName), ctx, id)
 }
 
 // SetVPCServiceURLForRegion mocks base method.

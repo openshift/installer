@@ -2,7 +2,15 @@ data "ibm_resource_group" "group" {
   name = var.resource_group
 }
 
-resource "ibm_resource_instance" "powervs_service_instance" {
+data "ibm_resource_instance" "existing_service_instance" {
+  count             = var.service_instance_name != "" ? 1 : 0
+  name              = var.service_instance_name
+  service           = "power-iaas"
+  resource_group_id = data.ibm_resource_group.group.id
+}
+
+resource "ibm_resource_instance" "created_service_instance" {
+  count             = var.service_instance_name == "" ? 1 : 0
   name              = "${var.cluster_id}-power-iaas"
   service           = "power-iaas"
   plan              = "power-virtual-server-group"

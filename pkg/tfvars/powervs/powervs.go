@@ -40,6 +40,7 @@ type config struct {
 	PublishStrategy       string `json:"powervs_publish_strategy"`
 	EnableSNAT            bool   `json:"powervs_enable_snat"`
 	TransitGatewayEnabled bool   `json:"powervs_transit_gateway_enabled"`
+	ServiceInstanceName   string `json:"powervs_service_instance_name"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -64,6 +65,7 @@ type TFVarsSources struct {
 	PublishStrategy       types.PublishingStrategy
 	EnableSNAT            bool
 	TransitGatewayEnabled bool
+	ServiceInstanceName   string
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -119,6 +121,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:       string(sources.PublishStrategy),
 		EnableSNAT:            sources.EnableSNAT,
 		TransitGatewayEnabled: sources.TransitGatewayEnabled,
+		ServiceInstanceName:   sources.ServiceInstanceName,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
