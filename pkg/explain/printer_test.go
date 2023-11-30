@@ -213,6 +213,9 @@ func Test_PrintFields(t *testing.T) {
     controlPlaneSubnet <string>
       ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
 
+    customerManagedKey <object>
+      CustomerManagedKey has the keys needed to encrypt the storage account.
+
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on Azure for machine pools which do not define their own platform configuration.
 

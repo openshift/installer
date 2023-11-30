@@ -2481,6 +2481,34 @@ spec:
                     description: ControlPlaneSubnet specifies an existing subnet for
                       use by the control plane nodes
                     type: string
+                  customerManagedKey:
+                    description: CustomerManagedKey has the keys needed to encrypt
+                      the storage account.
+                    properties:
+                      keyVault:
+                        description: KeyVault is the keyvault used for the customer
+                          created key required for encryption.
+                        properties:
+                          keyName:
+                            description: KeyName is the name of the key vault key.
+                            type: string
+                          name:
+                            description: Name is the name of the key vault.
+                            type: string
+                          resourceGroup:
+                            description: ResourceGroup defines the Azure resource
+                              group used by the key vault.
+                            type: string
+                        required:
+                        - keyName
+                        - name
+                        - resourceGroup
+                        type: object
+                      userAssignedIdentityKey:
+                        description: UserAssignedIdentityKey is the name of the user
+                          identity that has access to the managed key.
+                        type: string
+                    type: object
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on Azure for machine pools which do not
