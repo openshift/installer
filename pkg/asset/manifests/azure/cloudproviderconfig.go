@@ -55,6 +55,7 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1782516#c7
 		CloudProviderBackoff:         true,
 		CloudProviderBackoffDuration: 6,
+		VMType:                       "standard",
 
 		UseInstanceMetadata: true,
 		// default to standard load balancer, supports tcp resets on idle
