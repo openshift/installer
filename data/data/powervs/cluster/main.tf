@@ -36,7 +36,7 @@ module "pi_network" {
   source = "./power_network"
 
   cluster_id              = var.cluster_id
-  cloud_instance_id       = module.iaas.si_guid
+  cloud_instance_id       = module.iaas.pi_workspace_id
   resource_group          = var.powervs_resource_group
   machine_cidr            = var.machine_v4_cidrs[0]
   vpc_crn                 = module.vpc.vpc_crn
@@ -49,7 +49,7 @@ resource "ibm_pi_key" "cluster_key" {
   provider             = ibm.powervs
   pi_key_name          = "${var.cluster_id}-key"
   pi_ssh_key           = var.powervs_ssh_key
-  pi_cloud_instance_id = module.iaas.si_guid
+  pi_cloud_instance_id = module.iaas.pi_workspace_id
 }
 
 module "master" {
@@ -57,7 +57,7 @@ module "master" {
     ibm = ibm.powervs
   }
   source            = "./master"
-  cloud_instance_id = module.iaas.si_guid
+  cloud_instance_id = module.iaas.pi_workspace_id
   cluster_id        = var.cluster_id
   resource_group    = var.powervs_resource_group
   instance_count    = var.master_count
@@ -86,7 +86,7 @@ module "master" {
 resource "ibm_pi_image" "boot_image" {
   provider                  = ibm.powervs
   pi_image_name             = "rhcos-${var.cluster_id}"
-  pi_cloud_instance_id      = module.iaas.si_guid
+  pi_cloud_instance_id      = module.iaas.pi_workspace_id
   pi_image_bucket_name      = var.powervs_image_bucket_name
   pi_image_bucket_access    = "public"
   pi_image_bucket_region    = var.powervs_cos_region
@@ -97,7 +97,7 @@ resource "ibm_pi_image" "boot_image" {
 data "ibm_pi_dhcp" "dhcp_service" {
   provider             = ibm.powervs
   depends_on           = [module.master]
-  pi_cloud_instance_id = module.iaas.si_guid
+  pi_cloud_instance_id = module.iaas.pi_workspace_id
   pi_dhcp_id           = module.pi_network.dhcp_id
 }
 
@@ -150,10 +150,14 @@ module "transit_gateway" {
 
   cluster_id              = var.cluster_id
   resource_group          = var.powervs_resource_group
-  service_instance_crn    = module.iaas.si_crn
+  service_instance_crn    = data.ibm_pi_workspace.workspace.pi_workspace_details.crn
   transit_gateway_enabled = var.powervs_transit_gateway_enabled
   vpc_crn                 = module.vpc.vpc_crn
   vpc_region              = var.powervs_vpc_region
+}
+
+data "ibm_pi_workspace" "workspace" {
+  pi_cloud_instance_id = module.iaas.pi_workspace_id
 }
 
 module "iaas" {
