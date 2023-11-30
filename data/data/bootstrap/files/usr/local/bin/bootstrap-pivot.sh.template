@@ -87,6 +87,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
     if systemctl list-unit-files -q fix-resolvconf.service >/dev/null; then
         systemctl start fix-resolvconf.service
         systemctl restart NetworkManager.service
+        nmcli general reload dns-full
     fi
 
     # Workaround for SELinux denials when launching crio.service from overlayfs
