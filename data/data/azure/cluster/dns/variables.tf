@@ -43,12 +43,12 @@ variable "external_lb_fqdn_v6" {
 
 variable "internal_lb_ipaddress_v4" {
   description = "External API's LB IP v4 address"
-  type = string
+  type = list(string)
 }
 
 variable "internal_lb_ipaddress_v6" {
   description = "External API's LB IP v6 address"
-  type = string
+  type = list(string)
 }
 
 variable "virtual_network_id" {

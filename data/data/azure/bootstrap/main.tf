@@ -145,7 +145,7 @@ resource "azurerm_network_interface" "bootstrap" {
     content {
       primary                       = ip_configuration.value.primary
       name                          = ip_configuration.value.name
-      subnet_id                     = var.master_subnet_id
+      subnet_id                     = var.master_subnet_id[0]
       private_ip_address_version    = ip_configuration.value.ip_address_version
       private_ip_address_allocation = "Dynamic"
       public_ip_address_id          = ip_configuration.value.public_ip_id
@@ -179,7 +179,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "internal_
   count = var.use_ipv4 ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
-  backend_address_pool_id = var.ilb_backend_pool_v4_id
+  backend_address_pool_id = var.ilb_backend_pool_v4_id[0]
   ip_configuration_name   = local.bootstrap_nic_ip_v4_configuration_name
 }
 
@@ -187,7 +187,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "internal_
   count = var.use_ipv6 ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
-  backend_address_pool_id = var.ilb_backend_pool_v6_id
+  backend_address_pool_id = var.ilb_backend_pool_v6_id[0]
   ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
 }
 

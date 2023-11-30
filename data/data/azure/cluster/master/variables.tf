@@ -80,11 +80,11 @@ variable "elb_backend_pool_v6_id" {
 }
 
 variable "ilb_backend_pool_v4_id" {
-  type = string
+  type = list(string)
 }
 
 variable "ilb_backend_pool_v6_id" {
-  type = string
+  type = list(string)
 }
 
 variable "ignition_master" {
@@ -98,8 +98,8 @@ variable "kubeconfig_content" {
 }
 
 variable "subnet_id" {
-  type        = string
-  description = "The subnet to attach the masters to."
+  type        = list(string)
+  description = "The subnets to attach the masters to."
 }
 
 variable "os_volume_type" {

@@ -13,7 +13,7 @@ resource "azurestack_subnet" "master_subnet" {
   resource_group_name       = data.azurestack_resource_group.main.name
   address_prefix            = local.master_subnet_cidr_v4
   virtual_network_name      = local.virtual_network
-  name                      = var.azure_control_plane_subnet
+  name                      = var.azure_control_plane_subnet[0]
   network_security_group_id = azurestack_network_security_group.cluster.id
 }
 
@@ -23,6 +23,6 @@ resource "azurestack_subnet" "worker_subnet" {
   resource_group_name       = data.azurestack_resource_group.main.name
   address_prefix            = local.worker_subnet_cidr_v4
   virtual_network_name      = local.virtual_network
-  name                      = var.azure_compute_subnet
+  name                      = var.azure_compute_subnet[0]
   network_security_group_id = azurestack_network_security_group.cluster.id
 }

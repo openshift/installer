@@ -11,19 +11,19 @@ variable "elb_backend_pool_v6_id" {
 }
 
 variable "ilb_backend_pool_v4_id" {
-  type        = string
+  type        = list(string)
   default     = null
   description = "The internal load balancer bakend pool id. used to attach the bootstrap NIC"
 }
 
 variable "ilb_backend_pool_v6_id" {
-  type        = string
+  type        = list(string)
   default     = null
   description = "The internal load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
 }
 
 variable "master_subnet_id" {
-  type        = string
+  type        = list(string)
   description = "The subnet ID for the bootstrap node."
 }
 

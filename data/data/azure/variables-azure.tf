@@ -161,13 +161,13 @@ variable "azure_virtual_network" {
 }
 
 variable "azure_control_plane_subnet" {
-  type        = string
-  description = "The name of the subnet for the control plane, either existing or to be created."
+  type        = list(string)
+  description = "The name of the subnets for the control plane, either existing or to be created."
 }
 
 variable "azure_compute_subnet" {
-  type        = string
-  description = "The name of the subnet for worker nodes, either existing or to be created"
+  type        = list(string)
+  description = "The name of the subnets for worker nodes, either existing or to be created"
 }
 
 variable "azure_private" {
@@ -277,4 +277,10 @@ variable "azure_master_virtualized_trusted_platform_module" {
   type        = string
   description = "Defines whether the instance should have vTPM enabled."
   default     = ""
+}
+
+variable "azure_worker_availability_zones" {
+  type        = list(string)
+  description = "The availability zones in which to create the workers. The length of this list must match worker_count."
+  default     = []
 }

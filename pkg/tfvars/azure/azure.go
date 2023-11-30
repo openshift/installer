@@ -51,8 +51,8 @@ type config struct {
 	ResourceGroupName                       string            `json:"azure_resource_group_name"`
 	NetworkResourceGroupName                string            `json:"azure_network_resource_group_name"`
 	VirtualNetwork                          string            `json:"azure_virtual_network"`
-	ControlPlaneSubnet                      string            `json:"azure_control_plane_subnet"`
-	ComputeSubnet                           string            `json:"azure_compute_subnet"`
+	ControlPlaneSubnet                      []string          `json:"azure_control_plane_subnet"`
+	ComputeSubnet                           []string          `json:"azure_compute_subnet"`
 	PreexistingNetwork                      bool              `json:"azure_preexisting_network"`
 	Private                                 bool              `json:"azure_private"`
 	OutboundType                            string            `json:"azure_outbound_routing_type"`
@@ -65,10 +65,11 @@ type config struct {
 	UseMarketplaceImage                     bool              `json:"azure_use_marketplace_image"`
 	MarketplaceImageHasPlan                 bool              `json:"azure_marketplace_image_has_plan"`
 	OSImage                                 `json:",inline"`
-	SecurityEncryptionType                  string `json:"azure_master_security_encryption_type,omitempty"`
-	SecureVirtualMachineDiskEncryptionSetID string `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
-	SecureBoot                              string `json:"azure_master_secure_boot,omitempty"`
-	VirtualizedTrustedPlatformModule        string `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	SecurityEncryptionType                  string   `json:"azure_master_security_encryption_type,omitempty"`
+	SecureVirtualMachineDiskEncryptionSetID string   `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
+	SecureBoot                              string   `json:"azure_master_secure_boot,omitempty"`
+	VirtualizedTrustedPlatformModule        string   `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	WorkerAvailabilityZones                 []string `json:"azure_worker_availability_zones,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -95,13 +96,17 @@ type TFVarsSources struct {
 // TFVars generates Azure-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
-	workerConfig := sources.WorkerConfigs[0]
 
 	region := masterConfig.Location
 
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = c.Zone
+	}
+
+	workerAvailabilityZones := make([]string, len(sources.WorkerConfigs))
+	for i, c := range sources.WorkerConfigs {
+		workerAvailabilityZones[i] = to.String(c.Zone)
 	}
 
 	environment, err := environment(sources.CloudName)
@@ -150,6 +155,16 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Version:   masterConfig.Image.Version,
 	}
 
+	masterSubnets := make([]string, len(sources.MasterConfigs))
+	for i, c := range sources.MasterConfigs {
+		masterSubnets[i] = c.Subnet
+	}
+
+	workerSubnets := make([]string, len(sources.WorkerConfigs))
+	for i, c := range sources.WorkerConfigs {
+		workerSubnets[i] = c.Subnet
+	}
+
 	cfg := &config{
 		Auth:                                    sources.Auth,
 		Environment:                             environment,
@@ -170,8 +185,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BaseDomainResourceGroupName:             sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:                masterConfig.NetworkResourceGroup,
 		VirtualNetwork:                          masterConfig.Vnet,
-		ControlPlaneSubnet:                      masterConfig.Subnet,
-		ComputeSubnet:                           workerConfig.Subnet,
+		ControlPlaneSubnet:                      masterSubnets,
+		ComputeSubnet:                           workerSubnets,
 		PreexistingNetwork:                      sources.PreexistingNetwork,
 		BootstrapIgnitionStub:                   sources.BootstrapIgnStub,
 		BootstrapIgnitionURLPlaceholder:         sources.BootstrapIgnitionURLPlaceholder,
@@ -187,6 +202,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		SecureVirtualMachineDiskEncryptionSetID: masterConfig.OSDisk.ManagedDisk.SecurityProfile.DiskEncryptionSet.ID,
 		SecureBoot:                              secureBoot,
 		VirtualizedTrustedPlatformModule:        virtualizedTrustedPlatformModule,
+		WorkerAvailabilityZones:                 workerAvailabilityZones,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
