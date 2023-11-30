@@ -2467,6 +2467,7 @@ spec:
                     - AzureChinaCloud
                     - AzureGermanCloud
                     - AzureStackCloud
+                    - USSec
                     type: string
                   clusterOSImage:
                     description: ClusterOSImage is the url of a storage blob in the
