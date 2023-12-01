@@ -72,6 +72,9 @@ type RuntimeFile struct {
 // directory.
 func PersistToFile(asset WritableAsset, directory string) error {
 	for _, f := range asset.Files() {
+		if f == nil {
+			panic("asset.Files() returned nil")
+		}
 		path := filepath.Join(directory, f.Filename)
 		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
 			return errors.Wrap(err, "failed to create dir")

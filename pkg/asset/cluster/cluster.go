@@ -114,7 +114,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return fmt.Errorf("error getting infrastructure provider: %w", err)
 	}
 	files, err := provider.Provision(InstallDir, tfvarsFiles)
-	c.FileList = append(c.FileList, files...) // append state files even in case of failure
+	if files != nil {
+		c.FileList = append(c.FileList, files...) // append state files even in case of failure
+	}
 	if err != nil {
 		return fmt.Errorf("%s: %w", asset.ClusterCreationError, err)
 	}
