@@ -1,6 +1,7 @@
 package types
 
 import (
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -25,6 +26,8 @@ type ClusterMetadata struct {
 	// InfraID is an ID that is used to identify cloud resources created by the installer.
 	InfraID                 string `json:"infraID"`
 	ClusterPlatformMetadata `json:",inline"`
+	FeatureSet              configv1.FeatureSet          `json:"featureSet"`
+	CustomFeatureSet        *configv1.CustomFeatureGates `json:"customFeatureSet"`
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.
