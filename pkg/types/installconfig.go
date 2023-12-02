@@ -408,6 +408,13 @@ type Networking struct {
 	// +optional
 	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
 
+	// ClusterNetworkMTU is the Maximum Transmit (MTU) Unit size in bytes to allocate to the cluster network.
+	// For example, 1200 would set the MTU of the entire overlay network. If the deployment does
+	// not require changes in the network plugin, leave it unset and the MTU will be calculated
+	// automatically based on the host network MTU.
+	// +optional
+	ClusterNetworkMTU uint32 `json:"clusterNetworkMTU,omitempty"`
+
 	// Deprecated types, scheduled to be removed
 
 	// Deprecated way to configure an IP address pool for machines.
