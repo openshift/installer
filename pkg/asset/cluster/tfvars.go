@@ -402,6 +402,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			managedKeys.UserAssignedIdentityKey = installConfig.Config.Azure.CustomerManagedKey.UserAssignedIdentityKey
 		}
 
+		lbPrivate := false
+		if installConfig.Config.OperatorPublishingStrategy != nil {
+			lbPrivate = installConfig.Config.OperatorPublishingStrategy.APIServer == "Internal"
+		}
+
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                            auth,
@@ -423,6 +428,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				InfrastructureName:              clusterID.InfraID,
 				KeyVault:                        managedKeys.KeyVault,
 				UserAssignedIdentityKey:         managedKeys.UserAssignedIdentityKey,
+				LBPrivate:                       lbPrivate,
 			},
 		)
 		if err != nil {

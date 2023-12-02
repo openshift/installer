@@ -84,6 +84,9 @@ func Test_PrintFields(t *testing.T) {
     networking <object>
       Networking is the configuration for the pod network provider in the cluster.
 
+    operatorPublishingStrategy <object>
+      OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to perform the installation.
 

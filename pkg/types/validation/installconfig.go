@@ -156,6 +156,38 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 
+	if c.Publish == types.MixedPublishingStrategy {
+		switch platformName := c.Platform.Name(); platformName {
+		case azure.Name:
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, fmt.Sprintf("mixed publish strategy is not supported on %q platform", platformName)))
+		}
+		if c.OperatorPublishingStrategy == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.Publish, "please specify the operator publishing strategy for mixed publish strategy"))
+		}
+	} else if c.OperatorPublishingStrategy != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("operatorPublishingStrategy"), c.Publish, "operator publishing strategy is only allowed with mixed publishing strategy installs"))
+	}
+
+	if c.OperatorPublishingStrategy != nil {
+		acceptedValues := sets.New[string]("Internal", "External")
+		if c.OperatorPublishingStrategy.APIServer == "" {
+			c.OperatorPublishingStrategy.APIServer = "External"
+		}
+		if c.OperatorPublishingStrategy.Ingress == "" {
+			c.OperatorPublishingStrategy.Ingress = "External"
+		}
+		if !acceptedValues.Has(c.OperatorPublishingStrategy.APIServer) {
+			allErrs = append(allErrs, field.NotSupported(field.NewPath("apiserver"), c.OperatorPublishingStrategy.APIServer, sets.List(acceptedValues)))
+		}
+		if !acceptedValues.Has(c.OperatorPublishingStrategy.Ingress) {
+			allErrs = append(allErrs, field.NotSupported(field.NewPath("ingress"), c.OperatorPublishingStrategy.Ingress, sets.List(acceptedValues)))
+		}
+		if c.OperatorPublishingStrategy.APIServer == "Internal" && c.OperatorPublishingStrategy.Ingress == "Internal" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("publish"), c.OperatorPublishingStrategy.APIServer, "cannot set both fields to internal in a mixed cluster, use publish internal instead"))
+		}
+	}
+
 	if c.Capabilities != nil {
 		if c.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetNone {
 			enabledCaps := sets.New[configv1.ClusterVersionCapability](c.Capabilities.AdditionalEnabledCapabilities...)
@@ -898,6 +930,7 @@ var (
 	validPublishingStrategies = map[types.PublishingStrategy]struct{}{
 		types.ExternalPublishingStrategy: {},
 		types.InternalPublishingStrategy: {},
+		types.MixedPublishingStrategy:    {},
 	}
 
 	validPublishingStrategyValues = func() []string {
