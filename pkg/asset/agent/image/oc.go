@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -48,7 +49,7 @@ type Config struct {
 type Release interface {
 	GetBaseIso(architecture string) (string, error)
 	GetBaseIsoVersion(architecture string) (string, error)
-	ExtractFile(image string, filename string) ([]string, error)
+	ExtractFile(image string, filename string, architecture string) ([]string, error)
 }
 
 type release struct {
@@ -69,15 +70,15 @@ func NewRelease(config Config, releaseImage string, pullSecret string, mirrorCon
 }
 
 const (
-	templateGetImage             = "oc adm release info --image-for=%s --insecure=%t %s"
-	templateGetImageWithIcsp     = "oc adm release info --image-for=%s --insecure=%t --icsp-file=%s %s"
-	templateImageExtract         = "oc image extract --path %s:%s --confirm %s"
-	templateImageExtractWithIcsp = "oc image extract --path %s:%s --confirm --icsp-file=%s %s"
+	templateGetImage             = "oc adm release info --image-for=%s --filter-by-os=linux/%s --insecure=%t %s"
+	templateGetImageWithIcsp     = "oc adm release info --image-for=%s --filter-by-os=linux/%s --insecure=%t --icsp-file=%s %s"
+	templateImageExtract         = "oc image extract --path %s:%s --filter-by-os=linux/%s --confirm %s"
+	templateImageExtractWithIcsp = "oc image extract --path %s:%s --filter-by-os=linux/%s --confirm --icsp-file=%s %s"
 )
 
 // ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
-func (r *release) ExtractFile(image string, filename string) ([]string, error) {
-	imagePullSpec, err := r.getImageFromRelease(image)
+func (r *release) ExtractFile(image string, filename string, architecture string) ([]string, error) {
+	imagePullSpec, err := r.getImageFromRelease(image, architecture)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func (r *release) ExtractFile(image string, filename string) ([]string, error) {
 		return nil, err
 	}
 
-	path, err := r.extractFileFromImage(imagePullSpec, filename, cacheDir)
+	path, err := r.extractFileFromImage(imagePullSpec, filename, cacheDir, architecture)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (r *release) ExtractFile(image string, filename string) ([]string, error) {
 // Get the CoreOS ISO from the releaseImage.
 func (r *release) GetBaseIso(architecture string) (string, error) {
 	// Get the machine-os-images pullspec from the release and use that to get the CoreOS ISO
-	image, err := r.getImageFromRelease(machineOsImageName)
+	image, err := r.getImageFromRelease(machineOsImageName, architecture)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +127,7 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 	}
 
 	// Get the base ISO from the payload
-	path, err := r.extractFileFromImage(image, filename, cacheDir)
+	path, err := r.extractFileFromImage(image, filename, cacheDir, architecture)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +136,7 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 }
 
 func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
-	files, err := r.ExtractFile(machineOsImageName, coreOsStreamFileName)
+	files, err := r.ExtractFile(machineOsImageName, coreOsStreamFileName, architecture)
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +167,7 @@ func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
 	return "", errors.New("unable to determine CoreOS release version")
 }
 
-func (r *release) getImageFromRelease(imageName string) (string, error) {
+func (r *release) getImageFromRelease(imageName string, architecture string) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
 	var cmd string
@@ -179,6 +180,8 @@ func (r *release) getImageFromRelease(imageName string) (string, error) {
 		return "", err
 	}
 
+	archName := arch.GoArch(architecture)
+
 	if len(r.mirrorConfig) > 0 {
 		logrus.Debugf("Using mirror configuration")
 		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
@@ -186,9 +189,9 @@ func (r *release) getImageFromRelease(imageName string) (string, error) {
 			return "", err
 		}
 		defer removeIcspFile(icspFile)
-		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, true, icspFile, r.releaseImage)
+		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, archName, true, icspFile, r.releaseImage)
 	} else {
-		cmd = fmt.Sprintf(templateGetImage, imageName, true, r.releaseImage)
+		cmd = fmt.Sprintf(templateGetImage, imageName, archName, true, r.releaseImage)
 	}
 
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
@@ -203,17 +206,18 @@ func (r *release) getImageFromRelease(imageName string) (string, error) {
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(image, file, cacheDir string) ([]string, error) {
+func (r *release) extractFileFromImage(image, file, cacheDir string, architecture string) ([]string, error) {
 	var cmd string
+	archName := arch.GoArch(architecture)
 	if len(r.mirrorConfig) > 0 {
 		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
 		if err != nil {
 			return nil, err
 		}
 		defer removeIcspFile(icspFile)
-		cmd = fmt.Sprintf(templateImageExtractWithIcsp, file, cacheDir, icspFile, image)
+		cmd = fmt.Sprintf(templateImageExtractWithIcsp, file, cacheDir, archName, icspFile, image)
 	} else {
-		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
+		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, archName, image)
 	}
 	path := filepath.Join(cacheDir, path.Base(file))
 	// Remove file if it exists
@@ -303,7 +307,7 @@ func (r *release) verifyCacheFile(image, file, architecture string) (bool, error
 	defer os.RemoveAll(tempDir)
 
 	shaFilename := fmt.Sprintf(coreOsSha256FileName, architecture)
-	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir)
+	shaFile, err := r.extractFileFromImage(image, shaFilename, tempDir, architecture)
 	if err != nil {
 		logrus.Debug("Could not get SHA from payload for cache comparison")
 		return false, nil
