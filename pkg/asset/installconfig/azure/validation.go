@@ -13,7 +13,6 @@ import (
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -98,7 +97,7 @@ func validateConfidentialDiskEncryptionSet(client API, diskEncryptionSet *aztype
 	if requestErr != nil {
 		return requestErr
 	} else if resp == nil || resp.EncryptionSetProperties == nil || resp.EncryptionSetProperties.EncryptionType != azenc.ConfidentialVMEncryptedWithCustomerKey {
-		return errors.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
+		return fmt.Errorf("the disk encryption set should be created with type %s", azenc.ConfidentialVMEncryptedWithCustomerKey)
 	}
 	return nil
 }
@@ -549,7 +548,7 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) field.ErrorList {
 	locations, err := client.ListLocations(context.TODO())
 	if err != nil {
-		return field.ErrorList{field.InternalError(fieldPath, errors.Wrap(err, "failed to retrieve available regions"))}
+		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve available regions: %w", err))}
 	}
 
 	availableRegions := map[string]string{}
@@ -572,7 +571,7 @@ func validateRegion(client API, fieldPath *field.Path, p *aztypes.Platform) fiel
 
 	provider, err := client.GetResourcesProvider(context.TODO(), "Microsoft.Resources")
 	if err != nil {
-		return field.ErrorList{field.InternalError(fieldPath, errors.Wrap(err, "failed to retrieve resource capable regions"))}
+		return field.ErrorList{field.InternalError(fieldPath, fmt.Errorf("failed to retrieve resource capable regions: %w", err))}
 	}
 
 	for _, resType := range *provider.ResourceTypes {
@@ -605,19 +604,19 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	// Look for an existing CNAME first
 	rs, err := azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.CNAME)
 	if err == nil && rs.CnameRecord != nil {
-		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.CNAME, clusterName))
+		return fmt.Errorf(fmtStr, zoneName, azdns.CNAME, clusterName)
 	}
 
 	// Look for an A record
 	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.A)
 	if err == nil && rs.ARecords != nil && len(*rs.ARecords) > 0 {
-		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.A, clusterName))
+		return fmt.Errorf(fmtStr, zoneName, azdns.A, clusterName)
 	}
 
 	// Look for an AAAA record
 	rs, err = azureDNS.GetDNSRecordSet(rgName, zoneName, record, azdns.AAAA)
 	if err == nil && rs.AaaaRecords != nil && len(*rs.AaaaRecords) > 0 {
-		return errors.New(fmt.Sprintf(fmtStr, zoneName, azdns.AAAA, clusterName))
+		return fmt.Errorf(fmtStr, zoneName, azdns.AAAA, clusterName)
 	}
 
 	return nil
@@ -642,7 +641,7 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 	}
 	group, err := client.GetGroup(context.TODO(), platform.ResourceGroupName)
 	if err != nil {
-		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to get resource group")))
+		return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to get resource group: %w", err)))
 	}
 
 	normalizedRegion := strings.Replace(strings.ToLower(to.String(group.Location)), " ", "", -1)
@@ -669,7 +668,7 @@ func validateResourceGroup(client API, fieldPath *field.Path, platform *aztypes.
 	if !platform.IsARO() {
 		ids, err := client.ListResourceIDsByGroup(context.TODO(), platform.ResourceGroupName)
 		if err != nil {
-			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), errors.Wrap(err, "failed to list resources in the resource group")))
+			return append(allErrs, field.InternalError(fieldPath.Child("resourceGroupName"), fmt.Errorf("failed to list resources in the resource group: %w", err)))
 		}
 		if l := len(ids); l > 0 {
 			if len(ids) > 2 {

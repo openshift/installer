@@ -9,7 +9,6 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -31,12 +30,12 @@ func Platform() (*azure.Platform, error) {
 
 	regions, err := getRegions(context.TODO(), client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get list of regions")
+		return nil, fmt.Errorf("failed to get list of regions: %w", err)
 	}
 
 	resourceCapableRegions, err := getResourceCapableRegions(context.TODO(), client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get list of resources to check available regions")
+		return nil, fmt.Errorf("failed to get list of resources to check available regions: %w", err)
 	}
 
 	longRegions := make([]string, 0, len(regions))
@@ -63,7 +62,7 @@ func Platform() (*azure.Platform, error) {
 
 	_, ok := regions[defaultRegion]
 	if !ok {
-		return nil, errors.Errorf("installer bug: invalid default azure region %q", defaultRegion)
+		return nil, fmt.Errorf("installer bug: invalid default azure region %q", defaultRegion)
 	}
 
 	sort.Strings(longRegions)
@@ -82,7 +81,7 @@ func Platform() (*azure.Platform, error) {
 				choice := regionTransform(ans).(core.OptionAnswer).Value
 				i := sort.SearchStrings(shortRegions, choice)
 				if i == len(shortRegions) || shortRegions[i] != choice {
-					return errors.Errorf("invalid region %q", choice)
+					return fmt.Errorf("invalid region %q", choice)
 				}
 				return nil
 			}),
