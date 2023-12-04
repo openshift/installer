@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -141,13 +142,15 @@ func (i *Config) ParseDNSDataFromConfig(loadBalancerType LoadBalancerCategory) (
 
 	if internalData, ok := lbData["data"]; ok {
 		if lbStoredData, ok := internalData.(map[string]interface{})[string(loadBalancerType)]; ok {
-			// TODO: make this parse a comma separated string
-			parsedIP := net.ParseIP(lbStoredData.(string))
-			if parsedIP != nil {
-				ipAddresses = append(ipAddresses, parsedIP)
-			} else {
-				// assume the data is a dns entry
-				dnsNames = append(dnsNames, lbStoredData.(string))
+			lbStoredDataList := strings.Split(lbStoredData.(string), ",")
+			for _, ip := range lbStoredDataList {
+				parsedIP := net.ParseIP(ip)
+				if parsedIP != nil {
+					ipAddresses = append(ipAddresses, parsedIP)
+				} else {
+					// assume the data is a dns entry
+					dnsNames = append(dnsNames, lbStoredData.(string))
+				}
 			}
 		}
 	}
