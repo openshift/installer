@@ -48,6 +48,16 @@ func TestFeatureGates(t *testing.T) {
 			}(),
 		},
 		{
+			name: "GCP UserProvisionedDNS is not allowed without Feature Gates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.GCP = validGCPPlatform()
+				c.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+				return c
+			}(),
+			expected: `^platform.gcp.userProvisionedDNS: Forbidden: this field is protected by the GCPClusterHostedDNS feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set$`,
+		},
+		{
 			name: "GCP UserLabels is not allowed without Feature Gates",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
