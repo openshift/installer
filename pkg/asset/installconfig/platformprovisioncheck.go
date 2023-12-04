@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -91,13 +92,15 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		client := awsconfig.NewClient(session)
 		return awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
 	case azure.Name:
-		dnsConfig, err := ic.Azure.DNSConfig()
-		if err != nil {
-			return err
-		}
-		err = azconfig.ValidatePublicDNS(ic.Config, dnsConfig)
-		if err != nil {
-			return err
+		if ic.Config.Platform.Azure.UserProvisionedDNS != dnstypes.UserProvisionedDNSEnabled {
+			dnsConfig, err := ic.Azure.DNSConfig()
+			if err != nil {
+				return err
+			}
+			err = azconfig.ValidatePublicDNS(ic.Config, dnsConfig)
+			if err != nil {
+				return err
+			}
 		}
 		client, err := ic.Azure.Client()
 		if err != nil {

@@ -73,6 +73,7 @@ type config struct {
 	KeyVaultName                            string `json:"azure_keyvault_name,omitempty"`
 	KeyVaultKeyName                         string `json:"azure_keyvault_key_name,omitempty"`
 	UserAssignedIdentity                    string `json:"azure_user_assigned_identity_key,omitempty"`
+	UserProvisionedDNS                      bool   `json:"azure_user_provisioned_dns,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -97,6 +98,7 @@ type TFVarsSources struct {
 	KeyVault                        azure.KeyVault
 	UserAssignedIdentityKey         string
 	LBPrivate                       bool
+	UserProvisionedDNS              bool
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -198,6 +200,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		KeyVaultName:                            sources.KeyVault.Name,
 		KeyVaultKeyName:                         sources.KeyVault.KeyName,
 		UserAssignedIdentity:                    sources.UserAssignedIdentityKey,
+		UserProvisionedDNS:                      sources.UserProvisionedDNS,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
