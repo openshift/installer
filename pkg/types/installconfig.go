@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -372,6 +373,20 @@ func (p *Platform) Name() string {
 		return nutanix.Name
 	default:
 		return ""
+	}
+}
+
+// UserProvisionedDNS returns the value of UserProvisionedDNS on platforms that
+// support custom DNS. For platforms that don't support custom DNS, "Disabled"
+// is returned.
+func (p *Platform) UserProvisionedDNS() dnstypes.UserProvisionedDNS {
+	switch {
+	case p == nil:
+		return dnstypes.UserProvisionedDNSDisabled
+	case p.GCP != nil:
+		return p.GCP.UserProvisionedDNS
+	default:
+		return dnstypes.UserProvisionedDNSDisabled
 	}
 }
 
