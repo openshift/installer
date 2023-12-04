@@ -112,7 +112,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		if _, ok := sources.AvailabilityZones[zoneName]; !ok {
 			return nil, errors.New(fmt.Sprintf("unable to find the zone when generating terraform vars: %s", zoneName))
 		}
-		if sources.AvailabilityZones[zoneName].Type == typesaws.LocalZoneType || sources.AvailabilityZones[zoneName].Type == typesaws.WavelengtyZoneType {
+		if sources.AvailabilityZones[zoneName].Type == typesaws.LocalZoneType ||
+			sources.AvailabilityZones[zoneName].Type == typesaws.WavelengthZoneType {
 			edgeLocalZoneMap[zoneName] = exists
 			continue
 		}
