@@ -56,7 +56,6 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 		&sshPublicKey{},
 		&baseDomain{},
 		&clusterName{},
-		&networking{},
 		&pullSecret{},
 		&platform{},
 	}
@@ -67,14 +66,12 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
-	networking := &networking{}
 	pullSecret := &pullSecret{}
 	platform := &platform{}
 	parents.Get(
 		sshPublicKey,
 		baseDomain,
 		clusterName,
-		networking,
 		pullSecret,
 		platform,
 	)
@@ -89,9 +86,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		PullSecret: pullSecret.PullSecret,
-		Networking: &types.Networking{
-			MachineNetwork: networking.machineNetwork,
-		},
 	}
 
 	a.Config.AlibabaCloud = platform.AlibabaCloud
