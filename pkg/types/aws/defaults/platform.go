@@ -6,6 +6,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -28,6 +29,9 @@ var (
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *aws.Platform) {
+	if p.UserProvisionedDNS == "" {
+		p.UserProvisionedDNS = dnstypes.UserProvisionedDNSDisabled
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given

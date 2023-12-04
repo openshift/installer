@@ -383,6 +383,8 @@ func (p *Platform) UserProvisionedDNS() dnstypes.UserProvisionedDNS {
 	switch {
 	case p == nil:
 		return dnstypes.UserProvisionedDNSDisabled
+	case p.AWS != nil:
+		return p.AWS.UserProvisionedDNS
 	case p.Azure != nil:
 		return p.Azure.UserProvisionedDNS
 	case p.GCP != nil:

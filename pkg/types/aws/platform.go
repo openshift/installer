@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 
 	configv1 "github.com/openshift/api/config/v1"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 const (
@@ -106,6 +107,13 @@ type Platform struct {
 	// during bootstrap destroy.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
+
+	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
+	// provisioned by the Installer.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	UserProvisionedDNS dnstypes.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to

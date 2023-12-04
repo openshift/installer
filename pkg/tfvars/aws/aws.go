@@ -49,6 +49,7 @@ type Config struct {
 	BootstrapMetadataAuthentication string            `json:"aws_bootstrap_instance_metadata_authentication,omitempty"`
 	PreserveBootstrapIgnition       bool              `json:"aws_preserve_bootstrap_ignition"`
 	MasterSecurityGroups            []string          `json:"aws_master_security_groups,omitempty"`
+	UserProvisionedDNS              bool              `json:"aws_user_provisioned_dns,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -80,6 +81,8 @@ type TFVarsSources struct {
 	PreserveBootstrapIgnition bool
 
 	MasterSecurityGroups []string
+
+	UserProvisionedDNS bool
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -207,6 +210,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		WorkerIAMRoleName:         sources.WorkerIAMRoleName,
 		PreserveBootstrapIgnition: sources.PreserveBootstrapIgnition,
 		MasterSecurityGroups:      sources.MasterSecurityGroups,
+		UserProvisionedDNS:        sources.UserProvisionedDNS,
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)

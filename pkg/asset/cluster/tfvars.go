@@ -334,6 +334,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Proxy:                     installConfig.Config.Proxy,
 			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
 			MasterSecurityGroups:      securityGroups,
+			UserProvisionedDNS:        installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
