@@ -11,6 +11,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 var (
@@ -110,6 +111,10 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 
 	if p.CustomerManagedKey != nil {
 		allErrs = append(allErrs, validateCustomerManagedKeys(p.CloudName, *p.CustomerManagedKey, fldPath.Child("customerManagedKey"))...)
+	}
+
+	if !dnstypes.ValidUserProvisionedDNSType(p.UserProvisionedDNS) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "valid values are Enabled or Disabled"))
 	}
 
 	// support for Azure user-defined tags made available through
