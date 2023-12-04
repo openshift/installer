@@ -101,3 +101,7 @@ output "cluster_internal_ip" {
 output "user_provisioned_dns" {
   value = var.azure_user_provisioned_dns
 }
+
+output "user_provisioned_dns" {
+  value = var.azure_user_provisioned_dns
+}
