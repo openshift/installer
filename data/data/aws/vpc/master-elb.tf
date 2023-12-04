@@ -9,7 +9,7 @@ resource "aws_lb" "api_internal" {
     {
       "Name" = "${var.cluster_id}-int"
     },
-    var.tags,
+    local.tags,
   )
 
   timeouts {
@@ -17,6 +17,20 @@ resource "aws_lb" "api_internal" {
   }
 
   depends_on = [aws_internet_gateway.igw]
+}
+
+data "aws_network_interface" "api_internal_nics" {
+  count = length(data.aws_subnet.private.*.id)
+
+  filter {
+    name   = "description"
+    values = ["ELB ${aws_lb.api_internal.arn_suffix}"]
+  }
+
+  filter {
+    name   = "subnet-id"
+    values = [data.aws_subnet.private.*.id[count.index]]
+  }
 }
 
 resource "aws_lb" "api_external" {
@@ -32,7 +46,7 @@ resource "aws_lb" "api_external" {
     {
       "Name" = "${var.cluster_id}-ext"
     },
-    var.tags,
+    local.tags,
   )
 
   timeouts {
@@ -40,6 +54,20 @@ resource "aws_lb" "api_external" {
   }
 
   depends_on = [aws_internet_gateway.igw]
+}
+
+data "aws_network_interface" "api_external_nics" {
+  count = length(data.aws_subnet.public.*.id)
+
+  filter {
+    name   = "description"
+    values = ["ELB ${aws_lb.api_external[0].arn_suffix}"]
+  }
+
+  filter {
+    name   = "subnet-id"
+    values = [data.aws_subnet.public.*.id[count.index]]
+  }
 }
 
 resource "aws_lb_target_group" "api_internal" {
@@ -54,7 +82,7 @@ resource "aws_lb_target_group" "api_internal" {
     {
       "Name" = "${var.cluster_id}-aint"
     },
-    var.tags,
+    local.tags,
   )
 
   // Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
@@ -82,7 +110,7 @@ resource "aws_lb_target_group" "api_external" {
     {
       "Name" = "${var.cluster_id}-aext"
     },
-    var.tags,
+    local.tags,
   )
 
   // Refer to docs/dev/kube-apiserver-health-check.md on how to correctly setup health check probe for kube-apiserver
@@ -108,7 +136,7 @@ resource "aws_lb_target_group" "services" {
     {
       "Name" = "${var.cluster_id}-sint"
     },
-    var.tags,
+    local.tags,
   )
 
   health_check {
@@ -155,4 +183,3 @@ resource "aws_lb_listener" "api_external_api" {
     type             = "forward"
   }
 }
-

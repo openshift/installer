@@ -38,6 +38,10 @@ output "master_sg_id" {
   value = aws_security_group.master.id
 }
 
+output "master_sg_ids" {
+  value = concat([aws_security_group.master.id], var.aws_master_security_groups)
+}
+
 output "worker_sg_id" {
   value = aws_security_group.worker.id
 }
@@ -76,3 +80,29 @@ output "aws_lb_api_internal_zone_id" {
   value = aws_lb.api_internal.zone_id
 }
 
+output "user_provisioned_dns" {
+  value = var.aws_user_provisioned_dns
+}
+
+output "api_internal_nics" {
+  value = data.aws_network_interface.api_internal_nics
+}
+
+output "api_external_nics" {
+  value = data.aws_network_interface.api_external_nics
+}
+
+output "api_internal_ips" {
+  value = flatten([data.aws_network_interface.api_internal_nics.*.private_ips])
+}
+
+output "api_external_ips" {
+  value = distinct(flatten([
+    for each_associations in flatten([data.aws_network_interface.api_external_nics.*.association]) :
+    each_associations.public_ip
+  ]))
+}
+
+output "ami_id" {
+  value = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
+}

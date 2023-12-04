@@ -2,17 +2,28 @@
 # read only: only locals and data source definitions allowed. No resources or module blocks in this file
 
 locals {
-  public_endpoints = var.publish_strategy == "External" ? true : false
+  public_endpoints = var.aws_publish_strategy == "External" ? true : false
   description      = "Created By OpenShift Installer"
+
+  availability_zones = sort(
+    distinct(
+      concat(
+        var.aws_master_availability_zones,
+        var.aws_worker_availability_zones,
+      ),
+    )
+  )
+
+  edge_zones = distinct(var.aws_edge_local_zones)
 
   # CIDR block distribution:
   # allow_expansion_* flags checks if is a single-zone deployment, if true (1) the
   # available CIDR block will be split into two to allow user expansion.
-  allow_expansion_zones = length(var.availability_zones) == 1 ? 1 : 0
-  allow_expansion_edge  = length(var.edge_zones) == 1 ? 1 : 0
+  allow_expansion_zones = length(local.availability_zones) == 1 ? 1 : 0
+  allow_expansion_edge  = length(local.edge_zones) == 1 ? 1 : 0
 
   # edge_enabled flag is enabled when edge zones (Local Zone) are provided.
-  edge_enabled = length(var.edge_zones) > 0 ? 1 : 0
+  edge_enabled = length(local.edge_zones) > 0 ? 1 : 0
 
   # CIDR blocks for default IPI installation
   cidr_dedicated_private = cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 1, 0)
@@ -38,29 +49,29 @@ locals {
 # (ie: we don't want "aws.new_vpc" and "data.aws_vpc.cluster_vpc", just "data.aws_vpc.cluster_vpc" used everwhere).
 
 data "aws_vpc" "cluster_vpc" {
-  id = var.vpc == null ? aws_vpc.new_vpc[0].id : var.vpc
+  id = var.aws_vpc == null ? aws_vpc.new_vpc[0].id : var.aws_vpc
 }
 
 data "aws_subnet" "public" {
-  count = var.public_subnets == null ? length(var.availability_zones) : length(var.public_subnets)
+  count = var.aws_public_subnets == null ? length(local.availability_zones) : length(var.aws_public_subnets)
 
-  id = var.public_subnets == null ? aws_subnet.public_subnet[count.index].id : var.public_subnets[count.index]
+  id = var.aws_public_subnets == null ? aws_subnet.public_subnet[count.index].id : var.aws_public_subnets[count.index]
 }
 
 data "aws_subnet" "private" {
-  count = var.private_subnets == null ? length(var.availability_zones) : length(var.private_subnets)
+  count = var.aws_private_subnets == null ? length(local.availability_zones) : length(var.aws_private_subnets)
 
-  id = var.private_subnets == null ? aws_subnet.private_subnet[count.index].id : var.private_subnets[count.index]
+  id = var.aws_private_subnets == null ? aws_subnet.private_subnet[count.index].id : var.aws_private_subnets[count.index]
 }
 
 data "aws_subnet" "edge_private" {
-  count = var.edge_zones == null ? 0 : length(var.edge_zones)
+  count = local.edge_zones == null ? 0 : length(local.edge_zones)
 
-  id = var.edge_zones == null ? null : aws_subnet.edge_private_subnet[count.index].id
+  id = local.edge_zones == null ? null : aws_subnet.edge_private_subnet[count.index].id
 }
 
 data "aws_subnet" "edge_public" {
-  count = var.edge_zones == null ? 0 : length(var.edge_zones)
+  count = local.edge_zones == null ? 0 : length(local.edge_zones)
 
-  id = var.edge_zones == null ? null : aws_subnet.edge_public_subnet[count.index].id
+  id = local.edge_zones == null ? null : aws_subnet.edge_public_subnet[count.index].id
 }

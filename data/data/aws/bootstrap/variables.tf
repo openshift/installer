@@ -30,7 +30,14 @@ variable "master_sg_id" {
   type = string
 }
 
-variable "ami_id" {
+variable "aws_lb_target_group_arns" {
+  type = list(string)
+}
+
+variable "aws_lb_target_group_arns_length" {
   type = string
 }
 
+variable "ami_id" {
+  type = string
+}

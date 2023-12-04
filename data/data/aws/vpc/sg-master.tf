@@ -10,7 +10,7 @@ resource "aws_security_group" "master" {
     {
       "Name" = "${var.cluster_id}-master-sg"
     },
-    var.tags,
+    local.tags,
   )
 }
 
@@ -20,7 +20,7 @@ resource "aws_security_group_rule" "master_mcs" {
   description       = local.description
 
   protocol    = "tcp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = 22623
   to_port     = 22623
 }
@@ -42,7 +42,7 @@ resource "aws_security_group_rule" "master_ingress_icmp" {
   description       = local.description
 
   protocol    = "icmp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = -1
   to_port     = -1
 }
@@ -53,7 +53,7 @@ resource "aws_security_group_rule" "master_ingress_ssh" {
   description       = local.description
 
   protocol    = "tcp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = 22
   to_port     = 22
 }
@@ -64,7 +64,7 @@ resource "aws_security_group_rule" "master_ingress_https" {
   description       = local.description
 
   protocol    = "tcp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = 6443
   to_port     = 6443
 }

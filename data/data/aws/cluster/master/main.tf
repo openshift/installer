@@ -61,8 +61,8 @@ resource "aws_iam_role_policy" "master_policy" {
   // Please see: docs/dev/aws/iam_permissions.md
 
   count = var.iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-master-policy"
-  role = aws_iam_role.master_role[0].id
+  name  = "${var.cluster_id}-master-policy"
+  role  = aws_iam_role.master_role[0].id
 
   policy = <<EOF
 {

@@ -66,7 +66,7 @@ EOF
 }
 
 variable "region" {
-  type = string
+  type        = string
   description = "The target AWS region for the cluster."
 }
 

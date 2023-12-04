@@ -10,7 +10,7 @@ resource "aws_security_group" "worker" {
     {
       "Name" = "${var.cluster_id}-worker-sg"
     },
-    var.tags,
+    local.tags,
   )
 }
 
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "worker_ingress_icmp" {
   description       = local.description
 
   protocol    = "icmp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = -1
   to_port     = -1
 }
@@ -42,7 +42,7 @@ resource "aws_security_group_rule" "worker_ingress_ssh" {
   description       = local.description
 
   protocol    = "tcp"
-  cidr_blocks = var.cidr_blocks
+  cidr_blocks = var.machine_v4_cidrs
   from_port   = 22
   to_port     = 22
 }
