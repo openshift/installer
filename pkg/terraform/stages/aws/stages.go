@@ -76,11 +76,11 @@ func extractAWSLBConfig(s stages.SplitStage, directory string, terraformDir stri
 	}
 
 	// Extract the Load Balancer ip addresses from the terraform output.
-	apiLBIpRaw, ok := outputs["api_external_ips"]
+	apiLBIpRaw, ok := outputs["cluster_public_ips"]
 	if !ok {
 		return "", fmt.Errorf("failed to read External API LB DNS Name from terraform outputs")
 	}
-	apiIntLBIpRaw, ok := outputs["api_internal_ips"]
+	apiIntLBIpRaw, ok := outputs["cluster_internal_ips"]
 	if !ok {
 		return "", fmt.Errorf("failed to read Internal API LB DNS Name from terraform outputs")
 	}

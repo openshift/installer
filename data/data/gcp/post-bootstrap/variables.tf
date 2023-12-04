@@ -26,11 +26,11 @@ variable "master_subnet" {
   type = string
 }
 
-variable "cluster_internal_ip" {
+variable "cluster_internal_ips" {
   type = string
 }
 
-variable "cluster_public_ip" {
+variable "cluster_public_ips" {
   type        = string
   default     = null
   description = "IP of the API load balancer; it is null with the internal publishing strategy."

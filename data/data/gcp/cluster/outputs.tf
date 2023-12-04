@@ -1,8 +1,8 @@
-output "cluster_internal_ip" {
+output "cluster_internal_ips" {
   value = module.network.cluster_ip
 }
 
-output "cluster_public_ip" {
+output "cluster_public_ips" {
   value = module.network.cluster_public_ip
 }
 

@@ -92,11 +92,11 @@ output "api_external_nics" {
   value = data.aws_network_interface.api_external_nics
 }
 
-output "api_internal_ips" {
+output "cluster_internal_ips" {
   value = flatten([data.aws_network_interface.api_internal_nics.*.private_ips])
 }
 
-output "api_external_ips" {
+output "cluster_public_ips" {
   value = distinct(flatten([
     for each_associations in flatten([data.aws_network_interface.api_external_nics.*.association]) :
     each_associations.public_ip

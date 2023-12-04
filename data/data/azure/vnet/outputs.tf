@@ -90,11 +90,11 @@ output "user_provisioned_dns" {
   value = var.azure_user_provisioned_dns
 }
 
-output "cluster_public_ip" {
+output "cluster_public_ips" {
   value = local.need_public_ipv4 ? data.azurerm_public_ip.cluster_public_ip_v4[0].ip_address : null
 }
 
-output "cluster_internal_ip" {
+output "cluster_internal_ips" {
   value = var.use_ipv4 ? azurerm_lb.internal.private_ip_addresses[0] : null
 }
 
