@@ -26,7 +26,7 @@ variable "master_subnet" {
   type = string
 }
 
-variable "cluster_ip" {
+variable "cluster_internal_ip" {
   type = string
 }
 

@@ -1,4 +1,4 @@
-output "cluster_ip" {
+output "cluster_internal_ip" {
   value = module.network.cluster_ip
 }
 
