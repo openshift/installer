@@ -945,6 +945,137 @@ func ObjectLockDefaultRetentionGet(in *s3.DefaultRetention) []map[string]interfa
 	}
 	return defaultRetention
 }
+
+func WebsiteConfigurationGet(in *s3.WebsiteConfiguration) []map[string]interface{} {
+	configuration := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		websiteConfig := make(map[string]interface{})
+
+		if in.ErrorDocument != nil {
+			websiteConfig["error_document"] = GetErrorDocument(in.ErrorDocument)
+		}
+		if in.IndexDocument != nil {
+			websiteConfig["index_document"] = GetIndexDocument(in.IndexDocument)
+		}
+		if in.RedirectAllRequestsTo != nil {
+			websiteConfig["redirect_all_requests_to"] = RedirectAllRequestsGet(in.RedirectAllRequestsTo)
+		}
+
+		if in.RoutingRules != nil {
+			websiteConfig["routing_rule"] = RoutingRulesGet(in.RoutingRules)
+		}
+
+		configuration = append(configuration, websiteConfig)
+	}
+	return configuration
+}
+
+func GetErrorDocument(in *s3.ErrorDocument) []map[string]interface{} {
+	errorDocumentMap := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		errorDocValue := make(map[string]interface{})
+
+		if in.Key != nil {
+			errorDocValue["key"] = aws.StringValue(in.Key)
+		}
+		errorDocumentMap = append(errorDocumentMap, errorDocValue)
+	}
+	return errorDocumentMap
+}
+
+func GetIndexDocument(in *s3.IndexDocument) []map[string]interface{} {
+	indexDocumentMap := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		indexDocumentValue := make(map[string]interface{})
+
+		if in.Suffix != nil {
+			indexDocumentValue["suffix"] = aws.StringValue(in.Suffix)
+		}
+		indexDocumentMap = append(indexDocumentMap, indexDocumentValue)
+	}
+	return indexDocumentMap
+}
+
+func RedirectAllRequestsGet(in *s3.RedirectAllRequestsTo) []map[string]interface{} {
+	redirectRequests := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		redirectRequestConfig := make(map[string]interface{})
+
+		if in.HostName != nil {
+			redirectRequestConfig["host_name"] = aws.StringValue(in.HostName)
+		}
+		if in.Protocol != nil {
+			redirectRequestConfig["protocol"] = aws.StringValue(in.Protocol)
+		}
+
+		redirectRequests = append(redirectRequests, redirectRequestConfig)
+	}
+	return redirectRequests
+}
+
+func RoutingRulesGet(in []*s3.RoutingRule) []map[string]interface{} {
+	routingRules := make([]map[string]interface{}, 0, len(in))
+	if in != nil {
+		for _, routingRuleValue := range in {
+			rule := make(map[string]interface{})
+
+			if routingRuleValue.Condition != nil {
+				rule["condition"] = RoutingRuleConditionGet(routingRuleValue.Condition)
+			}
+
+			if routingRuleValue.Redirect != nil {
+				rule["redirect"] = RoutingRuleRedirectGet(routingRuleValue.Redirect)
+			}
+
+			routingRules = append(routingRules, rule)
+		}
+	}
+	return routingRules
+}
+
+func RoutingRuleConditionGet(in *s3.Condition) []map[string]interface{} {
+	condition := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		conditionConfig := make(map[string]interface{})
+
+		if in.HttpErrorCodeReturnedEquals != nil {
+			conditionConfig["http_error_code_returned_equals"] = aws.StringValue(in.HttpErrorCodeReturnedEquals)
+		}
+		if in.KeyPrefixEquals != nil {
+			conditionConfig["key_prefix_equals"] = aws.StringValue(in.KeyPrefixEquals)
+		}
+
+		condition = append(condition, conditionConfig)
+	}
+	return condition
+}
+
+func RoutingRuleRedirectGet(in *s3.Redirect) []map[string]interface{} {
+	redirect := make([]map[string]interface{}, 0, 1)
+	if in != nil {
+		redirectConfig := make(map[string]interface{})
+
+		if in.HostName != nil {
+			redirectConfig["host_name"] = aws.StringValue(in.HostName)
+		}
+		if in.HttpRedirectCode != nil {
+			redirectConfig["http_redirect_code"] = aws.StringValue(in.HttpRedirectCode)
+		}
+		if in.Protocol != nil {
+			redirectConfig["protocol"] = aws.StringValue(in.Protocol)
+		}
+		if in.ReplaceKeyPrefixWith != nil {
+			redirectConfig["replace_key_prefix_with"] = aws.StringValue(in.ReplaceKeyPrefixWith)
+		}
+		if in.ReplaceKeyWith != nil {
+			redirectConfig["replace_key_with"] = aws.StringValue(in.ReplaceKeyWith)
+		}
+
+		redirect = append(redirect, redirectConfig)
+	}
+	return redirect
+}
+
 func FlattenLimits(in *whisk.Limits) []interface{} {
 	att := make(map[string]interface{})
 	if in.Timeout != nil {
@@ -1510,42 +1641,55 @@ func FlattenV2PolicyResourceTags(resource iampolicymanagementv1.V2PolicyResource
 	return result
 }
 
+func getConditionValues(v interface{}) []string {
+	var values []string
+	switch value := v.(type) {
+	case string:
+		values = append(values, value)
+	case []interface{}:
+		for _, v := range value {
+			values = append(values, fmt.Sprint(v))
+		}
+	case nil:
+	default:
+		values = append(values, fmt.Sprintf("%v", value))
+	}
+	return values
+}
+
 func FlattenRuleConditions(rule iampolicymanagementv1.V2PolicyRule) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0)
 	if len(rule.Conditions) > 0 {
-		for _, c := range rule.Conditions {
-			var values []string
-			switch value := c.Value.(type) {
-			case string:
-				values = append(values, value)
-			case []interface{}:
-				for _, v := range value {
-					values = append(values, fmt.Sprint(v))
+		for _, cIntf := range rule.Conditions {
+			c := cIntf.(*iampolicymanagementv1.NestedCondition)
+			if len(c.Conditions) > 0 {
+				nestedConditions := make([]map[string]interface{}, 0)
+				for _, nc := range c.Conditions {
+					values := getConditionValues(nc.Value)
+					nestedCondition := map[string]interface{}{
+						"key":      nc.Key,
+						"value":    values,
+						"operator": nc.Operator,
+					}
+					nestedConditions = append(nestedConditions, nestedCondition)
 				}
-			default:
-				values = append(values, value.(string))
+				condition := map[string]interface{}{
+					"operator":   c.Operator,
+					"conditions": nestedConditions,
+				}
+				result = append(result, condition)
+			} else {
+				values := getConditionValues(c.Value)
+				condition := map[string]interface{}{
+					"key":      c.Key,
+					"value":    values,
+					"operator": c.Operator,
+				}
+				result = append(result, condition)
 			}
-
-			condition := map[string]interface{}{
-				"key":      c.Key,
-				"value":    values,
-				"operator": c.Operator,
-			}
-			result = append(result, condition)
 		}
 	} else {
-		var values []string
-		switch value := rule.Value.(type) {
-		case string:
-			values = append(values, value)
-		case []interface{}:
-			for _, v := range value {
-				values = append(values, fmt.Sprint(v))
-			}
-		default:
-			values = append(values, value.(string))
-		}
-
+		values := getConditionValues(rule.Value)
 		condition := map[string]interface{}{
 			"key":      rule.Key,
 			"value":    values,
@@ -2587,131 +2731,6 @@ func ResourceIBMISLBPoolCookieValidate(diff *schema.ResourceDiff) error {
 	return nil
 }
 
-func ResourceSharesValidate(diff *schema.ResourceDiff) error {
-	err := ResourceSharesValidateHelper(diff, "size", "profile", "iops")
-	if err != nil {
-		return err
-	}
-	if _, ok := diff.GetOk("replica_share"); ok {
-		err := ResourceSharesValidateHelper(diff, "replica_share.0.size", "replica_share.0.profile", "replica_share.0.iops")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-func ResourceSharesValidateHelper(diff *schema.ResourceDiff, sizeStr, profileStr, iopsStr string) error {
-
-	profile := ""
-	var size, iops int
-
-	if iopsIntf, ok := diff.GetOk(iopsStr); ok {
-		iops = iopsIntf.(int)
-	}
-	if profileIntf, ok := diff.GetOk(profileStr); ok {
-		profile = profileIntf.(string)
-	}
-	if diff.HasChange(sizeStr) && !diff.HasChange(profileStr) {
-		oldSize, newSize := diff.GetChange(sizeStr)
-		if newSize.(int) < oldSize.(int) {
-			return fmt.Errorf("The new share size '%d' must be greater than the current share size '%d'", newSize.(int), oldSize.(int))
-		}
-	}
-
-	if sizeIntf, ok := diff.GetOk(sizeStr); ok {
-		size = sizeIntf.(int)
-		if profile == "tier-5iops" && size > 9600 {
-			return fmt.Errorf("'%s' shares cannot have size more than %d.", profile, 9600)
-		} else if profile == "tier-10iops" && size > 4800 {
-			return fmt.Errorf("'%s' shares cannot have size more than %d.", profile, 4800)
-		} else if profile == "custom-iops" && size > 16000 {
-			return fmt.Errorf("'%s' shares cannot have size more than %d.", profile, 16000)
-		}
-	}
-
-	if profile != "custom-iops" {
-		if iops != 0 && diff.NewValueKnown(iopsStr) && diff.HasChange(iopsStr) {
-			return fmt.Errorf("The Share profile specified in the request cannot accept IOPS values")
-		}
-	} else {
-		if iops == 0 {
-			return nil
-		}
-		if size >= 10 && size <= 39 {
-			min := 100
-			max := 1000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 40 && size <= 79 {
-			min := 100
-			max := 2000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 80 && size <= 99 {
-			min := 100
-			max := 4000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 100 && size <= 499 {
-			min := 100
-			max := 6000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 500 && size <= 999 {
-			min := 100
-			max := 10000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 1000 && size <= 1999 {
-			min := 100
-			max := 20000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 2000 && size <= 3999 {
-			min := 200
-			max := 40000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 4000 && size <= 7999 {
-			min := 300
-			max := 40000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 8000 && size <= 9999 {
-			min := 500
-			max := 48000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-		if size >= 10000 && size <= 16000 {
-			min := 1000
-			max := 48000
-			if !(iops >= min && iops <= max) {
-				return fmt.Errorf("Shares Error: Allowed iops range for size %d is [%d-%d] ", size, min, max)
-			}
-		}
-	}
-
-	return nil
-}
-
 func ResourceVolumeAttachmentValidate(diff *schema.ResourceDiff) error {
 
 	if volsintf, ok := diff.GetOk("volume_attachments"); ok {
@@ -2737,22 +2756,6 @@ func ResourceVolumeAttachmentValidate(diff *schema.ResourceDiff) error {
 		}
 	}
 
-	return nil
-}
-
-func InstanceProfileValidate(diff *schema.ResourceDiff) error {
-	if diff.Id() != "" && diff.HasChange("profile") {
-		o, n := diff.GetChange("profile")
-		old := o.(string)
-		new := n.(string)
-		log.Println("old profile : ", old)
-		log.Println("new profile : ", new)
-		if !strings.Contains(old, "d") && strings.Contains(new, "d") {
-			diff.ForceNew("profile")
-		} else if strings.Contains(old, "d") && !strings.Contains(new, "d") {
-			diff.ForceNew("profile")
-		}
-	}
 	return nil
 }
 
@@ -3421,7 +3424,7 @@ func GetRolesFromRoleNames(roleNames []string, roles []iampolicymanagementv1.Pol
 	return filteredRoles, nil
 }
 
-func MapRoleListToPolicyRoles(roleList iampolicymanagementv1.RoleList) []iampolicymanagementv1.PolicyRole {
+func MapRoleListToPolicyRoles(roleList iampolicymanagementv1.RoleCollection) []iampolicymanagementv1.PolicyRole {
 	var policyRoles []iampolicymanagementv1.PolicyRole
 	for _, customRole := range roleList.CustomRoles {
 		newPolicyRole := iampolicymanagementv1.PolicyRole{
@@ -3463,7 +3466,7 @@ func MapRolesToPolicyRoles(roles []iampolicymanagementv1.Roles) []iampolicymanag
 	return policyRoles
 }
 
-func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2Policy, d *schema.ResourceData, meta interface{}) ([]string, error) {
+func GetRoleNamesFromPolicyResponse(policy iampolicymanagementv1.V2PolicyTemplateMetaData, d *schema.ResourceData, meta interface{}) ([]string, error) {
 	iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
 	if err != nil {
 		return []string{}, err
@@ -3942,39 +3945,64 @@ func GenerateV2PolicyOptions(d *schema.ResourceData, meta interface{}) (iampolic
 	return iampolicymanagementv1.CreateV2PolicyOptions{Control: policyControl, Resource: &policyResource}, nil
 }
 
+func generatePolicyRuleCondition(c map[string]interface{}) iampolicymanagementv1.RuleAttribute {
+	key := c["key"].(string)
+	operator := c["operator"].(string)
+	r := iampolicymanagementv1.RuleAttribute{
+		Key:      &key,
+		Operator: &operator,
+	}
+
+	interfaceValues := c["value"].([]interface{})
+	values := make([]string, len(interfaceValues))
+	for i, v := range interfaceValues {
+		values[i] = fmt.Sprint(v)
+	}
+
+	if len(values) > 1 {
+		r.Value = &values
+	} else if operator == "stringExists" && values[0] == "true" {
+		r.Value = true
+	} else if operator == "stringExists" && values[0] == "false" {
+		r.Value = false
+	} else {
+		r.Value = &values[0]
+	}
+	return r
+}
+
 func GeneratePolicyRule(d *schema.ResourceData, ruleConditions interface{}) *iampolicymanagementv1.V2PolicyRule {
-	conditions := []iampolicymanagementv1.RuleAttribute{}
+	conditions := []iampolicymanagementv1.NestedConditionIntf{}
 
-	for _, condition := range ruleConditions.(*schema.Set).List() {
-		c := condition.(map[string]interface{})
-		key := c["key"].(string)
-		operator := c["operator"].(string)
-		r := iampolicymanagementv1.RuleAttribute{
-			Key:      &key,
-			Operator: &operator,
-		}
-
-		interfaceValues := c["value"].([]interface{})
-		values := make([]string, len(interfaceValues))
-		for i, v := range interfaceValues {
-			values[i] = fmt.Sprint(v)
-		}
-
-		if len(values) > 1 {
-			r.Value = &values
-		} else if operator == "stringExists" && values[0] == "true" {
-			r.Value = true
+	for _, ruleCondition := range ruleConditions.(*schema.Set).List() {
+		rc := ruleCondition.(map[string]interface{})
+		con := rc["conditions"].([]interface{})
+		if len(con) > 0 {
+			nestedConditions := []iampolicymanagementv1.RuleAttribute{}
+			for _, nc := range con {
+				nestedConditions = append(nestedConditions, generatePolicyRuleCondition(nc.(map[string]interface{})))
+			}
+			nestedCondition := &iampolicymanagementv1.NestedCondition{}
+			nestedConditionsOperator := rc["operator"].(string)
+			nestedCondition.Operator = &nestedConditionsOperator
+			nestedCondition.Conditions = nestedConditions
+			conditions = append(conditions, nestedCondition)
 		} else {
-			r.Value = &values[0]
+			ruleAttribute := generatePolicyRuleCondition(rc)
+			nestedCondition := &iampolicymanagementv1.NestedCondition{
+				Key:      ruleAttribute.Key,
+				Operator: ruleAttribute.Operator,
+				Value:    ruleAttribute.Value,
+			}
+			conditions = append(conditions, nestedCondition)
 		}
-
-		conditions = append(conditions, r)
 	}
 	rule := new(iampolicymanagementv1.V2PolicyRule)
 	if len(conditions) == 1 {
-		rule.Key = conditions[0].Key
-		rule.Operator = conditions[0].Operator
-		rule.Value = conditions[0].Value
+		ruleCondition := conditions[0].(*iampolicymanagementv1.NestedCondition)
+		rule.Key = ruleCondition.Key
+		rule.Operator = ruleCondition.Operator
+		rule.Value = ruleCondition.Value
 	} else {
 		ruleOperator := d.Get("rule_operator").(string)
 		rule.Operator = &ruleOperator

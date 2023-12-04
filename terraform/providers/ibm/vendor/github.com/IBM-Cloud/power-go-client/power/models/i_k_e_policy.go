@@ -305,6 +305,7 @@ func (m *IKEPolicy) ContextValidate(ctx context.Context, formats strfmt.Registry
 func (m *IKEPolicy) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Authentication != nil {
+
 		if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("authentication")
@@ -321,6 +322,7 @@ func (m *IKEPolicy) contextValidateAuthentication(ctx context.Context, formats s
 func (m *IKEPolicy) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.KeyLifetime != nil {
+
 		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("keyLifetime")

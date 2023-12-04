@@ -72,7 +72,7 @@ func (o *PcloudVolumegroupsPutReader) ReadResponse(response runtime.ClientRespon
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}] pcloud.volumegroups.put", response, response.Code())
 	}
 }
 
@@ -113,6 +113,11 @@ func (o *PcloudVolumegroupsPutAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups put accepted response a status code equal to that given
 func (o *PcloudVolumegroupsPutAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud volumegroups put accepted response
+func (o *PcloudVolumegroupsPutAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudVolumegroupsPutAccepted) Error() string {
@@ -174,6 +179,11 @@ func (o *PcloudVolumegroupsPutBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups put bad request response a status code equal to that given
 func (o *PcloudVolumegroupsPutBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud volumegroups put bad request response
+func (o *PcloudVolumegroupsPutBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudVolumegroupsPutBadRequest) Error() string {
@@ -239,6 +249,11 @@ func (o *PcloudVolumegroupsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud volumegroups put unauthorized response
+func (o *PcloudVolumegroupsPutUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudVolumegroupsPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}][%d] pcloudVolumegroupsPutUnauthorized  %+v", 401, o.Payload)
 }
@@ -300,6 +315,11 @@ func (o *PcloudVolumegroupsPutForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups put forbidden response a status code equal to that given
 func (o *PcloudVolumegroupsPutForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud volumegroups put forbidden response
+func (o *PcloudVolumegroupsPutForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudVolumegroupsPutForbidden) Error() string {
@@ -365,6 +385,11 @@ func (o *PcloudVolumegroupsPutNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud volumegroups put not found response
+func (o *PcloudVolumegroupsPutNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVolumegroupsPutNotFound) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}][%d] pcloudVolumegroupsPutNotFound  %+v", 404, o.Payload)
 }
@@ -426,6 +451,11 @@ func (o *PcloudVolumegroupsPutConflict) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups put conflict response a status code equal to that given
 func (o *PcloudVolumegroupsPutConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud volumegroups put conflict response
+func (o *PcloudVolumegroupsPutConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudVolumegroupsPutConflict) Error() string {
@@ -491,6 +521,11 @@ func (o *PcloudVolumegroupsPutUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud volumegroups put unprocessable entity response
+func (o *PcloudVolumegroupsPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudVolumegroupsPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}][%d] pcloudVolumegroupsPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -552,6 +587,11 @@ func (o *PcloudVolumegroupsPutInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups put internal server error response a status code equal to that given
 func (o *PcloudVolumegroupsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud volumegroups put internal server error response
+func (o *PcloudVolumegroupsPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVolumegroupsPutInternalServerError) Error() string {

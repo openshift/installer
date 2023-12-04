@@ -53,6 +53,12 @@ func (o *PcloudNetworksPostReader) ReadResponse(response runtime.ClientResponse,
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudNetworksPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudNetworksPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -71,8 +77,14 @@ func (o *PcloudNetworksPostReader) ReadResponse(response runtime.ClientResponse,
 			return nil, err
 		}
 		return nil, result
+	case 550:
+		result := NewPcloudNetworksPostStatus550()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks] pcloud.networks.post", response, response.Code())
 	}
 }
 
@@ -113,6 +125,11 @@ func (o *PcloudNetworksPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud networks post o k response a status code equal to that given
 func (o *PcloudNetworksPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud networks post o k response
+func (o *PcloudNetworksPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudNetworksPostOK) Error() string {
@@ -178,6 +195,11 @@ func (o *PcloudNetworksPostCreated) IsCode(code int) bool {
 	return code == 201
 }
 
+// Code gets the status code for the pcloud networks post created response
+func (o *PcloudNetworksPostCreated) Code() int {
+	return 201
+}
+
 func (o *PcloudNetworksPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostCreated  %+v", 201, o.Payload)
 }
@@ -239,6 +261,11 @@ func (o *PcloudNetworksPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud networks post bad request response a status code equal to that given
 func (o *PcloudNetworksPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud networks post bad request response
+func (o *PcloudNetworksPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudNetworksPostBadRequest) Error() string {
@@ -304,6 +331,11 @@ func (o *PcloudNetworksPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud networks post unauthorized response
+func (o *PcloudNetworksPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudNetworksPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -367,6 +399,11 @@ func (o *PcloudNetworksPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud networks post forbidden response
+func (o *PcloudNetworksPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudNetworksPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostForbidden  %+v", 403, o.Payload)
 }
@@ -380,6 +417,74 @@ func (o *PcloudNetworksPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudNetworksPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPostNotFound creates a PcloudNetworksPostNotFound with default headers values
+func NewPcloudNetworksPostNotFound() *PcloudNetworksPostNotFound {
+	return &PcloudNetworksPostNotFound{}
+}
+
+/*
+PcloudNetworksPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudNetworksPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud networks post not found response has a 2xx status code
+func (o *PcloudNetworksPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks post not found response has a 3xx status code
+func (o *PcloudNetworksPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks post not found response has a 4xx status code
+func (o *PcloudNetworksPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks post not found response has a 5xx status code
+func (o *PcloudNetworksPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks post not found response a status code equal to that given
+func (o *PcloudNetworksPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud networks post not found response
+func (o *PcloudNetworksPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudNetworksPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudNetworksPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudNetworksPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -428,6 +533,11 @@ func (o *PcloudNetworksPostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud networks post conflict response a status code equal to that given
 func (o *PcloudNetworksPostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud networks post conflict response
+func (o *PcloudNetworksPostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudNetworksPostConflict) Error() string {
@@ -493,6 +603,11 @@ func (o *PcloudNetworksPostUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud networks post unprocessable entity response
+func (o *PcloudNetworksPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudNetworksPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -556,6 +671,11 @@ func (o *PcloudNetworksPostInternalServerError) IsCode(code int) bool {
 	return code == 500
 }
 
+// Code gets the status code for the pcloud networks post internal server error response
+func (o *PcloudNetworksPostInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudNetworksPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostInternalServerError  %+v", 500, o.Payload)
 }
@@ -569,6 +689,74 @@ func (o *PcloudNetworksPostInternalServerError) GetPayload() *models.Error {
 }
 
 func (o *PcloudNetworksPostInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPostStatus550 creates a PcloudNetworksPostStatus550 with default headers values
+func NewPcloudNetworksPostStatus550() *PcloudNetworksPostStatus550 {
+	return &PcloudNetworksPostStatus550{}
+}
+
+/*
+PcloudNetworksPostStatus550 describes a response with status code 550, with default header values.
+
+Workspace Status Error
+*/
+type PcloudNetworksPostStatus550 struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud networks post status550 response has a 2xx status code
+func (o *PcloudNetworksPostStatus550) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks post status550 response has a 3xx status code
+func (o *PcloudNetworksPostStatus550) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks post status550 response has a 4xx status code
+func (o *PcloudNetworksPostStatus550) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud networks post status550 response has a 5xx status code
+func (o *PcloudNetworksPostStatus550) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud networks post status550 response a status code equal to that given
+func (o *PcloudNetworksPostStatus550) IsCode(code int) bool {
+	return code == 550
+}
+
+// Code gets the status code for the pcloud networks post status550 response
+func (o *PcloudNetworksPostStatus550) Code() int {
+	return 550
+}
+
+func (o *PcloudNetworksPostStatus550) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostStatus550  %+v", 550, o.Payload)
+}
+
+func (o *PcloudNetworksPostStatus550) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks][%d] pcloudNetworksPostStatus550  %+v", 550, o.Payload)
+}
+
+func (o *PcloudNetworksPostStatus550) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksPostStatus550) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

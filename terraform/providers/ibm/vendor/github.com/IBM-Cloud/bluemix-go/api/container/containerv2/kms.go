@@ -9,21 +9,22 @@ const (
 	resourceGroup = "X-Auth-Resource-Group"
 )
 
-//Request body to attach a KMS to a cluster
+// Request body to attach a KMS to a cluster
 type KmsEnableReq struct {
+	AccountID       string `json:"account_id,omitempty"`
 	Cluster         string `json:"cluster"`
-	Kms             string `json:"instance_id"`
 	Crk             string `json:"crk_id"`
+	Kms             string `json:"instance_id"`
 	PrivateEndpoint bool   `json:"private_endpoint"`
 }
 
-//ClusterHeader ...
+// ClusterHeader ...
 type ClusterHeader struct {
 	AccountID     string
 	ResourceGroup string
 }
 
-//CreateMap ...
+// CreateMap ...
 func (c ClusterHeader) CreateMap() map[string]string {
 	m := make(map[string]string, 3)
 	m[account] = c.AccountID
@@ -35,7 +36,7 @@ type kms struct {
 	client *client.Client
 }
 
-//Kms interface
+// Kms interface
 type Kms interface {
 	EnableKms(enableKmsReq KmsEnableReq, target ClusterHeader) error
 }

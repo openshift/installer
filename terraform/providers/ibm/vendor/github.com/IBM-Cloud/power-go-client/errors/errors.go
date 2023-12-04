@@ -27,15 +27,15 @@ const DeleteCloudConnectionOperationFailed = "failed to perform Delete Cloud Con
 
 const GetVPNConnectionOperationFailed = "failed to perform Get VPN Connection Operation for id %s with error %w"
 const CreateVPNConnectionOperationFailed = "failed to perform Create VPN Connection Operation for cloud instance %s with error %w"
-const UpdateVPNConnectionOperationFailed = "failed to perform Update VPN Connection Operation for id  %s with error %w"
-const DeleteVPNConnectionOperationFailed = "failed to perform Delete VPN Connection Operation for id  %s with error %w"
+const UpdateVPNConnectionOperationFailed = "failed to perform Update VPN Connection Operation for id %s with error %w"
+const DeleteVPNConnectionOperationFailed = "failed to perform Delete VPN Connection Operation for id %s with error %w"
 
 // start of VPN Policy Messages
 
 const GetVPNPolicyOperationFailed = "failed to perform Get VPN Policy Operation for Policy id %s with error %w"
 const CreateVPNPolicyOperationFailed = "failed to perform Create VPN Policy Operation for cloud instance %s with error %w"
-const UpdateVPNPolicyOperationFailed = "failed to perform Update VPN Policy Operation for Policy id  %s with error %w"
-const DeleteVPNPolicyOperationFailed = "failed to perform Delete VPN Policy Operation for Policy id  %s with error %w"
+const UpdateVPNPolicyOperationFailed = "failed to perform Update VPN Policy Operation for Policy id %s with error %w"
+const DeleteVPNPolicyOperationFailed = "failed to perform Delete VPN Policy Operation for Policy id %s with error %w"
 
 // start of Job Messages
 const GetJobOperationFailed = "failed to perform get Job operation for job id %s with error %w"
@@ -118,6 +118,12 @@ const CreateSPPPlacementGroupOperationFailed = "failed to perform Create Shared 
 const DeleteSPPPlacementGroupOperationFailed = "failed to perform Delete Shared Processor Pool Placement Group Operation for placement group %s with error %w"
 const AddMemberSPPPlacementGroupOperationFailed = "failed to perform Add Member Operation for pool %s and shared processor pool placement group %s with error %w"
 const DeleteMemberSPPPlacementGroupOperationFailed = "failed to perform Delete Member Operation for pool %s and shared processor pool placement group %s with error %w"
+
+// start of workspaces
+const GetWorkspaceOperationFailed = "failed to perform Get Workspace Operation for id %s with error %w"
+
+// Datacenter
+const GetDatacenterOperationFailed = "failed to perform Get Datacenter Operation for id %s with error %w"
 
 // ErrorTarget ...
 type ErrorTarget struct {

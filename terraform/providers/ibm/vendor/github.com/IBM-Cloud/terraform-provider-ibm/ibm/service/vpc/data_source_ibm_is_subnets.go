@@ -17,6 +17,10 @@ const (
 	isSubnets                = "subnets"
 	isSubnetResourceGroupID  = "resource_group"
 	isSubnetRoutingTableName = "routing_table_name"
+	isSubnetResourceZone     = "zone"
+	isSubnetResourceVpc      = "vpc"
+	isSubnetResourceVpcCrn   = "vpc_crn"
+	isSubnetResourceVpcName  = "vpc_name"
 )
 
 func DataSourceIBMISSubnets() *schema.Resource {
@@ -24,6 +28,26 @@ func DataSourceIBMISSubnets() *schema.Resource {
 		Read: dataSourceIBMISSubnetsRead,
 
 		Schema: map[string]*schema.Schema{
+			isSubnetResourceVpc: {
+				Type:        schema.TypeString,
+				Description: "ID of the VPC",
+				Optional:    true,
+			},
+			isSubnetResourceVpcName: {
+				Type:        schema.TypeString,
+				Description: "Name of the VPC",
+				Optional:    true,
+			},
+			isSubnetResourceVpcCrn: {
+				Type:        schema.TypeString,
+				Description: "CRN of the VPC",
+				Optional:    true,
+			},
+			isSubnetResourceZone: {
+				Type:        schema.TypeString,
+				Description: "Name of the Zone ",
+				Optional:    true,
+			},
 			isSubnetResourceGroupID: {
 				Type:        schema.TypeString,
 				Description: "Resource Group ID",
@@ -177,18 +201,49 @@ func subnetList(d *schema.ResourceData, meta interface{}) error {
 		resourceTableName = v.(string)
 	}
 
-	options := &vpcv1.ListSubnetsOptions{}
-	if resourceGroup != "" {
-		options.SetResourceGroupID(resourceGroup)
+	var zone string
+	if v, ok := d.GetOk(isSubnetResourceZone); ok {
+		zone = v.(string)
 	}
-	if routingTable != "" {
-		options.SetRoutingTableID(routingTable)
+
+	var vpc string
+	if v, ok := d.GetOk(isSubnetResourceVpc); ok {
+		vpc = v.(string)
 	}
-	if resourceTableName != "" {
-		options.SetRoutingTableName(resourceTableName)
+
+	var vpcName string
+	if v, ok := d.GetOk(isSubnetResourceVpcName); ok {
+		vpcName = v.(string)
+	}
+
+	var vpcCrn string
+	if v, ok := d.GetOk(isSubnetResourceVpcCrn); ok {
+		vpcCrn = v.(string)
 	}
 
 	for {
+		options := &vpcv1.ListSubnetsOptions{}
+		if resourceGroup != "" {
+			options.SetResourceGroupID(resourceGroup)
+		}
+		if routingTable != "" {
+			options.SetRoutingTableID(routingTable)
+		}
+		if resourceTableName != "" {
+			options.SetRoutingTableName(resourceTableName)
+		}
+		if zone != "" {
+			options.SetZoneName(zone)
+		}
+		if vpc != "" {
+			options.SetVPCID(vpc)
+		}
+		if vpcName != "" {
+			options.SetVPCName(vpcName)
+		}
+		if vpcCrn != "" {
+			options.SetVPCCRN(vpcCrn)
+		}
 		if start != "" {
 			options.Start = &start
 		}

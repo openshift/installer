@@ -181,6 +181,7 @@ func (m *HostInfo) ContextValidate(ctx context.Context, formats strfmt.Registry)
 func (m *HostInfo) contextValidateCores(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Cores != nil {
+
 		if err := m.Cores.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("cores")
@@ -197,6 +198,7 @@ func (m *HostInfo) contextValidateCores(ctx context.Context, formats strfmt.Regi
 func (m *HostInfo) contextValidateMemory(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Memory != nil {
+
 		if err := m.Memory.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("memory")
@@ -215,6 +217,11 @@ func (m *HostInfo) contextValidatePvmInstances(ctx context.Context, formats strf
 	for i := 0; i < len(m.PvmInstances); i++ {
 
 		if m.PvmInstances[i] != nil {
+
+			if swag.IsZero(m.PvmInstances[i]) { // not required
+				return nil
+			}
+
 			if err := m.PvmInstances[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))

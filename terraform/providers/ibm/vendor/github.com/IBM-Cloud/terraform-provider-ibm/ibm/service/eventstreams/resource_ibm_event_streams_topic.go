@@ -4,6 +4,7 @@
 package eventstreams
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +13,8 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,7 +27,7 @@ const (
 )
 
 var (
-	brokerVersion       = sarama.V2_6_0_0
+	brokerVersion       = sarama.V3_3_0_0
 	adminClientTimeout  = 30 * time.Second
 	allowedTopicConfigs = []string{
 		"cleanup.policy",
@@ -46,12 +48,11 @@ var (
 
 func ResourceIBMEventStreamsTopic() *schema.Resource {
 	return &schema.Resource{
-		Exists:   resourceIBMEventStreamsTopicExists,
-		Create:   resourceIBMEventStreamsTopicCreate,
-		Read:     resourceIBMEventStreamsTopicRead,
-		Update:   resourceIBMEventStreamsTopicUpdate,
-		Delete:   resourceIBMEventStreamsTopicDelete,
-		Importer: &schema.ResourceImporter{},
+		CreateContext: resourceIBMEventStreamsTopicCreate,
+		ReadContext:   resourceIBMEventStreamsTopicRead,
+		UpdateContext: resourceIBMEventStreamsTopicUpdate,
+		DeleteContext: resourceIBMEventStreamsTopicDelete,
+		Importer:      &schema.ResourceImporter{},
 		Schema: map[string]*schema.Schema{
 			"resource_instance_id": {
 				Type:        schema.TypeString,
@@ -93,7 +94,8 @@ func ResourceIBMEventStreamsTopic() *schema.Resource {
 // key is instance's CRN
 var clientPool = map[string]sarama.ClusterAdmin{}
 
-func resourceIBMEventStreamsTopicExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func resourceIBMEventStreamsTopicExists(context context.Context, d *schema.ResourceData, meta interface{}) (bool, error) {
+	log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists")
 	adminClient, _, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists createSaramaAdminClient err %s", err)
@@ -103,28 +105,29 @@ func resourceIBMEventStreamsTopicExists(d *schema.ResourceData, meta interface{}
 	topicsMetadata, err := adminClient.DescribeTopics([]string{topicName})
 	if err != nil {
 		descErr := fmt.Errorf("[ERROR] Error describing topic %s : %v", topicName, err)
-		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics err %v", descErr)
+		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics: %s, err %v", topicName, descErr)
 		return false, descErr
 	}
 	if len(topicsMetadata) == 0 {
 		descErr := fmt.Errorf("no metadata was returned for topic %s", topicName)
-		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics err %v", descErr)
+		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics: %s, err %v", topicName, descErr)
 		return false, descErr
 	}
 	if topicsMetadata[0].Err != sarama.ErrNoError {
 		metadataErr := topicsMetadata[0].Err
-		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics err %v", metadataErr)
+		log.Printf("[DEBUG] resourceIBMEventStreamsTopicExists DescribeTopics: %s, err %v", topicName, metadataErr)
 		return false, metadataErr
 	}
 	log.Printf("[INFO] resourceIBMEventStreamsTopicExists topic %s exists", topicName)
 	return true, nil
 }
 
-func resourceIBMEventStreamsTopicCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMEventStreamsTopicCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[DEBUG] resourceIBMEventStreamsTopicCreate")
 	adminClient, instanceCRN, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicCreate createSaramaAdminClient err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topicName := d.Get("name").(string)
 	partitions := d.Get("partitions").(int)
@@ -138,37 +141,38 @@ func resourceIBMEventStreamsTopicCreate(d *schema.ResourceData, meta interface{}
 	if err != nil {
 		if kafkaErr, ok := err.(*sarama.TopicError); ok {
 			if kafkaErr != nil && kafkaErr.Err == sarama.ErrTopicAlreadyExists {
-				exists, err := resourceIBMEventStreamsTopicExists(d, meta)
+				exists, err := resourceIBMEventStreamsTopicExists(context, d, meta)
 				if err != nil {
-					log.Printf("[DEBUG] resourceIBMEventStreamsTopicCreate resourceIBMEventStreamsTopicExists err %s", err)
-					return err
+					log.Printf("[DEBUG] resourceIBMEventStreamsTopicCreate resourceIBMEventStreamsTopicExists: %s, err %s", topicName, err)
+					return diag.FromErr(err)
 				}
 				if exists {
 					d.SetId(getTopicID(instanceCRN, topicName))
-					return resourceIBMEventStreamsTopicRead(d, meta)
+					return resourceIBMEventStreamsTopicRead(context, d, meta)
 				}
 			}
 		}
-		log.Printf("[ERROR] resourceIBMEventStreamsTopicCreate CreateTopic err %s", err)
-		return err
+		log.Printf("[ERROR] resourceIBMEventStreamsTopicCreate CreateTopic: %s, err %s", topicName, err)
+		return diag.FromErr(err)
 	}
 	log.Printf("[INFO] resourceIBMEventStreamsTopicCreate CreateTopic: topic is %s, detail is %v", topicName, topicDetail)
 	d.SetId(getTopicID(instanceCRN, topicName))
-	return resourceIBMEventStreamsTopicRead(d, meta)
+	return resourceIBMEventStreamsTopicRead(context, d, meta)
 }
 
-func resourceIBMEventStreamsTopicRead(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMEventStreamsTopicRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[DEBUG] resourceIBMEventStreamsTopicRead")
 	adminClient, instanceCRN, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicRead createSaramaAdminClient err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topicID := d.Id()
 	topicName := getTopicName(topicID)
 	topics, err := adminClient.ListTopics()
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicRead ListTopics err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	for name, detail := range topics {
 		if name == topicName {
@@ -192,11 +196,12 @@ func resourceIBMEventStreamsTopicRead(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-func resourceIBMEventStreamsTopicUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMEventStreamsTopicUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[DEBUG] resourceIBMEventStreamsTopicUpdate")
 	adminClient, _, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicUpdate createSaramaAdminClient err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topicName := d.Get("name").(string)
 	if d.HasChange("partitions") {
@@ -207,7 +212,7 @@ func resourceIBMEventStreamsTopicUpdate(d *schema.ResourceData, meta interface{}
 		err = adminClient.CreatePartitions(topicName, int32(newPartitions), nil, false)
 		if err != nil {
 			log.Printf("[DEBUG]resourceIBMEventStreamsTopicUpdate CreatePartitions err %s", err)
-			return err
+			return diag.FromErr(err)
 		}
 		d.Set("partitions", int32(newPartitions))
 		log.Printf("[INFO]resourceIBMEventStreamsTopicUpdate partitions is set to %d", newPartitions)
@@ -218,19 +223,20 @@ func resourceIBMEventStreamsTopicUpdate(d *schema.ResourceData, meta interface{}
 		err = adminClient.AlterConfig(sarama.TopicResource, topicName, configEntries, false)
 		if err != nil {
 			log.Printf("[DEBUG]resourceIBMEventStreamsTopicUpdate AlterConfig err %s", err)
-			return err
+			return diag.FromErr(err)
 		}
 		d.Set("config", topicDetail2Config(configEntries))
 		log.Printf("[INFO]resourceIBMEventStreamsTopicUpdate config is set to %v", topicDetail2Config(configEntries))
 	}
-	return resourceIBMEventStreamsTopicRead(d, meta)
+	return resourceIBMEventStreamsTopicRead(context, d, meta)
 }
 
-func resourceIBMEventStreamsTopicDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceIBMEventStreamsTopicDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[DEBUG] resourceIBMEventStreamsTopicDelete")
 	adminClient, _, err := createSaramaAdminClient(d, meta)
 	if err != nil {
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicDelete createSaramaAdminClient err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	topicName := d.Get("name").(string)
 	err = adminClient.DeleteTopic(topicName)
@@ -243,7 +249,7 @@ func resourceIBMEventStreamsTopicDelete(d *schema.ResourceData, meta interface{}
 			}
 		}
 		log.Printf("[DEBUG] resourceIBMEventStreamsTopicDelete DeleteTopic err %s", err)
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	log.Printf("[INFO]resourceIBMEventStreamsTopicDelete topic %s deleted", topicName)

@@ -47,6 +47,12 @@ func (o *PcloudV2VolumesclonePostReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudV2VolumesclonePostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudV2VolumesclonePostInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudV2VolumesclonePostReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone] pcloud.v2.volumesclone.post", response, response.Code())
 	}
 }
 
@@ -95,6 +101,11 @@ func (o *PcloudV2VolumesclonePostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone post accepted response a status code equal to that given
 func (o *PcloudV2VolumesclonePostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud v2 volumesclone post accepted response
+func (o *PcloudV2VolumesclonePostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudV2VolumesclonePostAccepted) Error() string {
@@ -160,6 +171,11 @@ func (o *PcloudV2VolumesclonePostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud v2 volumesclone post bad request response
+func (o *PcloudV2VolumesclonePostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudV2VolumesclonePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostBadRequest  %+v", 400, o.Payload)
 }
@@ -221,6 +237,11 @@ func (o *PcloudV2VolumesclonePostUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone post unauthorized response a status code equal to that given
 func (o *PcloudV2VolumesclonePostUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud v2 volumesclone post unauthorized response
+func (o *PcloudV2VolumesclonePostUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudV2VolumesclonePostUnauthorized) Error() string {
@@ -286,6 +307,11 @@ func (o *PcloudV2VolumesclonePostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud v2 volumesclone post forbidden response
+func (o *PcloudV2VolumesclonePostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV2VolumesclonePostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostForbidden  %+v", 403, o.Payload)
 }
@@ -299,6 +325,74 @@ func (o *PcloudV2VolumesclonePostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2VolumesclonePostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumesclonePostNotFound creates a PcloudV2VolumesclonePostNotFound with default headers values
+func NewPcloudV2VolumesclonePostNotFound() *PcloudV2VolumesclonePostNotFound {
+	return &PcloudV2VolumesclonePostNotFound{}
+}
+
+/*
+PcloudV2VolumesclonePostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudV2VolumesclonePostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 volumesclone post not found response has a 2xx status code
+func (o *PcloudV2VolumesclonePostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone post not found response has a 3xx status code
+func (o *PcloudV2VolumesclonePostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone post not found response has a 4xx status code
+func (o *PcloudV2VolumesclonePostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone post not found response has a 5xx status code
+func (o *PcloudV2VolumesclonePostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone post not found response a status code equal to that given
+func (o *PcloudV2VolumesclonePostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud v2 volumesclone post not found response
+func (o *PcloudV2VolumesclonePostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudV2VolumesclonePostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV2VolumesclonePostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumesclonePostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV2VolumesclonePostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumesclonePostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -347,6 +441,11 @@ func (o *PcloudV2VolumesclonePostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone post internal server error response a status code equal to that given
 func (o *PcloudV2VolumesclonePostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud v2 volumesclone post internal server error response
+func (o *PcloudV2VolumesclonePostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudV2VolumesclonePostInternalServerError) Error() string {

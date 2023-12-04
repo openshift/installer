@@ -29,6 +29,12 @@ func (o *PcloudPvminstancesConsolePostReader) ReadResponse(response runtime.Clie
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudPvminstancesConsolePostBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudPvminstancesConsolePostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudPvminstancesConsolePostReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console] pcloud.pvminstances.console.post", response, response.Code())
 	}
 }
 
@@ -103,6 +109,11 @@ func (o *PcloudPvminstancesConsolePostCreated) IsCode(code int) bool {
 	return code == 201
 }
 
+// Code gets the status code for the pcloud pvminstances console post created response
+func (o *PcloudPvminstancesConsolePostCreated) Code() int {
+	return 201
+}
+
 func (o *PcloudPvminstancesConsolePostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsolePostCreated  %+v", 201, o.Payload)
 }
@@ -118,6 +129,74 @@ func (o *PcloudPvminstancesConsolePostCreated) GetPayload() *models.PVMInstanceC
 func (o *PcloudPvminstancesConsolePostCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.PVMInstanceConsole)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesConsolePostBadRequest creates a PcloudPvminstancesConsolePostBadRequest with default headers values
+func NewPcloudPvminstancesConsolePostBadRequest() *PcloudPvminstancesConsolePostBadRequest {
+	return &PcloudPvminstancesConsolePostBadRequest{}
+}
+
+/*
+PcloudPvminstancesConsolePostBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudPvminstancesConsolePostBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances console post bad request response has a 2xx status code
+func (o *PcloudPvminstancesConsolePostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances console post bad request response has a 3xx status code
+func (o *PcloudPvminstancesConsolePostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances console post bad request response has a 4xx status code
+func (o *PcloudPvminstancesConsolePostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances console post bad request response has a 5xx status code
+func (o *PcloudPvminstancesConsolePostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances console post bad request response a status code equal to that given
+func (o *PcloudPvminstancesConsolePostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances console post bad request response
+func (o *PcloudPvminstancesConsolePostBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudPvminstancesConsolePostBadRequest) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsolePostBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudPvminstancesConsolePostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsolePostBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudPvminstancesConsolePostBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesConsolePostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -164,6 +243,11 @@ func (o *PcloudPvminstancesConsolePostUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances console post unauthorized response a status code equal to that given
 func (o *PcloudPvminstancesConsolePostUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud pvminstances console post unauthorized response
+func (o *PcloudPvminstancesConsolePostUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudPvminstancesConsolePostUnauthorized) Error() string {
@@ -229,6 +313,11 @@ func (o *PcloudPvminstancesConsolePostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud pvminstances console post forbidden response
+func (o *PcloudPvminstancesConsolePostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudPvminstancesConsolePostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsolePostForbidden  %+v", 403, o.Payload)
 }
@@ -290,6 +379,11 @@ func (o *PcloudPvminstancesConsolePostNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances console post not found response a status code equal to that given
 func (o *PcloudPvminstancesConsolePostNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances console post not found response
+func (o *PcloudPvminstancesConsolePostNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudPvminstancesConsolePostNotFound) Error() string {
@@ -355,6 +449,11 @@ func (o *PcloudPvminstancesConsolePostUnprocessableEntity) IsCode(code int) bool
 	return code == 422
 }
 
+// Code gets the status code for the pcloud pvminstances console post unprocessable entity response
+func (o *PcloudPvminstancesConsolePostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesConsolePostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/console][%d] pcloudPvminstancesConsolePostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -416,6 +515,11 @@ func (o *PcloudPvminstancesConsolePostInternalServerError) IsServerError() bool 
 // IsCode returns true when this pcloud pvminstances console post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesConsolePostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances console post internal server error response
+func (o *PcloudPvminstancesConsolePostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesConsolePostInternalServerError) Error() string {

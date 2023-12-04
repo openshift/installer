@@ -66,7 +66,7 @@ func (o *PcloudVpnconnectionsPutReader) ReadResponse(response runtime.ClientResp
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}] pcloud.vpnconnections.put", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudVpnconnectionsPutOK) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections put o k response a status code equal to that given
 func (o *PcloudVpnconnectionsPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud vpnconnections put o k response
+func (o *PcloudVpnconnectionsPutOK) Code() int {
+	return 200
 }
 
 func (o *PcloudVpnconnectionsPutOK) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudVpnconnectionsPutBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud vpnconnections put bad request response
+func (o *PcloudVpnconnectionsPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVpnconnectionsPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsPutBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudVpnconnectionsPutUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections put unauthorized response a status code equal to that given
 func (o *PcloudVpnconnectionsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud vpnconnections put unauthorized response
+func (o *PcloudVpnconnectionsPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudVpnconnectionsPutUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudVpnconnectionsPutForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud vpnconnections put forbidden response
+func (o *PcloudVpnconnectionsPutForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVpnconnectionsPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsPutForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudVpnconnectionsPutNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections put not found response a status code equal to that given
 func (o *PcloudVpnconnectionsPutNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud vpnconnections put not found response
+func (o *PcloudVpnconnectionsPutNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudVpnconnectionsPutNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudVpnconnectionsPutUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud vpnconnections put unprocessable entity response
+func (o *PcloudVpnconnectionsPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudVpnconnectionsPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}][%d] pcloudVpnconnectionsPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudVpnconnectionsPutInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud vpnconnections put internal server error response a status code equal to that given
 func (o *PcloudVpnconnectionsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud vpnconnections put internal server error response
+func (o *PcloudVpnconnectionsPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVpnconnectionsPutInternalServerError) Error() string {

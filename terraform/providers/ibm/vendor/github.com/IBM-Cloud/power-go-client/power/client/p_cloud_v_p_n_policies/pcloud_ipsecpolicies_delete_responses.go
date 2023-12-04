@@ -60,7 +60,7 @@ func (o *PcloudIpsecpoliciesDeleteReader) ReadResponse(response runtime.ClientRe
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}] pcloud.ipsecpolicies.delete", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudIpsecpoliciesDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies delete o k response a status code equal to that given
 func (o *PcloudIpsecpoliciesDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud ipsecpolicies delete o k response
+func (o *PcloudIpsecpoliciesDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudIpsecpoliciesDeleteOK) Error() string {
@@ -162,6 +167,11 @@ func (o *PcloudIpsecpoliciesDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies delete bad request response a status code equal to that given
 func (o *PcloudIpsecpoliciesDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud ipsecpolicies delete bad request response
+func (o *PcloudIpsecpoliciesDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudIpsecpoliciesDeleteBadRequest) Error() string {
@@ -227,6 +237,11 @@ func (o *PcloudIpsecpoliciesDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud ipsecpolicies delete unauthorized response
+func (o *PcloudIpsecpoliciesDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudIpsecpoliciesDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -288,6 +303,11 @@ func (o *PcloudIpsecpoliciesDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies delete forbidden response a status code equal to that given
 func (o *PcloudIpsecpoliciesDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud ipsecpolicies delete forbidden response
+func (o *PcloudIpsecpoliciesDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudIpsecpoliciesDeleteForbidden) Error() string {
@@ -353,6 +373,11 @@ func (o *PcloudIpsecpoliciesDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud ipsecpolicies delete not found response
+func (o *PcloudIpsecpoliciesDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudIpsecpoliciesDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -414,6 +439,11 @@ func (o *PcloudIpsecpoliciesDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies delete internal server error response a status code equal to that given
 func (o *PcloudIpsecpoliciesDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud ipsecpolicies delete internal server error response
+func (o *PcloudIpsecpoliciesDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudIpsecpoliciesDeleteInternalServerError) Error() string {

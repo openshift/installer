@@ -66,7 +66,7 @@ func (o *PcloudNetworksPortsDeleteReader) ReadResponse(response runtime.ClientRe
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}] pcloud.networks.ports.delete", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudNetworksPortsDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports delete o k response a status code equal to that given
 func (o *PcloudNetworksPortsDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud networks ports delete o k response
+func (o *PcloudNetworksPortsDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudNetworksPortsDeleteOK) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudNetworksPortsDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports delete bad request response a status code equal to that given
 func (o *PcloudNetworksPortsDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud networks ports delete bad request response
+func (o *PcloudNetworksPortsDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudNetworksPortsDeleteBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudNetworksPortsDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud networks ports delete unauthorized response
+func (o *PcloudNetworksPortsDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudNetworksPortsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudNetworksPortsDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports delete forbidden response a status code equal to that given
 func (o *PcloudNetworksPortsDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud networks ports delete forbidden response
+func (o *PcloudNetworksPortsDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudNetworksPortsDeleteForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudNetworksPortsDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud networks ports delete not found response
+func (o *PcloudNetworksPortsDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudNetworksPortsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudNetworksPortsDeleteGone) IsCode(code int) bool {
 	return code == 410
 }
 
+// Code gets the status code for the pcloud networks ports delete gone response
+func (o *PcloudNetworksPortsDeleteGone) Code() int {
+	return 410
+}
+
 func (o *PcloudNetworksPortsDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsDeleteGone  %+v", 410, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudNetworksPortsDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports delete internal server error response a status code equal to that given
 func (o *PcloudNetworksPortsDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud networks ports delete internal server error response
+func (o *PcloudNetworksPortsDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudNetworksPortsDeleteInternalServerError) Error() string {

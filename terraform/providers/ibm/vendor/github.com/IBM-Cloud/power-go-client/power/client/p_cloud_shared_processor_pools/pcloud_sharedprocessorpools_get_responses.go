@@ -41,6 +41,12 @@ func (o *PcloudSharedprocessorpoolsGetReader) ReadResponse(response runtime.Clie
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudSharedprocessorpoolsGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudSharedprocessorpoolsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudSharedprocessorpoolsGetReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}] pcloud.sharedprocessorpools.get", response, response.Code())
 	}
 }
 
@@ -95,6 +101,11 @@ func (o *PcloudSharedprocessorpoolsGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud sharedprocessorpools get o k response a status code equal to that given
 func (o *PcloudSharedprocessorpoolsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools get o k response
+func (o *PcloudSharedprocessorpoolsGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudSharedprocessorpoolsGetOK) Error() string {
@@ -160,6 +171,11 @@ func (o *PcloudSharedprocessorpoolsGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud sharedprocessorpools get bad request response
+func (o *PcloudSharedprocessorpoolsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudSharedprocessorpoolsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsGetBadRequest  %+v", 400, o.Payload)
 }
@@ -223,6 +239,11 @@ func (o *PcloudSharedprocessorpoolsGetUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud sharedprocessorpools get unauthorized response
+func (o *PcloudSharedprocessorpoolsGetUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudSharedprocessorpoolsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsGetUnauthorized  %+v", 401, o.Payload)
 }
@@ -236,6 +257,74 @@ func (o *PcloudSharedprocessorpoolsGetUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudSharedprocessorpoolsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSharedprocessorpoolsGetForbidden creates a PcloudSharedprocessorpoolsGetForbidden with default headers values
+func NewPcloudSharedprocessorpoolsGetForbidden() *PcloudSharedprocessorpoolsGetForbidden {
+	return &PcloudSharedprocessorpoolsGetForbidden{}
+}
+
+/*
+PcloudSharedprocessorpoolsGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudSharedprocessorpoolsGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sharedprocessorpools get forbidden response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools get forbidden response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools get forbidden response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools get forbidden response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools get forbidden response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools get forbidden response
+func (o *PcloudSharedprocessorpoolsGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudSharedprocessorpoolsGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSharedprocessorpoolsGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSharedprocessorpoolsGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSharedprocessorpoolsGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -284,6 +373,11 @@ func (o *PcloudSharedprocessorpoolsGetNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud sharedprocessorpools get not found response a status code equal to that given
 func (o *PcloudSharedprocessorpoolsGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools get not found response
+func (o *PcloudSharedprocessorpoolsGetNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudSharedprocessorpoolsGetNotFound) Error() string {
@@ -347,6 +441,11 @@ func (o *PcloudSharedprocessorpoolsGetInternalServerError) IsServerError() bool 
 // IsCode returns true when this pcloud sharedprocessorpools get internal server error response a status code equal to that given
 func (o *PcloudSharedprocessorpoolsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools get internal server error response
+func (o *PcloudSharedprocessorpoolsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudSharedprocessorpoolsGetInternalServerError) Error() string {

@@ -31,7 +31,7 @@ func (f *IBMPINetworkClient) Get(id string) (*models.Network, error) {
 		WithCloudInstanceID(f.cloudInstanceID).WithNetworkID(id)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetNetworkOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetNetworkOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Network %s", id)
@@ -46,7 +46,7 @@ func (f *IBMPINetworkClient) GetAll() (*models.Networks, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get Network for cloud instance %s with error %w", f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get Network for cloud instance %s with error %w", f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Network for cloud instance %s", f.cloudInstanceID)
@@ -56,12 +56,16 @@ func (f *IBMPINetworkClient) GetAll() (*models.Networks, error) {
 
 // Create a Network
 func (f *IBMPINetworkClient) Create(body *models.NetworkCreate) (*models.Network, error) {
+	// Check for satellite differences in this endpoint
+	if f.session.IsOnPrem() && body.Jumbo {
+		return nil, fmt.Errorf("jumbo parameter is not supported in satellite location, use mtu instead")
+	}
 	params := p_cloud_networks.NewPcloudNetworksPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, postcreated, err := f.session.Power.PCloudNetworks.PcloudNetworksPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateNetworkOperationFailed, body.Name, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateNetworkOperationFailed, body.Name, err))
 	}
 	if postok != nil && postok.Payload != nil {
 		return postok.Payload, nil
@@ -80,7 +84,7 @@ func (f *IBMPINetworkClient) Update(id string, body *models.NetworkUpdate) (*mod
 		WithBody(body)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to perform Update Network Operation for Network %s with error %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to perform Update Network Operation for Network %s with error %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform Update Network Operation for Network %s", id)
@@ -96,7 +100,7 @@ func (f *IBMPINetworkClient) GetAllPublic() (*models.Networks, error) {
 		WithCloudInstanceID(f.cloudInstanceID).WithFilter(&filterQuery)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all Public Networks for cloud instance %s: %w", f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all Public Networks for cloud instance %s: %w", f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Public Networks for cloud instance %s", f.cloudInstanceID)
@@ -123,7 +127,7 @@ func (f *IBMPINetworkClient) GetAllPorts(id string) (*models.NetworkPorts, error
 		WithCloudInstanceID(f.cloudInstanceID).WithNetworkID(id)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all Network Ports for Network %s: %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all Network Ports for Network %s: %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Network Ports for Network %s", id)
@@ -140,7 +144,7 @@ func (f *IBMPINetworkClient) GetPort(id string, networkPortID string) (*models.N
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get PI Network Port %s for Network %s: %w", networkPortID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get PI Network Port %s for Network %s: %w", networkPortID, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get PI Network Port %s for Network %s", networkPortID, id)
@@ -156,7 +160,7 @@ func (f *IBMPINetworkClient) CreatePort(id string, body *models.NetworkPortCreat
 		WithBody(body)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateNetworkPortOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateNetworkPortOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform Create Network Port Operation for Network %s", id)
@@ -185,7 +189,7 @@ func (f *IBMPINetworkClient) UpdatePort(id, networkPortID string, body *models.N
 		WithPortID(networkPortID).WithBody(body)
 	resp, err := f.session.Power.PCloudNetworks.PcloudNetworksPortsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to update the port %s and Network %s with error %w", networkPortID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to update the port %s and Network %s with error %w", networkPortID, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to update the port %s and Network %s", networkPortID, id)

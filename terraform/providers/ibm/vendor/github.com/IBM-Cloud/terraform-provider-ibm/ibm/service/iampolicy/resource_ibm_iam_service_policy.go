@@ -214,7 +214,7 @@ func ResourceIBMIAMServicePolicy() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"key": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "Key of the condition",
 						},
 						"operator": {
@@ -224,9 +224,34 @@ func ResourceIBMIAMServicePolicy() *schema.Resource {
 						},
 						"value": {
 							Type:        schema.TypeList,
-							Required:    true,
+							Optional:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Value of the condition",
+						},
+						"conditions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "Additional Rule conditions enforced by the policy",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Key of the condition",
+									},
+									"operator": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Operator of the condition",
+									},
+									"value": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "Value of the condition",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -461,7 +486,7 @@ func resourceIBMIAMServicePolicyRead(d *schema.ResourceData, meta interface{}) e
 	}
 	serviceIDUUID := parts[0]
 	servicePolicyID := parts[1]
-	servicePolicy := &iampolicymanagementv1.V2Policy{}
+	servicePolicy := &iampolicymanagementv1.V2PolicyTemplateMetaData{}
 	res := &core.DetailedResponse{}
 	getPolicyOptions := iamPolicyManagementClient.NewGetV2PolicyOptions(
 		servicePolicyID,

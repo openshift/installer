@@ -49,6 +49,9 @@ type Volume struct {
 	// Volume Group ID
 	GroupID string `json:"groupID,omitempty"`
 
+	// Amount of iops assigned to the volume
+	IoThrottleRate string `json:"ioThrottleRate,omitempty"`
+
 	// Last Update Date
 	// Required: true
 	// Format: date-time

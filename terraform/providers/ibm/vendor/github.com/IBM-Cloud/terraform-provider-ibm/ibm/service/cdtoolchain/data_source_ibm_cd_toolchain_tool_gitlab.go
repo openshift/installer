@@ -73,7 +73,7 @@ func DataSourceIBMCdToolchainToolGitlab() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Tool name.",
+				Description: "Name of the tool.",
 			},
 			"updated_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -89,7 +89,7 @@ func DataSourceIBMCdToolchainToolGitlab() *schema.Resource {
 						"git_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Set this value to 'gitlab' for gitlab.com, the GUID of an existing custom GitLab server, or 'gitlabcustom'.",
+							Description: "Set this value to 'gitlab' for gitlab.com, or 'gitlabcustom' for a custom GitLab server.",
 						},
 						"title": &schema.Schema{
 							Type:        schema.TypeString,
@@ -275,10 +275,10 @@ func dataSourceIBMCdToolchainToolGitlabRead(context context.Context, d *schema.R
 func dataSourceIBMCdToolchainToolGitlabToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = *model.UIHref
+		modelMap["ui_href"] = model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = *model.APIHref
+		modelMap["api_href"] = model.APIHref
 	}
 	return modelMap, nil
 }

@@ -17,9 +17,13 @@ import (
 )
 
 // NetworkCreate network create
+// Example: {"accessConfig":"internal-only","cidr":"192.168.1.0/24","gateway":"192.168.1.1","ipAddressRanges":[{"endingIPAddress":"192.168.1.254","startingIPAddress":"192.168.1.2"}],"mtu":1450,"name":"sample-network","type":"vlan"}
 //
 // swagger:model NetworkCreate
 type NetworkCreate struct {
+
+	// access config
+	AccessConfig AccessConfig `json:"accessConfig,omitempty"`
 
 	// Network in CIDR notation (192.168.0.0/24)
 	Cidr string `json:"cidr,omitempty"`
@@ -33,15 +37,21 @@ type NetworkCreate struct {
 	// IP Address Ranges
 	IPAddressRanges []*IPAddressRange `json:"ipAddressRanges"`
 
-	// Enable MTU Jumbo Network
+	// (deprecated - replaced by mtu) Enable MTU Jumbo Network (for multi-zone locations only)
 	Jumbo bool `json:"jumbo,omitempty"`
 
+	// Maximum transmission unit
+	// Maximum: 9000
+	// Minimum: 1450
+	Mtu *int64 `json:"mtu,omitempty"`
+
 	// Network Name
+	// Max Length: 255
 	Name string `json:"name,omitempty"`
 
-	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network)
+	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
 	// Required: true
-	// Enum: [vlan pub-vlan]
+	// Enum: [vlan pub-vlan dhcp-vlan]
 	Type *string `json:"type"`
 }
 
@@ -49,7 +59,19 @@ type NetworkCreate struct {
 func (m *NetworkCreate) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateAccessConfig(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateIPAddressRanges(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMtu(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -60,6 +82,23 @@ func (m *NetworkCreate) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *NetworkCreate) validateAccessConfig(formats strfmt.Registry) error {
+	if swag.IsZero(m.AccessConfig) { // not required
+		return nil
+	}
+
+	if err := m.AccessConfig.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("accessConfig")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("accessConfig")
+		}
+		return err
+	}
+
 	return nil
 }
 
@@ -89,11 +128,39 @@ func (m *NetworkCreate) validateIPAddressRanges(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *NetworkCreate) validateMtu(formats strfmt.Registry) error {
+	if swag.IsZero(m.Mtu) { // not required
+		return nil
+	}
+
+	if err := validate.MinimumInt("mtu", "body", *m.Mtu, 1450, false); err != nil {
+		return err
+	}
+
+	if err := validate.MaximumInt("mtu", "body", *m.Mtu, 9000, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkCreate) validateName(formats strfmt.Registry) error {
+	if swag.IsZero(m.Name) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("name", "body", m.Name, 255); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var networkCreateTypeTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["vlan","pub-vlan"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["vlan","pub-vlan","dhcp-vlan"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -108,6 +175,9 @@ const (
 
 	// NetworkCreateTypePubDashVlan captures enum value "pub-vlan"
 	NetworkCreateTypePubDashVlan string = "pub-vlan"
+
+	// NetworkCreateTypeDhcpDashVlan captures enum value "dhcp-vlan"
+	NetworkCreateTypeDhcpDashVlan string = "dhcp-vlan"
 )
 
 // prop value enum
@@ -136,6 +206,10 @@ func (m *NetworkCreate) validateType(formats strfmt.Registry) error {
 func (m *NetworkCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateAccessConfig(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateIPAddressRanges(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -146,11 +220,34 @@ func (m *NetworkCreate) ContextValidate(ctx context.Context, formats strfmt.Regi
 	return nil
 }
 
+func (m *NetworkCreate) contextValidateAccessConfig(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.AccessConfig) { // not required
+		return nil
+	}
+
+	if err := m.AccessConfig.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("accessConfig")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("accessConfig")
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (m *NetworkCreate) contextValidateIPAddressRanges(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.IPAddressRanges); i++ {
 
 		if m.IPAddressRanges[i] != nil {
+
+			if swag.IsZero(m.IPAddressRanges[i]) { // not required
+				return nil
+			}
+
 			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))

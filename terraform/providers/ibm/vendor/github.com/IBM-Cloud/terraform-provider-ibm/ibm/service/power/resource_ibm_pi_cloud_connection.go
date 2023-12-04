@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -20,6 +21,15 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+)
+
+var (
+	vpcUnavailable = regexp.MustCompile("pcloudCloudconnectionsPostServiceUnavailable|pcloudCloudconnectionsPutServiceUnavailable")
+)
+
+const (
+	vpcRetryCount    = 2
+	vpcRetryDuration = time.Minute
 )
 
 func ResourceIBMPICloudConnection() *schema.Resource {
@@ -226,8 +236,16 @@ func resourceIBMPICloudConnectionCreate(ctx context.Context, d *schema.ResourceD
 	client := st.NewIBMPICloudConnectionClient(ctx, sess, cloudInstanceID)
 	cloudConnection, cloudConnectionJob, err := client.Create(body)
 	if err != nil {
-		log.Printf("[DEBUG] create cloud connection failed %v", err)
-		return diag.FromErr(err)
+		if vpcUnavailable.Match([]byte(err.Error())) {
+			err = retryCloudConnectionsVPC(func() (err error) {
+				cloudConnection, cloudConnectionJob, err = client.Create(body)
+				return
+			}, "create", err)
+		}
+		if err != nil {
+			log.Printf("[DEBUG] create cloud connection failed %v", err)
+			return diag.FromErr(err)
+		}
 	}
 
 	if cloudConnection != nil {
@@ -333,7 +351,16 @@ func resourceIBMPICloudConnectionUpdate(ctx context.Context, d *schema.ResourceD
 
 		_, cloudConnectionJob, err := client.Update(cloudConnectionID, body)
 		if err != nil {
-			return diag.FromErr(err)
+			if vpcUnavailable.Match([]byte(err.Error())) {
+				err = retryCloudConnectionsVPC(func() (err error) {
+					_, cloudConnectionJob, err = client.Update(cloudConnectionID, body)
+					return
+				}, "update", err)
+			}
+			if err != nil {
+				log.Printf("[DEBUG] update cloud connection failed %v", err)
+				return diag.FromErr(err)
+			}
 		}
 		if cloudConnectionJob != nil {
 			_, err = waitForIBMPIJobCompleted(ctx, jobClient, *cloudConnectionJob.ID, d.Timeout(schema.TimeoutCreate))
@@ -496,4 +523,14 @@ func resourceIBMPICloudConnectionDelete(ctx context.Context, d *schema.ResourceD
 
 	d.SetId("")
 	return nil
+}
+
+func retryCloudConnectionsVPC(ccVPCRetry func() error, operation string, errMsg error) error {
+	for count := 0; count < vpcRetryCount && errMsg != nil; count++ {
+		log.Printf("[DEBUG] unable to get vpc details for cloud connection: %v", errMsg)
+		time.Sleep(vpcRetryDuration)
+		log.Printf("[DEBUG] retrying cloud connection %s, retry #%v", operation, count+1)
+		errMsg = ccVPCRetry()
+	}
+	return errMsg
 }

@@ -531,6 +531,12 @@ func DataSourceIBMISInstance() *schema.Resource {
 				Description: "Instance memory",
 			},
 
+			"numa_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of NUMA nodes this virtual server instance is provisioned on. This property may be absent if the instance's `status` is not `running`.",
+			},
+
 			isInstanceStatus: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -779,7 +785,9 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 	}
 
 	d.Set(isInstanceMemory, *instance.Memory)
-
+	if instance.NumaCount != nil {
+		d.Set("numa_count", *instance.NumaCount)
+	}
 	gpuList := make([]map[string]interface{}, 0)
 	if instance.Gpu != nil {
 		currentGpu := map[string]interface{}{}

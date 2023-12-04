@@ -48,7 +48,7 @@ func (o *ServiceBrokerOpenstacksHostsGetReader) ReadResponse(response runtime.Cl
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}] serviceBroker.openstacks.hosts.get", response, response.Code())
 	}
 }
 
@@ -89,6 +89,11 @@ func (o *ServiceBrokerOpenstacksHostsGetOK) IsServerError() bool {
 // IsCode returns true when this service broker openstacks hosts get o k response a status code equal to that given
 func (o *ServiceBrokerOpenstacksHostsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the service broker openstacks hosts get o k response
+func (o *ServiceBrokerOpenstacksHostsGetOK) Code() int {
+	return 200
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetOK) Error() string {
@@ -154,6 +159,11 @@ func (o *ServiceBrokerOpenstacksHostsGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the service broker openstacks hosts get bad request response
+func (o *ServiceBrokerOpenstacksHostsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *ServiceBrokerOpenstacksHostsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetBadRequest  %+v", 400, o.Payload)
 }
@@ -217,6 +227,11 @@ func (o *ServiceBrokerOpenstacksHostsGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the service broker openstacks hosts get not found response
+func (o *ServiceBrokerOpenstacksHostsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *ServiceBrokerOpenstacksHostsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}/hosts/{hostname}][%d] serviceBrokerOpenstacksHostsGetNotFound  %+v", 404, o.Payload)
 }
@@ -278,6 +293,11 @@ func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) IsServerError() boo
 // IsCode returns true when this service broker openstacks hosts get internal server error response a status code equal to that given
 func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the service broker openstacks hosts get internal server error response
+func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *ServiceBrokerOpenstacksHostsGetInternalServerError) Error() string {

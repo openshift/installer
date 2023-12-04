@@ -60,7 +60,7 @@ func (o *PcloudV2VolumescloneDeleteReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}] pcloud.v2.volumesclone.delete", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudV2VolumescloneDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone delete o k response a status code equal to that given
 func (o *PcloudV2VolumescloneDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud v2 volumesclone delete o k response
+func (o *PcloudV2VolumescloneDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudV2VolumescloneDeleteOK) Error() string {
@@ -162,6 +167,11 @@ func (o *PcloudV2VolumescloneDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone delete bad request response a status code equal to that given
 func (o *PcloudV2VolumescloneDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud v2 volumesclone delete bad request response
+func (o *PcloudV2VolumescloneDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudV2VolumescloneDeleteBadRequest) Error() string {
@@ -227,6 +237,11 @@ func (o *PcloudV2VolumescloneDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud v2 volumesclone delete unauthorized response
+func (o *PcloudV2VolumescloneDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudV2VolumescloneDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -288,6 +303,11 @@ func (o *PcloudV2VolumescloneDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone delete forbidden response a status code equal to that given
 func (o *PcloudV2VolumescloneDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud v2 volumesclone delete forbidden response
+func (o *PcloudV2VolumescloneDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudV2VolumescloneDeleteForbidden) Error() string {
@@ -353,6 +373,11 @@ func (o *PcloudV2VolumescloneDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud v2 volumesclone delete not found response
+func (o *PcloudV2VolumescloneDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudV2VolumescloneDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}][%d] pcloudV2VolumescloneDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -414,6 +439,11 @@ func (o *PcloudV2VolumescloneDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumesclone delete internal server error response a status code equal to that given
 func (o *PcloudV2VolumescloneDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud v2 volumesclone delete internal server error response
+func (o *PcloudV2VolumescloneDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudV2VolumescloneDeleteInternalServerError) Error() string {

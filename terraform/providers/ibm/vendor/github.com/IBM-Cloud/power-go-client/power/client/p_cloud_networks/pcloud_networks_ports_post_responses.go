@@ -72,7 +72,7 @@ func (o *PcloudNetworksPortsPostReader) ReadResponse(response runtime.ClientResp
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports] pcloud.networks.ports.post", response, response.Code())
 	}
 }
 
@@ -113,6 +113,11 @@ func (o *PcloudNetworksPortsPostCreated) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports post created response a status code equal to that given
 func (o *PcloudNetworksPortsPostCreated) IsCode(code int) bool {
 	return code == 201
+}
+
+// Code gets the status code for the pcloud networks ports post created response
+func (o *PcloudNetworksPortsPostCreated) Code() int {
+	return 201
 }
 
 func (o *PcloudNetworksPortsPostCreated) Error() string {
@@ -178,6 +183,11 @@ func (o *PcloudNetworksPortsPostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud networks ports post bad request response
+func (o *PcloudNetworksPortsPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudNetworksPortsPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostBadRequest  %+v", 400, o.Payload)
 }
@@ -239,6 +249,11 @@ func (o *PcloudNetworksPortsPostUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports post unauthorized response a status code equal to that given
 func (o *PcloudNetworksPortsPostUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud networks ports post unauthorized response
+func (o *PcloudNetworksPortsPostUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudNetworksPortsPostUnauthorized) Error() string {
@@ -304,6 +319,11 @@ func (o *PcloudNetworksPortsPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud networks ports post forbidden response
+func (o *PcloudNetworksPortsPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudNetworksPortsPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostForbidden  %+v", 403, o.Payload)
 }
@@ -365,6 +385,11 @@ func (o *PcloudNetworksPortsPostNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports post not found response a status code equal to that given
 func (o *PcloudNetworksPortsPostNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud networks ports post not found response
+func (o *PcloudNetworksPortsPostNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudNetworksPortsPostNotFound) Error() string {
@@ -430,6 +455,11 @@ func (o *PcloudNetworksPortsPostConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud networks ports post conflict response
+func (o *PcloudNetworksPortsPostConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudNetworksPortsPostConflict) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostConflict  %+v", 409, o.Payload)
 }
@@ -493,6 +523,11 @@ func (o *PcloudNetworksPortsPostUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud networks ports post unprocessable entity response
+func (o *PcloudNetworksPortsPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudNetworksPortsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports][%d] pcloudNetworksPortsPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -554,6 +589,11 @@ func (o *PcloudNetworksPortsPostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports post internal server error response a status code equal to that given
 func (o *PcloudNetworksPortsPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud networks ports post internal server error response
+func (o *PcloudNetworksPortsPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudNetworksPortsPostInternalServerError) Error() string {

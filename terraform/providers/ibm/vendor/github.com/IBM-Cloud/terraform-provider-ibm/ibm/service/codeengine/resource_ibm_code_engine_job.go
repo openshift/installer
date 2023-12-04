@@ -119,7 +119,7 @@ func ResourceIbmCodeEngineJob() *schema.Resource {
 				Optional:     true,
 				Default:      "task",
 				ValidateFunc: validate.InvokeValidator("ibm_code_engine_job", "run_mode"),
-				Description:  "The mode for runs of the job. Valid values are `task` and `daemon`. In `task` mode, the `max_execution_time` and `retry_limit` properties apply. In `daemon` mode, since there is no timeout and failed instances are restarted indefinitely, the `max_execution_time` and `retry_limit` properties are not allowed.",
+				Description:  "The mode for runs of the job. Valid values are `task` and `daemon`. In `task` mode, the `scale_max_execution_time` and `scale_retry_limit` properties apply. In `daemon` mode, since there is no timeout and failed instances are restarted indefinitely, the `scale_max_execution_time` and `scale_retry_limit` properties are not allowed.",
 			},
 			"run_service_account": &schema.Schema{
 				Type:         schema.TypeString,

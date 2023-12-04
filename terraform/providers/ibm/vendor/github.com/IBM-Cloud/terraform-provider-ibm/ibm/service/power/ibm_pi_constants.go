@@ -148,4 +148,27 @@ const (
 	StatusPending = "PENDING"
 	SctionStart   = "start"
 	SctionStop    = "stop"
+
+	// Workspaces
+	Attr_WorkspaceCapabilities = "pi_workspace_capabilities"
+	Attr_WorkspaceDetails      = "pi_workspace_details"
+	Attr_WorkspaceID           = "pi_workspace_id"
+	Attr_WorkspaceLocation     = "pi_workspace_location"
+	Attr_WorkspaceName         = "pi_workspace_name"
+	Attr_WorkspaceStatus       = "pi_workspace_status"
+	Attr_WorkspaceType         = "pi_workspace_type"
+
+	// Datacenter
+	Arg_DatacenterZone          = "pi_datacenter_zone"
+	Attr_DatacenterCapabilities = "pi_datacenter_capabilities"
+	Attr_DatacenterLocation     = "pi_datacenter_location"
+	Attr_DatacenterStatus       = "pi_datacenter_status"
+	Attr_DatacenterType         = "pi_datacenter_type"
+	Attr_DatacenterHref         = "pi_datacenter_href"
+
+	// IBM PI Workspace
+	PIWorkspaceName          = "pi_name"
+	PIWorkspaceDatacenter    = "pi_datacenter"
+	PIWorkspaceResourceGroup = "pi_resource_group_id"
+	PIWorkspacePlan          = "pi_plan"
 )

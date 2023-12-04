@@ -66,7 +66,7 @@ func (o *PcloudIpsecpoliciesGetReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}] pcloud.ipsecpolicies.get", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudIpsecpoliciesGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies get o k response a status code equal to that given
 func (o *PcloudIpsecpoliciesGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get o k response
+func (o *PcloudIpsecpoliciesGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudIpsecpoliciesGetOK) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudIpsecpoliciesGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud ipsecpolicies get bad request response
+func (o *PcloudIpsecpoliciesGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudIpsecpoliciesGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudIpsecpoliciesGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies get unauthorized response a status code equal to that given
 func (o *PcloudIpsecpoliciesGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get unauthorized response
+func (o *PcloudIpsecpoliciesGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudIpsecpoliciesGetUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudIpsecpoliciesGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud ipsecpolicies get forbidden response
+func (o *PcloudIpsecpoliciesGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudIpsecpoliciesGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudIpsecpoliciesGetNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies get not found response a status code equal to that given
 func (o *PcloudIpsecpoliciesGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get not found response
+func (o *PcloudIpsecpoliciesGetNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudIpsecpoliciesGetNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudIpsecpoliciesGetUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud ipsecpolicies get unprocessable entity response
+func (o *PcloudIpsecpoliciesGetUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudIpsecpoliciesGetUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesGetUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudIpsecpoliciesGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud ipsecpolicies get internal server error response a status code equal to that given
 func (o *PcloudIpsecpoliciesGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud ipsecpolicies get internal server error response
+func (o *PcloudIpsecpoliciesGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudIpsecpoliciesGetInternalServerError) Error() string {

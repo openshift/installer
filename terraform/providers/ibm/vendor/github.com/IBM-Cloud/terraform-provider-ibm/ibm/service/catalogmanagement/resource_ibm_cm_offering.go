@@ -3728,17 +3728,6 @@ func resourceIBMCmOfferingMapToKind(modelMap map[string]interface{}) (*catalogma
 		}
 		model.Versions = versions
 	}
-	if modelMap["plans"] != nil {
-		plans := []catalogmanagementv1.Plan{}
-		for _, plansItem := range modelMap["plans"].([]interface{}) {
-			plansItemModel, err := resourceIBMCmOfferingMapToPlan(plansItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			plans = append(plans, *plansItemModel)
-		}
-		model.Plans = plans
-	}
 	return model, nil
 }
 
@@ -4540,94 +4529,6 @@ func resourceIBMCmOfferingMapToDependency(modelMap map[string]interface{}) (*cat
 	return model, nil
 }
 
-func resourceIBMCmOfferingMapToPlan(modelMap map[string]interface{}) (*catalogmanagementv1.Plan, error) {
-	model := &catalogmanagementv1.Plan{}
-	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
-		model.ID = core.StringPtr(modelMap["id"].(string))
-	}
-	if modelMap["label"] != nil && modelMap["label"].(string) != "" {
-		model.Label = core.StringPtr(modelMap["label"].(string))
-	}
-	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
-		model.Name = core.StringPtr(modelMap["name"].(string))
-	}
-	if modelMap["short_description"] != nil && modelMap["short_description"].(string) != "" {
-		model.ShortDescription = core.StringPtr(modelMap["short_description"].(string))
-	}
-	if modelMap["long_description"] != nil && modelMap["long_description"].(string) != "" {
-		model.LongDescription = core.StringPtr(modelMap["long_description"].(string))
-	}
-	if modelMap["tags"] != nil {
-		tags := []string{}
-		for _, tagsItem := range modelMap["tags"].([]interface{}) {
-			tags = append(tags, tagsItem.(string))
-		}
-		model.Tags = tags
-	}
-	if modelMap["additional_features"] != nil {
-		additionalFeatures := []catalogmanagementv1.Feature{}
-		for _, additionalFeaturesItem := range modelMap["additional_features"].([]interface{}) {
-			additionalFeaturesItemModel, err := resourceIBMCmOfferingMapToFeature(additionalFeaturesItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			additionalFeatures = append(additionalFeatures, *additionalFeaturesItemModel)
-		}
-		model.AdditionalFeatures = additionalFeatures
-	}
-	if modelMap["created"] != nil {
-
-	}
-	if modelMap["updated"] != nil {
-
-	}
-	if modelMap["deployments"] != nil {
-		deployments := []catalogmanagementv1.Deployment{}
-		for _, deploymentsItem := range modelMap["deployments"].([]interface{}) {
-			deploymentsItemModel, err := resourceIBMCmOfferingMapToDeployment(deploymentsItem.(map[string]interface{}))
-			if err != nil {
-				return model, err
-			}
-			deployments = append(deployments, *deploymentsItemModel)
-		}
-		model.Deployments = deployments
-	}
-	return model, nil
-}
-
-func resourceIBMCmOfferingMapToDeployment(modelMap map[string]interface{}) (*catalogmanagementv1.Deployment, error) {
-	model := &catalogmanagementv1.Deployment{}
-	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
-		model.ID = core.StringPtr(modelMap["id"].(string))
-	}
-	if modelMap["label"] != nil && modelMap["label"].(string) != "" {
-		model.Label = core.StringPtr(modelMap["label"].(string))
-	}
-	if modelMap["name"] != nil && modelMap["name"].(string) != "" {
-		model.Name = core.StringPtr(modelMap["name"].(string))
-	}
-	if modelMap["short_description"] != nil && modelMap["short_description"].(string) != "" {
-		model.ShortDescription = core.StringPtr(modelMap["short_description"].(string))
-	}
-	if modelMap["long_description"] != nil && modelMap["long_description"].(string) != "" {
-		model.LongDescription = core.StringPtr(modelMap["long_description"].(string))
-	}
-	if modelMap["tags"] != nil {
-		tags := []string{}
-		for _, tagsItem := range modelMap["tags"].([]interface{}) {
-			tags = append(tags, tagsItem.(string))
-		}
-		model.Tags = tags
-	}
-	if modelMap["created"] != nil {
-
-	}
-	if modelMap["updated"] != nil {
-
-	}
-	return model, nil
-}
-
 func resourceIBMCmOfferingMapToProviderInfo(modelMap map[string]interface{}) (*catalogmanagementv1.ProviderInfo, error) {
 	model := &catalogmanagementv1.ProviderInfo{}
 	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
@@ -4932,17 +4833,6 @@ func resourceIBMCmOfferingKindToMap(model *catalogmanagementv1.Kind) (map[string
 			versions = append(versions, versionsItemMap)
 		}
 		modelMap["versions"] = versions
-	}
-	if model.Plans != nil {
-		plans := []map[string]interface{}{}
-		for _, plansItem := range model.Plans {
-			plansItemMap, err := resourceIBMCmOfferingPlanToMap(&plansItem)
-			if err != nil {
-				return modelMap, err
-			}
-			plans = append(plans, plansItemMap)
-		}
-		modelMap["plans"] = plans
 	}
 	return modelMap, nil
 }
@@ -5741,86 +5631,6 @@ func resourceIBMCmOfferingDependencyToMap(model *catalogmanagementv1.OfferingRef
 	}
 	if model.Flavors != nil {
 		modelMap["flavors"] = model.Flavors
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmOfferingPlanToMap(model *catalogmanagementv1.Plan) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.ID != nil {
-		modelMap["id"] = model.ID
-	}
-	if model.Label != nil {
-		modelMap["label"] = model.Label
-	}
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.ShortDescription != nil {
-		modelMap["short_description"] = model.ShortDescription
-	}
-	if model.LongDescription != nil {
-		modelMap["long_description"] = model.LongDescription
-	}
-	if model.Tags != nil {
-		modelMap["tags"] = model.Tags
-	}
-	if model.AdditionalFeatures != nil {
-		additionalFeatures := []map[string]interface{}{}
-		for _, additionalFeaturesItem := range model.AdditionalFeatures {
-			additionalFeaturesItemMap, err := resourceIBMCmOfferingFeatureToMap(&additionalFeaturesItem)
-			if err != nil {
-				return modelMap, err
-			}
-			additionalFeatures = append(additionalFeatures, additionalFeaturesItemMap)
-		}
-		modelMap["additional_features"] = additionalFeatures
-	}
-	if model.Created != nil {
-		modelMap["created"] = model.Created.String()
-	}
-	if model.Updated != nil {
-		modelMap["updated"] = model.Updated.String()
-	}
-	if model.Deployments != nil {
-		deployments := []map[string]interface{}{}
-		for _, deploymentsItem := range model.Deployments {
-			deploymentsItemMap, err := resourceIBMCmOfferingDeploymentToMap(&deploymentsItem)
-			if err != nil {
-				return modelMap, err
-			}
-			deployments = append(deployments, deploymentsItemMap)
-		}
-		modelMap["deployments"] = deployments
-	}
-	return modelMap, nil
-}
-
-func resourceIBMCmOfferingDeploymentToMap(model *catalogmanagementv1.Deployment) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	if model.ID != nil {
-		modelMap["id"] = model.ID
-	}
-	if model.Label != nil {
-		modelMap["label"] = model.Label
-	}
-	if model.Name != nil {
-		modelMap["name"] = model.Name
-	}
-	if model.ShortDescription != nil {
-		modelMap["short_description"] = model.ShortDescription
-	}
-	if model.LongDescription != nil {
-		modelMap["long_description"] = model.LongDescription
-	}
-	if model.Tags != nil {
-		modelMap["tags"] = model.Tags
-	}
-	if model.Created != nil {
-		modelMap["created"] = model.Created.String()
-	}
-	if model.Updated != nil {
-		modelMap["updated"] = model.Updated.String()
 	}
 	return modelMap, nil
 }

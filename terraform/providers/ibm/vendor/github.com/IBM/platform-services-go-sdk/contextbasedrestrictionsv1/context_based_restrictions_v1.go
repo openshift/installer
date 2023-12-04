@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.57.1-4c556507-20220928-143422
+ * IBM OpenAPI SDK Code Generator Version: 3.81.0-c73a091c-20231026-215706
  */
 
 // Package contextbasedrestrictionsv1 : Operations and models for the ContextBasedRestrictionsV1 service
@@ -1047,10 +1047,6 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListAvailableService
 
 // ListAvailableServiceOperationsWithContext is an alternate form of the ListAvailableServiceOperations method which supports a Context parameter
 func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListAvailableServiceOperationsWithContext(ctx context.Context, listAvailableServiceOperationsOptions *ListAvailableServiceOperationsOptions) (result *OperationsList, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(listAvailableServiceOperationsOptions, "listAvailableServiceOperationsOptions cannot be nil")
-	if err != nil {
-		return
-	}
 	err = core.ValidateStruct(listAvailableServiceOperationsOptions, "listAvailableServiceOperationsOptions")
 	if err != nil {
 		return
@@ -1080,7 +1076,15 @@ func (contextBasedRestrictions *ContextBasedRestrictionsV1) ListAvailableService
 		builder.AddHeader("Transaction-Id", fmt.Sprint(*listAvailableServiceOperationsOptions.TransactionID))
 	}
 
-	builder.AddQuery("service_name", fmt.Sprint(*listAvailableServiceOperationsOptions.ServiceName))
+	if listAvailableServiceOperationsOptions.ServiceName != nil {
+		builder.AddQuery("service_name", fmt.Sprint(*listAvailableServiceOperationsOptions.ServiceName))
+	}
+	if listAvailableServiceOperationsOptions.ServiceGroupID != nil {
+		builder.AddQuery("service_group_id", fmt.Sprint(*listAvailableServiceOperationsOptions.ServiceGroupID))
+	}
+	if listAvailableServiceOperationsOptions.ResourceType != nil {
+		builder.AddQuery("resource_type", fmt.Sprint(*listAvailableServiceOperationsOptions.ResourceType))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1114,8 +1118,14 @@ type APIType struct {
 	// The description of the API type.
 	Description *string `json:"description" validate:"required"`
 
+	// The type of the API type.
+	Type *string `json:"type" validate:"required"`
+
 	// The actions available for the API type.
 	Actions []Action `json:"actions" validate:"required"`
+
+	// The enforcement modes supported by the API type.
+	EnforcementModes []string `json:"enforcement_modes,omitempty"`
 }
 
 // UnmarshalAPIType unmarshals an instance of APIType from the specified map of raw messages.
@@ -1133,7 +1143,15 @@ func UnmarshalAPIType(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "actions", &obj.Actions, UnmarshalAction)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "enforcement_modes", &obj.EnforcementModes)
 	if err != nil {
 		return
 	}
@@ -1345,6 +1363,7 @@ type CreateRuleOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1404,6 +1423,7 @@ func (_options *CreateRuleOptions) SetXCorrelationID(xCorrelationID string) *Cre
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateRuleOptions) SetTransactionID(transactionID string) *CreateRuleOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1441,6 +1461,7 @@ type CreateZoneOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1489,6 +1510,7 @@ func (_options *CreateZoneOptions) SetXCorrelationID(xCorrelationID string) *Cre
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateZoneOptions) SetTransactionID(transactionID string) *CreateZoneOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1513,6 +1535,7 @@ type DeleteRuleOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1539,6 +1562,7 @@ func (_options *DeleteRuleOptions) SetXCorrelationID(xCorrelationID string) *Del
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *DeleteRuleOptions) SetTransactionID(transactionID string) *DeleteRuleOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1563,6 +1587,7 @@ type DeleteZoneOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1589,6 +1614,7 @@ func (_options *DeleteZoneOptions) SetXCorrelationID(xCorrelationID string) *Del
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *DeleteZoneOptions) SetTransactionID(transactionID string) *DeleteZoneOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1613,6 +1639,7 @@ type GetAccountSettingsOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1639,6 +1666,7 @@ func (_options *GetAccountSettingsOptions) SetXCorrelationID(xCorrelationID stri
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *GetAccountSettingsOptions) SetTransactionID(transactionID string) *GetAccountSettingsOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1663,6 +1691,7 @@ type GetRuleOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1689,6 +1718,7 @@ func (_options *GetRuleOptions) SetXCorrelationID(xCorrelationID string) *GetRul
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *GetRuleOptions) SetTransactionID(transactionID string) *GetRuleOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1713,6 +1743,7 @@ type GetZoneOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -1739,6 +1770,7 @@ func (_options *GetZoneOptions) SetXCorrelationID(xCorrelationID string) *GetZon
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *GetZoneOptions) SetTransactionID(transactionID string) *GetZoneOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1752,9 +1784,6 @@ func (options *GetZoneOptions) SetHeaders(param map[string]string) *GetZoneOptio
 
 // ListAvailableServiceOperationsOptions : The ListAvailableServiceOperations options.
 type ListAvailableServiceOperationsOptions struct {
-	// The name of the service.
-	ServiceName *string `json:"service_name" validate:"required"`
-
 	// The supplied or generated value of this header is logged for a request and repeated in a response header for the
 	// corresponding response. The same value is used for downstream requests and retries of those requests. If a value of
 	// this headers is not supplied in a request, the service generates a random (version 4) UUID.
@@ -1763,23 +1792,25 @@ type ListAvailableServiceOperationsOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
+
+	// The name of the service.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// The id of the service group.
+	ServiceGroupID *string `json:"service_group_id,omitempty"`
+
+	// The type of resource.
+	ResourceType *string `json:"resource_type,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // NewListAvailableServiceOperationsOptions : Instantiate ListAvailableServiceOperationsOptions
-func (*ContextBasedRestrictionsV1) NewListAvailableServiceOperationsOptions(serviceName string) *ListAvailableServiceOperationsOptions {
-	return &ListAvailableServiceOperationsOptions{
-		ServiceName: core.StringPtr(serviceName),
-	}
-}
-
-// SetServiceName : Allow user to set ServiceName
-func (_options *ListAvailableServiceOperationsOptions) SetServiceName(serviceName string) *ListAvailableServiceOperationsOptions {
-	_options.ServiceName = core.StringPtr(serviceName)
-	return _options
+func (*ContextBasedRestrictionsV1) NewListAvailableServiceOperationsOptions() *ListAvailableServiceOperationsOptions {
+	return &ListAvailableServiceOperationsOptions{}
 }
 
 // SetXCorrelationID : Allow user to set XCorrelationID
@@ -1789,8 +1820,27 @@ func (_options *ListAvailableServiceOperationsOptions) SetXCorrelationID(xCorrel
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ListAvailableServiceOperationsOptions) SetTransactionID(transactionID string) *ListAvailableServiceOperationsOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
+	return _options
+}
+
+// SetServiceName : Allow user to set ServiceName
+func (_options *ListAvailableServiceOperationsOptions) SetServiceName(serviceName string) *ListAvailableServiceOperationsOptions {
+	_options.ServiceName = core.StringPtr(serviceName)
+	return _options
+}
+
+// SetServiceGroupID : Allow user to set ServiceGroupID
+func (_options *ListAvailableServiceOperationsOptions) SetServiceGroupID(serviceGroupID string) *ListAvailableServiceOperationsOptions {
+	_options.ServiceGroupID = core.StringPtr(serviceGroupID)
+	return _options
+}
+
+// SetResourceType : Allow user to set ResourceType
+func (_options *ListAvailableServiceOperationsOptions) SetResourceType(resourceType string) *ListAvailableServiceOperationsOptions {
+	_options.ResourceType = core.StringPtr(resourceType)
 	return _options
 }
 
@@ -1810,6 +1860,7 @@ type ListAvailableServicerefTargetsOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Specifies the types of services to retrieve.
@@ -1838,6 +1889,7 @@ func (_options *ListAvailableServicerefTargetsOptions) SetXCorrelationID(xCorrel
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ListAvailableServicerefTargetsOptions) SetTransactionID(transactionID string) *ListAvailableServicerefTargetsOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1868,6 +1920,7 @@ type ListRulesOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// The `region` resource attribute.
@@ -1933,6 +1986,7 @@ func (_options *ListRulesOptions) SetXCorrelationID(xCorrelationID string) *List
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ListRulesOptions) SetTransactionID(transactionID string) *ListRulesOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -2017,6 +2071,7 @@ type ListZonesOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// The name of the zone.
@@ -2050,6 +2105,7 @@ func (_options *ListZonesOptions) SetXCorrelationID(xCorrelationID string) *List
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ListZonesOptions) SetTransactionID(transactionID string) *ListZonesOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -2176,6 +2232,7 @@ type ReplaceRuleOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2250,6 +2307,7 @@ func (_options *ReplaceRuleOptions) SetXCorrelationID(xCorrelationID string) *Re
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceRuleOptions) SetTransactionID(transactionID string) *ReplaceRuleOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -2294,6 +2352,7 @@ type ReplaceZoneOptions struct {
 	// The `Transaction-Id` header behaves as the `X-Correlation-Id` header. It is supported for backward compatibility
 	// with other IBM platform services that support the `Transaction-Id` header only. If both `X-Correlation-Id` and
 	// `Transaction-Id` are provided, `X-Correlation-Id` has the precedence over `Transaction-Id`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"Transaction-Id,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2357,6 +2416,7 @@ func (_options *ReplaceZoneOptions) SetXCorrelationID(xCorrelationID string) *Re
 }
 
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ReplaceZoneOptions) SetTransactionID(transactionID string) *ReplaceZoneOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -3028,7 +3088,7 @@ func UnmarshalZoneSummary(m map[string]json.RawMessage, result interface{}) (err
 	return
 }
 
-// AddressIPAddress : A single IP address.
+// AddressIPAddress : A single IP address. IPv4 and IPv6 are supported.
 // This model "extends" Address
 type AddressIPAddress struct {
 	// The type of address.
@@ -3073,7 +3133,7 @@ func UnmarshalAddressIPAddress(m map[string]json.RawMessage, result interface{})
 	return
 }
 
-// AddressIPAddressRange : An IP address range.
+// AddressIPAddressRange : An IP address range. IPv4 and IPv6 are supported.
 // This model "extends" Address
 type AddressIPAddressRange struct {
 	// The type of address.

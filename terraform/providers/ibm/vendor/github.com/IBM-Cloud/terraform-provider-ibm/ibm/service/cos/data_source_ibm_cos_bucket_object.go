@@ -91,6 +91,10 @@ func DataSourceIBMCosBucketObject() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"website_redirect": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -170,6 +174,9 @@ func dataSourceIBMCosBucketObjectRead(ctx context.Context, d *schema.ResourceDat
 	}
 	if out.ObjectLockLegalHoldStatus != nil {
 		d.Set("object_lock_legal_hold_status", out.ObjectLockLegalHoldStatus)
+	}
+	if out.WebsiteRedirectLocation != nil {
+		d.Set("website_redirect", out.WebsiteRedirectLocation)
 	}
 
 	objectID := getObjectId(bucketCRN, objectKey, bucketLocation)

@@ -97,6 +97,11 @@ func DataSourceIBMSatelliteClusterWorkerPool() *schema.Resource {
 				Computed:    true,
 				Description: "Enable auto scalling for worker pool",
 			},
+			"openshift_license_source": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "License source for Openshift",
+			},
 		},
 	}
 }
@@ -154,6 +159,7 @@ func dataSourceIBMSatelliteClusterWorkerPoolRead(d *schema.ResourceData, meta in
 	d.Set("auto_scale_enabled", *workerPool.AutoscaleEnabled)
 	d.Set("state", *workerPool.Lifecycle.ActualState)
 	d.Set("isolation", *workerPool.Isolation)
+	d.Set("openshift_license_source", *workerPool.OpenshiftLicense)
 	d.SetId(*workerPool.ID)
 
 	return nil

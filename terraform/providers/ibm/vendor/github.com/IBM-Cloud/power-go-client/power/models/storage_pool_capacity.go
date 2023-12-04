@@ -19,12 +19,21 @@ import (
 // swagger:model StoragePoolCapacity
 type StoragePoolCapacity struct {
 
+	// Available/Unused pool capacity (GB)
+	AvailableCapacity int64 `json:"availableCapacity,omitempty"`
+
 	// Maximum allocation storage size (GB)
 	// Required: true
 	MaxAllocationSize *int64 `json:"maxAllocationSize"`
 
 	// Pool name
 	PoolName string `json:"poolName,omitempty"`
+
+	// true if storage-pool is replication enabled and can be used to manage replication enabled volumes
+	ReplicationEnabled *bool `json:"replicationEnabled,omitempty"`
+
+	// Storage host/controller for this storage pool
+	StorageHost string `json:"storageHost,omitempty"`
 
 	// Storage type of the storage pool
 	StorageType string `json:"storageType,omitempty"`

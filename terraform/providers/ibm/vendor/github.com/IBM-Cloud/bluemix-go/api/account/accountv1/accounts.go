@@ -6,6 +6,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/api/account/accountv2"
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/bluemix-go/client"
+	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/bluemix-go/rest"
 )
 
@@ -27,21 +28,16 @@ type AccountUser struct {
 	Photo       string `json:"photo"`
 }
 
-//Accounts ...
+// Accounts ...
 type Accounts interface {
-	GetAccountUsers(accountGuid string) ([]AccountUser, error)
+	GetAccountUsers(accountGuid string) ([]models.AccountUser, error)
 	InviteAccountUser(accountGuid string, userEmail string) (AccountInviteResponse, error)
 	DeleteAccountUser(accountGuid string, userGuid string) error
-	FindAccountUserByUserId(accountGuid string, userId string) (*AccountUser, error)
+	FindAccountUserByUserId(accountGuid string, userId string) (*models.AccountUser, error)
 }
 
 type account struct {
 	client *client.Client
-}
-
-type AccountUserResource struct {
-	Metadata AccountUserMetadata
-	Entity   AccountUserEntity
 }
 
 type Metadata struct {
@@ -80,30 +76,86 @@ type AccountInviteResponse struct {
 	State string `json:"state"`
 }
 
-func (resource AccountUserResource) ToModel() AccountUser {
-	m := resource.Metadata
-	e := resource.Entity
-
-	return AccountUser{
-		UserId:      m.Identity.UserName,
-		CreatedOn:   m.CreatedAt,
-		VerifiedOn:  m.VerifiedAt,
-		FirstName:   e.FirstName,
-		LastName:    e.LastName,
-		IbmUniqueId: m.Identity.Id,
-		State:       e.State,
-		Email:       e.Email,
-		Phonenumber: e.PhoneNumber,
-		Id:          m.Guid,
-		AccountId:   e.AccountId,
-		Role:        e.Role,
-		Photo:       e.Photo,
-	}
-}
-
 type AccountUserQueryResponse struct {
 	Metadata     Metadata
 	AccountUsers []AccountUserResource `json:"resources"`
+}
+
+type AccountResource struct {
+	Metadata Metadata
+	Entity   AccountEntity
+}
+
+type AccountEntity struct {
+	Name          string                       `json:"name"`
+	Type          string                       `json:"type"`
+	State         string                       `json:"state"`
+	OwnerIamId    string                       `json:"owner_iam_id"`
+	CountryCode   string                       `json:"country_code"`
+	CurrencyCode  string                       `json:"currency_code"`
+	Organizations []models.AccountOrganization `json:"organizations_region"`
+}
+
+func (resource AccountResource) ToModel() models.V2Account {
+	return models.V2Account{
+		Guid:          resource.Metadata.Guid,
+		Name:          resource.Entity.Name,
+		Type:          resource.Entity.Type,
+		State:         resource.Entity.State,
+		OwnerIamId:    resource.Entity.OwnerIamId,
+		CountryCode:   resource.Entity.CountryCode,
+		Organizations: resource.Entity.Organizations,
+	}
+}
+
+// AccountUserResource is the original user information returned by V2 endpoint (for listing)
+type AccountUserResource struct {
+	ID             string `json:"id"`
+	IAMID          string `json:"iam_id"`
+	Realm          string `json:"realm"`
+	UserID         string `json:"user_id"`
+	FirstName      string `json:"firstname"`
+	LastName       string `json:"lastname"`
+	State          string `json:"state"`
+	Email          string `json:"email"`
+	PhoneNumber    string `json:"phonenumber"`
+	AltPhoneNumber string `json:"altphonenumber"`
+	Photo          string `json:"photo"`
+	InvitedOn      string `json:"invitedOn"`
+	AddedOn        string `json:"added_on"`
+	AccountID      string `json:"account_id"`
+
+	Linkages []struct {
+		Origin string `json:"origin"`
+		ID     string `json:"id"`
+	} `json:"linkages"`
+}
+
+func (resource AccountUserResource) ToModel() models.AccountUser {
+	var uaaGUID string
+	for _, linkage := range resource.Linkages {
+		if linkage.Origin == "UAA" {
+			uaaGUID = linkage.ID
+			break
+		}
+	}
+	user := models.AccountUser{
+		Id:          resource.ID,
+		UserId:      resource.UserID,
+		FirstName:   resource.FirstName,
+		LastName:    resource.LastName,
+		State:       resource.State,
+		Email:       resource.Email,
+		Phonenumber: resource.PhoneNumber,
+		AccountId:   resource.AccountID,
+		Photo:       resource.Photo,
+		IbmUniqueId: resource.IAMID,
+		UaaGuid:     uaaGUID,
+		AddedOn:     resource.AddedOn,
+		InvitedOn:   resource.InvitedOn,
+	}
+
+	return user
 }
 
 func newAccountAPI(c *client.Client) Accounts {
@@ -112,11 +164,11 @@ func newAccountAPI(c *client.Client) Accounts {
 	}
 }
 
-//GetAccountUser ...
-func (a *account) GetAccountUsers(accountGuid string) ([]AccountUser, error) {
-	var users []AccountUser
+// GetAccountUser ...
+func (a *account) GetAccountUsers(accountGuid string) ([]models.AccountUser, error) {
+	var users []models.AccountUser
 
-	resp, err := a.client.GetPaginated(fmt.Sprintf("/v1/accounts/%s/users", accountGuid),
+	resp, err := a.client.GetPaginated(fmt.Sprintf("/v2/accounts/%s/users", accountGuid),
 		accountv2.NewAccountPaginatedResources(AccountUserResource{}),
 		func(resource interface{}) bool {
 			if accountUser, ok := resource.(AccountUserResource); ok {
@@ -127,13 +179,14 @@ func (a *account) GetAccountUsers(accountGuid string) ([]AccountUser, error) {
 		})
 
 	if resp.StatusCode == 404 {
-		return []AccountUser{}, bmxerror.New(ErrCodeNoAccountExists,
+		return []models.AccountUser{}, bmxerror.New(ErrCodeNoAccountExists,
 			fmt.Sprintf("No Account exists with account id:%q", accountGuid))
 	}
 
 	return users, err
 }
 
+// Deprecated: User Invite is deprecated from accounts use UserInvite from userManagement
 func (a *account) InviteAccountUser(accountGuid string, userEmail string) (AccountInviteResponse, error) {
 	type userEntity struct {
 		Email       string `json:"email"`
@@ -153,20 +206,20 @@ func (a *account) InviteAccountUser(accountGuid string, userEmail string) (Accou
 
 	resp := AccountInviteResponse{}
 
-	_, err := a.client.Post(fmt.Sprintf("/v1/accounts/%s/users", accountGuid), payload, &resp)
+	_, err := a.client.Post(fmt.Sprintf("/v2/accounts/%s/users", accountGuid), payload, &resp)
 	return resp, err
 }
 
 func (a *account) DeleteAccountUser(accountGuid string, userGuid string) error {
-	_, err := a.client.Delete(fmt.Sprintf("/v1/accounts/%s/users/%s", accountGuid, userGuid))
+	_, err := a.client.Delete(fmt.Sprintf("/v2/accounts/%s/users/%s", accountGuid, userGuid))
 
 	return err
 }
 
-func (a *account) FindAccountUserByUserId(accountGuid string, userId string) (*AccountUser, error) {
+func (a *account) FindAccountUserByUserId(accountGuid string, userId string) (*models.AccountUser, error) {
 	queryResp := AccountUserQueryResponse{}
 
-	req := rest.GetRequest(*a.client.Config.Endpoint+fmt.Sprintf("/v1/accounts/%s/users", accountGuid)).
+	req := rest.GetRequest(*a.client.Config.Endpoint+fmt.Sprintf("/v2/accounts/%s/users", accountGuid)).
 		Query("user_id", userId)
 
 	response, err := a.client.SendRequest(req,

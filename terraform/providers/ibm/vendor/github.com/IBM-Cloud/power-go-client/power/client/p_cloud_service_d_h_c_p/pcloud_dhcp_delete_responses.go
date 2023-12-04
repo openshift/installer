@@ -54,7 +54,7 @@ func (o *PcloudDhcpDeleteReader) ReadResponse(response runtime.ClientResponse, c
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp/{dhcp_id}] pcloud.dhcp.delete", response, response.Code())
 	}
 }
 
@@ -95,6 +95,11 @@ func (o *PcloudDhcpDeleteAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud dhcp delete accepted response a status code equal to that given
 func (o *PcloudDhcpDeleteAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud dhcp delete accepted response
+func (o *PcloudDhcpDeleteAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudDhcpDeleteAccepted) Error() string {
@@ -156,6 +161,11 @@ func (o *PcloudDhcpDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud dhcp delete bad request response a status code equal to that given
 func (o *PcloudDhcpDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud dhcp delete bad request response
+func (o *PcloudDhcpDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudDhcpDeleteBadRequest) Error() string {
@@ -221,6 +231,11 @@ func (o *PcloudDhcpDeleteForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud dhcp delete forbidden response
+func (o *PcloudDhcpDeleteForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudDhcpDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp/{dhcp_id}][%d] pcloudDhcpDeleteForbidden  %+v", 403, o.Payload)
 }
@@ -284,6 +299,11 @@ func (o *PcloudDhcpDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud dhcp delete not found response
+func (o *PcloudDhcpDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudDhcpDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp/{dhcp_id}][%d] pcloudDhcpDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -345,6 +365,11 @@ func (o *PcloudDhcpDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud dhcp delete internal server error response a status code equal to that given
 func (o *PcloudDhcpDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud dhcp delete internal server error response
+func (o *PcloudDhcpDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudDhcpDeleteInternalServerError) Error() string {

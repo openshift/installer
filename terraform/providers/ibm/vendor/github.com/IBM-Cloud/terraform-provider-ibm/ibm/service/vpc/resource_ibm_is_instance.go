@@ -176,10 +176,6 @@ func ResourceIBMISInstance() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customdiff.Sequence(
 				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-					return flex.InstanceProfileValidate(diff)
-				}),
-			customdiff.Sequence(
-				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 					return flex.ResourceTagsCustomizeDiff(diff)
 				}),
 			customdiff.Sequence(
@@ -629,7 +625,7 @@ func ResourceIBMISInstance() *schema.Resource {
 							ForceNew:      true,
 							Computed:      true,
 							RequiredWith:  []string{isInstanceZone, isInstancePrimaryNetworkInterface, isInstanceProfile, isInstanceKeys, isInstanceVPC},
-							AtLeastOneOf:  []string{isInstanceImage, isInstanceSourceTemplate, "boot_volume.0.volume_id", "boot_volume.0.snapshot"},
+							AtLeastOneOf:  []string{isInstanceImage, isInstanceSourceTemplate, "boot_volume.0.volume_id", "boot_volume.0.snapshot", "catalog_offering.0.offering_crn", "catalog_offering.0.version_crn"},
 							ConflictsWith: []string{isInstanceImage, isInstanceSourceTemplate, "boot_volume.0.snapshot", "boot_volume.0.name", "boot_volume.0.encryption", "catalog_offering.0.offering_crn", "catalog_offering.0.version_crn"},
 							Description:   "The unique identifier for this volume",
 						},
@@ -763,6 +759,12 @@ func ResourceIBMISInstance() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Instance memory",
+			},
+
+			"numa_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of NUMA nodes this virtual server instance is provisioned on. This property may be absent if the instance's `status` is not `running`.",
 			},
 
 			isInstanceStatus: {
@@ -3305,7 +3307,9 @@ func instanceGet(d *schema.ResourceData, meta interface{}, id string) error {
 	if instance.Image != nil {
 		d.Set(isInstanceImage, *instance.Image.ID)
 	}
-
+	if instance.NumaCount != nil {
+		d.Set("numa_count", int(*instance.NumaCount))
+	}
 	d.Set(isInstanceStatus, *instance.Status)
 
 	//set the status reasons
