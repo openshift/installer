@@ -40,7 +40,7 @@ type API interface {
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
-	ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error)
+	ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error)
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
 }
 
@@ -669,8 +669,8 @@ func TransitGatewayEnabledZone(zone string) bool {
 	return zone == "dal10"
 }
 
-// ServiceInstanceIDToCRN returns the CRN of the matching service instance GUID which was passed in.
-func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
+// ServiceInstanceGUIDToName returns the name of the matching service instance GUID which was passed in.
+func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error) {
 	var (
 		options   *resourcecontrollerv2.ListResourceInstancesOptions
 		resources *resourcecontrollerv2.ResourceInstancesList
@@ -724,10 +724,10 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 
 			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
 				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
-					if resourceInstance.CRN == nil {
+					if resourceInstance.Name == nil {
 						return "", nil
 					}
-					return *resourceInstance.CRN, nil
+					return *resourceInstance.Name, nil
 				}
 			}
 		}

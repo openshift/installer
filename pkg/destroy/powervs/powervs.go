@@ -205,6 +205,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Region = %v", metadata.ClusterPlatformMetadata.PowerVS.Region)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.VPCRegion = %v", metadata.ClusterPlatformMetadata.PowerVS.VPCRegion)
 	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.Zone = %v", metadata.ClusterPlatformMetadata.PowerVS.Zone)
+	logger.Debugf("powervs.New: metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID = %v", metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID)
 
 	// Handle an optional setting in install-config.yaml
 	if metadata.ClusterPlatformMetadata.PowerVS.VPCRegion == "" {
@@ -230,6 +231,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Zone:               metadata.ClusterPlatformMetadata.PowerVS.Zone,
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
+		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 	}, nil
 }
 
@@ -683,12 +685,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 	}
 
-	serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
-	o.Logger.Debugf("loadSDKServices: serviceName = %v", serviceName)
+	// If we should have created a service instance dynamically
+	if o.ServiceGUID == "" {
+		serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
+		o.Logger.Debugf("loadSDKServices: serviceName = %v", serviceName)
 
-	o.ServiceGUID, err = o.ServiceInstanceNameToGUID(context.Background(), serviceName)
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: ServiceInstanceNameToGUID: %w", err)
+		o.ServiceGUID, err = o.ServiceInstanceNameToGUID(context.Background(), serviceName)
+		if err != nil {
+			return fmt.Errorf("loadSDKServices: ServiceInstanceNameToGUID: %w", err)
+		}
 	}
 	if o.ServiceGUID == "" {
 		// The rest of this function relies on o.ServiceGUID, so finish now!

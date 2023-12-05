@@ -271,7 +271,16 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
 		}
 
-		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
+		var (
+			serviceGUID string
+			serviceName string
+		)
+
+		if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
+			serviceName = fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
+		} else {
+			serviceGUID = installConfig.Config.PowerVS.ServiceInstanceGUID
+		}
 
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
@@ -280,6 +289,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			vpcSubnets,
+			serviceGUID,
 			serviceName,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,

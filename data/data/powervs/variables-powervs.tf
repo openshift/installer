@@ -40,6 +40,11 @@ variable "powervs_publish_strategy" {
   default     = "External"
 }
 
+variable "powervs_service_instance_name" {
+  type        = string
+  description = "Optionally, the service instance name of an existing object before cluster creation"
+}
+
 ################################################################
 # Configure storage
 ################################################################

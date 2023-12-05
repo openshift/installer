@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/powervs"
@@ -35,5 +36,14 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
+	// validate ServiceInstanceGUID
+	if p.ServiceInstanceGUID != "" {
+		_, err := uuid.Parse(p.ServiceInstanceGUID)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ServiceInstanceGUID"), p.ServiceInstanceGUID, "ServiceInstanceGUID must be a valid UUID"))
+		}
+	}
+
 	return allErrs
 }

@@ -56,12 +56,12 @@ module "master" {
   providers = {
     ibm = ibm.powervs
   }
-  source            = "./master"
-  cloud_instance_id = module.iaas.si_guid
-  cluster_id        = var.cluster_id
-  resource_group    = var.powervs_resource_group
-  instance_count    = var.master_count
+  source = "./master"
 
+  cloud_instance_id   = module.iaas.si_guid
+  cluster_id          = var.cluster_id
+  resource_group      = var.powervs_resource_group
+  instance_count      = var.master_count
   api_key             = var.powervs_api_key
   powervs_region      = var.powervs_region
   powervs_zone        = var.powervs_zone
@@ -166,7 +166,8 @@ module "iaas" {
   # define and pass variables to:
   # data/data/powervs/cluster/iaas/variables.tf
   #
-  cluster_id     = var.cluster_id
-  resource_group = var.powervs_resource_group
-  powervs_zone   = var.powervs_zone
+  cluster_id            = var.cluster_id
+  resource_group        = var.powervs_resource_group
+  powervs_zone          = var.powervs_zone
+  service_instance_name = var.powervs_service_instance_name
 }
