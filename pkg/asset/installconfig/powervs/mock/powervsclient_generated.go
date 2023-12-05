@@ -53,6 +53,21 @@ func (mr *MockAPIMockRecorder) GetAPIKey() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockAPI)(nil).GetAPIKey))
 }
 
+// GetAttachedTransitGateway mocks base method.
+func (m *MockAPI) GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAttachedTransitGateway", ctx, svcInsID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAttachedTransitGateway indicates an expected call of GetAttachedTransitGateway.
+func (mr *MockAPIMockRecorder) GetAttachedTransitGateway(ctx, svcInsID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttachedTransitGateway", reflect.TypeOf((*MockAPI)(nil).GetAttachedTransitGateway), ctx, svcInsID)
+}
+
 // GetAuthenticatorAPIKeyDetails mocks base method.
 func (m *MockAPI) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
 	m.ctrl.T.Helper()
@@ -171,6 +186,21 @@ func (m *MockAPI) GetSubnetByName(ctx context.Context, subnetName, region string
 func (mr *MockAPIMockRecorder) GetSubnetByName(ctx, subnetName, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnetByName", reflect.TypeOf((*MockAPI)(nil).GetSubnetByName), ctx, subnetName, region)
+}
+
+// GetTGConnectionVPC mocks base method.
+func (m *MockAPI) GetTGConnectionVPC(ctx context.Context, gatewayID, vpcSubnetID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTGConnectionVPC", ctx, gatewayID, vpcSubnetID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTGConnectionVPC indicates an expected call of GetTGConnectionVPC.
+func (mr *MockAPIMockRecorder) GetTGConnectionVPC(ctx, gatewayID, vpcSubnetID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTGConnectionVPC", reflect.TypeOf((*MockAPI)(nil).GetTGConnectionVPC), ctx, gatewayID, vpcSubnetID)
 }
 
 // GetVPCByName mocks base method.
