@@ -761,16 +761,23 @@ func IsMachineManifest(file *asset.File) bool {
 	} else if matched {
 		return true
 	}
-	if matched, err := filepath.Match(masterMachineFileNamePattern, filename); err != nil {
-		panic("bad format for master machine file name pattern")
-	} else if matched {
-		return true
+	for _, pattern := range []struct {
+		Pattern string
+		Type    string
+	}{
+		{Pattern: secretFileNamePattern, Type: "secret"},
+		{Pattern: networkConfigSecretFileNamePattern, Type: "network config secret"},
+		{Pattern: hostFileNamePattern, Type: "host"},
+		{Pattern: masterMachineFileNamePattern, Type: "master machine"},
+		{Pattern: workerMachineSetFileNamePattern, Type: "worker machineset"},
+	} {
+		if matched, err := filepath.Match(pattern.Pattern, filename); err != nil {
+			panic(fmt.Sprintf("bad format for %s file name pattern", pattern.Type))
+		} else if matched {
+			return true
+		}
 	}
-	if matched, err := filepath.Match(workerMachineSetFileNamePattern, filename); err != nil {
-		panic("bad format for worker machine file name pattern")
-	} else {
-		return matched
-	}
+	return false
 }
 
 func createSecretAssetFiles(resources []corev1.Secret, fileName string) ([]*asset.File, error) {
