@@ -56,7 +56,9 @@ func (p *Provider) Provision(dir string, vars []*asset.File) ([]*asset.File, err
 		outputs, stateFile, err := applyStage(stage.Platform(), stage, terraformDirPath, vars)
 		if err != nil {
 			// Write the state file to the install directory even if the apply failed.
-			fileList = append(fileList, stateFile)
+			if stateFile != nil {
+				fileList = append(fileList, stateFile)
+			}
 			return fileList, fmt.Errorf("failure applying terraform for %q stage: %w", stage.Name(), err)
 		}
 		vars = append(vars, outputs)
