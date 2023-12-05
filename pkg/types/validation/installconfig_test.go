@@ -575,16 +575,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `networking\.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin OpenShiftSDN$`,
 		},
 		{
-			name: "networking clusterNetworkMTU - unsupported network type",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking.NetworkType = string(operv1.NetworkTypeKuryr)
-				c.Networking.ClusterNetworkMTU = 8000
-				return c
-			}(),
-			expectedError: `networking\.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin Kuryr\]$`,
-		},
-		{
 			name: "missing control plane",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
