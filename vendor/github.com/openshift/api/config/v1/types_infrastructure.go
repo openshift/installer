@@ -231,6 +231,24 @@ const (
 	IBMCloudProviderTypeUPI IBMCloudProviderType = "UPI"
 )
 
+// ClusterHostedDNS indicates whether the cluster DNS is hosted by the cluster or Core DNS .
+type ClusterHostedDNS string
+
+const (
+	// EnabledClusterHostedDNS indicates that a DNS solution other than the default provided by the
+	// cloud platform is in use. In this mode, the cluster hosts a DNS solution during installation and the
+	// user is expected to provide their own DNS solution post-install.
+	// When "Enabled", the cluster will continue to use the default Load Balancers provided by the cloud
+	// platform.
+	EnabledClusterHostedDNS ClusterHostedDNS = "Enabled"
+
+	// DisabledClusterHostedDNS indicates that the cluster is using the default DNS solution for the
+	// cloud platform. OpenShift is responsible for all the LB and DNS configuration needed for the
+	// cluster to be functional with no intervention from the user. To accomplish this, OpenShift
+	// configures the default LB and DNS solutions provided by the underlying cloud.
+	DisabledClusterHostedDNS ClusterHostedDNS = "Disabled"
+)
+
 // ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.
 type ExternalPlatformSpec struct {
 	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
@@ -612,6 +630,24 @@ type GCPPlatformStatus struct {
 	// +optional
 	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
 	ResourceTags []GCPResourceTag `json:"resourceTags,omitempty"`
+
+	// clusterHostedDNS indicates the type of DNS solution in use within the cluster. Its default value of
+	// "Disabled" indicates that the cluster's DNS is the default provided by the cloud platform. It can be
+	// "Enabled" during install to bypass the configuration of the cloud default DNS. When "Enabled", the
+	// cluster needs to provide a self-hosted DNS solution for the cluster's installation to succeed.
+	// The cluster's use of the cloud's Load Balancers is unaffected by this setting.
+	// The value is immutable after it has been set at install time.
+	// Currently, there is no way for the customer to add additional DNS entries into the cluster hosted DNS.
+	// Enabling this functionality allows the user to start their own DNS solution outside the cluster after
+	// installation is complete. The customer would be responsible for configuring this custom DNS solution,
+	// and it can be run in addition to the in-cluster DNS solution.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="clusterHostedDNS is immutable and may only be configured during installation"
+	// +optional
+	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+	ClusterHostedDNS ClusterHostedDNS `json:"clusterHostedDNS,omitempty"`
 }
 
 // GCPResourceLabel is a label to apply to GCP resources created for the cluster.

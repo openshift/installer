@@ -79,6 +79,12 @@ variable "ibmcloud_vpc" {
   default     = null
 }
 
+variable "ibmcloud_control_plane_boot_volume_key" {
+  type        = string
+  description = "IBM Cloud Key Protect key CRN to use to encrypt the control plane's volume(s)."
+  default     = null
+}
+
 variable "ibmcloud_control_plane_subnets" {
   type        = list(string)
   description = "The names of the existing subnets for the control plane."

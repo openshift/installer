@@ -3,15 +3,20 @@ package common
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/google/uuid"
 )
 
 const (
 	HEADER_NAME_USER_AGENT = "User-Agent"
 
 	SDK_NAME = "vpc-go-sdk"
+
+	X_CORRELATION_ID = "X-Correlation-Id"
+
+	X_REQUEST_ID = "X-Request-Id"
 )
 
-//
 // GetSdkHeaders - returns the set of SDK-specific headers to be included in an outgoing request.
 //
 // This function is invoked by generated service methods (i.e. methods which implement the REST API operations
@@ -25,25 +30,34 @@ const (
 // as in the example below.
 //
 // Parameters:
-//   serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
-//   serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
-//   operationId - the operationId as defined in the API definition (e.g. getContext)
+//
+//	serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
+//	serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
+//	operationId - the operationId as defined in the API definition (e.g. getContext)
 //
 // Returns:
-//   a Map which contains the set of headers to be included in the REST API request
 //
+//	a Map which contains the set of headers to be included in the REST API request
 func GetSdkHeaders(serviceName string, serviceVersion string, operationId string) map[string]string {
 	sdkHeaders := make(map[string]string)
 
 	sdkHeaders[HEADER_NAME_USER_AGENT] = GetUserAgentInfo()
+	sdkHeaders[X_CORRELATION_ID] = GetNewXCorrelationID()
+	sdkHeaders[X_REQUEST_ID] = GetNewXRequestID()
 
 	return sdkHeaders
 }
 
-var userAgent string = fmt.Sprintf("%s-%s %s", SDK_NAME, Version, GetSystemInfo())
+var UserAgent string = fmt.Sprintf("%s-%s %s", SDK_NAME, Version, GetSystemInfo())
 
 func GetUserAgentInfo() string {
-	return userAgent
+	return UserAgent
+}
+func GetNewXCorrelationID() string {
+	return uuid.New().String()
+}
+func GetNewXRequestID() string {
+	return uuid.New().String()
 }
 
 var systemInfo = fmt.Sprintf("(arch=%s; os=%s; go.version=%s)", runtime.GOARCH, runtime.GOOS, runtime.Version())

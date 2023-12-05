@@ -12,9 +12,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
+	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
@@ -173,12 +175,27 @@ var (
 		},
 	}
 
-	validInstanceProfies = []vpcv1.InstanceProfile{{Name: &[]string{"type-a"}[0]}, {Name: &[]string{"type-b"}[0]}}
+	validInstanceProfiles = []vpcv1.InstanceProfile{{Name: &[]string{"type-a"}[0]}, {Name: &[]string{"type-b"}[0]}}
 
-	machinePoolInvalidType = func(ic *types.InstallConfig) {
-		ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
-			InstanceType: "invalid-type",
-		}
+	invalidEncryptionKey = "invalid-encryption-key-crn"
+	validEncryptionKey   = "valid-encryption-key-crn"
+
+	validEncryptionKeyResponse = &responses.EncryptionKeyResponse{
+		CRN:     validEncryptionKey,
+		State:   1,
+		Deleted: ptr.To(false),
+	}
+
+	disabledEncryptionKeyResponse = &responses.EncryptionKeyResponse{
+		CRN:     validEncryptionKey,
+		State:   0,
+		Deleted: ptr.To(false),
+	}
+
+	deletedEncryptionKeyResponse = &responses.EncryptionKeyResponse{
+		CRN:     validEncryptionKey,
+		State:   1,
+		Deleted: ptr.To(true),
 	}
 
 	existingDNSRecordsResponse = []dnsrecordsv1.DnsrecordDetails{
@@ -261,6 +278,34 @@ func validComputeSubnetsForZones(ic *types.InstallConfig, zones []string) {
 	}
 	for _, zone := range zones {
 		ic.Platform.IBMCloud.ComputeSubnets = append(ic.Platform.IBMCloud.ComputeSubnets, validZoneSubnetNameMap[zone])
+	}
+}
+
+func controlPlaneInvalidBootVolume(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			EncryptionKey: invalidEncryptionKey,
+		},
+	}
+}
+
+func controlPlaneValidBootVolume(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		BootVolume: &ibmcloudtypes.BootVolume{
+			EncryptionKey: validEncryptionKey,
+		},
+	}
+}
+
+func controlPlaneInvalidInstanceType(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		InstanceType: "invalid-instance-type",
+	}
+}
+
+func controlPlaneValidInstanceType(ic *types.InstallConfig) {
+	ic.ControlPlane.Platform.IBMCloud = &ibmcloudtypes.MachinePool{
+		InstanceType: "type-a",
 	}
 }
 
@@ -614,6 +659,46 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "invalid control plane machine pool type",
+			edits: editFunctions{
+				controlPlaneInvalidInstanceType,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.type: Not found: "invalid-instance-type"\E`,
+		},
+		{
+			name: "valid control plane machine pool type",
+			edits: editFunctions{
+				controlPlaneValidInstanceType,
+			},
+		},
+		{
+			name: "invalid control plane machine pool boot volume crn",
+			edits: editFunctions{
+				controlPlaneInvalidBootVolume,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.encryptionKey: Invalid value: "invalid-encryption-key-crn": key CRN does not match: valid-encryption-key-crn\E`,
+		},
+		{
+			name: "invalid control plane machine pool boot volume disabled key",
+			edits: editFunctions{
+				controlPlaneValidBootVolume,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.encryptionKey: Invalid value: "valid-encryption-key-crn": key is disabled\E`,
+		},
+		{
+			name: "invalid control plane machine pool boot volume deleted key",
+			edits: editFunctions{
+				controlPlaneValidBootVolume,
+			},
+			errorMsg: `\QcontrolPlane.platform.ibmcloud.bootVolume.encryptionKey: Invalid value: "valid-encryption-key-crn": key has been deleted\E`,
+		},
+		{
+			name: "valid control plane machine pool boot volume crn",
+			edits: editFunctions{
+				controlPlaneValidBootVolume,
+			},
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -627,7 +712,7 @@ func TestValidate(t *testing.T) {
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPrivateSubnetUSSouth1ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPrivateSubnetUSSouth2ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), "subnet-invalid-zone").Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &[]string{"invalid"}[0]}}, nil).AnyTimes()
-	ibmcloudClient.EXPECT().GetVSIProfiles(gomock.Any()).Return(validInstanceProfies, nil).AnyTimes()
+	ibmcloudClient.EXPECT().GetVSIProfiles(gomock.Any()).Return(validInstanceProfiles, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetVPCZonesForRegion(gomock.Any(), validRegion).Return([]string{"us-south-1", "us-south-2", "us-south-3"}, nil).AnyTimes()
 
 	// Mocks: VPC with no ResourceGroup supplied
@@ -779,6 +864,24 @@ func TestValidate(t *testing.T) {
 	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet1Name, validRegion).Return(validSubnet1, nil).Times(2)
 	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet2Name, validRegion).Return(validSubnet2, nil).Times(2)
 	ibmcloudClient.EXPECT().GetSubnetByName(gomock.Any(), validSubnet3Name, validRegion).Return(validSubnet3, nil).Times(2)
+
+	// Mocks: invalid control plane machine pool type
+	// No additional mocks required
+
+	// Mocks: valid control plane machine pool type
+	// No additional mocks required
+
+	// Mocks: invalid control plane machine pool boot volume crn
+	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), invalidEncryptionKey).Return(validEncryptionKeyResponse, nil)
+
+	// Mocks: invalid control plane machine pool boot volume disabled
+	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), validEncryptionKey).Return(disabledEncryptionKeyResponse, nil)
+
+	// Mocks: invalid control plane machine pool boot volume deleted
+	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), validEncryptionKey).Return(deletedEncryptionKeyResponse, nil)
+
+	// Mock: valid control plane machine pool boot volume crn
+	ibmcloudClient.EXPECT().GetEncryptionKey(gomock.Any(), validEncryptionKey).Return(validEncryptionKeyResponse, nil)
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

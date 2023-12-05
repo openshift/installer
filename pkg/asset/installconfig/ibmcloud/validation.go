@@ -186,7 +186,7 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 		return allErrs
 	}
 
-	// Make sure the encryptionKey exists
+	// Make sure the encryptionKey exists and meets requirements for use
 	key, err := client.GetEncryptionKey(context.TODO(), bootVolume.EncryptionKey)
 	if err != nil {
 		return field.ErrorList{field.InternalError(path.Child("encryptionKey"), err)}
@@ -194,6 +194,18 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 
 	if key == nil {
 		return field.ErrorList{field.NotFound(path.Child("encryptionKey"), bootVolume.EncryptionKey)}
+	}
+
+	if key.CRN != bootVolume.EncryptionKey {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, fmt.Sprintf("key CRN does not match: %s", key.CRN)))
+	}
+
+	if key.State != 1 {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, "key is disabled"))
+	}
+
+	if key.Deleted != nil && *key.Deleted {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, "key has been deleted"))
 	}
 
 	return allErrs
