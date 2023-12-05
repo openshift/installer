@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -72,7 +72,7 @@ type TFVarsSources struct {
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
+	cachedImage, err := cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
 	}

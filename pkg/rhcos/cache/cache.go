@@ -11,23 +11,49 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/h2non/filetype/matchers"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/thedevsaddam/retry"
 	"github.com/ulikunitz/xz"
 	"golang.org/x/sys/unix"
 )
 
 const (
-	applicationName = "openshift-installer"
-	imageDataType   = "image"
+	// InstallerApplicationName is to use as application name by installer.
+	InstallerApplicationName = "openshift-installer"
+	// AgentApplicationName is to use as application name used by agent.
+	AgentApplicationName = "agent"
+	// ImageDataType is used by installer.
+	ImageDataType = "image"
+	// FilesDataType is used by agent.
+	FilesDataType = "files"
 )
 
-// getCacheDir returns a local path of the cache, where the installer should put the data:
-// <user_cache_dir>/openshift-installer/<dataType>_cache
+// GetFileFromCache returns path of the cached file if found, otherwise returns an empty string
+// or error.
+func GetFileFromCache(fileName string, cacheDir string) (string, error) {
+	filePath := filepath.Join(cacheDir, fileName)
+
+	// If the file has already been cached, return its path
+	_, err := os.Stat(filePath)
+	if err == nil {
+		logrus.Debugf("The file was found in cache: %v. Reusing...", filePath)
+		return filePath, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	return "", nil
+}
+
+// GetCacheDir returns a local path of the cache, where the installer should put the data:
+// <user_cache_dir>/agent/<dataType>_cache
 // If the directory doesn't exist, it will be automatically created.
-func getCacheDir(dataType string) (string, error) {
+func GetCacheDir(dataType, applicationName string) (string, error) {
 	if dataType == "" {
 		return "", errors.Errorf("data type can't be an empty string")
 	}
@@ -54,7 +80,7 @@ func getCacheDir(dataType string) (string, error) {
 	return cacheDir, nil
 }
 
-// cacheFile puts data in the cache
+// cacheFile puts data in the cache.
 func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err error) {
 	logrus.Debugf("Unpacking file into %q...", filePath)
 
@@ -190,39 +216,42 @@ func (u *urlWithIntegrity) uncompressedName() string {
 
 // download obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
 // and returns the local file path.
-func (u *urlWithIntegrity) download(dataType string) (string, error) {
+func (u *urlWithIntegrity) download(dataType, applicationName string) (string, error) {
 	fileName := u.uncompressedName()
-	cacheDir, err := getCacheDir(dataType)
+
+	cacheDir, err := GetCacheDir(dataType, applicationName)
 	if err != nil {
 		return "", err
 	}
-	filePath := filepath.Join(cacheDir, fileName)
 
-	// If the file has already been cached, return its path
-	_, err = os.Stat(filePath)
-	if err == nil {
-		logrus.Infof("The file was found in cache: %v. Reusing...", filePath)
+	filePath, err := GetFileFromCache(fileName, cacheDir)
+	if err != nil {
+		return "", err
+	}
+	if filePath != "" {
+		// Found cached file
 		return filePath, nil
 	}
-	if !os.IsNotExist(err) {
-		return "", err
-	}
 
-	resp, err := http.Get(u.location.String())
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+	// Send a request to get the file
+	err = retry.DoFunc(3, 5*time.Second, func() error {
+		resp, err := http.Get(u.location.String())
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
-	// Let's find the content length for future debugging
-	logrus.Debugf("image download content length: %d", resp.ContentLength)
+		// Let's find the content length for future debugging
+		logrus.Debugf("image download content length: %d", resp.ContentLength)
 
-	// Check server response
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.Errorf("bad status: %s", resp.Status)
-	}
+		// Check server response
+		if resp.StatusCode != http.StatusOK {
+			return errors.Errorf("bad status: %s", resp.Status)
+		}
 
-	err = cacheFile(resp.Body, filePath, u.uncompressedSHA256)
+		filePath = filepath.Join(cacheDir, fileName)
+		return cacheFile(resp.Body, filePath, u.uncompressedSHA256)
+	})
 	if err != nil {
 		return "", err
 	}
@@ -233,8 +262,8 @@ func (u *urlWithIntegrity) download(dataType string) (string, error) {
 // DownloadImageFile is a helper function that obtains an image file from a given URL,
 // puts it in the cache and returns the local file path.  If the file is compressed
 // by a known compressor, the file is uncompressed prior to being returned.
-func DownloadImageFile(baseURL string) (string, error) {
-	logrus.Infof("Obtaining RHCOS image file from '%v'", baseURL)
+func DownloadImageFile(baseURL string, applicationName string) (string, error) {
+	logrus.Debugf("Obtaining RHCOS image file from '%v'", baseURL)
 
 	var u urlWithIntegrity
 	parsedURL, err := url.ParseRequestURI(baseURL)
@@ -249,5 +278,5 @@ func DownloadImageFile(baseURL string) (string, error) {
 	}
 	u.location = *parsedURL
 
-	return u.download(imageDataType)
+	return u.download(ImageDataType, applicationName)
 }

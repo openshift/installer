@@ -26,6 +26,7 @@ import (
 	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 )
 
 const (
@@ -83,7 +84,7 @@ func (r *release) ExtractFile(image string, filename string, architecture string
 		return nil, err
 	}
 
-	cacheDir, err := GetCacheDir(filesDataType)
+	cacheDir, err := cache.GetCacheDir(cache.FilesDataType, cache.AgentApplicationName)
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +104,14 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 		return "", err
 	}
 
-	cacheDir, err := GetCacheDir(imageDataType)
+	cacheDir, err := cache.GetCacheDir(cache.ImageDataType, cache.AgentApplicationName)
 	if err != nil {
 		return "", err
 	}
 
 	filename := fmt.Sprintf(coreOsFileName, architecture)
 	// Check if file is already cached
-	cachedFile, err := GetFileFromCache(path.Base(filename), cacheDir)
+	cachedFile, err := cache.GetFileFromCache(path.Base(filename), cacheDir)
 	if err != nil {
 		return "", err
 	}

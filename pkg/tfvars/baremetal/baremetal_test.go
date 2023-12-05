@@ -162,7 +162,7 @@ func TestMastersSelectionByRole(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.scenario, func(t *testing.T) {
 
-			imageDownloader = func(baseURL string) (string, error) {
+			imageDownloader = func(baseURL, applicationName string) (string, error) {
 				return "", nil
 			}
 
@@ -291,7 +291,7 @@ func TestRAIDBIOSConfig(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.scenario, func(t *testing.T) {
 
-			imageDownloader = func(baseURL string) (string, error) {
+			imageDownloader = func(baseURL, applicationName string) (string, error) {
 				return "", nil
 			}
 
