@@ -657,40 +657,52 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// NOTE(cjschaef): If one or more ServiceEndpoint's are supplied, attempt to build the Terraform endpoint_file_path
 		// https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/guides/custom-service-endpoints#file-structure-for-endpoints-file
 		var endpointsJSONFile string
+		// Set Terraform visibility mode if necessary
+		terraformPrivateVisibility := false
 		if len(installConfig.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			// Determine if any endpoints require 'private' Terraform visibility mode (any contain 'private' or 'direct' for COS)
+			// This is a requirement for the IBM Cloud Terraform provider, forcing 'public' or 'private' visibility mode.
+			for _, endpoint := range installConfig.Config.Platform.IBMCloud.ServiceEndpoints {
+				if strings.Contains(endpoint.URL, "private") || strings.Contains(endpoint.URL, "direct") {
+					// If at least one endpoint is private (or direct) we expect to use Private visibility mode
+					terraformPrivateVisibility = true
+					break
+				}
+			}
+
 			endpointData, err := ibmcloudtfvars.CreateEndpointJSON(installConfig.Config.Platform.IBMCloud.ServiceEndpoints, installConfig.Config.Platform.IBMCloud.Region)
 			if err != nil {
 				return err
 			}
-			// While we should have already confirmed there are ServiceEndpoints, we can verify data did get created, requiring the JSON file gets created and passed along
-			if endpointData == nil {
-				return fmt.Errorf("failed to generate endpoint JSON with provided IBM Cloud ServiceEndpoints")
+			// While service endpoints may not be empty, they may not be required for Terraform.
+			// So, if we have not endpoint data, we don't need to generate the JSON override file.
+			if endpointData != nil {
+				// Add endpoint JSON data to list of generated files for Terraform
+				t.FileList = append(t.FileList, &asset.File{
+					Filename: ibmcloudtfvars.IBMCloudEndpointJSONFileName,
+					Data:     endpointData,
+				})
+				endpointsJSONFile = ibmcloudtfvars.IBMCloudEndpointJSONFileName
 			}
-
-			// Add endpoint JSON data to list of generated files for Terraform
-			t.FileList = append(t.FileList, &asset.File{
-				Filename: ibmcloudtfvars.IBMCloudEndpointJSONFileName,
-				Data:     endpointData,
-			})
-			endpointsJSONFile = ibmcloudtfvars.IBMCloudEndpointJSONFileName
 		}
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
-				Auth:                     auth,
-				CISInstanceCRN:           cisCRN,
-				DNSInstanceID:            dnsID,
-				EndpointsJSONFile:        endpointsJSONFile,
-				ImageURL:                 string(*rhcosImage),
-				MasterConfigs:            masterConfigs,
-				MasterDedicatedHosts:     masterDedicatedHosts,
-				NetworkResourceGroupName: installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
-				PreexistingVPC:           preexistingVPC,
-				PublishStrategy:          installConfig.Config.Publish,
-				ResourceGroupName:        installConfig.Config.Platform.IBMCloud.ResourceGroupName,
-				VPCPermitted:             vpcPermitted,
-				WorkerConfigs:            workerConfigs,
-				WorkerDedicatedHosts:     workerDedicatedHosts,
+				Auth:                       auth,
+				CISInstanceCRN:             cisCRN,
+				DNSInstanceID:              dnsID,
+				EndpointsJSONFile:          endpointsJSONFile,
+				ImageURL:                   string(*rhcosImage),
+				MasterConfigs:              masterConfigs,
+				MasterDedicatedHosts:       masterDedicatedHosts,
+				NetworkResourceGroupName:   installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
+				PreexistingVPC:             preexistingVPC,
+				PublishStrategy:            installConfig.Config.Publish,
+				ResourceGroupName:          installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+				TerraformPrivateVisibility: terraformPrivateVisibility,
+				VPCPermitted:               vpcPermitted,
+				WorkerConfigs:              workerConfigs,
+				WorkerDedicatedHosts:       workerDedicatedHosts,
 			},
 		)
 		if err != nil {
