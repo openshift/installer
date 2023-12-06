@@ -53,7 +53,6 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		// client side rate limiting is problematic for scaling operations. We disable it by default.
 		// https://github.com/kubernetes-sigs/cloud-provider-azure/issues/247
 		// https://bugzilla.redhat.com/show_bug.cgi?id=1782516#c7
-		CloudProviderRateLimit:       false,
 		CloudProviderBackoff:         true,
 		CloudProviderBackoffDuration: 6,
 
