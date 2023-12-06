@@ -6,7 +6,9 @@ import (
 
 	"github.com/gophercloud/gophercloud"
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,7 +59,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	for idx := int64(0); idx < total; idx++ {
 		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
 
-		providerSpec := generateProviderSpec(
+		providerSpec, err := generateProviderSpec(
 			clusterID,
 			platform,
 			mpool,
@@ -67,6 +69,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			trunkSupport,
 			failureDomain,
 		)
+		if err != nil {
+			return nil, nil, err
+		}
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -92,7 +97,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 
-	machineSetProviderSpec := generateProviderSpec(
+	machineSetProviderSpec, err := generateProviderSpec(
 		clusterID,
 		platform,
 		mpool,
@@ -102,6 +107,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		trunkSupport,
 		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	replicas := int32(total)
 
@@ -148,7 +156,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	if CPMSFailureDomains := pruneFailureDomains(failureDomains); CPMSFailureDomains != nil {
-		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = machinev1.FailureDomains{
+		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = &machinev1.FailureDomains{
 			Platform:  v1.OpenStackPlatformType,
 			OpenStack: CPMSFailureDomains,
 		}
@@ -156,7 +164,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) *machinev1alpha1.OpenstackProviderSpec {
+func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
@@ -164,17 +172,29 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 	if platform.ControlPlanePort != nil {
 		var subnets []machinev1alpha1.SubnetParam
 		controlPlanePort := platform.ControlPlanePort
+		networkID := controlPlanePort.Network.ID
 
 		for _, fixedIP := range controlPlanePort.FixedIPs {
 			subnets = append(subnets, machinev1alpha1.SubnetParam{
 				Filter: machinev1alpha1.SubnetFilter{ID: fixedIP.Subnet.ID, Name: fixedIP.Subnet.Name},
 			})
 		}
+
+		// In a dual-stack cluster, when network ID or Name is not specified, the network ID needs to
+		// be discovered and added to the ProviderSpec for MAPO to create one unique Port with two addresses.
+		var err error
+		if networkID == "" && controlPlanePort.Network.Name == "" && len(controlPlanePort.FixedIPs) == 2 {
+			networkID, err = getNetworkFromSubnet(controlPlanePort.FixedIPs[0], platform.Cloud)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		controlPlaneNetwork = machinev1alpha1.NetworkParam{
 			Subnets: subnets,
 			Filter: machinev1alpha1.Filter{
 				Name: controlPlanePort.Network.Name,
-				ID:   controlPlanePort.Network.ID,
+				ID:   networkID,
 			},
 		}
 		primarySubnet = controlPlanePort.FixedIPs[0].Subnet.ID
@@ -254,7 +274,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 	} else {
 		spec.Image = osImage
 	}
-	return &spec
+	return &spec, nil
 }
 
 // failureDomainIsEmpty returns true if the failure domain only contains nil or
@@ -378,6 +398,26 @@ func checkNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.C
 	}
 
 	return true, nil
+}
+
+func getNetworkFromSubnet(fixedIP openstack.FixedIP, cloud string) (string, error) {
+	opts := openstackdefaults.DefaultClientOpts(cloud)
+	conn, err := openstackdefaults.NewServiceClient("network", opts)
+	if err != nil {
+		return "", err
+	}
+	page, err := subnets.List(conn, subnets.ListOpts{Name: fixedIP.Subnet.Name, ID: fixedIP.Subnet.ID}).AllPages()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get subnet list")
+	}
+	subnetList, err := subnets.ExtractSubnets(page)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to extract subnets list")
+	}
+	if len(subnetList) == 0 {
+		return "", errors.New("subnet not found")
+	}
+	return subnetList[0].NetworkID, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines

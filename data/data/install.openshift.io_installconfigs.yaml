@@ -80,6 +80,7 @@ spec:
                   - DeploymentConfig
                   - ImageRegistry
                   - OperatorLifecycleManager
+                  - CloudCredential
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -740,6 +741,13 @@ spec:
                             cores to assign a vm.
                           format: int64
                           type: integer
+                        failureDomains:
+                          description: FailureDomains optionally configures a list
+                            of failure domain names that will be applied to the MachinePool
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: set
                         memoryMiB:
                           description: Memory is the size of a VM's memory in MiB.
                           format: int64
@@ -979,6 +987,10 @@ spec:
                           description: Processors defines the processing units for
                             the instance.
                           x-kubernetes-int-or-string: true
+                        smtLevel:
+                          description: SMTLevel specifies the level of SMT to set
+                            the control plane and worker nodes to.
+                          type: string
                         sysType:
                           description: SysType defines the system type for instance.
                           type: string
@@ -1670,6 +1682,13 @@ spec:
                           cores to assign a vm.
                         format: int64
                         type: integer
+                      failureDomains:
+                        description: FailureDomains optionally configures a list of
+                          failure domain names that will be applied to the MachinePool
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
                       memoryMiB:
                         description: Memory is the size of a VM's memory in MiB.
                         format: int64
@@ -1906,6 +1925,10 @@ spec:
                         description: Processors defines the processing units for the
                           instance.
                         x-kubernetes-int-or-string: true
+                      smtLevel:
+                        description: SMTLevel specifies the level of SMT to set the
+                          control plane and worker nodes to.
+                        type: string
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
@@ -2092,6 +2115,15 @@ spec:
                   - cidr
                   type: object
                 type: array
+              clusterNetworkMTU:
+                description: ClusterNetworkMTU is the Maximum Transmit (MTU) Unit
+                  size in bytes to allocate to the cluster network. For example, 1200
+                  would set the MTU of the entire overlay network. If the deployment
+                  does not require changes in the network plugin, leave it unset and
+                  the MTU will be calculated automatically based on the host network
+                  MTU.
+                format: int32
+                type: integer
               clusterNetworks:
                 description: Deprecated name for ClusterNetwork
                 items:
@@ -2158,6 +2190,28 @@ spec:
                 type: array
               type:
                 description: Deprecated name for NetworkType
+                type: string
+            type: object
+          operatorPublishingStrategy:
+            description: OperatorPublishingStrategy controls the visibility of ingress
+              and apiserver. Defaults to public.
+            properties:
+              apiserver:
+                default: External
+                description: APIServer sets the visibility of the load balancers servicing
+                  the APIserver.
+                enum:
+                - ""
+                - External
+                - Internal
+                type: string
+              ingress:
+                default: External
+                description: Ingress sets the visibility of the created dns resources.
+                enum:
+                - ""
+                - External
+                - Internal
                 type: string
             type: object
           platform:
@@ -2459,6 +2513,34 @@ spec:
                     description: ControlPlaneSubnet specifies an existing subnet for
                       use by the control plane nodes
                     type: string
+                  customerManagedKey:
+                    description: CustomerManagedKey has the keys needed to encrypt
+                      the storage account.
+                    properties:
+                      keyVault:
+                        description: KeyVault is the keyvault used for the customer
+                          created key required for encryption.
+                        properties:
+                          keyName:
+                            description: KeyName is the name of the key vault key.
+                            type: string
+                          name:
+                            description: Name is the name of the key vault.
+                            type: string
+                          resourceGroup:
+                            description: ResourceGroup defines the Azure resource
+                              group used by the key vault.
+                            type: string
+                        required:
+                        - keyName
+                        - name
+                        - resourceGroup
+                        type: object
+                      userAssignedIdentityKey:
+                        description: UserAssignedIdentityKey is the name of the user
+                          identity that has access to the managed key.
+                        type: string
+                    type: object
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on Azure for machine pools which do not
@@ -3231,6 +3313,15 @@ spec:
                       - value
                       type: object
                     type: array
+                  userProvisionedDNS:
+                    default: Disabled
+                    description: UserProvisionedDNS indicates if the customer is providing
+                      their own DNS solution in place of the default provisioned by
+                      the Installer.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
                   userTags:
                     description: userTags has additional keys and values that the
                       installer will add as tags to all resources that it creates
@@ -3356,6 +3447,49 @@ spec:
                       resource group where the cluster should be installed. If empty,
                       a new resource group will be created for the cluster.
                     type: string
+                  serviceEndpoints:
+                    description: ServiceEndpoints is a list which contains custom
+                      endpoints to override default service endpoints of IBM Cloud
+                      Services. There must only be one ServiceEndpoint for a service
+                      (no duplicates).
+                    items:
+                      description: IBMCloudServiceEndpoint stores the configuration
+                        of a custom url to override existing defaults of IBM Cloud
+                        Services.
+                      properties:
+                        name:
+                          description: 'name is the name of the IBM Cloud service.
+                            Possible values are: CIS, COS, DNSServices, GlobalSearch,
+                            GlobalTagging, HyperProtect, IAM, KeyProtect, ResourceController,
+                            ResourceManager, or VPC. For example, the IBM Cloud Private
+                            IAM service could be configured with the service `name`
+                            of `IAM` and `url` of `https://private.iam.cloud.ibm.com`
+                            Whereas the IBM Cloud Private VPC service for US South
+                            (Dallas) could be configured with the service `name` of
+                            `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`'
+                          enum:
+                          - CIS
+                          - COS
+                          - DNSServices
+                          - GlobalSearch
+                          - GlobalTagging
+                          - HyperProtect
+                          - IAM
+                          - KeyProtect
+                          - ResourceController
+                          - ResourceManager
+                          - VPC
+                          type: string
+                        url:
+                          description: url is fully qualified URI with scheme https,
+                            that overrides the default generated endpoint for a client.
+                            This must be provided and cannot be empty.
+                          type: string
+                      required:
+                      - name
+                      - url
+                      type: object
+                    type: array
                   vpcName:
                     description: VPCName is the name of an already existing VPC to
                       be used during cluster creation.
@@ -3432,7 +3566,7 @@ spec:
                     uniqueItems: true
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
-                      to download the RHCOS Image
+                      to download the RHCOS Image.
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
@@ -3493,6 +3627,13 @@ spec:
                           cores to assign a vm.
                         format: int64
                         type: integer
+                      failureDomains:
+                        description: FailureDomains optionally configures a list of
+                          failure domain names that will be applied to the MachinePool
+                        items:
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
                       memoryMiB:
                         description: Memory is the size of a VM's memory in MiB.
                         format: int64
@@ -3526,6 +3667,70 @@ spec:
                         - type
                         type: object
                     type: object
+                  failureDomains:
+                    description: FailureDomains configures failure domains for the
+                      Nutanix platform.
+                    items:
+                      description: FailureDomain configures failure domain information
+                        for the Nutanix platform.
+                      properties:
+                        name:
+                          description: Name defines the unique name of a failure domain.
+                          maxLength: 64
+                          minLength: 1
+                          pattern: ^[0-9A-Za-z_.-@/]+$
+                          type: string
+                        prismElement:
+                          description: prismElement holds the identification (name,
+                            uuid) and the optional endpoint address and port of the
+                            Nutanix Prism Element. When a cluster-wide proxy is installed,
+                            by default, this endpoint will be accessed via the proxy.
+                            Should you wish for communication with this endpoint not
+                            to be proxied, please add the endpoint to the proxy spec.noProxy
+                            list.
+                          properties:
+                            endpoint:
+                              description: Endpoint holds the address and port of
+                                the Prism Element
+                              properties:
+                                address:
+                                  description: address is the endpoint address (DNS
+                                    name or IP address) of the Nutanix Prism Central
+                                    or Element (cluster)
+                                  type: string
+                                port:
+                                  description: port is the port number to access the
+                                    Nutanix Prism Central or Element (cluster)
+                                  format: int32
+                                  type: integer
+                              required:
+                              - address
+                              - port
+                              type: object
+                            name:
+                              description: Name is prism endpoint Name
+                              type: string
+                            uuid:
+                              description: UUID is the UUID of the Prism Element (cluster)
+                              type: string
+                          required:
+                          - uuid
+                          type: object
+                        subnetUUIDs:
+                          description: SubnetUUIDs identifies the network subnets
+                            of the Prism Element. Currently we only support one subnet
+                            for a failure domain.
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - name
+                      - prismElement
+                      - subnetUUIDs
+                      type: object
+                    type: array
                   ingressVIP:
                     description: 'DeprecatedIngressVIP is the virtual IP address for
                       ingress Deprecated: use IngressVIPs'
@@ -3564,7 +3769,8 @@ spec:
                     type: object
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
-                      credentials to connect to the Prism Central.
+                      credentials to connect to the Prism Central. This serves as
+                      the default Prism-Central.
                     properties:
                       endpoint:
                         description: Endpoint holds the address and port of the Prism
@@ -3601,7 +3807,7 @@ spec:
                     description: PrismElements holds a list of Prism Elements (clusters).
                       A Prism Element encompasses all Nutanix resources (VMs, subnets,
                       etc.) used to host the OpenShift cluster. Currently only a single
-                      Prism Element may be defined.
+                      Prism Element may be defined. This serves as the default Prism-Element.
                     items:
                       description: PrismElement holds the uuid, endpoint of the Prism
                         Element (cluster)
@@ -3631,7 +3837,6 @@ spec:
                           description: UUID is the UUID of the Prism Element (cluster)
                           type: string
                       required:
-                      - endpoint
                       - uuid
                       type: object
                     type: array
@@ -4152,6 +4357,10 @@ spec:
                         description: Processors defines the processing units for the
                           instance.
                         x-kubernetes-int-or-string: true
+                      smtLevel:
+                        description: SMTLevel specifies the level of SMT to set the
+                          control plane and worker nodes to.
+                        type: string
                       sysType:
                         description: SysType defines the system type for instance.
                         type: string
@@ -4166,17 +4375,15 @@ spec:
                     description: PowerVSResourceGroup is the resource group in which
                       Power VS resources will be created.
                     type: string
-                  pvsNetworkName:
-                    description: PVSNetworkName specifies an existing network within
-                      the Power VS Service Instance.
-                    type: string
                   region:
                     description: Region specifies the IBM Cloud colo region where
                       the cluster will be created.
                     type: string
-                  serviceInstanceID:
-                    description: ServiceInstanceID is the ID of the Power IAAS instance
-                      created from the IBM Cloud Catalog
+                  serviceInstanceGUID:
+                    description: ServiceInstanceGUID is the GUID of the Power IAAS
+                      instance created from the IBM Cloud Catalog before the cluster
+                      is completed.  Leave unset to allow the installer to create
+                      a service instance during cluster creation.
                     type: string
                   userID:
                     description: UserID is the login for the user's IBM Cloud account.
@@ -4204,7 +4411,6 @@ spec:
                     type: string
                 required:
                 - powervsResourceGroup
-                - serviceInstanceID
                 - userID
                 - zone
                 type: object

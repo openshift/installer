@@ -88,6 +88,11 @@ func (m *VolumeOnboardingCreate) contextValidateVolumes(ctx context.Context, for
 	for i := 0; i < len(m.Volumes); i++ {
 
 		if m.Volumes[i] != nil {
+
+			if swag.IsZero(m.Volumes[i]) { // not required
+				return nil
+			}
+
 			if err := m.Volumes[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("Volumes" + "." + strconv.Itoa(i))

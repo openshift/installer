@@ -82,6 +82,36 @@ func ResourceIBMIsVPNServerRoute() *schema.Resource {
 				Computed:    true,
 				Description: "The date and time that the VPN route was created.",
 			},
+			"health_state": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The health of this resource.- `ok`: Healthy- `degraded`: Suffering from compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+			},
+			"health_reasons": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -91,6 +121,32 @@ func ResourceIBMIsVPNServerRoute() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The lifecycle state of the VPN route.",
+			},
+			"lifecycle_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+						},
+
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
 			},
 			"resource_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -246,11 +302,24 @@ func resourceIBMIsVPNServerRouteRead(context context.Context, d *schema.Resource
 	if err = d.Set("created_at", flex.DateTimeToString(vpnServerRoute.CreatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting created_at: %s", err))
 	}
+	if err = d.Set("health_state", vpnServerRoute.HealthState); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_state: %s", err))
+	}
+	if vpnServerRoute.HealthReasons != nil {
+		if err := d.Set("health_reasons", resourceVPNServerRouteFlattenHealthReasons(vpnServerRoute.HealthReasons)); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting health_reasons: %s", err))
+		}
+	}
 	if err = d.Set("href", vpnServerRoute.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting href: %s", err))
 	}
 	if err = d.Set("lifecycle_state", vpnServerRoute.LifecycleState); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_state: %s", err))
+	}
+	if vpnServerRoute.LifecycleReasons != nil {
+		if err := d.Set("lifecycle_reasons", resourceVPNServerRouteFlattenLifecycleReasons(vpnServerRoute.LifecycleReasons)); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting lifecycle_reasons: %s", err))
+		}
 	}
 	if err = d.Set("resource_type", vpnServerRoute.ResourceType); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting resource_type: %s", err))
@@ -364,4 +433,35 @@ func isWaitForVPNServerRouteDeleted(context context.Context, sess *vpcv1.VpcV1, 
 	}
 
 	return stateConf.WaitForState()
+}
+
+func resourceVPNServerRouteFlattenLifecycleReasons(lifecycleReasons []vpcv1.VPNServerRouteLifecycleReason) (lifecycleReasonsList []map[string]interface{}) {
+	lifecycleReasonsList = make([]map[string]interface{}, 0)
+	for _, lr := range lifecycleReasons {
+		currentLR := map[string]interface{}{}
+		if lr.Code != nil && lr.Message != nil {
+			currentLR[isInstanceLifecycleReasonsCode] = *lr.Code
+			currentLR[isInstanceLifecycleReasonsMessage] = *lr.Message
+			if lr.MoreInfo != nil {
+				currentLR[isInstanceLifecycleReasonsMoreInfo] = *lr.MoreInfo
+			}
+			lifecycleReasonsList = append(lifecycleReasonsList, currentLR)
+		}
+	}
+	return lifecycleReasonsList
+}
+func resourceVPNServerRouteFlattenHealthReasons(healthReasons []vpcv1.VPNServerRouteHealthReason) (healthReasonsList []map[string]interface{}) {
+	healthReasonsList = make([]map[string]interface{}, 0)
+	for _, hr := range healthReasons {
+		currentHR := map[string]interface{}{}
+		if hr.Code != nil && hr.Message != nil {
+			currentHR[isVolumeHealthReasonsCode] = *hr.Code
+			currentHR[isVolumeHealthReasonsMessage] = *hr.Message
+			if hr.MoreInfo != nil {
+				currentHR[isVolumeHealthReasonsMoreInfo] = *hr.MoreInfo
+			}
+			healthReasonsList = append(healthReasonsList, currentHR)
+		}
+	}
+	return healthReasonsList
 }

@@ -44,7 +44,7 @@ type ClientService interface {
 }
 
 /*
-  ServiceBrokerOpenstacksGet lists all open stack instances being managed
+ServiceBrokerOpenstacksGet lists all open stack instances being managed
 */
 func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksGetOK, error) {
 	// TODO: Validate the params before sending
@@ -83,7 +83,7 @@ func (a *Client) ServiceBrokerOpenstacksGet(params *ServiceBrokerOpenstacksGetPa
 }
 
 /*
-  ServiceBrokerOpenstacksHostsGet lists account information for all pvm instances on hostname
+ServiceBrokerOpenstacksHostsGet lists account information for all pvm instances on hostname
 */
 func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacksHostsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksHostsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -122,7 +122,7 @@ func (a *Client) ServiceBrokerOpenstacksHostsGet(params *ServiceBrokerOpenstacks
 }
 
 /*
-  ServiceBrokerOpenstacksOpenstackGet lists account information for all pvm instances on hostname
+ServiceBrokerOpenstacksOpenstackGet lists account information for all pvm instances on hostname
 */
 func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenstacksOpenstackGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksOpenstackGetOK, error) {
 	// TODO: Validate the params before sending
@@ -161,7 +161,7 @@ func (a *Client) ServiceBrokerOpenstacksOpenstackGet(params *ServiceBrokerOpenst
 }
 
 /*
-  ServiceBrokerOpenstacksPost creates a new open stack instance to be managed
+ServiceBrokerOpenstacksPost creates a new open stack instance to be managed
 */
 func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksPostOK, *ServiceBrokerOpenstacksPostCreated, error) {
 	// TODO: Validate the params before sending
@@ -201,7 +201,7 @@ func (a *Client) ServiceBrokerOpenstacksPost(params *ServiceBrokerOpenstacksPost
 }
 
 /*
-  ServiceBrokerOpenstacksServersGet lists account information for a pvm instance
+ServiceBrokerOpenstacksServersGet lists account information for a pvm instance
 */
 func (a *Client) ServiceBrokerOpenstacksServersGet(params *ServiceBrokerOpenstacksServersGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*ServiceBrokerOpenstacksServersGetOK, error) {
 	// TODO: Validate the params before sending

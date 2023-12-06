@@ -96,6 +96,11 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 							Default:     false,
 							Description: "Specify this option to use the KMS public service endpoint.",
 						},
+						"account_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Account ID of KMS instance holder - if not provided, defaults to the account in use",
+						},
 					},
 				},
 			},
@@ -684,6 +689,12 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 				if privateEndpoint := kmsMap["private_endpoint"]; privateEndpoint != nil {
 					endpoint := privateEndpoint.(bool)
 					kmsConfig.PrivateEndpoint = endpoint
+				}
+
+				//Read optional account id
+				if accountid := kmsMap["account_id"]; accountid != nil {
+					accountid_string := accountid.(string)
+					kmsConfig.AccountID = accountid_string
 				}
 			}
 		}

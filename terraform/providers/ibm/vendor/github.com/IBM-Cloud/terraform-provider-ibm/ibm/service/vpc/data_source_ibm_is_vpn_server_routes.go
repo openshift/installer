@@ -57,10 +57,66 @@ func DataSourceIBMIsVPNServerRoutes() *schema.Resource {
 							Computed:    true,
 							Description: "The unique identifier for this VPN route.",
 						},
+						"health_state": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The health of this resource.- `ok`: Healthy- `degraded`: Suffering from compromised performance, capacity, or connectivity- `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated- `inapplicable`: The health state does not apply because of the current lifecycle state. A resource with a lifecycle state of `failed` or `deleting` will have a health state of `inapplicable`. A `pending` resource may also have this state.",
+						},
+						"health_reasons": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this health state.",
+									},
+
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this health state.",
+									},
+
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this health state.",
+									},
+								},
+							},
+						},
 						"lifecycle_state": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The lifecycle state of the VPN route.",
+						},
+						"lifecycle_reasons": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current lifecycle_state (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+									},
+
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the reason for this lifecycle state.",
+									},
+
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about the reason for this lifecycle state.",
+									},
+								},
+							},
 						},
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
@@ -186,8 +242,18 @@ func dataSourceVPNServerRouteCollectionRoutesToMap(routesItem vpcv1.VPNServerRou
 	if routesItem.ID != nil {
 		routesMap["id"] = routesItem.ID
 	}
+	if routesItem.HealthState != nil {
+		routesMap["health_state"] = routesItem.HealthState
+	}
+	if routesItem.HealthReasons != nil {
+		routesMap["health_reasons"] = resourceVPNServerRouteFlattenHealthReasons(routesItem.HealthReasons)
+	}
 	if routesItem.LifecycleState != nil {
 		routesMap["lifecycle_state"] = routesItem.LifecycleState
+	}
+	if routesItem.LifecycleReasons != nil {
+		routesMap["lifecycle_reasons"] = resourceVPNServerRouteFlattenLifecycleReasons(routesItem.LifecycleReasons)
+
 	}
 	if routesItem.Name != nil {
 		routesMap["name"] = routesItem.Name

@@ -15,6 +15,12 @@ variable "edge_parent_gw_map" {
   description = "The parent zone index used to lookup the NAT gateway for private subnets in Local Zone."
 }
 
+variable "edge_zones_type" {
+  type        = map(string)
+  default     = {}
+  description = "A map with types of Edge (Local or Wavelength) zones."
+}
+
 variable "cidr_blocks" {
   type        = list(string)
   description = "A list of IPv4 CIDRs with 0 index being the main CIDR."

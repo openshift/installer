@@ -85,6 +85,11 @@ func (m *PlacementGroups) contextValidatePlacementGroups(ctx context.Context, fo
 	for i := 0; i < len(m.PlacementGroups); i++ {
 
 		if m.PlacementGroups[i] != nil {
+
+			if swag.IsZero(m.PlacementGroups[i]) { // not required
+				return nil
+			}
+
 			if err := m.PlacementGroups[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("placementGroups" + "." + strconv.Itoa(i))

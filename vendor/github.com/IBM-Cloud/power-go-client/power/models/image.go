@@ -279,6 +279,11 @@ func (m *Image) ContextValidate(ctx context.Context, formats strfmt.Registry) er
 func (m *Image) contextValidateSpecifications(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Specifications != nil {
+
+		if swag.IsZero(m.Specifications) { // not required
+			return nil
+		}
+
 		if err := m.Specifications.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("specifications")
@@ -295,6 +300,11 @@ func (m *Image) contextValidateSpecifications(ctx context.Context, formats strfm
 func (m *Image) contextValidateTaskref(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Taskref != nil {
+
+		if swag.IsZero(m.Taskref) { // not required
+			return nil
+		}
+
 		if err := m.Taskref.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("taskref")
@@ -313,6 +323,11 @@ func (m *Image) contextValidateVolumes(ctx context.Context, formats strfmt.Regis
 	for i := 0; i < len(m.Volumes); i++ {
 
 		if m.Volumes[i] != nil {
+
+			if swag.IsZero(m.Volumes[i]) { // not required
+				return nil
+			}
+
 			if err := m.Volumes[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("volumes" + "." + strconv.Itoa(i))

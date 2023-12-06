@@ -211,6 +211,7 @@ func (m *ServiceBindingVolumeMount) ContextValidate(ctx context.Context, formats
 func (m *ServiceBindingVolumeMount) contextValidateDevice(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Device != nil {
+
 		if err := m.Device.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("device")

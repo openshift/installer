@@ -56,7 +56,6 @@ func ResourceIBMCISTLSSettings() *schema.Resource {
 				Description:  "Minimum version of TLS required",
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator(ibmCISTLSSettings, cisTLSSettingsMinTLSVersion),
-				Default:      "1.1",
 			},
 		},
 		Create:   resourceCISTLSSettingsUpdate,

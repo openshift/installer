@@ -13,7 +13,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
@@ -30,7 +30,7 @@ func uploadBaseImage(cloud string, baseImage, imageName string, infraID string, 
 	// location. Otherwise will take local file path from the URL.
 	switch url.Scheme {
 	case "http", "https":
-		localFilePath, err = cache.DownloadImageFile(baseImage)
+		localFilePath, err = cache.DownloadImageFile(baseImage, cache.InstallerApplicationName)
 		if err != nil {
 			return err
 		}

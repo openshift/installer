@@ -25,3 +25,7 @@ variable "tags" {
 variable "cos_resource_instance_crn" {
   type = string
 }
+
+variable "endpoint_visibility" {
+  type = string
+}

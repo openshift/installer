@@ -60,7 +60,7 @@ func (o *PcloudV2VolumescloneExecutePostReader) ReadResponse(response runtime.Cl
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute] pcloud.v2.volumesclone.execute.post", response, response.Code())
 	}
 }
 
@@ -69,7 +69,8 @@ func NewPcloudV2VolumescloneExecutePostAccepted() *PcloudV2VolumescloneExecutePo
 	return &PcloudV2VolumescloneExecutePostAccepted{}
 }
 
-/* PcloudV2VolumescloneExecutePostAccepted describes a response with status code 202, with default header values.
+/*
+PcloudV2VolumescloneExecutePostAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -77,9 +78,44 @@ type PcloudV2VolumescloneExecutePostAccepted struct {
 	Payload *models.VolumesClone
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post accepted response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post accepted response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post accepted response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post accepted response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post accepted response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post accepted response
+func (o *PcloudV2VolumescloneExecutePostAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudV2VolumescloneExecutePostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostAccepted  %+v", 202, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostAccepted) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostAccepted  %+v", 202, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostAccepted) GetPayload() *models.VolumesClone {
 	return o.Payload
 }
@@ -101,7 +137,8 @@ func NewPcloudV2VolumescloneExecutePostBadRequest() *PcloudV2VolumescloneExecute
 	return &PcloudV2VolumescloneExecutePostBadRequest{}
 }
 
-/* PcloudV2VolumescloneExecutePostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudV2VolumescloneExecutePostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +146,44 @@ type PcloudV2VolumescloneExecutePostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post bad request response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post bad request response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post bad request response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post bad request response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post bad request response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post bad request response
+func (o *PcloudV2VolumescloneExecutePostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudV2VolumescloneExecutePostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +205,8 @@ func NewPcloudV2VolumescloneExecutePostUnauthorized() *PcloudV2VolumescloneExecu
 	return &PcloudV2VolumescloneExecutePostUnauthorized{}
 }
 
-/* PcloudV2VolumescloneExecutePostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudV2VolumescloneExecutePostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +214,44 @@ type PcloudV2VolumescloneExecutePostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post unauthorized response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post unauthorized response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post unauthorized response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post unauthorized response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post unauthorized response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post unauthorized response
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudV2VolumescloneExecutePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -165,7 +273,8 @@ func NewPcloudV2VolumescloneExecutePostForbidden() *PcloudV2VolumescloneExecuteP
 	return &PcloudV2VolumescloneExecutePostForbidden{}
 }
 
-/* PcloudV2VolumescloneExecutePostForbidden describes a response with status code 403, with default header values.
+/*
+PcloudV2VolumescloneExecutePostForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -173,9 +282,44 @@ type PcloudV2VolumescloneExecutePostForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post forbidden response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post forbidden response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post forbidden response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post forbidden response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post forbidden response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post forbidden response
+func (o *PcloudV2VolumescloneExecutePostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV2VolumescloneExecutePostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +341,8 @@ func NewPcloudV2VolumescloneExecutePostNotFound() *PcloudV2VolumescloneExecutePo
 	return &PcloudV2VolumescloneExecutePostNotFound{}
 }
 
-/* PcloudV2VolumescloneExecutePostNotFound describes a response with status code 404, with default header values.
+/*
+PcloudV2VolumescloneExecutePostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -205,9 +350,44 @@ type PcloudV2VolumescloneExecutePostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post not found response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post not found response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post not found response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post not found response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post not found response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post not found response
+func (o *PcloudV2VolumescloneExecutePostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudV2VolumescloneExecutePostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +409,8 @@ func NewPcloudV2VolumescloneExecutePostInternalServerError() *PcloudV2Volumesclo
 	return &PcloudV2VolumescloneExecutePostInternalServerError{}
 }
 
-/* PcloudV2VolumescloneExecutePostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudV2VolumescloneExecutePostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +418,44 @@ type PcloudV2VolumescloneExecutePostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone execute post internal server error response has a 2xx status code
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone execute post internal server error response has a 3xx status code
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone execute post internal server error response has a 4xx status code
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone execute post internal server error response has a 5xx status code
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud v2 volumesclone execute post internal server error response a status code equal to that given
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud v2 volumesclone execute post internal server error response
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudV2VolumescloneExecutePostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneExecutePostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/execute][%d] pcloudV2VolumescloneExecutePostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneExecutePostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

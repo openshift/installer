@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -87,7 +88,7 @@ func downloadIso(archName string) (string, error) {
 	}
 
 	url := format.Disk.Location
-	cachedImage, err := DownloadImageFile(url)
+	cachedImage, err := cache.DownloadImageFile(url, cache.AgentApplicationName)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to download base ISO image %s", url)
 	}
@@ -154,7 +155,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 	if urlOverride, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && urlOverride != "" {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
-		baseIsoFileName, err = DownloadImageFile(urlOverride)
+		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.AgentApplicationName)
 	} else {
 		baseIsoFileName, err = i.retrieveBaseIso(dependencies)
 	}

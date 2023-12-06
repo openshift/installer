@@ -19,7 +19,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/subnetpools"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
@@ -110,7 +109,6 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		"deleteSecurityGroups":  deleteSecurityGroups,
 		"clearRouterInterfaces": clearRouterInterfaces,
 		"deleteSubnets":         deleteSubnets,
-		"deleteSubnetPools":     deleteSubnetPools,
 		"deleteNetworks":        deleteNetworks,
 		"deleteContainers":      deleteContainers,
 		"deleteVolumes":         deleteVolumes,
@@ -1426,51 +1424,6 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 		numberDeleted++
 	}
 
-	return numberDeleted == numberToDelete, nil
-}
-
-func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
-	logger.Debug("Deleting openstack subnet-pools")
-	defer logger.Debugf("Exiting deleting openstack subnet-pools")
-
-	conn, err := openstackdefaults.NewServiceClient("network", opts)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-	tags := filterTags(filter)
-	listOpts := subnetpools.ListOpts{
-		TagsAny: strings.Join(tags, ","),
-	}
-
-	allPages, err := subnetpools.List(conn, listOpts).AllPages()
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-
-	allSubnetPools, err := subnetpools.ExtractSubnetPools(allPages)
-	if err != nil {
-		logger.Error(err)
-		return false, nil
-	}
-	numberToDelete := len(allSubnetPools)
-	numberDeleted := 0
-	for _, subnetPool := range allSubnetPools {
-		logger.Debugf("Deleting Subnet Pool %q", subnetPool.ID)
-		err = subnetpools.Delete(conn, subnetPool.ID).ExtractErr()
-		if err != nil {
-			// Ignore the error if the subnet pool cannot be found
-			var gerr gophercloud.ErrDefault404
-			if !errors.As(err, &gerr) {
-				// Just log the error and move on to the next subnet pool
-				logger.Debugf("Deleting subnet pool %q failed: %v", subnetPool.ID, err)
-				continue
-			}
-			logger.Debugf("Cannot find subnet pool %q. It's probably already been deleted.", subnetPool.ID)
-		}
-		numberDeleted++
-	}
 	return numberDeleted == numberToDelete, nil
 }
 

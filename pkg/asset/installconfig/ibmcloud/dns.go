@@ -23,7 +23,9 @@ type Zone struct {
 
 // GetDNSZone returns a DNS Zone chosen by survey.
 func GetDNSZone() (*Zone, error) {
-	client, err := NewClient()
+	// A pre-existing installConfig with potential serviceEndpoints would be required,
+	// but doesn't exist at this time (generating an installConfig), so we pass nil
+	client, err := NewClient(nil)
 	if err != nil {
 		return nil, err
 	}

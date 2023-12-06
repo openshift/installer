@@ -10,12 +10,6 @@
       cluster_id_tag: "openshiftClusterID={{ infraID }}"
       primary_cluster_network_tag: "{{ infraID }}-primaryClusterNetwork"
       os_infra_id: "{{ infraID }}"
-      os_network: "{{ infraID }}-network"
-      os_subnet: "{{ infraID }}-nodes"
-      os_router: "{{ infraID }}-external-router"
-      # Port names
-      os_port_api: "{{ infraID }}-api-port"
-      os_port_ingress: "{{ infraID }}-ingress-port"
       os_port_bootstrap: "{{ infraID }}-bootstrap-port"
       os_port_master: "{{ infraID }}-master-port"
       os_port_worker: "{{ infraID }}-worker-port"
@@ -28,14 +22,5 @@
       os_cp_server_group_name: "{{ infraID }}-master"
       os_compute_server_name: "{{ infraID }}-worker"
       os_compute_server_group_name: "{{ infraID }}-worker"
-      # Trunk names
-      os_cp_trunk_name: "{{ infraID }}-master-trunk"
-      os_compute_trunk_name: "{{ infraID }}-worker-trunk"
-      # Subnet pool name
-      subnet_pool: "{{ infraID }}-kuryr-pod-subnetpool"
-      # Service network name
-      os_svc_network: "{{ infraID }}-kuryr-service-network"
-      # Service subnet name
-      os_svc_subnet: "{{ infraID }}-kuryr-service-subnet"
       # Ignition files
       os_bootstrap_ignition: "{{ infraID }}-bootstrap-ignition.json"

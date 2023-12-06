@@ -87,8 +87,11 @@ func DataSourceIBMISSubnet() *schema.Resource {
 			},
 
 			isSubnetVPC: {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				RequiredWith: []string{isSubnetName},
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_is_subnet", "identifier"),
 			},
 
 			isSubnetVPCName: {
@@ -229,10 +232,13 @@ func subnetGetByNameOrID(d *schema.ResourceData, meta interface{}) error {
 		start := ""
 		allrecs := []vpcv1.Subnet{}
 		getSubnetsListOptions := &vpcv1.ListSubnetsOptions{}
-
 		for {
 			if start != "" {
 				getSubnetsListOptions.Start = &start
+			}
+			if vpcIdOk, ok := d.GetOk(isSubnetVPC); ok {
+				vpcIDOk := vpcIdOk.(string)
+				getSubnetsListOptions.VPCID = &vpcIDOk
 			}
 			subnetsCollection, response, err := sess.ListSubnets(getSubnetsListOptions)
 			if err != nil {

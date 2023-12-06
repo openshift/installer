@@ -30,7 +30,7 @@ func (f *IBMPIVolumeGroupClient) Get(id string) (*models.VolumeGroup, error) {
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeGroupID(id)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVolumeGroupOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVolumeGroupOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get volume-group %s", id)
@@ -45,7 +45,7 @@ func (f *IBMPIVolumeGroupClient) GetAll() (*models.VolumeGroups, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all volume-groups for Cloud Instance %s: %w", f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all volume-groups for Cloud Instance %s: %w", f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all volume-groups for Cloud Instance %s", f.cloudInstanceID)
@@ -60,7 +60,7 @@ func (f *IBMPIVolumeGroupClient) GetDetails(id string) (*models.VolumeGroupDetai
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeGroupID(id)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsGetDetails(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVolumeGroupDetailsOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVolumeGroupDetailsOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get volume-group %s details", id)
@@ -75,7 +75,7 @@ func (f *IBMPIVolumeGroupClient) GetAllDetails() (*models.VolumeGroupsDetails, e
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsGetallDetails(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all volume-groups details for Cloud Instance %s: %w", f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all volume-groups details for Cloud Instance %s: %w", f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all volume-groups details for Cloud Instance %s", f.cloudInstanceID)
@@ -90,7 +90,7 @@ func (f *IBMPIVolumeGroupClient) CreateVolumeGroup(body *models.VolumeGroupCreat
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	respOk, respPartial, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateVolumeGroupOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVolumeGroupOperationFailed, f.cloudInstanceID, err))
 	}
 	if respOk != nil && respOk.Payload != nil {
 		return respOk.Payload, nil
@@ -135,7 +135,7 @@ func (f *IBMPIVolumeGroupClient) GetVolumeGroupLiveDetails(id string) (*models.V
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeGroupID(id)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsStorageDetailsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetLiveVolumeGroupDetailsOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetLiveVolumeGroupDetailsOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get live details of volume-group %s", id)
@@ -150,7 +150,7 @@ func (f *IBMPIVolumeGroupClient) VolumeGroupAction(id string, body *models.Volum
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeGroupID(id).WithBody(body)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsActionPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.VolumeGroupActionOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.VolumeGroupActionOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform action on volume-group %s", id)
@@ -165,7 +165,7 @@ func (f *IBMPIVolumeGroupClient) GetVolumeGroupRemoteCopyRelationships(id string
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeGroupID(id)
 	resp, err := f.session.Power.PCloudVolumeGroups.PcloudVolumegroupsRemoteCopyRelationshipsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVolumeGroupRemoteCopyRelationshipsOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVolumeGroupRemoteCopyRelationshipsOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get remote copy relationships of the volumes belonging to volume group %s", id)

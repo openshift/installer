@@ -55,6 +55,12 @@ variable "ibmcloud_image_filepath" {
 # Top-level module variables (optional)
 #######################################
 
+variable "ibmcloud_endpoints_json_file" {
+  type        = string
+  description = "JSON file containing IBM Cloud service endpoints"
+  default     = ""
+}
+
 variable "ibmcloud_preexisting_vpc" {
   type        = bool
   description = "Specifies whether an existing VPC should be used or a new one created for installation."
@@ -70,6 +76,12 @@ variable "ibmcloud_vpc_permitted" {
 variable "ibmcloud_vpc" {
   type        = string
   description = "The name of an existing cluster VPC."
+  default     = null
+}
+
+variable "ibmcloud_control_plane_boot_volume_key" {
+  type        = string
+  description = "IBM Cloud Key Protect key CRN to use to encrypt the control plane's volume(s)."
   default     = null
 }
 

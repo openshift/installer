@@ -28,6 +28,7 @@ const (
 	StoragePool              = "storage_pool"
 	StorageType              = "storage_type"
 	TotalCapacity            = "total_capacity"
+	ReplicationEnabled       = "replication_enabled"
 )
 
 func DataSourceIBMPIStoragePoolsCapacity() *schema.Resource {
@@ -71,6 +72,11 @@ func DataSourceIBMPIStoragePoolsCapacity() *schema.Resource {
 							Computed:    true,
 							Description: "Total pool capacity (GB)",
 						},
+						ReplicationEnabled: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Replication status of the storage pool",
+						},
 					},
 				},
 			},
@@ -79,6 +85,7 @@ func DataSourceIBMPIStoragePoolsCapacity() *schema.Resource {
 }
 
 func dataSourceIBMPIStoragePoolsCapacityRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
 	sess, err := meta.(conns.ClientSession).IBMPISession()
 	if err != nil {
 		return diag.FromErr(err)
@@ -109,11 +116,13 @@ func dataSourceIBMPIStoragePoolsCapacityRead(ctx context.Context, d *schema.Reso
 	result := make([]map[string]interface{}, 0, len(spc.StoragePoolsCapacity))
 	for _, sp := range spc.StoragePoolsCapacity {
 		data := map[string]interface{}{
-			MaxAllocationSize: *sp.MaxAllocationSize,
-			PoolName:          sp.PoolName,
-			StorageType:       sp.StorageType,
-			TotalCapacity:     sp.TotalCapacity,
+			MaxAllocationSize:  *sp.MaxAllocationSize,
+			PoolName:           sp.PoolName,
+			StorageType:        sp.StorageType,
+			TotalCapacity:      sp.TotalCapacity,
+			ReplicationEnabled: *sp.ReplicationEnabled,
 		}
+
 		result = append(result, data)
 	}
 	d.Set(StoragePoolsCapacity, result)

@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtoolchain
@@ -7,14 +7,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
 func ResourceIBMCdToolchainToolSaucelabs() *schema.Resource {
@@ -32,6 +35,12 @@ func ResourceIBMCdToolchainToolSaucelabs() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_saucelabs", "toolchain_id"),
 				Description:  "ID of the toolchain to bind the tool to.",
+			},
+			"name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_saucelabs", "name"),
+				Description:  "Name of the tool.",
 			},
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
@@ -55,12 +64,6 @@ func ResourceIBMCdToolchainToolSaucelabs() *schema.Resource {
 						},
 					},
 				},
-			},
-			"name": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_saucelabs", "name"),
-				Description:  "Name of the tool.",
 			},
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -193,7 +196,21 @@ func resourceIBMCdToolchainToolSaucelabsRead(context context.Context, d *schema.
 	getToolByIDOptions.SetToolchainID(parts[0])
 	getToolByIDOptions.SetToolID(parts[1])
 
-	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	var toolchainTool *cdtoolchainv2.ToolchainTool
+	var response *core.DetailedResponse
+	err = resource.RetryContext(context, 10*time.Second, func() *resource.RetryError {
+		toolchainTool, response, err = cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+		if err != nil || toolchainTool == nil {
+			if response != nil && response.StatusCode == 404 {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+	if conns.IsResourceTimeoutError(err) {
+		toolchainTool, response, err = cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	}
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -206,15 +223,17 @@ func resourceIBMCdToolchainToolSaucelabsRead(context context.Context, d *schema.
 	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
 	}
+	if !core.IsNil(toolchainTool.Name) {
+		if err = d.Set("name", toolchainTool.Name); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
+		}
+	}
 	remapFields := map[string]string{
 		"access_key": "key",
 	}
 	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolSaucelabs(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
-	}
-	if err = d.Set("name", toolchainTool.Name); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
 	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
@@ -271,17 +290,17 @@ func resourceIBMCdToolchainToolSaucelabsUpdate(context context.Context, d *schem
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "toolchain_id"))
 	}
+	if d.HasChange("name") {
+		newName := d.Get("name").(string)
+		patchVals.Name = &newName
+		hasChange = true
+	}
 	if d.HasChange("parameters") {
 		remapFields := map[string]string{
 			"access_key": "key",
 		}
 		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolSaucelabs(), remapFields)
 		patchVals.Parameters = parameters
-		hasChange = true
-	}
-	if d.HasChange("name") {
-		newName := d.Get("name").(string)
-		patchVals.Name = &newName
 		hasChange = true
 	}
 

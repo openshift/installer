@@ -92,10 +92,19 @@ func TestValidatePlatform(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "ServiceInstanceID: Valid Power VS ServiceInstanceID empty",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.ServiceInstanceGUID = ""
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name: "ServiceInstanceID: Valid Power VS ServiceInstanceID",
 			platform: func() *powervs.Platform {
 				p := validMinimalPlatform()
-				p.ServiceInstanceID = "05d5dbfd-2a62-4d01-b37b-71211be442f6"
+				p.ServiceInstanceGUID = "05d5dbfd-2a62-4d01-b37b-71211be442f6"
 				return p
 			}(),
 			valid: true,
@@ -104,7 +113,7 @@ func TestValidatePlatform(t *testing.T) {
 			name: "ServiceInstanceID: Invalid Power VS ServiceInstanceID",
 			platform: func() *powervs.Platform {
 				p := validMinimalPlatform()
-				p.ServiceInstanceID = "abc123"
+				p.ServiceInstanceGUID = "abc123"
 				return p
 			}(),
 			valid: false,

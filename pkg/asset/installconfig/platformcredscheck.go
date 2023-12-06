@@ -75,7 +75,9 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(errorList.ToAggregate(), "validating credentials")
 		}
 	case ibmcloud.Name:
-		_, err = ibmcloudconfig.NewClient()
+		// A pre-existing installConfig with potential serviceEndpoints would be required,
+		// but doesn't exist at this time (generating an installConfig), so we pass nil
+		_, err = ibmcloudconfig.NewClient(nil)
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}

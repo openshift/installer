@@ -91,6 +91,11 @@ func (m *ServiceBinding) contextValidateVolumeMounts(ctx context.Context, format
 	for i := 0; i < len(m.VolumeMounts); i++ {
 
 		if m.VolumeMounts[i] != nil {
+
+			if swag.IsZero(m.VolumeMounts[i]) { // not required
+				return nil
+			}
+
 			if err := m.VolumeMounts[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("volume_mounts" + "." + strconv.Itoa(i))

@@ -4,7 +4,6 @@ import "time"
 
 const (
 	// IBM PI Instance
-
 	PIInstanceName                      = "pi_instance_name"
 	PIInstanceDate                      = "pi_creation_date"
 	PIInstanceSSHKeyName                = "pi_key_pair_name"
@@ -37,14 +36,13 @@ const (
 	PIInstanceStoragePool               = "pi_instance_storage_pool"
 	PIInstanceStorageAffinityPool       = "pi_instance_storage_affinity_pool"
 	PIInstanceLicenseRepositoryCapacity = "pi_license_repository_capacity"
-
-	PIInstanceHealthStatus      = "pi_health_status"
-	PIInstanceReplicants        = "pi_replicants"
-	PIInstanceReplicationPolicy = "pi_replication_policy"
-	PIInstanceReplicationScheme = "pi_replication_scheme"
-	PIInstanceProgress          = "pi_progress"
-	PIInstanceUserData          = "pi_user_data"
-	PIInstancePinPolicy         = "pi_pin_policy"
+	PIInstanceHealthStatus              = "pi_health_status"
+	PIInstanceReplicants                = "pi_replicants"
+	PIInstanceReplicationPolicy         = "pi_replication_policy"
+	PIInstanceReplicationScheme         = "pi_replication_scheme"
+	PIInstanceProgress                  = "pi_progress"
+	PIInstanceUserData                  = "pi_user_data"
+	PIInstancePinPolicy                 = "pi_pin_policy"
 
 	// IBM PI Volume
 	PIVolumeName              = "pi_volume_name"
@@ -67,7 +65,6 @@ const (
 	PIReplicationEnabled      = "pi_replication_enabled"
 
 	// IBM PI Snapshots
-
 	PISnapshot         = "pi_snap_shot_id"
 	PISnapshotName     = "pi_snap_shot_name"
 	PISnapshotStatus   = "pi_snap_shot_status"
@@ -75,10 +72,10 @@ const (
 	PISnapshotComplete = "pi_snap_shot_complete"
 
 	// IBM PI SAP Profile
-
-	PISAPProfileID        = "pi_sap_profile_id"
-	PISAPProfile          = "pi_sap_profile"
-	PISAPProfileMemory    = "pi_sap_profile_memory"
+	PISAPProfileID     = "pi_sap_profile_id"
+	PISAPProfile       = "pi_sap_profile"
+	PISAPProfileMemory = "pi_sap_profile_memory"
+	//#nosec G101
 	PISAPProfileCertified = "pi_sap_profile_certified"
 	PISAPProfileType      = "pi_sap_profile_type"
 	PISAPProfileCores     = "pi_sap_profile_cores"
@@ -89,7 +86,6 @@ const (
 	PIVolumeCloneFailure = "pi_volume_clone_failure"
 
 	// IBM PI Image
-
 	PIImageName            = "pi_image_name"
 	PIImageId              = "pi_image_id"
 	PIImageAccessKey       = "pi_image_access_key"
@@ -107,25 +103,26 @@ const (
 	PIImageOsType          = "pi_image_os_type"
 
 	// IBM PI Key
-
 	PIKeyName = "pi_key_name"
 	PIKey     = "pi_ssh_key"
 	PIKeyDate = "pi_creation_date"
 	PIKeyId   = "pi_key_id"
 
 	// IBM PI Network
-
-	PINetworkReady           = "ready"
-	PINetworkID              = "pi_networkid"
-	PINetworkName            = "pi_network_name"
-	PINetworkCidr            = "pi_cidr"
-	PINetworkDNS             = "pi_dns"
-	PINetworkType            = "pi_network_type"
-	PINetworkGateway         = "pi_gateway"
-	PINetworkIPAddressRange  = "pi_ipaddress_range"
-	PINetworkVlanId          = "pi_vlan_id"
-	PINetworkProvisioning    = "build"
-	PINetworkJumbo           = "pi_network_jumbo"
+	PINetworkReady          = "ready"
+	PINetworkID             = "pi_networkid"
+	PINetworkName           = "pi_network_name"
+	PINetworkCidr           = "pi_cidr"
+	PINetworkDNS            = "pi_dns"
+	PINetworkType           = "pi_network_type"
+	PINetworkGateway        = "pi_gateway"
+	PINetworkIPAddressRange = "pi_ipaddress_range"
+	PINetworkVlanId         = "pi_vlan_id"
+	PINetworkProvisioning   = "build"
+	PINetworkJumbo          = "pi_network_jumbo"
+	PINetworkMtu            = "pi_network_mtu"
+	//#nosec G101
+	PINetworkAccessConfig    = "pi_network_access_config"
 	PINetworkPortDescription = "pi_network_port_description"
 	PINetworkPortIPAddress   = "pi_network_port_ipaddress"
 	PINetworkPortMacAddress  = "pi_network_port_macaddress"
@@ -156,7 +153,6 @@ const (
 	PIInstanceCaptureCloudStorageSecretKey = "pi_capture_cloud_storage_secret_key"
 
 	// IBM PI Cloud Connections
-
 	PICloudConnectionName          = "pi_cloud_connection_name"
 	PICloudConnectionStatus        = "pi_cloud_connection_status"
 	PICloudConnectionMetered       = "pi_cloud_connection_metered"
@@ -178,16 +174,16 @@ const (
 	PICloudConnectionVPCName    = "pi_cloud_connection_vpc_name"
 
 	// IBM PI VPN Connections
-
-	PIVPNConnectionName                       = "pi_vpn_connection_name"
-	PIVPNConnectionId                         = "pi_vpn_connection_id"
-	PIVPNIKEPolicyId                          = "pi_ike_policy_id"
-	PIVPNIPSecPolicyId                        = "pi_ipsec_policy_id"
-	PIVPNConnectionLocalGatewayAddress        = "pi_local_gateway_address"
-	PIVPNConnectionMode                       = "pi_vpn_connection_mode"
-	PIVPNConnectionNetworks                   = "pi_networks"
-	PIVPNConnectionPeerGatewayAddress         = "pi_peer_gateway_address"
-	PIVPNConnectionPeerSubnets                = "pi_peer_subnets"
+	PIVPNConnectionName                = "pi_vpn_connection_name"
+	PIVPNConnectionId                  = "pi_vpn_connection_id"
+	PIVPNIKEPolicyId                   = "pi_ike_policy_id"
+	PIVPNIPSecPolicyId                 = "pi_ipsec_policy_id"
+	PIVPNConnectionLocalGatewayAddress = "pi_local_gateway_address"
+	PIVPNConnectionMode                = "pi_vpn_connection_mode"
+	PIVPNConnectionNetworks            = "pi_networks"
+	PIVPNConnectionPeerGatewayAddress  = "pi_peer_gateway_address"
+	PIVPNConnectionPeerSubnets         = "pi_peer_subnets"
+	//#nosec G101
 	PIVPNConnectionStatus                     = "pi_vpn_connection_status"
 	PIVPNConnectionVpnGatewayAddress          = "pi_gateway_address"
 	PIVPNConnectionDeadPeerDetection          = "pi_dead_peer_detections"
@@ -223,13 +219,11 @@ const (
 	PIDhcpInstanceMac = "pi_dhcp_instance_mac"
 
 	// IBM PI Placement Groups
-
 	PIPlacementGroupName   = "pi_placement_group_name"
 	PIPlacementGroupPolicy = "pi_placement_group_policy"
 	PIPlacementGroupID     = "pi_placement_group_id"
 
 	// Status For all the resources
-
 	PIVolumeDeleting         = "deleting"
 	PIVolumeDeleted          = "done"
 	PIVolumeProvisioning     = "creating"
@@ -243,10 +237,12 @@ const (
 	PIImageQueStatus         = "queued"
 	PIImageActiveStatus      = "active"
 
-	//Timeout values for Power VS -
-
+	// Timeout values for Power VS -
 	PICreateTimeOut = 5 * time.Minute
 	PIUpdateTimeOut = 5 * time.Minute
 	PIDeleteTimeOut = 3 * time.Minute
 	PIGetTimeOut    = 2 * time.Minute
+
+	// Stratos region prefix
+	PIStratosRegionPrefix = "satloc"
 )

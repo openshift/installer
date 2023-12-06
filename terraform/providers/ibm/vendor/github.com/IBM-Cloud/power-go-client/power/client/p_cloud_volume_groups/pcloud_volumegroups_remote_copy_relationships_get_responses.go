@@ -35,6 +35,12 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetReader) ReadResponse(respon
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudVolumegroupsRemoteCopyRelationshipsGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetReader) ReadResponse(respon
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships] pcloud.volumegroups.remoteCopyRelationships.get", response, response.Code())
 	}
 }
 
@@ -101,6 +107,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups remote copy relationships get o k response a status code equal to that given
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud volumegroups remote copy relationships get o k response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetOK) Error() string {
@@ -166,6 +177,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) IsCode(code int
 	return code == 400
 }
 
+// Code gets the status code for the pcloud volumegroups remote copy relationships get bad request response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest  %+v", 400, o.Payload)
 }
@@ -179,6 +195,74 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) GetPayload() *m
 }
 
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized creates a PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized with default headers values
+func NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized() *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized {
+	return &PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized{}
+}
+
+/*
+PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 2xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 3xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 4xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 5xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups remote copy relationships get unauthorized response a status code equal to that given
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud volumegroups remote copy relationships get unauthorized response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -227,6 +311,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetForbidden) IsServerError() 
 // IsCode returns true when this pcloud volumegroups remote copy relationships get forbidden response a status code equal to that given
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud volumegroups remote copy relationships get forbidden response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetForbidden) Error() string {
@@ -292,6 +381,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetNotFound) IsCode(code int) 
 	return code == 404
 }
 
+// Code gets the status code for the pcloud volumegroups remote copy relationships get not found response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetNotFound  %+v", 404, o.Payload)
 }
@@ -355,6 +449,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetTooManyRequests) IsCode(cod
 	return code == 429
 }
 
+// Code gets the status code for the pcloud volumegroups remote copy relationships get too many requests response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetTooManyRequests) Code() int {
+	return 429
+}
+
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetTooManyRequests) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetTooManyRequests  %+v", 429, o.Payload)
 }
@@ -416,6 +515,11 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetInternalServerError) IsServ
 // IsCode returns true when this pcloud volumegroups remote copy relationships get internal server error response a status code equal to that given
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud volumegroups remote copy relationships get internal server error response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetInternalServerError) Error() string {

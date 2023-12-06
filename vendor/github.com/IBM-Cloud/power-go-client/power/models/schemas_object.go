@@ -102,6 +102,11 @@ func (m *SchemasObject) ContextValidate(ctx context.Context, formats strfmt.Regi
 func (m *SchemasObject) contextValidateServiceBinding(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.ServiceBinding != nil {
+
+		if swag.IsZero(m.ServiceBinding) { // not required
+			return nil
+		}
+
 		if err := m.ServiceBinding.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("service_binding")
@@ -118,6 +123,11 @@ func (m *SchemasObject) contextValidateServiceBinding(ctx context.Context, forma
 func (m *SchemasObject) contextValidateServiceInstance(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.ServiceInstance != nil {
+
+		if swag.IsZero(m.ServiceInstance) { // not required
+			return nil
+		}
+
 		if err := m.ServiceInstance.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("service_instance")

@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/openshift/api/annotations"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -69,6 +70,9 @@ func (atbc *AdditionalTrustBundleConfig) Generate(dependencies asset.Parents) er
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "openshift-config",
 			Name:      additionalTrustBundleConfigMapName,
+			Annotations: map[string]string{
+				annotations.OpenShiftComponent: "End User",
+			},
 		},
 		Data: data,
 	}

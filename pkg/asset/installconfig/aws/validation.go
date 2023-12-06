@@ -422,8 +422,10 @@ func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path,
 	validZone := false
 	for _, zone := range zones {
 		if aws.StringValue(zone.ZoneName) == zoneName {
-			if aws.StringValue(zone.ZoneType) != awstypes.LocalZoneType {
-				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone is valid in the edge machine pool: %s", aws.StringValue(zone.ZoneType)))
+			switch aws.StringValue(zone.ZoneType) {
+			case awstypes.LocalZoneType, awstypes.WavelengthZoneType:
+			default:
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone or wavelength-zone are valid in the edge machine pool: %s", aws.StringValue(zone.ZoneType)))
 			}
 			if aws.StringValue(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
 				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.StringValue(zone.GroupName)))

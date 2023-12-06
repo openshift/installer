@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -66,7 +66,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 			return nil, errors.Wrap(err, "failed to access file or directory")
 		}
 	} else {
-		osImage, err = cache.DownloadImageFile(osImage)
+		osImage, err = cache.DownloadImageFile(osImage, cache.InstallerApplicationName)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to use cached libvirt image")
 		}

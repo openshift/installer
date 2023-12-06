@@ -89,6 +89,12 @@ func provider(clusterID string,
 		resourceGroup = clusterID
 	}
 
+	// Set the ProviderSpec.BootVolume, with encryption key if provided
+	bootVolume := ibmcloudprovider.IBMCloudMachineBootVolume{}
+	if mpool.BootVolume != nil && mpool.BootVolume.EncryptionKey != "" {
+		bootVolume.EncryptionKey = mpool.BootVolume.EncryptionKey
+	}
+
 	// Set the ProviderSpec.NetworkResourceGroup if NetworkResourceGroupName was provided
 	var networkResourceGroup string
 	if platform.NetworkResourceGroupName != "" {
@@ -123,6 +129,7 @@ func provider(clusterID string,
 			Kind:       "IBMCloudMachineProviderSpec",
 		},
 		VPC:                  vpc,
+		BootVolume:           bootVolume,
 		DedicatedHost:        dedicatedHost,
 		Tags:                 []ibmcloudprovider.TagSpecs{},
 		Image:                fmt.Sprintf("%s-rhcos", clusterID),
@@ -137,7 +144,6 @@ func provider(clusterID string,
 		},
 		UserDataSecret:    &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "ibmcloud-credentials"},
-		// TODO: IBM: Boot volume encryption key
 	}, nil
 }
 

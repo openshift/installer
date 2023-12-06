@@ -12,7 +12,7 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/models"
 )
 
-//IBMPIPlacementGroupClient
+// IBMPIPlacementGroupClient
 type IBMPIPlacementGroupClient struct {
 	IBMPIClient
 }
@@ -31,7 +31,7 @@ func (f *IBMPIPlacementGroupClient) Get(id string) (*models.PlacementGroup, erro
 		WithCloudInstanceID(f.cloudInstanceID).WithPlacementGroupID(id)
 	resp, err := f.session.Power.PCloudPlacementGroups.PcloudPlacementgroupsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetPlacementGroupOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetPlacementGroupOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Placement Group %s", id)
@@ -46,7 +46,7 @@ func (f *IBMPIPlacementGroupClient) GetAll() (*models.PlacementGroups, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudPlacementGroups.PcloudPlacementgroupsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get All Placement Groups: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get All Placement Groups: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Placement Groups")
@@ -61,7 +61,7 @@ func (f *IBMPIPlacementGroupClient) Create(body *models.PlacementGroupCreate) (*
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, err := f.session.Power.PCloudPlacementGroups.PcloudPlacementgroupsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreatePlacementGroupOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreatePlacementGroupOperationFailed, f.cloudInstanceID, err))
 	}
 	if postok == nil || postok.Payload == nil {
 		return nil, fmt.Errorf("failed to Create Placement Group")
@@ -89,7 +89,7 @@ func (f *IBMPIPlacementGroupClient) AddMember(id string, body *models.PlacementG
 		WithBody(body)
 	postok, err := f.session.Power.PCloudPlacementGroups.PcloudPlacementgroupsMembersPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.AddMemberPlacementGroupOperationFailed, *body.ID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.AddMemberPlacementGroupOperationFailed, *body.ID, id, err))
 	}
 	if postok == nil || postok.Payload == nil {
 		return nil, fmt.Errorf("failed to Add Member for instance %s and placement group %s", *body.ID, id)
@@ -105,7 +105,7 @@ func (f *IBMPIPlacementGroupClient) DeleteMember(id string, body *models.Placeme
 		WithBody(body)
 	delok, err := f.session.Power.PCloudPlacementGroups.PcloudPlacementgroupsMembersDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.DeleteMemberPlacementGroupOperationFailed, *body.ID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.DeleteMemberPlacementGroupOperationFailed, *body.ID, id, err))
 	}
 	if delok == nil || delok.Payload == nil {
 		return nil, fmt.Errorf("failed to Delete Member for instance %s and placement group %s", *body.ID, id)

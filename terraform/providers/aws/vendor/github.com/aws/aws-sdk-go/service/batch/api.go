@@ -60,6 +60,13 @@ func (c *Batch) CancelJobRequest(input *CancelJobInput) (req *request.Request, o
 // are canceled. A job inRUNNABLE remains in RUNNABLE until it reaches the head
 // of the job queue. Then the job status is updated to FAILED.
 //
+// A PENDING job is canceled after all dependency jobs are completed. Therefore,
+// it may take longer than expected to cancel a job in PENDING status.
+//
+// When you try to cancel an array parent job in PENDING, Batch attempts to
+// cancel all child jobs. The array parent job is canceled when all child jobs
+// are completed.
+//
 // Jobs that progressed to the STARTING or RUNNING state aren't canceled. However,
 // the API operation still succeeds, even if no job is canceled. These jobs
 // must be terminated with the TerminateJob operation.
@@ -203,11 +210,13 @@ func (c *Batch) CreateComputeEnvironmentRequest(input *CreateComputeEnvironmentI
 //   - Either don't set the service role (serviceRole) parameter or set it
 //     to the AWSBatchServiceRole service-linked role.
 //
-//   - Set the allocation strategy (allocationStrategy) parameter to BEST_FIT_PROGRESSIVE
-//     or SPOT_CAPACITY_OPTIMIZED.
+//   - Set the allocation strategy (allocationStrategy) parameter to BEST_FIT_PROGRESSIVE,
+//     SPOT_CAPACITY_OPTIMIZED, or SPOT_PRICE_CAPACITY_OPTIMIZED.
 //
 //   - Set the update to latest image version (updateToLatestImageVersion)
-//     parameter to true.
+//     parameter to true. The updateToLatestImageVersion parameter is used when
+//     you update a compute environment. This parameter is ignored when you create
+//     a compute environment.
 //
 //   - Don't specify an AMI ID in imageId, imageIdOverride (in ec2Configuration
 //     (https://docs.aws.amazon.com/batch/latest/APIReference/API_Ec2Configuration.html)),
@@ -3241,10 +3250,18 @@ type ComputeResource struct {
 	// that are less likely to be interrupted. This allocation strategy is only
 	// available for Spot Instance compute resources.
 	//
-	// With both BEST_FIT_PROGRESSIVE and SPOT_CAPACITY_OPTIMIZED strategies using
-	// On-Demand or Spot Instances, and the BEST_FIT strategy using Spot Instances,
-	// Batch might need to exceed maxvCpus to meet your capacity requirements. In
-	// this event, Batch never exceeds maxvCpus by more than a single instance.
+	// SPOT_PRICE_CAPACITY_OPTIMIZED
+	//
+	// The price and capacity optimized allocation strategy looks at both price
+	// and capacity to select the Spot Instance pools that are the least likely
+	// to be interrupted and have the lowest possible price. This allocation strategy
+	// is only available for Spot Instance compute resources.
+	//
+	// With BEST_FIT_PROGRESSIVE,SPOT_CAPACITY_OPTIMIZED and SPOT_PRICE_CAPACITY_OPTIMIZED
+	// strategies using On-Demand or Spot Instances, and the BEST_FIT strategy using
+	// Spot Instances, Batch might need to exceed maxvCpus to meet your capacity
+	// requirements. In this event, Batch never exceeds maxvCpus by more than a
+	// single instance.
 	AllocationStrategy *string `locationName:"allocationStrategy" type:"string" enum:"CRAllocationStrategy"`
 
 	// The maximum percentage that a Spot Instance price can be when compared with
@@ -3259,9 +3276,8 @@ type ComputeResource struct {
 	// Don't specify it.
 	BidPercentage *int64 `locationName:"bidPercentage" type:"integer"`
 
-	// The desired number of Amazon EC2 vCPUS in the compute environment. Batch
-	// modifies this value between the minimum and maximum values based on job queue
-	// demand.
+	// The desired number of vCPUS in the compute environment. Batch modifies this
+	// value between the minimum and maximum values based on job queue demand.
 	//
 	// This parameter isn't applicable to jobs that are running on Fargate resources.
 	// Don't specify it.
@@ -3341,20 +3357,20 @@ type ComputeResource struct {
 	// Don't specify it.
 	LaunchTemplate *LaunchTemplateSpecification `locationName:"launchTemplate" type:"structure"`
 
-	// The maximum number of Amazon EC2 vCPUs that a compute environment can reach.
+	// The maximum number of vCPUs that a compute environment can support.
 	//
-	// With both BEST_FIT_PROGRESSIVE and SPOT_CAPACITY_OPTIMIZED allocation strategies
-	// using On-Demand or Spot Instances, and the BEST_FIT strategy using Spot Instances,
-	// Batch might need to exceed maxvCpus to meet your capacity requirements. In
-	// this event, Batch never exceeds maxvCpus by more than a single instance.
-	// For example, no more than a single instance from among those specified in
-	// your compute environment is allocated.
+	// With BEST_FIT_PROGRESSIVE, SPOT_CAPACITY_OPTIMIZED and SPOT_PRICE_CAPACITY_OPTIMIZED
+	// allocation strategies using On-Demand or Spot Instances, and the BEST_FIT
+	// strategy using Spot Instances, Batch might need to exceed maxvCpus to meet
+	// your capacity requirements. In this event, Batch never exceeds maxvCpus by
+	// more than a single instance. For example, no more than a single instance
+	// from among those specified in your compute environment is allocated.
 	//
 	// MaxvCpus is a required field
 	MaxvCpus *int64 `locationName:"maxvCpus" type:"integer" required:"true"`
 
-	// The minimum number of Amazon EC2 vCPUs that an environment should maintain
-	// (even if the compute environment is DISABLED).
+	// The minimum number of vCPUs that a compute environment should maintain (even
+	// if the compute environment is DISABLED).
 	//
 	// This parameter isn't applicable to jobs that are running on Fargate resources.
 	// Don't specify it.
@@ -3628,10 +3644,18 @@ type ComputeResourceUpdate struct {
 	// that are less likely to be interrupted. This allocation strategy is only
 	// available for Spot Instance compute resources.
 	//
-	// With both BEST_FIT_PROGRESSIVE and SPOT_CAPACITY_OPTIMIZED strategies using
-	// On-Demand or Spot Instances, and the BEST_FIT strategy using Spot Instances,
-	// Batch might need to exceed maxvCpus to meet your capacity requirements. In
-	// this event, Batch never exceeds maxvCpus by more than a single instance.
+	// SPOT_PRICE_CAPACITY_OPTIMIZED
+	//
+	// The price and capacity optimized allocation strategy looks at both price
+	// and capacity to select the Spot Instance pools that are the least likely
+	// to be interrupted and have the lowest possible price. This allocation strategy
+	// is only available for Spot Instance compute resources.
+	//
+	// With both BEST_FIT_PROGRESSIVE, SPOT_CAPACITY_OPTIMIZED, and SPOT_PRICE_CAPACITY_OPTIMIZED
+	// strategies using On-Demand or Spot Instances, and the BEST_FIT strategy using
+	// Spot Instances, Batch might need to exceed maxvCpus to meet your capacity
+	// requirements. In this event, Batch never exceeds maxvCpus by more than a
+	// single instance.
 	AllocationStrategy *string `locationName:"allocationStrategy" type:"string" enum:"CRUpdateAllocationStrategy"`
 
 	// The maximum percentage that a Spot Instance price can be when compared with
@@ -3650,9 +3674,8 @@ type ComputeResourceUpdate struct {
 	// Don't specify it.
 	BidPercentage *int64 `locationName:"bidPercentage" type:"integer"`
 
-	// The desired number of Amazon EC2 vCPUS in the compute environment. Batch
-	// modifies this value between the minimum and maximum values based on job queue
-	// demand.
+	// The desired number of vCPUS in the compute environment. Batch modifies this
+	// value between the minimum and maximum values based on job queue demand.
 	//
 	// This parameter isn't applicable to jobs that are running on Fargate resources.
 	// Don't specify it.
@@ -3780,16 +3803,16 @@ type ComputeResourceUpdate struct {
 
 	// The maximum number of Amazon EC2 vCPUs that an environment can reach.
 	//
-	// With both BEST_FIT_PROGRESSIVE and SPOT_CAPACITY_OPTIMIZED allocation strategies
-	// using On-Demand or Spot Instances, and the BEST_FIT strategy using Spot Instances,
-	// Batch might need to exceed maxvCpus to meet your capacity requirements. In
-	// this event, Batch never exceeds maxvCpus by more than a single instance.
-	// That is, no more than a single instance from among those specified in your
-	// compute environment.
+	// With BEST_FIT_PROGRESSIVE, SPOT_CAPACITY_OPTIMIZED, and SPOT_PRICE_CAPACITY_OPTIMIZED
+	// allocation strategies using On-Demand or Spot Instances, and the BEST_FIT
+	// strategy using Spot Instances, Batch might need to exceed maxvCpus to meet
+	// your capacity requirements. In this event, Batch never exceeds maxvCpus by
+	// more than a single instance. That is, no more than a single instance from
+	// among those specified in your compute environment.
 	MaxvCpus *int64 `locationName:"maxvCpus" type:"integer"`
 
-	// The minimum number of Amazon EC2 vCPUs that an environment should maintain
-	// (even if the compute environment is DISABLED).
+	// The minimum number of vCPUs that an environment should maintain (even if
+	// the compute environment is DISABLED).
 	//
 	// This parameter isn't applicable to jobs that are running on Fargate resources.
 	// Don't specify it.
@@ -4163,6 +4186,10 @@ type ContainerDetail struct {
 	// resources include GPU, MEMORY, and VCPU.
 	ResourceRequirements []*ResourceRequirement `locationName:"resourceRequirements" type:"list"`
 
+	// An object that represents the compute environment architecture for Batch
+	// jobs on Fargate.
+	RuntimePlatform *RuntimePlatform `locationName:"runtimePlatform" type:"structure"`
+
 	// The secrets to pass to the container. For more information, see Specifying
 	// sensitive data (https://docs.aws.amazon.com/batch/latest/userguide/specifying-sensitive-data.html)
 	// in the Batch User Guide.
@@ -4350,6 +4377,12 @@ func (s *ContainerDetail) SetResourceRequirements(v []*ResourceRequirement) *Con
 	return s
 }
 
+// SetRuntimePlatform sets the RuntimePlatform field's value.
+func (s *ContainerDetail) SetRuntimePlatform(v *RuntimePlatform) *ContainerDetail {
+	s.RuntimePlatform = v
+	return s
+}
+
 // SetSecrets sets the Secrets field's value.
 func (s *ContainerDetail) SetSecrets(v []*Secret) *ContainerDetail {
 	s.Secrets = v
@@ -4387,11 +4420,16 @@ func (s *ContainerDetail) SetVolumes(v []*Volume) *ContainerDetail {
 }
 
 // The overrides that should be sent to a container.
+//
+// For information about using Batch overrides when you connect event sources
+// to targets, see BatchContainerOverrides (https://docs.aws.amazon.com/eventbridge/latest/pipes-reference/API_BatchContainerOverrides.html).
 type ContainerOverrides struct {
 	_ struct{} `type:"structure"`
 
 	// The command to send to the container that overrides the default command from
 	// the Docker image or the job definition.
+	//
+	// This parameter can't contain an empty string.
 	Command []*string `locationName:"command" type:"list"`
 
 	// The environment variables to send to the container. You can add new environment
@@ -4679,6 +4717,10 @@ type ContainerProperties struct {
 	// resources include GPU, MEMORY, and VCPU.
 	ResourceRequirements []*ResourceRequirement `locationName:"resourceRequirements" type:"list"`
 
+	// An object that represents the compute environment architecture for Batch
+	// jobs on Fargate.
+	RuntimePlatform *RuntimePlatform `locationName:"runtimePlatform" type:"structure"`
+
 	// The secrets for the container. For more information, see Specifying sensitive
 	// data (https://docs.aws.amazon.com/batch/latest/userguide/specifying-sensitive-data.html)
 	// in the Batch User Guide.
@@ -4894,6 +4936,12 @@ func (s *ContainerProperties) SetReadonlyRootFilesystem(v bool) *ContainerProper
 // SetResourceRequirements sets the ResourceRequirements field's value.
 func (s *ContainerProperties) SetResourceRequirements(v []*ResourceRequirement) *ContainerProperties {
 	s.ResourceRequirements = v
+	return s
+}
+
+// SetRuntimePlatform sets the RuntimePlatform field's value.
+func (s *ContainerProperties) SetRuntimePlatform(v *RuntimePlatform) *ContainerProperties {
+	s.RuntimePlatform = v
 	return s
 }
 
@@ -11436,6 +11484,66 @@ func (s *RetryStrategy) SetEvaluateOnExit(v []*EvaluateOnExit) *RetryStrategy {
 	return s
 }
 
+// An object that represents the compute environment architecture for Batch
+// jobs on Fargate.
+type RuntimePlatform struct {
+	_ struct{} `type:"structure"`
+
+	// The vCPU architecture. The default value is X86_64. Valid values are X86_64
+	// and ARM64.
+	//
+	// This parameter must be set to X86_64 for Windows containers.
+	CpuArchitecture *string `locationName:"cpuArchitecture" type:"string"`
+
+	// The operating system for the compute environment. Valid values are: LINUX
+	// (default), WINDOWS_SERVER_2019_CORE, WINDOWS_SERVER_2019_FULL, WINDOWS_SERVER_2022_CORE,
+	// and WINDOWS_SERVER_2022_FULL.
+	//
+	// The following parameters can’t be set for Windows containers: linuxParameters,
+	// privileged, user, ulimits, readonlyRootFilesystem, and efsVolumeConfiguration.
+	//
+	// The Batch Scheduler checks before registering a task definition with Fargate.
+	// If the job requires a Windows container and the first compute environment
+	// is LINUX, the compute environment is skipped and the next is checked until
+	// a Windows-based compute environment is found.
+	//
+	// Fargate Spot is not supported for Windows-based containers on Fargate. A
+	// job queue will be blocked if a Fargate Windows job is submitted to a job
+	// queue with only Fargate Spot compute environments. However, you can attach
+	// both FARGATE and FARGATE_SPOT compute environments to the same job queue.
+	OperatingSystemFamily *string `locationName:"operatingSystemFamily" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimePlatform) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimePlatform) GoString() string {
+	return s.String()
+}
+
+// SetCpuArchitecture sets the CpuArchitecture field's value.
+func (s *RuntimePlatform) SetCpuArchitecture(v string) *RuntimePlatform {
+	s.CpuArchitecture = &v
+	return s
+}
+
+// SetOperatingSystemFamily sets the OperatingSystemFamily field's value.
+func (s *RuntimePlatform) SetOperatingSystemFamily(v string) *RuntimePlatform {
+	s.OperatingSystemFamily = &v
+	return s
+}
+
 // An object that represents a scheduling policy.
 type SchedulingPolicyDetail struct {
 	_ struct{} `type:"structure"`
@@ -11845,9 +11953,12 @@ type SubmitJobInput struct {
 	// The minimum supported value is 0 and the maximum supported value is 9999.
 	SchedulingPriorityOverride *int64 `locationName:"schedulingPriorityOverride" type:"integer"`
 
-	// The share identifier for the job. If the job queue doesn't have a scheduling
-	// policy, then this parameter must not be specified. If the job queue has a
-	// scheduling policy, then this parameter must be specified.
+	// The share identifier for the job. Don't specify this parameter if the job
+	// queue doesn't have a scheduling policy. If the job queue has a scheduling
+	// policy, then this parameter must be specified.
+	//
+	// This string is limited to 255 alphanumeric characters, and can be followed
+	// by an asterisk (*).
 	ShareIdentifier *string `locationName:"shareIdentifier" type:"string"`
 
 	// The tags that you apply to the job request to help you categorize and organize
@@ -13173,6 +13284,9 @@ const (
 
 	// CRAllocationStrategySpotCapacityOptimized is a CRAllocationStrategy enum value
 	CRAllocationStrategySpotCapacityOptimized = "SPOT_CAPACITY_OPTIMIZED"
+
+	// CRAllocationStrategySpotPriceCapacityOptimized is a CRAllocationStrategy enum value
+	CRAllocationStrategySpotPriceCapacityOptimized = "SPOT_PRICE_CAPACITY_OPTIMIZED"
 )
 
 // CRAllocationStrategy_Values returns all elements of the CRAllocationStrategy enum
@@ -13181,6 +13295,7 @@ func CRAllocationStrategy_Values() []string {
 		CRAllocationStrategyBestFit,
 		CRAllocationStrategyBestFitProgressive,
 		CRAllocationStrategySpotCapacityOptimized,
+		CRAllocationStrategySpotPriceCapacityOptimized,
 	}
 }
 
@@ -13214,6 +13329,9 @@ const (
 
 	// CRUpdateAllocationStrategySpotCapacityOptimized is a CRUpdateAllocationStrategy enum value
 	CRUpdateAllocationStrategySpotCapacityOptimized = "SPOT_CAPACITY_OPTIMIZED"
+
+	// CRUpdateAllocationStrategySpotPriceCapacityOptimized is a CRUpdateAllocationStrategy enum value
+	CRUpdateAllocationStrategySpotPriceCapacityOptimized = "SPOT_PRICE_CAPACITY_OPTIMIZED"
 )
 
 // CRUpdateAllocationStrategy_Values returns all elements of the CRUpdateAllocationStrategy enum
@@ -13221,6 +13339,7 @@ func CRUpdateAllocationStrategy_Values() []string {
 	return []string{
 		CRUpdateAllocationStrategyBestFitProgressive,
 		CRUpdateAllocationStrategySpotCapacityOptimized,
+		CRUpdateAllocationStrategySpotPriceCapacityOptimized,
 	}
 }
 

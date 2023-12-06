@@ -94,7 +94,7 @@ func dataSourceIBMSchematicsOutputRead(d *schema.ResourceData, meta interface{})
 			outputJSON = string(outputByte[:])
 			// items := map[string]interface{}
 			for _, value := range output {
-				for key, val := range value.(map[string]interface{}) {
+				for key, val := range value {
 					val2 := val.(map[string]interface{})["value"]
 					items[key] = val2
 				}
@@ -145,7 +145,7 @@ func dataSourceOutputValuesListOutputValuesToMap(outputValuesItem schematicsv1.O
 	m := []flex.Map{}
 
 	for _, outputValues := range outputValuesItem.OutputValues {
-		m = append(m, flex.Flatten(outputValues.(map[string]interface{})))
+		m = append(m, flex.Flatten(outputValues))
 	}
 
 	if outputValuesItem.OutputValues != nil {

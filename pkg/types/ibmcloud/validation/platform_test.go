@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
@@ -101,6 +102,120 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			valid: false,
+		},
+		{
+			name: "invalid url (no hostname) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "/some/path",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "invalid url (has path) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/some/path",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "valid url (has version path, no trailing '/') for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/v2",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "valid url (has version path and trailing '/') for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/v35/",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "invalid url (has request) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local?foo=some",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "valid url (no scheme) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "test-iam.random.local",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "valid url (with scheme) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "duplicate service endpoints",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "test-iam.random.local",
+				}, {
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "multiple valid service endpoints",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "test-iam.random.local",
+				}, {
+					Name: configv1.IBMCloudServiceVPC,
+					URL:  "test-vpc.random.local",
+				}}
+				return p
+			}(),
+			valid: true,
 		},
 	}
 	for _, tc := range cases {

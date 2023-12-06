@@ -319,6 +319,11 @@ func (m *CloudConnection) ContextValidate(ctx context.Context, formats strfmt.Re
 func (m *CloudConnection) contextValidateClassic(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Classic != nil {
+
+		if swag.IsZero(m.Classic) { // not required
+			return nil
+		}
+
 		if err := m.Classic.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("classic")
@@ -337,6 +342,11 @@ func (m *CloudConnection) contextValidateNetworks(ctx context.Context, formats s
 	for i := 0; i < len(m.Networks); i++ {
 
 		if m.Networks[i] != nil {
+
+			if swag.IsZero(m.Networks[i]) { // not required
+				return nil
+			}
+
 			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
@@ -355,6 +365,11 @@ func (m *CloudConnection) contextValidateNetworks(ctx context.Context, formats s
 func (m *CloudConnection) contextValidateVpc(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Vpc != nil {
+
+		if swag.IsZero(m.Vpc) { // not required
+			return nil
+		}
+
 		if err := m.Vpc.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vpc")

@@ -66,7 +66,7 @@ func (o *PcloudSharedprocessorpoolsDeleteReader) ReadResponse(response runtime.C
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}] pcloud.sharedprocessorpools.delete", response, response.Code())
 	}
 }
 
@@ -75,7 +75,8 @@ func NewPcloudSharedprocessorpoolsDeleteOK() *PcloudSharedprocessorpoolsDeleteOK
 	return &PcloudSharedprocessorpoolsDeleteOK{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteOK describes a response with status code 200, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -83,9 +84,44 @@ type PcloudSharedprocessorpoolsDeleteOK struct {
 	Payload models.Object
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete o k response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete o k response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete o k response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete o k response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete o k response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete o k response
+func (o *PcloudSharedprocessorpoolsDeleteOK) Code() int {
+	return 200
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteOK) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteOK) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteOK) GetPayload() models.Object {
 	return o.Payload
 }
@@ -105,7 +141,8 @@ func NewPcloudSharedprocessorpoolsDeleteBadRequest() *PcloudSharedprocessorpools
 	return &PcloudSharedprocessorpoolsDeleteBadRequest{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -113,9 +150,44 @@ type PcloudSharedprocessorpoolsDeleteBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete bad request response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete bad request response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete bad request response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete bad request response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete bad request response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete bad request response
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -137,7 +209,8 @@ func NewPcloudSharedprocessorpoolsDeleteUnauthorized() *PcloudSharedprocessorpoo
 	return &PcloudSharedprocessorpoolsDeleteUnauthorized{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -145,9 +218,44 @@ type PcloudSharedprocessorpoolsDeleteUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete unauthorized response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete unauthorized response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete unauthorized response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete unauthorized response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete unauthorized response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete unauthorized response
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -169,7 +277,8 @@ func NewPcloudSharedprocessorpoolsDeleteForbidden() *PcloudSharedprocessorpoolsD
 	return &PcloudSharedprocessorpoolsDeleteForbidden{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteForbidden describes a response with status code 403, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -177,9 +286,44 @@ type PcloudSharedprocessorpoolsDeleteForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete forbidden response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete forbidden response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete forbidden response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete forbidden response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete forbidden response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete forbidden response
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -201,7 +345,8 @@ func NewPcloudSharedprocessorpoolsDeleteNotFound() *PcloudSharedprocessorpoolsDe
 	return &PcloudSharedprocessorpoolsDeleteNotFound{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteNotFound describes a response with status code 404, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -209,9 +354,44 @@ type PcloudSharedprocessorpoolsDeleteNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete not found response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete not found response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete not found response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete not found response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete not found response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete not found response
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -233,7 +413,8 @@ func NewPcloudSharedprocessorpoolsDeleteConflict() *PcloudSharedprocessorpoolsDe
 	return &PcloudSharedprocessorpoolsDeleteConflict{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteConflict describes a response with status code 409, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -241,9 +422,44 @@ type PcloudSharedprocessorpoolsDeleteConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete conflict response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete conflict response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete conflict response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete conflict response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete conflict response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteConflict) IsCode(code int) bool {
+	return code == 409
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete conflict response
+func (o *PcloudSharedprocessorpoolsDeleteConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteConflict  %+v", 409, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteConflict) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteConflict  %+v", 409, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -265,7 +481,8 @@ func NewPcloudSharedprocessorpoolsDeleteInternalServerError() *PcloudSharedproce
 	return &PcloudSharedprocessorpoolsDeleteInternalServerError{}
 }
 
-/* PcloudSharedprocessorpoolsDeleteInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudSharedprocessorpoolsDeleteInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -273,9 +490,44 @@ type PcloudSharedprocessorpoolsDeleteInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sharedprocessorpools delete internal server error response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools delete internal server error response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools delete internal server error response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools delete internal server error response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools delete internal server error response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools delete internal server error response
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools/{shared_processor_pool_id}][%d] pcloudSharedprocessorpoolsDeleteInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudSharedprocessorpoolsDeleteInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

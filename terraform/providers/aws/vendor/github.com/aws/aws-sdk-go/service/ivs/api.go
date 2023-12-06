@@ -159,6 +159,91 @@ func (c *IVS) BatchGetStreamKeyWithContext(ctx aws.Context, input *BatchGetStrea
 	return out, req.Send()
 }
 
+const opBatchStartViewerSessionRevocation = "BatchStartViewerSessionRevocation"
+
+// BatchStartViewerSessionRevocationRequest generates a "aws/request.Request" representing the
+// client's request for the BatchStartViewerSessionRevocation operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See BatchStartViewerSessionRevocation for more information on using the BatchStartViewerSessionRevocation
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the BatchStartViewerSessionRevocationRequest method.
+//	req, resp := client.BatchStartViewerSessionRevocationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ivs-2020-07-14/BatchStartViewerSessionRevocation
+func (c *IVS) BatchStartViewerSessionRevocationRequest(input *BatchStartViewerSessionRevocationInput) (req *request.Request, output *BatchStartViewerSessionRevocationOutput) {
+	op := &request.Operation{
+		Name:       opBatchStartViewerSessionRevocation,
+		HTTPMethod: "POST",
+		HTTPPath:   "/BatchStartViewerSessionRevocation",
+	}
+
+	if input == nil {
+		input = &BatchStartViewerSessionRevocationInput{}
+	}
+
+	output = &BatchStartViewerSessionRevocationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// BatchStartViewerSessionRevocation API operation for Amazon Interactive Video Service.
+//
+// Performs StartViewerSessionRevocation on multiple channel ARN and viewer
+// ID pairs simultaneously.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Interactive Video Service's
+// API operation BatchStartViewerSessionRevocation for usage and error information.
+//
+// Returned Error Types:
+//
+//   - AccessDeniedException
+//
+//   - ValidationException
+//
+//   - PendingVerification
+//
+//   - ThrottlingException
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ivs-2020-07-14/BatchStartViewerSessionRevocation
+func (c *IVS) BatchStartViewerSessionRevocation(input *BatchStartViewerSessionRevocationInput) (*BatchStartViewerSessionRevocationOutput, error) {
+	req, out := c.BatchStartViewerSessionRevocationRequest(input)
+	return out, req.Send()
+}
+
+// BatchStartViewerSessionRevocationWithContext is the same as BatchStartViewerSessionRevocation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See BatchStartViewerSessionRevocation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *IVS) BatchStartViewerSessionRevocationWithContext(ctx aws.Context, input *BatchStartViewerSessionRevocationInput, opts ...request.Option) (*BatchStartViewerSessionRevocationOutput, error) {
+	req, out := c.BatchStartViewerSessionRevocationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateChannel = "CreateChannel"
 
 // CreateChannelRequest generates a "aws/request.Request" representing the
@@ -2398,6 +2483,99 @@ func (c *IVS) PutMetadataWithContext(ctx aws.Context, input *PutMetadataInput, o
 	return out, req.Send()
 }
 
+const opStartViewerSessionRevocation = "StartViewerSessionRevocation"
+
+// StartViewerSessionRevocationRequest generates a "aws/request.Request" representing the
+// client's request for the StartViewerSessionRevocation operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartViewerSessionRevocation for more information on using the StartViewerSessionRevocation
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StartViewerSessionRevocationRequest method.
+//	req, resp := client.StartViewerSessionRevocationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ivs-2020-07-14/StartViewerSessionRevocation
+func (c *IVS) StartViewerSessionRevocationRequest(input *StartViewerSessionRevocationInput) (req *request.Request, output *StartViewerSessionRevocationOutput) {
+	op := &request.Operation{
+		Name:       opStartViewerSessionRevocation,
+		HTTPMethod: "POST",
+		HTTPPath:   "/StartViewerSessionRevocation",
+	}
+
+	if input == nil {
+		input = &StartViewerSessionRevocationInput{}
+	}
+
+	output = &StartViewerSessionRevocationOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// StartViewerSessionRevocation API operation for Amazon Interactive Video Service.
+//
+// Starts the process of revoking the viewer session associated with a specified
+// channel ARN and viewer ID. Optionally, you can provide a version to revoke
+// viewer sessions less than and including that version. For instructions on
+// associating a viewer ID with a viewer session, see Setting Up Private Channels
+// (https://docs.aws.amazon.com/ivs/latest/userguide/private-channels.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Interactive Video Service's
+// API operation StartViewerSessionRevocation for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ResourceNotFoundException
+//
+//   - InternalServerException
+//
+//   - AccessDeniedException
+//
+//   - ValidationException
+//
+//   - PendingVerification
+//
+//   - ThrottlingException
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/ivs-2020-07-14/StartViewerSessionRevocation
+func (c *IVS) StartViewerSessionRevocation(input *StartViewerSessionRevocationInput) (*StartViewerSessionRevocationOutput, error) {
+	req, out := c.StartViewerSessionRevocationRequest(input)
+	return out, req.Send()
+}
+
+// StartViewerSessionRevocationWithContext is the same as StartViewerSessionRevocation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartViewerSessionRevocation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *IVS) StartViewerSessionRevocationWithContext(ctx aws.Context, input *StartViewerSessionRevocationInput, opts ...request.Option) (*StartViewerSessionRevocationOutput, error) {
+	req, out := c.StartViewerSessionRevocationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opStopStream = "StopStream"
 
 // StopStreamRequest generates a "aws/request.Request" representing the
@@ -3098,6 +3276,240 @@ func (s *BatchGetStreamKeyOutput) SetStreamKeys(v []*StreamKey) *BatchGetStreamK
 	return s
 }
 
+// Error for a request in the batch for BatchStartViewerSessionRevocation. Each
+// error is related to a specific channel-ARN and viewer-ID pair.
+type BatchStartViewerSessionRevocationError struct {
+	_ struct{} `type:"structure"`
+
+	// Channel ARN.
+	//
+	// ChannelArn is a required field
+	ChannelArn *string `locationName:"channelArn" min:"1" type:"string" required:"true"`
+
+	// Error code.
+	Code *string `locationName:"code" type:"string"`
+
+	// Error message, determined by the application.
+	Message *string `locationName:"message" type:"string"`
+
+	// The ID of the viewer session to revoke.
+	//
+	// ViewerId is a required field
+	ViewerId *string `locationName:"viewerId" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationError) GoString() string {
+	return s.String()
+}
+
+// SetChannelArn sets the ChannelArn field's value.
+func (s *BatchStartViewerSessionRevocationError) SetChannelArn(v string) *BatchStartViewerSessionRevocationError {
+	s.ChannelArn = &v
+	return s
+}
+
+// SetCode sets the Code field's value.
+func (s *BatchStartViewerSessionRevocationError) SetCode(v string) *BatchStartViewerSessionRevocationError {
+	s.Code = &v
+	return s
+}
+
+// SetMessage sets the Message field's value.
+func (s *BatchStartViewerSessionRevocationError) SetMessage(v string) *BatchStartViewerSessionRevocationError {
+	s.Message = &v
+	return s
+}
+
+// SetViewerId sets the ViewerId field's value.
+func (s *BatchStartViewerSessionRevocationError) SetViewerId(v string) *BatchStartViewerSessionRevocationError {
+	s.ViewerId = &v
+	return s
+}
+
+type BatchStartViewerSessionRevocationInput struct {
+	_ struct{} `type:"structure"`
+
+	// Array of viewer sessions, one per channel-ARN and viewer-ID pair.
+	//
+	// ViewerSessions is a required field
+	ViewerSessions []*BatchStartViewerSessionRevocationViewerSession `locationName:"viewerSessions" min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchStartViewerSessionRevocationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchStartViewerSessionRevocationInput"}
+	if s.ViewerSessions == nil {
+		invalidParams.Add(request.NewErrParamRequired("ViewerSessions"))
+	}
+	if s.ViewerSessions != nil && len(s.ViewerSessions) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ViewerSessions", 1))
+	}
+	if s.ViewerSessions != nil {
+		for i, v := range s.ViewerSessions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ViewerSessions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetViewerSessions sets the ViewerSessions field's value.
+func (s *BatchStartViewerSessionRevocationInput) SetViewerSessions(v []*BatchStartViewerSessionRevocationViewerSession) *BatchStartViewerSessionRevocationInput {
+	s.ViewerSessions = v
+	return s
+}
+
+type BatchStartViewerSessionRevocationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Each error object is related to a specific channelArn and viewerId pair in
+	// the request.
+	Errors []*BatchStartViewerSessionRevocationError `locationName:"errors" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationOutput) GoString() string {
+	return s.String()
+}
+
+// SetErrors sets the Errors field's value.
+func (s *BatchStartViewerSessionRevocationOutput) SetErrors(v []*BatchStartViewerSessionRevocationError) *BatchStartViewerSessionRevocationOutput {
+	s.Errors = v
+	return s
+}
+
+// A viewer session to revoke in the call to BatchStartViewerSessionRevocation.
+type BatchStartViewerSessionRevocationViewerSession struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the channel associated with the viewer session to revoke.
+	//
+	// ChannelArn is a required field
+	ChannelArn *string `locationName:"channelArn" min:"1" type:"string" required:"true"`
+
+	// The ID of the viewer associated with the viewer session to revoke. Do not
+	// use this field for personally identifying, confidential, or sensitive information.
+	//
+	// ViewerId is a required field
+	ViewerId *string `locationName:"viewerId" min:"1" type:"string" required:"true"`
+
+	// An optional filter on which versions of the viewer session to revoke. All
+	// versions less than or equal to the specified version will be revoked. Default:
+	// 0.
+	ViewerSessionVersionsLessThanOrEqualTo *int64 `locationName:"viewerSessionVersionsLessThanOrEqualTo" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationViewerSession) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchStartViewerSessionRevocationViewerSession) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchStartViewerSessionRevocationViewerSession) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchStartViewerSessionRevocationViewerSession"}
+	if s.ChannelArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChannelArn"))
+	}
+	if s.ChannelArn != nil && len(*s.ChannelArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChannelArn", 1))
+	}
+	if s.ViewerId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ViewerId"))
+	}
+	if s.ViewerId != nil && len(*s.ViewerId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ViewerId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetChannelArn sets the ChannelArn field's value.
+func (s *BatchStartViewerSessionRevocationViewerSession) SetChannelArn(v string) *BatchStartViewerSessionRevocationViewerSession {
+	s.ChannelArn = &v
+	return s
+}
+
+// SetViewerId sets the ViewerId field's value.
+func (s *BatchStartViewerSessionRevocationViewerSession) SetViewerId(v string) *BatchStartViewerSessionRevocationViewerSession {
+	s.ViewerId = &v
+	return s
+}
+
+// SetViewerSessionVersionsLessThanOrEqualTo sets the ViewerSessionVersionsLessThanOrEqualTo field's value.
+func (s *BatchStartViewerSessionRevocationViewerSession) SetViewerSessionVersionsLessThanOrEqualTo(v int64) *BatchStartViewerSessionRevocationViewerSession {
+	s.ViewerSessionVersionsLessThanOrEqualTo = &v
+	return s
+}
+
 // Object specifying a channel.
 type Channel struct {
 	_ struct{} `type:"structure"`
@@ -3781,6 +4193,9 @@ type CreateRecordingConfigurationInput struct {
 	// Default: 0.
 	RecordingReconnectWindowSeconds *int64 `locationName:"recordingReconnectWindowSeconds" type:"integer"`
 
+	// Object that describes which renditions should be recorded for a stream.
+	RenditionConfiguration *RenditionConfiguration `locationName:"renditionConfiguration" type:"structure"`
+
 	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
 	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
@@ -3850,6 +4265,12 @@ func (s *CreateRecordingConfigurationInput) SetName(v string) *CreateRecordingCo
 // SetRecordingReconnectWindowSeconds sets the RecordingReconnectWindowSeconds field's value.
 func (s *CreateRecordingConfigurationInput) SetRecordingReconnectWindowSeconds(v int64) *CreateRecordingConfigurationInput {
 	s.RecordingReconnectWindowSeconds = &v
+	return s
+}
+
+// SetRenditionConfiguration sets the RenditionConfiguration field's value.
+func (s *CreateRecordingConfigurationInput) SetRenditionConfiguration(v *RenditionConfiguration) *CreateRecordingConfigurationInput {
+	s.RenditionConfiguration = v
 	return s
 }
 
@@ -6044,6 +6465,9 @@ type RecordingConfiguration struct {
 	// Default: 0.
 	RecordingReconnectWindowSeconds *int64 `locationName:"recordingReconnectWindowSeconds" type:"integer"`
 
+	// Object that describes which renditions should be recorded for a stream.
+	RenditionConfiguration *RenditionConfiguration `locationName:"renditionConfiguration" type:"structure"`
+
 	// Indicates the current state of the recording configuration. When the state
 	// is ACTIVE, the configuration is ready for recording a channel stream.
 	//
@@ -6102,6 +6526,12 @@ func (s *RecordingConfiguration) SetName(v string) *RecordingConfiguration {
 // SetRecordingReconnectWindowSeconds sets the RecordingReconnectWindowSeconds field's value.
 func (s *RecordingConfiguration) SetRecordingReconnectWindowSeconds(v int64) *RecordingConfiguration {
 	s.RecordingReconnectWindowSeconds = &v
+	return s
+}
+
+// SetRenditionConfiguration sets the RenditionConfiguration field's value.
+func (s *RecordingConfiguration) SetRenditionConfiguration(v *RenditionConfiguration) *RecordingConfiguration {
+	s.RenditionConfiguration = v
 	return s
 }
 
@@ -6200,6 +6630,54 @@ func (s *RecordingConfigurationSummary) SetState(v string) *RecordingConfigurati
 // SetTags sets the Tags field's value.
 func (s *RecordingConfigurationSummary) SetTags(v map[string]*string) *RecordingConfigurationSummary {
 	s.Tags = v
+	return s
+}
+
+// Object that describes which renditions should be recorded for a stream.
+type RenditionConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates which set of renditions are recorded for a stream. For BASIC channels,
+	// the CUSTOM value has no effect. If CUSTOM is specified, a set of renditions
+	// must be specified in the renditions field. Default: ALL.
+	RenditionSelection *string `locationName:"renditionSelection" type:"string" enum:"RenditionConfigurationRenditionSelection"`
+
+	// Indicates which renditions are recorded for a stream, if renditionSelection
+	// is CUSTOM; otherwise, this field is irrelevant. The selected renditions are
+	// recorded if they are available during the stream. If a selected rendition
+	// is unavailable, the best available rendition is recorded. For details on
+	// the resolution dimensions of each rendition, see Auto-Record to Amazon S3
+	// (https://docs.aws.amazon.com/ivs/latest/userguide/record-to-s3.html).
+	Renditions []*string `locationName:"renditions" type:"list" enum:"RenditionConfigurationRendition"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RenditionConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RenditionConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetRenditionSelection sets the RenditionSelection field's value.
+func (s *RenditionConfiguration) SetRenditionSelection(v string) *RenditionConfiguration {
+	s.RenditionSelection = &v
+	return s
+}
+
+// SetRenditions sets the Renditions field's value.
+func (s *RenditionConfiguration) SetRenditions(v []*string) *RenditionConfiguration {
+	s.Renditions = v
 	return s
 }
 
@@ -6384,6 +6862,106 @@ func (s *ServiceQuotaExceededException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *ServiceQuotaExceededException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+type StartViewerSessionRevocationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the channel associated with the viewer session to revoke.
+	//
+	// ChannelArn is a required field
+	ChannelArn *string `locationName:"channelArn" min:"1" type:"string" required:"true"`
+
+	// The ID of the viewer associated with the viewer session to revoke. Do not
+	// use this field for personally identifying, confidential, or sensitive information.
+	//
+	// ViewerId is a required field
+	ViewerId *string `locationName:"viewerId" min:"1" type:"string" required:"true"`
+
+	// An optional filter on which versions of the viewer session to revoke. All
+	// versions less than or equal to the specified version will be revoked. Default:
+	// 0.
+	ViewerSessionVersionsLessThanOrEqualTo *int64 `locationName:"viewerSessionVersionsLessThanOrEqualTo" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartViewerSessionRevocationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartViewerSessionRevocationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartViewerSessionRevocationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartViewerSessionRevocationInput"}
+	if s.ChannelArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChannelArn"))
+	}
+	if s.ChannelArn != nil && len(*s.ChannelArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ChannelArn", 1))
+	}
+	if s.ViewerId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ViewerId"))
+	}
+	if s.ViewerId != nil && len(*s.ViewerId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ViewerId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetChannelArn sets the ChannelArn field's value.
+func (s *StartViewerSessionRevocationInput) SetChannelArn(v string) *StartViewerSessionRevocationInput {
+	s.ChannelArn = &v
+	return s
+}
+
+// SetViewerId sets the ViewerId field's value.
+func (s *StartViewerSessionRevocationInput) SetViewerId(v string) *StartViewerSessionRevocationInput {
+	s.ViewerId = &v
+	return s
+}
+
+// SetViewerSessionVersionsLessThanOrEqualTo sets the ViewerSessionVersionsLessThanOrEqualTo field's value.
+func (s *StartViewerSessionRevocationInput) SetViewerSessionVersionsLessThanOrEqualTo(v int64) *StartViewerSessionRevocationInput {
+	s.ViewerSessionVersionsLessThanOrEqualTo = &v
+	return s
+}
+
+type StartViewerSessionRevocationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartViewerSessionRevocationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartViewerSessionRevocationOutput) GoString() string {
+	return s.String()
 }
 
 type StopStreamInput struct {
@@ -7220,14 +7798,29 @@ type ThumbnailConfiguration struct {
 	// Thumbnail recording mode. Default: INTERVAL.
 	RecordingMode *string `locationName:"recordingMode" type:"string" enum:"RecordingMode"`
 
+	// Indicates the desired resolution of recorded thumbnails. Thumbnails are recorded
+	// at the selected resolution if the corresponding rendition is available during
+	// the stream; otherwise, they are recorded at source resolution. For more information
+	// about resolution values and their corresponding height and width dimensions,
+	// see Auto-Record to Amazon S3 (https://docs.aws.amazon.com/ivs/latest/userguide/record-to-s3.html).
+	// Default: Null (source resolution is returned).
+	Resolution *string `locationName:"resolution" type:"string" enum:"ThumbnailConfigurationResolution"`
+
+	// Indicates the format in which thumbnails are recorded. SEQUENTIAL records
+	// all generated thumbnails in a serial manner, to the media/thumbnails directory.
+	// LATEST saves the latest thumbnail in media/latest_thumbnail/thumb.jpg and
+	// overwrites it at the interval specified by targetIntervalSeconds. You can
+	// enable both SEQUENTIAL and LATEST. Default: SEQUENTIAL.
+	Storage []*string `locationName:"storage" type:"list" enum:"ThumbnailConfigurationStorage"`
+
 	// The targeted thumbnail-generation interval in seconds. This is configurable
 	// (and required) only if recordingMode is INTERVAL. Default: 60.
 	//
-	// Important: Setting a value for targetIntervalSeconds does not guarantee that
-	// thumbnails are generated at the specified interval. For thumbnails to be
-	// generated at the targetIntervalSeconds interval, the IDR/Keyframe value for
-	// the input video must be less than the targetIntervalSeconds value. See Amazon
-	// IVS Streaming Configuration (https://docs.aws.amazon.com/ivs/latest/userguide/streaming-config.html)
+	// Important: For the BASIC channel type, setting a value for targetIntervalSeconds
+	// does not guarantee that thumbnails are generated at the specified interval.
+	// For thumbnails to be generated at the targetIntervalSeconds interval, the
+	// IDR/Keyframe value for the input video must be less than the targetIntervalSeconds
+	// value. See Amazon IVS Streaming Configuration (https://docs.aws.amazon.com/ivs/latest/userguide/streaming-config.html)
 	// for information on setting IDR/Keyframe to the recommended value in video-encoder
 	// settings.
 	TargetIntervalSeconds *int64 `locationName:"targetIntervalSeconds" min:"1" type:"long"`
@@ -7267,6 +7860,18 @@ func (s *ThumbnailConfiguration) Validate() error {
 // SetRecordingMode sets the RecordingMode field's value.
 func (s *ThumbnailConfiguration) SetRecordingMode(v string) *ThumbnailConfiguration {
 	s.RecordingMode = &v
+	return s
+}
+
+// SetResolution sets the Resolution field's value.
+func (s *ThumbnailConfiguration) SetResolution(v string) *ThumbnailConfiguration {
+	s.Resolution = &v
+	return s
+}
+
+// SetStorage sets the Storage field's value.
+func (s *ThumbnailConfiguration) SetStorage(v []*string) *ThumbnailConfiguration {
+	s.Storage = v
 	return s
 }
 
@@ -7806,6 +8411,50 @@ func RecordingMode_Values() []string {
 }
 
 const (
+	// RenditionConfigurationRenditionFullHd is a RenditionConfigurationRendition enum value
+	RenditionConfigurationRenditionFullHd = "FULL_HD"
+
+	// RenditionConfigurationRenditionHd is a RenditionConfigurationRendition enum value
+	RenditionConfigurationRenditionHd = "HD"
+
+	// RenditionConfigurationRenditionSd is a RenditionConfigurationRendition enum value
+	RenditionConfigurationRenditionSd = "SD"
+
+	// RenditionConfigurationRenditionLowestResolution is a RenditionConfigurationRendition enum value
+	RenditionConfigurationRenditionLowestResolution = "LOWEST_RESOLUTION"
+)
+
+// RenditionConfigurationRendition_Values returns all elements of the RenditionConfigurationRendition enum
+func RenditionConfigurationRendition_Values() []string {
+	return []string{
+		RenditionConfigurationRenditionFullHd,
+		RenditionConfigurationRenditionHd,
+		RenditionConfigurationRenditionSd,
+		RenditionConfigurationRenditionLowestResolution,
+	}
+}
+
+const (
+	// RenditionConfigurationRenditionSelectionAll is a RenditionConfigurationRenditionSelection enum value
+	RenditionConfigurationRenditionSelectionAll = "ALL"
+
+	// RenditionConfigurationRenditionSelectionNone is a RenditionConfigurationRenditionSelection enum value
+	RenditionConfigurationRenditionSelectionNone = "NONE"
+
+	// RenditionConfigurationRenditionSelectionCustom is a RenditionConfigurationRenditionSelection enum value
+	RenditionConfigurationRenditionSelectionCustom = "CUSTOM"
+)
+
+// RenditionConfigurationRenditionSelection_Values returns all elements of the RenditionConfigurationRenditionSelection enum
+func RenditionConfigurationRenditionSelection_Values() []string {
+	return []string{
+		RenditionConfigurationRenditionSelectionAll,
+		RenditionConfigurationRenditionSelectionNone,
+		RenditionConfigurationRenditionSelectionCustom,
+	}
+}
+
+const (
 	// StreamHealthHealthy is a StreamHealth enum value
 	StreamHealthHealthy = "HEALTHY"
 
@@ -7838,6 +8487,46 @@ func StreamState_Values() []string {
 	return []string{
 		StreamStateLive,
 		StreamStateOffline,
+	}
+}
+
+const (
+	// ThumbnailConfigurationResolutionFullHd is a ThumbnailConfigurationResolution enum value
+	ThumbnailConfigurationResolutionFullHd = "FULL_HD"
+
+	// ThumbnailConfigurationResolutionHd is a ThumbnailConfigurationResolution enum value
+	ThumbnailConfigurationResolutionHd = "HD"
+
+	// ThumbnailConfigurationResolutionSd is a ThumbnailConfigurationResolution enum value
+	ThumbnailConfigurationResolutionSd = "SD"
+
+	// ThumbnailConfigurationResolutionLowestResolution is a ThumbnailConfigurationResolution enum value
+	ThumbnailConfigurationResolutionLowestResolution = "LOWEST_RESOLUTION"
+)
+
+// ThumbnailConfigurationResolution_Values returns all elements of the ThumbnailConfigurationResolution enum
+func ThumbnailConfigurationResolution_Values() []string {
+	return []string{
+		ThumbnailConfigurationResolutionFullHd,
+		ThumbnailConfigurationResolutionHd,
+		ThumbnailConfigurationResolutionSd,
+		ThumbnailConfigurationResolutionLowestResolution,
+	}
+}
+
+const (
+	// ThumbnailConfigurationStorageSequential is a ThumbnailConfigurationStorage enum value
+	ThumbnailConfigurationStorageSequential = "SEQUENTIAL"
+
+	// ThumbnailConfigurationStorageLatest is a ThumbnailConfigurationStorage enum value
+	ThumbnailConfigurationStorageLatest = "LATEST"
+)
+
+// ThumbnailConfigurationStorage_Values returns all elements of the ThumbnailConfigurationStorage enum
+func ThumbnailConfigurationStorage_Values() []string {
+	return []string{
+		ThumbnailConfigurationStorageSequential,
+		ThumbnailConfigurationStorageLatest,
 	}
 }
 

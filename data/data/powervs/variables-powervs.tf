@@ -34,15 +34,15 @@ variable "powervs_resource_group" {
   description = "The cloud instance resource group"
 }
 
-variable "powervs_cloud_instance_id" {
-  type        = string
-  description = "The cloud instance ID of your account"
-}
-
 variable "powervs_publish_strategy" {
   type        = string
   description = "The cluster publishing strategy, either Internal or External"
   default     = "External"
+}
+
+variable "powervs_service_instance_name" {
+  type        = string
+  description = "Optionally, the service instance name of an existing object before cluster creation"
 }
 
 ################################################################
@@ -73,12 +73,6 @@ variable "powervs_wait_for_vpc" {
   type        = string
   description = "The seconds wait for VPC creation, default is 60s"
   default     = "60s"
-}
-
-variable "powervs_network_name" {
-  type        = string
-  description = "The name of a pre-created Power VS DHCP network"
-  default     = ""
 }
 
 variable "powervs_vpc_name" {
@@ -213,10 +207,6 @@ variable "powervs_dns_guid" {
 ################################################################
 # Configure Tranit Gateways
 ################################################################
-variable "powervs_service_instance_crn" {
-  type        = string
-  description = "The CRN of service instance to use."
-}
 
 ################################################################
 # Output Variables

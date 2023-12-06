@@ -85,6 +85,11 @@ func (m *NetworkPorts) contextValidatePorts(ctx context.Context, formats strfmt.
 	for i := 0; i < len(m.Ports); i++ {
 
 		if m.Ports[i] != nil {
+
+			if swag.IsZero(m.Ports[i]) { // not required
+				return nil
+			}
+
 			if err := m.Ports[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("ports" + "." + strconv.Itoa(i))

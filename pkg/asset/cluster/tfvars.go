@@ -34,6 +34,7 @@ import (
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	aztypes "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	ibmcloudconfig "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
@@ -181,6 +182,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 	}
 
+	lengthBootstrapFile := int64(len(bootstrapIgn))
+	if installConfig.Config.Platform.Azure != nil && installConfig.Config.Platform.Azure.CustomerManagedKey != nil &&
+		installConfig.Config.Platform.Azure.CustomerManagedKey.UserAssignedIdentityKey != "" {
+		if lengthBootstrapFile%512 != 0 {
+			lengthBootstrapFile = (((lengthBootstrapFile / 512) + 1) * 512)
+		}
+	}
+
 	data, err := tfvars.TFVars(
 		clusterID.InfraID,
 		installConfig.Config.ClusterDomain(),
@@ -190,6 +199,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		useIPv4,
 		useIPv6,
 		bootstrapIgn,
+		lengthBootstrapFile,
 		masterIgn,
 		masterCount,
 		mastersSchedulable,
@@ -382,6 +392,21 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			bootstrapIgnStub = string(shim)
 		}
 
+		managedKeys := azure.CustomerManagedKey{}
+		if installConfig.Config.Azure.CustomerManagedKey != nil {
+			managedKeys.KeyVault = azure.KeyVault{
+				ResourceGroup: installConfig.Config.Azure.CustomerManagedKey.KeyVault.ResourceGroup,
+				Name:          installConfig.Config.Azure.CustomerManagedKey.KeyVault.Name,
+				KeyName:       installConfig.Config.Azure.CustomerManagedKey.KeyVault.KeyName,
+			}
+			managedKeys.UserAssignedIdentityKey = installConfig.Config.Azure.CustomerManagedKey.UserAssignedIdentityKey
+		}
+
+		lbPrivate := false
+		if installConfig.Config.OperatorPublishingStrategy != nil {
+			lbPrivate = installConfig.Config.OperatorPublishingStrategy.APIServer == "Internal"
+		}
+
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                            auth,
@@ -401,6 +426,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
+				KeyVault:                        managedKeys.KeyVault,
+				UserAssignedIdentityKey:         managedKeys.UserAssignedIdentityKey,
+				LBPrivate:                       lbPrivate,
 			},
 		)
 		if err != nil {
@@ -508,6 +536,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
+				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
 			},
 		)
 		if err != nil {
@@ -518,7 +547,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ibmcloud.Name:
-		client, err := installConfig.IBMCloud.Client()
+		meta := ibmcloudconfig.NewMetadata(installConfig.Config)
+		client, err := meta.Client()
 		if err != nil {
 			return err
 		}
@@ -601,8 +631,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		vpcPermitted := false
 
 		if installConfig.Config.Publish == types.InternalPublishingStrategy {
-			// Get DNSInstanceCRN from InstallConfig metadata
-			dnsInstance, err := installConfig.IBMCloud.DNSInstance(ctx)
+			// Get DNSInstanceCRN from metadata
+			dnsInstance, err := meta.DNSInstance(ctx)
 			if err != nil {
 				return err
 			}
@@ -611,17 +641,38 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 			// If the VPC already exists and the cluster is Private, check if the VPC is already a Permitted Network on DNS Instance
 			if preexistingVPC {
-				vpcPermitted, err = installConfig.IBMCloud.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
+				vpcPermitted, err = meta.IsVPCPermittedNetwork(ctx, installConfig.Config.Platform.IBMCloud.VPCName)
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			// Get CISInstanceCRN from InstallConfig metadata
-			cisCRN, err = installConfig.IBMCloud.CISInstanceCRN(ctx)
+			// Get CISInstanceCRN from metadata
+			cisCRN, err = meta.CISInstanceCRN(ctx)
 			if err != nil {
 				return err
 			}
+		}
+
+		// NOTE(cjschaef): If one or more ServiceEndpoint's are supplied, attempt to build the Terraform endpoint_file_path
+		// https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/guides/custom-service-endpoints#file-structure-for-endpoints-file
+		var endpointsJSONFile string
+		if len(installConfig.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			endpointData, err := ibmcloudtfvars.CreateEndpointJSON(installConfig.Config.Platform.IBMCloud.ServiceEndpoints, installConfig.Config.Platform.IBMCloud.Region)
+			if err != nil {
+				return err
+			}
+			// While we should have already confirmed there are ServiceEndpoints, we can verify data did get created, requiring the JSON file gets created and passed along
+			if endpointData == nil {
+				return fmt.Errorf("failed to generate endpoint JSON with provided IBM Cloud ServiceEndpoints")
+			}
+
+			// Add endpoint JSON data to list of generated files for Terraform
+			t.FileList = append(t.FileList, &asset.File{
+				Filename: ibmcloudtfvars.IBMCloudEndpointJSONFileName,
+				Data:     endpointData,
+			})
+			endpointsJSONFile = ibmcloudtfvars.IBMCloudEndpointJSONFileName
 		}
 
 		data, err = ibmcloudtfvars.TFVars(
@@ -629,6 +680,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				Auth:                     auth,
 				CISInstanceCRN:           cisCRN,
 				DNSInstanceID:            dnsID,
+				EndpointsJSONFile:        endpointsJSONFile,
 				ImageURL:                 string(*rhcosImage),
 				MasterConfigs:            masterConfigs,
 				MasterDedicatedHosts:     masterDedicatedHosts,
@@ -877,14 +929,25 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
+		cpStanza := installConfig.Config.ControlPlane
+		if cpStanza == nil || cpStanza.Platform.PowerVS == nil || cpStanza.Platform.PowerVS.SysType == "" {
+			sysTypes, err := powervs.AvailableSysTypes(installConfig.Config.PowerVS.Region)
+			if err != nil {
+				return err
+			}
+			for i := range masters {
+				masterConfigs[i].SystemType = sysTypes[0]
+			}
+		}
+
 		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
 
-		serviceInstanceCRN, err := client.ServiceInstanceIDToCRN(ctx, installConfig.Config.PowerVS.ServiceInstanceID)
+		// If a service instance GUID was passed in the install-config.yaml file, then
+		// find the corresponding name for it.  Otherwise, we expect our Terraform to
+		// dynamically create one.
+		serviceInstanceName, err := client.ServiceInstanceGUIDToName(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
 		if err != nil {
 			return err
-		}
-		if serviceInstanceCRN == "" {
-			return fmt.Errorf("the service instance CRN is empty for the given ID")
 		}
 
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
@@ -898,7 +961,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PowerVSResourceGroup:  installConfig.Config.PowerVS.PowerVSResourceGroup,
 				ImageBucketName:       osImage[0],
 				ImageBucketFileName:   osImage[1],
-				NetworkName:           installConfig.Config.PowerVS.PVSNetworkName,
 				VPCRegion:             vpcRegion,
 				VPCZone:               vpcZone,
 				VPCName:               vpcName,
@@ -911,7 +973,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublishStrategy:       installConfig.Config.Publish,
 				EnableSNAT:            len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
 				TransitGatewayEnabled: transitGatewayEnabled,
-				ServiceInstanceCRN:    serviceInstanceCRN,
+				ServiceInstanceName:   serviceInstanceName,
 			},
 		)
 		if err != nil {
@@ -946,6 +1008,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, c := range controlPlanes {
 			var clusterMo mo.ClusterComputeResource
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+
 			rpObj, err := finder.ResourcePool(ctx, controlPlaneConfigs[i].Workspace.ResourcePool)
 			if err != nil {
 				return err
@@ -956,16 +1019,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				return err
 			}
 
-			clusterObj := object.NewClusterComputeResource(vim25Client, clusterRef.Reference())
+			// When using finder.ObjectReference the InventoryPath is defined
+			// NewClusterComputeResource I don't believe assigns that value.
+			clusterObjRef, err := finder.ObjectReference(ctx, clusterRef.Reference())
+			if err != nil {
+				return err
+			}
+
+			clusterObj, ok := clusterObjRef.(*object.ClusterComputeResource)
+			if !ok {
+				return errors.New("unable to convert cluster object reference to object cluster compute resource")
+			}
 			err = clusterObj.Properties(ctx, clusterRef.Reference(), []string{"name", "summary"}, &clusterMo)
 			if err != nil {
 				return err
 			}
 
-			clusterPath := strings.SplitAfter(controlPlaneConfigs[i].Workspace.ResourcePool, clusterMo.Name)
-
-			networkPath := path.Join(clusterPath[0], controlPlaneConfigs[i].Network.Devices[0].NetworkName)
-
+			networkPath := path.Join(clusterObj.InventoryPath, controlPlaneConfigs[i].Network.Devices[0].NetworkName)
 			netObj, err := finder.Network(ctx, networkPath)
 			if err != nil {
 				return err

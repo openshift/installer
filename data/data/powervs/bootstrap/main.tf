@@ -30,7 +30,7 @@ module "vm" {
   proc_type             = var.powervs_proc_type
   image_id              = var.boot_image_id
   sys_type              = var.powervs_sys_type
-  cloud_instance_id     = var.powervs_cloud_instance_id
+  cloud_instance_id     = module.iaas.si_guid
   dhcp_network_id       = var.dhcp_network_id
   dhcp_id               = var.dhcp_id
   proxy_server_ip       = var.proxy_server_ip
@@ -51,3 +51,17 @@ module "lb" {
   api_pool_ext_id     = var.api_pool_ext_id
 }
 
+module "iaas" {
+  providers = {
+    ibm = ibm.vpc
+  }
+  source = "./iaas"
+
+  #
+  # define and pass variables to:
+  # data/data/powervs/bootstrap/iaas/variables.tf
+  #
+  cluster_id            = var.cluster_id
+  resource_group        = var.powervs_resource_group
+  service_instance_name = var.powervs_service_instance_name
+}

@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.69.0-370d6400-20230329-174648
+ * IBM OpenAPI SDK Code Generator Version: 3.77.0-42417df0-20230811-192318
  */
 
 // Package secretsmanagerv2 : Operations and models for the SecretsManagerV2 service
@@ -910,6 +910,72 @@ func (secretsManager *SecretsManagerV2) CreateSecretActionWithContext(ctx contex
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecretAction)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetSecretByNameType : Get a secret by name
+// Get a secret and its details by specifying the Name and Type of the secret.
+//
+// A successful request returns the secret data that is associated with your secret, along with other metadata. To view
+// only the details of a specified secret without retrieving its value, use the [Get secret
+// metadata](#get-secret-metadata) operation.
+func (secretsManager *SecretsManagerV2) GetSecretByNameType(getSecretByNameTypeOptions *GetSecretByNameTypeOptions) (result SecretIntf, response *core.DetailedResponse, err error) {
+	return secretsManager.GetSecretByNameTypeWithContext(context.Background(), getSecretByNameTypeOptions)
+}
+
+// GetSecretByNameTypeWithContext is an alternate form of the GetSecretByNameType method which supports a Context parameter
+func (secretsManager *SecretsManagerV2) GetSecretByNameTypeWithContext(ctx context.Context, getSecretByNameTypeOptions *GetSecretByNameTypeOptions) (result SecretIntf, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getSecretByNameTypeOptions, "getSecretByNameTypeOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getSecretByNameTypeOptions, "getSecretByNameTypeOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"secret_type":       *getSecretByNameTypeOptions.SecretType,
+		"name":              *getSecretByNameTypeOptions.Name,
+		"secret_group_name": *getSecretByNameTypeOptions.SecretGroupName,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = secretsManager.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(secretsManager.Service.Options.URL, `/api/v2/secret_groups/{secret_group_name}/secret_types/{secret_type}/secrets/{name}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getSecretByNameTypeOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("secrets_manager", "V2", "GetSecretByNameType")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = secretsManager.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecret)
 		if err != nil {
 			return
 		}
@@ -2723,10 +2789,9 @@ type Configuration struct {
 	// [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
 	ClassicInfrastructurePassword *string `json:"classic_infrastructure_password,omitempty"`
 
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
+	// An IBM Cloud API key that can create and manage service IDs. The API key must be assigned the Editor platform role
+	// on the Access Groups Service and the Operator platform role on the IAM Identity Service.  For more information, see
+	// the [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-configure-iam-engine).
 	ApiKey *string `json:"api_key,omitempty"`
 
 	// The Common Name (CN) represents the server name that is protected by the SSL certificate.
@@ -2736,7 +2801,8 @@ type Configuration struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The type of private key to generate.
@@ -2831,7 +2897,7 @@ type Configuration struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The configuration data of your Private Certificate.
@@ -3156,8 +3222,8 @@ type ConfigurationAction struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -3183,7 +3249,11 @@ type ConfigurationAction struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The certificate signing request.
@@ -3317,8 +3387,8 @@ type ConfigurationActionPrototype struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -3344,7 +3414,11 @@ type ConfigurationActionPrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The certificate signing request.
@@ -3454,7 +3528,8 @@ type ConfigurationMetadata struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The type of private key to generate.
@@ -3673,56 +3748,17 @@ func (resp *ConfigurationMetadataPaginatedCollection) GetNextOffset() (*int64, e
 // ConfigurationPatch : Your configuration update data.
 // Models which "extend" this model:
 // - IAMCredentialsConfigurationPatch
+// - PrivateCertificateConfigurationRootCAPatch
+// - PrivateCertificateConfigurationIntermediateCAPatch
+// - PrivateCertificateConfigurationTemplatePatch
 // - PublicCertificateConfigurationCALetsEncryptPatch
 // - PublicCertificateConfigurationDNSCloudInternetServicesPatch
 // - PublicCertificateConfigurationDNSClassicInfrastructurePatch
-// - PrivateCertificateConfigurationRootCAPatch
-// - PrivateCertificateConfigurationTemplatePatch
-// - PrivateCertificateConfigurationIntermediateCAPatch
 type ConfigurationPatch struct {
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
+	// An IBM Cloud API key that can create and manage service IDs. The API key must be assigned the Editor platform role
+	// on the Access Groups Service and the Operator platform role on the IAM Identity Service.  For more information, see
+	// the [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-configure-iam-engine).
 	ApiKey *string `json:"api_key,omitempty"`
-
-	// The configuration of the Let's Encrypt CA environment.
-	LetsEncryptEnvironment *string `json:"lets_encrypt_environment,omitempty"`
-
-	// The PEM-encoded private key of your Let's Encrypt account. The data must be formatted on a single line with embedded
-	// newline characters.
-	LetsEncryptPrivateKey *string `json:"lets_encrypt_private_key,omitempty"`
-
-	// If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If
-	// no match, the default offered chain will be used.
-	LetsEncryptPreferredChain *string `json:"lets_encrypt_preferred_chain,omitempty"`
-
-	// An IBM Cloud API key that can to list domains in your Cloud Internet Services instance.
-	//
-	// To grant Secrets Manager the ability to view the Cloud Internet Services instance and all of its domains, the API
-	// key must be assigned the Reader service role on Internet Services (`internet-svcs`).
-	//
-	// If you need to manage specific domains, you can assign the Manager role. For production environments, it is
-	// recommended that you assign the Reader access role, and then use the
-	// [IAM Policy Management API](https://cloud.ibm.com/apidocs/iam-policy-management#create-policy) to control specific
-	// domains. For more information, see the
-	// [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-prepare-order-certificates#authorize-specific-domains).
-	CloudInternetServicesApikey *string `json:"cloud_internet_services_apikey,omitempty"`
-
-	// A CRN that uniquely identifies an IBM Cloud resource.
-	CloudInternetServicesCrn *string `json:"cloud_internet_services_crn,omitempty"`
-
-	// The username that is associated with your classic infrastructure account.
-	//
-	// In most cases, your classic infrastructure username is your `<account_id>_<email_address>`. For more information,
-	// see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
-	ClassicInfrastructureUsername *string `json:"classic_infrastructure_username,omitempty"`
-
-	// Your classic infrastructure API key.
-	//
-	// For information about viewing and accessing your classic infrastructure API key, see the
-	// [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
-	ClassicInfrastructurePassword *string `json:"classic_infrastructure_password,omitempty"`
 
 	// The maximum time-to-live (TTL) for certificates that are created by this CA.
 	//
@@ -3900,7 +3936,7 @@ type ConfigurationPatch struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// This field is deprecated. You can ignore its value.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// This field indicates whether to require a common name to create a private certificate.
@@ -3921,20 +3957,58 @@ type ConfigurationPatch struct {
 	// The value can be supplied as a string representation of a duration, such as `30s`. In the API response, this value
 	// is returned in seconds (integer).
 	NotBeforeDuration *string `json:"not_before_duration,omitempty"`
-}
 
-// Constants associated with the ConfigurationPatch.LetsEncryptEnvironment property.
-// The configuration of the Let's Encrypt CA environment.
-const (
-	ConfigurationPatch_LetsEncryptEnvironment_Production = "production"
-	ConfigurationPatch_LetsEncryptEnvironment_Staging    = "staging"
-)
+	// The configuration of the Let's Encrypt CA environment.
+	LetsEncryptEnvironment *string `json:"lets_encrypt_environment,omitempty"`
+
+	// The PEM-encoded private key of your Let's Encrypt account. The data must be formatted on a single line with embedded
+	// newline characters.
+	LetsEncryptPrivateKey *string `json:"lets_encrypt_private_key,omitempty"`
+
+	// If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If
+	// no match, the default offered chain will be used.
+	LetsEncryptPreferredChain *string `json:"lets_encrypt_preferred_chain,omitempty"`
+
+	// An IBM Cloud API key that can to list domains in your Cloud Internet Services instance.
+	//
+	// To grant Secrets Manager the ability to view the Cloud Internet Services instance and all of its domains, the API
+	// key must be assigned the Reader service role on Internet Services (`internet-svcs`).
+	//
+	// If you need to manage specific domains, you can assign the Manager role. For production environments, it is
+	// recommended that you assign the Reader access role, and then use the
+	// [IAM Policy Management API](https://cloud.ibm.com/apidocs/iam-policy-management#create-policy) to control specific
+	// domains. For more information, see the
+	// [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-prepare-order-certificates#authorize-specific-domains).
+	CloudInternetServicesApikey *string `json:"cloud_internet_services_apikey,omitempty"`
+
+	// A CRN that uniquely identifies an IBM Cloud resource.
+	CloudInternetServicesCrn *string `json:"cloud_internet_services_crn,omitempty"`
+
+	// The username that is associated with your classic infrastructure account.
+	//
+	// In most cases, your classic infrastructure username is your `<account_id>_<email_address>`. For more information,
+	// see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
+	ClassicInfrastructureUsername *string `json:"classic_infrastructure_username,omitempty"`
+
+	// Your classic infrastructure API key.
+	//
+	// For information about viewing and accessing your classic infrastructure API key, see the
+	// [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
+	ClassicInfrastructurePassword *string `json:"classic_infrastructure_password,omitempty"`
+}
 
 // Constants associated with the ConfigurationPatch.KeyType property.
 // The type of private key to generate.
 const (
 	ConfigurationPatch_KeyType_Ec  = "ec"
 	ConfigurationPatch_KeyType_Rsa = "rsa"
+)
+
+// Constants associated with the ConfigurationPatch.LetsEncryptEnvironment property.
+// The configuration of the Let's Encrypt CA environment.
+const (
+	ConfigurationPatch_LetsEncryptEnvironment_Production = "production"
+	ConfigurationPatch_LetsEncryptEnvironment_Staging    = "staging"
 )
 
 func (*ConfigurationPatch) isaConfigurationPatch() bool {
@@ -3949,34 +4023,6 @@ type ConfigurationPatchIntf interface {
 func UnmarshalConfigurationPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ConfigurationPatch)
 	err = core.UnmarshalPrimitive(m, "api_key", &obj.ApiKey)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "lets_encrypt_environment", &obj.LetsEncryptEnvironment)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "lets_encrypt_private_key", &obj.LetsEncryptPrivateKey)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "lets_encrypt_preferred_chain", &obj.LetsEncryptPreferredChain)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cloud_internet_services_apikey", &obj.CloudInternetServicesApikey)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "cloud_internet_services_crn", &obj.CloudInternetServicesCrn)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "classic_infrastructure_username", &obj.ClassicInfrastructureUsername)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "classic_infrastructure_password", &obj.ClassicInfrastructurePassword)
 	if err != nil {
 		return
 	}
@@ -4144,6 +4190,34 @@ func UnmarshalConfigurationPatch(m map[string]json.RawMessage, result interface{
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "lets_encrypt_environment", &obj.LetsEncryptEnvironment)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lets_encrypt_private_key", &obj.LetsEncryptPrivateKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lets_encrypt_preferred_chain", &obj.LetsEncryptPreferredChain)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cloud_internet_services_apikey", &obj.CloudInternetServicesApikey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cloud_internet_services_crn", &obj.CloudInternetServicesCrn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "classic_infrastructure_username", &obj.ClassicInfrastructureUsername)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "classic_infrastructure_password", &obj.ClassicInfrastructurePassword)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -4160,13 +4234,13 @@ func (configurationPatch *ConfigurationPatch) AsPatch() (_patch map[string]inter
 
 // ConfigurationPrototype : The details of your configuration.
 // Models which "extend" this model:
+// - PrivateCertificateConfigurationRootCAPrototype
+// - PrivateCertificateConfigurationIntermediateCAPrototype
+// - PrivateCertificateConfigurationTemplatePrototype
 // - PublicCertificateConfigurationCALetsEncryptPrototype
 // - PublicCertificateConfigurationDNSCloudInternetServicesPrototype
 // - PublicCertificateConfigurationDNSClassicInfrastructurePrototype
 // - IAMCredentialsConfigurationPrototype
-// - PrivateCertificateConfigurationRootCAPrototype
-// - PrivateCertificateConfigurationIntermediateCAPrototype
-// - PrivateCertificateConfigurationTemplatePrototype
 type ConfigurationPrototype struct {
 	// The configuration type.
 	ConfigType *string `json:"config_type,omitempty"`
@@ -4175,50 +4249,6 @@ type ConfigurationPrototype struct {
 	//
 	// To protect your privacy, do not use personal data, such as your name or location, as an name for your secret.
 	Name *string `json:"name,omitempty"`
-
-	// The configuration of the Let's Encrypt CA environment.
-	LetsEncryptEnvironment *string `json:"lets_encrypt_environment,omitempty"`
-
-	// The PEM-encoded private key of your Let's Encrypt account. The data must be formatted on a single line with embedded
-	// newline characters.
-	LetsEncryptPrivateKey *string `json:"lets_encrypt_private_key,omitempty"`
-
-	// If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If
-	// no match, the default offered chain will be used.
-	LetsEncryptPreferredChain *string `json:"lets_encrypt_preferred_chain,omitempty"`
-
-	// An IBM Cloud API key that can to list domains in your Cloud Internet Services instance.
-	//
-	// To grant Secrets Manager the ability to view the Cloud Internet Services instance and all of its domains, the API
-	// key must be assigned the Reader service role on Internet Services (`internet-svcs`).
-	//
-	// If you need to manage specific domains, you can assign the Manager role. For production environments, it is
-	// recommended that you assign the Reader access role, and then use the
-	// [IAM Policy Management API](https://cloud.ibm.com/apidocs/iam-policy-management#create-policy) to control specific
-	// domains. For more information, see the
-	// [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-prepare-order-certificates#authorize-specific-domains).
-	CloudInternetServicesApikey *string `json:"cloud_internet_services_apikey,omitempty"`
-
-	// A CRN that uniquely identifies an IBM Cloud resource.
-	CloudInternetServicesCrn *string `json:"cloud_internet_services_crn,omitempty"`
-
-	// The username that is associated with your classic infrastructure account.
-	//
-	// In most cases, your classic infrastructure username is your `<account_id>_<email_address>`. For more information,
-	// see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
-	ClassicInfrastructureUsername *string `json:"classic_infrastructure_username,omitempty"`
-
-	// Your classic infrastructure API key.
-	//
-	// For information about viewing and accessing your classic infrastructure API key, see the
-	// [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
-	ClassicInfrastructurePassword *string `json:"classic_infrastructure_password,omitempty"`
-
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
-	ApiKey *string `json:"api_key,omitempty"`
 
 	// The maximum time-to-live (TTL) for certificates that are created by this CA.
 	//
@@ -4328,7 +4358,11 @@ type ConfigurationPrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The signing method to use with this certificate authority to generate private certificates.
@@ -4476,6 +4510,47 @@ type ConfigurationPrototype struct {
 	// The value can be supplied as a string representation of a duration, such as `30s`. In the API response, this value
 	// is returned in seconds (integer).
 	NotBeforeDuration *string `json:"not_before_duration,omitempty"`
+
+	// The configuration of the Let's Encrypt CA environment.
+	LetsEncryptEnvironment *string `json:"lets_encrypt_environment,omitempty"`
+
+	// The PEM-encoded private key of your Let's Encrypt account. The data must be formatted on a single line with embedded
+	// newline characters.
+	LetsEncryptPrivateKey *string `json:"lets_encrypt_private_key,omitempty"`
+
+	// If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If
+	// no match, the default offered chain will be used.
+	LetsEncryptPreferredChain *string `json:"lets_encrypt_preferred_chain,omitempty"`
+
+	// An IBM Cloud API key that can to list domains in your Cloud Internet Services instance.
+	//
+	// To grant Secrets Manager the ability to view the Cloud Internet Services instance and all of its domains, the API
+	// key must be assigned the Reader service role on Internet Services (`internet-svcs`).
+	//
+	// If you need to manage specific domains, you can assign the Manager role. For production environments, it is
+	// recommended that you assign the Reader access role, and then use the
+	// [IAM Policy Management API](https://cloud.ibm.com/apidocs/iam-policy-management#create-policy) to control specific
+	// domains. For more information, see the
+	// [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-prepare-order-certificates#authorize-specific-domains).
+	CloudInternetServicesApikey *string `json:"cloud_internet_services_apikey,omitempty"`
+
+	// A CRN that uniquely identifies an IBM Cloud resource.
+	CloudInternetServicesCrn *string `json:"cloud_internet_services_crn,omitempty"`
+
+	// The username that is associated with your classic infrastructure account.
+	//
+	// In most cases, your classic infrastructure username is your `<account_id>_<email_address>`. For more information,
+	// see the [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
+	ClassicInfrastructureUsername *string `json:"classic_infrastructure_username,omitempty"`
+
+	// Your classic infrastructure API key.
+	//
+	// For information about viewing and accessing your classic infrastructure API key, see the
+	// [docs](https://cloud.ibm.com/docs/account?topic=account-classic_keys).
+	ClassicInfrastructurePassword *string `json:"classic_infrastructure_password,omitempty"`
+
+	// The API key that is used to set the iam_credentials engine.
+	ApiKey *string `json:"api_key,omitempty"`
 }
 
 // Constants associated with the ConfigurationPrototype.ConfigType property.
@@ -4488,13 +4563,6 @@ const (
 	ConfigurationPrototype_ConfigType_PublicCertConfigurationCaLetsEncrypt            = "public_cert_configuration_ca_lets_encrypt"
 	ConfigurationPrototype_ConfigType_PublicCertConfigurationDnsClassicInfrastructure = "public_cert_configuration_dns_classic_infrastructure"
 	ConfigurationPrototype_ConfigType_PublicCertConfigurationDnsCloudInternetServices = "public_cert_configuration_dns_cloud_internet_services"
-)
-
-// Constants associated with the ConfigurationPrototype.LetsEncryptEnvironment property.
-// The configuration of the Let's Encrypt CA environment.
-const (
-	ConfigurationPrototype_LetsEncryptEnvironment_Production = "production"
-	ConfigurationPrototype_LetsEncryptEnvironment_Staging    = "staging"
 )
 
 // Constants associated with the ConfigurationPrototype.Format property.
@@ -4528,6 +4596,13 @@ const (
 	ConfigurationPrototype_SigningMethod_Internal = "internal"
 )
 
+// Constants associated with the ConfigurationPrototype.LetsEncryptEnvironment property.
+// The configuration of the Let's Encrypt CA environment.
+const (
+	ConfigurationPrototype_LetsEncryptEnvironment_Production = "production"
+	ConfigurationPrototype_LetsEncryptEnvironment_Staging    = "staging"
+)
+
 func (*ConfigurationPrototype) isaConfigurationPrototype() bool {
 	return true
 }
@@ -4549,7 +4624,13 @@ func UnmarshalConfigurationPrototype(m map[string]json.RawMessage, result interf
 		err = fmt.Errorf("required discriminator property 'config_type' not found in JSON object")
 		return
 	}
-	if discValue == "public_cert_configuration_ca_lets_encrypt" {
+	if discValue == "private_cert_configuration_root_ca" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationRootCAPrototype)
+	} else if discValue == "private_cert_configuration_intermediate_ca" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationIntermediateCAPrototype)
+	} else if discValue == "private_cert_configuration_template" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationTemplatePrototype)
+	} else if discValue == "public_cert_configuration_ca_lets_encrypt" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalPublicCertificateConfigurationCALetsEncryptPrototype)
 	} else if discValue == "public_cert_configuration_dns_cloud_internet_services" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalPublicCertificateConfigurationDNSCloudInternetServicesPrototype)
@@ -4557,12 +4638,6 @@ func UnmarshalConfigurationPrototype(m map[string]json.RawMessage, result interf
 		err = core.UnmarshalModel(m, "", result, UnmarshalPublicCertificateConfigurationDNSClassicInfrastructurePrototype)
 	} else if discValue == "iam_credentials_configuration" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalIAMCredentialsConfigurationPrototype)
-	} else if discValue == "private_cert_configuration_root_ca" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationRootCAPrototype)
-	} else if discValue == "private_cert_configuration_intermediate_ca" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationIntermediateCAPrototype)
-	} else if discValue == "private_cert_configuration_template" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateConfigurationTemplatePrototype)
 	} else {
 		err = fmt.Errorf("unrecognized value for discriminator property 'config_type': %s", discValue)
 	}
@@ -5363,6 +5438,69 @@ func (options *GetNotificationsRegistrationTestOptions) SetHeaders(param map[str
 	return options
 }
 
+// GetSecretByNameTypeOptions : The GetSecretByNameType options.
+type GetSecretByNameTypeOptions struct {
+	// The secret type. Supported types are arbitrary, certificates (imported, public, and private), IAM credentials,
+	// key-value, and user credentials.
+	SecretType *string `json:"secret_type" validate:"required,ne="`
+
+	// A human-readable name to assign to your secret. To protect your privacy, do not use personal data, such as your name
+	// or location, as a name for your secret.
+	Name *string `json:"name" validate:"required,ne="`
+
+	// The name of your secret group.
+	SecretGroupName *string `json:"secret_group_name" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the GetSecretByNameTypeOptions.SecretType property.
+// The secret type. Supported types are arbitrary, certificates (imported, public, and private), IAM credentials,
+// key-value, and user credentials.
+const (
+	GetSecretByNameTypeOptions_SecretType_Arbitrary        = "arbitrary"
+	GetSecretByNameTypeOptions_SecretType_IamCredentials   = "iam_credentials"
+	GetSecretByNameTypeOptions_SecretType_ImportedCert     = "imported_cert"
+	GetSecretByNameTypeOptions_SecretType_Kv               = "kv"
+	GetSecretByNameTypeOptions_SecretType_PrivateCert      = "private_cert"
+	GetSecretByNameTypeOptions_SecretType_PublicCert       = "public_cert"
+	GetSecretByNameTypeOptions_SecretType_UsernamePassword = "username_password"
+)
+
+// NewGetSecretByNameTypeOptions : Instantiate GetSecretByNameTypeOptions
+func (*SecretsManagerV2) NewGetSecretByNameTypeOptions(secretType string, name string, secretGroupName string) *GetSecretByNameTypeOptions {
+	return &GetSecretByNameTypeOptions{
+		SecretType:      core.StringPtr(secretType),
+		Name:            core.StringPtr(name),
+		SecretGroupName: core.StringPtr(secretGroupName),
+	}
+}
+
+// SetSecretType : Allow user to set SecretType
+func (_options *GetSecretByNameTypeOptions) SetSecretType(secretType string) *GetSecretByNameTypeOptions {
+	_options.SecretType = core.StringPtr(secretType)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *GetSecretByNameTypeOptions) SetName(name string) *GetSecretByNameTypeOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetSecretGroupName : Allow user to set SecretGroupName
+func (_options *GetSecretByNameTypeOptions) SetSecretGroupName(secretGroupName string) *GetSecretByNameTypeOptions {
+	_options.SecretGroupName = core.StringPtr(secretGroupName)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetSecretByNameTypeOptions) SetHeaders(param map[string]string) *GetSecretByNameTypeOptions {
+	options.Headers = param
+	return options
+}
+
 // GetSecretGroupOptions : The GetSecretGroup options.
 type GetSecretGroupOptions struct {
 	// The v4 UUID that uniquely identifies your secret group.
@@ -5557,7 +5695,7 @@ type ListConfigurationsOptions struct {
 	// `config_type`, `secret_type`.
 	//
 	// **Usage:** If you want to list only the configurations that contain the string `text`, use
-	// `../secrets?search=text`.
+	// `../configurations?search=text`.
 	Search *string `json:"search,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -6161,7 +6299,8 @@ func UnmarshalPublicCertificateRotationObject(m map[string]json.RawMessage, resu
 	return
 }
 
-// RotationPolicy : This field indicates whether Secrets Manager rotates your secrets automatically.
+// RotationPolicy : This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+// username_password, private_cert, public_cert, iam_credentials.
 // Models which "extend" this model:
 // - CommonRotationPolicy
 // - PublicCertificateRotationPolicy
@@ -6291,7 +6430,8 @@ type Secret struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The secret data that is assigned to an `arbitrary` secret.
@@ -6341,7 +6481,8 @@ type Secret struct {
 	// Issuance information that is associated with your certificate.
 	IssuanceInfo *CertificateIssuanceInfo `json:"issuance_info,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// Indicates whether the issued certificate is bundled with intermediate certificates.
@@ -6536,10 +6677,10 @@ func UnmarshalSecretAction(m map[string]json.RawMessage, result interface{}) (er
 		err = fmt.Errorf("required discriminator property 'action_type' not found in JSON object")
 		return
 	}
-	if discValue == "public_cert_action_validate_dns_challenge" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalPublicCertificateActionValidateManualDNS)
-	} else if discValue == "private_cert_action_revoke_certificate" {
+	if discValue == "private_cert_action_revoke_certificate" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalPrivateCertificateActionRevoke)
+	} else if discValue == "public_cert_action_validate_dns_challenge" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalPublicCertificateActionValidateManualDNS)
 	} else {
 		err = fmt.Errorf("unrecognized value for discriminator property 'action_type': %s", discValue)
 	}
@@ -6548,8 +6689,8 @@ func UnmarshalSecretAction(m map[string]json.RawMessage, result interface{}) (er
 
 // SecretActionPrototype : The request body to specify the properties for your secret action.
 // Models which "extend" this model:
-// - PublicCertificateActionValidateManualDNSPrototype
 // - PrivateCertificateActionRevokePrototype
+// - PublicCertificateActionValidateManualDNSPrototype
 type SecretActionPrototype struct {
 	// The type of secret action.
 	ActionType *string `json:"action_type,omitempty"`
@@ -6992,12 +7133,12 @@ func (resp *SecretLocksPaginatedCollection) GetNextOffset() (*int64, error) {
 
 // SecretMetadata : Properties of your secret metadata.
 // Models which "extend" this model:
+// - ArbitrarySecretMetadata
 // - ImportedCertificateMetadata
 // - PublicCertificateMetadata
 // - KVSecretMetadata
 // - UsernamePasswordSecretMetadata
 // - IAMCredentialsSecretMetadata
-// - ArbitrarySecretMetadata
 // - PrivateCertificateMetadata
 type SecretMetadata struct {
 	// The unique identifier that is associated with the entity that created the secret.
@@ -7058,6 +7199,10 @@ type SecretMetadata struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total,omitempty"`
 
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
+	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
+
 	// The identifier for the cryptographic algorithm that is used by the issuing certificate authority to sign a
 	// certificate.
 	SigningAlgorithm *string `json:"signing_algorithm,omitempty"`
@@ -7068,9 +7213,6 @@ type SecretMetadata struct {
 
 	// The Common Name (CN) represents the server name protected by the SSL certificate.
 	CommonName *string `json:"common_name,omitempty"`
-
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
-	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// Indicates whether the certificate was imported with an associated intermediate certificate.
 	IntermediateIncluded *bool `json:"intermediate_included,omitempty"`
@@ -7094,7 +7236,8 @@ type SecretMetadata struct {
 	// Issuance information that is associated with your certificate.
 	IssuanceInfo *CertificateIssuanceInfo `json:"issuance_info,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// Indicates whether the issued certificate is bundled with intermediate certificates.
@@ -7342,7 +7485,8 @@ type SecretMetadataPatch struct {
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The time-to-live (TTL) or lease duration to assign to credentials that are generated.
@@ -7354,7 +7498,8 @@ type SecretMetadataPatch struct {
 	// The minimum duration is 1 minute. The maximum is 90 days.
 	TTL *string `json:"ttl,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 }
 
@@ -7430,7 +7575,8 @@ type SecretPrototype struct {
 	// group.
 	Description *string `json:"description,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// Labels that you can use to search secrets in your instance. Only 30 labels can be created.
@@ -7488,7 +7634,8 @@ type SecretPrototype struct {
 	// API key are generated each time that the secret is read or accessed.
 	ReuseApiKey *bool `json:"reuse_api_key,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// Your PEM-encoded certificate. The data must be formatted on a single line with embedded newline characters.
@@ -7548,7 +7695,7 @@ type SecretPrototype struct {
 	//
 	// The algorithm that you select determines the encryption algorithm (`RSA` or `ECDSA`) and key size to be used to
 	// generate keys and sign certificates. For longer living certificates, it is recommended to use longer keys to provide
-	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `EC256`, and `EC384`.
+	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `ECDSA256`, and `ECDSA384`.
 	KeyAlgorithm *string `json:"key_algorithm,omitempty"`
 
 	// The name of the certificate authority configuration.
@@ -7685,7 +7832,8 @@ type SecretVersion struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The secret data that is assigned to an `arbitrary` secret.
@@ -8027,7 +8175,8 @@ type SecretVersionMetadata struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -8643,7 +8792,8 @@ type ArbitrarySecret struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The secret data that is assigned to an `arbitrary` secret.
@@ -8817,7 +8967,8 @@ type ArbitrarySecretMetadata struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 }
 
@@ -8947,7 +9098,8 @@ type ArbitrarySecretMetadataPatch struct {
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 }
 
@@ -9004,7 +9156,8 @@ type ArbitrarySecretPrototype struct {
 	// group.
 	Description *string `json:"description,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// Labels that you can use to search secrets in your instance. Only 30 labels can be created.
@@ -9146,7 +9299,8 @@ type ArbitrarySecretVersion struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The secret data that is assigned to an `arbitrary` secret.
@@ -9283,7 +9437,8 @@ type ArbitrarySecretVersionMetadata struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 }
 
@@ -9493,10 +9648,9 @@ type IAMCredentialsConfiguration struct {
 	// The date when a resource was modified. The date format follows `RFC 3339`.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
+	// An IBM Cloud API key that can create and manage service IDs. The API key must be assigned the Editor platform role
+	// on the Access Groups Service and the Operator platform role on the IAM Identity Service.  For more information, see
+	// the [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-configure-iam-engine).
 	ApiKey *string `json:"api_key,omitempty"`
 }
 
@@ -9650,10 +9804,9 @@ func UnmarshalIAMCredentialsConfigurationMetadata(m map[string]json.RawMessage, 
 // IAMCredentialsConfigurationPatch : The configuration update of the IAM Credentials engine.
 // This model "extends" ConfigurationPatch
 type IAMCredentialsConfigurationPatch struct {
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
+	// An IBM Cloud API key that can create and manage service IDs. The API key must be assigned the Editor platform role
+	// on the Access Groups Service and the Operator platform role on the IAM Identity Service.  For more information, see
+	// the [docs](https://cloud.ibm.com/docs/secrets-manager?topic=secrets-manager-configure-iam-engine).
 	ApiKey *string `json:"api_key" validate:"required"`
 }
 
@@ -9702,10 +9855,7 @@ type IAMCredentialsConfigurationPrototype struct {
 	// The configuration type.
 	ConfigType *string `json:"config_type" validate:"required"`
 
-	// The API key that is generated for this secret.
-	//
-	// After the secret reaches the end of its lease (see the `ttl` field), the API key is deleted automatically. If you
-	// want to continue to use the same API key for future read operations, see the `reuse_api_key` field.
+	// The API key that is used to set the iam_credentials engine.
 	ApiKey *string `json:"api_key" validate:"required"`
 }
 
@@ -9855,7 +10005,8 @@ type IAMCredentialsSecret struct {
 	// API key are generated each time that the secret is read or accessed.
 	ReuseApiKey *bool `json:"reuse_api_key" validate:"required"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The date that the secret is scheduled for automatic rotation.
@@ -10105,7 +10256,8 @@ type IAMCredentialsSecretMetadata struct {
 	// API key are generated each time that the secret is read or accessed.
 	ReuseApiKey *bool `json:"reuse_api_key" validate:"required"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The date that the secret is scheduled for automatic rotation.
@@ -10278,7 +10430,8 @@ type IAMCredentialsSecretMetadataPatch struct {
 	// The minimum duration is 1 minute. The maximum is 90 days.
 	TTL *string `json:"ttl,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 }
 
@@ -10385,7 +10538,8 @@ type IAMCredentialsSecretPrototype struct {
 	// API key are generated each time that the secret is read or accessed.
 	ReuseApiKey *bool `json:"reuse_api_key" validate:"required"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The secret metadata that a user can customize.
@@ -10923,7 +11077,8 @@ type ImportedCertificate struct {
 	// The Common Name (CN) represents the server name protected by the SSL certificate.
 	CommonName *string `json:"common_name,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// Indicates whether the certificate was imported with an associated intermediate certificate.
@@ -11179,7 +11334,8 @@ type ImportedCertificateMetadata struct {
 	// The Common Name (CN) represents the server name protected by the SSL certificate.
 	CommonName *string `json:"common_name,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// Indicates whether the certificate was imported with an associated intermediate certificate.
@@ -11565,7 +11721,8 @@ type ImportedCertificateVersion struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -11732,7 +11889,8 @@ type ImportedCertificateVersionMetadata struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -12765,7 +12923,8 @@ type PrivateCertificate struct {
 	// The Common Name (CN) represents the server name that is protected by the SSL certificate.
 	CommonName *string `json:"common_name" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The distinguished name that identifies the entity that signed and issued the certificate.
@@ -12781,7 +12940,8 @@ type PrivateCertificate struct {
 	// secrets that can be auto-rotated and an existing rotation policy.
 	NextRotationDate *strfmt.DateTime `json:"next_rotation_date,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -13359,8 +13519,8 @@ type PrivateCertificateConfigurationActionSignCSR struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -13386,7 +13546,11 @@ type PrivateCertificateConfigurationActionSignCSR struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The type of configuration action.
@@ -13568,8 +13732,8 @@ type PrivateCertificateConfigurationActionSignCSRPrototype struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -13595,7 +13759,11 @@ type PrivateCertificateConfigurationActionSignCSRPrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The type of configuration action.
@@ -13781,8 +13949,8 @@ type PrivateCertificateConfigurationActionSignIntermediate struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -13808,7 +13976,11 @@ type PrivateCertificateConfigurationActionSignIntermediate struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The type of configuration action.
@@ -13984,8 +14156,8 @@ type PrivateCertificateConfigurationActionSignIntermediatePrototype struct {
 	// 1) Subject information, including names and alternate names, are preserved from the CSR rather than by using the
 	// values that are provided in the other parameters to this operation.
 	//
-	// 2) Any key usage, for example, nonrepudiation, that is requested in the CSR are added to the basic set of key usages
-	// used for CA certificates that are signed by the intermediate authority.
+	// 2) Any key usage, for example, non-repudiation, that is requested in the CSR are added to the basic set of key
+	// usages used for CA certificates that are signed by the intermediate authority.
 	//
 	// 3) Extensions that are requested in the CSR are copied into the issued private certificate.
 	UseCsrValues *bool `json:"use_csr_values,omitempty"`
@@ -14011,7 +14183,11 @@ type PrivateCertificateConfigurationActionSignIntermediatePrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The type of configuration action.
@@ -14215,7 +14391,8 @@ type PrivateCertificateConfigurationIntermediateCA struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The distinguished name that identifies the entity that signed and issued the certificate.
@@ -14307,7 +14484,7 @@ type PrivateCertificateConfigurationIntermediateCA struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The configuration data of your Private Certificate.
@@ -14610,7 +14787,8 @@ type PrivateCertificateConfigurationIntermediateCAMetadata struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The distinguished name that identifies the entity that signed and issued the certificate.
@@ -14946,7 +15124,11 @@ type PrivateCertificateConfigurationIntermediateCAPrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 }
 
@@ -15154,7 +15336,8 @@ type PrivateCertificateConfigurationRootCA struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The type of private key to generate.
@@ -15249,7 +15432,7 @@ type PrivateCertificateConfigurationRootCA struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// The configuration data of your Private Certificate.
@@ -15495,7 +15678,8 @@ type PrivateCertificateConfigurationRootCAMetadata struct {
 	// certificates that are issued by this certificate authority.
 	CrlDistributionPointsEncoded *bool `json:"crl_distribution_points_encoded,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The type of private key to generate.
@@ -15811,7 +15995,11 @@ type PrivateCertificateConfigurationRootCAPrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// The requested value for the [`serialNumber`](https://datatracker.ietf.org/doc/html/rfc4519#section-2.31) attribute
+	// that is in the certificate's distinguished name (DN).
+	//
+	// **Note:** This field is not related to the `serial_number` field that is returned in the API response. The
+	// `serial_number` field represents the certificate's randomly assigned serial number.
 	SerialNumber *string `json:"serial_number,omitempty"`
 }
 
@@ -16153,7 +16341,7 @@ type PrivateCertificateConfigurationTemplate struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// This field is deprecated. You can ignore its value.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// This field indicates whether to require a common name to create a private certificate.
@@ -16641,7 +16829,7 @@ type PrivateCertificateConfigurationTemplatePatch struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// This field is deprecated. You can ignore its value.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// This field indicates whether to require a common name to create a private certificate.
@@ -17016,7 +17204,7 @@ type PrivateCertificateConfigurationTemplatePrototype struct {
 	// The postal code values to define in the subject field of the resulting certificate.
 	PostalCode []string `json:"postal_code,omitempty"`
 
-	// The serial number to assign to the generated certificate. To assign a random serial number, you can omit this field.
+	// This field is deprecated. You can ignore its value.
 	SerialNumber *string `json:"serial_number,omitempty"`
 
 	// This field indicates whether to require a common name to create a private certificate.
@@ -17322,7 +17510,8 @@ type PrivateCertificateMetadata struct {
 	// The Common Name (CN) represents the server name that is protected by the SSL certificate.
 	CommonName *string `json:"common_name" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The distinguished name that identifies the entity that signed and issued the certificate.
@@ -17338,7 +17527,8 @@ type PrivateCertificateMetadata struct {
 	// secrets that can be auto-rotated and an existing rotation policy.
 	NextRotationDate *strfmt.DateTime `json:"next_rotation_date,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -17532,7 +17722,8 @@ type PrivateCertificateMetadataPatch struct {
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 }
 
@@ -17649,7 +17840,8 @@ type PrivateCertificatePrototype struct {
 	// exceed the `max_ttl` that is defined in the associated certificate template.
 	TTL *string `json:"ttl,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The secret metadata that a user can customize.
@@ -17827,7 +18019,8 @@ type PrivateCertificateVersion struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -18072,7 +18265,8 @@ type PrivateCertificateVersionMetadata struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -18282,7 +18476,8 @@ type PublicCertificate struct {
 	// The Common Name (CN) represents the server name protected by the SSL certificate.
 	CommonName *string `json:"common_name" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// Issuance information that is associated with your certificate.
@@ -18296,7 +18491,7 @@ type PublicCertificate struct {
 	//
 	// The algorithm that you select determines the encryption algorithm (`RSA` or `ECDSA`) and key size to be used to
 	// generate keys and sign certificates. For longer living certificates, it is recommended to use longer keys to provide
-	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `EC256`, and `EC384`.
+	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `ECDSA256`, and `ECDSA384`.
 	KeyAlgorithm *string `json:"key_algorithm" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -18305,7 +18500,8 @@ type PublicCertificate struct {
 	// The date and time that the certificate validity period begins and ends.
 	Validity *CertificateValidity `json:"validity,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation" validate:"required"`
 
 	// Indicates whether the issued certificate is bundled with intermediate certificates.
@@ -19627,7 +19823,8 @@ type PublicCertificateMetadata struct {
 	// The Common Name (CN) represents the server name protected by the SSL certificate.
 	CommonName *string `json:"common_name" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// Issuance information that is associated with your certificate.
@@ -19641,7 +19838,7 @@ type PublicCertificateMetadata struct {
 	//
 	// The algorithm that you select determines the encryption algorithm (`RSA` or `ECDSA`) and key size to be used to
 	// generate keys and sign certificates. For longer living certificates, it is recommended to use longer keys to provide
-	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `EC256`, and `EC384`.
+	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `ECDSA256`, and `ECDSA384`.
 	KeyAlgorithm *string `json:"key_algorithm" validate:"required"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -19650,7 +19847,8 @@ type PublicCertificateMetadata struct {
 	// The date and time that the certificate validity period begins and ends.
 	Validity *CertificateValidity `json:"validity,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation" validate:"required"`
 
 	// Indicates whether the issued certificate is bundled with intermediate certificates.
@@ -19837,7 +20035,8 @@ type PublicCertificateMetadataPatch struct {
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 }
 
@@ -19922,7 +20121,7 @@ type PublicCertificatePrototype struct {
 	//
 	// The algorithm that you select determines the encryption algorithm (`RSA` or `ECDSA`) and key size to be used to
 	// generate keys and sign certificates. For longer living certificates, it is recommended to use longer keys to provide
-	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `EC256`, and `EC384`.
+	// more encryption protection. Allowed values:  `RSA2048`, `RSA4096`, `ECDSA256`, and `ECDSA384`.
 	KeyAlgorithm *string `json:"key_algorithm,omitempty"`
 
 	// The name of the certificate authority configuration.
@@ -19935,7 +20134,8 @@ type PublicCertificatePrototype struct {
 	// the certificate file to contain only the issued certificate.
 	BundleCerts *bool `json:"bundle_certs,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
 	// The secret metadata that a user can customize.
@@ -20128,7 +20328,8 @@ type PublicCertificateVersion struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -20295,7 +20496,8 @@ type PublicCertificateVersionMetadata struct {
 	// A v4 UUID identifier.
 	SecretID *string `json:"secret_id" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The unique serial number that was assigned to a certificate by the issuing certificate authority.
@@ -20503,10 +20705,12 @@ type UsernamePasswordSecret struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total" validate:"required"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The date that the secret is scheduled for automatic rotation.
@@ -20701,10 +20905,12 @@ type UsernamePasswordSecretMetadata struct {
 	// The number of versions of your secret.
 	VersionsTotal *int64 `json:"versions_total" validate:"required"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The date that the secret is scheduled for automatic rotation.
@@ -20848,10 +21054,12 @@ type UsernamePasswordSecretMetadataPatch struct {
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 }
 
@@ -20934,7 +21142,8 @@ type UsernamePasswordSecretPrototype struct {
 	// The password that is assigned to an `username_password` secret.
 	Password *string `json:"password" validate:"required"`
 
-	// The date when the secret material expires. The date format follows the `RFC 3339` format.
+	// The date when the secret material expires. The date format follows the `RFC 3339` format. Supported secret types:
+	// Arbitrary, username_password.
 	ExpirationDate *strfmt.DateTime `json:"expiration_date,omitempty"`
 
 	// The secret metadata that a user can customize.
@@ -20943,7 +21152,8 @@ type UsernamePasswordSecretPrototype struct {
 	// The secret version metadata that a user can customize.
 	VersionCustomMetadata map[string]interface{} `json:"version_custom_metadata,omitempty"`
 
-	// This field indicates whether Secrets Manager rotates your secrets automatically.
+	// This field indicates whether Secrets Manager rotates your secrets automatically. Supported secret types:
+	// username_password, private_cert, public_cert, iam_credentials.
 	Rotation RotationPolicyIntf `json:"rotation,omitempty"`
 }
 
@@ -21291,22 +21501,13 @@ func UnmarshalUsernamePasswordSecretVersionMetadata(m map[string]json.RawMessage
 // This model "extends" SecretVersionPrototype
 type UsernamePasswordSecretVersionPrototype struct {
 	// The password that is assigned to an `username_password` secret.
-	Password *string `json:"password" validate:"required"`
+	Password *string `json:"password,omitempty"`
 
 	// The secret metadata that a user can customize.
 	CustomMetadata map[string]interface{} `json:"custom_metadata,omitempty"`
 
 	// The secret version metadata that a user can customize.
 	VersionCustomMetadata map[string]interface{} `json:"version_custom_metadata,omitempty"`
-}
-
-// NewUsernamePasswordSecretVersionPrototype : Instantiate UsernamePasswordSecretVersionPrototype (Generic Model Constructor)
-func (*SecretsManagerV2) NewUsernamePasswordSecretVersionPrototype(password string) (_model *UsernamePasswordSecretVersionPrototype, err error) {
-	_model = &UsernamePasswordSecretVersionPrototype{
-		Password: core.StringPtr(password),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
 }
 
 func (*UsernamePasswordSecretVersionPrototype) isaSecretVersionPrototype() bool {

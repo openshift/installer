@@ -44,6 +44,10 @@ func ResourceIBMContainerIngressSecretTLS() *schema.Resource {
 				Required:    true,
 				Description: "Secret name",
 				ForceNew:    true,
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_ingress_secret_tls",
+					"secret_name",
+				),
 			},
 			"secret_namespace": {
 				Type:        schema.TypeString,
@@ -91,6 +95,11 @@ func ResourceIBMContainerIngressSecretTLS() *schema.Resource {
 				Computed:    true,
 				Description: "Timestamp secret was last updated",
 			},
+			"update_secret": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Updates secret from secrets manager if value is changed (increment each usage)",
+			},
 		},
 	}
 }
@@ -106,6 +115,15 @@ func ResourceIBMContainerIngressSecretTLSValidator() *validate.ResourceValidator
 			CloudDataType:              "cluster",
 			CloudDataRange:             []string{"resolved_to:id"}})
 
+	validateSchema = append(validateSchema, validate.ValidateSchema{
+		Identifier:                 "secret_name",
+		ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+		Type:                       validate.TypeString,
+		Required:                   true,
+		Regexp:                     `^([a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*)$`,
+		MinValueLength:             1,
+		MaxValueLength:             63,
+	})
 	iBMContainerIngressInstanceValidator := validate.ResourceValidator{ResourceName: "ibm_container_ingress_secret_tls", Schema: validateSchema}
 	return &iBMContainerIngressInstanceValidator
 }
@@ -228,11 +246,17 @@ func resourceIBMContainerIngressSecretTLSUpdate(d *schema.ResourceData, meta int
 		Namespace: secretNamespace,
 	}
 
+	ingressAPI := ingressClient.Ingresses()
 	if d.HasChange("cert_crn") {
 		params.CRN = d.Get("cert_crn").(string)
 
-		ingressAPI := ingressClient.Ingresses()
 		_, err := ingressAPI.UpdateIngressSecret(params)
+		if err != nil {
+			return err
+		}
+	} else if d.HasChange("update_secret") {
+		// user wants to force an upstream secret update from secrets manager onto kube cluster w/out changing crn
+		_, err = ingressAPI.UpdateIngressSecret(params)
 		if err != nil {
 			return err
 		}

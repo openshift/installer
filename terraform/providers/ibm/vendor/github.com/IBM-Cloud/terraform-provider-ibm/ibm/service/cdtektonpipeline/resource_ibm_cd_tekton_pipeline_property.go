@@ -41,13 +41,6 @@ func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "name"),
 				Description:  "Property name.",
 			},
-			"type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
-				Description:  "Property type.",
-			},
 			"value": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -61,11 +54,18 @@ func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 				Description: "Options for `single_select` property type. Only needed when using `single_select` property type.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"type": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
+				Description:  "Property type.",
+			},
 			"path": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "path"),
-				Description:  "A dot notation path for `integration` type properties only, to select a value from the tool integration. If left blank the full tool integration data will be used.",
+				Description:  "A dot notation path for `integration` type properties only, that selects a value from the tool integration. If left blank the full tool integration data will be used.",
 			},
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
@@ -98,13 +98,6 @@ func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator 
 			MaxValueLength:             253,
 		},
 		validate.ValidateSchema{
-			Identifier:                 "type",
-			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
-			Type:                       validate.TypeString,
-			Required:                   true,
-			AllowedValues:              "appconfig, integration, secure, single_select, text",
-		},
-		validate.ValidateSchema{
 			Identifier:                 "value",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
@@ -112,6 +105,13 @@ func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator 
 			Regexp:                     `^.*$`,
 			MinValueLength:             0,
 			MaxValueLength:             4096,
+		},
+		validate.ValidateSchema{
+			Identifier:                 "type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "appconfig, integration, secure, single_select, text",
 		},
 		validate.ValidateSchema{
 			Identifier:                 "path",
@@ -197,9 +197,6 @@ func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.
 	if err = d.Set("name", property.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-	if err = d.Set("type", property.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
-	}
 	if !core.IsNil(property.Value) {
 		if err = d.Set("value", property.Value); err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting value: %s", err))
@@ -209,6 +206,9 @@ func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.
 		if err = d.Set("enum", property.Enum); err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting enum: %s", err))
 		}
+	}
+	if err = d.Set("type", property.Type); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
 	}
 	if !core.IsNil(property.Path) {
 		if err = d.Set("path", property.Path); err != nil {

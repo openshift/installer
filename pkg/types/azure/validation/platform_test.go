@@ -28,6 +28,18 @@ func validNetworkPlatform() *azure.Platform {
 	return p
 }
 
+func validCustomerManagedKeys() *azure.Platform {
+	p := validPlatform()
+	p.CustomerManagedKey = &azure.CustomerManagedKey{
+		KeyVault: azure.KeyVault{
+			KeyName:       "test",
+			Name:          "test",
+			ResourceGroup: "test123",
+		},
+		UserAssignedIdentityKey: "12345678-1234-1234-1234-123456789123"}
+	return p
+}
+
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -159,6 +171,78 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.outboundType: Invalid value: "NatGateway": not supported in this feature set$`,
+		},
+		{
+			name: "missing key vault name",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.Name = ""
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Required value: name of the key vault is required for storage account encryption$`,
+		},
+		{
+			name: "invalid key vault name",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.Name = "1invalid"
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Invalid value: "1invalid": invalid name for key vault for encryption$`,
+		},
+		{
+			name: "missing key vault key name",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.KeyName = ""
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Required value: key vault key name is required for storage account encryption$`,
+		},
+		{
+			name: "invalid key vault key name",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.KeyName = "."
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Invalid value: ".": invalid key name for encryption$`,
+		},
+		{
+			name: "missing resource group",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.ResourceGroup = ""
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Required value: resource group of the key vault is required for storage account encryption$`,
+		},
+		{
+			name: "invalid resource group",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.KeyVault.ResourceGroup = "invalid."
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Invalid value: "invalid.": invalid resource group for encryption$`,
+		},
+		{
+			name: "missing user assigned identity",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.UserAssignedIdentityKey = ""
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Required value: user assigned identity key is required for storage account encryption$`,
+		},
+		{
+			name: "invalid user assigned identity",
+			platform: func() *azure.Platform {
+				p := validCustomerManagedKeys()
+				p.CustomerManagedKey.UserAssignedIdentityKey = "-"
+				return p
+			}(),
+			expected: `^test-path\.customerManagedKey: Invalid value: "-": invalid user assigned identity key for encryption$`,
 		},
 	}
 	ic := types.InstallConfig{}

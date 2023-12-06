@@ -124,6 +124,12 @@ func ResourceIBMSatelliteCluster() *schema.Resource {
 				},
 				Description: "The OpenShift Container Platform version",
 			},
+			"entitlement": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Entitlement option reduces additional OCP Licence cost in Openshift Clusters",
+			},
 			"operating_system": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -388,6 +394,11 @@ func resourceIBMSatelliteClusterCreate(d *schema.ResourceData, meta interface{})
 		hl := v.(*schema.Set)
 		hostLabels = flex.FlattenHostLabels(hl.List())
 		createClusterOptions.Labels = hostLabels
+	}
+
+	if v, ok := d.GetOk("entitlement"); ok {
+		entitlement := v.(string)
+		createClusterOptions.DefaultWorkerPoolEntitlement = &entitlement
 	}
 
 	if v, ok := d.GetOk("crn_token"); ok {

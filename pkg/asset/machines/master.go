@@ -301,7 +301,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.IBMCloud)
 		if len(mpool.Zones) == 0 {
-			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region)
+			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -473,10 +473,15 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
-		machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+
+		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
+			controlPlaneMachineSet = nil
+		}
+
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
 	case powervstypes.Name:
 		mpool := defaultPowerVSMachinePoolPlatform()
@@ -553,6 +558,15 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create ignition for Multipath enabled for master machines")
 		}
 		machineConfigs = append(machineConfigs, ignMultipath)
+
+		// set SMT level if specified for powervs.
+		if pool.Platform.PowerVS.SMTLevel != "" {
+			ignPowerSMT, err := machineconfig.ForPowerSMT("master", pool.Platform.PowerVS.SMTLevel)
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for Power SMT for master machines")
+			}
+			machineConfigs = append(machineConfigs, ignPowerSMT)
+		}
 	}
 	// The maximum number of networks supported on ServiceNetwork is two, one IPv4 and one IPv6 network.
 	// The cluster-network-operator handles the validation of this field.
@@ -747,16 +761,23 @@ func IsMachineManifest(file *asset.File) bool {
 	} else if matched {
 		return true
 	}
-	if matched, err := filepath.Match(masterMachineFileNamePattern, filename); err != nil {
-		panic("bad format for master machine file name pattern")
-	} else if matched {
-		return true
+	for _, pattern := range []struct {
+		Pattern string
+		Type    string
+	}{
+		{Pattern: secretFileNamePattern, Type: "secret"},
+		{Pattern: networkConfigSecretFileNamePattern, Type: "network config secret"},
+		{Pattern: hostFileNamePattern, Type: "host"},
+		{Pattern: masterMachineFileNamePattern, Type: "master machine"},
+		{Pattern: workerMachineSetFileNamePattern, Type: "worker machineset"},
+	} {
+		if matched, err := filepath.Match(pattern.Pattern, filename); err != nil {
+			panic(fmt.Sprintf("bad format for %s file name pattern", pattern.Type))
+		} else if matched {
+			return true
+		}
 	}
-	if matched, err := filepath.Match(workerMachineSetFileNamePattern, filename); err != nil {
-		panic("bad format for worker machine file name pattern")
-	} else {
-		return matched
-	}
+	return false
 }
 
 func createSecretAssetFiles(resources []corev1.Secret, fileName string) ([]*asset.File, error) {

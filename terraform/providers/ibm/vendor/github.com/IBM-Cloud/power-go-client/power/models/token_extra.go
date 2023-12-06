@@ -131,6 +131,7 @@ func (m *TokenExtra) ContextValidate(ctx context.Context, formats strfmt.Registr
 func (m *TokenExtra) contextValidateToken(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Token != nil {
+
 		if err := m.Token.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("token")

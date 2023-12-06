@@ -57,6 +57,16 @@ func DataSourceIBMContainerClusterVersions() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"default_openshift_version": {
+				Description: "Default openshift-version",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"default_kube_version": {
+				Description: "Default kube-version",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -74,16 +84,26 @@ func dataSourceIBMContainerClusterVersionsRead(d *schema.ResourceData, meta inte
 
 	availableVersions, _ := verAPI.ListV1(targetEnv)
 	versions := make([]string, len(availableVersions["kubernetes"]))
+	var defaultKubeVersion string
 	for i, version := range availableVersions["kubernetes"] {
 		versions[i] = fmt.Sprintf("%d%s%d%s%d", version.Major, ".", version.Minor, ".", version.Patch)
+		if version.Default {
+			defaultKubeVersion = fmt.Sprintf("%d%s%d%s%d", version.Major, ".", version.Minor, ".", version.Patch)
+		}
 	}
 
 	openshiftVersions := make([]string, len(availableVersions["openshift"]))
+	var defaultOpenshiftVersion string
 	for i, version := range availableVersions["openshift"] {
 		openshiftVersions[i] = fmt.Sprintf("%d%s%d%s%d", version.Major, ".", version.Minor, ".", version.Patch)
+		if version.Default {
+			defaultOpenshiftVersion = fmt.Sprintf("%d%s%d%s%d", version.Major, ".", version.Minor, ".", version.Patch)
+		}
 	}
 	d.SetId(time.Now().UTC().String())
 	d.Set("valid_kube_versions", versions)
 	d.Set("valid_openshift_versions", openshiftVersions)
+	d.Set("default_kube_version", defaultKubeVersion)
+	d.Set("default_openshift_version", defaultOpenshiftVersion)
 	return nil
 }

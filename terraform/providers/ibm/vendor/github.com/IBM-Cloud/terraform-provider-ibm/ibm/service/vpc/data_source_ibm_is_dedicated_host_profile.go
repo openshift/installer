@@ -238,6 +238,11 @@ func DataSourceIbmIsDedicatedHostProfile() *schema.Resource {
 					},
 				},
 			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The status of the dedicated host profile.",
+			},
 			"vcpu_architecture": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -354,7 +359,9 @@ func dataSourceIbmIsDedicatedHostProfileRead(context context.Context, d *schema.
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting disks %s", err))
 		}
 	}
-
+	if dedicatedHostProfile.Status != nil {
+		d.Set("status", dedicatedHostProfile.Status)
+	}
 	if err = d.Set("family", dedicatedHostProfile.Family); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting family: %s", err))
 	}

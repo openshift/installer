@@ -4,23 +4,18 @@ all:
       ansible_connection: local
       ansible_python_interpreter: "{{ansible_playbook_python}}"
 
+      # Network resource names
+      os_network: ocp-network
+      os_port_api: ocp-api-port
+      os_port_ingress: ocp-ingress-port
+      os_router: ocp-external-router
+      os_subnet: ocp-subnet-v4
+
       # User-provided values
       os_subnet_range: '10.0.0.0/16'
-      # uncomment for dual stack
-      # os_subnet6_range: 'd2e:6f44:5dd8:c956::/64'
       os_flavor_master: 'm1.xlarge'
       os_flavor_worker: 'm1.large'
       os_image_rhcos: 'rhcos'
-      # Service subnet cidr
-      svc_subnet_range: '172.30.0.0/16'
-      os_svc_network_range: '172.30.0.0/15'
-      # Subnet pool prefixes
-      cluster_network_cidrs: '10.128.0.0/14'
-      # Subnet pool prefix length
-      host_prefix: '23'
-      # Name of the SDN.
-      # Possible values are OpenshiftSDN or Kuryr.
-      os_networking_type: 'OpenshiftSDN'
 
       # Number of provisioned Control Plane nodes
       # 3 is the minimum number for a fully-functional cluster.
@@ -62,15 +57,43 @@ all:
       # in case of install failure.
       os_bootstrap_fip: '203.0.113.20'
 
-      # An IP address that will be assigned to the API VIP.
+      # An IPv4 address that will be assigned to the API VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
+      # This value will be overwritten by the network.yaml playbook.
       os_apiVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(5) }}"
 
-      # An IP address that will be assigned to the ingress VIP.
+      # An IPv4 address that will be assigned to the ingress VIP.
       # Be aware that the 10 and 11 of the machineNetwork will
       # be taken by neutron dhcp by default, and wont be available.
+      # This value will be overwritten by the network.yaml playbook.
       os_ingressVIP: "{{ os_subnet_range | ansible.utils.next_nth_usable(7) }}"
 
-      # Set control-plane nodes to schedule workloads when number of compute nodes is zero
+      # Set control-plane nodes to schedule workloads when number of compute
+      # nodes is zero
       os_master_schedulable: "{{ os_compute_nodes_number | int == 0 }}"
+
+      # Name of the IPv6 subnet. Uncomment to enable dual-stack support
+      #os_subnet6: ocp-subnet-v6
+
+      # IPv6 subnet CIDR
+      os_subnet6_range: 'fd2e:6f44:5dd8:c956::/64'
+
+      # Modes are one of: slaac, dhcpv6-stateful or dhcpv6-stateless
+      os_subnet6_address_mode: slaac
+      os_subnet6_router_advertisements_mode: slaac
+
+      # IPv6 service subnet cidr
+      service_subnet6_range: 'fd02::/112'
+
+      # IPv6 cluster network details
+      cluster_network6_cidr: 'fd01::/48'
+      cluster_network6_prefix: 64
+
+      # An IPv6 address that will be assigned to the API VIP.
+      # This value will be overwritten by the network.yaml playbook.
+      os_apiVIP6: ""
+
+      # An IPv6 address that will be assigned to the ingress VIP.
+      # This value will be overwritten by the network.yaml playbook.
+      os_ingressVIP6: ""

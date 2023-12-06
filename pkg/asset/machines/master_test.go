@@ -307,9 +307,11 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 
 	assert.Len(t, master.NetworkConfigSecretFiles, 1)
 	verifySecret(t, master.NetworkConfigSecretFiles[0], "openshift/99_openshift-cluster-api_host-network-config-secrets-0.yaml", "master-0-network-config-secret", "map[nmstate:[105 110 116 101 114 102 97 99 101 115 58 32 110 117 108 108 10]]")
+	verifyManifestOwnership(t, master)
 }
 
 func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
+	t.Helper()
 	assert.Equal(t, a.Filename, eFilename)
 	var host v1alpha1.BareMetalHost
 	assert.NoError(t, yaml.Unmarshal(a.Data, &host))
@@ -317,11 +319,19 @@ func verifyHost(t *testing.T, a *asset.File, eFilename, eName string) {
 }
 
 func verifySecret(t *testing.T, a *asset.File, eFilename, eName, eData string) {
+	t.Helper()
 	assert.Equal(t, a.Filename, eFilename)
 	var secret corev1.Secret
 	assert.NoError(t, yaml.Unmarshal(a.Data, &secret))
 	assert.Equal(t, eName, secret.Name)
 	assert.Equal(t, eData, fmt.Sprintf("%v", secret.Data))
+}
+
+func verifyManifestOwnership(t *testing.T, a asset.WritableAsset) {
+	t.Helper()
+	for _, file := range a.Files() {
+		assert.True(t, IsMachineManifest(file), file.Filename)
+	}
 }
 
 func networkConfig(config string) *v1.JSON {

@@ -85,6 +85,11 @@ func (m *Volumes) contextValidateVolumes(ctx context.Context, formats strfmt.Reg
 	for i := 0; i < len(m.Volumes); i++ {
 
 		if m.Volumes[i] != nil {
+
+			if swag.IsZero(m.Volumes[i]) { // not required
+				return nil
+			}
+
 			if err := m.Volumes[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("volumes" + "." + strconv.Itoa(i))

@@ -41,6 +41,18 @@ func (o *PcloudTenantsSshkeysPutReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudTenantsSshkeysPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudTenantsSshkeysPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudTenantsSshkeysPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +66,7 @@ func (o *PcloudTenantsSshkeysPutReader) ReadResponse(response runtime.ClientResp
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}] pcloud.tenants.sshkeys.put", response, response.Code())
 	}
 }
 
@@ -63,7 +75,8 @@ func NewPcloudTenantsSshkeysPutOK() *PcloudTenantsSshkeysPutOK {
 	return &PcloudTenantsSshkeysPutOK{}
 }
 
-/* PcloudTenantsSshkeysPutOK describes a response with status code 200, with default header values.
+/*
+PcloudTenantsSshkeysPutOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -71,9 +84,44 @@ type PcloudTenantsSshkeysPutOK struct {
 	Payload *models.SSHKey
 }
 
+// IsSuccess returns true when this pcloud tenants sshkeys put o k response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put o k response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put o k response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put o k response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put o k response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put o k response
+func (o *PcloudTenantsSshkeysPutOK) Code() int {
+	return 200
+}
+
 func (o *PcloudTenantsSshkeysPutOK) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudTenantsSshkeysPutOK) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudTenantsSshkeysPutOK) GetPayload() *models.SSHKey {
 	return o.Payload
 }
@@ -95,7 +143,8 @@ func NewPcloudTenantsSshkeysPutBadRequest() *PcloudTenantsSshkeysPutBadRequest {
 	return &PcloudTenantsSshkeysPutBadRequest{}
 }
 
-/* PcloudTenantsSshkeysPutBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudTenantsSshkeysPutBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +152,44 @@ type PcloudTenantsSshkeysPutBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tenants sshkeys put bad request response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put bad request response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put bad request response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put bad request response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put bad request response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put bad request response
+func (o *PcloudTenantsSshkeysPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudTenantsSshkeysPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudTenantsSshkeysPutBadRequest) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudTenantsSshkeysPutBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +211,8 @@ func NewPcloudTenantsSshkeysPutUnauthorized() *PcloudTenantsSshkeysPutUnauthoriz
 	return &PcloudTenantsSshkeysPutUnauthorized{}
 }
 
-/* PcloudTenantsSshkeysPutUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudTenantsSshkeysPutUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +220,44 @@ type PcloudTenantsSshkeysPutUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tenants sshkeys put unauthorized response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put unauthorized response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put unauthorized response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put unauthorized response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put unauthorized response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put unauthorized response
+func (o *PcloudTenantsSshkeysPutUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudTenantsSshkeysPutUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudTenantsSshkeysPutUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudTenantsSshkeysPutUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -154,12 +274,149 @@ func (o *PcloudTenantsSshkeysPutUnauthorized) readResponse(response runtime.Clie
 	return nil
 }
 
+// NewPcloudTenantsSshkeysPutForbidden creates a PcloudTenantsSshkeysPutForbidden with default headers values
+func NewPcloudTenantsSshkeysPutForbidden() *PcloudTenantsSshkeysPutForbidden {
+	return &PcloudTenantsSshkeysPutForbidden{}
+}
+
+/*
+PcloudTenantsSshkeysPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudTenantsSshkeysPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys put forbidden response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put forbidden response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put forbidden response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put forbidden response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put forbidden response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put forbidden response
+func (o *PcloudTenantsSshkeysPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudTenantsSshkeysPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysPutNotFound creates a PcloudTenantsSshkeysPutNotFound with default headers values
+func NewPcloudTenantsSshkeysPutNotFound() *PcloudTenantsSshkeysPutNotFound {
+	return &PcloudTenantsSshkeysPutNotFound{}
+}
+
+/*
+PcloudTenantsSshkeysPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudTenantsSshkeysPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys put not found response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put not found response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put not found response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put not found response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put not found response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put not found response
+func (o *PcloudTenantsSshkeysPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudTenantsSshkeysPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudTenantsSshkeysPutUnprocessableEntity creates a PcloudTenantsSshkeysPutUnprocessableEntity with default headers values
 func NewPcloudTenantsSshkeysPutUnprocessableEntity() *PcloudTenantsSshkeysPutUnprocessableEntity {
 	return &PcloudTenantsSshkeysPutUnprocessableEntity{}
 }
 
-/* PcloudTenantsSshkeysPutUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudTenantsSshkeysPutUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -167,9 +424,44 @@ type PcloudTenantsSshkeysPutUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tenants sshkeys put unprocessable entity response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put unprocessable entity response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put unprocessable entity response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put unprocessable entity response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put unprocessable entity response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put unprocessable entity response
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudTenantsSshkeysPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudTenantsSshkeysPutUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudTenantsSshkeysPutUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -191,7 +483,8 @@ func NewPcloudTenantsSshkeysPutInternalServerError() *PcloudTenantsSshkeysPutInt
 	return &PcloudTenantsSshkeysPutInternalServerError{}
 }
 
-/* PcloudTenantsSshkeysPutInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudTenantsSshkeysPutInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +492,44 @@ type PcloudTenantsSshkeysPutInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud tenants sshkeys put internal server error response has a 2xx status code
+func (o *PcloudTenantsSshkeysPutInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys put internal server error response has a 3xx status code
+func (o *PcloudTenantsSshkeysPutInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys put internal server error response has a 4xx status code
+func (o *PcloudTenantsSshkeysPutInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys put internal server error response has a 5xx status code
+func (o *PcloudTenantsSshkeysPutInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud tenants sshkeys put internal server error response a status code equal to that given
+func (o *PcloudTenantsSshkeysPutInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud tenants sshkeys put internal server error response
+func (o *PcloudTenantsSshkeysPutInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudTenantsSshkeysPutInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudTenantsSshkeysPutInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysPutInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudTenantsSshkeysPutInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

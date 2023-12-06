@@ -1,9 +1,8 @@
 package azure
 
 import (
+	"fmt"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 )
@@ -63,7 +62,7 @@ func (m *Metadata) unlockedSession() (*Session, error) {
 		var err error
 		m.session, err = GetSessionWithCredentials(m.CloudName, m.ARMEndpoint, m.Credentials)
 		if err != nil {
-			return nil, errors.Wrap(err, "creating Azure session")
+			return nil, fmt.Errorf("creating Azure session: %w", err)
 		}
 	}
 

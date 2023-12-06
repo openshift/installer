@@ -124,3 +124,8 @@ func (s *IBMPISession) AuthInfo(cloudInstanceID string) runtime.ClientAuthInfoWr
 		return r.SetHeaderParam("CRN", fmt.Sprintf(s.CRNFormat, cloudInstanceID))
 	})
 }
+
+// IsOnPrem returns true if the operation is being done on premise (at a satellite region)
+func (s *IBMPISession) IsOnPrem() bool {
+	return strings.Contains(s.Options.Zone, helpers.PIStratosRegionPrefix)
+}

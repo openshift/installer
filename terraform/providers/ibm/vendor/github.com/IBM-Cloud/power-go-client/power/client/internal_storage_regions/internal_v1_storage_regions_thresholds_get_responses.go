@@ -54,7 +54,7 @@ func (o *InternalV1StorageRegionsThresholdsGetReader) ReadResponse(response runt
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds] internal.v1.storage.regions.thresholds.get", response, response.Code())
 	}
 }
 
@@ -95,6 +95,11 @@ func (o *InternalV1StorageRegionsThresholdsGetOK) IsServerError() bool {
 // IsCode returns true when this internal v1 storage regions thresholds get o k response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds get o k response
+func (o *InternalV1StorageRegionsThresholdsGetOK) Code() int {
+	return 200
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetOK) Error() string {
@@ -160,6 +165,11 @@ func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) IsCode(code int) boo
 	return code == 401
 }
 
+// Code gets the status code for the internal v1 storage regions thresholds get unauthorized response
+func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) Code() int {
+	return 401
+}
+
 func (o *InternalV1StorageRegionsThresholdsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetUnauthorized  %+v", 401, o.Payload)
 }
@@ -221,6 +231,11 @@ func (o *InternalV1StorageRegionsThresholdsGetForbidden) IsServerError() bool {
 // IsCode returns true when this internal v1 storage regions thresholds get forbidden response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsGetForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds get forbidden response
+func (o *InternalV1StorageRegionsThresholdsGetForbidden) Code() int {
+	return 403
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetForbidden) Error() string {
@@ -286,6 +301,11 @@ func (o *InternalV1StorageRegionsThresholdsGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the internal v1 storage regions thresholds get not found response
+func (o *InternalV1StorageRegionsThresholdsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *InternalV1StorageRegionsThresholdsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/thresholds][%d] internalV1StorageRegionsThresholdsGetNotFound  %+v", 404, o.Payload)
 }
@@ -347,6 +367,11 @@ func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) IsServerError
 // IsCode returns true when this internal v1 storage regions thresholds get internal server error response a status code equal to that given
 func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the internal v1 storage regions thresholds get internal server error response
+func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *InternalV1StorageRegionsThresholdsGetInternalServerError) Error() string {

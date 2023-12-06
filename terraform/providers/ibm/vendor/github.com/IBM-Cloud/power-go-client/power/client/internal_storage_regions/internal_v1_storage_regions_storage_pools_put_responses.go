@@ -60,7 +60,7 @@ func (o *InternalV1StorageRegionsStoragePoolsPutReader) ReadResponse(response ru
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}] internal.v1.storage.regions.storage-pools.put", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutOK) IsServerError() bool {
 // IsCode returns true when this internal v1 storage regions storage pools put o k response a status code equal to that given
 func (o *InternalV1StorageRegionsStoragePoolsPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the internal v1 storage regions storage pools put o k response
+func (o *InternalV1StorageRegionsStoragePoolsPutOK) Code() int {
+	return 200
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutOK) Error() string {
@@ -166,6 +171,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) IsCode(code int) boo
 	return code == 400
 }
 
+// Code gets the status code for the internal v1 storage regions storage pools put bad request response
+func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) IsServerError() bo
 // IsCode returns true when this internal v1 storage regions storage pools put unauthorized response a status code equal to that given
 func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the internal v1 storage regions storage pools put unauthorized response
+func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) IsCode(code int) bool
 	return code == 403
 }
 
+// Code gets the status code for the internal v1 storage regions storage pools put forbidden response
+func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) Code() int {
+	return 403
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) IsCode(code int) bool 
 	return code == 404
 }
 
+// Code gets the status code for the internal v1 storage regions storage pools put not found response
+func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) Code() int {
+	return 404
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsPutNotFound) Error() string {
 	return fmt.Sprintf("[PUT /internal/v1/storage/regions/{region_zone_id}/storage-pools/{storage_pool_name}][%d] internalV1StorageRegionsStoragePoolsPutNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) IsServerErr
 // IsCode returns true when this internal v1 storage regions storage pools put internal server error response a status code equal to that given
 func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the internal v1 storage regions storage pools put internal server error response
+func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *InternalV1StorageRegionsStoragePoolsPutInternalServerError) Error() string {

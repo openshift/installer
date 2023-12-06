@@ -14,7 +14,6 @@ import (
 )
 
 type config struct {
-	ServiceInstanceID     string `json:"powervs_cloud_instance_id"`
 	APIKey                string `json:"powervs_api_key"`
 	SSHKey                string `json:"powervs_ssh_key"`
 	PowerVSRegion         string `json:"powervs_region"`
@@ -27,7 +26,6 @@ type config struct {
 	DNSInstanceGUID       string `json:"powervs_dns_guid"`
 	ImageBucketName       string `json:"powervs_image_bucket_name"`
 	ImageBucketFileName   string `json:"powervs_image_bucket_file_name"`
-	NetworkName           string `json:"powervs_network_name"`
 	VPCName               string `json:"powervs_vpc_name"`
 	VPCSubnetName         string `json:"powervs_vpc_subnet_name"`
 	VPCPermitted          bool   `json:"powervs_vpc_permitted"`
@@ -42,7 +40,7 @@ type config struct {
 	PublishStrategy       string `json:"powervs_publish_strategy"`
 	EnableSNAT            bool   `json:"powervs_enable_snat"`
 	TransitGatewayEnabled bool   `json:"powervs_transit_gateway_enabled"`
-	ServiceInstanceCRN    string `json:"powervs_service_instance_crn"`
+	ServiceInstanceName   string `json:"powervs_service_instance_name"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -54,7 +52,6 @@ type TFVarsSources struct {
 	Zone                  string
 	ImageBucketName       string
 	ImageBucketFileName   string
-	NetworkName           string
 	PowerVSResourceGroup  string
 	CISInstanceCRN        string
 	DNSInstanceCRN        string
@@ -68,7 +65,7 @@ type TFVarsSources struct {
 	PublishStrategy       types.PublishingStrategy
 	EnableSNAT            bool
 	TransitGatewayEnabled bool
-	ServiceInstanceCRN    string
+	ServiceInstanceName   string
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -80,12 +77,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		return nil, fmt.Errorf("failed to find COS region for PowerVS region")
 	}
 
-	var serviceInstanceID, processor, dnsGUID string
-	if masterConfig.ServiceInstance.ID != nil {
-		serviceInstanceID = *masterConfig.ServiceInstance.ID
-	} else {
-		return nil, fmt.Errorf("serviceInstanceID is nil")
-	}
+	var processor, dnsGUID string
 
 	if masterConfig.Processors.StrVal != "" {
 		processor = masterConfig.Processors.StrVal
@@ -103,7 +95,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		ServiceInstanceID:     serviceInstanceID,
 		APIKey:                sources.APIKey,
 		SSHKey:                sources.SSHKey,
 		PowerVSRegion:         sources.Region,
@@ -130,10 +121,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		PublishStrategy:       string(sources.PublishStrategy),
 		EnableSNAT:            sources.EnableSNAT,
 		TransitGatewayEnabled: sources.TransitGatewayEnabled,
-		ServiceInstanceCRN:    sources.ServiceInstanceCRN,
-	}
-	if masterConfig.Network.Name != nil {
-		cfg.NetworkName = *masterConfig.Network.Name
+		ServiceInstanceName:   sources.ServiceInstanceName,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

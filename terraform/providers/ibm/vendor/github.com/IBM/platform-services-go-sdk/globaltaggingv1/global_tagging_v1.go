@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.63.0-5dae26c1-20230111-193039
+ * IBM OpenAPI SDK Code Generator Version: 3.79.0-2eb6af3d-20230905-174838
  */
 
 // Package globaltaggingv1 : Operations and models for the GlobalTaggingV1 service
@@ -196,6 +196,12 @@ func (globalTagging *GlobalTaggingV1) ListTagsWithContext(ctx context.Context, l
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	if listTagsOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*listTagsOptions.XRequestID))
+	}
+	if listTagsOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*listTagsOptions.XCorrelationID))
+	}
 	if listTagsOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*listTagsOptions.TransactionID))
 	}
@@ -292,6 +298,12 @@ func (globalTagging *GlobalTaggingV1) CreateTagWithContext(ctx context.Context, 
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
+	if createTagOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*createTagOptions.XRequestID))
+	}
+	if createTagOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*createTagOptions.XCorrelationID))
+	}
 	if createTagOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*createTagOptions.TransactionID))
 	}
@@ -366,6 +378,12 @@ func (globalTagging *GlobalTaggingV1) DeleteTagAllWithContext(ctx context.Contex
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	if deleteTagAllOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*deleteTagAllOptions.XRequestID))
+	}
+	if deleteTagAllOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*deleteTagAllOptions.XCorrelationID))
+	}
 	if deleteTagAllOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*deleteTagAllOptions.TransactionID))
 	}
@@ -442,6 +460,12 @@ func (globalTagging *GlobalTaggingV1) DeleteTagWithContext(ctx context.Context, 
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+	if deleteTagOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*deleteTagOptions.XRequestID))
+	}
+	if deleteTagOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*deleteTagOptions.XCorrelationID))
+	}
 	if deleteTagOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*deleteTagOptions.TransactionID))
 	}
@@ -516,6 +540,12 @@ func (globalTagging *GlobalTaggingV1) AttachTagWithContext(ctx context.Context, 
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
+	if attachTagOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*attachTagOptions.XRequestID))
+	}
+	if attachTagOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*attachTagOptions.XCorrelationID))
+	}
 	if attachTagOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*attachTagOptions.TransactionID))
 	}
@@ -601,6 +631,12 @@ func (globalTagging *GlobalTaggingV1) DetachTagWithContext(ctx context.Context, 
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
+	if detachTagOptions.XRequestID != nil {
+		builder.AddHeader("x-request-id", fmt.Sprint(*detachTagOptions.XRequestID))
+	}
+	if detachTagOptions.XCorrelationID != nil {
+		builder.AddHeader("x-correlation-id", fmt.Sprint(*detachTagOptions.XCorrelationID))
+	}
 	if detachTagOptions.TransactionID != nil {
 		builder.AddHeader("transaction-id", fmt.Sprint(*detachTagOptions.TransactionID))
 	}
@@ -662,8 +698,24 @@ type AttachTagOptions struct {
 	// An array of tag names to attach.
 	TagNames []string `json:"tag_names,omitempty"`
 
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The user on whose behalf the attach operation must be performed (_for administrators only_).
@@ -715,7 +767,20 @@ func (_options *AttachTagOptions) SetTagNames(tagNames []string) *AttachTagOptio
 	return _options
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *AttachTagOptions) SetXRequestID(xRequestID string) *AttachTagOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *AttachTagOptions) SetXCorrelationID(xCorrelationID string) *AttachTagOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *AttachTagOptions) SetTransactionID(transactionID string) *AttachTagOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -753,8 +818,24 @@ type CreateTagOptions struct {
 	// The user on whose behalf the create operation must be performed (_for administrators only_).
 	ImpersonateUser *string `json:"impersonate_user,omitempty"`
 
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The ID of the billing account where the tag must be created. It is a required parameter if `impersonate_user` is
@@ -793,7 +874,20 @@ func (_options *CreateTagOptions) SetImpersonateUser(impersonateUser string) *Cr
 	return _options
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *CreateTagOptions) SetXRequestID(xRequestID string) *CreateTagOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *CreateTagOptions) SetXCorrelationID(xCorrelationID string) *CreateTagOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *CreateTagOptions) SetTransactionID(transactionID string) *CreateTagOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -860,8 +954,24 @@ func UnmarshalCreateTagResultsResultsItem(m map[string]json.RawMessage, result i
 
 // DeleteTagAllOptions : The DeleteTagAll options.
 type DeleteTagAllOptions struct {
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// Select a provider. Supported values are `ghost` and `ims`.
@@ -903,7 +1013,20 @@ func (*GlobalTaggingV1) NewDeleteTagAllOptions() *DeleteTagAllOptions {
 	return &DeleteTagAllOptions{}
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *DeleteTagAllOptions) SetXRequestID(xRequestID string) *DeleteTagAllOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *DeleteTagAllOptions) SetXCorrelationID(xCorrelationID string) *DeleteTagAllOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *DeleteTagAllOptions) SetTransactionID(transactionID string) *DeleteTagAllOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -944,8 +1067,24 @@ type DeleteTagOptions struct {
 	// The name of tag to be deleted.
 	TagName *string `json:"tag_name" validate:"required,ne="`
 
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// Select a provider. Supported values are `ghost` and `ims`. To delete tags both in Global Search and Tagging and in
@@ -995,7 +1134,20 @@ func (_options *DeleteTagOptions) SetTagName(tagName string) *DeleteTagOptions {
 	return _options
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *DeleteTagOptions) SetXRequestID(xRequestID string) *DeleteTagOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *DeleteTagOptions) SetXCorrelationID(xCorrelationID string) *DeleteTagOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *DeleteTagOptions) SetTransactionID(transactionID string) *DeleteTagOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1203,14 +1355,30 @@ type DetachTagOptions struct {
 	// An array of tag names to detach.
 	TagNames []string `json:"tag_names,omitempty"`
 
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The user on whose behalf the detach operation must be performed (_for administrators only_).
 	ImpersonateUser *string `json:"impersonate_user,omitempty"`
 
-	// The ID of the billing account of the untagged resource.  It is a required parameter if `tag_type` is set to
+	// The ID of the billing account of the untagged resource. It is a required parameter if `tag_type` is set to
 	// `service`, otherwise it is inferred from the authorization IAM token.
 	AccountID *string `json:"account_id,omitempty"`
 
@@ -1256,7 +1424,20 @@ func (_options *DetachTagOptions) SetTagNames(tagNames []string) *DetachTagOptio
 	return _options
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *DetachTagOptions) SetXRequestID(xRequestID string) *DetachTagOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *DetachTagOptions) SetXCorrelationID(xCorrelationID string) *DetachTagOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *DetachTagOptions) SetTransactionID(transactionID string) *DetachTagOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options
@@ -1288,8 +1469,24 @@ func (options *DetachTagOptions) SetHeaders(param map[string]string) *DetachTagO
 
 // ListTagsOptions : The ListTags options.
 type ListTagsOptions struct {
+	// An alphanumeric string that is used to trace the request. The value  may include ASCII alphanumerics and any of
+	// following segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024
+	// bytes. The value is considered invalid and must be ignored if that value includes any other character or is longer
+	// than 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XRequestID *string `json:"x-request-id,omitempty"`
+
+	// An alphanumeric string that is used to trace the request as a part of a larger context: the same value is used for
+	// downstream requests and retries of those requests. The value may include ASCII alphanumerics and any of following
+	// segment separators: space ( ), comma (,), hyphen, (-), and underscore (_) and may have a length up to 1024 bytes.
+	// The value is considered invalid and must be ignored if that value includes any other character or is longer than
+	// 1024 bytes or is fewer than 8 characters. If not specified or invalid, it is automatically replaced by a random
+	// (version 4) UUID.
+	XCorrelationID *string `json:"x-correlation-id,omitempty"`
+
 	// An alphanumeric string that can be used to trace a request across services. If not specified, it automatically
 	// generated with the prefix "gst-".
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TransactionID *string `json:"transaction-id,omitempty"`
 
 	// The user on whose behalf the get operation must be performed (_for administrators only_).
@@ -1364,7 +1561,20 @@ func (*GlobalTaggingV1) NewListTagsOptions() *ListTagsOptions {
 	return &ListTagsOptions{}
 }
 
+// SetXRequestID : Allow user to set XRequestID
+func (_options *ListTagsOptions) SetXRequestID(xRequestID string) *ListTagsOptions {
+	_options.XRequestID = core.StringPtr(xRequestID)
+	return _options
+}
+
+// SetXCorrelationID : Allow user to set XCorrelationID
+func (_options *ListTagsOptions) SetXCorrelationID(xCorrelationID string) *ListTagsOptions {
+	_options.XCorrelationID = core.StringPtr(xCorrelationID)
+	return _options
+}
+
 // SetTransactionID : Allow user to set TransactionID
+// Deprecated: this method is deprecated and may be removed in a future release.
 func (_options *ListTagsOptions) SetTransactionID(transactionID string) *ListTagsOptions {
 	_options.TransactionID = core.StringPtr(transactionID)
 	return _options

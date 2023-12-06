@@ -22,7 +22,7 @@ func TestInstanceTypes(t *testing.T) {
 		{
 			name:     "default instance types for AMD64",
 			topology: configv1.HighlyAvailableTopologyMode,
-			expected: []string{"m6i.xlarge", "m5.xlarge", "r5.xlarge", "c5.2xlarge", "m5.2xlarge", "c5d.2xlarge"},
+			expected: []string{"m6i.xlarge", "m5.xlarge", "r5.xlarge", "c5.2xlarge", "m5.2xlarge", "c5d.2xlarge", "r5.2xlarge"},
 			assert: func(tc *testCase) {
 				instances := InstanceTypes(tc.region, tc.architecture, tc.topology)
 				assert.Equal(t, tc.expected, instances, "unexepcted instance type for AMD64")
@@ -31,7 +31,7 @@ func TestInstanceTypes(t *testing.T) {
 		{
 			name:     "default instance types for AMD64",
 			topology: configv1.SingleReplicaTopologyMode,
-			expected: []string{"m6i.2xlarge", "m5.2xlarge", "r5.2xlarge", "c5.2xlarge", "m5.2xlarge", "c5d.2xlarge"},
+			expected: []string{"m6i.2xlarge", "m5.2xlarge", "r5.2xlarge", "c5.2xlarge", "m5.2xlarge", "c5d.2xlarge", "r5.2xlarge"},
 			assert: func(tc *testCase) {
 				instances := InstanceTypes(tc.region, tc.architecture, tc.topology)
 				assert.Equal(t, tc.expected, instances, "unexepcted instance type for AMD64")

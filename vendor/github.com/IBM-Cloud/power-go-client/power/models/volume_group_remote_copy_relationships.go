@@ -85,6 +85,11 @@ func (m *VolumeGroupRemoteCopyRelationships) contextValidateRemoteCopyRelationsh
 	for i := 0; i < len(m.RemoteCopyRelationships); i++ {
 
 		if m.RemoteCopyRelationships[i] != nil {
+
+			if swag.IsZero(m.RemoteCopyRelationships[i]) { // not required
+				return nil
+			}
+
 			if err := m.RemoteCopyRelationships[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("remoteCopyRelationships" + "." + strconv.Itoa(i))

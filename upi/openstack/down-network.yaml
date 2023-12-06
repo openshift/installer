@@ -54,16 +54,3 @@
     ansible.builtin.command:
       cmd: "openstack network delete {{ networks.stdout_lines | join(' ') }}"
     when: networks.stdout != ""
-
-  - name: 'List the cluster subnet pool'
-    ansible.builtin.command:
-      cmd: "openstack subnet pool list --name {{ subnet_pool }}"
-    when: os_networking_type == "Kuryr"
-    register: pods_subnet_pool
-
-  - name: 'Remove the cluster subnet pool'
-    ansible.builtin.command:
-      cmd: "openstack subnet pool delete {{ subnet_pool }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - pods_subnet_pool.stdout != ""

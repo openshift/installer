@@ -72,6 +72,11 @@ func (m *ServiceBindingSchemaObject) ContextValidate(ctx context.Context, format
 func (m *ServiceBindingSchemaObject) contextValidateCreate(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Create != nil {
+
+		if swag.IsZero(m.Create) { // not required
+			return nil
+		}
+
 		if err := m.Create.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("create")

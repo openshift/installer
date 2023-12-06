@@ -68,6 +68,7 @@ func InstanceTypes(region string, arch types.Architecture, topology configv1.Top
 			"c5.2xlarge",
 			"m5.2xlarge",
 			"c5d.2xlarge",
+			"r5.2xlarge",
 		}
 	}
 }

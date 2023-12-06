@@ -39,24 +39,14 @@ func TestCloudProviderConfig(t *testing.T) {
 	"subnetName": "clusterid-worker-subnet",
 	"securityGroupName": "clusterid-node-nsg",
 	"routeTableName": "clusterid-node-routetable",
-	"primaryAvailabilitySetName": "",
-	"vmType": "",
-	"primaryScaleSetName": "",
-	"cloudProviderBackoff": true,
-	"cloudProviderBackoffRetries": 0,
-	"cloudProviderBackoffExponent": 0,
-	"cloudProviderBackoffDuration": 6,
-	"cloudProviderBackoffJitter": 0,
-	"cloudProviderRateLimit": false,
-	"cloudProviderRateLimitQPS": 0,
-	"cloudProviderRateLimitBucket": 0,
-	"cloudProviderRateLimitQPSWrite": 0,
-	"cloudProviderRateLimitBucketWrite": 0,
-	"useInstanceMetadata": true,
+	"vmType": "standard",
 	"loadBalancerSku": "standard",
+	"cloudProviderBackoff": true,
+	"useInstanceMetadata": true,
 	"excludeMasterFromStandardLB": false,
-	"disableOutboundSNAT": null,
-	"maximumLoadBalancerRuleCount": 0
+	"cloudProviderBackoffDuration": 6,
+	"putVMSSVMBatchSize": 0,
+	"enableMigrateToIPBasedBackendPoolAPI": false
 }
 `
 

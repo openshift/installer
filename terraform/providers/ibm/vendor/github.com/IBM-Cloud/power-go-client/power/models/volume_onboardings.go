@@ -85,6 +85,11 @@ func (m *VolumeOnboardings) contextValidateOnboardings(ctx context.Context, form
 	for i := 0; i < len(m.Onboardings); i++ {
 
 		if m.Onboardings[i] != nil {
+
+			if swag.IsZero(m.Onboardings[i]) { // not required
+				return nil
+			}
+
 			if err := m.Onboardings[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("onboardings" + "." + strconv.Itoa(i))

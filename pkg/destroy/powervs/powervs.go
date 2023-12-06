@@ -57,6 +57,9 @@ func leftInContext(ctx context.Context) time.Duration {
 }
 
 const (
+	// resource Id for Power Systems Virtual Server in the Global catalog.
+	powerIAASResourceID = "abd259f0-9990-11e8-acc8-b9f54a8f1661"
+
 	// cisServiceID is the Cloud Internet Services' catalog service ID.
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
 )
@@ -153,21 +156,20 @@ type ClusterUninstaller struct {
 	VPCRegion      string
 	Zone           string
 
-	managementSvc         *resourcemanagerv2.ResourceManagerV2
-	controllerSvc         *resourcecontrollerv2.ResourceControllerV2
-	vpcSvc                *vpcv1.VpcV1
-	zonesSvc              *zonesv1.ZonesV1
-	dnsRecordsSvc         *dnsrecordsv1.DnsRecordsV1
-	dnsZonesSvc           *dnszonesv1.DnsZonesV1
-	resourceRecordsSvc    *resourcerecordsv1.ResourceRecordsV1
-	piSession             *ibmpisession.IBMPISession
-	instanceClient        *instance.IBMPIInstanceClient
-	imageClient           *instance.IBMPIImageClient
-	jobClient             *instance.IBMPIJobClient
-	keyClient             *instance.IBMPIKeyClient
-	cloudConnectionClient *instance.IBMPICloudConnectionClient
-	dhcpClient            *instance.IBMPIDhcpClient
-	tgClient              *transitgatewayapisv1.TransitGatewayApisV1
+	managementSvc      *resourcemanagerv2.ResourceManagerV2
+	controllerSvc      *resourcecontrollerv2.ResourceControllerV2
+	vpcSvc             *vpcv1.VpcV1
+	zonesSvc           *zonesv1.ZonesV1
+	dnsRecordsSvc      *dnsrecordsv1.DnsRecordsV1
+	dnsZonesSvc        *dnszonesv1.DnsZonesV1
+	resourceRecordsSvc *resourcerecordsv1.ResourceRecordsV1
+	piSession          *ibmpisession.IBMPISession
+	instanceClient     *instance.IBMPIInstanceClient
+	imageClient        *instance.IBMPIImageClient
+	jobClient          *instance.IBMPIJobClient
+	keyClient          *instance.IBMPIKeyClient
+	dhcpClient         *instance.IBMPIDhcpClient
+	tgClient           *transitgatewayapisv1.TransitGatewayApisV1
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -225,11 +227,11 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		CISInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.CISInstanceCRN,
 		DNSInstanceCRN:     metadata.ClusterPlatformMetadata.PowerVS.DNSInstanceCRN,
 		Region:             metadata.ClusterPlatformMetadata.PowerVS.Region,
-		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 		VPCRegion:          metadata.ClusterPlatformMetadata.PowerVS.VPCRegion,
 		Zone:               metadata.ClusterPlatformMetadata.PowerVS.Zone,
 		pendingItemTracker: newPendingItemTracker(),
 		resourceGroupID:    metadata.ClusterPlatformMetadata.PowerVS.PowerVSResourceGroup,
+		ServiceGUID:        metadata.ClusterPlatformMetadata.PowerVS.ServiceInstanceGUID,
 	}, nil
 }
 
@@ -311,8 +313,6 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		{name: "Public Gateways", execute: o.destroyPublicGateways},
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
-	}, {
-		{name: "Cloud Connections", execute: o.destroyCloudConnections},
 	}, {
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
@@ -451,9 +451,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		ctrlv2                controllerv2.ResourceControllerAPIV2
 		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
 		authenticator         core.Authenticator
-		serviceInstances      cloudResources
 		versionDate           = "2023-07-04"
 		tgOptions             *transitgatewayapisv1.TransitGatewayApisV1Options
+		serviceName           string
 	)
 
 	defer func() {
@@ -467,7 +467,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		o.Logger.Debugf("loadSDKServices: o.imageClient = %v", o.imageClient)
 		o.Logger.Debugf("loadSDKServices: o.jobClient = %v", o.jobClient)
 		o.Logger.Debugf("loadSDKServices: o.keyClient = %v", o.keyClient)
-		o.Logger.Debugf("loadSDKServices: o.cloudConnectionClient = %v", o.cloudConnectionClient)
 		o.Logger.Debugf("loadSDKServices: o.vpcSvc = %v", o.vpcSvc)
 		o.Logger.Debugf("loadSDKServices: o.managementSvc = %v", o.managementSvc)
 		o.Logger.Debugf("loadSDKServices: o.controllerSvc = %v", o.controllerSvc)
@@ -686,21 +685,16 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 	}
 
-	o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
-	// Try and recover a service GUID if not present in the metadata
+	// If we should have created a service instance dynamically
 	if o.ServiceGUID == "" {
-		// Find matching instances based on our cluster id
-		serviceInstances, err = o.listServiceInstances()
+		serviceName = fmt.Sprintf("%s-power-iaas", o.InfraID)
+		o.Logger.Debugf("loadSDKServices: serviceName = %v", serviceName)
+
+		o.ServiceGUID, err = o.ServiceInstanceNameToGUID(context.Background(), serviceName)
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: listServiceInstances: %w", err)
-		}
-		if len(serviceInstances.list()) == 1 {
-			// The status field has been reused with the GUID
-			o.ServiceGUID = serviceInstances.list()[0].status
-			o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
+			return fmt.Errorf("loadSDKServices: ServiceInstanceNameToGUID: %w", err)
 		}
 	}
-
 	if o.ServiceGUID == "" {
 		// The rest of this function relies on o.ServiceGUID, so finish now!
 		return nil
@@ -726,17 +720,89 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: o.keyClient is nil")
 	}
 
-	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.cloudConnectionClient == nil {
-		return fmt.Errorf("loadSDKServices: o.cloudConnectionClient is nil")
-	}
-
 	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.dhcpClient == nil {
 		return fmt.Errorf("loadSDKServices: o.dhcpClient is nil")
 	}
 
 	return nil
+}
+
+// ServiceInstanceNameToGUID returns the GUID of the matching service instance name which was passed in.
+func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name string) (string, error) {
+	var (
+		options   *resourcecontrollerv2.ListResourceInstancesOptions
+		resources *resourcecontrollerv2.ResourceInstancesList
+		err       error
+		perPage   int64 = 10
+		moreData        = true
+		nextURL   *string
+		groupID   = o.resourceGroupID
+	)
+
+	// If the user passes in a human readable group id, then we need to convert it to a UUID
+	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
+	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
+	if err != nil {
+		return "", fmt.Errorf("failed to list resource groups: %w", err)
+	}
+	for _, group := range groups.Resources {
+		if *group.Name == groupID {
+			groupID = *group.ID
+		}
+	}
+
+	options = o.controllerSvc.NewListResourceInstancesOptions()
+	options.SetResourceGroupID(groupID)
+	// resource ID for Power Systems Virtual Server in the Global catalog
+	options.SetResourceID(powerIAASResourceID)
+	options.SetLimit(perPage)
+
+	for moreData {
+		resources, _, err = o.controllerSvc.ListResourceInstancesWithContext(ctx, options)
+		if err != nil {
+			return "", fmt.Errorf("failed to list resource instances: %w", err)
+		}
+
+		for _, resource := range resources.Resources {
+			var (
+				getResourceOptions *resourcecontrollerv2.GetResourceInstanceOptions
+				resourceInstance   *resourcecontrollerv2.ResourceInstance
+				response           *core.DetailedResponse
+			)
+
+			getResourceOptions = o.controllerSvc.NewGetResourceInstanceOptions(*resource.ID)
+
+			resourceInstance, response, err = o.controllerSvc.GetResourceInstance(getResourceOptions)
+			if err != nil {
+				return "", fmt.Errorf("failed to get instance: %w", err)
+			}
+			if response != nil && response.StatusCode == gohttp.StatusNotFound || response.StatusCode == gohttp.StatusInternalServerError {
+				return "", fmt.Errorf("failed to get instance, response is: %v", response)
+			}
+
+			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+				if resourceInstance.GUID != nil && *resourceInstance.Name == name {
+					return *resourceInstance.GUID, nil
+				}
+			}
+		}
+
+		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
+		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
+		if err != nil {
+			return "", fmt.Errorf("failed to GetQueryParam on start: %w", err)
+		}
+		if nextURL == nil {
+			options.SetStart("")
+		} else {
+			options.SetStart(*nextURL)
+		}
+
+		moreData = *resources.RowsCount == perPage
+	}
+
+	return "", nil
 }
 
 func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {

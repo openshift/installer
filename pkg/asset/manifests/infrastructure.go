@@ -2,9 +2,9 @@ package manifests
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sort"
-	"strconv"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
+	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -215,6 +216,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			CISInstanceCRN:    cisInstanceCRN,
 			DNSInstanceCRN:    dnsInstanceCRN,
 			ProviderType:      configv1.IBMCloudProviderTypeVPC,
+			ServiceEndpoints:  installConfig.Config.Platform.IBMCloud.ServiceEndpoints,
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
@@ -245,8 +247,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			}
 		}
 
-		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig)
-
+		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig, clusterID.InfraID)
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
 			cloudProviderConfigMapKey = "vsphere.conf"
 		}
@@ -286,42 +287,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			DNSInstanceCRN: dnsInstanceCRN,
 		}
 	case nutanix.Name:
-		nutanixPlatform := installConfig.Config.Nutanix
-
-		// Retrieve the prism element name
-		var peName string
-		if len(nutanixPlatform.PrismElements[0].Name) == 0 {
-			nc, err := nutanix.CreateNutanixClient(context.Background(),
-				nutanixPlatform.PrismCentral.Endpoint.Address,
-				strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
-				nutanixPlatform.PrismCentral.Username,
-				nutanixPlatform.PrismCentral.Password)
-			if err != nil {
-				return errors.Wrapf(err, "unable to connect to Prism Central %s", nutanixPlatform.PrismCentral.Endpoint.Address)
-			}
-			pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
-			if err != nil {
-				return errors.Wrapf(err, "fail to find the Prism Element (cluster) with uuid %s", nutanixPlatform.PrismElements[0].UUID)
-			}
-			peName = *pe.Spec.Name
-		} else {
-			peName = nutanixPlatform.PrismElements[0].Name
-		}
-
 		config.Spec.PlatformSpec.Type = configv1.NutanixPlatformType
-		config.Spec.PlatformSpec.Nutanix = &configv1.NutanixPlatformSpec{
-			PrismCentral: configv1.NutanixPrismEndpoint{
-				Address: nutanixPlatform.PrismCentral.Endpoint.Address,
-				Port:    nutanixPlatform.PrismCentral.Endpoint.Port,
-			},
-			PrismElements: []configv1.NutanixPrismElementEndpoint{{
-				Name: peName,
-				Endpoint: configv1.NutanixPrismEndpoint{
-					Address: nutanixPlatform.PrismElements[0].Endpoint.Address,
-					Port:    nutanixPlatform.PrismElements[0].Endpoint.Port,
-				},
-			}},
+
+		platformSpec, err := nutanixinfra.GetInfrastructureNutanixPlatformSpec(installConfig)
+		if err != nil {
+			return fmt.Errorf("failed to create Infrastructure manifest Nutanix platformSpec: %w", err)
 		}
+		config.Spec.PlatformSpec.Nutanix = platformSpec
 
 		if len(installConfig.Config.Nutanix.APIVIPs) > 0 {
 			config.Status.PlatformStatus.Nutanix = &configv1.NutanixPlatformStatus{

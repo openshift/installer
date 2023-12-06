@@ -85,6 +85,11 @@ func (m *CloudConnections) contextValidateCloudConnections(ctx context.Context, 
 	for i := 0; i < len(m.CloudConnections); i++ {
 
 		if m.CloudConnections[i] != nil {
+
+			if swag.IsZero(m.CloudConnections[i]) { // not required
+				return nil
+			}
+
 			if err := m.CloudConnections[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("cloudConnections" + "." + strconv.Itoa(i))

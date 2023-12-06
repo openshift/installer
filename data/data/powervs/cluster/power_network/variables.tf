@@ -18,18 +18,6 @@ variable "vpc_crn" {
   description = "The CRN of the IBM Cloud VPC."
 }
 
-variable "pvs_network_name" {
-  type        = string
-  description = "The name of a pre-created Power VS DHCP Network."
-  default     = ""
-}
-
-variable "cloud_conn_name" {
-  type        = string
-  description = "The name of a pre-created Power VS Cloud connection."
-  default     = ""
-}
-
 variable "machine_cidr" {
   type        = string
   description = "The machine network (IPv4 only)"

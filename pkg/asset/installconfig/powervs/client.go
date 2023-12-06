@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM-Cloud/power-go-client/power/client/datacenters"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
@@ -39,7 +40,8 @@ type API interface {
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
-	ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error)
+	ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error)
+	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -667,8 +669,8 @@ func TransitGatewayEnabledZone(zone string) bool {
 	return zone == "dal10"
 }
 
-// ServiceInstanceIDToCRN returns the CRN of the matching service instance GUID which was passed in.
-func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
+// ServiceInstanceGUIDToName returns the name of the matching service instance GUID which was passed in.
+func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error) {
 	var (
 		options   *resourcecontrollerv2.ListResourceInstancesOptions
 		resources *resourcecontrollerv2.ResourceInstancesList
@@ -722,10 +724,10 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 
 			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
 				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
-					if resourceInstance.CRN == nil {
+					if resourceInstance.Name == nil {
 						return "", nil
 					}
-					return *resourceInstance.CRN, nil
+					return *resourceInstance.Name, nil
 				}
 			}
 		}
@@ -745,4 +747,21 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 	}
 
 	return "", nil
+}
+
+// GetDatacenterCapabilities retrieves the capabilities of the specified datacenter.
+func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error) {
+	var err error
+	if c.BXCli.PISession == nil {
+		err = c.BXCli.NewPISession()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterCapabilities: %w", err)
+		}
+	}
+	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
+	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
+	}
+	return getOk.Payload.Capabilities, nil
 }

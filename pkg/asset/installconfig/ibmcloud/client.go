@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	ibmcrn "github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/go-sdk-core/v5/core"
+	kpclient "github.com/IBM/keyprotect-go-client"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
@@ -19,8 +21,10 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 //go:generate mockgen -source=./client.go -destination=./mock/ibmcloudclient_generated.go -package=mock
@@ -52,11 +56,15 @@ type API interface {
 
 // Client makes calls to the IBM Cloud API.
 type Client struct {
-	apiKey         string
-	managementAPI  *resourcemanagerv2.ResourceManagerV2
-	controllerAPI  *resourcecontrollerv2.ResourceControllerV2
-	vpcAPI         *vpcv1.VpcV1
-	dnsServicesAPI *dnssvcsv1.DnsSvcsV1
+	apiKey        string
+	managementAPI *resourcemanagerv2.ResourceManagerV2
+	controllerAPI *resourcecontrollerv2.ResourceControllerV2
+	vpcAPI        *vpcv1.VpcV1
+
+	// A set of overriding endpoints for IBM Cloud Services
+	serviceEndpoints []configv1.IBMCloudServiceEndpoint
+	// Cache endpoint override for IBM Cloud IAM, if one was provided in serviceEndpoints
+	iamServiceEndpointOverride string
 }
 
 // InstanceType is the IBM Cloud network services type being used
@@ -72,6 +80,20 @@ const (
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
 	// dnsServiceID is the DNS Services' catalog service ID.
 	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
+
+	// hyperProtectCRNServiceName is the service name within the IBM Cloud CRN for the Hyper Protect service.
+	hyperProtectCRNServiceName = "hs-crypto"
+	// keyProtectCRNServiceName is the service name within the IBM Cloud CRN for the Key Protect service.
+	keyProtectCRNServiceName = "kms"
+
+	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
+	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
+	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
+	iamTokenDefaultURL = "https://iam.cloud.ibm.com/identity/token" // #nosec G101 // this is the URL for IBM Cloud IAM tokens, not a credential
+	// iamTokenPath is the URL path, to add to override IAM endpoints, for the IBM Cloud IAM token service.
+	iamTokenPath = "identity/token" // #nosec G101 // this is the URI path for IBM Cloud IAM tokens, not a credential
+	// keyProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Key Protect service.
+	keyProtectDefaultURLTemplate = "https://%s.kms.cloud.ibm.com"
 )
 
 // VPCResourceNotFoundError represents an error for a VPC resoruce that is not found.
@@ -82,12 +104,21 @@ func (e *VPCResourceNotFoundError) Error() string {
 	return "Not Found"
 }
 
-// NewClient initializes a client with a session.
-func NewClient() (*Client, error) {
+// NewClient initializes a client with any provided endpoint overrides.
+func NewClient(endpoints []configv1.IBMCloudServiceEndpoint) (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
 
 	client := &Client{
-		apiKey: apiKey,
+		apiKey:           apiKey,
+		serviceEndpoints: endpoints,
+	}
+
+	// Look for an override to IBM Cloud IAM service, preventing searching each time its necessary
+	for _, endpoint := range endpoints {
+		if endpoint.Name == configv1.IBMCloudServiceIAM {
+			client.iamServiceEndpointOverride = endpoint.URL
+			break
+		}
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -102,7 +133,6 @@ func (c *Client) loadSDKServices() error {
 		c.loadResourceManagementAPI,
 		c.loadResourceControllerAPI,
 		c.loadVPCV1API,
-		c.loadDNSServicesAPI,
 	}
 
 	// Call all the load functions.
@@ -123,13 +153,18 @@ func (c *Client) GetAPIKey() string {
 // GetAuthenticatorAPIKeyDetails gets detailed information on the API key used
 // for authentication to the IBM Cloud APIs
 func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error) {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return nil, err
 	}
-	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&iamidentityv1.IamIdentityV1Options{
+	newIamIdentityV1Options := iamidentityv1.IamIdentityV1Options{
 		Authenticator: authenticator,
-	})
+	}
+	// If an IAM service endpoint override was provided, pass it along to override the default IAM service endpoint
+	if c.iamServiceEndpointOverride != "" {
+		newIamIdentityV1Options.URL = c.iamServiceEndpointOverride
+	}
+	iamIdentityService, err := iamidentityv1.NewIamIdentityV1(&newIamIdentityV1Options)
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +207,25 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	listPermittedNetworksOptions := c.dnsServicesAPI.NewListPermittedNetworksOptions(dnsID, dnsZone)
-	permittedNetworks, _, err := c.dnsServicesAPI.ListPermittedNetworksWithContext(ctx, listPermittedNetworksOptions)
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return nil, err
+	}
+	options := &dnssvcsv1.DnsSvcsV1Options{
+		Authenticator: authenticator,
+	}
+	// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Services service endpoint
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	// Isolate DNS Services service usage for Internal (Private) clusters; within this function
+	dnsService, err := dnssvcsv1.NewDnsSvcsV1(options)
+	if err != nil {
+		return nil, err
+	}
+
+	listPermittedNetworksOptions := dnsService.NewListPermittedNetworksOptions(dnsID, dnsZone)
+	permittedNetworks, _, err := dnsService.ListPermittedNetworksWithContext(ctx, listPermittedNetworksOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -226,22 +278,29 @@ func (c *Client) GetDedicatedHostProfiles(ctx context.Context, region string) ([
 // GetDNSRecordsByName gets DNS records in specific Cloud Internet Services instance
 // by its CRN, zone ID, and DNS record name.
 func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error) {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return nil, err
 	}
-	// Set CIS DNS record service
-	dnsService, err := dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+	// Set CIS DNS record service options
+	options := &dnsrecordsv1.DnsRecordsV1Options{
 		Authenticator:  authenticator,
 		Crn:            core.StringPtr(crnstr),
 		ZoneIdentifier: core.StringPtr(zoneID),
-	})
+	}
+	// If a CIS service endpoint override was provided, pass it along to override the default DNS Records service
+	// dnsrecordsv1 is provided via IBM CIS endpoint
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	// Isolate DNS Records service (for IBM Cloud CIS) usage for External (Public) clusters; within this function
+	dnsRecordsService, err := dnsrecordsv1.NewDnsRecordsV1(options)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get CIS DNS records by name
-	records, _, err := dnsService.ListAllDnsRecordsWithContext(ctx, &dnsrecordsv1.ListAllDnsRecordsOptions{
+	records, _, err := dnsRecordsService.ListAllDnsRecordsWithContext(ctx, &dnsrecordsv1.ListAllDnsRecordsOptions{
 		Name: core.StringPtr(recordName),
 	})
 	if err != nil {
@@ -289,19 +348,26 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+		authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 		if err != nil {
 			return nil, err
 		}
-		dnsZoneService, err := dnszonesv1.NewDnsZonesV1(&dnszonesv1.DnsZonesV1Options{
+		options := &dnszonesv1.DnsZonesV1Options{
 			Authenticator: authenticator,
-		})
+		}
+		// If a DNS Services service endpoint override was provided, pass it along to override the default DNS Zones service
+		// dnszonesv1 is provided via IBM Cloud DNS Services endpoint
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, c.serviceEndpoints); overrideURL != "" {
+			options.URL = overrideURL
+		}
+		// Isolate DNS Zones service (for IBM Cloud DNS Services) usage for Internal (Private) clusters; within this function
+		dnsZoneService, err := dnszonesv1.NewDnsZonesV1(options)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to list DNS zones")
+			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 		}
 
-		options := dnsZoneService.NewListDnszonesOptions(*instance.GUID)
-		result, _, err := dnsZoneService.ListDnszones(options)
+		listZonesOptions := dnsZoneService.NewListDnszonesOptions(*instance.GUID)
+		result, _, err := dnsZoneService.ListDnszones(listZonesOptions)
 		if result == nil {
 			return nil, err
 		}
@@ -337,21 +403,27 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 	var allZones []responses.DNSZoneResponse
 	for _, instance := range listResourceInstancesResponse.Resources {
-		authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+		authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 		if err != nil {
 			return nil, err
 		}
-		crnstr := instance.CRN
-		zonesService, err := zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+		options := &zonesv1.ZonesV1Options{
 			Authenticator: authenticator,
-			Crn:           crnstr,
-		})
+			Crn:           instance.CRN,
+		}
+		// If a CIS service endpoint override was provided, pass it along to override the default Zones service
+		// zonesv1 is provided via IBM Cloud CIS endpoint
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, c.serviceEndpoints); overrideURL != "" {
+			options.URL = overrideURL
+		}
+		// Isolate Zones service (for IBM Cloud CIS) usage for External (Public) clusters; within this function
+		zonesService, err := zonesv1.NewZonesV1(options)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to list DNS zones")
+			return nil, fmt.Errorf("failed to list DNS zones: %w", err)
 		}
 
-		options := zonesService.NewListZonesOptions()
-		listZonesResponse, _, err := zonesService.ListZones(options)
+		listZonesOptions := zonesService.NewListZonesOptions()
+		listZonesResponse, _, err := zonesService.ListZones(listZonesOptions)
 
 		if listZonesResponse == nil {
 			return nil, err
@@ -377,8 +449,35 @@ func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 
 // GetEncryptionKey gets data for an encryption key
 func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error) {
-	// TODO: IBM: Call KMS / Hyperprotect Crpyto APIs.
-	return &responses.EncryptionKeyResponse{}, nil
+	// Parse out the IBM Cloud details from CRN
+	crn, err := ibmcrn.Parse(keyCRN)
+	if err != nil {
+		return nil, err
+	}
+
+	var keyResponse *responses.EncryptionKeyResponse
+
+	keyAPI, err := c.getKeyServiceAPI(crn)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := keyAPI.GetKey(ctx, crn.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	if key != nil {
+		keyResponse = &responses.EncryptionKeyResponse{
+			ID:      key.ID,
+			Type:    key.Type,
+			CRN:     key.CRN,
+			State:   key.State,
+			Deleted: key.Deleted,
+		}
+	}
+
+	return keyResponse, nil
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
@@ -460,7 +559,7 @@ func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, e
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
 	profiles, _, err := c.vpcAPI.ListInstanceProfilesWithContext(ctx, listInstanceProfilesOptions)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list vpc vsi profiles")
+		return nil, errors.Wrapf(err, "failed to list vpc vsi profiles using: %s", c.vpcAPI.Service.Options.URL)
 	}
 	return profiles.Profiles, nil
 }
@@ -527,7 +626,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	for _, region := range regions {
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to set vpc api service url")
+			return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
 		}
 
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
@@ -576,12 +675,15 @@ func (c *Client) getVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
 }
 
 func (c *Client) loadResourceManagementAPI() error {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
 	options := &resourcemanagerv2.ResourceManagerV2Options{
 		Authenticator: authenticator,
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceResourceManager, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
 	}
 	resourceManagerV2Service, err := resourcemanagerv2.NewResourceManagerV2(options)
 	if err != nil {
@@ -592,12 +694,15 @@ func (c *Client) loadResourceManagementAPI() error {
 }
 
 func (c *Client) loadResourceControllerAPI() error {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
 	options := &resourcecontrollerv2.ResourceControllerV2Options{
 		Authenticator: authenticator,
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceResourceController, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
 	}
 	resourceControllerV2Service, err := resourcecontrollerv2.NewResourceControllerV2(options)
 	if err != nil {
@@ -608,13 +713,17 @@ func (c *Client) loadResourceControllerAPI() error {
 }
 
 func (c *Client) loadVPCV1API() error {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
-	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
+	options := &vpcv1.VpcV1Options{
 		Authenticator: authenticator,
-	})
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceVPC, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	vpcService, err := vpcv1.NewVpcV1(options)
 	if err != nil {
 		return err
 	}
@@ -622,19 +731,45 @@ func (c *Client) loadVPCV1API() error {
 	return nil
 }
 
-func (c *Client) loadDNSServicesAPI() error {
-	authenticator, err := NewIamAuthenticator(c.GetAPIKey())
-	if err != nil {
-		return err
+func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
+	var clientConfig kpclient.ClientConfig
+
+	switch crn.ServiceName {
+	case hyperProtectCRNServiceName:
+		clientConfig = kpclient.ClientConfig{
+			BaseURL:    fmt.Sprintf(hyperProtectDefaultURLTemplate, crn.Region),
+			APIKey:     c.apiKey,
+			TokenURL:   iamTokenDefaultURL,
+			InstanceID: crn.ServiceInstance,
+		}
+
+		// Override HyperProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceHyperProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
+	case keyProtectCRNServiceName:
+		clientConfig = kpclient.ClientConfig{
+			BaseURL:    fmt.Sprintf(keyProtectDefaultURLTemplate, crn.Region),
+			APIKey:     c.apiKey,
+			TokenURL:   iamTokenDefaultURL,
+			InstanceID: crn.ServiceInstance,
+		}
+
+		// Override KeyProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceKeyProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
+	default:
+		return nil, fmt.Errorf("unknown key service for provided encryption key: %s", crn)
 	}
-	dnsService, err := dnssvcsv1.NewDnsSvcsV1(&dnssvcsv1.DnsSvcsV1Options{
-		Authenticator: authenticator,
-	})
-	if err != nil {
-		return err
+
+	// Override IAM token URL, if an IAM service override URL was provided
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, c.serviceEndpoints); overrideURL != "" {
+		// Construct the token URL using the overridden IAM URL and the token path
+		clientConfig.TokenURL = fmt.Sprintf("%s/%s", overrideURL, iamTokenPath)
 	}
-	c.dnsServicesAPI = dnsService
-	return nil
+
+	return kpclient.New(clientConfig, kpclient.DefaultTransport())
 }
 
 // SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources

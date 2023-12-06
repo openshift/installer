@@ -10,7 +10,8 @@ import (
 )
 
 // Metadata converts an install configuration to IBM Cloud metadata.
-func Metadata(infraID string, config *types.InstallConfig, meta *icibmcloud.Metadata) *ibmcloud.Metadata {
+func Metadata(infraID string, config *types.InstallConfig) *ibmcloud.Metadata {
+	meta := icibmcloud.NewMetadata(config)
 	accountID, _ := meta.AccountID(context.TODO())
 	cisCrn, _ := meta.CISInstanceCRN(context.TODO())
 	dnsInstance, _ := meta.DNSInstance(context.TODO())
@@ -40,6 +41,7 @@ func Metadata(infraID string, config *types.InstallConfig, meta *icibmcloud.Meta
 		DNSInstanceID:     dnsInstanceID,
 		Region:            config.Platform.IBMCloud.Region,
 		ResourceGroupName: config.Platform.IBMCloud.ClusterResourceGroupName(infraID),
+		ServiceEndpoints:  config.Platform.IBMCloud.ServiceEndpoints,
 		Subnets:           subnets,
 		VPC:               config.Platform.IBMCloud.GetVPCName(),
 	}

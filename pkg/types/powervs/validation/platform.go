@@ -32,17 +32,18 @@ func ValidatePlatform(p *powervs.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, powervs.RegionShortNames()))
 	}
 
-	// validate ServiceInstanceID
-	if p.ServiceInstanceID != "" {
-		_, err := uuid.Parse(p.ServiceInstanceID)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("ServiceInstanceID"), p.ServiceInstanceID, "ServiceInstanceID must be a valid UUID"))
-		}
-	}
-
 	// validate DefaultMachinePlatform
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
+	// validate ServiceInstanceGUID
+	if p.ServiceInstanceGUID != "" {
+		_, err := uuid.Parse(p.ServiceInstanceGUID)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("ServiceInstanceGUID"), p.ServiceInstanceGUID, "ServiceInstanceGUID must be a valid UUID"))
+		}
+	}
+
 	return allErrs
 }

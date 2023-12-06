@@ -146,23 +146,6 @@ The teardown playbooks provided for UPI installation will not delete:
 
 These objects have to be manually removed after running the teardown playbooks.
 
-## Requirement to create Control Plane Machines manifests (Kuryr SDN)
-
-Installations with Kuryr SDN can timeout due to changes in the way Kuryr detects
-the OpenStack Subnet used by the cluster's nodes. Kuryr relied on the Network of
-the cluster's nodes Subnet having a specific tag, but the tag was removed for IPI
-Installations causing the need to discover it from the OpenShift Machine objects,
-which the creation is removed on one of the UPI steps. Until the fix for
-[the issue][bugzilla-upi] is available, as a workaround, only the compute machine
-manifests should be removed in the [Remove machines and machinesets][manifests-removal]
-section of the UPI guide. The command to run is:
-
-```console
-$ rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
-```
-[bugzilla-upi]: https://bugzilla.redhat.com/show_bug.cgi?id=1927244
-[manifests-removal]:../openstack/install_upi.md#remove-machines-and-machinesets
-
 ## Limitations of creating external load balancers using pre-defined FIPs
 
 On most clouds, the default policy prevents non-admin users from creating                                     

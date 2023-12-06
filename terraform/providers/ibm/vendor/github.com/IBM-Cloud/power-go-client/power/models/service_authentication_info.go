@@ -138,6 +138,10 @@ func (m *ServiceAuthenticationInfo) ContextValidate(ctx context.Context, formats
 
 func (m *ServiceAuthenticationInfo) contextValidateCapabilities(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.Capabilities) { // not required
+		return nil
+	}
+
 	if err := m.Capabilities.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("capabilities")
@@ -153,6 +157,7 @@ func (m *ServiceAuthenticationInfo) contextValidateCapabilities(ctx context.Cont
 func (m *ServiceAuthenticationInfo) contextValidateToken(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Token != nil {
+
 		if err := m.Token.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("token")

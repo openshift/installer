@@ -164,7 +164,8 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		}
 
 		// AWS Local Zones are grouped as Edge subnets
-		if meta.Zone.Type == typesaws.LocalZoneType {
+		if meta.Zone.Type == typesaws.LocalZoneType ||
+			meta.Zone.Type == typesaws.WavelengthZoneType {
 			subnetGroups.Edge[id] = meta
 			continue
 		}
@@ -226,6 +227,9 @@ func isSubnetPublic(rt []*ec2.RouteTable, subnetID string) (bool, error) {
 		// or other virtual gateway (starting with vgv)
 		// or vpc peering connections (starting with pcx).
 		if strings.HasPrefix(aws.StringValue(route.GatewayId), "igw") {
+			return true, nil
+		}
+		if strings.HasPrefix(aws.StringValue(route.CarrierGatewayId), "cagw") {
 			return true, nil
 		}
 	}

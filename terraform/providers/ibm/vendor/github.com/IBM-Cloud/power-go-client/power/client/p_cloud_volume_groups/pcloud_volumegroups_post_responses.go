@@ -53,6 +53,12 @@ func (o *PcloudVolumegroupsPostReader) ReadResponse(response runtime.ClientRespo
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVolumegroupsPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudVolumegroupsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -78,7 +84,7 @@ func (o *PcloudVolumegroupsPostReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups] pcloud.volumegroups.post", response, response.Code())
 	}
 }
 
@@ -119,6 +125,11 @@ func (o *PcloudVolumegroupsPostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups post accepted response a status code equal to that given
 func (o *PcloudVolumegroupsPostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud volumegroups post accepted response
+func (o *PcloudVolumegroupsPostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudVolumegroupsPostAccepted) Error() string {
@@ -184,6 +195,11 @@ func (o *PcloudVolumegroupsPostPartialContent) IsCode(code int) bool {
 	return code == 206
 }
 
+// Code gets the status code for the pcloud volumegroups post partial content response
+func (o *PcloudVolumegroupsPostPartialContent) Code() int {
+	return 206
+}
+
 func (o *PcloudVolumegroupsPostPartialContent) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostPartialContent  %+v", 206, o.Payload)
 }
@@ -245,6 +261,11 @@ func (o *PcloudVolumegroupsPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups post bad request response a status code equal to that given
 func (o *PcloudVolumegroupsPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud volumegroups post bad request response
+func (o *PcloudVolumegroupsPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudVolumegroupsPostBadRequest) Error() string {
@@ -310,6 +331,11 @@ func (o *PcloudVolumegroupsPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud volumegroups post unauthorized response
+func (o *PcloudVolumegroupsPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudVolumegroupsPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -373,6 +399,11 @@ func (o *PcloudVolumegroupsPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud volumegroups post forbidden response
+func (o *PcloudVolumegroupsPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVolumegroupsPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostForbidden  %+v", 403, o.Payload)
 }
@@ -386,6 +417,74 @@ func (o *PcloudVolumegroupsPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudVolumegroupsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsPostNotFound creates a PcloudVolumegroupsPostNotFound with default headers values
+func NewPcloudVolumegroupsPostNotFound() *PcloudVolumegroupsPostNotFound {
+	return &PcloudVolumegroupsPostNotFound{}
+}
+
+/*
+PcloudVolumegroupsPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVolumegroupsPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups post not found response has a 2xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups post not found response has a 3xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups post not found response has a 4xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups post not found response has a 5xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups post not found response a status code equal to that given
+func (o *PcloudVolumegroupsPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud volumegroups post not found response
+func (o *PcloudVolumegroupsPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVolumegroupsPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -434,6 +533,11 @@ func (o *PcloudVolumegroupsPostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups post conflict response a status code equal to that given
 func (o *PcloudVolumegroupsPostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud volumegroups post conflict response
+func (o *PcloudVolumegroupsPostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudVolumegroupsPostConflict) Error() string {
@@ -499,6 +603,11 @@ func (o *PcloudVolumegroupsPostUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud volumegroups post unprocessable entity response
+func (o *PcloudVolumegroupsPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudVolumegroupsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -562,6 +671,11 @@ func (o *PcloudVolumegroupsPostInternalServerError) IsCode(code int) bool {
 	return code == 500
 }
 
+// Code gets the status code for the pcloud volumegroups post internal server error response
+func (o *PcloudVolumegroupsPostInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudVolumegroupsPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostInternalServerError  %+v", 500, o.Payload)
 }
@@ -623,6 +737,11 @@ func (o *PcloudVolumegroupsPostGatewayTimeout) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups post gateway timeout response a status code equal to that given
 func (o *PcloudVolumegroupsPostGatewayTimeout) IsCode(code int) bool {
 	return code == 504
+}
+
+// Code gets the status code for the pcloud volumegroups post gateway timeout response
+func (o *PcloudVolumegroupsPostGatewayTimeout) Code() int {
+	return 504
 }
 
 func (o *PcloudVolumegroupsPostGatewayTimeout) Error() string {

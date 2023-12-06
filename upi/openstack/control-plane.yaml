@@ -22,25 +22,27 @@
       - ip_address: "{{ os_ingressVIP }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
     register: ports
+    when: os_subnet6 is not defined
+
+  - name: 'Create the dualstack Control Plane ports'
+    openstack.cloud.port:
+      name: "{{ item.1 }}-{{ item.0 }}"
+      network: "{{ os_network }}"
+      security_groups:
+      - "{{ os_sg_master }}"
+      allowed_address_pairs:
+      - ip_address: "{{ os_apiVIP }}"
+      - ip_address: "{{ os_apiVIP6 }}"
+      - ip_address: "{{ os_ingressVIP }}"
+      - ip_address: "{{ os_ingressVIP6 }}"
+    with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
+    register: ports
+    when: os_subnet6 is defined
 
   - name: 'Set Control Plane ports tag'
     ansible.builtin.command:
       cmd: "openstack port set --tag {{ cluster_id_tag }} {{ item.1 }}-{{ item.0 }}"
     with_indexed_items: "{{ [os_port_master] * os_cp_nodes_number }}"
-
-  - name: 'List the Control Plane Trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk list"
-    when: os_networking_type == "Kuryr"
-    register: control_plane_trunks
-
-  - name: 'Create the Control Plane trunks'
-    ansible.builtin.command:
-      cmd: "openstack network trunk create --parent-port {{ item.1.id }} {{ os_cp_trunk_name }}-{{ item.0 }}"
-    with_indexed_items: "{{ ports.results }}"
-    when:
-    - os_networking_type == "Kuryr"
-    - "os_cp_trunk_name|string not in control_plane_trunks.stdout"
 
   - name: 'List the Server groups'
     ansible.builtin.command:
