@@ -350,6 +350,54 @@ if [ ! -f cmdbootline-nto-bootstrap.done ]; then
 	if [ -n "$(ls -A cmdbootline-nto-bootstrap)" ]; then
 		cp cmdbootline-nto-bootstrap/* manifests/
 	fi
+	# Patch cpu pinning bug
+	/bin/cat<<EOF>node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 01-master-cpu-partitioning
+spec:
+  baseOSExtensionsContainerImage: ""
+  config:
+    ignition:
+      config:
+        replace:
+          verification: {}
+      proxy: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 3.2.0
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,CnsKICAibWFuYWdlbWVudCI6IHsKICAgICJjcHVzZXQiOiAiMC0zIgogIH0KfQo=
+          verification: {}
+        group: {}
+        mode: 420
+        path: /etc/kubernetes/openshift-workload-pinning
+        user: {}
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,CltjcmlvLnJ1bnRpbWUud29ya2xvYWRzLm1hbmFnZW1lbnRdCmFjdGl2YXRpb25fYW5ub3RhdGlvbiA9ICJ0YXJnZXQud29ya2xvYWQub3BlbnNoaWZ0LmlvL21hbmFnZW1lbnQiCmFubm90YXRpb25fcHJlZml4ID0gInJlc291cmNlcy53b3JrbG9hZC5vcGVuc2hpZnQuaW8iCnJlc291cmNlcyA9IHsgImNwdXNoYXJlcyIgPSAwLCAiY3B1c2V0IiA9ICIiIH0K
+          verification: {}
+        group: {}
+        mode: 420
+        path: /etc/crio/crio.conf.d/01-workload-pinning-default.conf
+        user: {}
+    systemd: {}
+  extensions: null
+  fips: false
+  kernelArguments: null
+  kernelType: ""
+  osImageURL: ""
+
+
+EOF
+	cp node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml manifests/
 
 	rm -rf ${tmpfolder}
 	touch cmdbootline-nto-bootstrap.done
