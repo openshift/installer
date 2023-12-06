@@ -102,6 +102,9 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	if installConfig.Platform.Name() != none.Name && installConfig.ControlPlane.Architecture == types.ArchitecturePPC64LE {
 		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitecturePPC64LE, none.Name)))
 	}
+	if installConfig.Platform.Name() != none.Name && installConfig.ControlPlane.Architecture == types.ArchitectureS390X {
+		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitectureS390X, none.Name)))
+	}
 	if installConfig.Platform.Name() == external.Name {
 		if installConfig.Platform.External.PlatformName != string(models.PlatformTypeOci) {
 			fieldPath = field.NewPath("Platform", "External", "PlatformName")
@@ -130,8 +133,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 	case types.ArchitectureAMD64:
 	case types.ArchitectureARM64:
 	case types.ArchitecturePPC64LE:
+	case types.ArchitectureS390X:
 	default:
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE}))
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE, types.ArchitectureS390X}))
 	}
 
 	for i, compute := range installConfig.Compute {
@@ -141,8 +145,9 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 		case types.ArchitectureAMD64:
 		case types.ArchitectureARM64:
 		case types.ArchitecturePPC64LE:
+		case types.ArchitectureS390X:
 		default:
-			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE}))
+			allErrs = append(allErrs, field.NotSupported(fieldPath, compute.Architecture, []string{types.ArchitectureAMD64, types.ArchitectureARM64, types.ArchitecturePPC64LE, types.ArchitectureS390X}))
 		}
 	}
 
