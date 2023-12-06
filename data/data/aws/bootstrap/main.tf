@@ -45,8 +45,9 @@ data "aws_partition" "current" {}
 data "aws_ebs_default_kms_key" "current" {}
 
 resource "aws_s3_bucket" "ignition" {
-  count  = var.aws_preserve_bootstrap_ignition ? 0 : 1
-  bucket = var.aws_ignition_bucket
+  count         = var.aws_preserve_bootstrap_ignition ? 0 : 1
+  bucket        = var.aws_ignition_bucket
+  force_destroy = true
 
   tags = merge(
     {
