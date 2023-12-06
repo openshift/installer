@@ -419,7 +419,74 @@ spec:
 
 
 EOF
+
+	# Patch remove owner reference
+	/bin/cat<<NEOF>node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml
+	apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  creationTimestamp: null
+  name: performance-openshift-node-performance-profile
+spec:
+  kubeletConfig:
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    authentication:
+      anonymous: {}
+      webhook:
+        cacheTTL: 0s
+      x509: {}
+    authorization:
+      webhook:
+        cacheAuthorizedTTL: 0s
+        cacheUnauthorizedTTL: 0s
+    containerRuntimeEndpoint: ""
+    cpuManagerPolicy: static
+    cpuManagerReconcilePeriod: 5s
+    evictionHard:
+      imagefs.available: 15%
+      memory.available: 100Mi
+      nodefs.available: 10%
+      nodefs.inodesFree: 5%
+    evictionPressureTransitionPeriod: 0s
+    fileCheckFrequency: 0s
+    httpCheckFrequency: 0s
+    imageMinimumGCAge: 0s
+    kind: KubeletConfiguration
+    kubeReserved:
+      memory: 500Mi
+    logging:
+      flushFrequency: 0
+      options:
+        json:
+          infoBufferSize: "0"
+      verbosity: 0
+    memoryManagerPolicy: Static
+    memorySwap: {}
+    nodeStatusReportFrequency: 0s
+    nodeStatusUpdateFrequency: 0s
+    reservedMemory:
+    - limits:
+        memory: 1100Mi
+      numaNode: 0
+    reservedSystemCPUs: 0-3
+    runtimeRequestTimeout: 0s
+    shutdownGracePeriod: 0s
+    shutdownGracePeriodCriticalPods: 0s
+    streamingConnectionIdleTimeout: 0s
+    syncFrequency: 0s
+    systemReserved:
+      memory: 500Mi
+    topologyManagerPolicy: restricted
+    volumeStatsAggPeriod: 0s
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.openshift.io/master: ""
+status:
+  conditions: null
+
+NEOF
 	cp node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml manifests/
+	cp node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml manifests
 
 	rm -rf ${tmpfolder}
 	touch cmdbootline-nto-bootstrap.done
