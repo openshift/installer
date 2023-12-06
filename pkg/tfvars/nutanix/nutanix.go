@@ -20,8 +20,8 @@ type config struct {
 	NumCoresPerSocket              int64             `json:"nutanix_control_plane_cores_per_socket"`
 	ProjectUUID                    string            `json:"nutanix_control_plane_project_uuid"`
 	Categories                     map[string]string `json:"nutanix_control_plane_categories"`
-	PrismElementUUID               string            `json:"nutanix_prism_element_uuid"`
-	SubnetUUID                     string            `json:"nutanix_subnet_uuid"`
+	PrismElementUUIDs              []string          `json:"nutanix_prism_element_uuids"`
+	SubnetUUIDs                    []string          `json:"nutanix_subnet_uuids"`
 	Image                          string            `json:"nutanix_image"`
 	ImageURI                       string            `json:"nutanix_image_uri"`
 	BootstrapIgnitionImage         string            `json:"nutanix_bootstrap_ignition_image"`
@@ -49,6 +49,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	bootstrapIgnitionImageName := nutanixtypes.BootISOImageName(sources.ClusterID)
 	controlPlaneConfig := sources.ControlPlaneConfigs[0]
+	cpCount := len(sources.ControlPlaneConfigs)
 	cfg := &config{
 		Port:                           sources.Port,
 		PrismCentralAddress:            sources.PrismCentralAddress,
@@ -58,12 +59,17 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		DiskSizeMiB:                    controlPlaneConfig.SystemDiskSize.Value() / (1024 * 1024),
 		NumCPUs:                        int64(controlPlaneConfig.VCPUSockets),
 		NumCoresPerSocket:              int64(controlPlaneConfig.VCPUsPerSocket),
-		PrismElementUUID:               *controlPlaneConfig.Cluster.UUID,
-		SubnetUUID:                     *controlPlaneConfig.Subnets[0].UUID,
+		PrismElementUUIDs:              make([]string, cpCount),
+		SubnetUUIDs:                    make([]string, cpCount),
 		Image:                          *controlPlaneConfig.Image.Name,
 		ImageURI:                       sources.ImageURI,
 		BootstrapIgnitionImage:         bootstrapIgnitionImageName,
 		BootstrapIgnitionImageFilePath: bootstrapIgnitionImagePath,
+	}
+
+	for i, cpcfg := range sources.ControlPlaneConfigs {
+		cfg.PrismElementUUIDs[i] = *cpcfg.Cluster.UUID
+		cfg.SubnetUUIDs[i] = *cpcfg.Subnets[0].UUID
 	}
 
 	if controlPlaneConfig.Project.Type == machinev1.NutanixIdentifierUUID {
