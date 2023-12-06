@@ -22,6 +22,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -54,6 +55,26 @@ type agentClusterInstallOnPremPlatform struct {
 	// IngressVIPs contains the VIP(s) to use for ingress traffic. In dual stack
 	// clusters it contains an IPv4 and IPv6 address, otherwise only one VIP
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
+
+	// Host, including BMC, configuration.
+	Hosts []baremetal.Host `json:"hosts,omitempty"`
+
+	// ClusterProvisioningIP is the IP on the dedicated provisioning network.
+	ClusterProvisioningIP string `json:"clusterProvisioningIP,omitempty"`
+
+	// ProvisioningNetwork is used to indicate if we will have a provisioning network, and how it will be managed.
+	ProvisioningNetwork baremetal.ProvisioningNetwork `json:"provisioningNetwork,omitempty"`
+
+	// ProvisioningNetworkInterface is the name of the network interface on a control plane
+	// baremetal host that is connected to the provisioning network.
+	ProvisioningNetworkInterface string `json:"provisioningNetworkInterface,omitempty"`
+
+	// ProvisioningNetworkCIDR defines the network to use for provisioning.
+	ProvisioningNetworkCIDR *ipnet.IPNet `json:"provisioningNetworkCIDR,omitempty"`
+
+	// ProvisioningDHCPRange is used to provide DHCP services to hosts
+	// for provisioning.
+	ProvisioningDHCPRange string `json:"provisioningDHCPRange,omitempty"`
 }
 
 type agentClusterInstallOnPremExternalPlatform struct {
@@ -105,13 +126,15 @@ func (*AgentClusterInstall) Name() string {
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&agent.OptionalInstallConfig{},
+		&agentconfig.AgentHosts{},
 	}
 }
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	agentHosts := &agentconfig.AgentHosts{}
+	dependencies.Get(agentHosts, installConfig)
 
 	if installConfig.Config != nil {
 		var numberOfWorkers int = 0
@@ -190,6 +213,42 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 		}
 
 		if installConfig.Config.Platform.BareMetal != nil {
+			baremetalPlatform := agentClusterInstallOnPremPlatform{}
+			bmIcOverridden := false
+
+			for _, host := range agentHosts.Hosts {
+				// Override if BMC values are not the same as default
+				if host.BMC.Username != "" || host.BMC.Password != "" || host.BMC.Address != "" {
+					bmhost := baremetal.Host{
+						Name: host.Hostname,
+						Role: host.Role,
+					}
+					if len(host.Interfaces) > 0 {
+						// Boot MAC address is stored as first interface
+						bmhost.BootMACAddress = host.Interfaces[0].MacAddress
+					} else {
+						logrus.Infof("Could not obtain baremetal BootMacAddress for %s", installConfig.Config.Platform.Name())
+					}
+					bmIcOverridden = true
+					bmhost.BMC = host.BMC
+					baremetalPlatform.Hosts = append(baremetalPlatform.Hosts, bmhost)
+
+					// Set provisioning network configuration
+					baremetalPlatform.ClusterProvisioningIP = installConfig.Config.Platform.BareMetal.ClusterProvisioningIP
+					baremetalPlatform.ProvisioningNetwork = installConfig.Config.Platform.BareMetal.ProvisioningNetwork
+					baremetalPlatform.ProvisioningNetworkInterface = installConfig.Config.Platform.BareMetal.ProvisioningNetworkInterface
+					baremetalPlatform.ProvisioningNetworkCIDR = installConfig.Config.Platform.BareMetal.ProvisioningNetworkCIDR
+					baremetalPlatform.ProvisioningDHCPRange = installConfig.Config.Platform.BareMetal.ProvisioningDHCPRange
+				}
+			}
+			if bmIcOverridden {
+				icOverridden = true
+				icOverrides.Platform = &agentClusterInstallPlatform{}
+				icOverrides.Platform = &agentClusterInstallPlatform{
+					BareMetal: &baremetalPlatform,
+				}
+			}
+
 			agentClusterInstall.Spec.APIVIPs = installConfig.Config.Platform.BareMetal.APIVIPs
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.BareMetal.IngressVIPs
 		} else if installConfig.Config.Platform.VSphere != nil {

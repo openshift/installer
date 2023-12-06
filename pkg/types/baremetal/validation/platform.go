@@ -487,61 +487,33 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	switch p.ProvisioningNetwork {
-	// If we do not have a provisioning network, provisioning services
-	// will be run on the external network. Users must provide IP's on the
-	// machine networks to host those services.
-	case baremetal.DisabledProvisioningNetwork:
-		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("Hosts"))
+	allErrs = append(allErrs, validateProvisioningBootstrapAndImages(p, n, fldPath)...)
 
+	allErrs = append(allErrs, ValidateProvisioningNetworking(p, n, fldPath)...)
+
+	return allErrs
+}
+
+// validateProvisioningBootstrapAndImagechecks that provisioning settings and images required for bootstrap are valid.
+func validateProvisioningBootstrapAndImages(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	switch p.ProvisioningNetwork {
+	case baremetal.DisabledProvisioningNetwork:
 		// If set, ensure bootstrapProvisioningIP is in one of the machine networks
 		if p.BootstrapProvisioningIP != "" {
 			if err := validateIPinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
 			}
 		}
-
-		// If set, ensure clusterProvisioningIP is in one of the machine networks
-		if p.ClusterProvisioningIP != "" {
-			if err := validateIPinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
-			}
-		}
 	default:
-		// Ensure provisioningNetworkCIDR mask is >= 64 for managed ipv6 networks due to a dnsmasq limitation
-		if err := validateCIDRSize(p); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
-		}
-
-		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
-		if err := validateNoOverlapMachineCIDR(&p.ProvisioningNetworkCIDR.IPNet, n); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
-		}
-
 		// Ensure bootstrapProvisioningIP is in the provisioningNetworkCIDR
 		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.BootstrapProvisioningIP)) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.BootstrapProvisioningIP)))
 		}
 
-		// Ensure clusterProvisioningIP is in the provisioningNetworkCIDR
-		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
-		}
-
-		// Ensure provisioningNetworkCIDR does not have any host bits set
-		expectedIP := p.ProvisioningNetworkCIDR.IP.Mask(p.ProvisioningNetworkCIDR.Mask)
-		expectedLen, _ := p.ProvisioningNetworkCIDR.Mask.Size()
-		if !p.ProvisioningNetworkCIDR.IP.Equal(expectedIP) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR,
-				fmt.Sprintf("provisioningNetworkCIDR has host bits set, expected %s/%d", expectedIP, expectedLen)))
-		}
-
 		if err := validateIPNotinMachineCIDR(p.BootstrapProvisioningIP, n); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, err.Error()))
-		}
-
-		if p.ProvisioningDHCPRange != "" {
-			allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
 		}
 
 		if err := validate.MAC(p.ExternalMACAddress); p.ExternalMACAddress != "" && err != nil {
@@ -562,6 +534,55 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 	}
 
 	allErrs = append(allErrs, validateOSImages(p, fldPath)...)
+
+	return allErrs
+}
+
+// ValidateProvisioningNetworking checks that provisioning network requirements specified is valid.
+func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	switch p.ProvisioningNetwork {
+	// If we do not have a provisioning network, provisioning services
+	// will be run on the external network. Users must provide IP's on the
+	// machine networks to host those services.
+	case baremetal.DisabledProvisioningNetwork:
+		allErrs = validateProvisioningNetworkDisabledSupported(p.Hosts, fldPath.Child("Hosts"))
+
+		// If set, ensure clusterProvisioningIP is in one of the machine networks
+		if p.ClusterProvisioningIP != "" {
+			if err := validateIPinMachineCIDR(p.ClusterProvisioningIP, n); err != nil {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("provisioning network is disabled, %s", err.Error())))
+			}
+		}
+	default:
+		// Ensure provisioningNetworkCIDR mask is >= 64 for managed ipv6 networks due to a dnsmasq limitation
+		if err := validateCIDRSize(p); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
+		}
+
+		// Ensure provisioningNetworkCIDR doesn't overlap with any machine network
+		if err := validateNoOverlapMachineCIDR(&p.ProvisioningNetworkCIDR.IPNet, n); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR.String(), err.Error()))
+		}
+
+		// Ensure clusterProvisioningIP is in the provisioningNetworkCIDR
+		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
+		}
+
+		// Ensure provisioningNetworkCIDR does not have any host bits set
+		expectedIP := p.ProvisioningNetworkCIDR.IP.Mask(p.ProvisioningNetworkCIDR.Mask)
+		expectedLen, _ := p.ProvisioningNetworkCIDR.Mask.Size()
+		if !p.ProvisioningNetworkCIDR.IP.Equal(expectedIP) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkCIDR"), p.ProvisioningNetworkCIDR,
+				fmt.Sprintf("provisioningNetworkCIDR has host bits set, expected %s/%d", expectedIP, expectedLen)))
+		}
+
+		if p.ProvisioningDHCPRange != "" {
+			allErrs = append(allErrs, validateDHCPRange(p, fldPath)...)
+		}
+	}
 
 	allErrs = append(allErrs, validateHostsBMCOnly(p.Hosts, fldPath)...)
 
