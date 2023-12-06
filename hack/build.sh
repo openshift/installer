@@ -44,13 +44,13 @@ MODE="${MODE:-release}"
 # Build terraform binaries before setting environment variables since it messes up make
 if test "${SKIP_TERRAFORM}" != y && ! (echo "${TAGS}" | grep -q -e 'aro' -e 'altinfra')
 then
-  make -j8 -C terraform all
+  make -C terraform all
   copy_terraform_to_mirror # Copy terraform parts to embedded mirror.
 fi
 
 # build cluster-api binaries
 if [ -n "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
-  make -j8 -C cluster-api all
+  make -C cluster-api all
   copy_cluster_api_to_mirror
 fi
 
