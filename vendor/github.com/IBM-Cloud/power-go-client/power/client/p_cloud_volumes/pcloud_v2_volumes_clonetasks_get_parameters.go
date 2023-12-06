@@ -52,10 +52,12 @@ func NewPcloudV2VolumesClonetasksGetParamsWithHTTPClient(client *http.Client) *P
 	}
 }
 
-/* PcloudV2VolumesClonetasksGetParams contains all the parameters to send to the API endpoint
-   for the pcloud v2 volumes clonetasks get operation.
+/*
+PcloudV2VolumesClonetasksGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud v2 volumes clonetasks get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudV2VolumesClonetasksGetParams struct {
 

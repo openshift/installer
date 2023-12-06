@@ -25,12 +25,15 @@ func NewIBMPIVolumeOnboardingClient(ctx context.Context, sess *ibmpisession.IBMP
 
 // Get the information of volume onboarding operation
 func (f *IBMPIVolumeOnboardingClient) Get(id string) (*models.VolumeOnboarding, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithVolumeOnboardingID(id)
 	resp, err := f.session.Power.PCloudVolumeOnboarding.PcloudVolumeOnboardingGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVolumeOnboardingOperationFailed, id, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVolumeOnboardingOperationFailed, id, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Volume Onboarding for volume-onboarding ID:%s", id)
@@ -40,12 +43,15 @@ func (f *IBMPIVolumeOnboardingClient) Get(id string) (*models.VolumeOnboarding, 
 
 // Get All volume onboardings for this cloud instance
 func (f *IBMPIVolumeOnboardingClient) GetAll() (*models.VolumeOnboardings, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudVolumeOnboarding.PcloudVolumeOnboardingGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetAllVolumeOnboardingsOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetAllVolumeOnboardingsOperationFailed, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get All Volume Onboardings for the cloud instance %s", f.cloudInstanceID)
@@ -55,12 +61,15 @@ func (f *IBMPIVolumeOnboardingClient) GetAll() (*models.VolumeOnboardings, error
 
 // Onboard auxiliary volumes to target site
 func (f *IBMPIVolumeOnboardingClient) CreateVolumeOnboarding(body *models.VolumeOnboardingCreate) (*models.VolumeOnboardingCreateResponse, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := p_cloud_volume_onboarding.NewPcloudVolumeOnboardingPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	resp, err := f.session.Power.PCloudVolumeOnboarding.PcloudVolumeOnboardingPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateVolumeOnboardingsOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVolumeOnboardingsOperationFailed, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Create Volume Onboarding")

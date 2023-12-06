@@ -83,6 +83,11 @@ func (m *VPNConnections) contextValidateVpnConnections(ctx context.Context, form
 	for i := 0; i < len(m.VpnConnections); i++ {
 
 		if m.VpnConnections[i] != nil {
+
+			if swag.IsZero(m.VpnConnections[i]) { // not required
+				return nil
+			}
+
 			if err := m.VpnConnections[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("vpnConnections" + "." + strconv.Itoa(i))

@@ -305,6 +305,10 @@ func (m *IKEPolicyCreate) ContextValidate(ctx context.Context, formats strfmt.Re
 
 func (m *IKEPolicyCreate) contextValidateAuthentication(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.Authentication) { // not required
+		return nil
+	}
+
 	if err := m.Authentication.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("authentication")
@@ -320,6 +324,7 @@ func (m *IKEPolicyCreate) contextValidateAuthentication(ctx context.Context, for
 func (m *IKEPolicyCreate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.KeyLifetime != nil {
+
 		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("keyLifetime")

@@ -49,6 +49,32 @@ func validateMachinePool(fldPath *field.Path, machinePool *types.MachinePool) fi
 	return allErrs
 }
 
+// ValidatePERAvailability ensures the target datacenter has PER enabled.
+func ValidatePERAvailability(client API, ic *types.InstallConfig) error {
+	capabilities, err := client.GetDatacenterCapabilities(context.TODO(), ic.PowerVS.Zone)
+	if err != nil {
+		return err
+	}
+	const per = "power-edge-router"
+	perAvail, ok := capabilities[per]
+	if !ok {
+		return fmt.Errorf("%s capability unknown at: %s", per, ic.PowerVS.Zone)
+	}
+	if !perAvail {
+		return fmt.Errorf("%s is not available at: %s", per, ic.PowerVS.Zone)
+	}
+
+	capabilities, err = client.GetWorkspaceCapabilities(context.TODO(), ic.PowerVS.ServiceInstanceID)
+	if err != nil {
+		return err
+	}
+	if !capabilities[per] {
+		return fmt.Errorf("%s is not available in workspace: %s", per, ic.PowerVS.ServiceInstanceID)
+	}
+
+	return nil
+}
+
 // ValidatePreExistingDNS ensures no pre-existing DNS record exists in the CIS
 // DNS zone or IBM DNS zone for cluster's Kubernetes API.
 func ValidatePreExistingDNS(client API, ic *types.InstallConfig, metadata MetadataAPI) error {

@@ -158,7 +158,12 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create a new PISession")
 		}
 
-		transitGatewayEnabled := configpowervs.TransitGatewayEnabledZone(ic.Config.Platform.PowerVS.Zone)
+		client, err := configpowervs.NewClient()
+		if err != nil {
+			return err
+		}
+		err = configpowervs.ValidatePERAvailability(client, ic.Config)
+		transitGatewayEnabled := err == nil
 
 		if !transitGatewayEnabled {
 			// Only check that there isn't an existing Cloud connection if we're not re-using one

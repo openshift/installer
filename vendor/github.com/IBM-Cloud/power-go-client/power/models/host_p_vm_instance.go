@@ -160,6 +160,7 @@ func (m *HostPVMInstance) ContextValidate(ctx context.Context, formats strfmt.Re
 func (m *HostPVMInstance) contextValidateOwner(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Owner != nil {
+
 		if err := m.Owner.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("owner")

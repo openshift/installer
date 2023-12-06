@@ -52,10 +52,12 @@ func NewPcloudSystempoolsGetParamsWithHTTPClient(client *http.Client) *PcloudSys
 	}
 }
 
-/* PcloudSystempoolsGetParams contains all the parameters to send to the API endpoint
-   for the pcloud systempools get operation.
+/*
+PcloudSystempoolsGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud systempools get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudSystempoolsGetParams struct {
 

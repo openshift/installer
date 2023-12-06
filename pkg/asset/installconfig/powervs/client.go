@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM-Cloud/power-go-client/power/client/datacenters"
+	"github.com/IBM-Cloud/power-go-client/power/client/workspaces"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
@@ -40,6 +42,8 @@ type API interface {
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
 	ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error)
+	GetDatacenterCapabilities(ctx context.Context, zone string) (map[string]bool, error)
+	GetWorkspaceCapabilities(ctx context.Context, svcInsID string) (map[string]bool, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -661,12 +665,6 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	return serviceInstances, nil
 }
 
-// TransitGatewayEnabledZone returns if a zone is configured for transit gateways rather than cloud connections.
-func TransitGatewayEnabledZone(zone string) bool {
-	// @TBD - HACK.  Waiting for officially supported detection function
-	return zone == "dal10"
-}
-
 // ServiceInstanceIDToCRN returns the CRN of the matching service instance GUID which was passed in.
 func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
 	var (
@@ -745,4 +743,31 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 	}
 
 	return "", nil
+}
+
+// GetDatacenterCapabilities retrieves the capabilities of the specified datacenter.
+func (c *Client) GetDatacenterCapabilities(ctx context.Context, zone string) (map[string]bool, error) {
+	var err error
+	if c.BXCli.PISession == nil {
+		err = c.BXCli.NewPISession()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterCapabilities: %w", err)
+		}
+	}
+	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(zone)
+	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
+	}
+	return getOk.Payload.Capabilities, nil
+}
+
+// GetWorkspaceCapabilities retrieves the capabilities of the specified workspace.
+func (c *Client) GetWorkspaceCapabilities(ctx context.Context, svcInsID string) (map[string]bool, error) {
+	params := workspaces.NewV1WorkspacesGetParamsWithContext(ctx).WithWorkspaceID(svcInsID)
+	getOk, err := c.BXCli.PISession.Power.Workspaces.V1WorkspacesGet(params, c.BXCli.PISession.AuthInfo(svcInsID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get workspace capabilities: %w", err)
+	}
+	return getOk.Payload.Capabilities, nil
 }

@@ -25,7 +25,7 @@ import (
 type editFunctions []func(ic *types.InstallConfig)
 
 var (
-	validRegion                  = "lon"
+	validRegion                  = "dal"
 	validCIDR                    = "192.168.0.0/24"
 	validCISInstanceCRN          = "crn:v1:bluemix:public:internet-svcs:global:a/valid-account-id:valid-instance-id::"
 	validClusterName             = "valid-cluster-name"
@@ -37,6 +37,7 @@ var (
 	validPrivateSubnetUSSouth1ID = "private-subnet-us-south-1-id"
 	validPrivateSubnetUSSouth2ID = "private-subnet-us-south-2-id"
 	validServiceInstanceID       = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	invalidServiceInstanceID     = "bogus-service-instance-id"
 	validSubnets                 = []string{
 		validPublicSubnetUSSouth1ID,
 		validPublicSubnetUSSouth2ID,
@@ -44,7 +45,7 @@ var (
 		validPrivateSubnetUSSouth2ID,
 	}
 	validUserID = "valid-user@example.com"
-	validZone   = "lon04"
+	validZone   = "dal10"
 
 	existingDNSRecordsResponse = []powervs.DNSRecordResponse{
 		{
@@ -62,7 +63,7 @@ var (
 	invalidMachinePoolCIDR = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrInvalid }
 	cidrValid, _           = ipnet.ParseCIDR("192.168.0.0/24")
 	validMachinePoolCIDR   = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrValid }
-	validVPCRegion         = "eu-gb"
+	validVPCRegion         = "us-south"
 	invalidVPCRegion       = "foo-bah"
 	setValidVPCRegion      = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCRegion = validVPCRegion }
 	validRG                = "valid-resource-group"
@@ -115,6 +116,23 @@ var (
 			Name: &validRG,
 			ID:   &validRG,
 		},
+	}
+	regionWithPER    = "dal10"
+	regionWithoutPER = "foo99"
+	regionPERUnknown = "bah77"
+	mapWithPERFalse  = map[string]bool{
+		"disaster-recover-site": true,
+		"power-edge-router":     false,
+		"vpn-connections":       true,
+	}
+	mapWithPERTrue = map[string]bool{
+		"disaster-recover-site": true,
+		"power-edge-router":     true,
+		"vpn-connections":       true,
+	}
+	mapPERUnknown = map[string]bool{
+		"disaster-recover-site": true,
+		"power-vpn-connections": false,
 	}
 )
 
@@ -630,6 +648,90 @@ func TestSystemPool(t *testing.T) {
 
 	err = powervs.ValidateCapacityWithPools(dedicatedControlPlanes, dedicatedComputes, systemPoolsGood)
 	assert.Empty(t, err)
+}
+
+func TestValidatePERAvailability(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Region without PER",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithoutPER
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router is not available at: %s", regionWithoutPER),
+		},
+		{
+			name: "Region with PER",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithPER
+					ic.Platform.PowerVS.ServiceInstanceID = validServiceInstanceID
+				},
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Region with no PER availability info",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionPERUnknown
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router capability unknown at: %s", regionPERUnknown),
+		},
+		{
+			name: "Region with PER, but with invalid Workspace ID",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithPER
+					ic.Platform.PowerVS.ServiceInstanceID = invalidServiceInstanceID
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router is not available in workspace: %s", invalidServiceInstanceID),
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	powervsClient := mock.NewMockAPI(mockCtrl)
+
+	// Mocks: PER-absent region results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithoutPER).Return(mapWithPERFalse, nil)
+
+	// Mocks: PER-enabled region results in true
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
+	powervsClient.EXPECT().GetWorkspaceCapabilities(gomock.Any(), validServiceInstanceID).Return(mapWithPERTrue, nil)
+
+	// Mocks: PER-unknown region results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionPERUnknown).Return(mapPERUnknown, nil)
+
+	// Mocks: PER-enabled region, but bogus Service Instance results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
+	powervsClient.EXPECT().GetWorkspaceCapabilities(gomock.Any(), invalidServiceInstanceID).Return(mapWithPERFalse, nil)
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidatePERAvailability(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
 }
 
 func setMockEnvVars() {

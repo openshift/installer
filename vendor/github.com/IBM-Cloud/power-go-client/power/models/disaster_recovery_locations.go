@@ -85,6 +85,11 @@ func (m *DisasterRecoveryLocations) contextValidateDisasterRecoveryLocations(ctx
 	for i := 0; i < len(m.DisasterRecoveryLocations); i++ {
 
 		if m.DisasterRecoveryLocations[i] != nil {
+
+			if swag.IsZero(m.DisasterRecoveryLocations[i]) { // not required
+				return nil
+			}
+
 			if err := m.DisasterRecoveryLocations[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("disasterRecoveryLocations" + "." + strconv.Itoa(i))

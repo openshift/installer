@@ -42,7 +42,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudDhcpDelete deletes d h c p server open shift internal use only
+PcloudDhcpDelete deletes d h c p server open shift internal use only
 */
 func (a *Client) PcloudDhcpDelete(params *PcloudDhcpDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudDhcpDeleteAccepted, error) {
 	// TODO: Validate the params before sending
@@ -81,7 +81,7 @@ func (a *Client) PcloudDhcpDelete(params *PcloudDhcpDeleteParams, authInfo runti
 }
 
 /*
-  PcloudDhcpGet gets d h c p server information open shift internal use only
+PcloudDhcpGet gets d h c p server information open shift internal use only
 */
 func (a *Client) PcloudDhcpGet(params *PcloudDhcpGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudDhcpGetOK, error) {
 	// TODO: Validate the params before sending
@@ -120,7 +120,7 @@ func (a *Client) PcloudDhcpGet(params *PcloudDhcpGetParams, authInfo runtime.Cli
 }
 
 /*
-  PcloudDhcpGetall gets all d h c p servers information open shift internal use only
+PcloudDhcpGetall gets all d h c p servers information open shift internal use only
 */
 func (a *Client) PcloudDhcpGetall(params *PcloudDhcpGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudDhcpGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -159,7 +159,7 @@ func (a *Client) PcloudDhcpGetall(params *PcloudDhcpGetallParams, authInfo runti
 }
 
 /*
-  PcloudDhcpPost creates a d h c p server open shift internal use only
+PcloudDhcpPost creates a d h c p server open shift internal use only
 */
 func (a *Client) PcloudDhcpPost(params *PcloudDhcpPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudDhcpPostAccepted, error) {
 	// TODO: Validate the params before sending

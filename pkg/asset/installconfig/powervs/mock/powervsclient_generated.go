@@ -128,6 +128,21 @@ func (mr *MockAPIMockRecorder) GetDNSZones(ctx, publish interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZones", reflect.TypeOf((*MockAPI)(nil).GetDNSZones), ctx, publish)
 }
 
+// GetDatacenterCapabilities mocks base method.
+func (m *MockAPI) GetDatacenterCapabilities(ctx context.Context, zone string) (map[string]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDatacenterCapabilities", ctx, zone)
+	ret0, _ := ret[0].(map[string]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDatacenterCapabilities indicates an expected call of GetDatacenterCapabilities.
+func (mr *MockAPIMockRecorder) GetDatacenterCapabilities(ctx, zone interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatacenterCapabilities", reflect.TypeOf((*MockAPI)(nil).GetDatacenterCapabilities), ctx, zone)
+}
+
 // GetPublicGatewayByVPC mocks base method.
 func (m *MockAPI) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error) {
 	m.ctrl.T.Helper()
@@ -186,6 +201,21 @@ func (m *MockAPI) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, erro
 func (mr *MockAPIMockRecorder) GetVPCs(ctx, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
+}
+
+// GetWorkspaceCapabilities mocks base method.
+func (m *MockAPI) GetWorkspaceCapabilities(ctx context.Context, svcInsID string) (map[string]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkspaceCapabilities", ctx, svcInsID)
+	ret0, _ := ret[0].(map[string]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkspaceCapabilities indicates an expected call of GetWorkspaceCapabilities.
+func (mr *MockAPIMockRecorder) GetWorkspaceCapabilities(ctx, svcInsID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkspaceCapabilities", reflect.TypeOf((*MockAPI)(nil).GetWorkspaceCapabilities), ctx, svcInsID)
 }
 
 // ListResourceGroups mocks base method.

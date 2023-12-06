@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  InternalV1PowervsLocationsTransitgatewayGet gets list of p e r enabled power v s locations
+InternalV1PowervsLocationsTransitgatewayGet gets list of p e r enabled power v s locations
 */
 func (a *Client) InternalV1PowervsLocationsTransitgatewayGet(params *InternalV1PowervsLocationsTransitgatewayGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1PowervsLocationsTransitgatewayGetOK, error) {
 	// TODO: Validate the params before sending

@@ -208,6 +208,10 @@ func (m *UserAuthenticationInfo) ContextValidate(ctx context.Context, formats st
 
 func (m *UserAuthenticationInfo) contextValidateCapabilities(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.Capabilities) { // not required
+		return nil
+	}
+
 	if err := m.Capabilities.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("capabilities")
@@ -221,6 +225,10 @@ func (m *UserAuthenticationInfo) contextValidateCapabilities(ctx context.Context
 }
 
 func (m *UserAuthenticationInfo) contextValidateCrnAccess(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.CrnAccess) { // not required
+		return nil
+	}
 
 	if err := m.CrnAccess.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
@@ -237,6 +245,7 @@ func (m *UserAuthenticationInfo) contextValidateCrnAccess(ctx context.Context, f
 func (m *UserAuthenticationInfo) contextValidateToken(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Token != nil {
+
 		if err := m.Token.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("token")

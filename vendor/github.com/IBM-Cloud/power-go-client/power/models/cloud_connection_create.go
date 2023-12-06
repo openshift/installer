@@ -176,6 +176,11 @@ func (m *CloudConnectionCreate) ContextValidate(ctx context.Context, formats str
 func (m *CloudConnectionCreate) contextValidateClassic(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Classic != nil {
+
+		if swag.IsZero(m.Classic) { // not required
+			return nil
+		}
+
 		if err := m.Classic.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("classic")
@@ -192,6 +197,11 @@ func (m *CloudConnectionCreate) contextValidateClassic(ctx context.Context, form
 func (m *CloudConnectionCreate) contextValidateVpc(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Vpc != nil {
+
+		if swag.IsZero(m.Vpc) { // not required
+			return nil
+		}
+
 		if err := m.Vpc.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("vpc")

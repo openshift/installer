@@ -873,7 +873,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
-		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
+		err = powervsconfig.ValidatePERAvailability(client, installConfig.Config)
+		transitGatewayEnabled := err == nil
 
 		serviceInstanceCRN, err := client.ServiceInstanceIDToCRN(ctx, installConfig.Config.PowerVS.ServiceInstanceID)
 		if err != nil {

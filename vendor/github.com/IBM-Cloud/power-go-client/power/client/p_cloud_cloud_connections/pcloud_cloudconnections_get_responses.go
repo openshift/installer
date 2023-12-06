@@ -41,6 +41,12 @@ func (o *PcloudCloudconnectionsGetReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudconnectionsGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudconnectionsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudCloudconnectionsGetReader) ReadResponse(response runtime.ClientRe
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}] pcloud.cloudconnections.get", response, response.Code())
 	}
 }
 
@@ -69,7 +75,8 @@ func NewPcloudCloudconnectionsGetOK() *PcloudCloudconnectionsGetOK {
 	return &PcloudCloudconnectionsGetOK{}
 }
 
-/* PcloudCloudconnectionsGetOK describes a response with status code 200, with default header values.
+/*
+PcloudCloudconnectionsGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +84,44 @@ type PcloudCloudconnectionsGetOK struct {
 	Payload *models.CloudConnection
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get o k response has a 2xx status code
+func (o *PcloudCloudconnectionsGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get o k response has a 3xx status code
+func (o *PcloudCloudconnectionsGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get o k response has a 4xx status code
+func (o *PcloudCloudconnectionsGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud cloudconnections get o k response has a 5xx status code
+func (o *PcloudCloudconnectionsGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get o k response a status code equal to that given
+func (o *PcloudCloudconnectionsGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudconnections get o k response
+func (o *PcloudCloudconnectionsGetOK) Code() int {
+	return 200
+}
+
 func (o *PcloudCloudconnectionsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetOK) GetPayload() *models.CloudConnection {
 	return o.Payload
 }
@@ -101,7 +143,8 @@ func NewPcloudCloudconnectionsGetBadRequest() *PcloudCloudconnectionsGetBadReque
 	return &PcloudCloudconnectionsGetBadRequest{}
 }
 
-/* PcloudCloudconnectionsGetBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudCloudconnectionsGetBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +152,44 @@ type PcloudCloudconnectionsGetBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get bad request response has a 2xx status code
+func (o *PcloudCloudconnectionsGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get bad request response has a 3xx status code
+func (o *PcloudCloudconnectionsGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get bad request response has a 4xx status code
+func (o *PcloudCloudconnectionsGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections get bad request response has a 5xx status code
+func (o *PcloudCloudconnectionsGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get bad request response a status code equal to that given
+func (o *PcloudCloudconnectionsGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud cloudconnections get bad request response
+func (o *PcloudCloudconnectionsGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudCloudconnectionsGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +211,8 @@ func NewPcloudCloudconnectionsGetUnauthorized() *PcloudCloudconnectionsGetUnauth
 	return &PcloudCloudconnectionsGetUnauthorized{}
 }
 
-/* PcloudCloudconnectionsGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudCloudconnectionsGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +220,44 @@ type PcloudCloudconnectionsGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get unauthorized response has a 2xx status code
+func (o *PcloudCloudconnectionsGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get unauthorized response has a 3xx status code
+func (o *PcloudCloudconnectionsGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get unauthorized response has a 4xx status code
+func (o *PcloudCloudconnectionsGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections get unauthorized response has a 5xx status code
+func (o *PcloudCloudconnectionsGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get unauthorized response a status code equal to that given
+func (o *PcloudCloudconnectionsGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud cloudconnections get unauthorized response
+func (o *PcloudCloudconnectionsGetUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudCloudconnectionsGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -160,12 +274,81 @@ func (o *PcloudCloudconnectionsGetUnauthorized) readResponse(response runtime.Cl
 	return nil
 }
 
+// NewPcloudCloudconnectionsGetForbidden creates a PcloudCloudconnectionsGetForbidden with default headers values
+func NewPcloudCloudconnectionsGetForbidden() *PcloudCloudconnectionsGetForbidden {
+	return &PcloudCloudconnectionsGetForbidden{}
+}
+
+/*
+PcloudCloudconnectionsGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudconnectionsGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections get forbidden response has a 2xx status code
+func (o *PcloudCloudconnectionsGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get forbidden response has a 3xx status code
+func (o *PcloudCloudconnectionsGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get forbidden response has a 4xx status code
+func (o *PcloudCloudconnectionsGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections get forbidden response has a 5xx status code
+func (o *PcloudCloudconnectionsGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get forbidden response a status code equal to that given
+func (o *PcloudCloudconnectionsGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudconnections get forbidden response
+func (o *PcloudCloudconnectionsGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudconnectionsGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudCloudconnectionsGetNotFound creates a PcloudCloudconnectionsGetNotFound with default headers values
 func NewPcloudCloudconnectionsGetNotFound() *PcloudCloudconnectionsGetNotFound {
 	return &PcloudCloudconnectionsGetNotFound{}
 }
 
-/* PcloudCloudconnectionsGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudCloudconnectionsGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -173,9 +356,44 @@ type PcloudCloudconnectionsGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get not found response has a 2xx status code
+func (o *PcloudCloudconnectionsGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get not found response has a 3xx status code
+func (o *PcloudCloudconnectionsGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get not found response has a 4xx status code
+func (o *PcloudCloudconnectionsGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections get not found response has a 5xx status code
+func (o *PcloudCloudconnectionsGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get not found response a status code equal to that given
+func (o *PcloudCloudconnectionsGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudconnections get not found response
+func (o *PcloudCloudconnectionsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudCloudconnectionsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +415,8 @@ func NewPcloudCloudconnectionsGetRequestTimeout() *PcloudCloudconnectionsGetRequ
 	return &PcloudCloudconnectionsGetRequestTimeout{}
 }
 
-/* PcloudCloudconnectionsGetRequestTimeout describes a response with status code 408, with default header values.
+/*
+PcloudCloudconnectionsGetRequestTimeout describes a response with status code 408, with default header values.
 
 Request Timeout
 */
@@ -205,9 +424,44 @@ type PcloudCloudconnectionsGetRequestTimeout struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get request timeout response has a 2xx status code
+func (o *PcloudCloudconnectionsGetRequestTimeout) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get request timeout response has a 3xx status code
+func (o *PcloudCloudconnectionsGetRequestTimeout) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get request timeout response has a 4xx status code
+func (o *PcloudCloudconnectionsGetRequestTimeout) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections get request timeout response has a 5xx status code
+func (o *PcloudCloudconnectionsGetRequestTimeout) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections get request timeout response a status code equal to that given
+func (o *PcloudCloudconnectionsGetRequestTimeout) IsCode(code int) bool {
+	return code == 408
+}
+
+// Code gets the status code for the pcloud cloudconnections get request timeout response
+func (o *PcloudCloudconnectionsGetRequestTimeout) Code() int {
+	return 408
+}
+
 func (o *PcloudCloudconnectionsGetRequestTimeout) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetRequestTimeout  %+v", 408, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetRequestTimeout) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetRequestTimeout  %+v", 408, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetRequestTimeout) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +483,8 @@ func NewPcloudCloudconnectionsGetInternalServerError() *PcloudCloudconnectionsGe
 	return &PcloudCloudconnectionsGetInternalServerError{}
 }
 
-/* PcloudCloudconnectionsGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudCloudconnectionsGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +492,44 @@ type PcloudCloudconnectionsGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud cloudconnections get internal server error response has a 2xx status code
+func (o *PcloudCloudconnectionsGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections get internal server error response has a 3xx status code
+func (o *PcloudCloudconnectionsGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections get internal server error response has a 4xx status code
+func (o *PcloudCloudconnectionsGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud cloudconnections get internal server error response has a 5xx status code
+func (o *PcloudCloudconnectionsGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud cloudconnections get internal server error response a status code equal to that given
+func (o *PcloudCloudconnectionsGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudconnections get internal server error response
+func (o *PcloudCloudconnectionsGetInternalServerError) Code() int {
+	return 500
+}
+
 func (o *PcloudCloudconnectionsGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudCloudconnectionsGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}][%d] pcloudCloudconnectionsGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudCloudconnectionsGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
