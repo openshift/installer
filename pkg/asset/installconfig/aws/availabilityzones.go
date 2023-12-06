@@ -103,7 +103,7 @@ func edgeZones(ctx context.Context, session *session.Session, region string) ([]
 		return nil, fmt.Errorf("unable to retrieve Local Zone names: %w", err)
 	}
 
-	wavelengthZones, err := filterZonesByType(ctx, session, region, typesaws.WavelengtyZoneType)
+	wavelengthZones, err := filterZonesByType(ctx, session, region, typesaws.WavelengthZoneType)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Wavelength Zone names: %w", err)
 	}
