@@ -93,6 +93,11 @@ variable "powervs_vpc_gateway_attached" {
   default     = false
 }
 
+variable "powervs_tg_connection_vpc_id" {
+  type        = string
+  description = "ID of a VPC connection to the transit gateway specified in attached_transit_gateway, if any."
+}
+
 variable "powervs_vpc_gateway_name" {
   type        = string
   description = "The name of a pre-created VPC gateway. Must be in $powervs_vpc_region"
@@ -115,6 +120,12 @@ variable "powervs_transit_gateway_enabled" {
   type        = bool
   description = "Boolean indicating if Transit Gateways should be used."
   default     = false
+}
+
+variable "powervs_attached_transit_gateway" {
+  type        = string
+  description = "ID of already attached Transit Gateways."
+  default     = ""
 }
 
 ################################################################

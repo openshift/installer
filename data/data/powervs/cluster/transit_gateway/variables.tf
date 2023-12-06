@@ -8,10 +8,14 @@ variable "resource_group" {
   description = "The name of the Power VS resource group to which the user belongs."
 }
 
-variable "transit_gateway_enabled" {
-  type        = bool
-  description = "Boolean indicating if Transit Gateways should be used."
-  default     = false
+variable "attached_transit_gateway" {
+  type        = string
+  description = "The ID of already attached Transit Gateways, if any."
+}
+
+variable "tg_connection_vpc_id" {
+  type        = string
+  description = "ID of a VPC connection to the transit gateway specified in attached_transit_gateway, if any."
 }
 
 variable "service_instance_crn" {

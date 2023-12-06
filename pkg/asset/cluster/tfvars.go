@@ -895,10 +895,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		var (
 			vpcRegion, vpcZone string
+			vpc                *vpcv1.VPC
 		)
 		vpcName := installConfig.Config.PowerVS.VPCName
 		if vpcName != "" {
-			var vpc *vpcv1.VPC
 			vpc, err = client.GetVPCByName(ctx, vpcName)
 			if err != nil {
 				return err
@@ -940,7 +940,20 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
+		attachedTG := ""
+		tgConnectionVPCID := ""
+		if installConfig.Config.PowerVS.ServiceInstanceGUID != "" {
+			attachedTG, err = client.GetAttachedTransitGateway(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
+			if err != nil {
+				return err
+			}
+			if attachedTG != "" && vpc != nil {
+				tgConnectionVPCID, err = client.GetTGConnectionVPC(ctx, attachedTG, *vpc.ID)
+				if err != nil {
+					return err
+				}
+			}
+		}
 
 		// If a service instance GUID was passed in the install-config.yaml file, then
 		// find the corresponding name for it.  Otherwise, we expect our Terraform to
@@ -953,27 +966,28 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
-				MasterConfigs:         masterConfigs,
-				Region:                installConfig.Config.Platform.PowerVS.Region,
-				Zone:                  installConfig.Config.Platform.PowerVS.Zone,
-				APIKey:                APIKey,
-				SSHKey:                installConfig.Config.SSHKey,
-				PowerVSResourceGroup:  installConfig.Config.PowerVS.PowerVSResourceGroup,
-				ImageBucketName:       osImage[0],
-				ImageBucketFileName:   osImage[1],
-				VPCRegion:             vpcRegion,
-				VPCZone:               vpcZone,
-				VPCName:               vpcName,
-				VPCSubnetName:         vpcSubnet,
-				VPCPermitted:          vpcPermitted,
-				VPCGatewayName:        vpcGatewayName,
-				VPCGatewayAttached:    vpcGatewayAttached,
-				CISInstanceCRN:        cisCRN,
-				DNSInstanceCRN:        dnsCRN,
-				PublishStrategy:       installConfig.Config.Publish,
-				EnableSNAT:            len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
-				TransitGatewayEnabled: transitGatewayEnabled,
-				ServiceInstanceName:   serviceInstanceName,
+				MasterConfigs:          masterConfigs,
+				Region:                 installConfig.Config.Platform.PowerVS.Region,
+				Zone:                   installConfig.Config.Platform.PowerVS.Zone,
+				APIKey:                 APIKey,
+				SSHKey:                 installConfig.Config.SSHKey,
+				PowerVSResourceGroup:   installConfig.Config.PowerVS.PowerVSResourceGroup,
+				ImageBucketName:        osImage[0],
+				ImageBucketFileName:    osImage[1],
+				VPCRegion:              vpcRegion,
+				VPCZone:                vpcZone,
+				VPCName:                vpcName,
+				VPCSubnetName:          vpcSubnet,
+				VPCPermitted:           vpcPermitted,
+				VPCGatewayName:         vpcGatewayName,
+				VPCGatewayAttached:     vpcGatewayAttached,
+				CISInstanceCRN:         cisCRN,
+				DNSInstanceCRN:         dnsCRN,
+				PublishStrategy:        installConfig.Config.Publish,
+				EnableSNAT:             len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
+				AttachedTransitGateway: attachedTG,
+				TGConnectionVPCID:      tgConnectionVPCID,
+				ServiceInstanceName:    serviceInstanceName,
 			},
 		)
 		if err != nil {
