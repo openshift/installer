@@ -378,6 +378,7 @@ func (AuthenticationSpec) SwaggerDoc() map[string]string {
 
 var map_AuthenticationStatus = map[string]string{
 	"integratedOAuthMetadata": "integratedOAuthMetadata contains the discovery endpoint data for OAuth 2.0 Authorization Server Metadata for the in-cluster integrated OAuth server. This discovery document can be viewed from its served location: oc get --raw '/.well-known/oauth-authorization-server' For further details, see the IETF Draft: https://tools.ietf.org/html/draft-ietf-oauth-discovery-04#section-2 This contains the observed value based on cluster state. An explicitly set value in spec.oauthMetadata has precedence over this field. This field has no meaning if authentication spec.type is not set to IntegratedOAuth. The key \"oauthMetadata\" is used to locate the data. If the config map or expected key is not found, no metadata is served. If the specified metadata is not valid, no metadata is served. The namespace for this config map is openshift-config-managed.",
+	"oidcClients":             "OIDCClients is where participating operators place the current OIDC client status for OIDC clients that can be customized by the cluster-admin.",
 }
 
 func (AuthenticationStatus) SwaggerDoc() map[string]string {
@@ -393,9 +394,44 @@ func (DeprecatedWebhookTokenAuthenticator) SwaggerDoc() map[string]string {
 	return map_DeprecatedWebhookTokenAuthenticator
 }
 
+var map_OIDCClientConfig = map[string]string{
+	"componentName":      "ComponentName is the name of the component that is supposed to consume this client configuration",
+	"componentNamespace": "ComponentNamespace is the namespace of the component that is supposed to consume this client configuration",
+	"clientID":           "ClientID is the identifier of the OIDC client from the OIDC provider",
+	"clientSecret":       "ClientSecret refers to a secret in the `openshift-config` namespace that contains the client secret in the `clientSecret` key of the `.data` field",
+	"extraScopes":        "ExtraScopes is an optional set of scopes to request tokens with.",
+}
+
+func (OIDCClientConfig) SwaggerDoc() map[string]string {
+	return map_OIDCClientConfig
+}
+
+var map_OIDCClientReference = map[string]string{
+	"oidcProviderName": "OIDCName refers to the `name` of the provider from `oidcProviders`",
+	"issuerURL":        "URL is the serving URL of the token issuer. Must use the https:// scheme.",
+	"clientID":         "ClientID is the identifier of the OIDC client from the OIDC provider",
+}
+
+func (OIDCClientReference) SwaggerDoc() map[string]string {
+	return map_OIDCClientReference
+}
+
+var map_OIDCClientStatus = map[string]string{
+	"componentName":      "ComponentName is the name of the component that will consume a client configuration.",
+	"componentNamespace": "ComponentNamespace is the namespace of the component that will consume a client configuration.",
+	"currentOIDCClients": "CurrentOIDCClients is a list of clients that the component is currently using.",
+	"consumingUsers":     "ConsumingUsers is a slice of ServiceAccounts that need to have read permission on the `clientSecret` secret.",
+	"conditions":         "Conditions are used to communicate the state of the `oidcClients` entry.\n\nSupported conditions include Available, Degraded and Progressing.\n\nIf Available is true, the component is successfully using the configured client. If Degraded is true, that means something has gone wrong trying to handle the client configuration. If Progressing is true, that means the component is taking some action related to the `oidcClients` entry.",
+}
+
+func (OIDCClientStatus) SwaggerDoc() map[string]string {
+	return map_OIDCClientStatus
+}
+
 var map_OIDCProvider = map[string]string{
 	"name":                 "Name of the OIDC provider",
 	"issuer":               "Issuer describes atributes of the OIDC token issuer",
+	"oidcClients":          "OIDCClients contains configuration for the platform's clients that need to request tokens from the issuer",
 	"claimMappings":        "ClaimMappings describes rules on how to transform information from an ID token into a cluster identity",
 	"claimValidationRules": "ClaimValidationRules are rules that are applied to validate token claims to authenticate users.",
 }
@@ -1958,6 +1994,7 @@ var map_NetworkStatus = map[string]string{
 	"networkType":       "NetworkType is the plugin that is deployed (e.g. OpenShiftSDN).",
 	"clusterNetworkMTU": "ClusterNetworkMTU is the MTU for inter-pod networking.",
 	"migration":         "Migration contains the cluster network migration configuration.",
+	"conditions":        "conditions represents the observations of a network.config current state. Known .status.conditions.type are: \"NetworkTypeMigrationInProgress\", \"NetworkTypeMigrationMTUReady\", \"NetworkTypeMigrationTargetCNIAvailable\", \"NetworkTypeMigrationTargetCNIInUse\" and \"NetworkTypeMigrationOriginalCNIPurged\"",
 }
 
 func (NetworkStatus) SwaggerDoc() map[string]string {
