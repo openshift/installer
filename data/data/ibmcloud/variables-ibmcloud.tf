@@ -51,6 +51,12 @@ variable "ibmcloud_image_filepath" {
   description = "The file path to the RHCOS image"
 }
 
+variable "ibmcloud_terraform_private_visibility" {
+  type        = bool
+  description = "Specified whether the IBM Cloud terraform provider visibility mode should be private, for endpoint usage."
+  default     = false
+}
+
 #######################################
 # Top-level module variables (optional)
 #######################################

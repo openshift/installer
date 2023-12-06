@@ -93,7 +93,7 @@ type EndpointsJSON struct {
 	IBMCloudEndpointResourceManager *EndpointsVisibility `json:"IBMCLOUD_RESOURCE_MANAGEMENT_API_ENDPOINT,omitempty"`
 
 	// IBMCloudEndpointVPC contains endpoint mapping for IBM Cloud VPC.
-	IBMCloudEndpointVPC *EndpointsVisibility `json:"IBMCLOUDIS_NG_API_ENDPOINT,omitempty"`
+	IBMCloudEndpointVPC *EndpointsVisibility `json:"IBMCLOUD_IS_NG_API_ENDPOINT,omitempty"`
 }
 
 // EndpointsVisibility contains region mapped endpoint for a service.
@@ -101,6 +101,10 @@ type EndpointsVisibility struct {
 	// Private is a string-string map of a region name to endpoint URL
 	// To prevent maintaining a list of supported regions here, we simply use a map instead of a struct
 	Private map[string]string `json:"private"`
+
+	// Public is a string-string map of a region name to endpoint URL
+	// To prevent maintaining a list of supported regions here, we simply use a map instead of a struct
+	Public map[string]string `json:"public"`
 }
 
 // CheckServiceEndpointOverride checks whether a service has an override endpoint.
