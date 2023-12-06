@@ -1,8 +1,7 @@
 locals {
   description = "Created By OpenShift Installer"
-  # If any Service Endpoints are being overridden, set visibility to 'private'
-  # for IBM Terraform Provider to use the endpoints JSON file.
-  endpoint_visibility = var.ibmcloud_endpoints_json_file != "" ? "private" : "public"
+  # If specified, set visibility to 'private' for IBM Terraform Provider
+  endpoint_visibility = var.ibmcloud_terraform_private_visibility ? "private" : "public"
   public_endpoints    = var.ibmcloud_publish_strategy == "External" ? true : false
   tags = concat(
     ["kubernetes.io_cluster_${var.cluster_id}:owned"],
