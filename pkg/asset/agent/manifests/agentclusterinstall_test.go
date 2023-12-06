@@ -43,9 +43,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
-	goodACIDualStackVIPs.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"platform":{"baremetal":{"apiVIPs":["192.168.122.10","2001:db8:1111:2222:ffff:ffff:ffff:cafe"],"ingressVIPs":["192.168.122.11","2001:db8:1111:2222:ffff:ffff:ffff:dead"]}}}`,
-	})
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
 	goodACIDualStackVIPs.Spec.IngressVIPs = []string{"192.168.122.11", "2001:db8:1111:2222:ffff:ffff:ffff:dead"}
 
@@ -87,8 +84,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	}
 
 	goodExternalPlatformACI := getGoodACI()
-	goodExternalPlatformACI.Spec.APIVIP = ""
-	goodExternalPlatformACI.Spec.IngressVIP = ""
 	goodExternalPlatformACI.Spec.APIVIPs = nil
 	goodExternalPlatformACI.Spec.IngressVIPs = nil
 	val := true
@@ -110,11 +105,9 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	}
 
 	goodExternalOCIPlatformACI := getGoodACI()
-	goodExternalOCIPlatformACI.Spec.APIVIP = ""
-	goodExternalOCIPlatformACI.Spec.IngressVIP = ""
+	val = true
 	goodExternalOCIPlatformACI.Spec.APIVIPs = nil
 	goodExternalOCIPlatformACI.Spec.IngressVIPs = nil
-	val = true
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
