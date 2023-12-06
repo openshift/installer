@@ -422,7 +422,7 @@ EOF
 
 	# Patch remove owner reference
 	/bin/cat<<NEOF>node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml
-	apiVersion: machineconfiguration.openshift.io/v1
+apiVersion: machineconfiguration.openshift.io/v1
 kind: KubeletConfig
 metadata:
   creationTimestamp: null
