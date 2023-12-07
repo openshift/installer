@@ -74,6 +74,9 @@ type AccessDetails interface {
 	RAIDInterface() string
 	VendorInterface() string
 
+	// Firmware interface to set
+	FirmwareInterface() string
+
 	// Whether the driver supports changing secure boot state.
 	SupportsSecureBoot() bool
 

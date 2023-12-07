@@ -82,6 +82,10 @@ func (a *iDracAccessDetails) BootInterface() string {
 	return "ipxe"
 }
 
+func (a *iDracAccessDetails) FirmwareInterface() string {
+	return ""
+}
+
 func (a *iDracAccessDetails) ManagementInterface() string {
 	return ""
 }
@@ -91,9 +95,7 @@ func (a *iDracAccessDetails) PowerInterface() string {
 }
 
 func (a *iDracAccessDetails) RAIDInterface() string {
-	// Disabled RAID in OpenShift because we are not ready to support it
-	//return "idrac-wsman"
-	return "no-raid"
+	return "idrac-wsman"
 }
 
 func (a *iDracAccessDetails) VendorInterface() string {

@@ -78,6 +78,10 @@ func (a *iLO5AccessDetails) BootInterface() string {
 	return "ilo-ipxe"
 }
 
+func (a *iLO5AccessDetails) FirmwareInterface() string {
+	return ""
+}
+
 func (a *iLO5AccessDetails) ManagementInterface() string {
 	return ""
 }
@@ -87,9 +91,7 @@ func (a *iLO5AccessDetails) PowerInterface() string {
 }
 
 func (a *iLO5AccessDetails) RAIDInterface() string {
-	// Disabled RAID in OpenShift because we are not ready to support it
-	//return "ilo5"
-	return "no-raid"
+	return "ilo5"
 }
 
 func (a *iLO5AccessDetails) VendorInterface() string {

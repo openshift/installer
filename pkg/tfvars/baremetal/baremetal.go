@@ -156,8 +156,7 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 
 		// Properties
 		propertiesMap := map[string]interface{}{
-			"local_gb":     profile.LocalGB,
-			"cpu_arch":     profile.CPUArch,
+			"cpu_arch":     "x86_64",
 			"capabilities": bootMode,
 		}
 

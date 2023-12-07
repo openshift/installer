@@ -78,6 +78,10 @@ func (a *iRMCAccessDetails) BootInterface() string {
 	return "ipxe"
 }
 
+func (a *iRMCAccessDetails) FirmwareInterface() string {
+	return ""
+}
+
 func (a *iRMCAccessDetails) ManagementInterface() string {
 	return ""
 }

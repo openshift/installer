@@ -97,6 +97,10 @@ func (a *ipmiAccessDetails) BootInterface() string {
 	return "ipxe"
 }
 
+func (a *ipmiAccessDetails) FirmwareInterface() string {
+	return ""
+}
+
 func (a *ipmiAccessDetails) ManagementInterface() string {
 	return ""
 }
