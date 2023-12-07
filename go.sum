@@ -193,8 +193,6 @@ github.com/cilium/ebpf v0.4.0/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJ
 github.com/cilium/ebpf v0.6.2/go.mod h1:4tRaxcgiL706VnOzHOdBlY8IEAIdxINsQBcU4xJJXRs=
 github.com/cjlapao/common-go v0.0.29 h1:SOiTEEmA/YWOaP37U8beyqbxjvTtWcUAuvQAchGOQLE=
 github.com/cjlapao/common-go v0.0.29/go.mod h1:OyTAY388jfEj8uaRzx0uYneFghKDLL5KP+ewSydlQ5g=
-github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231125212514-e4de41aba4e9 h1:iVRp3mlBNg5B/rozk7VjrpslKPBqkIaHb6IgdKG/Bgk=
-github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231125212514-e4de41aba4e9/go.mod h1:cF2vIryKLoYmkUAFsvFHTlChMAtMEuRDVYMiH+uFe3E=
 github.com/clarketm/json v1.14.1 h1:43bkbTTKKdDx7crs3WHzkrnH6S1EvAF1VZrdFGMmmz4=
 github.com/clarketm/json v1.14.1/go.mod h1:ynr2LRfb0fQU34l07csRNBTcivjySLLiY1YzQqKVfdo=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -989,6 +987,8 @@ github.com/openshift/library-go v0.0.0-20191003152030-97c62d8a2901/go.mod h1:NBt
 github.com/openshift/library-go v0.0.0-20200831114015-2ab0c61c15de/go.mod h1:6vwp+YhYOIlj8MpkQKkebTTSn2TuYyvgiAFQ206jIEQ=
 github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf h1:ZpFAN2qprgp7jEhGPrOAwP8mmuYC9BRYzvDefg+k4GM=
 github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf/go.mod h1:PJVatR/oS/EaFciwylyAr9hORSqQHrC+5bXf4L0wsBY=
+github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d h1:ELypg5zkw9jXCbp2jZ6iwYWTCtSqZVrxcKBQqwIgd2Y=
+github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d/go.mod h1:cF2vIryKLoYmkUAFsvFHTlChMAtMEuRDVYMiH+uFe3E=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 h1:C4gCipkWTDp0B9jb0wZdLgB+HWC7EzVVwQOeNaKnTRA=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8/go.mod h1:fjKreLaKEeUKsyIkT4wlzIQwUVJ2ZKDUh3CI73ckYIY=
 github.com/openshift/runtime-utils v0.0.0-20200415173359-c45d4ff3f912/go.mod h1:0OXNy7VoqFexkxKqyQbHJLPwn1MFp1/CxRJAgKHM+/o=

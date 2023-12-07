@@ -8861,7 +8861,7 @@ github.com/openshift/hive/apis/scheme
 ## explicit; go 1.20
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1 => github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231125212514-e4de41aba4e9
+# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
 ## explicit; go 1.19
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
@@ -9816,7 +9816,6 @@ sigs.k8s.io/yaml
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20230531194024-8dde0991ffdd
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20230531194024-8dde0991ffdd
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d0558
-# github.com/openshift/machine-api-provider-ibmcloud => github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231125212514-e4de41aba4e9
 # sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305
 # sigs.k8s.io/cluster-api-provider-azure => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
