@@ -1679,6 +1679,24 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"192.168.222.1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
 		},
 		{
+			name: "apivip_v4_not_in_machinenetwork_cidr_usermanaged_loadbalancer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{Type: configv1.LoadBalancerTypeUserManaged}
+				c.Platform.BareMetal.APIVIPs = []string{"192.168.222.1"}
+
+				return c
+			}(),
+		},
+		{
 			name: "apivip_v6_not_in_machinenetwork_cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1960,6 +1978,21 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"fe80::1\": VIP for API must not be one of the Ingress VIPs",
+		},
+		{
+			name: "identical_apivip_ingressvip_usermanaged_loadbalancer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{Type: configv1.LoadBalancerTypeUserManaged}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1"}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1"}
+
+				return c
+			}(),
 		},
 		{
 			name: "identical_apivips_ingressvips_multiple_ips",

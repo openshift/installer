@@ -642,6 +642,9 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 		APIVIPs:     "apiVIPs",
 		IngressVIPs: "ingressVIPs",
 	}
+
+	var lbType configv1.PlatformLoadBalancerType
+
 	switch {
 	case platform.BareMetal != nil:
 		virtualIPs = vips{
@@ -649,7 +652,11 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.BareMetal.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(baremetal.Name))...)
+		if platform.BareMetal.LoadBalancer != nil {
+			lbType = platform.BareMetal.LoadBalancer.Type
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, lbType, network, fldPath.Child(baremetal.Name))...)
 	case platform.Nutanix != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs, fldPath.Child(nutanix.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs, fldPath.Child(nutanix.Name, newVIPsFields.IngressVIPs))...)
@@ -659,21 +666,33 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.Nutanix.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, network, fldPath.Child(nutanix.Name))...)
+		if platform.Nutanix.LoadBalancer != nil {
+			lbType = platform.Nutanix.LoadBalancer.Type
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
 		virtualIPs = vips{
 			API:     platform.OpenStack.APIVIPs,
 			Ingress: platform.OpenStack.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(openstack.Name))...)
+		if platform.OpenStack.LoadBalancer != nil {
+			lbType = platform.OpenStack.LoadBalancer.Type
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, lbType, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
 		virtualIPs = vips{
 			API:     platform.VSphere.APIVIPs,
 			Ingress: platform.VSphere.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, network, fldPath.Child(vsphere.Name))...)
+		if platform.VSphere.LoadBalancer != nil {
+			lbType = platform.VSphere.LoadBalancer.Type
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, lbType, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
@@ -687,7 +706,11 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.Ovirt.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(ovirt.Name))...)
+		if platform.Ovirt.LoadBalancer != nil {
+			lbType = platform.Ovirt.LoadBalancer.Type
+		}
+
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, lbType, network, fldPath.Child(ovirt.Name))...)
 	default:
 		//no vips to validate on this platform
 	}
@@ -720,7 +743,7 @@ func ensureIPv4IsFirstInDualStackSlice(vips *[]string, fldPath *field.Path) fiel
 // validateAPIAndIngressVIPs validates the API and Ingress VIPs
 //
 //nolint:gocyclo
-func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, reqVIPinMachineCIDR bool, n *types.Networking, fldPath *field.Path) field.ErrorList {
+func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, reqVIPinMachineCIDR bool, lbType configv1.PlatformLoadBalancerType, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(vips.API) == 0 {
@@ -733,17 +756,21 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
 			}
 
-			for _, ingressVIP := range vips.Ingress {
-				apiVIPNet := net.ParseIP(vip)
-				ingressVIPNet := net.ParseIP(ingressVIP)
+			// When using user-managed loadbalancer we do not require API and Ingress VIP to be different as well as
+			// we allow them to be from outside the machine network CIDR.
+			if lbType != configv1.LoadBalancerTypeUserManaged {
+				for _, ingressVIP := range vips.Ingress {
+					apiVIPNet := net.ParseIP(vip)
+					ingressVIPNet := net.ParseIP(ingressVIP)
 
-				if apiVIPNet.Equal(ingressVIPNet) {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "VIP for API must not be one of the Ingress VIPs"))
+					if apiVIPNet.Equal(ingressVIPNet) {
+						allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "VIP for API must not be one of the Ingress VIPs"))
+					}
 				}
-			}
 
-			if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
+				if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
+				}
 			}
 
 			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
@@ -785,8 +812,12 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
-			if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
+			// When using user-managed loadbalancer we do not require API and Ingress VIP to be different as well as
+			// we allow them to be from outside the machine network CIDR.
+			if lbType != configv1.LoadBalancerTypeUserManaged {
+				if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
+				}
 			}
 
 			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
