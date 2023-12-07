@@ -108,7 +108,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 		// delete the machine when the stage is complete.
 		bootstrapAWSMachine := &capa.AWSMachine{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s-bootstrap", clusterID.InfraID, pool.Name),
+				Name: capiutils.GenerateBoostrapMachineName(clusterID.InfraID),
 				Labels: map[string]string{
 					"cluster.x-k8s.io/control-plane": "",
 					"install.openshift.io/bootstrap": "",

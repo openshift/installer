@@ -23,3 +23,9 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 func IsEnabled(installConfig *installconfig.InstallConfig) bool {
 	return installConfig.Config.EnabledFeatureGates().Enabled(v1.FeatureGateClusterAPIInstall)
 }
+
+// GenerateBoostrapMachineName generates the Cluster API Machine used for bootstrapping
+// from the cluster ID and machine type.
+func GenerateBoostrapMachineName(infraID string) string {
+	return infraID + "-bootstrap"
+}

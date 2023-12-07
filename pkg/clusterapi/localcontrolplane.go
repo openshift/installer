@@ -56,10 +56,10 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	// Create a temporary directory to unpack the cluster-api binaries.
 	c.BinDir = filepath.Join(command.RootOpts.Dir, "bin", "cluster-api")
 	if err := UnpackClusterAPIBinary(c.BinDir); err != nil {
-		return err
+		return fmt.Errorf("failed to unpack cluster-api binary: %w", err)
 	}
 	if err := UnpackEnvtestBinaries(c.BinDir); err != nil {
-		return err
+		return fmt.Errorf("failed to unpack envtest binaries: %w", err)
 	}
 
 	log.SetLogger(klog.NewKlogr())

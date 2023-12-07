@@ -32,9 +32,20 @@ var (
 	sys = &system{}
 )
 
+// SystemState is the state of the cluster-api system.
+type SystemState string
+
+const (
+	// SystemStateRunning indicates the system is running.
+	SystemStateRunning SystemState = "running"
+	// SystemStateStopped indicates the system is stopped.
+	SystemStateStopped SystemState = "stopped"
+)
+
 // Interface is the interface for the cluster-api system.
 type Interface interface {
 	Run(ctx context.Context, installConfig *installconfig.InstallConfig) error
+	State() SystemState
 	Client() client.Client
 	Teardown()
 }
@@ -47,6 +58,8 @@ func System() Interface {
 // system creates a local capi control plane
 // to use as a management cluster.
 type system struct {
+	sync.Mutex
+
 	client client.Client
 
 	componentDir string
@@ -59,25 +72,29 @@ type system struct {
 
 // Run launches the cluster-api system.
 func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallConfig) error {
+	c.Lock()
+	defer c.Unlock()
+
 	// Setup the context with a cancel function.
 	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 
 	// Create the local control plane.
-	c.lcp = &localControlPlane{}
-	if err := c.lcp.Run(ctx); err != nil {
+	lcp := &localControlPlane{}
+	if err := lcp.Run(ctx); err != nil {
 		return fmt.Errorf("failed to run local control plane: %w", err)
 	}
+	c.lcp = lcp
 	c.client = c.lcp.Client
 
 	// Create a temporary directory to unpack the cluster-api assets
 	// and use it as the working directory for the envtest environment.
 	componentDir, err := os.MkdirTemp("", "openshift-cluster-api-system-components")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create temporary folder for cluster api components: %w", err)
 	}
 	if err := data.Unpack(componentDir, "/cluster-api"); err != nil {
-		return err
+		return fmt.Errorf("failed to unpack cluster api components: %w", err)
 	}
 	c.componentDir = componentDir
 
@@ -202,11 +219,17 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 
 // Client returns the client for the local control plane.
 func (c *system) Client() client.Client {
+	c.Lock()
+	defer c.Unlock()
+
 	return c.client
 }
 
 // Teardown shuts down the local capi control plane and all its controllers.
 func (c *system) Teardown() {
+	c.Lock()
+	defer c.Unlock()
+
 	if c.lcp == nil {
 		return
 	}
@@ -230,6 +253,17 @@ func (c *system) Teardown() {
 			logrus.Warn("Timed out waiting for local Cluster API system to shut down")
 		}
 	})
+}
+
+// State returns the state of the cluster-api system.
+func (c *system) State() SystemState {
+	c.Lock()
+	defer c.Unlock()
+
+	if c.lcp == nil {
+		return SystemStateStopped
+	}
+	return SystemStateRunning
 }
 
 // getInfrastructureController returns a controller for the given provider,
