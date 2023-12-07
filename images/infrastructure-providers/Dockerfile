@@ -18,7 +18,7 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 make -C terraform
 
-FROM registry.ci.openshift.org/ocp/builder:base
+FROM registry.ci.openshift.org/ocp/4.15:base
 WORKDIR /go/src/github.com/openshift/installer
 COPY --from=macbuilder /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
