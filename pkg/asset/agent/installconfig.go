@@ -106,10 +106,6 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 		allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("CPU architecture \"%s\" only supports platform \"%s\".", types.ArchitectureS390X, none.Name)))
 	}
 	if installConfig.Platform.Name() == external.Name {
-		if installConfig.Platform.External.PlatformName != string(models.PlatformTypeOci) {
-			fieldPath = field.NewPath("Platform", "External", "PlatformName")
-			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.External.PlatformName, []string{string(models.PlatformTypeOci)}))
-		}
 		if installConfig.Platform.External.PlatformName == string(models.PlatformTypeOci) &&
 			installConfig.Platform.External.CloudControllerManager != external.CloudControllerManagerTypeExternal {
 			fieldPath = field.NewPath("Platform", "External", "CloudControllerManager")
