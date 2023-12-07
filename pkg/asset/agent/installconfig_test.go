@@ -676,8 +676,6 @@ platform:
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:aa:aa:a1
-        bmc:
-          address: addr
       - name: host2
         bootMACAddress: 52:54:01:bb:bb:b1
       - name: host3
@@ -750,7 +748,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 								BootMACAddress:  "52:54:01:aa:aa:a1",
 								BootMode:        "UEFI",
 								HardwareProfile: "default",
-								BMC:             baremetal.BMC{Address: "addr"},
 							},
 							{
 								Name:            "host2",
@@ -907,6 +904,102 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
+		},
+		{
+			name: "provisioningNetwork invalid for baremetal cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    name: worker
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  name: master
+  replicas: 3
+platform:
+  baremetal:
+    provisioningNetwork: "UNMANAGED"
+    ingressVIPs:
+      - 192.168.122.11
+    apiVIPs:
+      - 192.168.122.10
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: platform.baremetal.provisioningNetwork: Unsupported value: \"UNMANAGED\": supported values: \"Disabled\", \"Managed\", \"Unmanaged\"",
+		},
+		{
+			name: "Provisioning validation failures for baremetal cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    name: worker
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  name: master
+  replicas: 3
+platform:
+  baremetal:
+    ingressVIPs:
+      - 192.168.122.11
+    apiVIPs:
+      - 192.168.122.10
+    clusterProvisioningIP: "172.22.0.11"
+    provisioningNetwork: "Managed"
+    provisioningMACAddress: "52:54:00:6e:3b:02"
+    provisioningNetworkInterface: "eth11"
+    provisioningDHCPExternal: true
+    provisioningDHCPRange: 172.22.0.10,172.22.0.254
+    hosts:
+      - name: host1
+        bootMACAddress: 52:54:01:aa:aa:a1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+      - name: host2
+        bootMACAddress: 52:54:01:bb:bb:b1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+      - name: host3
+        bootMACAddress: 52:54:01:cc:cc:c1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.BareMetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, Platform.BareMetal.hosts[2].BMC.Address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
 		},
 	}
 	for _, tc := range cases {

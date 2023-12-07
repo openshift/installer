@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
+	baremetalvalidation "github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/validation"
@@ -115,6 +116,10 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 
 	if installConfig.Platform.Name() == vsphere.Name {
 		allErrs = append(allErrs, a.validateVSpherePlatform(installConfig)...)
+	}
+
+	if installConfig.Platform.Name() == baremetal.Name {
+		allErrs = append(allErrs, a.validateBMCConfig(installConfig)...)
 	}
 
 	return allErrs
@@ -256,6 +261,25 @@ func (a *OptionalInstallConfig) GetBaremetalHosts() []*baremetal.Host {
 	return nil
 }
 
+func (a *OptionalInstallConfig) validateBMCConfig(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	bmcConfigured := false
+	for _, host := range installConfig.Platform.BareMetal.Hosts {
+		if host.BMC.Address == "" {
+			continue
+		}
+		bmcConfigured = true
+	}
+
+	if bmcConfigured {
+		fieldPath := field.NewPath("Platform", "BareMetal")
+		allErrs = append(allErrs, baremetalvalidation.ValidateProvisioningNetworking(installConfig.Platform.BareMetal, installConfig.Networking, fieldPath)...)
+	}
+
+	return allErrs
+}
+
 func warnUnusedConfig(installConfig *types.InstallConfig) {
 	// "Proxyonly" is the default set from generic install config code
 	if installConfig.AdditionalTrustBundlePolicy != "Proxyonly" {
@@ -298,14 +322,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "Baremetal", "LibvirtURI")
 			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI))
 		}
-		if baremetal.ClusterProvisioningIP != defaultBM.ClusterProvisioningIP {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ClusterProvisioningIP")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ClusterProvisioningIP))
-		}
-		if baremetal.DeprecatedProvisioningHostIP != defaultBM.DeprecatedProvisioningHostIP {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningHostIP")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.DeprecatedProvisioningHostIP))
-		}
 		if baremetal.BootstrapProvisioningIP != defaultBM.BootstrapProvisioningIP {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapProvisioningIP")
 			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP))
@@ -314,48 +330,12 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ExternalBridge")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ExternalBridge))
 		}
-		if baremetal.ProvisioningNetwork != defaultBM.ProvisioningNetwork {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetwork")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetwork))
-		}
 		if baremetal.ProvisioningBridge != defaultBM.ProvisioningBridge {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningBridge")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningBridge))
 		}
-		if baremetal.ProvisioningNetworkInterface != defaultBM.ProvisioningNetworkInterface {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetworkInterface")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetworkInterface))
-		}
-		if baremetal.ProvisioningNetworkCIDR.String() != defaultBM.ProvisioningNetworkCIDR.String() {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetworkCIDR")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetworkCIDR))
-		}
-		if baremetal.DeprecatedProvisioningDHCPExternal != defaultBM.DeprecatedProvisioningDHCPExternal {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningDHCPExternal")
-			logrus.Warnf(fmt.Sprintf("%s: true is ignored", fieldPath))
-		}
-		if baremetal.ProvisioningDHCPRange != defaultBM.ProvisioningDHCPRange {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningDHCPRange")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningDHCPRange))
-		}
 
 		for i, host := range baremetal.Hosts {
-			if host.BMC.Username != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Username")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BMC.Username))
-			}
-			if host.BMC.Password != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Password")
-				logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
-			}
-			if host.BMC.Address != "" {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Address")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BMC.Address))
-			}
-			if host.BMC.DisableCertificateVerification {
-				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "DisableCertificateVerification")
-				logrus.Warnf(fmt.Sprintf("%s: true is ignored", fieldPath))
-			}
 			// The default is UEFI. +kubebuilder:validation:Enum="";UEFI;UEFISecureBoot;legacy. Set from generic install config code
 			if host.BootMode != "UEFI" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BootMode")

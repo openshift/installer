@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	agentAsset "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/types/agent"
-	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -66,23 +65,22 @@ func (a *AgentHosts) Generate(dependencies asset.Parents) error {
 		a.Hosts = append(a.Hosts, agentConfig.Config.Hosts...)
 		if len(a.Hosts) > 0 {
 			// Hosts defined in agent-config take precedence
-			logrus.Infof("Using hosts from %s", agentConfigFilename)
+			logrus.Debugf("Using hosts from %s", agentConfigFilename)
 		}
 	}
 
 	if installConfig != nil && installConfig.GetBaremetalHosts() != nil {
-		icHosts := installConfig.GetBaremetalHosts()
+		// Only use hosts from install-config if they are not defined in agent-config
 		if len(a.Hosts) == 0 {
-			if err := a.getInstallConfigDefaults(icHosts); err != nil {
+			if err := a.getInstallConfigDefaults(installConfig); err != nil {
 				return errors.Wrapf(err, "invalid host definition in %s", agentAsset.InstallConfigFilename)
 			}
-		}
-		if len(a.Hosts) > 0 && len(icHosts) > 0 {
+		} else {
 			logrus.Warnf(fmt.Sprintf("hosts from %s are ignored", agentAsset.InstallConfigFilename))
 		}
 	}
 
-	if err := a.validateAgentHosts().ToAggregate(); err != nil {
+	if err := a.validateAgentHosts(installConfig).ToAggregate(); err != nil {
 		return errors.Wrapf(err, "invalid Hosts configuration")
 	}
 
@@ -99,7 +97,7 @@ func (a *AgentHosts) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
 }
 
-func (a *AgentHosts) validateAgentHosts() field.ErrorList {
+func (a *AgentHosts) validateAgentHosts(installConfig *agentAsset.OptionalInstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	macs := make(map[string]bool)
@@ -198,12 +196,8 @@ func (a *AgentHosts) validateRendezvousIPNotWorker(rendezvousIP string, hosts []
 }
 
 // Add the baremetal hosts defined in install-config to the agent Hosts.
-func (a *AgentHosts) getInstallConfigDefaults(hosts []*baremetal.Host) error {
-	if hosts == nil {
-		return nil
-	}
-
-	for _, icHost := range hosts {
+func (a *AgentHosts) getInstallConfigDefaults(installConfig *agentAsset.OptionalInstallConfig) error {
+	for _, icHost := range installConfig.GetBaremetalHosts() {
 		if icHost.BootMACAddress == "" {
 			return errors.New("host bootMACAddress is required")
 		}
@@ -221,8 +215,6 @@ func (a *AgentHosts) getInstallConfigDefaults(hosts []*baremetal.Host) error {
 				return errors.Wrap(err, "failed to unmarshal networkConfig")
 			}
 			host.NetworkConfig.Raw = contents
-			logrus.Warningf("hostNetworkconfig.Raw %s", icHost.NetworkConfig.Raw)
-			logrus.Warningf("contents %s", contents)
 
 			// Create interfaces table from NetworkConfig
 			var netInterfaces nmStateInterface
@@ -258,7 +250,10 @@ func (a *AgentHosts) getInstallConfigDefaults(hosts []*baremetal.Host) error {
 			host.Interfaces = append(host.Interfaces, hostInterface)
 		}
 
-		logrus.Infof("Using hosts from %s", agentAsset.InstallConfigFilename)
+		// Add BMC configuration
+		host.BMC = icHost.BMC
+
+		logrus.Debugf("Using host %s from %s", host.Hostname, agentAsset.InstallConfigFilename)
 		a.Hosts = append(a.Hosts, host)
 	}
 	return nil
