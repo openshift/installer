@@ -94,6 +94,10 @@ func (a *iLOAccessDetails) BootInterface() string {
 	}
 }
 
+func (a *iLOAccessDetails) FirmwareInterface() string {
+	return ""
+}
+
 func (a *iLOAccessDetails) ManagementInterface() string {
 	return ""
 }

@@ -76,6 +76,10 @@ func (a *redfishiDracVirtualMediaAccessDetails) BootInterface() string {
 	return "idrac-redfish-virtual-media"
 }
 
+func (a *redfishiDracVirtualMediaAccessDetails) FirmwareInterface() string {
+	return "redfish"
+}
+
 func (a *redfishiDracVirtualMediaAccessDetails) ManagementInterface() string {
 	return "idrac-redfish"
 }
@@ -85,9 +89,7 @@ func (a *redfishiDracVirtualMediaAccessDetails) PowerInterface() string {
 }
 
 func (a *redfishiDracVirtualMediaAccessDetails) RAIDInterface() string {
-	// Disabled RAID in OpenShift because we are not ready to support it
-	// return "idrac-redfish"
-	return "no-raid"
+	return "idrac-redfish"
 }
 
 func (a *redfishiDracVirtualMediaAccessDetails) VendorInterface() string {
