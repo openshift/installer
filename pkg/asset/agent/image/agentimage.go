@@ -35,6 +35,15 @@ type AgentImage struct {
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
 
+// IgnInfo is a struct to store details of the igninfo
+type IgnInfo struct {
+	File   string `json:"file"`
+	Length int64  `json:"length"`
+	Offset int64  `json:"offset"`
+}
+
+var ignInfo IgnInfo
+
 // Dependencies returns the assets on which the Bootstrap asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
@@ -94,6 +103,22 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
+// Fetching the ignition details from igninfo.json file
+func (a *AgentImage) fetchIgnitionInfo(ignInfoJSONPath string) error {
+
+	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
+	if err != nil {
+		logrus.Warnf("Failed to read json %s", ignInfoJSONPath)
+		return err
+	}
+	if err := json.Unmarshal(ignInfoJSONData, &ignInfo); err != nil {
+		logrus.Warnf("Failed to umarshal json: %s", err)
+		return err
+	}
+
+	return nil
+}
+
 // Update the ignition image file with the ignition data.
 func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 
@@ -108,30 +133,28 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	// Defining a struct for the ignition info
-	type IgnInfo struct {
-		File   string `json:"file"`
-		Length int64  `json:"length"`
-		Offset int64  `json:"offset"`
-	}
-	var ignInfo IgnInfo
-
-	// Reading the ignition details from igninfo.json file into the struct
+	// Gathering the ignition image details
+	var (
+		ignImagePath                 string
+		ignStartOffset, ignMaxLength int64
+	)
 	ignInfoJSONPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
-	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
-	if err != nil {
-		logrus.Warnf("Failed to read json %s", ignInfoJSONPath)
-		return err
-	}
-	if err := json.Unmarshal(ignInfoJSONData, &ignInfo); err != nil {
-		logrus.Warnf("Failed to umarshal json: %s", err)
-		return err
-	}
+	if _, err := os.Stat(ignInfoJSONPath); err == nil {
+		// Fetching the ignition details from the igninfo file
+		err = a.fetchIgnitionInfo(ignInfoJSONPath)
+		if err != nil {
+			return err
+		}
+		ignImagePath = filepath.Join(a.tmpPath, ignInfo.File)
+		ignStartOffset = ignInfo.Offset
+		ignMaxLength = ignInfo.Length
 
-	// Fetching the ignition details from the struct
-	ignImagePath := filepath.Join(a.tmpPath, ignInfo.File)
-	ignStartOffset := ignInfo.Offset
-	ignMaxLength := ignInfo.Length
+	} else {
+		// Defaulting the ignition image path if no info file is found
+		ignImagePath = filepath.Join(a.tmpPath, "images", "ignition.img")
+		ignStartOffset = 0
+		ignMaxLength = 0
+	}
 
 	// Verify that the compressed ignition buffer archive does not exceed the embed area (usually 256 Kb)
 	if ignMaxLength == 0 {
