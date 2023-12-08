@@ -10,7 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
@@ -20,6 +22,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -83,6 +87,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&password.KubeadminPassword{},
 		&capimanifests.Cluster{},
 		&kubeconfig.AdminClient{},
+		&bootstrap.Bootstrap{},
+		&machine.Master{},
 	}
 }
 
@@ -164,9 +170,13 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Parents, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
 	capiManifests := &capimanifests.Cluster{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
+	bootstrapIgnAsset := &bootstrap.Bootstrap{}
+	masterIgnAsset := &machine.Master{}
 	parents.Get(
 		capiManifests,
 		clusterKubeconfigAsset,
+		bootstrapIgnAsset,
+		masterIgnAsset,
 	)
 
 	// supplementalProvisioner creates resources not provided in CAPI provisioning.
@@ -180,6 +190,43 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 	manifests := []client.Object{}
 	for _, m := range capiManifests.RuntimeFiles() {
 		manifests = append(manifests, m.Object)
+	}
+
+	// Gather the ignition files, store them in a secret, and add them to manifests.
+	{
+		masterIgn := string(masterIgnAsset.Files()[0].Data)
+		bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
+		if err != nil {
+			return errors.Wrap(err, "unable to inject installation info")
+		}
+		manifests = append(manifests,
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+					Namespace: capiutils.Namespace,
+					Labels: map[string]string{
+						"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
+					},
+				},
+				Data: map[string][]byte{
+					"format": []byte("ignition"),
+					"value":  []byte(masterIgn),
+				},
+			},
+			&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+					Namespace: capiutils.Namespace,
+					Labels: map[string]string{
+						"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
+					},
+				},
+				Data: map[string][]byte{
+					"format": []byte("ignition"),
+					"value":  []byte(bootstrapIgn),
+				},
+			},
+		)
 	}
 
 	// Run the CAPI system.
