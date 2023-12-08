@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	ini "gopkg.in/ini.v1"
 
@@ -101,7 +101,7 @@ func getCredentials(options session.Options) (*credentials.Credentials, error) {
 		return getCredentialsFromSession(options)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "error loading credentials for AWS Provider")
+		return nil, fmt.Errorf("error loading credentials for AWS Provider: %w", err)
 	}
 
 	// log the source of credential provider.
@@ -122,9 +122,9 @@ func getCredentialsFromSession(options session.Options) (*credentials.Credential
 	sess, err := session.NewSessionWithOptions(options)
 	if err != nil {
 		if errCodeEquals(err, "NoCredentialProviders") {
-			return nil, errors.Wrap(err, "failed to get credentials from session")
+			return nil, fmt.Errorf("failed to get credentials from session: %w", err)
 		}
-		return nil, errors.Wrap(err, "error creating AWS session")
+		return nil, fmt.Errorf("error creating AWS session: %w", err)
 	}
 	creds := sess.Config.Credentials
 
@@ -203,7 +203,7 @@ func getUserCredentials() error {
 	creds, err := ini.Load(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return errors.Wrap(err, fmt.Sprintf("failed to load credentials file %s", path))
+			return fmt.Errorf("failed to load credentials file %s: %w", path, err)
 		}
 		creds = ini.Empty()
 		creds.Section("").Comment = "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html"
@@ -228,7 +228,7 @@ func getUserCredentials() error {
 	if err != nil {
 		err2 := os.Remove(tempPath)
 		if err2 != nil {
-			logrus.Error(errors.Wrap(err2, "failed to remove partially-written credentials file"))
+			logrus.Error(fmt.Errorf("failed to remove partially-written credentials file: %w", err2))
 		}
 		return err
 	}

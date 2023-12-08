@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -45,7 +44,7 @@ func (c *Client) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.Get
 	// validate that the hosted zone exists
 	hostedZoneOutput, err := r53.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZone)})
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get hosted zone: %s", hostedZone)
+		return nil, fmt.Errorf("could not get hosted zone: %s: %w", hostedZone, err)
 	}
 	return hostedZoneOutput, nil
 }
@@ -57,7 +56,7 @@ func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, 
 	problematicRecords, err := c.GetSubDomainDNSRecords(zone, ic, cfg)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(zonePath,
-			errors.Wrapf(err, "could not list record sets for domain %q", zoneName)))
+			fmt.Errorf("could not list record sets for domain %q: %w", zoneName, err)))
 	}
 
 	if len(problematicRecords) > 0 {
@@ -78,7 +77,7 @@ func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *type
 
 	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
 	if !isHostedZoneDomainParentOfClusterDomain(hostedZone, dottedClusterDomain) {
-		return nil, errors.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
+		return nil, fmt.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
 	}
 
 	r53 := route53.New(c.ssn, cfg)
@@ -131,7 +130,7 @@ func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dot
 func (c *Client) GetBaseDomain(baseDomainName string) (*route53.HostedZone, error) {
 	baseDomainZone, err := GetPublicZone(c.ssn, baseDomainName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not find public zone: %s", baseDomainName)
+		return nil, fmt.Errorf("could not find public zone: %s: %w", baseDomainName, err)
 	}
 	return baseDomainZone, nil
 }
