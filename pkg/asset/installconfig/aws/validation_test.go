@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -983,7 +982,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 
 			if test.expectedErr != "" {
 				if test.problematicRecords == nil {
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, fmt.Errorf(test.expectedErr)).AnyTimes()
 				} else {
 					// mimic the results of what should happen in the internal function passed to
 					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
@@ -994,7 +993,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 							returnedProblems = append(returnedProblems, pr)
 						}
 					}
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, fmt.Errorf(test.expectedErr)).AnyTimes()
 				}
 			} else {
 				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, nil).AnyTimes()

@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/pkg/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -390,7 +390,7 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 	for _, service := range requiredServices {
 		_, err := resolver.EndpointFor(service, region, endpoints.StrictMatchingOption)
 		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to find endpoint for service %q", service))
+			errs = append(errs, fmt.Errorf("failed to find endpoint for service %q: %w", service, err))
 		}
 	}
 	if err := utilerrors.NewAggregate(errs); err != nil {
@@ -479,7 +479,7 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 		zonePath = field.NewPath("aws", "hostedZone")
 		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
 		if err != nil {
-			errMsg := errors.Wrapf(err, "unable to retrieve hosted zone").Error()
+			errMsg := fmt.Errorf("unable to retrieve hosted zone: %w", err).Error()
 			return field.ErrorList{
 				field.Invalid(zonePath, zoneName, errMsg),
 			}.ToAggregate()

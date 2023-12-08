@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -63,7 +62,7 @@ func describeAvailabilityZones(ctx context.Context, session *session.Session, re
 	}
 	resp, err := client.DescribeAvailabilityZonesWithContext(ctx, input)
 	if err != nil {
-		return nil, errors.Wrap(err, "fetching zones")
+		return nil, fmt.Errorf("fetching zones: %w", err)
 	}
 
 	return resp.AvailabilityZones, nil
@@ -74,7 +73,7 @@ func describeAvailabilityZones(ctx context.Context, session *session.Session, re
 func zonesByType(ctx context.Context, session *session.Session, region string, zoneType string) ([]string, error) {
 	azs, err := describeAvailabilityZones(ctx, session, region, []string{})
 	if err != nil {
-		return nil, errors.Wrapf(err, "fetching %s", zoneType)
+		return nil, fmt.Errorf("fetching %s: %w", zoneType, err)
 	}
 	zones := []string{}
 	for _, zone := range azs {
@@ -84,7 +83,7 @@ func zonesByType(ctx context.Context, session *session.Session, region string, z
 	}
 
 	if len(zones) == 0 {
-		return nil, errors.Errorf("no zones with type %s in %s", zoneType, region)
+		return nil, fmt.Errorf("no zones with type %s in %s", zoneType, region)
 	}
 
 	return zones, nil
@@ -104,7 +103,7 @@ func localZones(ctx context.Context, session *session.Session, region string) ([
 func describeFilteredZones(ctx context.Context, session *session.Session, region string, zones []string) ([]*ec2.AvailabilityZone, error) {
 	azs, err := describeAvailabilityZones(ctx, session, region, zones)
 	if err != nil {
-		return nil, errors.Wrapf(err, "fetching %s", zones)
+		return nil, fmt.Errorf("fetching %s: %w", zones, err)
 	}
 
 	return azs, nil
