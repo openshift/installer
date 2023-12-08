@@ -179,8 +179,8 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, publicSubnets, publicSubnetsIdx, "public")...)
 	allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, edgeSubnets, edgeSubnetsIdx, "edge")...)
 
-	privateZones := sets.NewString()
-	publicZones := sets.NewString()
+	privateZones := sets.New[string]()
+	publicZones := sets.New[string]()
 	for _, subnet := range privateSubnets {
 		privateZones.Insert(subnet.Zone.Name)
 	}
@@ -188,7 +188,7 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 		publicZones.Insert(subnet.Zone.Name)
 	}
 	if publish == types.ExternalPublishingStrategy && !publicZones.IsSuperset(privateZones) {
-		errMsg := fmt.Sprintf("No public subnet provided for zones %s", privateZones.Difference(publicZones).List())
+		errMsg := fmt.Sprintf("No public subnet provided for zones %s", sets.List(privateZones.Difference(publicZones)))
 		allErrs = append(allErrs, field.Invalid(fldPath, subnets, errMsg))
 	}
 
@@ -230,7 +230,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	}
 
 	if pool.Zones != nil && len(pool.Zones) > 0 {
-		availableZones := sets.String{}
+		availableZones := sets.New[string]()
 		diffErrMsgPrefix := "One or more zones are unavailable"
 		if len(platform.Subnets) > 0 {
 			diffErrMsgPrefix = "No subnets provided for zones"
@@ -260,8 +260,8 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			availableZones.Insert(allzones...)
 		}
 
-		if diff := sets.NewString(pool.Zones...).Difference(availableZones); diff.Len() > 0 {
-			errMsg := fmt.Sprintf("%s %s", diffErrMsgPrefix, diff.List())
+		if diff := sets.New[string](pool.Zones...).Difference(availableZones); diff.Len() > 0 {
+			errMsg := fmt.Sprintf("%s %s", diffErrMsgPrefix, sets.List(diff))
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), pool.Zones, errMsg))
 		}
 	}
