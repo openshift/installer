@@ -198,7 +198,7 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 			"Warning: this should only be used for debugging purposes, and poses a risk to cluster stability.")
 	} else {
 		logrus.Info("Destroying the bootstrap resources...")
-		err = destroybootstrap.Destroy(command.RootOpts.Dir)
+		err = destroybootstrap.Destroy(ctx, command.RootOpts.Dir)
 		if err != nil {
 			return 0, err
 		}

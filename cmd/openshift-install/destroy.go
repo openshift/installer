@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -125,7 +126,7 @@ func newDestroyBootstrapCmd() *cobra.Command {
 			defer cleanup()
 
 			timer.StartTimer(timer.TotalTimeElapsed)
-			err := bootstrap.Destroy(command.RootOpts.Dir)
+			err := bootstrap.Destroy(context.TODO(), command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}

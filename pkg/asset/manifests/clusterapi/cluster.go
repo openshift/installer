@@ -86,7 +86,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 			Name: capiutils.Namespace,
 		},
 	}
-	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: namespace, File: asset.File{Filename: "00_capi-namespace.yaml"}})
+	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: namespace, File: asset.File{Filename: "000_capi-namespace.yaml"}})
 
 	cluster := &clusterv1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
