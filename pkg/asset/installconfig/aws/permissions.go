@@ -2,9 +2,11 @@
 package aws
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
@@ -269,14 +271,14 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	for _, group := range groups {
 		groupPerms, ok := permissions[group]
 		if !ok {
-			return errors.Errorf("unable to access permissions group %s", group)
+			return fmt.Errorf("unable to access permissions group %s", group)
 		}
 		requiredPermissions = append(requiredPermissions, groupPerms...)
 	}
 
 	client, err := ccaws.NewClientFromIAMClient(iam.New(ssn))
 	if err != nil {
-		return errors.Wrap(err, "failed to create client for permission check")
+		return fmt.Errorf("failed to create client for permission check: %w", err)
 	}
 
 	sParams := &ccaws.SimulateParams{
@@ -287,7 +289,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	logger := logrus.StandardLogger()
 	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, sParams, logger)
 	if err != nil {
-		return errors.Wrap(err, "checking install permissions")
+		return fmt.Errorf("checking install permissions: %w", err)
 	}
 	if !canInstall {
 		return errors.New("current credentials insufficient for performing cluster installation")
@@ -296,7 +298,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	// Check whether we can mint new creds for cluster services needing to interact with the cloud
 	canMint, err := ccaws.CheckCloudCredCreation(client, logger)
 	if err != nil {
-		return errors.Wrap(err, "mint credentials check")
+		return fmt.Errorf("mint credentials check: %w", err)
 	}
 	if canMint {
 		return nil
@@ -306,7 +308,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	// cluster services needing to interact with the cloud
 	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, sParams, logger)
 	if err != nil {
-		return errors.Wrap(err, "passthrough credentials check")
+		return fmt.Errorf("passthrough credentials check: %w", err)
 	}
 	if canPassthrough {
 		return nil
