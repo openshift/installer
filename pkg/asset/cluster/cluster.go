@@ -269,6 +269,7 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 			return fmt.Errorf("failed to get GVK for manifest: %w", err)
 		}
 		fileName := fmt.Sprintf("%s-%s-%s.yaml", gvk.Kind, m.GetNamespace(), m.GetName())
+		fileName = filepath.Join(capimanifests.ManifestDir, fileName)
 		objData, err := yaml.Marshal(m)
 		if err != nil {
 			errMsg := fmt.Sprintf("failed to create infrastructure manifest %s from InstallConfig", fileName)
@@ -296,6 +297,8 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	if err != nil {
 		return true, err
 	}
+
+	//TODO(padillon): check for existing CAPI cluster
 	if len(matches) != 0 {
 		return true, errors.Errorf("terraform state files alread exist.  There may already be a running cluster")
 	}
