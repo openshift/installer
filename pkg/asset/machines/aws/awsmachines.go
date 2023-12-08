@@ -98,6 +98,10 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 		})
 
 		machine := &capi.Machine{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: capi.GroupVersion.String(),
+				Kind:       "Machine",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: awsMachine.Name,
 				Labels: map[string]string{

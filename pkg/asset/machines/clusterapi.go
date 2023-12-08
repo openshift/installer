@@ -107,6 +107,10 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 		// a custom openshift label to determine the bootstrap machine role, so we can
 		// delete the machine when the stage is complete.
 		bootstrapAWSMachine := &capa.AWSMachine{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: capa.GroupVersion.String(),
+				Kind:       "AWSMachine",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: capiutils.GenerateBoostrapMachineName(clusterID.InfraID),
 				Labels: map[string]string{
@@ -146,6 +150,10 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 		})
 
 		bootstrapMachine := &capi.Machine{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: capi.GroupVersion.String(),
+				Kind:       "Machine",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: bootstrapAWSMachine.Name,
 				Labels: map[string]string{

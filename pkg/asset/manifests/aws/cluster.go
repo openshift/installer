@@ -27,6 +27,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	awsCluster := &capa.AWSCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: capa.GroupVersion.String(),
+			Kind:       "AWSCluster",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
@@ -207,6 +211,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	})
 
 	id := &capa.AWSClusterControllerIdentity{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: capa.GroupVersion.String(),
+			Kind:       "AWSClusterControllerIdentity",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default",
 			Namespace: capiutils.Namespace,
