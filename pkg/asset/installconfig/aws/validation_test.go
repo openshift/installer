@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/aws/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -68,7 +68,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		ControlPlane: &types.MachinePool{
 			Architecture: types.ArchitectureAMD64,
-			Replicas:     pointer.Int64Ptr(3),
+			Replicas:     ptr.To[int64](3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -78,7 +78,7 @@ func validInstallConfig() *types.InstallConfig {
 		Compute: []types.MachinePool{{
 			Name:         types.MachinePoolComputeRoleName,
 			Architecture: types.ArchitectureAMD64,
-			Replicas:     pointer.Int64Ptr(3),
+			Replicas:     ptr.To[int64](3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -725,7 +725,7 @@ func TestValidate(t *testing.T) {
 			c := validInstallConfig()
 			c.Platform.AWS.Region = "us-gov-east-1"
 			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
-			c.Compute[0].Replicas = pointer.Int64Ptr(0)
+			c.Compute[0].Replicas = ptr.To[int64](0)
 			return c
 		}(),
 		availZones:     validAvailZones(),
