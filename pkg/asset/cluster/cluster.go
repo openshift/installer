@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
@@ -43,6 +42,20 @@ var (
 // with the given terraform tfvar and generated templates.
 type Cluster struct {
 	FileList []*asset.File
+}
+
+// ResourceProvisioner provides hooks for creating additional resources during the
+// provisioning lifecycle.
+type ResourceProvisioner interface {
+	// PreProvision is called before provisioning using CAPI controllers has begun.
+	// and should be used to create dependencies needed for CAPI provisioning,
+	// such as IAM roles or policies.
+	PreProvision(clusterID string) error
+
+	// ValidControlPlaneEndpoint is called once cluster.Spec.ControlPlaneEndpoint.IsValid()
+	// returns true, typically after load balancers have been provisioned. It can be used
+	// to create DNS records.
+	ValidControlPlaneEndpoint(*clusterv1.Cluster) error
 }
 
 var _ asset.WritableAsset = (*Cluster)(nil)
@@ -156,6 +169,13 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 		clusterKubeconfigAsset,
 	)
 
+	// supplementalProvisioner creates resources not provided in CAPI provisioning.
+	supplementalProvisioner := initProvisioner(installConfig)
+
+	if err := supplementalProvisioner.PreProvision(clusterID.InfraID); err != nil {
+		return fmt.Errorf("failed to pre-provision resources: %w", err)
+	}
+
 	// Only need the objects--not the files.
 	manifests := []client.Object{}
 	for _, m := range capiManifests.RuntimeFiles() {
@@ -230,23 +250,8 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 		}
 	}
 
-	// Run the post-provisioning steps for the platform we're on.
-	// TODO(vincepri): The following should probably be in a separate package with a clear
-	// interface and multiple hooks at different stages of the cluster lifecycle.
-	switch installConfig.Config.Platform.Name() {
-	case typesaws.Name:
-		ssn, err := installConfig.AWS.Session(context.TODO())
-		if err != nil {
-			return fmt.Errorf("failed to create session: %w", err)
-		}
-		client := awsconfig.NewClient(ssn)
-		r53cfg := awsconfig.GetR53ClientCfg(ssn, "")
-		err = client.CreateOrUpdateRecord(installConfig.Config, cluster.Spec.ControlPlaneEndpoint.Host, r53cfg)
-		if err != nil {
-			return fmt.Errorf("failed to create route53 records: %w", err)
-		}
-		logrus.Infof("Created Route53 records to control plane load balancer.")
-	default:
+	if err := supplementalProvisioner.ValidControlPlaneEndpoint(cluster); err != nil {
+		return fmt.Errorf("failed to create supplemental resources for valid control plane endpoint: %w", err)
 	}
 
 	// For each manifest we created, retrieve it and store it in the asset.
@@ -296,4 +301,20 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	return false, nil
+}
+
+// defaultProvisioner does nothing and can be used if a cloud platform does not need
+// to provision additional resources.
+type defaultProvisioner struct{}
+
+func (d defaultProvisioner) PreProvision(clusterID string) error                        { return nil }
+func (d defaultProvisioner) ValidControlPlaneEndpoint(cluster *clusterv1.Cluster) error { return nil }
+
+func initProvisioner(ic *installconfig.InstallConfig) ResourceProvisioner {
+	switch ic.Config.Platform.Name() {
+	case typesaws.Name:
+		return aws.InitAWSProvisioner(ic)
+	default:
+		return defaultProvisioner{}
+	}
 }
