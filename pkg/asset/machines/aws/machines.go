@@ -113,12 +113,12 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			domain.Subnet.Type = machinev1.AWSFiltersReferenceType
 			domain.Subnet.Filters = &[]machinev1.AWSResourceFilter{
 				{
-					Name:   "tag:Name",
-					Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)}, // legacy Terraform config, TODO remove
+					Name: "tag:Name",
+					Values: []string{
+						fmt.Sprintf("%s-private-%s", clusterID, zone), // legacy Terraform config, TODO remove
+						fmt.Sprintf("%s-subnet-private-%s", clusterID, zone),
+					},
 				},
-				{
-					Name:   "tag:Name",
-					Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)}},
 			}
 		} else {
 			domain.Subnet.Type = machinev1.AWSIDReferenceType
@@ -258,12 +258,11 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 
 	subnetFilters := []machineapi.Filter{
 		{
-			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-%s-%s", in.clusterID, visibility, in.zone)}, // legacy TF config, TODO
-		},
-		{
-			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-subnet-%s-%s", in.clusterID, visibility, in.zone)},
+			Name: "tag:Name",
+			Values: []string{
+				fmt.Sprintf("%s-%s-%s", in.clusterID, visibility, in.zone),
+				fmt.Sprintf("%s-subnet-%s-%s", in.clusterID, visibility, in.zone), // legacy TF config, TODO remove
+			},
 		},
 	}
 
