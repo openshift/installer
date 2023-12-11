@@ -9,6 +9,9 @@
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS builder
 ARG TAGS="altinfra"
+# Enables building CAPI dependencies in hack/build.sh. Once CAPI is stable
+# the logic in build.sh should no longer be gated and this can be removed.
+ENV OPENSHIFT_INSTALL_CLUSTER_API="true"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
