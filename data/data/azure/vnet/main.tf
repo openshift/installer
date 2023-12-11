@@ -6,6 +6,9 @@ locals {
     var.azure_extra_tags,
   )
   description = "Created By OpenShift Installer"
+  # At this time min_tls_version is only supported in the Public Cloud and US Government Cloud.
+  environments_with_min_tls_version = ["public", "usgovernment"]
+
 }
 
 provider "azurerm" {
@@ -61,6 +64,33 @@ data "azurerm_user_assigned_identity" "keyvault_identity" {
   name                = var.azure_user_assigned_identity_key
 }
 
+resource "azurerm_storage_account" "cluster" {
+  name                            = "cluster${var.random_storage_account_suffix}"
+  resource_group_name             = data.azurerm_resource_group.main.name
+  location                        = var.azure_region
+  account_tier                    = var.azure_keyvault_name != "" ? "Premium" : "Standard"
+  account_replication_type        = "LRS"
+  min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
+  allow_nested_items_to_be_public = var.azure_keyvault_name != "" ? true : false
+  tags                            = var.azure_extra_tags
+
+  dynamic "customer_managed_key" {
+    for_each = var.azure_keyvault_name != "" ? [1] : []
+    content {
+      key_vault_key_id          = data.azurerm_key_vault_key.keyvault_key[0].id
+      user_assigned_identity_id = data.azurerm_user_assigned_identity.keyvault_identity[0].id
+    }
+  }
+
+  dynamic identity {
+    for_each = var.azure_keyvault_name != "" ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [data.azurerm_user_assigned_identity.keyvault_identity[0].id]
+    }
+  }
+}
+
 resource "azurerm_user_assigned_identity" "main" {
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
@@ -82,6 +112,20 @@ resource "azurerm_role_assignment" "network" {
   principal_id         = azurerm_user_assigned_identity.main.principal_id
 }
 
+# copy over the vhd to cluster resource group and create an image using that
+resource "azurerm_storage_container" "vhd" {
+  name                 = "vhd"
+  storage_account_name = azurerm_storage_account.cluster.name
+}
+
+resource "azurerm_storage_blob" "rhcos_image" {
+  name                   = "rhcos${var.random_storage_account_suffix}.vhd"
+  storage_account_name   = azurerm_storage_account.cluster.name
+  storage_container_name = azurerm_storage_container.vhd.name
+  type                   = "Page"
+  source_uri             = var.azure_image_url
+  metadata               = tomap({ source_uri = var.azure_image_url })
+}
 
 # Creates Shared Image Gallery
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/shared_image_gallery
@@ -132,3 +176,40 @@ resource "azurerm_shared_image" "clustergen2" {
 
   tags = var.azure_extra_tags
 }
+
+resource "azurerm_shared_image_version" "cluster_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = azurerm_shared_image.cluster.gallery_name
+  image_name          = azurerm_shared_image.cluster.name
+  resource_group_name = azurerm_shared_image.cluster.resource_group_name
+  location            = azurerm_shared_image.cluster.location
+
+  blob_uri           = azurerm_storage_blob.rhcos_image.url
+  storage_account_id = azurerm_storage_account.cluster.id
+
+  target_region {
+    name                   = azurerm_shared_image.cluster.location
+    regional_replica_count = 1
+  }
+
+  tags = var.azure_extra_tags
+}
+
+resource "azurerm_shared_image_version" "clustergen2_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = azurerm_shared_image.clustergen2.gallery_name
+  image_name          = azurerm_shared_image.clustergen2.name
+  resource_group_name = azurerm_shared_image.clustergen2.resource_group_name
+  location            = azurerm_shared_image.clustergen2.location
+
+  blob_uri           = azurerm_storage_blob.rhcos_image.url
+  storage_account_id = azurerm_storage_account.cluster.id
+
+  target_region {
+    name                   = azurerm_shared_image.clustergen2.location
+    regional_replica_count = 1
+  }
+
+  tags = var.azure_extra_tags
+}
+
