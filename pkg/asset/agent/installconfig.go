@@ -309,6 +309,11 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 	}
 
+	if installConfig.FeatureSet != configv1.Default {
+		fieldPath := field.NewPath("FeatureSet")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.FeatureSet))
+	}
+
 	switch installConfig.Platform.Name() {
 
 	case baremetal.Name:
