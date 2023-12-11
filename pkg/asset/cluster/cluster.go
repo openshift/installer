@@ -113,10 +113,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	// Otherwise, use the normal path.
-	return c.provision(installConfig, clusterID, terraformVariables)
+	return c.provision(installConfig, clusterID, terraformVariables, parents)
 }
 
-func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, terraformVariables *tfvars.TerraformVariables) error {
+func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, terraformVariables *tfvars.TerraformVariables, parents asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 
 	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
@@ -139,16 +139,11 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 		}
 	}
 
-	tfvarsFiles := []*asset.File{}
-	for _, file := range terraformVariables.Files() {
-		tfvarsFiles = append(tfvarsFiles, file)
-	}
-
 	provider, err := infra.ProviderForPlatform(platform, installConfig.Config.EnabledFeatureGates())
 	if err != nil {
 		return fmt.Errorf("error getting infrastructure provider: %w", err)
 	}
-	files, err := provider.Provision(InstallDir, tfvarsFiles)
+	files, err := provider.Provision(InstallDir, parents)
 	if files != nil {
 		c.FileList = append(c.FileList, files...) // append state files even in case of failure
 	}
