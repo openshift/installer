@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
@@ -67,7 +68,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
 		&quota.PlatformQuotaCheck{},
-		&TerraformVariables{},
+		&tfvars.TerraformVariables{},
 		&password.KubeadminPassword{},
 		&capimanifests.Cluster{},
 		&kubeconfig.AdminClient{},
@@ -82,7 +83,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
-	terraformVariables := &TerraformVariables{}
+	terraformVariables := &tfvars.TerraformVariables{}
 	parents.Get(clusterID, installConfig, terraformVariables)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
@@ -115,7 +116,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	return c.provision(installConfig, clusterID, terraformVariables)
 }
 
-func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, terraformVariables *TerraformVariables) error {
+func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, terraformVariables *tfvars.TerraformVariables) error {
 	platform := installConfig.Config.Platform.Name()
 
 	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
