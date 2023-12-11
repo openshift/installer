@@ -82,6 +82,7 @@ RUN mkdir /output && HOME=/output && \
     ibmcloud plugin install vpc-infrastructure -f && \
     ibmcloud plugin install cloud-dns-services -f && \
     ibmcloud plugin install cloud-internet-services -f && \
+    ibmcloud plugin install key-protect -f && \
     cp /usr/local/bin/ibmcloud /bin/ibmcloud && \
     rm -f $HOME/.curlrc && \
     ibmcloud version && \
