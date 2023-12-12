@@ -50,34 +50,22 @@ output "resource_group_name" {
   value = data.azurerm_resource_group.main.name
 }
 
+output "vm_image" {
+  value = var.azure_hypervgeneration_version == "V2" ? azurerm_shared_image_version.clustergen2_image_version.id : azurerm_shared_image_version.cluster_image_version.id
+}
+
 output "identity" {
   value = azurerm_user_assigned_identity.main.id
-}
-
-output "key_vault_key_id" {
-  value = var.azure_keyvault_name != "" ? data.azurerm_key_vault.keyvault[0].id : null
-}
-
-output "user_assigned_identity_id" {
-  value = var.azure_keyvault_name != "" ? data.azurerm_user_assigned_identity.keyvault_identity[0].id : null
 }
 
 output "subnet_id" {
   value = local.master_subnet_id
 }
 
-output "image_version_gallery_name" {
-  value = azurerm_shared_image.cluster.gallery_name
+output "storage_account_name" {
+  value = azurerm_storage_account.cluster.name
 }
 
-output "image_version_gen2_gallery_name" {
-  value = azurerm_shared_image.clustergen2.gallery_name
-}
-
-output "image_version_name" {
-  value = azurerm_shared_image.cluster.name
-}
-
-output "image_version_gen2_name" {
-  value = azurerm_shared_image.clustergen2.name
+output "outbound_type" {
+  value = var.azure_outbound_routing_type
 }

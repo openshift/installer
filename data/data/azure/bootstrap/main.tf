@@ -17,7 +17,7 @@ provider "azurerm" {
 }
 
 data "azurerm_storage_account" "storage_account" {
-  name                = azurerm_storage_account.cluster.name
+  name                = var.storage_account_name
   resource_group_name = var.resource_group_name
 }
 
@@ -57,13 +57,13 @@ data "azurerm_storage_account_sas" "ignition" {
 
 resource "azurerm_storage_container" "ignition" {
   name                 = "ignition"
-  storage_account_name = azurerm_storage_account.cluster.name
+  storage_account_name = var.storage_account_name
 }
 
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = var.ignition_bootstrap_file
-  storage_account_name   = azurerm_storage_account.cluster.name
+  storage_account_name   = var.storage_account_name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = var.azure_keyvault_key_name != "" ? "Page" : "Block"
 }
@@ -223,7 +223,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   }
 
   # Either source_image_id or source_image_reference must be defined
-  source_image_id = azurerm_shared_image_version.bootstrap_image_version.id
+  source_image_id = ! var.azure_use_marketplace_image ? var.vm_image : null
 
   dynamic "source_image_reference" {
     for_each = var.azure_use_marketplace_image ? [1] : []
