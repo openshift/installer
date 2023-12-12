@@ -330,7 +330,10 @@ func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, off
 	defer cancel()
 
 	image, err := client.Get(ctx, region, publisher, offer, sku, version)
-	return image, fmt.Errorf("could not get marketplace image: %w", err)
+	if err != nil {
+		return image, fmt.Errorf("could not get marketplace image: %w", err)
+	}
+	return image, nil
 }
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.
