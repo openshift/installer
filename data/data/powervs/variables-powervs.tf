@@ -40,9 +40,9 @@ variable "powervs_publish_strategy" {
   default     = "External"
 }
 
-variable "powervs_service_instance_name" {
+variable "powervs_service_instance_guid" {
   type        = string
-  description = "Optionally, the service instance name of an existing object before cluster creation"
+  description = "Optionally, the service instance GUID of an existing object before cluster creation"
 }
 
 variable "powervs_wait_for_workspace" {

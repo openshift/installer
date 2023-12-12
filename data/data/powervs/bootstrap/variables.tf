@@ -9,3 +9,7 @@ variable "api_pool_int_id" { type = string }
 variable "api_pool_ext_id" { type = string }
 variable "boot_image_id" { type = string }
 variable "proxy_server_ip" { type = string }
+variable "service_instance_guid" {
+  type        = string
+  description = "The service instance GUID"
+}

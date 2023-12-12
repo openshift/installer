@@ -42,6 +42,10 @@ output "proxy_server_ip" {
   value = module.dns.dns_server
 }
 
+output "service_instance_guid" {
+  value = module.iaas.service_instance_guid
+}
+
 output "vpc_id" {
   value = module.vpc.vpc_id
 }

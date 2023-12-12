@@ -965,14 +965,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		// If a service instance GUID was passed in the install-config.yaml file, then
-		// find the corresponding name for it.  Otherwise, we expect our Terraform to
+		// If a service instance GUID was not passed in the install-config.yaml file, we expect our Terraform to
 		// dynamically create one.
-		serviceInstanceName, err := client.ServiceInstanceGUIDToName(ctx, installConfig.Config.PowerVS.ServiceInstanceGUID)
-		if err != nil {
-			return err
-		}
-
+		serviceInstanceGUID := installConfig.Config.PowerVS.ServiceInstanceGUID
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
@@ -997,7 +992,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				EnableSNAT:             len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
 				AttachedTransitGateway: attachedTG,
 				TGConnectionVPCID:      tgConnectionVPCID,
-				ServiceInstanceName:    serviceInstanceName,
+				ServiceInstanceGUID:    serviceInstanceGUID,
 			},
 		)
 		if err != nil {

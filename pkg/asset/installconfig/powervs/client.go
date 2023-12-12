@@ -42,7 +42,6 @@ type API interface {
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
-	ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error)
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
@@ -685,87 +684,6 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	}
 
 	return serviceInstances, nil
-}
-
-// ServiceInstanceGUIDToName returns the name of the matching service instance GUID which was passed in.
-func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error) {
-	var (
-		options   *resourcecontrollerv2.ListResourceInstancesOptions
-		resources *resourcecontrollerv2.ResourceInstancesList
-		err       error
-		perPage   int64 = 10
-		moreData        = true
-		nextURL   *string
-		groupID   = c.BXCli.PowerVSResourceGroup
-	)
-
-	// If the user passes in a human readable group id, then we need to convert it to a UUID
-	listGroupOptions := c.managementAPI.NewListResourceGroupsOptions()
-	listGroupOptions.AccountID = &c.BXCli.User.Account
-	groups, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, listGroupOptions)
-	if err != nil {
-		return "", fmt.Errorf("failed to list resource groups: %w", err)
-	}
-	for _, group := range groups.Resources {
-		if *group.Name == groupID {
-			groupID = *group.ID
-		}
-	}
-
-	options = c.controllerAPI.NewListResourceInstancesOptions()
-	options.SetResourceGroupID(groupID)
-	// resource ID for Power Systems Virtual Server in the Global catalog
-	options.SetResourceID(powerIAASResourceID)
-	options.SetLimit(perPage)
-
-	for moreData {
-		resources, _, err = c.controllerAPI.ListResourceInstancesWithContext(ctx, options)
-		if err != nil {
-			return "", fmt.Errorf("failed to list resource instances: %w", err)
-		}
-
-		for _, resource := range resources.Resources {
-			var (
-				getResourceOptions *resourcecontrollerv2.GetResourceInstanceOptions
-				resourceInstance   *resourcecontrollerv2.ResourceInstance
-				response           *core.DetailedResponse
-			)
-
-			getResourceOptions = c.controllerAPI.NewGetResourceInstanceOptions(*resource.ID)
-
-			resourceInstance, response, err = c.controllerAPI.GetResourceInstance(getResourceOptions)
-			if err != nil {
-				return "", fmt.Errorf("failed to get instance: %w", err)
-			}
-			if response != nil && response.StatusCode == http.StatusNotFound || response.StatusCode == http.StatusInternalServerError {
-				continue
-			}
-
-			if resourceInstance.Type != nil && (*resourceInstance.Type == "service_instance" || *resourceInstance.Type == "composite_instance") {
-				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
-					if resourceInstance.Name == nil {
-						return "", nil
-					}
-					return *resourceInstance.Name, nil
-				}
-			}
-		}
-
-		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
-		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
-		if err != nil {
-			return "", fmt.Errorf("failed to GetQueryParam on start: %w", err)
-		}
-		if nextURL == nil {
-			options.SetStart("")
-		} else {
-			options.SetStart(*nextURL)
-		}
-
-		moreData = *resources.RowsCount == perPage
-	}
-
-	return "", nil
 }
 
 // GetDatacenterCapabilities retrieves the capabilities of the specified datacenter.
