@@ -130,39 +130,6 @@ spec:
                   description: Platform is configuration for machine pool specific
                     to the platform.
                   properties:
-                    alibabacloud:
-                      description: AlibabaCloud is the configuration used when installing
-                        on Alibaba Cloud.
-                      properties:
-                        imageID:
-                          description: ImageID is the Image ID that should be used
-                            to create ECS instance. If set, the ImageID should belong
-                            to the same region as the cluster.
-                          type: string
-                        instanceType:
-                          description: InstanceType defines the ECS instance type.
-                            eg. ecs.g6.large
-                          type: string
-                        systemDiskCategory:
-                          description: SystemDiskCategory defines the category of
-                            the system disk.
-                          enum:
-                          - ""
-                          - cloud_efficiency
-                          - cloud_essd
-                          type: string
-                        systemDiskSize:
-                          description: SystemDiskSize defines the size of the system
-                            disk in gibibytes (GiB).
-                          minimum: 120
-                          type: integer
-                        zones:
-                          description: Zones is list of availability zones that can
-                            be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
-                          items:
-                            type: string
-                          type: array
-                      type: object
                     aws:
                       description: AWS is the configuration used when installing on
                         AWS.
@@ -1077,39 +1044,6 @@ spec:
                 description: Platform is configuration for machine pool specific to
                   the platform.
                 properties:
-                  alibabacloud:
-                    description: AlibabaCloud is the configuration used when installing
-                      on Alibaba Cloud.
-                    properties:
-                      imageID:
-                        description: ImageID is the Image ID that should be used to
-                          create ECS instance. If set, the ImageID should belong to
-                          the same region as the cluster.
-                        type: string
-                      instanceType:
-                        description: InstanceType defines the ECS instance type. eg.
-                          ecs.g6.large
-                        type: string
-                      systemDiskCategory:
-                        description: SystemDiskCategory defines the category of the
-                          system disk.
-                        enum:
-                        - ""
-                        - cloud_efficiency
-                        - cloud_essd
-                        type: string
-                      systemDiskSize:
-                        description: SystemDiskSize defines the size of the system
-                          disk in gibibytes (GiB).
-                        minimum: 120
-                        type: integer
-                      zones:
-                        description: Zones is list of availability zones that can
-                          be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
-                        items:
-                          type: string
-                        type: array
-                    type: object
                   aws:
                     description: AWS is the configuration used when installing on
                       AWS.
@@ -2010,7 +1944,7 @@ spec:
               values. For all other platforms, the field must not be set. AWS: \"Mint\",
               \"Passthrough\", \"Manual\" Azure: \"Passthrough\", \"Manual\" AzureStack:
               \"Manual\" GCP: \"Mint\", \"Passthrough\", \"Manual\" IBMCloud: \"Manual\"
-              AlibabaCloud: \"Manual\" PowerVS: \"Manual\" Nutanix: \"Manual\""
+              PowerVS: \"Manual\" Nutanix: \"Manual\""
             enum:
             - ""
             - Mint
@@ -2218,84 +2152,6 @@ spec:
             description: Platform is the configuration for the specific platform upon
               which to perform the installation.
             properties:
-              alibabacloud:
-                description: AlibabaCloud is the configuration used when installing
-                  on Alibaba Cloud.
-                properties:
-                  defaultMachinePlatform:
-                    description: DefaultMachinePlatform is the default configuration
-                      used when installing on Alibaba Cloud for machine pools which
-                      do not define their own platform configuration.
-                    properties:
-                      imageID:
-                        description: ImageID is the Image ID that should be used to
-                          create ECS instance. If set, the ImageID should belong to
-                          the same region as the cluster.
-                        type: string
-                      instanceType:
-                        description: InstanceType defines the ECS instance type. eg.
-                          ecs.g6.large
-                        type: string
-                      systemDiskCategory:
-                        description: SystemDiskCategory defines the category of the
-                          system disk.
-                        enum:
-                        - ""
-                        - cloud_efficiency
-                        - cloud_essd
-                        type: string
-                      systemDiskSize:
-                        description: SystemDiskSize defines the size of the system
-                          disk in gibibytes (GiB).
-                        minimum: 120
-                        type: integer
-                      zones:
-                        description: Zones is list of availability zones that can
-                          be used. eg. ["cn-hangzhou-i", "cn-hangzhou-h", "cn-hangzhou-j"]
-                        items:
-                          type: string
-                        type: array
-                    type: object
-                  privateZoneID:
-                    description: PrivateZoneID is the ID of an existing private zone
-                      into which to add DNS records for the cluster's internal API.
-                      An existing private zone can only be used when also using existing
-                      VPC. The private zone must be associated with the VPC containing
-                      the subnets. Leave the private zone unset to have the installer
-                      create the private zone on your behalf.
-                    type: string
-                  region:
-                    description: Region specifies the Alibaba Cloud region where the
-                      cluster will be created.
-                    type: string
-                  resourceGroupID:
-                    description: ResourceGroupID is the ID of an already existing
-                      resource group where the cluster should be installed. If empty,
-                      the installer will create a new resource group for the cluster.
-                    type: string
-                  tags:
-                    additionalProperties:
-                      type: string
-                    description: Tags additional keys and values that the installer
-                      will add as tags to all resources that it creates. Resources
-                      created by the cluster itself may not include these tags.
-                    type: object
-                  vpcID:
-                    description: VpcID is the ID of an already existing VPC where
-                      the cluster should be installed. If empty, the installer will
-                      create a new VPC for the cluster.
-                    type: string
-                  vswitchIDs:
-                    description: VSwitchIDs is the ID list of already existing VSwitches
-                      where cluster resources will be created. The existing VSwitches
-                      can only be used when also using existing VPC. If empty, the
-                      installer will create new VSwitches for the cluster.
-                    items:
-                      type: string
-                    type: array
-                required:
-                - region
-                type: object
               aws:
                 description: AWS is the configuration used when installing on AWS.
                 properties:

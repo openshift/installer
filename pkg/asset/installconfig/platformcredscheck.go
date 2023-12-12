@@ -14,7 +14,6 @@ import (
 	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -53,12 +52,6 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	var err error
 	platform := ic.Config.Platform.Name()
 	switch platform {
-	case alibabacloud.Name:
-		_, err = ic.AlibabaCloud.Client()
-		if err != nil {
-			return errors.Wrap(err, "creating AlibabaCloud Cloud session")
-		}
-
 	case aws.Name:
 		_, err := ic.AWS.Session(ctx)
 		if err != nil {
