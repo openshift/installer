@@ -172,7 +172,7 @@ The Ansible Collections are not packaged (yet) on recent versions of OSP and RHE
 installed instead of Ansible 2.9. So the collections need to be installed from `ansible-galaxy`.
 
 ```sh
-ansible-galaxy collection install openstack.cloud ansible.utils community.general
+ansible-galaxy collection install "openstack.cloud:<2.0.0" ansible.utils community.general
 ```
 
 ## OpenShift Configuration Directory
