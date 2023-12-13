@@ -390,9 +390,9 @@ func TestConvertInstallConfig(t *testing.T) {
 			expectInstallConfig: convertedLegacyUpiInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn: []string{
-				"vsphere authentication fields are now depreciated please use vcenters",
-				"vsphere topology fields are now depreciated please use failureDomains",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter/datastore/test-datastore",
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"vsphere topology fields are now deprecated; please use failureDomains",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/test-datastore",
 			},
 		},
 		{
@@ -401,10 +401,10 @@ func TestConvertInstallConfig(t *testing.T) {
 			expectInstallConfig: convertedLegacyIpiInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn: []string{
-				"vsphere authentication fields are now depreciated please use vcenters",
-				"vsphere topology fields are now depreciated please use failureDomains",
-				"computeCluster as a non-path is now depreciated please use the form: /test-datacenter/host/test-cluster",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter/datastore/test-datastore",
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"vsphere topology fields are now deprecated; please use failureDomains",
+				"computeCluster as a non-path is now deprecated; please use the form: /test-datacenter/host/test-cluster",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/test-datastore",
 			},
 		},
 		{
@@ -413,11 +413,11 @@ func TestConvertInstallConfig(t *testing.T) {
 			expectInstallConfig: convertedLegacyIpiZonalInstallConfig,
 			expectLevel:         logrus.WarnLevel,
 			expectWarn: []string{
-				"vsphere authentication fields are now depreciated please use vcenters",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter/datastore/datastore1",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter/datastore/datastore2",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter/datastore/datastore3",
-				"datastore as a non-path is now depreciated please use the form: /test-datacenter4/datastore/datastore4",
+				"vsphere authentication fields are now deprecated; please use vcenters",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore1",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore2",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter/datastore/datastore3",
+				"datastore as a non-path is now deprecated; please use the form: /test-datacenter4/datastore/datastore4",
 			},
 		},
 		{
@@ -479,7 +479,7 @@ func Test_setComputeClusterPath(t *testing.T) {
 			computeCluster: "C1",
 			datacenter:     "DC1",
 			expectLevel:    `warning`,
-			expectWarn:     `computeCluster as a non-path is now depreciated please use the form: /DC1/host/C1`,
+			expectWarn:     `computeCluster as a non-path is now deprecated; please use the form: /DC1/host/C1`,
 			expectCluster:  "/DC1/host/C1",
 		},
 	}
@@ -525,7 +525,7 @@ func Test_setDatastorePath(t *testing.T) {
 			datastore:      "DS1",
 			datacenter:     "DC1",
 			expectLevel:    `warning`,
-			expectWarn:     `datastore as a non-path is now depreciated please use the form: /DC1/datastore/DS1`,
+			expectWarn:     `datastore as a non-path is now deprecated; please use the form: /DC1/datastore/DS1`,
 			expectDatstore: "/DC1/datastore/DS1",
 		},
 	}
@@ -571,7 +571,7 @@ func Test_setFolderPath(t *testing.T) {
 			folder:       "Folder1",
 			datacenter:   "DC1",
 			expectLevel:  `warning`,
-			expectWarn:   `folder as a non-path is now depreciated please use the form: /DC1/vm/Folder1`,
+			expectWarn:   `folder as a non-path is now deprecated; please use the form: /DC1/vm/Folder1`,
 			expectFolder: "/DC1/vm/Folder1",
 		},
 	}
