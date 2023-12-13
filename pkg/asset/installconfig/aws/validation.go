@@ -48,8 +48,12 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 	allErrs = append(allErrs, validateAMI(ctx, config)...)
 	allErrs = append(allErrs, validatePlatform(ctx, meta, field.NewPath("platform", "aws"), config.Platform.AWS, config.Networking, config.Publish)...)
 
-	if config.ControlPlane != nil && config.ControlPlane.Platform.AWS != nil {
-		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, config.ControlPlane.Platform.AWS, controlPlaneReq, "")...)
+	if config.ControlPlane != nil {
+		arch := string(config.ControlPlane.Architecture)
+		pool := &awstypes.MachinePool{}
+		pool.Set(config.AWS.DefaultMachinePlatform)
+		pool.Set(config.ControlPlane.Platform.AWS)
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, field.NewPath("controlPlane", "platform", "aws"), config.Platform.AWS, pool, controlPlaneReq, "", arch)...)
 	}
 
 	for idx, compute := range config.Compute {
@@ -62,9 +66,11 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 			}
 		}
 
-		if compute.Platform.AWS != nil {
-			allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("platform", "aws"), config.Platform.AWS, compute.Platform.AWS, computeReq, compute.Name)...)
-		}
+		arch := string(compute.Architecture)
+		pool := &awstypes.MachinePool{}
+		pool.Set(config.AWS.DefaultMachinePlatform)
+		pool.Set(compute.Platform.AWS)
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("platform", "aws"), config.Platform.AWS, pool, computeReq, compute.Name, arch)...)
 	}
 	return allErrs.ToAggregate()
 }
@@ -83,7 +89,7 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		allErrs = append(allErrs, validateSubnets(ctx, meta, fldPath.Child("subnets"), platform.Subnets, networking, publish)...)
 	}
 	if platform.DefaultMachinePlatform != nil {
-		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "")...)
+		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)
 	}
 	return allErrs
 }
@@ -195,7 +201,7 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	return allErrs
 }
 
-func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool, req resourceRequirements, poolName string) field.ErrorList {
+func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool, req resourceRequirements, poolName string, arch string) field.ErrorList {
 	var err error
 	allErrs := field.ErrorList{}
 
@@ -279,6 +285,12 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 				errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MiB Memory", req.minimumMemory)
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 			}
+			instanceArches := translateEC2Arches(typeMeta.Arches)
+			// `arch` might not be specified (e.g, defaultMachinePool)
+			if len(arch) > 0 && !instanceArches.Has(arch) {
+				errMsg := fmt.Sprintf("instance type supported architectures %s do not match specified architecture %s", sets.List(instanceArches), arch)
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+			}
 		} else {
 			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
@@ -290,6 +302,21 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 	}
 
 	return allErrs
+}
+
+func translateEC2Arches(arches []string) sets.Set[string] {
+	res := sets.New[string]()
+	for _, arch := range arches {
+		switch arch {
+		case ec2.ArchitectureTypeX8664:
+			res.Insert(types.ArchitectureAMD64)
+		case ec2.ArchitectureTypeArm64:
+			res.Insert(types.ArchitectureARM64)
+		default:
+			continue
+		}
+	}
+	return res
 }
 
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
