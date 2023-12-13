@@ -52,7 +52,7 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 
 	// Scenario: legacy UPI or IPI
 	if len(platform.FailureDomains) == 0 {
-		localLogger.Warn("vsphere topology fields are now depreciated please use failureDomains")
+		localLogger.Warn("vsphere topology fields are now deprecated; please use failureDomains")
 
 		platform.FailureDomains = make([]vsphere.FailureDomain, 1)
 		platform.FailureDomains[0].Name = "generated-failure-domain"
@@ -74,7 +74,7 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 
 func setComputeClusterPath(cluster, datacenter string) string {
 	if cluster != "" && !strings.HasPrefix(cluster, "/") {
-		localLogger.Warnf("computeCluster as a non-path is now depreciated please use the form: /%s/host/%s", datacenter, cluster)
+		localLogger.Warnf("computeCluster as a non-path is now deprecated; please use the form: /%s/host/%s", datacenter, cluster)
 		return fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 	}
 	return cluster
@@ -82,7 +82,7 @@ func setComputeClusterPath(cluster, datacenter string) string {
 
 func setDatastorePath(datastore, datacenter string) string {
 	if datastore != "" && !strings.HasPrefix(datastore, "/") {
-		localLogger.Warnf("datastore as a non-path is now depreciated please use the form: /%s/datastore/%s", datacenter, datastore)
+		localLogger.Warnf("datastore as a non-path is now deprecated; please use the form: /%s/datastore/%s", datacenter, datastore)
 		return fmt.Sprintf("/%s/datastore/%s", datacenter, datastore)
 	}
 	return datastore
@@ -90,14 +90,14 @@ func setDatastorePath(datastore, datacenter string) string {
 
 func setFolderPath(folder, datacenter string) string {
 	if folder != "" && !strings.HasPrefix(folder, "/") {
-		localLogger.Warnf("folder as a non-path is now depreciated please use the form: /%s/vm/%s", datacenter, folder)
+		localLogger.Warnf("folder as a non-path is now deprecated; please use the form: /%s/vm/%s", datacenter, folder)
 		return fmt.Sprintf("/%s/vm/%s", datacenter, folder)
 	}
 	return folder
 }
 
 func createVCenters(platform *vsphere.Platform) {
-	localLogger.Warn("vsphere authentication fields are now depreciated please use vcenters")
+	localLogger.Warn("vsphere authentication fields are now deprecated; please use vcenters")
 
 	platform.VCenters = make([]vsphere.VCenter, 1)
 	platform.VCenters[0].Server = platform.DeprecatedVCenter
