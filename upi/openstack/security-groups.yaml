@@ -299,7 +299,7 @@
     - name: 'Create master-sg IPv6 rule "OpenShift API"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_master }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         port_range_min: 6443
         port_range_max: 6443
@@ -307,7 +307,7 @@
     - name: 'Create worker-sg IPv6 rule "Ingress HTTP"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_worker }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         port_range_min: 80
         port_range_max: 80
@@ -315,7 +315,7 @@
     - name: 'Create worker-sg IPv6 rule "Ingress HTTPS"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_worker }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         port_range_min: 443
         port_range_max: 443
@@ -323,7 +323,7 @@
     - name: 'Create master-sg rule "master ingress HTTP (TCP)"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_master }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         port_range_min: 80
         port_range_max: 80
@@ -332,7 +332,7 @@
     - name: 'Create master-sg rule "master ingress HTTPS (TCP)"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_master }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         port_range_min: 443
         port_range_max: 443
@@ -341,12 +341,11 @@
     - name: 'Create master-sg rule "router"'
       openstack.cloud.security_group_rule:
         security_group: "{{ os_sg_master }}"
-        ether_type: IPv6
+        ethertype: IPv6
         protocol: tcp
         remote_ip_prefix: "{{ os_subnet_range }}"
         port_range_min: 1936
         port_range_max: 1936
       when: os_master_schedulable is defined and os_master_schedulable
 
-    when:
-      when: os_subnet6 is defined
+    when: os_subnet6 is defined
