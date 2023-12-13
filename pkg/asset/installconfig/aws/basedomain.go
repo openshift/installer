@@ -19,8 +19,8 @@ import (
 // IsForbidden returns true if and only if the input error is an HTTP
 // 403 error from the AWS API.
 func IsForbidden(err error) bool {
-	requestError, ok := err.(awserr.RequestFailure)
-	return ok && requestError.StatusCode() == http.StatusForbidden
+	var requestError awserr.RequestFailure
+	return errors.As(err, &requestError) && requestError.StatusCode() == http.StatusForbidden
 }
 
 // GetBaseDomain returns a base domain chosen from among the account's
@@ -99,7 +99,7 @@ func GetPublicZone(sess *session.Session, name string) (*route53.HostedZone, err
 		return nil, fmt.Errorf("listing hosted zones: %w", err)
 	}
 	if res == nil {
-		return nil, fmt.Errorf("No public route53 zone found matching name %q", name)
+		return nil, fmt.Errorf("no public route53 zone found matching name %q", name)
 	}
 	return res, nil
 }
