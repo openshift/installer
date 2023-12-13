@@ -7,6 +7,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -210,14 +211,17 @@ func validInstanceTypes() map[string]InstanceType {
 		"t2.small": {
 			DefaultVCpus: 1,
 			MemInMiB:     2048,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
 		"m5.large": {
 			DefaultVCpus: 2,
 			MemInMiB:     8192,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
 		"m5.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
 	}
 }
@@ -566,7 +570,7 @@ func TestValidate(t *testing.T) {
 			ic.Compute = []types.MachinePool{edgePool}
 			return ic
 		}(),
-		expectErr: `^compute\[0\]\.platform\.aws: Required value: edge compute pools are only supported on the AWS platform$`,
+		expectErr: `^\[compute\[0\]\.platform\.aws: Required value: edge compute pools are only supported on the AWS platform, compute\[0\].platform.aws: Required value: zone is required when using edge machine pools\]$`,
 	}, {
 		name: "invalid edge pool missing subnets on availability zones",
 		installConfig: func() *types.InstallConfig {
