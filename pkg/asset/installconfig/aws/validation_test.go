@@ -223,6 +223,11 @@ func validInstanceTypes() map[string]InstanceType {
 			MemInMiB:     16384,
 			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
+		"m6g.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{ec2.ArchitectureTypeArm64},
+		},
 	}
 }
 
@@ -365,6 +370,22 @@ func TestValidate(t *testing.T) {
 		availZones:    validAvailZones(),
 		instanceTypes: validInstanceTypes(),
 		expectErr:     `^\Qcompute[0].platform.aws.type: Invalid value: "m5.dummy": instance type m5.dummy not found\E$`,
+	}, {
+		name: "mismatched instance architecture",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS = &aws.Platform{
+				Region:                 "us-east-1",
+				DefaultMachinePlatform: &aws.MachinePool{InstanceType: "m5.xlarge"},
+			}
+			c.ControlPlane.Architecture = types.ArchitectureARM64
+			c.Compute[0].Platform.AWS.InstanceType = "m6g.xlarge"
+			c.Compute[0].Architecture = types.ArchitectureAMD64
+			return c
+		}(),
+		availZones:    validAvailZones(),
+		instanceTypes: validInstanceTypes(),
+		expectErr:     `^\[controlPlane.platform.aws.type: Invalid value: "m5.xlarge": instance type supported architectures \[amd64\] do not match specified architecture arm64, compute\[0\].platform.aws.type: Invalid value: "m6g.xlarge": instance type supported architectures \[arm64\] do not match specified architecture amd64\]$`,
 	}, {
 		name: "invalid no private subnets",
 		installConfig: func() *types.InstallConfig {
