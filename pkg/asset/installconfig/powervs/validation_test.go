@@ -134,6 +134,8 @@ var (
 	newSysType               = "s1022"
 	invalidRegion            = "foo"
 	validServiceInstanceGUID = ""
+	bogusServiceInstanceGUID = "bogus-workspace-guid"
+	validByoWorkspaceGUID    = "valid-workspace-guid"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -509,7 +511,7 @@ func TestValidatePERAvailability(t *testing.T) {
 			errorMsg: fmt.Sprintf("power-edge-router is not available at: %s", regionWithoutPER),
 		},
 		{
-			name: "Region with PER",
+			name: "Region with PER and no BYO Workspace",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
 					ic.Platform.PowerVS.Zone = regionWithPER
@@ -526,6 +528,26 @@ func TestValidatePERAvailability(t *testing.T) {
 			},
 			errorMsg: fmt.Sprintf("power-edge-router capability unknown at: %s", regionPERUnknown),
 		},
+		{
+			name: "Region with PER, but with invalid Workspace ID",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithPER
+					ic.Platform.PowerVS.ServiceInstanceGUID = bogusServiceInstanceGUID
+				},
+			},
+			errorMsg: fmt.Sprintf("power-edge-router is not available in workspace: %s", bogusServiceInstanceGUID),
+		},
+		{
+			name: "Region with PER and valid BYO Workspace",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.PowerVS.Zone = regionWithPER
+					ic.Platform.PowerVS.ServiceInstanceGUID = validByoWorkspaceGUID
+				},
+			},
+			errorMsg: "",
+		},
 	}
 	setMockEnvVars()
 
@@ -537,11 +559,19 @@ func TestValidatePERAvailability(t *testing.T) {
 	// Mocks: PER-absent region results in false
 	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithoutPER).Return(mapWithPERFalse, nil)
 
-	// Mocks: PER-enabled region results in true
+	// Mocks: PER-enabled region with no BYO workspace results in true
 	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
 
 	// Mocks: PER-unknown region results in false
 	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionPERUnknown).Return(mapPERUnknown, nil)
+
+	// Mocks: PER-enabled region, but bogus Service Instance results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
+	powervsClient.EXPECT().GetWorkspaceCapabilities(gomock.Any(), bogusServiceInstanceGUID).Return(mapWithPERFalse, nil)
+
+	// Mocks: PER-enabled region with valid BYO workspace results in false
+	powervsClient.EXPECT().GetDatacenterCapabilities(gomock.Any(), regionWithPER).Return(mapWithPERTrue, nil)
+	powervsClient.EXPECT().GetWorkspaceCapabilities(gomock.Any(), validByoWorkspaceGUID).Return(mapWithPERTrue, nil)
 
 	// Run tests
 	for _, tc := range cases {

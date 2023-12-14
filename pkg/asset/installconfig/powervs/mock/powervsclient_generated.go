@@ -233,6 +233,21 @@ func (mr *MockAPIMockRecorder) GetVPCs(ctx, region interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
 }
 
+// GetWorkspaceCapabilities mocks base method.
+func (m *MockAPI) GetWorkspaceCapabilities(ctx context.Context, svcInsID string) (map[string]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkspaceCapabilities", ctx, svcInsID)
+	ret0, _ := ret[0].(map[string]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkspaceCapabilities indicates an expected call of GetWorkspaceCapabilities.
+func (mr *MockAPIMockRecorder) GetWorkspaceCapabilities(ctx, svcInsID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkspaceCapabilities", reflect.TypeOf((*MockAPI)(nil).GetWorkspaceCapabilities), ctx, svcInsID)
+}
+
 // ListResourceGroups mocks base method.
 func (m *MockAPI) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error) {
 	m.ctrl.T.Helper()

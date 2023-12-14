@@ -49,7 +49,7 @@ func validateMachinePool(fldPath *field.Path, machinePool *types.MachinePool) fi
 	return allErrs
 }
 
-// ValidatePERAvailability ensures the target datacenter has PER enabled.
+// ValidatePERAvailability ensures the target datacenter has PER enabled, and in BYO workspace case, the workspace also has PER available.
 func ValidatePERAvailability(client API, ic *types.InstallConfig) error {
 	capabilities, err := client.GetDatacenterCapabilities(context.TODO(), ic.PowerVS.Zone)
 	if err != nil {
@@ -62,6 +62,17 @@ func ValidatePERAvailability(client API, ic *types.InstallConfig) error {
 	}
 	if !perAvail {
 		return fmt.Errorf("%s is not available at: %s", per, ic.PowerVS.Zone)
+	}
+
+	svcInsID := ic.PowerVS.ServiceInstanceGUID
+	if svcInsID != "" {
+		capabilities, err = client.GetWorkspaceCapabilities(context.TODO(), svcInsID)
+		if err != nil {
+			return err
+		}
+		if !capabilities[per] {
+			return fmt.Errorf("%s is not available in workspace: %s", per, svcInsID)
+		}
 	}
 
 	return nil
