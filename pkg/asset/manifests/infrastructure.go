@@ -197,9 +197,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		// If the user has requested the use of a DNS provisioned by them, then OpenShift needs to
 		// start an in-cluster DNS for the installation to succeed. The user can then configure their
 		// DNS post-install.
-		config.Status.PlatformStatus.GCP.ClusterHostedDNS = configv1.DisabledClusterHostedDNS
+		config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
+		config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
 		if installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
-			config.Status.PlatformStatus.GCP.ClusterHostedDNS = configv1.EnabledClusterHostedDNS
+			config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
 	case ibmcloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
