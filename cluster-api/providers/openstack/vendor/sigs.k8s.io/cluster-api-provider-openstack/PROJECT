@@ -1,0 +1,40 @@
+version: "2"
+domain: cluster.x-k8s.io
+repo: sigs.k8s.io/cluster-api-provider-openstack
+resources:
+- group: infrastructure
+  version: v1alpha5
+  kind: OpenStackCluster
+- group: infrastructure
+  version: v1alpha5
+  kind: OpenStackMachine
+- group: infrastructure
+  version: v1alpha5
+  kind: OpenStackMachineTemplate
+- group: infrastructure
+  kind: OpenStackClusterTemplate
+  version: v1alpha5
+- group: infrastructure
+  version: v1alpha6
+  kind: OpenStackCluster
+- group: infrastructure
+  version: v1alpha6
+  kind: OpenStackMachine
+- group: infrastructure
+  version: v1alpha6
+  kind: OpenStackMachineTemplate
+- group: infrastructure
+  kind: OpenStackClusterTemplate
+  version: v1alpha6
+- group: infrastructure
+  version: v1alpha7
+  kind: OpenStackCluster
+- group: infrastructure
+  version: v1alpha7
+  kind: OpenStackMachine
+- group: infrastructure
+  version: v1alpha7
+  kind: OpenStackMachineTemplate
+- group: infrastructure
+  kind: OpenStackClusterTemplate
+  version: v1alpha7
