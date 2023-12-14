@@ -38,12 +38,14 @@ var (
 	Azure = infrastructureProvider("azure")
 	// AzureASO is a companion component to Azure that is used to create resources declaratively.
 	AzureASO = infrastructureProvider("azureaso")
-	// IBMCloud is the provider for creating resources in IBM Cloud and powervs.
-	IBMCloud = infrastructureProvider("ibmcloud")
 	// GCP is the provider for creating resources in GCP.
 	GCP = infrastructureProvider("gcp")
+	// IBMCloud is the provider for creating resources in IBM Cloud and powervs.
+	IBMCloud = infrastructureProvider("ibmcloud")
 	// Nutanix is the provider for creating resources in Nutanix.
 	Nutanix = infrastructureProvider("nutanix")
+	// OpenStack is the provider for creating resources in OpenStack.
+	OpenStack = infrastructureProvider("openstack")
 	// VSphere is the provider for creating resources in vSphere.
 	VSphere = infrastructureProvider("vsphere")
 )
