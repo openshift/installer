@@ -687,7 +687,7 @@ github.com/hashicorp/terraform-json
 github.com/hexops/gotextdiff
 github.com/hexops/gotextdiff/myers
 github.com/hexops/gotextdiff/span
-# github.com/imdario/mergo v0.3.13
+# github.com/imdario/mergo v0.3.15
 ## explicit; go 1.13
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.1.0
@@ -9714,6 +9714,9 @@ sigs.k8s.io/cluster-api-provider-azure/util/azure
 sigs.k8s.io/cluster-api-provider-azure/util/maps
 sigs.k8s.io/cluster-api-provider-azure/util/ssh
 sigs.k8s.io/cluster-api-provider-azure/util/webhook
+# sigs.k8s.io/cluster-api-provider-openstack v0.8.0
+## explicit; go 1.20
+sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7
 # sigs.k8s.io/controller-runtime v0.16.2 => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
 ## explicit; go 1.20
 sigs.k8s.io/controller-runtime

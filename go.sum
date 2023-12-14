@@ -689,6 +689,8 @@ github.com/imdario/mergo v0.3.9/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJ
 github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
 github.com/imdario/mergo v0.3.13 h1:lFzP57bqS/wsqKssCGmtLAb8A0wKjLGrve2q3PPVcBk=
 github.com/imdario/mergo v0.3.13/go.mod h1:4lJ1jqUDcsbIECGy0RUJAXNIhg+6ocWgb1ALK2O4oXg=
+github.com/imdario/mergo v0.3.15 h1:M8XP7IuFNsqUx6VPK2P9OSmsYsI/YFaGil0uD21V3dM=
+github.com/imdario/mergo v0.3.15/go.mod h1:WBLT9ZmE3lPoWsEzCh9LPo3TiwVN+ZKEjmz+hD27ysY=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
@@ -1613,6 +1615,8 @@ sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305 h1:p3
 sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305/go.mod h1:5WDab1k/zhljuAA6jxijEAuxSFcyCgK670k/5PPebCs=
 sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9 h1:Q6ImZgb9g4tjnCszZ9e/igaOemD5AsNcx/sO/uRteEc=
 sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9/go.mod h1:N9VMyIYoaif6jVMIk9Ptf0GWRXXgZmQ7Wnmo5fUsVVA=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0 h1:8CLIu0mZ46tZfs2qbITVaQgWXJTlM8sJ6hjvJpS2mvc=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0/go.mod h1:XLdWHa2JUHZ5HfxZDblV/KZxCN7gWnrl7Uga3ndfV+Q=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce h1:zQZV2UuXjQgWF4m/fZRgvA/5lm9jqWl7cfxoNMMl4yA=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce/go.mod h1:kDNDxdBG0vwQaukUg2+bsI/3/WMvaZaa3ZxP9VMVqNw=
 sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185 h1:wLsmaqTEgs3DIfNzr0u/AfPHSVJbWHj/eevcS4AFvFE=
