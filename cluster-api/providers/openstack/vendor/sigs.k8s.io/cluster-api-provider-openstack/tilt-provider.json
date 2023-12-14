@@ -1,0 +1,16 @@
+{
+    "name": "openstack",
+    "config": {
+      "image": "gcr.io/k8s-staging-capi-openstack/capi-openstack-controller",
+      "live_reload_deps": [
+        "main.go",
+        "go.mod",
+        "go.sum",
+        "api",
+        "config",
+        "controllers",
+        "pkg"
+      ],
+      "label": "CAPO"
+    }
+}
