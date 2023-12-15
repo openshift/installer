@@ -23,14 +23,17 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
+	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -154,7 +157,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		}
 		c.FileList = append(c.FileList, awsMachines...)
 
-		// TODO(vincepri): The following code is almost duplicated from aws.AWSMachines.
+		// TODO(vincepri): The following code is almost duplicated from aws.GenerateMachines.
 		// Refactor and generalize around a bootstrap pool, with a single machine and
 		// a custom openshift label to determine the bootstrap machine role, so we can
 		// delete the machine when the stage is complete.
@@ -292,6 +295,27 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", installConfig.VSphere)
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
+		}
+	case openstacktypes.Name:
+		mpool := defaultOpenStackMachinePoolPlatform()
+		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.OpenStack)
+		pool.Platform.OpenStack = &mpool
+
+		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+
+		for _, role := range []string{"master", "bootstrap"} {
+			openStackMachines, err := openstack.GenerateMachines(
+				clusterID.InfraID,
+				ic,
+				&pool,
+				imageName,
+				role,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create machine objects: %w", err)
+			}
+			c.FileList = append(c.FileList, openStackMachines...)
 		}
 	default:
 		// TODO: support other platforms
