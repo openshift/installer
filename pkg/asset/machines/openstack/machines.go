@@ -203,7 +203,7 @@ func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool 
 			Subnets: []machinev1alpha1.SubnetParam{
 				{
 					Filter: machinev1alpha1.SubnetFilter{
-						Name: fmt.Sprintf("%s-nodes", clusterID),
+						// Name: fmt.Sprintf("%s-nodes", clusterID),
 						Tags: fmt.Sprintf("openshiftClusterID=%s", clusterID),
 					},
 				},
