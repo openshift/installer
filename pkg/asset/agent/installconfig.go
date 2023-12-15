@@ -80,6 +80,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.Insta
 		allErrs = append(allErrs, err...)
 	}
 
+	if installConfig.FeatureSet != configv1.Default {
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("FeatureSet"), installConfig.FeatureSet, []string{string(configv1.Default)}))
+	}
+
 	warnUnusedConfig(installConfig)
 
 	numMasters, numWorkers := GetReplicaCount(installConfig)
@@ -307,11 +311,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	if installConfig.ControlPlane.Platform != (types.MachinePoolPlatform{}) {
 		fieldPath := field.NewPath("ControlPlane", "Platform")
 		logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
-	}
-
-	if installConfig.FeatureSet != configv1.Default {
-		fieldPath := field.NewPath("FeatureSet")
-		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.FeatureSet))
 	}
 
 	switch installConfig.Platform.Name() {
