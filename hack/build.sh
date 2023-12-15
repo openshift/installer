@@ -34,18 +34,9 @@ copy_terraform_to_mirror() {
 check_module_changes() {
 	binpath="$1"
 	srcpath="$2"
-	build_hash="$(go version -m "${binpath}" | grep 'vcs.revision' | cut -f2 -d'=')"
-	# If it's a locally developed provider
-	if test -n "${build_hash}"; then
-		# Check if a provider has changed based on git changes since the
-		# revision the provider was last built
-		git diff --name-only --exit-code "${build_hash}.." -- "${srcpath}"
-	# If it's an imported module
-	else
-		# Check if a provider has changed based on its go.mod git hash
-		version_info="$(go version -m "${binpath}" | grep -Eo 'main.builtGoModHash=[a-fA-F0-9]+' | cut -f2 -d'=')"
-		test "${version_info}" == "$(git hash-object "${srcpath}/go.mod")"
-	fi
+	# Check if a provider has changed based on its go.mod git hash
+	version_info="$(go version -m "${binpath}" | grep -Eo 'main.builtGoModHash=[a-fA-F0-9]+' | cut -f2 -d'=')"
+	test "${version_info}" == "$(git hash-object "${srcpath}/go.mod")"
 }
 
 # Build terraform and providers only if needed
