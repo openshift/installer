@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
@@ -25,6 +26,7 @@ var (
 	Manifests = []asset.WritableAsset{
 		&machines.Master{},
 		&machines.Worker{},
+		&clusterapi.Cluster{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 	}
