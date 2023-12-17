@@ -373,6 +373,122 @@ if [ "$BOOTSTRAP_INPLACE" = true ] && [ ! -f cmdbootline-nto-bootstrap.done ]; t
 	if [ -n "$(ls -A cmdbootline-nto-bootstrap)" ]; then
 		cp cmdbootline-nto-bootstrap/* manifests/
 	fi
+	# Patch cpu pinning bug
+	/bin/cat<<EOF>node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: master
+  name: 01-master-cpu-partitioning
+spec:
+  baseOSExtensionsContainerImage: ""
+  config:
+    ignition:
+      config:
+        replace:
+          verification: {}
+      proxy: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 3.2.0
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,CnsKICAibWFuYWdlbWVudCI6IHsKICAgICJjcHVzZXQiOiAiMC0zIgogIH0KfQo=
+          verification: {}
+        group: {}
+        mode: 420
+        path: /etc/kubernetes/openshift-workload-pinning
+        user: {}
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,CltjcmlvLnJ1bnRpbWUud29ya2xvYWRzLm1hbmFnZW1lbnRdCmFjdGl2YXRpb25fYW5ub3RhdGlvbiA9ICJ0YXJnZXQud29ya2xvYWQub3BlbnNoaWZ0LmlvL21hbmFnZW1lbnQiCmFubm90YXRpb25fcHJlZml4ID0gInJlc291cmNlcy53b3JrbG9hZC5vcGVuc2hpZnQuaW8iCnJlc291cmNlcyA9IHsgImNwdXNoYXJlcyIgPSAwLCAiY3B1c2V0IiA9ICIiIH0K
+          verification: {}
+        group: {}
+        mode: 420
+        path: /etc/crio/crio.conf.d/01-workload-pinning-default.conf
+        user: {}
+    systemd: {}
+  extensions: null
+  fips: false
+  kernelArguments: null
+  kernelType: ""
+  osImageURL: ""
+
+
+EOF
+
+	# Patch remove owner reference
+	/bin/cat<<NEOF>node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  creationTimestamp: null
+  name: performance-openshift-node-performance-profile
+spec:
+  kubeletConfig:
+    apiVersion: kubelet.config.k8s.io/v1beta1
+    authentication:
+      anonymous: {}
+      webhook:
+        cacheTTL: 0s
+      x509: {}
+    authorization:
+      webhook:
+        cacheAuthorizedTTL: 0s
+        cacheUnauthorizedTTL: 0s
+    containerRuntimeEndpoint: ""
+    cpuManagerPolicy: static
+    cpuManagerReconcilePeriod: 5s
+    evictionHard:
+      imagefs.available: 15%
+      memory.available: 100Mi
+      nodefs.available: 10%
+      nodefs.inodesFree: 5%
+    evictionPressureTransitionPeriod: 0s
+    fileCheckFrequency: 0s
+    httpCheckFrequency: 0s
+    imageMinimumGCAge: 0s
+    kind: KubeletConfiguration
+    kubeReserved:
+      memory: 500Mi
+    logging:
+      flushFrequency: 0
+      options:
+        json:
+          infoBufferSize: "0"
+      verbosity: 0
+    memoryManagerPolicy: Static
+    memorySwap: {}
+    nodeStatusReportFrequency: 0s
+    nodeStatusUpdateFrequency: 0s
+    reservedMemory:
+    - limits:
+        memory: 1100Mi
+      numaNode: 0
+    reservedSystemCPUs: 0-3
+    runtimeRequestTimeout: 0s
+    shutdownGracePeriod: 0s
+    shutdownGracePeriodCriticalPods: 0s
+    streamingConnectionIdleTimeout: 0s
+    syncFrequency: 0s
+    systemReserved:
+      memory: 500Mi
+    topologyManagerPolicy: restricted
+    volumeStatsAggPeriod: 0s
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.openshift.io/master: ""
+status:
+  conditions: null
+
+NEOF
+	cp node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml manifests/
+	cp node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml manifests
+
 
 	rm -rf ${tmpfolder}
 	touch cmdbootline-nto-bootstrap.done
