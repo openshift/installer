@@ -107,12 +107,13 @@ var (
 	invalidateXpnSA          = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.GCP.ServiceAccount = invalidXpnSA }
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
-		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
-		"n1-standard-2": {GuestCpus: 2, MemoryMb: 7680},
-		"n1-standard-4": {GuestCpus: 4, MemoryMb: 15360},
-		"n2-standard-1": {GuestCpus: 1, MemoryMb: 8192},
-		"n2-standard-2": {GuestCpus: 2, MemoryMb: 16384},
-		"n2-standard-4": {GuestCpus: 4, MemoryMb: 32768},
+		"n1-standard-1":  {GuestCpus: 1, MemoryMb: 3840},
+		"n1-standard-2":  {GuestCpus: 2, MemoryMb: 7680},
+		"n1-standard-4":  {GuestCpus: 4, MemoryMb: 15360},
+		"n2-standard-1":  {GuestCpus: 1, MemoryMb: 8192},
+		"n2-standard-2":  {GuestCpus: 2, MemoryMb: 16384},
+		"n2-standard-4":  {GuestCpus: 4, MemoryMb: 32768},
+		"t2a-standard-4": {GuestCpus: 4, MemoryMb: 16384},
 	}
 
 	subnetAPIResult = []*compute.Subnetwork{
@@ -749,6 +750,7 @@ func TestValidateInstanceType(t *testing.T) {
 		name           string
 		zones          []string
 		instanceType   string
+		arch           string
 		expectedError  bool
 		expectedErrMsg string
 	}{
@@ -763,6 +765,7 @@ func TestValidateInstanceType(t *testing.T) {
 			name:           "Valid instance type with min requirements and valid zones specified",
 			zones:          []string{"a", "b"},
 			instanceType:   "n1-standard-4",
+			arch:           "amd64",
 			expectedError:  false,
 			expectedErrMsg: "",
 		},
@@ -814,6 +817,14 @@ func TestValidateInstanceType(t *testing.T) {
 			expectedError:  true,
 			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
 		},
+		{
+			name:           "Invalid instance architecture",
+			zones:          []string{"a", "b"},
+			instanceType:   "t2a-standard-4",
+			arch:           "amd64",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.type: Invalid value: "t2a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
+		},
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -829,7 +840,7 @@ func TestValidateInstanceType(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq)
+			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq, test.arch)
 			if test.expectedError {
 				assert.Regexp(t, test.expectedErrMsg, errs)
 			} else {
