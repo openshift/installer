@@ -57,17 +57,15 @@ func Destroy(dir string) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed generating endpoint override JSON data for bootstrap destroy: %w", err)
 		}
-		// Since there are ServiceEndpoints, we expect JSON data to be generated.
-		if jsonData == nil {
-			return fmt.Errorf("no endpoint override JSON data generated for set of endpoint overrides")
-		}
 
 		// If JSON data was generated, create the JSON file for IBM Cloud Terraform provider to use during destroy.
-		endpointsFilePath := filepath.Join(dir, ibmcloudtfvars.IBMCloudEndpointJSONFileName)
-		if err := os.WriteFile(endpointsFilePath, jsonData, 0o600); err != nil {
-			return fmt.Errorf("failed to write IBM Cloud service endpoint override JSON file for bootstrap destroy: %w", err)
+		if jsonData != nil {
+			endpointsFilePath := filepath.Join(dir, ibmcloudtfvars.IBMCloudEndpointJSONFileName)
+			if err := os.WriteFile(endpointsFilePath, jsonData, 0o600); err != nil {
+				return fmt.Errorf("failed to write IBM Cloud service endpoint override JSON file for bootstrap destroy: %w", err)
+			}
+			logrus.Debugf("generated ibm endpoint overrides file: %s", endpointsFilePath)
 		}
-		logrus.Debugf("generated ibm endpoint overrides file: %s", endpointsFilePath)
 	}
 
 	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
