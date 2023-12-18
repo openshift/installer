@@ -24,7 +24,7 @@ resource "nutanix_image" "bootstrap_ignition" {
 resource "nutanix_virtual_machine" "vm_bootstrap" {
   name                 = "${var.cluster_id}-bootstrap"
   description          = local.description
-  cluster_uuid         = var.nutanix_prism_element_uuid
+  cluster_uuid         = var.nutanix_prism_element_uuids[0]
   num_vcpus_per_socket = 4
   num_sockets          = 1
   memory_size_mib      = 16384
@@ -69,6 +69,6 @@ resource "nutanix_virtual_machine" "vm_bootstrap" {
   }
 
   nic_list {
-    subnet_uuid = var.nutanix_subnet_uuid
+    subnet_uuid = var.nutanix_subnet_uuids[0]
   }
 }
