@@ -45,7 +45,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 	}
 
 	if platform == openstack.Name {
-		if err := openstackasset.PreTerraform(); err != nil {
+		if err := openstackasset.SetTerraformEnvironment(); err != nil {
 			return errors.Wrapf(err, "Failed to  initialize infrastructure")
 		}
 

@@ -122,6 +122,9 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 		platform = typesazure.StackTerraformName
 	}
 
+	tfvarsFiles := []*asset.File{}
+	tfvarsFiles = append(tfvarsFiles, terraformVariables.Files()...)
+
 	logrus.Infof("Creating infrastructure resources...")
 	switch platform {
 	case typesaws.Name:
@@ -133,14 +136,16 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 			return err
 		}
 	case typesopenstack.Name:
-		if err := openstack.PreTerraform(); err != nil {
+		var tfvarsFile *asset.File
+		for _, f := range tfvarsFiles {
+			if f.Filename == TfPlatformVarsFileName {
+				tfvarsFile = f
+				break
+			}
+		}
+		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID); err != nil {
 			return err
 		}
-	}
-
-	tfvarsFiles := []*asset.File{}
-	for _, file := range terraformVariables.Files() {
-		tfvarsFiles = append(tfvarsFiles, file)
 	}
 
 	provider, err := infra.ProviderForPlatform(platform, installConfig.Config.EnabledFeatureGates())
@@ -170,6 +175,13 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 	manifests := []client.Object{}
 	for _, m := range capiManifests.RuntimeFiles() {
 		manifests = append(manifests, m.Object)
+	}
+
+	logrus.Infof("Creating infrastructure resources...")
+	if installConfig.Config.Platform.Name() == typesopenstack.Name {
+		if err := openstack.PreCAPI(ctx, &manifests, installConfig, clusterID); err != nil {
+			return err
+		}
 	}
 
 	// Run the CAPI system.

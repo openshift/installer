@@ -4,22 +4,18 @@ package openstack
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
-	"github.com/gophercloud/utils/openstack/clientconfig"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	installconfig_openstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/rhcos"
-	"github.com/openshift/installer/pkg/types"
 	types_openstack "github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
@@ -42,22 +38,6 @@ func TFVars(
 	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, fmt.Errorf("failed to build an OpenStack service client: %w", err)
-	}
-
-	var userCA string
-	{
-		cloud, err := installconfig_openstack.GetSession(installConfig.Config.Platform.OpenStack.Cloud)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get cloud config for openstack: %w", err)
-		}
-		// Get the ca-cert-bundle key if there is a value for cacert in clouds.yaml
-		if caPath := cloud.CloudConfig.CACertFile; caPath != "" {
-			caFile, err := os.ReadFile(caPath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read clouds.yaml ca-cert from disk: %w", err)
-			}
-			userCA = string(caFile)
-		}
 	}
 
 	var masterSpecs []*machinev1alpha1.OpenstackProviderSpec
@@ -144,11 +124,6 @@ func TFVars(
 	serviceCatalog, err := getServiceCatalog(cloud)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve service catalog: %w", err)
-	}
-
-	bootstrapShim, err := getBootstrapShim(cloud, clusterID.InfraID, serviceCatalog, installConfig.Config.Proxy, bootstrapIgn, userCA)
-	if err != nil {
-		return nil, err
 	}
 
 	octaviaSupport, err := isOctaviaSupported(serviceCatalog)
@@ -270,7 +245,7 @@ func TFVars(
 		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
-		BootstrapShim:                     bootstrapShim,
+		BootstrapShim:                     bootstrapIgn,
 		ExternalDNS:                       installConfig.Config.Platform.OpenStack.ExternalDNS,
 		MasterServerGroupName:             masterServerGroupName,
 		MasterServerGroupPolicy:           masterServerGroupPolicy,
@@ -357,47 +332,6 @@ func isOctaviaSupported(serviceCatalog *tokens.ServiceCatalog) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// We need to obtain Glance public endpoint that will be used by Ignition to download bootstrap ignition files.
-// By design this should be done by using https://www.terraform.io/docs/providers/openstack/d/identity_endpoint_v3.html
-// but OpenStack default policies forbid to use this API for regular users.
-// On the other hand when a user authenticates in OpenStack (i.e. gets a token), it includes the whole service
-// catalog in the output json. So we are able to parse the data and get the endpoint from there
-// https://docs.openstack.org/api-ref/identity/v3/?expanded=token-authentication-with-scoped-authorization-detail#token-authentication-with-scoped-authorization
-// Unfortunately this feature is not currently supported by Terraform, so we had to implement it here.
-// We do next:
-//  1. In "getServiceCatalog" we authenticate in OpenStack (tokens.Create(..)),
-//     parse the token and extract the service catalog: (ExtractServiceCatalog())
-//  2. In getGlancePublicURL we iterate through the catalog and find "public" endpoint for "image".
-func getBootstrapShim(cloud string, infraID string, serviceCatalog *tokens.ServiceCatalog, proxy *types.Proxy, bootstrapIgn string, userCA string) (string, error) {
-	clientConfigCloud, err := clientconfig.GetCloudFromYAML(openstackdefaults.DefaultClientOpts(cloud))
-	if err != nil {
-		return "", err
-	}
-	regionName := clientConfigCloud.RegionName
-	glancePublicURL, err := openstack.V3EndpointURL(serviceCatalog, gophercloud.EndpointOpts{
-		Type:         "image",
-		Availability: gophercloud.AvailabilityPublic,
-		Region:       regionName,
-	})
-	if err != nil {
-		return "", fmt.Errorf("cannot retrieve Glance URL from the service catalog: %w", err)
-	}
-
-	configLocation, err := uploadBootstrapConfig(cloud, bootstrapIgn, infraID)
-	if err != nil {
-		return "", err
-	}
-
-	tokenID, err := getAuthToken(cloud)
-	if err != nil {
-		return "", err
-	}
-
-	bootstrapConfigURL := fmt.Sprintf("%s%s", glancePublicURL, configLocation)
-
-	return generateIgnitionShim(userCA, infraID, bootstrapConfigURL, tokenID, proxy)
 }
 
 func getServerGroupPolicy(machinePool, defaultMachinePool *types_openstack.MachinePool, defaultPolicy types_openstack.ServerGroupPolicy) types_openstack.ServerGroupPolicy {
