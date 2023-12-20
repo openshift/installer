@@ -185,10 +185,9 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 	spec := capo.OpenStackMachineSpec{
 		CloudName: CloudName,
 		Flavor:    mpool.FlavorName,
-		// TODO(stephenfin): Create credentials
 		IdentityRef: &capo.OpenStackIdentityReference{
 			Kind: "Secret",
-			Name: "openstack-cloud-credentials",
+			Name: clusterID + "-cloud-config",
 		},
 		// FIXME(stephenfin): We probably want a FIP for bootstrap?
 		// TODO: This is an image name. Migrate to a filter with Name when API v1alpha8 is released.
