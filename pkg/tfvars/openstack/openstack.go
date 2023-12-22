@@ -8,8 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
@@ -157,23 +155,6 @@ func TFVars(
 			return nil, fmt.Errorf("failed to resolve portTarget :%w", err)
 		}
 		defaultMachinesPort = &port
-		// tagging the API port if pre-created by the user.
-		if apiVIPS := installConfig.Config.OpenStack.APIVIPs; len(apiVIPS) > 0 {
-			// Assuming the API VIPs addresses are on the same Port
-			err = tagVIPsPort(cloud, clusterID.InfraID, apiVIPS[0], port.NetworkID)
-			if err != nil {
-				return nil, err
-			}
-		}
-		// tagging the Ingress port if pre-created by the user.
-		if ingressVIPS := installConfig.Config.OpenStack.IngressVIPs; len(ingressVIPS) > 0 {
-			// Assuming the Ingress VIPs addresses are on the same Port
-			err = tagVIPsPort(cloud, clusterID.InfraID, ingressVIPS[0], port.NetworkID)
-			if err != nil {
-				return nil, err
-			}
-		}
-
 	}
 
 	// machinesPorts defines the primary port for a master. A nil value
@@ -252,40 +233,6 @@ func TFVars(
 		MasterRootVolumeTypes:             storageVolumeTypes,
 		UserManagedLoadBalancer:           userManagedLoadBalancer,
 	}, "", "  ")
-}
-
-// tagVIPsPort tags a provided Port to allow detach of security group when destroying the cluster.
-func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
-	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
-	if err != nil {
-		return err
-	}
-
-	listOpts := ports.ListOpts{
-		NetworkID: networkID,
-		FixedIPs:  []ports.FixedIPOpts{{IPAddress: portIP}},
-	}
-
-	allPagesPort, err := ports.List(conn, listOpts).AllPages()
-	if err != nil {
-		return err
-	}
-
-	allPorts, err := ports.ExtractPorts(allPagesPort)
-	if err != nil {
-		return err
-	}
-
-	if len(allPorts) > 1 {
-		return fmt.Errorf("found multiple ports matching network ID %s and Port IP %s, cannot proceed", networkID, portIP)
-	} else if len(allPorts) == 1 {
-		tag := infraID + openstackdefaults.DualStackVIPsPortTag
-		err = attributestags.Add(conn, "ports", allPorts[0].ID, tag).ExtractErr()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints

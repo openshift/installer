@@ -52,6 +52,10 @@ func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *in
 		return err
 	}
 
+	if err := tagVIPPorts(ctx, installConfig, clusterID); err != nil {
+		return err
+	}
+
 	// upload the corresponding image to Glance if rhcosImage contains a
 	// URL. If rhcosImage contains a name, then that points to an existing
 	// Glance image.
@@ -68,6 +72,10 @@ func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *in
 // happen before CAPI creates the remaining infrastructure.
 func PreCAPI(ctx context.Context, manifests *[]client.Object, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos_asset.Image) error {
 	if err := replaceBootstrapIgnitionInManifests(ctx, manifests, installConfig, clusterID); err != nil {
+		return err
+	}
+
+	if err := tagVIPPorts(ctx, installConfig, clusterID); err != nil {
 		return err
 	}
 
