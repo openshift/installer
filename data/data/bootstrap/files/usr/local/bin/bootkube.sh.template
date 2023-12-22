@@ -486,7 +486,7 @@ status:
   conditions: null
 
 NEOF
-	cp node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml manifests/
+	# cp node-tuning-bootstrap/01_01-master-cpu-partitioning_workload_pinning_machineconfig.yaml manifests/
 	cp node-tuning-bootstrap/openshift-node-performance-profile_kubeletconfig.yaml manifests
 
 
