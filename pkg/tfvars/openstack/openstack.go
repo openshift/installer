@@ -108,18 +108,9 @@ func TFVars(
 		}
 	}
 
-	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
-	// purposes we also allow to set a custom Glance image name to skip the uploading. Here we check
-	// whether baseImage is a URL or not. If this is the first case, it means that the image should be
-	// created by the installer from the URL. Otherwise, it means that we are given the name of the pre-created
-	// Glance image, which we should use for instances.
-	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, clusterID.InfraID)
-	if isURL {
-		// Valid URL -> use baseImage as a URL that will be used to create new Glance image with name "<infraID>-rhcos".
-		if err := uploadBaseImage(cloud, baseImage, imageName, clusterID.InfraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
-			return nil, err
-		}
-	}
+	// If baseImage is a URL, the corresponding image will be uploaded to
+	// Glance in the PreTerraform hook of the Cluster asset.
+	imageName, _ := rhcos.GenerateOpenStackImageName(baseImage, clusterID.InfraID)
 
 	serviceCatalog, err := getServiceCatalog(cloud)
 	if err != nil {

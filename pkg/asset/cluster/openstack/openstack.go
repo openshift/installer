@@ -13,6 +13,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	rhcos_asset "github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -45,17 +47,40 @@ func SetTerraformEnvironment() error {
 
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
-func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
+func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos_asset.Image) error {
 	if err := replaceBootstrapIgnitionInTFVars(ctx, tfvarsFile, installConfig, clusterID); err != nil {
 		return err
 	}
+
+	// upload the corresponding image to Glance if rhcosImage contains a
+	// URL. If rhcosImage contains a name, then that points to an existing
+	// Glance image.
+	if imageName, isURL := rhcos.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID); isURL {
+		if err := uploadBaseImage(installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, clusterID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
+			return err
+		}
+	}
+
 	return SetTerraformEnvironment()
 }
 
 // PreCAPI performs any infrastructure initialization which must
 // happen before CAPI creates the remaining infrastructure.
-func PreCAPI(ctx context.Context, manifests *[]client.Object, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
-	return replaceBootstrapIgnitionInManifests(ctx, manifests, installConfig, clusterID)
+func PreCAPI(ctx context.Context, manifests *[]client.Object, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos_asset.Image) error {
+	if err := replaceBootstrapIgnitionInManifests(ctx, manifests, installConfig, clusterID); err != nil {
+		return err
+	}
+
+	// upload the corresponding image to Glance if rhcosImage contains a
+	// URL. If rhcosImage contains a name, then that points to an existing
+	// Glance image.
+	if imageName, isURL := rhcos.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID); isURL {
+		if err := uploadBaseImage(installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, clusterID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Metadata converts an install configuration to OpenStack metadata.

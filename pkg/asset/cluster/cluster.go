@@ -28,6 +28,7 @@ import (
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
@@ -66,6 +67,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
+		new(rhcos.Image),
 		&quota.PlatformQuotaCheck{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
@@ -82,8 +84,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	terraformVariables := &TerraformVariables{}
-	parents.Get(clusterID, installConfig, terraformVariables)
+	parents.Get(clusterID, installConfig, rhcosImage, terraformVariables)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -108,14 +111,14 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			clusterapi.System().Teardown()
 		}()
 
-		return c.provisionWithClusterAPI(ctx, parents, installConfig, clusterID)
+		return c.provisionWithClusterAPI(ctx, parents, installConfig, clusterID, rhcosImage)
 	}
 
 	// Otherwise, use the normal path.
-	return c.provision(installConfig, clusterID, terraformVariables)
+	return c.provision(installConfig, clusterID, rhcosImage, terraformVariables)
 }
 
-func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, terraformVariables *TerraformVariables) error {
+func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image, terraformVariables *TerraformVariables) error {
 	platform := installConfig.Config.Platform.Name()
 
 	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
@@ -143,7 +146,7 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 				break
 			}
 		}
-		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID); err != nil {
+		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
 			return err
 		}
 	}
@@ -163,7 +166,7 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 	return nil
 }
 
-func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Parents, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
+func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Parents, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image) error {
 	capiManifests := &capimanifests.Cluster{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 	parents.Get(
@@ -179,7 +182,7 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 
 	logrus.Infof("Creating infrastructure resources...")
 	if installConfig.Config.Platform.Name() == typesopenstack.Name {
-		if err := openstack.PreCAPI(ctx, &manifests, installConfig, clusterID); err != nil {
+		if err := openstack.PreCAPI(ctx, &manifests, installConfig, clusterID, rhcosImage); err != nil {
 			return err
 		}
 	}
