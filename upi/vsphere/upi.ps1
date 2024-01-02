@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Stop"
 
 # since we do not have ca for vsphere certs, we'll just set insecure
-Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -Confirm:$false | Out-Null
+Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -ParticipateInCEIP $false -Confirm:$false | Out-Null
 $Env:GOVC_INSECURE = 1
 
 # Connect to vCenter
@@ -165,7 +165,7 @@ foreach ($fd in $fds)
     {
         $vmhost = Get-Random -InputObject (Get-VMHost -Location (Get-Cluster $fd.cluster))
         $ovfConfig = Get-OvfConfiguration -Ovf "template-$( $Version ).ova"
-        $ovfConfig.NetworkMapping.VM_Network.Value = $portgroup
+        $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
         $template = Import-Vapp -Source "template-$( $Version ).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
 
         $templateVIObj = Get-View -VIObject $template.Name
