@@ -71,7 +71,7 @@ resource "ibm_dns_resource_record" "proxy_vsi_record" {
   zone_id     = local.dns_zone.zone_id
   type        = "A"
   name        = "proxy.${var.cluster_domain}"
-  rdata       = ibm_is_instance.dns_vm_vsi[0].primary_network_interface[0].primary_ipv4_address
+  rdata       = ibm_is_instance.dns_vm_vsi[0].primary_network_interface[0].primary_ip[0].address
   ttl         = 60
 }
 
