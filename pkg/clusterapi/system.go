@@ -194,7 +194,21 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	case nutanix.Name:
 		// TODO
 	case openstack.Name:
-		// TODO
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&OpenStack,
+				[]string{
+					"-v=2",
+					"--metrics-bind-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+				},
+				map[string]string{
+					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
+				},
+			),
+		)
 	case vsphere.Name:
 		controllers = append(controllers,
 			c.getInfrastructureController(
