@@ -87,6 +87,8 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodExternalPlatformACI := getGoodACI()
 	goodExternalPlatformACI.Spec.APIVIPs = nil
 	goodExternalPlatformACI.Spec.IngressVIPs = nil
+	goodExternalPlatformACI.Spec.APIVIP = ""
+	goodExternalPlatformACI.Spec.IngressVIP = ""
 	val := true
 	goodExternalPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
@@ -109,6 +111,8 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	val = true
 	goodExternalOCIPlatformACI.Spec.APIVIPs = nil
 	goodExternalOCIPlatformACI.Spec.IngressVIPs = nil
+	goodExternalOCIPlatformACI.Spec.APIVIP = ""
+	goodExternalOCIPlatformACI.Spec.IngressVIP = ""
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
