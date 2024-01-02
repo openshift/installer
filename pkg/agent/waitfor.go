@@ -12,7 +12,7 @@ import (
 // WaitForBootstrapComplete Wait for the bootstrap process to complete on
 // cluster installations triggered by the agent installer.
 func WaitForBootstrapComplete(cluster *Cluster) error {
-	timeout := 60 * time.Minute
+	timeout := 90 * time.Minute
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
