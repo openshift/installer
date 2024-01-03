@@ -15,6 +15,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
@@ -98,7 +99,16 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	// Check if we're using Cluster API.
 	if capiutils.IsEnabled(installConfig) {
-		return c.provisionWithClusterAPI(context.TODO(), parents, installConfig, clusterID)
+		// TODO(vincepri): The context should be passed down from the caller,
+		// although today the Asset interface doesn't allow it, refactor once it does.
+		ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
+		go func() {
+			<-ctx.Done()
+			cancel()
+			clusterapi.System().Teardown()
+		}()
+
+		return c.provisionWithClusterAPI(ctx, parents, installConfig, clusterID)
 	}
 
 	// Otherwise, use the normal path.

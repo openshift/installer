@@ -124,7 +124,9 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRun: func(_ *cobra.Command, _ []string) {
-				ctx, cancel := context.WithCancel(context.Background())
+				// Setup a context that is canceled when the user presses Ctrl+C,
+				// or SIGTERM and SIGINT are received, this allows for a clean shutdown.
+				ctx, cancel := context.WithCancel(context.TODO())
 				defer cancel()
 				logrus.RegisterExitHandler(cancel)
 
