@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Stop"
 
 # since we do not have ca for vsphere certs, we'll just set insecure
-Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -ParticipateInCEIP $false -Confirm:$false | Out-Null
+Set-PowerCLIConfiguration -InvalidCertificateAction:Ignore -Confirm:$false | Out-Null
 $Env:GOVC_INSECURE = 1
 
 # Connect to vCenter
@@ -49,10 +49,11 @@ if ($downloadInstaller) {
 }
 
 if ($uploadTemplateOva) {
-    Write-Output "Downloading RHCOS OVA"
+    Write-Output "Checking for RHCOS OVA"
 
     # If the OVA doesn't exist on the path, determine the url from openshift-install and download it.
     if (-Not (Test-Path -Path "template-$($Version).ova")) {
+        Write-Output "Downloading RHCOS OVA"
         Start-Process -Wait -Path ./openshift-install -ArgumentList @("coreos", "print-stream-json") -RedirectStandardOutput coreos.json
 
         $coreosData = Get-Content -Path ./coreos.json | ConvertFrom-Json -AsHashtable
@@ -139,6 +140,9 @@ if (-Not $?) {
     $tag = New-Tag -Category $tagCategory -Name "$($metadata.infraID)"
 }
 
+$jobs = @()
+$templateInProgress = @()
+
 # Check each failure domain for ova template
 foreach ($fd in $fds)
 {
@@ -161,16 +165,27 @@ foreach ($fd in $fds)
     $template = Get-VM -Name $vm_template -Location $fd.datacenter -ErrorAction continue
 
     # Otherwise import the ova to a random host on the vSphere cluster
-    if (-Not$?)
+    if (-Not $? -And -Not $templateInProgress.Contains($fd.datacenter))
     {
+        $templateInProgress += $fd.datacenter
         $vmhost = Get-Random -InputObject (Get-VMHost -Location (Get-Cluster $fd.cluster))
-        $ovfConfig = Get-OvfConfiguration -Ovf "template-$( $Version ).ova"
+        $ovfConfig = Get-OvfConfiguration -Ovf "template-$($Version).ova"
         $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
-        $template = Import-Vapp -Source "template-$( $Version ).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
+        Write-Output "OVF: $($ovfConfig)"
+        $jobs += Start-ThreadJob -n "upload-template-$($fd.cluster)" -ScriptBlock {
+            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag)
+            . .\variables.ps1
+            . .\upi-functions.ps1
+            Write-Output "Version: $($Version)"
+            Write-Output "VM Template: $($vm_template)"
+            Write-Output "OVF Config: $($ovfConfig)"
+            Write-Output "VM Host: $($vmhost)"
+            Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+            $template = Import-Vapp -Source "template-$($Version).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
 
-        $templateVIObj = Get-View -VIObject $template.Name
-        # Need to look into upgrading hardware.  For me it keeps throwing exception.
-        <# try {
+            $templateVIObj = Get-View -VIObject $template.Name
+            # Need to look into upgrading hardware.  For me it keeps throwing exception.
+            <# try {
             $templateVIObj.UpgradeVM($hardwareVersion)
         }
         catch {
@@ -178,12 +193,22 @@ foreach ($fd in $fds)
             Write-Output $_
         } #>
 
-        New-TagAssignment -Entity $template -Tag $tag
-        Set-VM -VM $template -MemoryGB 16 -NumCpu 4 -CoresPerSocket 4 -Confirm:$false > $null
-        Get-HardDisk -VM $template | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
-        New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
-        New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
-        #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
+            New-TagAssignment -Entity $template -Tag $tag
+            Set-VM -VM $template -MemoryGB 16 -NumCpu 4 -CoresPerSocket 4 -Confirm:$false > $null
+            Get-HardDisk -VM $template | Select-Object -First 1 | Set-HardDisk -CapacityGB 120 -Confirm:$false > $null
+            New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
+            New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
+            #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
+        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag)
+    }
+}
+
+# If jobs were started, lets wait till they are done
+if ($jobs.count -gt 0)
+{
+    Wait-Job -Job $jobs
+    foreach ($job in $jobs) {
+        Receive-Job -Job $job
     }
 }
 
@@ -210,70 +235,83 @@ $vmHash = ConvertFrom-Json -InputObject $virtualmachines -AsHashtable
 
 Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete 0
 
+$jobs = @()
 $vmStep = (100 / $vmHash.virtualmachines.Count)
 $vmCount = 1
 foreach ($key in $vmHash.virtualmachines.Keys) {
     $node = $vmHash.virtualmachines[$key]
 
-    $name = "$($metadata.infraID)-$($key)"
-    Write-Output "Creating $($name)"
+    $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ScriptBlock {
+        param($key,$node,$vm_template,$metadata,$tag)
+        . .\variables.ps1
+        . .\upi-functions.ps1
+        Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+        
+        $name = "$($metadata.infraID)-$($key)"
+        Write-Output "Creating $($name)"
 
-    $rp = Get-Cluster -Name $node.cluster -Server $node.server
-    ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
-    $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
+        $rp = Get-Cluster -Name $node.cluster -Server $node.server
+        ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
+        $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
 
-    # Pull network config for each node
-    if ($node.type -eq "master") {
-        $numCPU = $control_plane_num_cpus
-        $memory = $control_plane_memory
-    } elseif ($node.type -eq "worker") {
-        $numCPU = $compute_num_cpus
-        $memory = $compute_memory
-    } else {
-        # should only be bootstrap
-        $numCPU = $control_plane_num_cpus
-        $memory = $control_plane_memory
-    }
-    $ip = $node.ip
-    $network = New-VMNetworkConfig -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
-
-    # Get the content of the ignition file per machine type (bootstrap, master, worker)
-    $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
-    $ignition = [Convert]::ToBase64String($bytes)
-
-    # Get correct template / folder
-    $folder = Get-Folder -Name $metadata.infraID -Location $node.datacenter
-    $template = Get-VM -Name $vm_template -Location $($node.datacenter)
-
-    # Clone the virtual machine from the imported template
-    #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-    $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -NumCPU $numCPU -MemoryMB $memory
-
-    # Assign tag so we can later clean up
-    # New-TagAssignment -Entity $vm -Tag $tag
-    # New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $ignition -confirm:$false -Force > $null
-    # New-AdvancedSetting -Entity $vm -name "guestinfo.hostname" -value $name -Confirm:$false -Force > $null
-
-    if ($node.type -eq "master" -And $delayVMStart) {
-        # To give bootstrap some time to start, lets wait 2 minutes
-        Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
-            Start-Sleep -Seconds 90
-            $input | Start-VM
+        # Pull network config for each node
+        if ($node.type -eq "master") {
+            $numCPU = $control_plane_num_cpus
+            $memory = $control_plane_memory
+        } elseif ($node.type -eq "worker") {
+            $numCPU = $compute_num_cpus
+            $memory = $compute_memory
+        } else {
+            # should only be bootstrap
+            $numCPU = $control_plane_num_cpus
+            $memory = $control_plane_memory
         }
-    } elseif ($node.type -eq "worker" -And $delayVMStart) {
-        # Workers are not needed right away, gotta wait till masters
-        # have started machine-server.  wait 7 minutes to start.
-        Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
-            Start-Sleep -Seconds 600
-            $input | Start-VM
+        $ip = $node.ip
+        $network = New-VMNetworkConfig -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
+
+        # Get the content of the ignition file per machine type (bootstrap, master, worker)
+        $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
+        $ignition = [Convert]::ToBase64String($bytes)
+
+        # Get correct template / folder
+        $folder = Get-Folder -Name $metadata.infraID -Location $node.datacenter
+        $template = Get-VM -Name $vm_template -Location $($node.datacenter)
+
+        # Clone the virtual machine from the imported template
+        #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
+        $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -NumCPU $numCPU -MemoryMB $memory
+
+        # Assign tag so we can later clean up
+        # New-TagAssignment -Entity $vm -Tag $tag
+        # New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $ignition -confirm:$false -Force > $null
+        # New-AdvancedSetting -Entity $vm -name "guestinfo.hostname" -value $name -Confirm:$false -Force > $null
+
+        if ($node.type -eq "master" -And $delayVMStart) {
+            # To give bootstrap some time to start, lets wait 2 minutes
+            Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
+                Start-Sleep -Seconds 90
+                $input | Start-VM
+            }
+        } elseif ($node.type -eq "worker" -And $delayVMStart) {
+            # Workers are not needed right away, gotta wait till masters
+            # have started machine-server.  wait 7 minutes to start.
+            Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
+                Start-Sleep -Seconds 600
+                $input | Start-VM
+            }
         }
-    }
-    else {
-        $vm | Start-VM
-    }
+        else {
+            $vm | Start-VM
+        }
+    } -ArgumentList @($key,$node,$vm_template,$metadata,$tag)
     Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete ($vmStep * $vmCount)
     $vmCount++
 }
+Wait-Job -Job $jobs
+foreach ($job in $jobs) {
+    Receive-Job -Job $job
+}
+
 Write-Progress -id 222 -Activity "Completed virtual machines" -PercentComplete 100 -Completed
 
 ## This is nice to have to clear screen when doing things manually.  Maybe i'll
