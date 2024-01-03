@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
-	"github.com/sirupsen/logrus"
 )
 
 type InfraHelper struct {
@@ -20,6 +19,8 @@ func (a InfraHelper) PreProvision(in clusterapi.PreProvisionInput) error {
 }
 
 func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableInput) error {
-	logrus.Infoln("Calling AWS ControlPlaneAvailable")
+	if err := createDNSRecords(in.Cluster, in.InstallConfig); err != nil {
+		return fmt.Errorf("failed to create DNS records: %w", err)
+	}
 	return nil
 }
