@@ -88,6 +88,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 			Name: capiutils.Namespace,
 		},
 	}
+	namespace.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Namespace"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: namespace, File: asset.File{Filename: "000_capi-namespace.yaml"}})
 
 	cluster := &clusterv1.Cluster{
@@ -97,6 +98,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		},
 		Spec: clusterv1.ClusterSpec{},
 	}
+	cluster.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("Cluster"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
 
 	// Gather the ignition files, and store them in a secret.
@@ -106,38 +108,44 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to inject installation info")
 		}
+
+		masterSecret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
+				Namespace: capiutils.Namespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
+				},
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(masterIgn),
+			},
+		}
+		masterSecret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
+		bootstrapSecret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
+				Namespace: capiutils.Namespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
+				},
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(bootstrapIgn),
+			},
+		}
+		bootstrapSecret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
+
 		c.FileList = append(c.FileList,
 			&asset.RuntimeFile{
 				File: asset.File{Filename: "01_ignition-secret-master.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(masterIgn),
-					},
-				},
+				Object: &masterSecret,
 			},
 			&asset.RuntimeFile{
 				File: asset.File{Filename: "01_ignition-secret-bootstrap.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(bootstrapIgn),
-					},
-				},
+				Object: &bootstrapSecret,
 			},
 		)
 	}
