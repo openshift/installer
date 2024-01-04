@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
@@ -196,6 +197,12 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 		return nil, fmt.Errorf("failed to create security groups: %w", err)
 	}
 
+	partitionDNSSuffix := "amazonaws.com"
+	if ps, found := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), clusterAWSConfig.Region); found {
+		partitionDNSSuffix = ps.DNSSuffix()
+	}
+	logger.Debugf("Using partition DNS suffix: %s", partitionDNSSuffix)
+
 	logger.Infoln("Creating bootstrap resources")
 	bootstrapSubnet := vpcOutput.privateSubnetIDs[0]
 	if usePublicEndpoints {
@@ -203,22 +210,23 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	}
 	bootstrapInput := bootstrapInputOptions{
 		instanceInputOptions: instanceInputOptions{
-			infraID:           clusterConfig.ClusterID,
-			amiID:             amiID,
-			instanceType:      clusterAWSConfig.MasterInstanceType,
-			iamRole:           clusterAWSConfig.MasterIAMRoleName,
-			volumeType:        "gp2",
-			volumeSize:        30,
-			volumeIOPS:        0,
-			isEncrypted:       true,
-			metadataAuth:      clusterAWSConfig.BootstrapMetadataAuthentication,
-			kmsKeyID:          clusterAWSConfig.KMSKeyID,
-			securityGroupIds:  []string{sgOutput.bootstrap, sgOutput.controlPlane},
-			targetGroupARNs:   lbOutput.targetGroupArns,
-			subnetID:          bootstrapSubnet,
-			associatePublicIP: usePublicEndpoints,
-			userData:          clusterAWSConfig.BootstrapIgnitionStub,
-			tags:              tags,
+			infraID:            clusterConfig.ClusterID,
+			amiID:              amiID,
+			instanceType:       clusterAWSConfig.MasterInstanceType,
+			iamRole:            clusterAWSConfig.MasterIAMRoleName,
+			volumeType:         "gp2",
+			volumeSize:         30,
+			volumeIOPS:         0,
+			isEncrypted:        true,
+			metadataAuth:       clusterAWSConfig.BootstrapMetadataAuthentication,
+			kmsKeyID:           clusterAWSConfig.KMSKeyID,
+			securityGroupIds:   []string{sgOutput.bootstrap, sgOutput.controlPlane},
+			targetGroupARNs:    lbOutput.targetGroupArns,
+			subnetID:           bootstrapSubnet,
+			associatePublicIP:  usePublicEndpoints,
+			userData:           clusterAWSConfig.BootstrapIgnitionStub,
+			partitionDNSSuffix: partitionDNSSuffix,
+			tags:               tags,
 		},
 		ignitionBucket:  clusterAWSConfig.IgnitionBucket,
 		ignitionContent: clusterConfig.IgnitionBootstrap,
@@ -233,21 +241,22 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 	logger.Infoln("Creating control plane resources")
 	controlPlaneInput := controlPlaneInputOptions{
 		instanceInputOptions: instanceInputOptions{
-			infraID:           clusterConfig.ClusterID,
-			amiID:             amiID,
-			instanceType:      clusterAWSConfig.MasterInstanceType,
-			iamRole:           clusterAWSConfig.MasterIAMRoleName,
-			volumeType:        clusterAWSConfig.Type,
-			volumeSize:        clusterAWSConfig.Size,
-			volumeIOPS:        clusterAWSConfig.IOPS,
-			isEncrypted:       clusterAWSConfig.Encrypted,
-			kmsKeyID:          clusterAWSConfig.KMSKeyID,
-			metadataAuth:      clusterAWSConfig.MasterMetadataAuthentication,
-			securityGroupIds:  append(clusterAWSConfig.MasterSecurityGroups, sgOutput.controlPlane),
-			targetGroupARNs:   lbOutput.targetGroupArns,
-			associatePublicIP: len(os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")) > 0,
-			userData:          clusterConfig.IgnitionMaster,
-			tags:              tags,
+			infraID:            clusterConfig.ClusterID,
+			amiID:              amiID,
+			instanceType:       clusterAWSConfig.MasterInstanceType,
+			iamRole:            clusterAWSConfig.MasterIAMRoleName,
+			volumeType:         clusterAWSConfig.Type,
+			volumeSize:         clusterAWSConfig.Size,
+			volumeIOPS:         clusterAWSConfig.IOPS,
+			isEncrypted:        clusterAWSConfig.Encrypted,
+			kmsKeyID:           clusterAWSConfig.KMSKeyID,
+			metadataAuth:       clusterAWSConfig.MasterMetadataAuthentication,
+			securityGroupIds:   append(clusterAWSConfig.MasterSecurityGroups, sgOutput.controlPlane),
+			targetGroupARNs:    lbOutput.targetGroupArns,
+			associatePublicIP:  len(os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY")) > 0,
+			userData:           clusterConfig.IgnitionMaster,
+			partitionDNSSuffix: partitionDNSSuffix,
+			tags:               tags,
 		},
 		nReplicas:         clusterConfig.Masters,
 		privateSubnetIDs:  vpcOutput.privateSubnetIDs,
@@ -261,8 +270,9 @@ func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File,
 
 	logger.Infoln("Creating compute resources")
 	computeInput := computeInputOptions{
-		infraID: clusterConfig.ClusterID,
-		tags:    tags,
+		infraID:            clusterConfig.ClusterID,
+		partitionDNSSuffix: partitionDNSSuffix,
+		tags:               tags,
 	}
 	err = createComputeResources(ctx, logger, iamClient, &computeInput)
 	if err != nil {

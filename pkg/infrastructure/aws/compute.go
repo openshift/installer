@@ -10,13 +10,14 @@ import (
 )
 
 type computeInputOptions struct {
-	infraID string
-	tags    map[string]string
+	infraID            string
+	partitionDNSSuffix string
+	tags               map[string]string
 }
 
 func createComputeResources(ctx context.Context, logger logrus.FieldLogger, iamClient iamiface.IAMAPI, input *computeInputOptions) error {
 	profileName := fmt.Sprintf("%s-worker", input.infraID)
-	_, err := createComputeInstanceProfile(ctx, logger, iamClient, profileName, input.tags)
+	_, err := createComputeInstanceProfile(ctx, logger, iamClient, profileName, input.partitionDNSSuffix, input.tags)
 	if err != nil {
 		return fmt.Errorf("failed to create compute instance profile: %w", err)
 	}
@@ -24,22 +25,22 @@ func createComputeResources(ctx context.Context, logger logrus.FieldLogger, iamC
 	return nil
 }
 
-func createComputeInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, tags map[string]string) (*iam.InstanceProfile, error) {
-	const (
-		assumeRolePolicy = `{
+func createComputeInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, partitionDNSSuffix string, tags map[string]string) (*iam.InstanceProfile, error) {
+	assumeRolePolicy := fmt.Sprintf(`{
     "Version": "2012-10-17",
     "Statement": [
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.%s"
             },
             "Effect": "Allow",
             "Sid": ""
         }
     ]
-}`
-		policy = `{
+}`, partitionDNSSuffix)
+
+	const policy = `{
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -52,7 +53,6 @@ func createComputeInstanceProfile(ctx context.Context, logger logrus.FieldLogger
     }
   ]
 }`
-	)
 
 	input := &instanceProfileOptions{
 		namePrefix:       name,

@@ -37,7 +37,7 @@ func createBootstrapResources(ctx context.Context, logger logrus.FieldLogger, ec
 	}
 
 	profileName := fmt.Sprintf("%s-bootstrap", input.infraID)
-	instanceProfile, err := createBootstrapInstanceProfile(ctx, logger, iamClient, profileName, input.iamRole, input.tags)
+	instanceProfile, err := createBootstrapInstanceProfile(ctx, logger, iamClient, profileName, input.iamRole, input.partitionDNSSuffix, input.tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bootstrap instance profile: %w", err)
 	}
@@ -167,22 +167,8 @@ func limitTags(tags map[string]string, size int) map[string]string {
 	return resized
 }
 
-func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, roleName string, tags map[string]string) (*iam.InstanceProfile, error) {
-	const (
-		assumeRolePolicy = `{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "sts:AssumeRole",
-            "Principal": {
-                "Service": "ec2.amazonaws.com"
-            },
-            "Effect": "Allow",
-            "Sid": ""
-        }
-    ]
-}`
-		bootstrapPolicy = `{
+func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, roleName string, partitionDNSSuffix string, tags map[string]string) (*iam.InstanceProfile, error) {
+	const bootstrapPolicy = `{
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -202,7 +188,20 @@ func createBootstrapInstanceProfile(ctx context.Context, logger logrus.FieldLogg
     }
   ]
 }`
-	)
+
+	assumeRolePolicy := fmt.Sprintf(`{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.%s"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}`, partitionDNSSuffix)
 
 	profileInput := &instanceProfileOptions{
 		namePrefix:       name,
