@@ -7,7 +7,6 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/aws"
@@ -69,7 +68,7 @@ func Platform() (*aws.Platform, error) {
 				choice := regionTransform(ans).(core.OptionAnswer).Value
 				i := sort.SearchStrings(shortRegions, choice)
 				if i == len(shortRegions) || shortRegions[i] != choice {
-					return errors.Errorf("invalid region %q", choice)
+					return fmt.Errorf("invalid region %q", choice)
 				}
 				return nil
 			}),
