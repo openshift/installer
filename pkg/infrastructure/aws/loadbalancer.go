@@ -81,14 +81,14 @@ func createLoadBalancers(ctx context.Context, logger logrus.FieldLogger, elbClie
 
 func (o *lbState) ensureInternalLoadBalancer(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, subnets []string, tags map[string]string) (*elbv2.LoadBalancer, error) {
 	lbName := fmt.Sprintf("%s-int", o.input.infraID)
-	lb, err := ensureLoadBalancer(ctx, logger, client, lbName, subnets, false, tags)
+	lb, err := EnsureLoadBalancer(ctx, logger, client, lbName, subnets, false, tags)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create internalA target group
 	aTGName := fmt.Sprintf("%s-aint", o.input.infraID)
-	aTG, err := ensureTargetGroup(ctx, logger, client, aTGName, o.input.vpcID, readyzPath, apiPort, tags)
+	aTG, err := EnsureTargetGroup(ctx, logger, client, aTGName, o.input.vpcID, readyzPath, apiPort, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internalA target group: %w", err)
 	}
@@ -96,7 +96,7 @@ func (o *lbState) ensureInternalLoadBalancer(ctx context.Context, logger logrus.
 
 	// Create internalA listener
 	aListenerName := fmt.Sprintf("%s-aint", o.input.infraID)
-	aListener, err := createListener(ctx, client, aListenerName, lb.LoadBalancerArn, aTG.TargetGroupArn, 6443, tags)
+	aListener, err := CreateListener(ctx, client, aListenerName, lb.LoadBalancerArn, aTG.TargetGroupArn, 6443, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internalA listener: %w", err)
 	}
@@ -104,7 +104,7 @@ func (o *lbState) ensureInternalLoadBalancer(ctx context.Context, logger logrus.
 
 	// Create internalS target group
 	sTGName := fmt.Sprintf("%s-sint", o.input.infraID)
-	sTG, err := ensureTargetGroup(ctx, logger, client, sTGName, o.input.vpcID, healthzPath, servicePort, tags)
+	sTG, err := EnsureTargetGroup(ctx, logger, client, sTGName, o.input.vpcID, healthzPath, servicePort, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internalS target group: %w", err)
 	}
@@ -112,7 +112,7 @@ func (o *lbState) ensureInternalLoadBalancer(ctx context.Context, logger logrus.
 
 	// Create internalS listener
 	sListenerName := fmt.Sprintf("%s-sint", o.input.infraID)
-	sListener, err := createListener(ctx, client, sListenerName, lb.LoadBalancerArn, sTG.TargetGroupArn, servicePort, tags)
+	sListener, err := CreateListener(ctx, client, sListenerName, lb.LoadBalancerArn, sTG.TargetGroupArn, servicePort, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create internalS listener: %w", err)
 	}
@@ -123,21 +123,21 @@ func (o *lbState) ensureInternalLoadBalancer(ctx context.Context, logger logrus.
 
 func (o *lbState) ensureExternalLoadBalancer(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, subnets []string, tags map[string]string) (*elbv2.LoadBalancer, error) {
 	lbName := fmt.Sprintf("%s-ext", o.input.infraID)
-	lb, err := ensureLoadBalancer(ctx, logger, client, lbName, subnets, true, tags)
+	lb, err := EnsureLoadBalancer(ctx, logger, client, lbName, subnets, true, tags)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create target group
 	tgName := fmt.Sprintf("%s-aext", o.input.infraID)
-	tg, err := ensureTargetGroup(ctx, logger, client, tgName, o.input.vpcID, readyzPath, apiPort, tags)
+	tg, err := EnsureTargetGroup(ctx, logger, client, tgName, o.input.vpcID, readyzPath, apiPort, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create external target group: %w", err)
 	}
 	o.targetGroupArns.Insert(aws.StringValue(tg.TargetGroupArn))
 
 	listenerName := fmt.Sprintf("%s-aext", o.input.infraID)
-	listener, err := createListener(ctx, client, listenerName, lb.LoadBalancerArn, tg.TargetGroupArn, apiPort, tags)
+	listener, err := CreateListener(ctx, client, listenerName, lb.LoadBalancerArn, tg.TargetGroupArn, apiPort, tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create external listener: %w", err)
 	}
@@ -146,7 +146,7 @@ func (o *lbState) ensureExternalLoadBalancer(ctx context.Context, logger logrus.
 	return lb, nil
 }
 
-func ensureLoadBalancer(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, lbName string, subnets []string, isPublic bool, tags map[string]string) (*elbv2.LoadBalancer, error) {
+func EnsureLoadBalancer(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, lbName string, subnets []string, isPublic bool, tags map[string]string) (*elbv2.LoadBalancer, error) {
 	l := logger.WithField("name", lbName)
 	createdOrFoundMsg := "Found existing load balancer"
 	lb, err := existingLoadBalancer(ctx, client, lbName)
@@ -224,7 +224,7 @@ func existingLoadBalancer(ctx context.Context, client elbv2iface.ELBV2API, lbNam
 	return nil, errNotFound
 }
 
-func ensureTargetGroup(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, targetName string, vpcID string, healthCheckPath string, port int64, tags map[string]string) (*elbv2.TargetGroup, error) {
+func EnsureTargetGroup(ctx context.Context, logger logrus.FieldLogger, client elbv2iface.ELBV2API, targetName string, vpcID string, healthCheckPath string, port int64, tags map[string]string) (*elbv2.TargetGroup, error) {
 	l := logger.WithField("name", targetName)
 	createdOrFoundMsg := "Found existing Target Group"
 	tg, err := existingTargetGroup(ctx, client, targetName)
@@ -289,7 +289,7 @@ func createTargetGroup(ctx context.Context, client elbv2iface.ELBV2API, targetNa
 	return res.TargetGroups[0], nil
 }
 
-func createListener(ctx context.Context, client elbv2iface.ELBV2API, listenerName string, lbARN *string, tgARN *string, port int64, tags map[string]string) (*elbv2.Listener, error) {
+func CreateListener(ctx context.Context, client elbv2iface.ELBV2API, listenerName string, lbARN *string, tgARN *string, port int64, tags map[string]string) (*elbv2.Listener, error) {
 	ltags := mergeTags(tags, map[string]string{
 		"Name": listenerName,
 	})
