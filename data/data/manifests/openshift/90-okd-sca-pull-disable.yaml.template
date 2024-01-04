@@ -1,6 +1,6 @@
 {{if .IsOKD -}}
-kind: Secret
 apiVersion: v1
+kind: Secret
 metadata:
   name: support
   namespace: openshift-config
