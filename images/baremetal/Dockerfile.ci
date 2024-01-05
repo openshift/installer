@@ -3,9 +3,9 @@
 
 ARG libvirt_version="8.0.0"
 
-FROM registry.ci.openshift.org/ocp/4.15:installer-terraform-providers as providers
+FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS providers
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS builder
 ARG libvirt_version
 ARG TAGS="libvirt baremetal"
 RUN dnf install -y libvirt-devel-$libvirt_version && \
@@ -16,7 +16,7 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/ terr
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 
-FROM registry.ci.openshift.org/ocp/4.15:base
+FROM registry.ci.openshift.org/ocp/4.16:base
 ARG libvirt_version
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
