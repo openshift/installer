@@ -151,7 +151,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				Name:             ptr.To(clusterID.InfraID + "-int"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
 				Scheme:           &capa.ELBSchemeInternal,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
