@@ -161,6 +161,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 				},
 			},
+			AdditionalTags: capa.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", clusterID): "owned"},
 		},
 	}
 
