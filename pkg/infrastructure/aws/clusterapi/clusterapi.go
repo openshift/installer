@@ -41,7 +41,6 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 	if err != nil {
 		return fmt.Errorf("failed to get session to create load balancer: %w", err)
 	}
-
 	subnets := awsCluster.Status.Network.APIServerELB.SubnetIDs
 	var vpcID string
 	var lastError error
@@ -87,18 +86,64 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		tags[k] = v
 	}
 
-	lb, err := createExtLB(elbClient, subnets, tags, in.InfraID, vpcID)
+	lb, tg, err := createExtLB(elbClient, subnets, tags, in.InfraID, vpcID)
 	if err != nil {
 		return fmt.Errorf("error creating external LB: %w", err)
+	}
+
+	ids, err := getControlPlaneIDs(in.Client, in.InstallConfig.Config.ControlPlane.Replicas, in.InfraID)
+	if err != nil {
+		return fmt.Errorf("error getting control plane IP addresses")
+	}
+
+	err = registerControlPlane(elbClient, ids, tg)
+	if err != nil {
+		return fmt.Errorf("error registering control plane to target group: %w", err)
 	}
 
 	//TODO(padillon): support shared vpc (assume role client)
 	r53Client := route53.New(awsSession)
 	phz, err := createHostedZone(context.TODO(), r53Client, tags, in.InfraID, in.InstallConfig.Config.ClusterDomain(), vpcID, awsCluster.Spec.Region, true)
+	if err != nil {
+		return fmt.Errorf("failed to create private hosted zone: %w", err)
+	}
 
 	if err := createDNSRecords(in.InstallConfig, *lb.DNSName, in.Cluster.Spec.ControlPlaneEndpoint.Host, *phz.Id); err != nil {
 		return fmt.Errorf("failed to create DNS records: %w", err)
 	}
 
 	return nil
+}
+
+func getControlPlaneIDs(cl client.Client, replicas *int64, infraID string) ([]*string, error) {
+	res := []*string{}
+	total := int64(1)
+	if replicas != nil {
+		total = *replicas
+	}
+	for i := int64(0); i < total; i++ {
+
+		key := client.ObjectKey{
+			Name:      fmt.Sprintf("%s-master-%d", infraID, i),
+			Namespace: capiutils.Namespace,
+		}
+		awsMachine := &capa.AWSMachine{}
+		if err := cl.Get(context.Background(), key, awsMachine); err != nil {
+			return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
+		}
+		res = append(res, awsMachine.Spec.InstanceID)
+	}
+
+	key := client.ObjectKey{
+		Name:      capiutils.GenerateBoostrapMachineName(infraID),
+		Namespace: capiutils.Namespace,
+	}
+	awsMachine := &capa.AWSMachine{}
+	if err := cl.Get(context.Background(), key, awsMachine); err != nil {
+		return nil, fmt.Errorf("failed to get AWSCluster: %w", err)
+	}
+
+	res = append(res, awsMachine.Spec.InstanceID)
+
+	return res, nil
 }
