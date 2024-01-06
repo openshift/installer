@@ -278,7 +278,6 @@ func createTargetGroup(ctx context.Context, client elbv2iface.ELBV2API, targetNa
 		Port:                       aws.Int64(port),
 		Protocol:                   aws.String("TCP"),
 		Tags:                       elbTags(ttags),
-		TargetType:                 aws.String("ip"),
 		VpcId:                      aws.String(vpcID),
 	}
 	res, err := client.CreateTargetGroupWithContext(ctx, input)
