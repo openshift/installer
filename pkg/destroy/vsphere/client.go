@@ -250,8 +250,8 @@ func (c *Client) DeleteTag(ctx context.Context, id string) error {
 	return err
 }
 
-// DeleteTagCategory deletes a Tag Category named `id`.
-func (c *Client) DeleteTagCategory(ctx context.Context, id string) error {
+// DeleteTagCategory deletes a Tag Category named `categoryName`.
+func (c *Client) DeleteTagCategory(ctx context.Context, categoryName string) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
@@ -270,7 +270,7 @@ func (c *Client) DeleteTagCategory(ctx context.Context, id string) error {
 			}
 			continue
 		}
-		if category.Name == id {
+		if category.Name == categoryName {
 			if err = tagManager.DeleteCategory(ctx, category); err != nil {
 				return err
 			}
