@@ -91,7 +91,7 @@ require (
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/sys v0.13.0
-	golang.org/x/term v0.6.0
+	golang.org/x/term v0.13.0
 	google.golang.org/api v0.107.0
 	google.golang.org/genproto v0.0.0-20230112194545-e10362b5ecf9
 	google.golang.org/grpc v1.51.0
@@ -260,12 +260,6 @@ replace github.com/openshift/assisted-service/client => github.com/openshift/ass
 
 replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20230831114549-1922eda29cf8
 
-// https://bugzilla.redhat.com/show_bug.cgi?id=2064702
-replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
-
-// https://bugzilla.redhat.com/show_bug.cgi?id=2100495
-replace golang.org/x/text => golang.org/x/text v0.3.7
-
 // https://issues.redhat.com/browse/OCPBUGS-5324
 replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 
@@ -274,9 +268,6 @@ replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2045880
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
-
-// https://issues.redhat.com/browse/OCPBUGS-6422
-replace golang.org/x/net => golang.org/x/net v0.5.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
