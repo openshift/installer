@@ -62,6 +62,8 @@ type PreProvisionInput struct {
 type ControlPlaneAvailableInput struct {
 	Cluster       *clusterv1.Cluster
 	InstallConfig *installconfig.InstallConfig
+	Client        client.Client
+	InfraID       string
 }
 
 // Provision creates cluster resources by applying CAPI manifests to a locally running control plane.
@@ -213,6 +215,8 @@ func (c InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 	controlPlaneAvailableInput := ControlPlaneAvailableInput{
 		Cluster:       cluster,
 		InstallConfig: installConfig,
+		Client:        cl,
+		InfraID:       clusterID.InfraID,
 	}
 	if err := c.ControlPlaneAvailable(controlPlaneAvailableInput); err != nil {
 		return fileList, fmt.Errorf("failed provisioning resources after control plane available: %w", err)

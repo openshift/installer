@@ -153,7 +153,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
 				Name:             ptr.To(clusterID.InfraID + "-ext"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
+				Scheme:           &capa.ELBSchemeInternal,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
