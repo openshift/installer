@@ -185,6 +185,11 @@ func (a *InstallConfig) platformValidation() error {
 		return alibabacloud.Validate(client, a.Config)
 	}
 	if a.Config.Platform.Azure != nil {
+		if a.Config.Platform.Azure.IsARO() {
+			// ARO performs platform validation in the Resource Provider before
+			// the Installer is called
+			return nil
+		}
 		client, err := a.Azure.Client()
 		if err != nil {
 			return err
