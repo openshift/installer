@@ -300,9 +300,10 @@ func (b infraBuildNamespace) withGCPPlatformStatus() infraOption {
 func (b infraBuildNamespace) withGCPClusterHostedDNS(enabled string) infraOption {
 	return func(infra *configv1.Infrastructure) {
 		b.withGCPPlatformStatus()(infra)
-		infra.Status.PlatformStatus.GCP.ClusterHostedDNS = configv1.DisabledClusterHostedDNS
+		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
+￼		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
 		if enabled == "Enabled" {
-			infra.Status.PlatformStatus.GCP.ClusterHostedDNS = configv1.EnabledClusterHostedDNS
+			infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
 	}
 }
