@@ -14,8 +14,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
@@ -49,8 +47,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&openshiftinstall.Config{},
 		&manifests.FeatureGate{},
-		&bootstrap.Bootstrap{},
-		&machine.Master{},
 		new(rhcos.Image),
 	}
 }
@@ -61,10 +57,8 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &manifests.FeatureGate{}
-	bootstrapIgnAsset := &bootstrap.Bootstrap{}
-	masterIgnAsset := &machine.Master{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, openshiftInstall, bootstrapIgnAsset, masterIgnAsset, featureGate, rhcosImage)
+	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
@@ -92,49 +86,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		Spec: clusterv1.ClusterSpec{},
 	}
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
-
-	// Gather the ignition files, and store them in a secret.
-	{
-		masterIgn := string(masterIgnAsset.Files()[0].Data)
-		bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
-		if err != nil {
-			return errors.Wrap(err, "unable to inject installation info")
-		}
-		c.FileList = append(c.FileList,
-			&asset.RuntimeFile{
-				File: asset.File{Filename: "01_ignition-secret-master.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(masterIgn),
-					},
-				},
-			},
-			&asset.RuntimeFile{
-				File: asset.File{Filename: "01_ignition-secret-bootstrap.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(bootstrapIgn),
-					},
-				},
-			},
-		)
-	}
 
 	var out *capiutils.GenerateClusterAssetsOutput
 	switch platform := installConfig.Config.Platform.Name(); platform {
