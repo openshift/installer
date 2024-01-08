@@ -19,32 +19,46 @@ const (
 	servicePort = 22623
 )
 
-func createExtLB(client elbv2iface.ELBV2API, subnets []string, tags map[string]string, infraID, vpcID string) (*elbv2.LoadBalancer, *elbv2.TargetGroup, error) {
+func createIntLB(client elbv2iface.ELBV2API, subnets []string, tags map[string]string, infraID, vpcID string) (*elbv2.LoadBalancer, *elbv2.TargetGroup, *elbv2.TargetGroup, error) {
 	logger := logrus.StandardLogger()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	lbName := fmt.Sprintf("%s-ext", infraID)
-	lb, err := awsInfra.EnsureLoadBalancer(ctx, logger, client, lbName, subnets, true, tags)
+	lbName := fmt.Sprintf("%s-int", infraID)
+	lb, err := awsInfra.EnsureLoadBalancer(ctx, logger, client, lbName, subnets, false, tags)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	// Create target group
-	tgName := fmt.Sprintf("%s-aext", infraID)
-	tg, err := awsInfra.EnsureTargetGroup(ctx, logger, client, tgName, vpcID, readyzPath, apiPort, tags)
+	// Create api-int target group
+	aintTGName := fmt.Sprintf("%s-aint", infraID)
+	aintTG, err := awsInfra.EnsureTargetGroup(ctx, logger, client, aintTGName, vpcID, readyzPath, apiPort, tags)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create external target group: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create external target group: %w", err)
 	}
 
-	listenerName := fmt.Sprintf("%s-aext", infraID)
-	listener, err := awsInfra.CreateListener(ctx, client, listenerName, lb.LoadBalancerArn, tg.TargetGroupArn, apiPort, tags)
+	aintListenerName := fmt.Sprintf("%s-aint", infraID)
+	aintListener, err := awsInfra.CreateListener(ctx, client, aintListenerName, lb.LoadBalancerArn, aintTG.TargetGroupArn, apiPort, tags)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create external listener: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create external listener: %w", err)
 	}
-	logger.WithField("arn", aws.StringValue(listener.ListenerArn)).Infoln("Created external listener")
 
-	return lb, tg, nil
+	logger.WithField("arn", aws.StringValue(aintListener.ListenerArn)).Infoln("Created api-int listener")
+
+	// Create machine-config server target group
+	sintTGName := fmt.Sprintf("%s-sint", infraID)
+	sintTG, err := awsInfra.EnsureTargetGroup(ctx, logger, client, sintTGName, vpcID, healthzPath, servicePort, tags)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create external target group: %w", err)
+	}
+	sintListenerName := fmt.Sprintf("%s-sint", infraID)
+	sintListener, err := awsInfra.CreateListener(ctx, client, sintListenerName, lb.LoadBalancerArn, sintTG.TargetGroupArn, servicePort, tags)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create external listener: %w", err)
+	}
+	logger.WithField("arn", aws.StringValue(sintListener.ListenerArn)).Infoln("Created mcs listener")
+
+	return lb, aintTG, sintTG, nil
 }
 
 func registerControlPlane(client elbv2iface.ELBV2API, ids []*string, tg *elbv2.TargetGroup) error {

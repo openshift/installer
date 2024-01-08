@@ -41,13 +41,19 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 	if err != nil {
 		return fmt.Errorf("failed to get session to create load balancer: %w", err)
 	}
-	subnets := awsCluster.Status.Network.APIServerELB.SubnetIDs
+	subnetIDs := []string{}
+	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
+		if !s.IsPublic {
+			subnetIDs = append(subnetIDs, s.ResourceID)
+		}
+	}
+
 	var vpcID string
 	var lastError error
 	ec2Client := ec2.New(awsSession, aws.NewConfig().WithRegion(awsCluster.Spec.Region))
 	err = ec2Client.DescribeSubnetsPagesWithContext(
 		context.TODO(),
-		&ec2.DescribeSubnetsInput{SubnetIds: []*string{aws.String(subnets[0])}}, //TODO ensure no segfault
+		&ec2.DescribeSubnetsInput{SubnetIds: []*string{aws.String(subnetIDs[0])}}, //TODO ensure no segfault
 		func(results *ec2.DescribeSubnetsOutput, lastPage bool) bool {
 			for _, subnet := range results.Subnets {
 				if subnet.SubnetId == nil {
@@ -86,7 +92,7 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		tags[k] = v
 	}
 
-	lb, tg, err := createExtLB(elbClient, subnets, tags, in.InfraID, vpcID)
+	lb, aintTG, sintTG, err := createIntLB(elbClient, subnetIDs, tags, in.InfraID, vpcID)
 	if err != nil {
 		return fmt.Errorf("error creating external LB: %w", err)
 	}
@@ -96,9 +102,14 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		return fmt.Errorf("error getting control plane IP addresses")
 	}
 
-	err = registerControlPlane(elbClient, ids, tg)
+	err = registerControlPlane(elbClient, ids, aintTG)
 	if err != nil {
-		return fmt.Errorf("error registering control plane to target group: %w", err)
+		return fmt.Errorf("error registering control plane to api-int target group: %w", err)
+	}
+
+	err = registerControlPlane(elbClient, ids, sintTG)
+	if err != nil {
+		return fmt.Errorf("error registering control plane to mcs target group: %w", err)
 	}
 
 	//TODO(padillon): support shared vpc (assume role client)
@@ -108,7 +119,7 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		return fmt.Errorf("failed to create private hosted zone: %w", err)
 	}
 
-	if err := createDNSRecords(in.InstallConfig, *lb.DNSName, in.Cluster.Spec.ControlPlaneEndpoint.Host, *phz.Id); err != nil {
+	if err := createDNSRecords(in.InstallConfig, in.Cluster.Spec.ControlPlaneEndpoint.Host, *lb.DNSName, *phz.Id); err != nil {
 		return fmt.Errorf("failed to create DNS records: %w", err)
 	}
 

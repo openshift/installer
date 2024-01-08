@@ -171,7 +171,7 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, cfg *aws.Config, 
 			AliasTarget: &route53.AliasTarget{
 				DNSName:              aws.String(target),
 				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
-				EvaluateTargetHealth: aws.Bool(true),
+				EvaluateTargetHealth: aws.Bool(false),
 			},
 		},
 	})
@@ -194,7 +194,7 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, cfg *aws.Config, 
 			AliasTarget: &route53.AliasTarget{
 				DNSName:              aws.String(intTarget),
 				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
-				EvaluateTargetHealth: aws.Bool(true),
+				EvaluateTargetHealth: aws.Bool(false),
 			},
 		},
 	})
@@ -206,7 +206,7 @@ func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, cfg *aws.Config, 
 			AliasTarget: &route53.AliasTarget{
 				DNSName:              aws.String(intTarget),
 				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
-				EvaluateTargetHealth: aws.Bool(true),
+				EvaluateTargetHealth: aws.Bool(false),
 			},
 		},
 	})
