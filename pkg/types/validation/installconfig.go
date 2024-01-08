@@ -190,6 +190,13 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 
 	if c.Capabilities != nil {
+		capSet := c.Capabilities.BaselineCapabilitySet
+		if capSet == "" {
+			capSet = configv1.ClusterVersionCapabilitySetCurrent
+		}
+		enabledCaps := sets.New[configv1.ClusterVersionCapability](configv1.ClusterVersionCapabilitySets[capSet]...)
+		enabledCaps.Insert(c.Capabilities.AdditionalEnabledCapabilities...)
+
 		if c.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetNone {
 			enabledCaps := sets.New[configv1.ClusterVersionCapability](c.Capabilities.AdditionalEnabledCapabilities...)
 			if enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) && !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
@@ -199,6 +206,16 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 			if enabledCaps.Has(configv1.ClusterVersionCapabilityMarketplace) && !enabledCaps.Has(configv1.ClusterVersionCapabilityOperatorLifecycleManager) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
 					"the marketplace capability requires the OperatorLifecycleManager capability"))
+			}
+		}
+
+		if !enabledCaps.Has(configv1.ClusterVersionCapabilityCloudCredential) {
+			// check if platform is cloud
+			if c.None == nil && c.BareMetal == nil {
+				if c.CredentialsMode != types.ManualCredentialsMode {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("credentialsMode"), c.CredentialsMode,
+						"credentialsMode must be set to Manual when CloudCredentials capability is disabled on a cloud platform"))
+				}
 			}
 		}
 	}
