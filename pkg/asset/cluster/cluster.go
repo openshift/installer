@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -71,6 +72,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&quota.PlatformQuotaCheck{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
+		&manifests.Manifests{},
 		&capimanifests.Cluster{},
 		&kubeconfig.AdminClient{},
 	}
@@ -85,8 +87,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
+	manifestsAsset := &manifests.Manifests{}
 	terraformVariables := &TerraformVariables{}
-	parents.Get(clusterID, installConfig, rhcosImage, terraformVariables)
+	parents.Get(clusterID, installConfig, manifestsAsset, rhcosImage, terraformVariables)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -111,7 +114,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			clusterapi.System().Teardown()
 		}()
 
-		return c.provisionWithClusterAPI(ctx, parents, installConfig, clusterID, rhcosImage)
+		return c.provisionWithClusterAPI(ctx, parents, installConfig, clusterID, manifestsAsset, rhcosImage)
 	}
 
 	// Otherwise, use the normal path.
@@ -166,7 +169,7 @@ func (c *Cluster) provision(installConfig *installconfig.InstallConfig, clusterI
 	return nil
 }
 
-func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Parents, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image) error {
+func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Parents, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, manifestsAsset *manifests.Manifests, rhcosImage *rhcos.Image) error {
 	capiManifests := &capimanifests.Cluster{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 	parents.Get(
@@ -182,7 +185,7 @@ func (c *Cluster) provisionWithClusterAPI(ctx context.Context, parents asset.Par
 
 	logrus.Infof("Creating infrastructure resources...")
 	if installConfig.Config.Platform.Name() == typesopenstack.Name {
-		if err := openstack.PreCAPI(ctx, &manifests, installConfig, clusterID, rhcosImage); err != nil {
+		if err := openstack.PreCAPI(ctx, &manifests, installConfig, clusterID, manifestsAsset, rhcosImage); err != nil {
 			return err
 		}
 	}

@@ -9,10 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"gopkg.in/yaml.v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	rhcos_asset "github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
@@ -70,8 +73,8 @@ func PreTerraform(ctx context.Context, tfvarsFile *asset.File, installConfig *in
 
 // PreCAPI performs any infrastructure initialization which must
 // happen before CAPI creates the remaining infrastructure.
-func PreCAPI(ctx context.Context, manifests *[]client.Object, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos_asset.Image) error {
-	if err := replaceBootstrapIgnitionInManifests(ctx, manifests, installConfig, clusterID); err != nil {
+func PreCAPI(ctx context.Context, manifestObjects *[]client.Object, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, manifestsAsset *manifests.Manifests, rhcosImage *rhcos_asset.Image) error {
+	if err := replaceBootstrapIgnitionInManifests(ctx, manifestObjects, installConfig, clusterID); err != nil {
 		return err
 	}
 
@@ -88,7 +91,20 @@ func PreCAPI(ctx context.Context, manifests *[]client.Object, installConfig *ins
 		}
 	}
 
-	return nil
+	var mastersSchedulable bool
+	{
+		for _, f := range manifestsAsset.Files() {
+			if f.Filename == manifests.SchedulerCfgFilename {
+				schedulerConfig := configv1.Scheduler{}
+				if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
+					return err
+				}
+				mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
+				break
+			}
+		}
+	}
+	return provisionSecurityGroups(ctx, manifestObjects, installConfig, clusterID, mastersSchedulable)
 }
 
 // Metadata converts an install configuration to OpenStack metadata.
