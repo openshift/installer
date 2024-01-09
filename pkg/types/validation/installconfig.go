@@ -212,10 +212,8 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		if !enabledCaps.Has(configv1.ClusterVersionCapabilityCloudCredential) {
 			// check if platform is cloud
 			if c.None == nil && c.BareMetal == nil {
-				if c.CredentialsMode != types.ManualCredentialsMode {
-					allErrs = append(allErrs, field.Invalid(field.NewPath("credentialsMode"), c.CredentialsMode,
-						"credentialsMode must be set to Manual when CloudCredentials capability is disabled on a cloud platform"))
-				}
+				allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
+					"disabling CloudController capability available only for baremetal platforms"))
 			}
 		}
 	}

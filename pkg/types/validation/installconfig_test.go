@@ -2318,7 +2318,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
-			name: "CloudCredential is disabled in cloud",
+			name: "CloudCredential is disabled in cloud aws",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
@@ -2326,18 +2326,20 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: "credentialsMode must be set to Manual when CloudCredentials capability is disabled on a cloud platform",
+			expectedError: "disabling CloudController capability available only for baremetal platforms",
 		},
 		{
-			name: "CloudCredential is disabled in cloud,but CredentialsMode is set to Manual",
+			name: "CloudCredential is disabled in cloud gcp",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.CredentialsMode = types.ManualCredentialsMode
+				c.GCP = validGCPPlatform()
+				c.AWS = nil
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
 				}
 				return c
 			}(),
+			expectedError: "disabling CloudController capability available only for baremetal platforms",
 		},
 		{
 			name: "CloudCredential is enabled in baremetal",
