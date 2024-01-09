@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/asset"
+	tfvarsAsset "github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	awssession "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/tfvars"
@@ -58,17 +59,16 @@ type output struct {
 	PrivateSubnetIDs []string `json:"private_subnet_ids,omitempty"`
 }
 
-// Provision creates the infrastructure resources for the stage.
-// dir: the path of the install dir
-// vars: cluster configuration input variables, such as terraform variables files
-// returns a slice of File assets, which will be appended to the cluster asset file list.
-func (a InfraProvider) Provision(dir string, vars []*asset.File) ([]*asset.File, error) {
+// Provision creates cluster infrastructure using AWS SDK calls.
+func (a InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+	terraformVariables := &tfvarsAsset.TerraformVariables{}
+	parents.Get(terraformVariables)
 	// Unmarshall input from tf variables, so we can use it along with
 	// installConfig and other assets as the contractual input regardless of
 	// the implementation.
 	clusterConfig := &tfvars.Config{}
 	clusterAWSConfig := &awstfvars.Config{}
-	for _, file := range vars {
+	for _, file := range terraformVariables.Files() {
 		switch file.Filename {
 		case tfVarsFileName:
 			if err := json.Unmarshal(file.Data, clusterConfig); err != nil {

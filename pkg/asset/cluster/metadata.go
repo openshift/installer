@@ -2,8 +2,6 @@ package cluster
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -16,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/gcp"
 	"github.com/openshift/installer/pkg/asset/cluster/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
+	clustermetadata "github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/asset/cluster/nutanix"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/ovirt"
@@ -39,10 +38,6 @@ import (
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
-)
-
-const (
-	metadataFileName = "metadata.json"
 )
 
 // Metadata contains information needed to destroy clusters.
@@ -123,7 +118,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	}
 
 	m.File = &asset.File{
-		Filename: metadataFileName,
+		Filename: clustermetadata.FileName,
 		Data:     data,
 	}
 
@@ -142,20 +137,4 @@ func (m *Metadata) Files() []*asset.File {
 // the disk.
 func (m *Metadata) Load(f asset.FileFetcher) (found bool, err error) {
 	return false, nil
-}
-
-// LoadMetadata loads the cluster metadata from an asset directory.
-func LoadMetadata(dir string) (*types.ClusterMetadata, error) {
-	path := filepath.Join(dir, metadataFileName)
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var metadata *types.ClusterMetadata
-	if err = json.Unmarshal(raw, &metadata); err != nil {
-		return nil, errors.Wrapf(err, "failed to Unmarshal data from %q to types.ClusterMetadata", path)
-	}
-
-	return metadata, err
 }
