@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -11,15 +13,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // IsForbidden returns true if and only if the input error is an HTTP
 // 403 error from the AWS API.
 func IsForbidden(err error) bool {
-	requestError, ok := err.(awserr.RequestFailure)
-	return ok && requestError.StatusCode() == http.StatusForbidden
+	var requestError awserr.RequestFailure
+	return errors.As(err, &requestError) && requestError.StatusCode() == http.StatusForbidden
 }
 
 // GetBaseDomain returns a base domain chosen from among the account's
@@ -45,7 +46,7 @@ func GetBaseDomain() (string, error) {
 			return !lastPage
 		},
 	); err != nil {
-		return "", errors.Wrap(err, "list hosted zones")
+		return "", fmt.Errorf("list hosted zones: %w", err)
 	}
 
 	publicZones := make([]string, 0, len(publicZoneMap))
@@ -69,12 +70,12 @@ func GetBaseDomain() (string, error) {
 			choice := ans.(core.OptionAnswer).Value
 			i := sort.SearchStrings(publicZones, choice)
 			if i == len(publicZones) || publicZones[i] != choice {
-				return errors.Errorf("invalid base domain %q", choice)
+				return fmt.Errorf("invalid base domain %q", choice)
 			}
 			return nil
 		}),
 	); err != nil {
-		return "", errors.Wrap(err, "failed UserInput")
+		return "", fmt.Errorf("failed UserInput: %w", err)
 	}
 
 	return domain, nil
@@ -95,10 +96,10 @@ func GetPublicZone(sess *session.Session, name string) (*route53.HostedZone, err
 
 	client := route53.New(sess)
 	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
-		return nil, errors.Wrap(err, "listing hosted zones")
+		return nil, fmt.Errorf("listing hosted zones: %w", err)
 	}
 	if res == nil {
-		return nil, errors.Errorf("No public route53 zone found matching name %q", name)
+		return nil, fmt.Errorf("no public route53 zone found matching name %q", name)
 	}
 	return res, nil
 }

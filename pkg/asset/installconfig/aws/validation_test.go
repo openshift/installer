@@ -7,13 +7,13 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/aws/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -68,7 +68,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		ControlPlane: &types.MachinePool{
 			Architecture: types.ArchitectureAMD64,
-			Replicas:     pointer.Int64Ptr(3),
+			Replicas:     ptr.To[int64](3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -78,7 +78,7 @@ func validInstallConfig() *types.InstallConfig {
 		Compute: []types.MachinePool{{
 			Name:         types.MachinePoolComputeRoleName,
 			Architecture: types.ArchitectureAMD64,
-			Replicas:     pointer.Int64Ptr(3),
+			Replicas:     ptr.To[int64](3),
 			Platform: types.MachinePoolPlatform{
 				AWS: &aws.MachinePool{
 					Zones: []string{"a", "b", "c"},
@@ -211,14 +211,22 @@ func validInstanceTypes() map[string]InstanceType {
 		"t2.small": {
 			DefaultVCpus: 1,
 			MemInMiB:     2048,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
 		"m5.large": {
 			DefaultVCpus: 2,
 			MemInMiB:     8192,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
 		},
 		"m5.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
+		},
+		"m6g.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{ec2.ArchitectureTypeArm64},
 		},
 	}
 }
@@ -362,6 +370,22 @@ func TestValidate(t *testing.T) {
 		availZones:    validAvailZones(),
 		instanceTypes: validInstanceTypes(),
 		expectErr:     `^\Qcompute[0].platform.aws.type: Invalid value: "m5.dummy": instance type m5.dummy not found\E$`,
+	}, {
+		name: "mismatched instance architecture",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS = &aws.Platform{
+				Region:                 "us-east-1",
+				DefaultMachinePlatform: &aws.MachinePool{InstanceType: "m5.xlarge"},
+			}
+			c.ControlPlane.Architecture = types.ArchitectureARM64
+			c.Compute[0].Platform.AWS.InstanceType = "m6g.xlarge"
+			c.Compute[0].Architecture = types.ArchitectureAMD64
+			return c
+		}(),
+		availZones:    validAvailZones(),
+		instanceTypes: validInstanceTypes(),
+		expectErr:     `^\[controlPlane.platform.aws.type: Invalid value: "m5.xlarge": instance type supported architectures \[amd64\] do not match specified architecture arm64, compute\[0\].platform.aws.type: Invalid value: "m6g.xlarge": instance type supported architectures \[arm64\] do not match specified architecture amd64\]$`,
 	}, {
 		name: "invalid no private subnets",
 		installConfig: func() *types.InstallConfig {
@@ -567,7 +591,7 @@ func TestValidate(t *testing.T) {
 			ic.Compute = []types.MachinePool{edgePool}
 			return ic
 		}(),
-		expectErr: `^compute\[0\]\.platform\.aws: Required value: edge compute pools are only supported on the AWS platform$`,
+		expectErr: `^\[compute\[0\]\.platform\.aws: Required value: edge compute pools are only supported on the AWS platform, compute\[0\].platform.aws: Required value: zone is required when using edge machine pools\]$`,
 	}, {
 		name: "invalid edge pool missing subnets on availability zones",
 		installConfig: func() *types.InstallConfig {
@@ -725,7 +749,7 @@ func TestValidate(t *testing.T) {
 			c := validInstallConfig()
 			c.Platform.AWS.Region = "us-gov-east-1"
 			c.ControlPlane.Platform.AWS.AMIID = "custom-ami"
-			c.Compute[0].Replicas = pointer.Int64Ptr(0)
+			c.Compute[0].Replicas = ptr.To[int64](0)
 			return c
 		}(),
 		availZones:     validAvailZones(),
@@ -983,7 +1007,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 
 			if test.expectedErr != "" {
 				if test.problematicRecords == nil {
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, fmt.Errorf(test.expectedErr)).AnyTimes()
 				} else {
 					// mimic the results of what should happen in the internal function passed to
 					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
@@ -994,7 +1018,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 							returnedProblems = append(returnedProblems, pr)
 						}
 					}
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, errors.Errorf(test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, fmt.Errorf(test.expectedErr)).AnyTimes()
 				}
 			} else {
 				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, nil).AnyTimes()
