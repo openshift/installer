@@ -17,6 +17,7 @@ import (
 	capav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	capav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3" //nolint:staticcheck
 	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -39,6 +40,7 @@ func init() {
 	utilruntime.Must(capav1beta1.AddToScheme(Scheme))
 	utilruntime.Must(capav1.AddToScheme(Scheme))
 	utilruntime.Must(capzv1.AddToScheme(Scheme))
+	utilruntime.Must(capvv1.AddToScheme(Scheme))
 }
 
 // localControlPlane creates a local capi control plane

@@ -15,12 +15,30 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
+	vspheremachines "github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 )
+
+// GenerateClusterAPIVSphere generates manifests for target cluster.
+func GenerateClusterAPIVSphere(ctx context.Context, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image, vcenterContexts *vcentercontexts.VCenterContexts) (*capiutils.GenerateMachinesOutput, error) {
+	var err error
+	result := &capiutils.GenerateMachinesOutput{}
+	ic := installConfig.Config
+	pool := *ic.ControlPlane
+
+	vSphereMachines, err := vspheremachines.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, string(*rhcosImage), "master", vcenterContexts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create control plane and bootstrap machine objects: %v", err)
+	}
+	result.Manifests = append(result.Manifests, vSphereMachines...)
+
+	return result, nil
+}
 
 // GenerateClusterAPI generates manifests for target cluster.
 func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image) (*capiutils.GenerateMachinesOutput, error) {

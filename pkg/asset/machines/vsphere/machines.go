@@ -3,6 +3,7 @@ package vsphere
 
 import (
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 
@@ -312,6 +313,8 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 	if failureDomain.Topology.ResourcePool != "" {
 		resourcePool = failureDomain.Topology.ResourcePool
 	}
+
+	resourcePool = path.Clean(resourcePool)
 
 	for i, network := range failureDomain.Topology.Networks {
 		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}

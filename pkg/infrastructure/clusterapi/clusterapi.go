@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/types"
@@ -57,6 +58,9 @@ type CAPIInfraHelper interface {
 type PreProvisionInput struct {
 	ClusterID     string
 	InstallConfig *installconfig.InstallConfig
+	Context       context.Context
+	OsImage       *rhcos.Image
+	Parents       asset.Parents
 }
 
 type ControlPlaneAvailableInput struct {
@@ -66,9 +70,11 @@ type ControlPlaneAvailableInput struct {
 
 // Provision creates cluster resources by applying CAPI manifests to a locally running control plane.
 func (c InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+	ctx := context.TODO()
 	capiManifestsAsset := &capimanifests.Cluster{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 	clusterID := &installconfig.ClusterID{}
+	rhcosImage := new(rhcos.Image)
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
@@ -79,6 +85,7 @@ func (c InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 		installConfig,
 		bootstrapIgnAsset,
 		masterIgnAsset,
+		rhcosImage,
 	)
 
 	fileList := []*asset.File{}
@@ -127,6 +134,9 @@ func (c InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 	preProvisionInput := PreProvisionInput{
 		ClusterID:     clusterID.InfraID,
 		InstallConfig: installConfig,
+		Context:       ctx,
+		OsImage:       rhcosImage,
+		Parents:       parents,
 	}
 	if err := c.PreProvision(preProvisionInput); err != nil {
 		return fileList, fmt.Errorf("failed during pre-provisioning: %w", err)

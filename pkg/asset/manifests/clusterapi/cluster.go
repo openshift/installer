@@ -15,15 +15,18 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
+	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 const (
@@ -51,18 +54,21 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&openshiftinstall.Config{},
 		&manifests.FeatureGate{},
+		&vcentercontexts.VCenterContexts{},
 		new(rhcos.Image),
 	}
 }
 
 // Generate generates the respective operator config.yml files.
 func (c *Cluster) Generate(dependencies asset.Parents) error {
+	var err error
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &manifests.FeatureGate{}
+	vcenterContexts := &vcentercontexts.VCenterContexts{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage)
+	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage, vcenterContexts)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
@@ -92,7 +98,8 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
 
 	var out *capiutils.GenerateClusterAssetsOutput
-	switch platform := installConfig.Config.Platform.Name(); platform {
+	platform := installConfig.Config.Platform.Name()
+	switch platform {
 	case "aws":
 		// Move this somewhere else.
 		// if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
@@ -107,7 +114,13 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		var err error
 		out, err = azure.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate AWS manifests")
+			return errors.Wrap(err, "failed to generate Azure manifests")
+		}
+	case vsphereplatform.Name:
+		var err error
+		out, err = vsphere.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate vSphere manifests")
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
@@ -122,10 +135,18 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	// Append the infrastructure manifests.
 	c.FileList = append(c.FileList, out.Manifests...)
 
-	// Generate the machines for the cluster, and append them to the list of manifests.
-	mc, err := machines.GenerateClusterAPI(context.TODO(), installConfig, clusterID, rhcosImage)
+	mc := &capiutils.GenerateMachinesOutput{}
+
+	switch platform {
+	case vsphereplatform.Name:
+		mc, err = machines.GenerateClusterAPIVSphere(context.TODO(), installConfig, clusterID, rhcosImage, vcenterContexts)
+	default:
+		mc, err = machines.GenerateClusterAPI(context.TODO(), installConfig, clusterID, rhcosImage)
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to generate machines")
+
 	}
 	c.FileList = append(c.FileList, mc.Manifests...)
 
