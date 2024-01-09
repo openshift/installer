@@ -138,6 +138,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 					},
 					{
+						Description: "public api", //TODO(padillon): this should only be on public/external clusters
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    6443,
+						ToPort:      6443,
+						CidrBlocks:  []string{"0.0.0.0/0"},
+					},
+					{
 						Description: "SSH everyone",
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    22,
@@ -151,15 +158,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				Name:             ptr.To(clusterID.InfraID + "-int"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
-				// AdditionalListeners: []capa.AdditionalListenerSpec{
-				// 	{
-				// 		Port:     22623,
-				// 		Protocol: capa.ELBProtocolTCP,
-				// 	},
-				// },
+				Scheme:           &capa.ELBSchemeInternal,
+				AdditionalListeners: []capa.AdditionalListenerSpec{
+					{
+						Port:     22623,
+						Protocol: capa.ELBProtocolTCP,
+					},
+				},
 			},
 			AdditionalTags: capa.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned"},
 		},

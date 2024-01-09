@@ -43,7 +43,7 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 	}
 	subnetIDs := []string{}
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
-		if !s.IsPublic {
+		if s.IsPublic {
 			subnetIDs = append(subnetIDs, s.ResourceID)
 		}
 	}
@@ -83,8 +83,6 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		return fmt.Errorf("error getting VPC ID: %w", err)
 	}
 
-	elbClient := elbv2.New(awsSession)
-
 	tags := map[string]string{
 		fmt.Sprintf("kubernetes.io/cluster/%s", in.InfraID): "owned",
 	}
@@ -92,7 +90,16 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		tags[k] = v
 	}
 
-	lb, aintTG, sintTG, err := createIntLB(elbClient, subnetIDs, tags, in.InfraID, vpcID)
+	elbClient := elbv2.New(awsSession)
+
+	//TODO(padillon): support shared vpc (assume role client)
+	r53Client := route53.New(awsSession)
+	phz, err := createHostedZone(context.TODO(), r53Client, tags, in.InfraID, in.InstallConfig.Config.ClusterDomain(), vpcID, awsCluster.Spec.Region, true)
+	if err != nil {
+		return fmt.Errorf("failed to create private hosted zone: %w", err)
+	}
+
+	lb, aextTG, err := createExtLB(elbClient, subnetIDs, tags, in.InfraID, vpcID)
 	if err != nil {
 		return fmt.Errorf("error creating external LB: %w", err)
 	}
@@ -102,24 +109,12 @@ func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableIn
 		return fmt.Errorf("error getting control plane IP addresses")
 	}
 
-	err = registerControlPlane(elbClient, ids, aintTG)
+	err = registerControlPlane(elbClient, ids, aextTG)
 	if err != nil {
 		return fmt.Errorf("error registering control plane to api-int target group: %w", err)
 	}
 
-	err = registerControlPlane(elbClient, ids, sintTG)
-	if err != nil {
-		return fmt.Errorf("error registering control plane to mcs target group: %w", err)
-	}
-
-	//TODO(padillon): support shared vpc (assume role client)
-	r53Client := route53.New(awsSession)
-	phz, err := createHostedZone(context.TODO(), r53Client, tags, in.InfraID, in.InstallConfig.Config.ClusterDomain(), vpcID, awsCluster.Spec.Region, true)
-	if err != nil {
-		return fmt.Errorf("failed to create private hosted zone: %w", err)
-	}
-
-	if err := createDNSRecords(in.InstallConfig, in.Cluster.Spec.ControlPlaneEndpoint.Host, *lb.DNSName, *phz.Id); err != nil {
+	if err := createDNSRecords(in.InstallConfig, *lb.DNSName, in.Cluster.Spec.ControlPlaneEndpoint.Host, *phz.Id); err != nil {
 		return fmt.Errorf("failed to create DNS records: %w", err)
 	}
 
