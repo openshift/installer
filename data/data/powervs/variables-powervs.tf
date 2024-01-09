@@ -45,6 +45,12 @@ variable "powervs_service_instance_name" {
   description = "Optionally, the service instance name of an existing object before cluster creation"
 }
 
+variable "powervs_wait_for_workspace" {
+  type        = string
+  description = "The seconds wait for the Power VS Workspace after creation, default is 60s"
+  default     = "60s"
+}
+
 ################################################################
 # Configure storage
 ################################################################
