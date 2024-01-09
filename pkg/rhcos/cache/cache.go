@@ -262,7 +262,7 @@ func (u *urlWithIntegrity) download(dataType, applicationName string) (string, e
 // DownloadImageFile is a helper function that obtains an image file from a given URL,
 // puts it in the cache and returns the local file path.  If the file is compressed
 // by a known compressor, the file is uncompressed prior to being returned.
-func DownloadImageFile(baseURL string, applicationName string) (string, error) {
+func DownloadImageFile(baseURL string, applicationName string, sha256Checksum string) (string, error) {
 	logrus.Debugf("Obtaining RHCOS image file from '%v'", baseURL)
 
 	var u urlWithIntegrity
@@ -275,6 +275,9 @@ func DownloadImageFile(baseURL string, applicationName string) (string, error) {
 		u.uncompressedSHA256 = uncompressedSHA256[0]
 		q.Del("sha256")
 		parsedURL.RawQuery = q.Encode()
+	} else if sha256Checksum != "" {
+		// Use the expected sha if provided
+		u.uncompressedSHA256 = sha256Checksum
 	}
 	u.location = *parsedURL
 

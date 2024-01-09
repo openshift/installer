@@ -66,7 +66,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 			return nil, errors.Wrap(err, "failed to access file or directory")
 		}
 	} else {
-		osImage, err = cache.DownloadImageFile(osImage, cache.InstallerApplicationName)
+		osImage, err = cache.DownloadImageFile(osImage, cache.InstallerApplicationName, "")
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to use cached libvirt image")
 		}
