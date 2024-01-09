@@ -44,6 +44,8 @@ import (
 	"go/types"
 	"math/big"
 	"os"
+
+	"golang.org/x/tools/internal/typeparams"
 )
 
 // If true, show diagnostic information at each step of lifting.
@@ -61,7 +63,6 @@ const debugLifting = false
 //
 // domFrontier's methods mutate the slice's elements but not its
 // length, so their receivers needn't be pointers.
-//
 type domFrontier [][]*BasicBlock
 
 func (df domFrontier) add(u, v *BasicBlock) {
@@ -127,7 +128,6 @@ func removeInstr(refs []Instruction, instr Instruction) []Instruction {
 // - fn has no dead blocks (blockopt has run).
 // - Def/use info (Operands and Referrers) is up-to-date.
 // - The dominator tree is up-to-date.
-//
 func lift(fn *Function) {
 	// TODO(adonovan): opt: lots of little optimizations may be
 	// worthwhile here, especially if they cause us to avoid
@@ -382,12 +382,10 @@ type newPhiMap map[*BasicBlock][]newPhi
 // and returns true.
 //
 // fresh is a source of fresh ids for phi nodes.
-//
 func liftAlloc(df domFrontier, alloc *Alloc, newPhis newPhiMap, fresh *int) bool {
-	// Don't lift aggregates into registers, because we don't have
-	// a way to express their zero-constants.
+	// TODO(taking): zero constants of aggregated types can now be lifted.
 	switch deref(alloc.Type()).Underlying().(type) {
-	case *types.Array, *types.Struct:
+	case *types.Array, *types.Struct, *typeparams.TypeParam:
 		return false
 	}
 
@@ -491,7 +489,6 @@ func liftAlloc(df domFrontier, alloc *Alloc, newPhis newPhiMap, fresh *int) bool
 // replaceAll replaces all intraprocedural uses of x with y,
 // updating x.Referrers and y.Referrers.
 // Precondition: x.Referrers() != nil, i.e. x must be local to some function.
-//
 func replaceAll(x, y Value) {
 	var rands []*Value
 	pxrefs := x.Referrers()
@@ -514,7 +511,6 @@ func replaceAll(x, y Value) {
 
 // renamed returns the value to which alloc is being renamed,
 // constructing it lazily if it's the implicit zero initialization.
-//
 func renamed(renaming []Value, alloc *Alloc) Value {
 	v := renaming[alloc.index]
 	if v == nil {
@@ -533,7 +529,6 @@ func renamed(renaming []Value, alloc *Alloc) Value {
 // renaming is a map from *Alloc (keyed by index number) to its
 // dominating stored value; newPhis[x] is the set of new φ-nodes to be
 // prepended to block x.
-//
 func rename(u *BasicBlock, renaming []Value, newPhis newPhiMap) {
 	// Each φ-node becomes the new name for its associated Alloc.
 	for _, np := range newPhis[u] {

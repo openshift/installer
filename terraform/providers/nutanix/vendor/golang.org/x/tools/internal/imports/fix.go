@@ -83,7 +83,7 @@ type ImportFix struct {
 	IdentName string
 	// FixType is the type of fix this is (AddImport, DeleteImport, SetImportName).
 	FixType   ImportFixType
-	Relevance int // see pkg
+	Relevance float64 // see pkg
 }
 
 // An ImportInfo represents a single import statement.
@@ -592,9 +592,9 @@ func getFixes(fset *token.FileSet, f *ast.File, filename string, env *ProcessEnv
 	return fixes, nil
 }
 
-// Highest relevance, used for the standard library. Chosen arbitrarily to
-// match pre-existing gopls code.
-const MaxRelevance = 7
+// MaxRelevance is the highest relevance, used for the standard library.
+// Chosen arbitrarily to match pre-existing gopls code.
+const MaxRelevance = 7.0
 
 // getCandidatePkgs works with the passed callback to find all acceptable packages.
 // It deduplicates by import path, and uses a cached stdlib rather than reading
@@ -607,6 +607,10 @@ func getCandidatePkgs(ctx context.Context, wrappedCallback *scanCallback, filena
 	if err != nil {
 		return err
 	}
+
+	var mu sync.Mutex // to guard asynchronous access to dupCheck
+	dupCheck := map[string]struct{}{}
+
 	// Start off with the standard library.
 	for importPath, exports := range stdlib {
 		p := &pkg{
@@ -615,13 +619,11 @@ func getCandidatePkgs(ctx context.Context, wrappedCallback *scanCallback, filena
 			packageName:     path.Base(importPath),
 			relevance:       MaxRelevance,
 		}
-		if notSelf(p) && wrappedCallback.packageNameLoaded(p) {
+		dupCheck[importPath] = struct{}{}
+		if notSelf(p) && wrappedCallback.dirFound(p) && wrappedCallback.packageNameLoaded(p) {
 			wrappedCallback.exportsLoaded(p, exports)
 		}
 	}
-
-	var mu sync.Mutex
-	dupCheck := map[string]struct{}{}
 
 	scanFilter := &scanCallback{
 		rootFound: func(root gopathwalk.Root) bool {
@@ -658,8 +660,8 @@ func getCandidatePkgs(ctx context.Context, wrappedCallback *scanCallback, filena
 	return resolver.scan(ctx, scanFilter)
 }
 
-func ScoreImportPaths(ctx context.Context, env *ProcessEnv, paths []string) (map[string]int, error) {
-	result := make(map[string]int)
+func ScoreImportPaths(ctx context.Context, env *ProcessEnv, paths []string) (map[string]float64, error) {
+	result := make(map[string]float64)
 	resolver, err := env.GetResolver()
 	if err != nil {
 		return nil, err
@@ -695,6 +697,9 @@ func candidateImportName(pkg *pkg) string {
 
 // GetAllCandidates calls wrapped for each package whose name starts with
 // searchPrefix, and can be imported from filename with the package name filePkg.
+//
+// Beware that the wrapped function may be called multiple times concurrently.
+// TODO(adonovan): encapsulate the concurrency.
 func GetAllCandidates(ctx context.Context, wrapped func(ImportFix), searchPrefix, filename, filePkg string, env *ProcessEnv) error {
 	callback := &scanCallback{
 		rootFound: func(gopathwalk.Root) bool {
@@ -794,7 +799,7 @@ func GetPackageExports(ctx context.Context, wrapped func(PackageExport), searchP
 	return getCandidatePkgs(ctx, callback, filename, filePkg, env)
 }
 
-var RequiredGoEnvVars = []string{"GO111MODULE", "GOFLAGS", "GOINSECURE", "GOMOD", "GOMODCACHE", "GONOPROXY", "GONOSUMDB", "GOPATH", "GOPROXY", "GOROOT", "GOSUMDB"}
+var requiredGoEnvVars = []string{"GO111MODULE", "GOFLAGS", "GOINSECURE", "GOMOD", "GOMODCACHE", "GONOPROXY", "GONOSUMDB", "GOPATH", "GOPROXY", "GOROOT", "GOSUMDB", "GOWORK"}
 
 // ProcessEnv contains environment variables and settings that affect the use of
 // the go command, the go/build package, etc.
@@ -802,6 +807,13 @@ type ProcessEnv struct {
 	GocmdRunner *gocommand.Runner
 
 	BuildFlags []string
+	ModFlag    string
+	ModFile    string
+
+	// SkipPathInScan returns true if the path should be skipped from scans of
+	// the RootCurrentModule root type. The function argument is a clean,
+	// absolute path.
+	SkipPathInScan func(string) bool
 
 	// Env overrides the OS environment, and can be used to specify
 	// GOPROXY, GO111MODULE, etc. PATH cannot be set here, because
@@ -827,7 +839,11 @@ func (e *ProcessEnv) goEnv() (map[string]string, error) {
 }
 
 func (e *ProcessEnv) matchFile(dir, name string) (bool, error) {
-	return build.Default.MatchFile(dir, name)
+	bctx, err := e.buildContext()
+	if err != nil {
+		return false, err
+	}
+	return bctx.MatchFile(dir, name)
 }
 
 // CopyConfig copies the env's configuration into a new env.
@@ -853,7 +869,7 @@ func (e *ProcessEnv) init() error {
 	}
 
 	foundAllRequired := true
-	for _, k := range RequiredGoEnvVars {
+	for _, k := range requiredGoEnvVars {
 		if _, ok := e.Env[k]; !ok {
 			foundAllRequired = false
 			break
@@ -869,7 +885,7 @@ func (e *ProcessEnv) init() error {
 	}
 
 	goEnv := map[string]string{}
-	stdout, err := e.invokeGo(context.TODO(), "env", append([]string{"-json"}, RequiredGoEnvVars...)...)
+	stdout, err := e.invokeGo(context.TODO(), "env", append([]string{"-json"}, requiredGoEnvVars...)...)
 	if err != nil {
 		return err
 	}
@@ -898,7 +914,7 @@ func (e *ProcessEnv) GetResolver() (Resolver, error) {
 	if err := e.init(); err != nil {
 		return nil, err
 	}
-	if len(e.Env["GOMOD"]) == 0 {
+	if len(e.Env["GOMOD"]) == 0 && len(e.Env["GOWORK"]) == 0 {
 		e.resolver = newGopathResolver(e)
 		return e.resolver, nil
 	}
@@ -920,14 +936,20 @@ func (e *ProcessEnv) buildContext() (*build.Context, error) {
 	// Populate it only if present.
 	rc := reflect.ValueOf(&ctx).Elem()
 	dir := rc.FieldByName("Dir")
-	if !dir.IsValid() {
-		// Working drafts of Go 1.14 named the field "WorkingDir" instead.
-		// TODO(bcmills): Remove this case after the Go 1.14 beta has been released.
-		dir = rc.FieldByName("WorkingDir")
-	}
 	if dir.IsValid() && dir.Kind() == reflect.String {
 		dir.SetString(e.WorkingDir)
 	}
+
+	// Since Go 1.11, go/build.Context.Import may invoke 'go list' depending on
+	// the value in GO111MODULE in the process's environment. We always want to
+	// run in GOPATH mode when calling Import, so we need to prevent this from
+	// happening. In Go 1.16, GO111MODULE defaults to "on", so this problem comes
+	// up more frequently.
+	//
+	// HACK: setting any of the Context I/O hooks prevents Import from invoking
+	// 'go list', regardless of GO111MODULE. This is undocumented, but it's
+	// unlikely to change before GOPATH support is removed.
+	ctx.ReadDir = ioutil.ReadDir
 
 	return &ctx, nil
 }
@@ -985,7 +1007,7 @@ type Resolver interface {
 	// loadExports may be called concurrently.
 	loadExports(ctx context.Context, pkg *pkg, includeTest bool) (string, []string, error)
 	// scoreImportPath returns the relevance for an import path.
-	scoreImportPath(ctx context.Context, path string) int
+	scoreImportPath(ctx context.Context, path string) float64
 
 	ClearForNewScan()
 }
@@ -1250,10 +1272,10 @@ func packageDirToName(dir string) (packageName string, err error) {
 }
 
 type pkg struct {
-	dir             string // absolute file path to pkg directory ("/usr/lib/go/src/net/http")
-	importPathShort string // vendorless import path ("net/http", "a/b")
-	packageName     string // package name loaded from source if requested
-	relevance       int    // a weakly-defined score of how relevant a package is. 0 is most relevant.
+	dir             string  // absolute file path to pkg directory ("/usr/lib/go/src/net/http")
+	importPathShort string  // vendorless import path ("net/http", "a/b")
+	packageName     string  // package name loaded from source if requested
+	relevance       float64 // a weakly-defined score of how relevant a package is. 0 is most relevant.
 }
 
 type pkgDistance struct {
@@ -1353,9 +1375,9 @@ func (r *gopathResolver) scan(ctx context.Context, callback *scanCallback) error
 		return err
 	}
 	var roots []gopathwalk.Root
-	roots = append(roots, gopathwalk.Root{filepath.Join(goenv["GOROOT"], "src"), gopathwalk.RootGOROOT})
+	roots = append(roots, gopathwalk.Root{Path: filepath.Join(goenv["GOROOT"], "src"), Type: gopathwalk.RootGOROOT})
 	for _, p := range filepath.SplitList(goenv["GOPATH"]) {
-		roots = append(roots, gopathwalk.Root{filepath.Join(p, "src"), gopathwalk.RootGOPATH})
+		roots = append(roots, gopathwalk.Root{Path: filepath.Join(p, "src"), Type: gopathwalk.RootGOPATH})
 	}
 	// The callback is not necessarily safe to use in the goroutine below. Process roots eagerly.
 	roots = filterRoots(roots, callback.rootFound)
@@ -1379,7 +1401,7 @@ func (r *gopathResolver) scan(ctx context.Context, callback *scanCallback) error
 	return nil
 }
 
-func (r *gopathResolver) scoreImportPath(ctx context.Context, path string) int {
+func (r *gopathResolver) scoreImportPath(ctx context.Context, path string) float64 {
 	if _, ok := stdlib[path]; ok {
 		return MaxRelevance
 	}
