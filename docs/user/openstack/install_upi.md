@@ -90,28 +90,19 @@ The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi
 
 ## Install Ansible
 
-This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on OpenStack.
+We provide Ansible playbooks to deploy OpenShift on OpenStack. Download the
+Ansible playbooks [from Github][ansible-upi] or use `jq` to download them
+programmatically.
 
 They can be downloaded from Github with this script:
 
 ```sh
-RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-bootstrap.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-compute-nodes.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-control-plane.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-security-groups.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/down-containers.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/inventory.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/network.yaml
-        https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
+RELEASE="release-4.15"; curl -L "https://api.github.com/repos/openshift/installer/contents/upi/openstack?ref=$RELEASE" | \
+    jq -r '.[]|select(.download_url | endswith("yaml")).download_url'| \
+    xargs -n 1 curl -O
 ```
 
-For installing a different version, change the branch (`release-4.14`)
+For installing a different version, change the branch (`release-4.15`)
 accordingly (e.g. `release-4.12`).
 
 **Requirements:**
@@ -127,7 +118,7 @@ accordingly (e.g. `release-4.12`).
   * ansible.utils
   * community.general
 
-### RHEL
+### RHEL8
 
 From a RHEL box, make sure that the repository origins are all set:
 
@@ -136,13 +127,14 @@ sudo subscription-manager register # if not done already
 sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
 sudo subscription-manager repos --disable=* # if not done already
 sudo subscription-manager repos \
-  --enable=rhel-8-for-x86_64-baseos-rpms \ # change RHEL version if needed
-  --enable=rhel-8-for-x86_64-appstream-rpms # change RHEL version if needed
+  --enable=rhel-8-for-x86_64-baseos-rpms \
+  --enable=ansible-2.9-for-rhel-8-x86_64-rpms \
+  --enable=rhel-8-for-x86_64-appstream-rpms
 ```
 
 Then install the package:
 ```sh
-sudo dnf install ansible-core
+sudo dnf install ansible-collections-openstack
 ```
 
 Make sure that `python` points to Python3:
@@ -156,24 +148,25 @@ python3 -m pip install --upgrade pip
 python3 -m pip install yq openstackclient openstacksdk netaddr
 ```
 
+Make sure, that none of copied playbooks contains an alias for ansible
+utility filters (i.e. remove the prefix `ansible.utils.` in all occurrences in
+playbooks):
+
+```sh
+for playbook in *.yaml; do
+    sed -i -e 's/ansible.utils.//g' $playbook
+done
+```
+
 ### Fedora
 
 This command installs all required dependencies on Fedora:
 
 ```sh
-sudo dnf install python3-openstackclient ansible-core python3-openstacksdk python3-netaddr
+sudo dnf install python3-openstackclient python3-netaddr ansible-collections-openstack ansible-collection-ansible-utils
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
-
-## Ansible Collections
-
-The Ansible Collections are not packaged (yet) on recent versions of OSP and RHEL when `ansible-core` is
-installed instead of Ansible 2.9. So the collections need to be installed from `ansible-galaxy`.
-
-```sh
-ansible-galaxy collection install "openstack.cloud:<2.0.0" ansible.utils community.general
-```
 
 ## OpenShift Configuration Directory
 
