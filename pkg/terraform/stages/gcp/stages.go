@@ -98,6 +98,11 @@ func extractGCPLBConfig(s stages.SplitStage, directory string, terraformDir stri
 		return "", err
 	}
 
+	err = stages.AddLoadBalancersToInfra(gcptypes.Name, &ignData, []string{apiLBIpRaw.(string)}, []string{apiIntLBIpRaw.(string)})
+	if err != nil {
+		return "", err
+	}
+
 	lbConfig, err := lbconfig.GenerateLBConfigOverride(apiIntLBIpRaw.(string), apiLBIpRaw.(string))
 	if err != nil {
 		return "", err
