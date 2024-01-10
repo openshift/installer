@@ -1,0 +1,51 @@
+name: Add PR User Label
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  add_label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: install deps
+        run: |
+          yes | sudo apt update
+          yes | sudo apt upgrade
+          yes | sudo apt install python3
+          yes | sudo apt install python3-pip
+          yes | python3 -m pip install pyyaml
+          yes | sudo apt install jq
+      - name: determine owners
+        id: determine_owners
+        run: |
+          OWNER_FILE_DATA=`curl https://raw.githubusercontent.com/openshift/installer/master/OWNERS_ALIASES -o TMP_ALIASES`
+          pyoutput=$(python3 -c '
+          import json;
+          import sys;
+          import yaml;
+
+          path = "./TMP_ALIASES";
+          data = yaml.safe_load(open(path));
+          searchUser = str(sys.argv[1]);
+
+          userTeam = "external-user-owned";
+          for team in data["aliases"]:
+              if searchUser in data["aliases"][team]:
+                  t = team
+                  t = t.replace("-reviewers", "").replace("-approvers", "")
+                  userTeam = t
+                  break
+
+          print(userTeam)' ${{ github.event.pull_request.user.login }})
+
+          if [ -f TMP_ALIASES ]; then
+            rm TMP_ALIASES
+          fi
+          echo "LABEL=$pyoutput" >> $GITHUB_OUTPUT
+      - name: add label
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: "${{ steps.determine_owners.outputs.LABEL }}"
