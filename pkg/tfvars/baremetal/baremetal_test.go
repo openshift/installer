@@ -169,7 +169,7 @@ func TestMastersSelectionByRole(t *testing.T) {
 			data, err := TFVars(
 				tc.numControlPlaneReplicas,
 				tc.libvirtURI,
-				tc.apiVIP,
+				[]string{tc.apiVIP},
 				tc.imageCacheIP,
 				tc.bootstrapOSImage,
 				tc.externalBridge,
@@ -298,7 +298,7 @@ func TestRAIDBIOSConfig(t *testing.T) {
 			data, err := TFVars(
 				tc.numControlPlaneReplicas,
 				tc.libvirtURI,
-				tc.apiVIP,
+				[]string{tc.apiVIP},
 				tc.imageCacheIP,
 				tc.bootstrapOSImage,
 				tc.externalBridge,
@@ -333,6 +333,203 @@ func TestRAIDBIOSConfig(t *testing.T) {
 	}
 }
 
+func TestDriverInfo(t *testing.T) {
+	cases := []struct {
+		scenario string
+
+		numControlPlaneReplicas int64
+		apiVIPs                 []string
+		platformHosts           []*baremetal.Host
+		hostFiles               []*asset.File
+
+		expectedError       string
+		expectedDriverInfos []map[string]string
+	}{
+		{
+			scenario: "v4-only",
+
+			numControlPlaneReplicas: 2,
+			apiVIPs:                 []string{"192.0.2.42"},
+			platformHosts: platformHosts(
+				host("master-0", "master"),
+				host("master-1", "master"),
+			),
+			hostFiles: hostFiles(
+				files("master-0", nil),
+				files("master-1", nil),
+			),
+
+			expectedDriverInfos: []map[string]string{
+				{
+					"deploy_kernel":     "http://192.0.2.42:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://192.0.2.42:8084/master-0.initramfs",
+					"external_http_url": "",
+				},
+				{
+					"deploy_kernel":     "http://192.0.2.42:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://192.0.2.42:8084/master-1.initramfs",
+					"external_http_url": "",
+				},
+			},
+		},
+		{
+			scenario: "v6-only",
+
+			numControlPlaneReplicas: 2,
+			apiVIPs:                 []string{"2001:db8::1"},
+			platformHosts: platformHosts(
+				hostv6("master-0", "master"),
+				hostv6("master-1", "master"),
+			),
+			hostFiles: hostFiles(
+				files("master-0", nil),
+				files("master-1", nil),
+			),
+
+			expectedDriverInfos: []map[string]string{
+				{
+					"deploy_kernel":     "http://[2001:db8::1]:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://[2001:db8::1]:8084/master-0.initramfs",
+					"external_http_url": "",
+				},
+				{
+					"deploy_kernel":     "http://[2001:db8::1]:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://[2001:db8::1]:8084/master-1.initramfs",
+					"external_http_url": "",
+				},
+			},
+		},
+		{
+			scenario: "v4-primary",
+
+			numControlPlaneReplicas: 3,
+			apiVIPs:                 []string{"192.0.2.42", "2001:db8::1"},
+			platformHosts: platformHosts(
+				host("master-0", "master"),
+				hostv6("master-1", "master"),
+				// DNS names are not resolved, the right networking is assumed
+				&baremetal.Host{
+					Name:            "master-2",
+					Role:            "master",
+					HardwareProfile: "default",
+					BMC: baremetal.BMC{
+						Address: "redfish+http://example.com:8000/redfish/v1/Systems/e4427260-6250-4df9-9e8a-120f78a46aa6",
+					},
+				},
+			),
+			hostFiles: hostFiles(
+				files("master-0", nil),
+				files("master-1", nil),
+				files("master-2", nil),
+			),
+
+			expectedDriverInfos: []map[string]string{
+				{
+					"deploy_kernel":     "http://192.0.2.42:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://192.0.2.42:8084/master-0.initramfs",
+					"external_http_url": "",
+				},
+				{
+					"deploy_kernel":     "http://192.0.2.42:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://192.0.2.42:8084/master-1.initramfs",
+					"external_http_url": "http://[2001:db8::1]:6180/",
+				},
+				{
+					"deploy_kernel":     "http://192.0.2.42:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://192.0.2.42:8084/master-2.initramfs",
+					"external_http_url": "",
+				},
+			},
+		},
+		{
+			scenario: "v6-primary",
+
+			numControlPlaneReplicas: 3,
+			apiVIPs:                 []string{"2001:db8::1", "192.0.2.42"},
+			platformHosts: platformHosts(
+				host("master-0", "master"),
+				hostv6("master-1", "master"),
+				&baremetal.Host{
+					Name:            "master-2",
+					Role:            "master",
+					HardwareProfile: "default",
+					BMC: baremetal.BMC{
+						Address: "redfish+http://example.com:8000/redfish/v1/Systems/e4427260-6250-4df9-9e8a-120f78a46aa6",
+					},
+				},
+			),
+			hostFiles: hostFiles(
+				files("master-0", nil),
+				files("master-1", nil),
+				files("master-2", nil),
+			),
+
+			expectedDriverInfos: []map[string]string{
+				{
+					"deploy_kernel":     "http://[2001:db8::1]:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://[2001:db8::1]:8084/master-0.initramfs",
+					"external_http_url": "http://192.0.2.42:6180/",
+				},
+				{
+					"deploy_kernel":     "http://[2001:db8::1]:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://[2001:db8::1]:8084/master-1.initramfs",
+					"external_http_url": "",
+				},
+				{
+					"deploy_kernel":     "http://[2001:db8::1]:6180/images/ironic-python-agent.kernel",
+					"deploy_ramdisk":    "http://[2001:db8::1]:8084/master-2.initramfs",
+					"external_http_url": "",
+				},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.scenario, func(t *testing.T) {
+			imageDownloader = func(baseURL string) (string, error) {
+				return "", nil
+			}
+
+			data, err := TFVars(
+				tc.numControlPlaneReplicas,
+				"",
+				tc.apiVIPs,
+				tc.apiVIPs[0],
+				"",
+				"",
+				"",
+				"",
+				"",
+				tc.platformHosts,
+				tc.hostFiles,
+				"",
+				"",
+				"",
+				"")
+
+			if tc.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expectedError, err)
+			}
+
+			var cfg struct {
+				// Simpler type since we know the values are strings currently
+				DriverInfos []map[string]string `json:"driver_infos"`
+			}
+			err = json.Unmarshal(data, &cfg)
+			assert.NoError(t, err)
+
+			assert.Equal(t, len(tc.expectedDriverInfos), len(cfg.DriverInfos))
+			for i, driverInfo := range tc.expectedDriverInfos {
+				for name, value := range driverInfo {
+					assert.Equal(t, value, cfg.DriverInfos[i][name])
+				}
+			}
+		})
+	}
+}
+
 func host(name, tag string) *baremetal.Host {
 	return &baremetal.Host{
 		Name:            name,
@@ -340,6 +537,17 @@ func host(name, tag string) *baremetal.Host {
 		HardwareProfile: "default",
 		BMC: baremetal.BMC{
 			Address: "redfish+http://192.168.111.1:8000/redfish/v1/Systems/e4427260-6250-4df9-9e8a-120f78a46aa6",
+		},
+	}
+}
+
+func hostv6(name, tag string) *baremetal.Host {
+	return &baremetal.Host{
+		Name:            name,
+		Role:            tag,
+		HardwareProfile: "default",
+		BMC: baremetal.BMC{
+			Address: "redfish+http://[2001:db8::1]:8000/redfish/v1/Systems/e4427260-6250-4df9-9e8a-120f78a46aa6",
 		},
 	}
 }
