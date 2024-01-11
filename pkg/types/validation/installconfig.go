@@ -207,6 +207,10 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
 					"the marketplace capability requires the OperatorLifecycleManager capability"))
 			}
+			if c.Platform.BareMetal != nil && !enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
+					"platform baremetal requires the baremetal capability"))
+			}
 		}
 
 		if !enabledCaps.Has(configv1.ClusterVersionCapabilityCloudCredential) {

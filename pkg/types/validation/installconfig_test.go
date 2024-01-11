@@ -1661,6 +1661,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "not-valid": supported values: .*`,
 		},
+		{
+			name: "baremetal platform requires the baremetal capability",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None", AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
+				return c
+			}(),
+			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
+		},
 		//VIP tests
 		{
 			name: "apivip_v4_not_in_machinenetwork_cidr",
@@ -2360,7 +2372,8 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.BareMetal = validBareMetalPlatform()
 				c.AWS = nil
 				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
 				}
 				return c
 			}(),
