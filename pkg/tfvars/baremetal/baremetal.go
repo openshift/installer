@@ -156,8 +156,11 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 
 		// Properties
 		propertiesMap := map[string]interface{}{
-			"cpu_arch":     "x86_64",
 			"capabilities": bootMode,
+		}
+
+		if bmh.Spec.Architecture != "" {
+			propertiesMap["cpu_arch"] = bmh.Spec.Architecture
 		}
 
 		// Root device hints
