@@ -15,6 +15,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/buildssa"
 	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/internal/typeparams"
 )
 
 const Doc = `check for redundant or impossible nil comparisons
@@ -102,8 +103,11 @@ func runFunc(pass *analysis.Pass, fn *ssa.Function) {
 		for _, instr := range b.Instrs {
 			switch instr := instr.(type) {
 			case ssa.CallInstruction:
-				notNil(stack, instr, instr.Common().Value,
-					instr.Common().Description())
+				// A nil receiver may be okay for type params.
+				cc := instr.Common()
+				if !(cc.IsInvoke() && typeparams.IsTypeParam(cc.Value.Type())) {
+					notNil(stack, instr, cc.Value, cc.Description())
+				}
 			case *ssa.FieldAddr:
 				notNil(stack, instr, instr.X, "field selection")
 			case *ssa.IndexAddr:
@@ -134,6 +138,11 @@ func runFunc(pass *analysis.Pass, fn *ssa.Function) {
 			case *ssa.Panic:
 				if nilnessOf(stack, instr.X) == isnil {
 					reportf("nilpanic", instr.Pos(), "panic with nil value")
+				}
+			case *ssa.SliceToArrayPointer:
+				nn := nilnessOf(stack, instr.X)
+				if nn == isnil && slice2ArrayPtrLen(instr) > 0 {
+					reportf("conversionpanic", instr.Pos(), "nil slice being cast to an array of len > 0 will always panic")
 				}
 			}
 		}
@@ -245,7 +254,7 @@ func (n nilness) String() string { return nilnessStrings[n+1] }
 // or unknown given the dominating stack of facts.
 func nilnessOf(stack []fact, v ssa.Value) nilness {
 	switch v := v.(type) {
-	// unwrap ChangeInterface values recursively, to detect if underlying
+	// unwrap ChangeInterface and Slice values recursively, to detect if underlying
 	// values have any facts recorded or are otherwise known with regard to nilness.
 	//
 	// This work must be in addition to expanding facts about
@@ -258,6 +267,30 @@ func nilnessOf(stack []fact, v ssa.Value) nilness {
 	case *ssa.ChangeInterface:
 		if underlying := nilnessOf(stack, v.X); underlying != unknown {
 			return underlying
+		}
+	case *ssa.Slice:
+		if underlying := nilnessOf(stack, v.X); underlying != unknown {
+			return underlying
+		}
+	case *ssa.SliceToArrayPointer:
+		nn := nilnessOf(stack, v.X)
+		if slice2ArrayPtrLen(v) > 0 {
+			if nn == isnil {
+				// We know that *(*[1]byte)(nil) is going to panic because of the
+				// conversion. So return unknown to the caller, prevent useless
+				// nil deference reporting due to * operator.
+				return unknown
+			}
+			// Otherwise, the conversion will yield a non-nil pointer to array.
+			// Note that the instruction can still panic if array length greater
+			// than slice length. If the value is used by another instruction,
+			// that instruction can assume the panic did not happen when that
+			// instruction is reached.
+			return isnonnil
+		}
+		// In case array length is zero, the conversion result depends on nilness of the slice.
+		if nn != unknown {
+			return nn
 		}
 	}
 
@@ -277,9 +310,9 @@ func nilnessOf(stack []fact, v ssa.Value) nilness {
 		return isnonnil
 	case *ssa.Const:
 		if v.IsNil() {
-			return isnil
+			return isnil // nil or zero value of a pointer-like type
 		} else {
-			return isnonnil
+			return unknown // non-pointer
 		}
 	}
 
@@ -290,6 +323,10 @@ func nilnessOf(stack []fact, v ssa.Value) nilness {
 		}
 	}
 	return unknown
+}
+
+func slice2ArrayPtrLen(v *ssa.SliceToArrayPointer) int64 {
+	return v.Type().(*types.Pointer).Elem().Underlying().(*types.Array).Len()
 }
 
 // If b ends with an equality comparison, eq returns the operation and
@@ -313,7 +350,7 @@ func eq(b *ssa.BasicBlock) (op *ssa.BinOp, tsucc, fsucc *ssa.BasicBlock) {
 // ChangeInterface, have transitive nilness, such that if you know the
 // underlying value is nil, you also know the value itself is nil, and vice
 // versa. This operation allows callers to match on any of the related values
-// in analyses, rather than just the one form of the value that happend to
+// in analyses, rather than just the one form of the value that happened to
 // appear in a comparison.
 //
 // This work must be in addition to unwrapping values within nilnessOf because
