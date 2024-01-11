@@ -102,7 +102,7 @@ func (t *TerraformVariables) Name() string {
 	return tfvarsAssetName
 }
 
-// Dependencies returns the dependency of the TerraformVariable
+// Dependencies returns the dependency of the TerraformVariable.
 func (t *TerraformVariables) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
@@ -121,6 +121,8 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 }
 
 // Generate generates the terraform.tfvars file.
+//
+//nolint:gocyclo // legacy, pre-linter cyclomatic complexity
 func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	ctx := context.TODO()
 	clusterID := &installconfig.ClusterID{}
@@ -263,7 +265,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		masterConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
@@ -271,7 +273,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		workerConfigs := make([]*machinev1beta1.AWSMachineProviderConfig, len(workers))
 		for i, m := range workers {
-			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig)
+			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AWSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 		osImage := strings.SplitN(string(*rhcosImage), ",", 2)
 		osImageID := osImage[0]
@@ -360,7 +362,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		masterConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
@@ -368,7 +370,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		workerConfigs := make([]*machinev1beta1.AzureMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.AzureMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		client := aztypes.NewClient(session)
 		hyperVGeneration, err := client.GetHyperVGenerationVersion(context.TODO(), masterConfigs[0].VMSize, masterConfigs[0].Location, "")
@@ -475,7 +477,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		masterConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
@@ -483,7 +485,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		workerConfigs := make([]*machinev1beta1.GCPMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1beta1.GCPMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
@@ -561,7 +563,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		masterConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 		workers, err := workersAsset.MachineSets()
 		if err != nil {
@@ -569,7 +571,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		workerConfigs := make([]*ibmcloudprovider.IBMCloudMachineProviderSpec, len(workers))
 		for i, w := range workers {
-			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 		}
 
 		// Set existing network (boolean of whether one is being used)
@@ -896,7 +898,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		masterConfigs := make([]*machinev1.PowerVSMachineProviderConfig, len(masters))
 		for i, m := range masters {
-			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 
 		client, err := powervsconfig.NewClient()
@@ -935,7 +937,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 			vpcZone = *sn.Zone.Name
 		} else {
-			rand.Seed(time.Now().UnixNano())
+			rand.New(rand.NewSource(time.Now().UnixNano()))           //nolint:gosec // we don't need a crypto secure number
 			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
@@ -1031,7 +1033,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
 			var clusterMo mo.ClusterComputeResource
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec) //nolint:errcheck // legacy, pre-linter
 
 			rpObj, err := finder.ResourcePool(ctx, controlPlaneConfigs[i].Workspace.ResourcePool)
 			if err != nil {
@@ -1100,18 +1102,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Filename: TfPlatformVarsFileName,
 			Data:     data,
 		})
-
 	case nutanix.Name:
-		if rhcosImage == nil {
-			return errors.New("unable to retrieve rhcos image")
-		}
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
 			return errors.Wrapf(err, "error getting control plane machines")
 		}
 		controlPlaneConfigs := make([]*machinev1.NutanixMachineProviderConfig, len(controlPlanes))
 		for i, c := range controlPlanes {
-			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig)
+			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1.NutanixMachineProviderConfig) //nolint:errcheck // legacy, pre-linter
 		}
 
 		imgURI := string(*rhcosImage)
