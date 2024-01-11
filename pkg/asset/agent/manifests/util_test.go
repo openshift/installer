@@ -485,6 +485,8 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 			},
 			APIVIPs:      []string{"192.168.122.10"},
 			IngressVIPs:  []string{"192.168.122.11"},
+			APIVIP:       "192.168.122.10",
+			IngressVIP:   "192.168.122.11",
 			PlatformType: hiveext.BareMetalPlatformType,
 		},
 	}
