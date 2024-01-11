@@ -572,7 +572,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking.ClusterNetworkMTU = 8000
 				return c
 			}(),
-			expectedError: `networking\.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin OpenShiftSDN$`,
+			expectedError: `networking.networkType: Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, networking.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin OpenShiftSDN`,
 		},
 		{
 			name: "missing control plane",
@@ -1364,28 +1364,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
 		},
 		{
-			name: "invalid dual-stack configuration, bad plugin",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
-				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
-				return c
-			}(),
-			expectedError: `IPv6 is not supported for this networking plugin`,
-		},
-		{
-			name: "invalid single-stack IPv6 configuration, bad plugin",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
-				c.Networking = validIPv6NetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
-				return c
-			}(),
-			expectedError: `IPv6 is not supported for this networking plugin`,
-		},
-		{
 			name: "invalid dual-stack configuration, machine has no IPv6",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1728,7 +1706,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+			expectedError: "[networking.networkType: Invalid value: \"OpenShiftSDN\": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, platform.baremetal.ingressVIPs: Invalid value: \"10.0.0.4\": IP expected to be in one of the machine networks: ffd0::/48]",
 		},
 		{
 			name: "ingressvips_v6_on_openshiftsdn",
@@ -1744,7 +1722,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+			expectedError: "[networking.networkType: Invalid value: \"OpenShiftSDN\": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, platform.baremetal.apiVIPs: Invalid value: \"10.0.0.5\": IP expected to be in one of the machine networks: ffd0::/48]",
 		},
 		{
 			name: "too_many_apivips",
