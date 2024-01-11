@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/pkg/errors"
 
