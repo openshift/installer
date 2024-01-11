@@ -3,9 +3,12 @@ package vsphere
 import (
 	"fmt"
 	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
 
 	"github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -23,7 +26,7 @@ const (
 	ipv6 = 0x02
 )
 
-func createTFVarsSources(createHosts bool, ipTypes int64, cpc []*v1beta1.VSphereMachineProviderSpec) TFVarsSources {
+func createTFVarsSources(createHosts bool, ipTypes int64) TFVarsSources {
 	tvs := TFVarsSources{
 		InstallConfig: &installconfig.InstallConfig{
 			AssetBase: installconfig.AssetBase{
@@ -34,11 +37,14 @@ func createTFVarsSources(createHosts bool, ipTypes int64, cpc []*v1beta1.VSphere
 				},
 			},
 		},
-		ControlPlaneConfigs: cpc,
 	}
 
 	if createHosts {
 		tvs.InstallConfig.Config.VSphere.Hosts = createValidHosts(ipTypes)
+		machines, cpc, ips := createControlPlaneConfigs(ipTypes)
+		tvs.ControlPlaneMachines = machines
+		tvs.ControlPlaneConfigs = cpc
+		tvs.IPAddresses = ips
 	}
 
 	return tvs
@@ -69,11 +75,15 @@ func createValidHosts(ipTypes int64) []*vsphere.Host {
 	return hosts
 }
 
-func createControlPlaneConfigs(ipTypes int64) []*v1beta1.VSphereMachineProviderSpec {
-	var machines []*v1beta1.VSphereMachineProviderSpec
+func createControlPlaneConfigs(ipTypes int64) ([]v1beta1.Machine, []*v1beta1.VSphereMachineProviderSpec, []ipamv1.IPAddress) {
+	var machines []v1beta1.Machine
+	var specs []*v1beta1.VSphereMachineProviderSpec
+	var ips []ipamv1.IPAddress
 
 	for i := 1; i <= 3; i++ {
-		machine := &v1beta1.VSphereMachineProviderSpec{
+		machine := v1beta1.Machine{}
+		machine.Name = fmt.Sprintf("master-%d", i-1)
+		spec := &v1beta1.VSphereMachineProviderSpec{
 			Network: v1beta1.NetworkSpec{
 				Devices: []v1beta1.NetworkDeviceSpec{
 					{
@@ -83,24 +93,64 @@ func createControlPlaneConfigs(ipTypes int64) []*v1beta1.VSphereMachineProviderS
 			},
 		}
 
+		var gateway string
 		if ipTypes&ipv4 != 0 {
-			machine.Network.Devices[0].Gateway = ipv4Gateway
-			machine.Network.Devices[0].Nameservers = append(machine.Network.Devices[0].Nameservers, "8.8.8.8")
+			gateway = ipv4Gateway
+			spec.Network.Devices[0].Nameservers = append(spec.Network.Devices[0].Nameservers, "8.8.8.8")
 		} else if ipTypes&ipv6 != 0 {
-			machine.Network.Devices[0].Gateway = ipv6Gateway
-			machine.Network.Devices[0].Nameservers = append(machine.Network.Devices[0].Nameservers, "2001::100")
+			gateway = ipv6Gateway
+			spec.Network.Devices[0].Nameservers = append(spec.Network.Devices[0].Nameservers, "2001::100")
 		}
 
+		idx := 0
 		if ipTypes&ipv4 != 0 {
-			machine.Network.Devices[0].IPAddrs = append(machine.Network.Devices[0].IPAddrs, fmt.Sprintf(ipv4Template, i))
+			ipAddress := ipamv1.IPAddress{}
+			ipAddress.Name = fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx)
+			pool := v1beta1.AddressesFromPool{
+				Group:    "installer.openshift.io",
+				Resource: "IPPool",
+				Name:     fmt.Sprintf("default-%d", idx),
+			}
+			spec.Network.Devices[0].AddressesFromPools = append(spec.Network.Devices[0].AddressesFromPools, pool)
+			ip := fmt.Sprintf(ipv4Template, i)
+			separatorIndex := strings.Index(ip, "/")
+			if separatorIndex > 0 {
+				ipAddress.Spec.Address = ip[:separatorIndex]
+				prefix, err := strconv.Atoi(ip[strings.Index(ip, "/")+1:])
+				if err == nil {
+					ipAddress.Spec.Prefix = prefix
+				}
+			}
+			ipAddress.Spec.Gateway = gateway
+			ips = append(ips, ipAddress)
+			idx++
 		}
 		if ipTypes&ipv6 != 0 {
-			machine.Network.Devices[0].IPAddrs = append(machine.Network.Devices[0].IPAddrs, fmt.Sprintf(ipv6Template, i))
+			ipAddress := ipamv1.IPAddress{}
+			ipAddress.Name = fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx)
+			pool := v1beta1.AddressesFromPool{
+				Group:    "installer.openshift.io",
+				Resource: "IPPool",
+				Name:     fmt.Sprintf("default-%d", idx),
+			}
+			spec.Network.Devices[0].AddressesFromPools = append(spec.Network.Devices[0].AddressesFromPools, pool)
+			ip := fmt.Sprintf(ipv6Template, i)
+			separatorIndex := strings.Index(ip, "/")
+			if separatorIndex > 0 {
+				ipAddress.Spec.Address = ip[:separatorIndex]
+				prefix, err := strconv.Atoi(ip[strings.Index(ip, "/")+1:])
+				if err == nil {
+					ipAddress.Spec.Prefix = prefix
+				}
+			}
+			ipAddress.Spec.Gateway = gateway
+			ips = append(ips, ipAddress)
 		}
+		specs = append(specs, spec)
 		machines = append(machines, machine)
 	}
 
-	return machines
+	return machines, specs, ips
 }
 
 func createVsphereConfig() *config {
@@ -119,14 +169,14 @@ func TestProcessGuestNetworkConfiguration(t *testing.T) {
 		{
 			name:                 "No Hosts",
 			config:               createVsphereConfig(),
-			source:               createTFVarsSources(false, 0, nil),
+			source:               createTFVarsSources(false, 0),
 			expectedBootKargs:    "",
 			expectedControlKargs: []string(nil),
 		},
 		{
 			name:              "Hosts - Single IPV4",
 			config:            createVsphereConfig(),
-			source:            createTFVarsSources(true, ipv4, createControlPlaneConfigs(ipv4)),
+			source:            createTFVarsSources(true, ipv4),
 			expectedBootKargs: "ip=192.168.101.240::192.168.101.200:255.255.255.0:::none nameserver=8.8.8.8",
 			expectedControlKargs: []string{
 				"ip=192.168.101.241::192.168.101.200:255.255.255.0:::none nameserver=8.8.8.8",
@@ -137,7 +187,7 @@ func TestProcessGuestNetworkConfiguration(t *testing.T) {
 		{
 			name:              "Hosts - Single IPV6",
 			config:            createVsphereConfig(),
-			source:            createTFVarsSources(true, ipv6, createControlPlaneConfigs(ipv6)),
+			source:            createTFVarsSources(true, ipv6),
 			expectedBootKargs: "ip=[2001::240]::[2001::200]:64:::none nameserver=[2001::100]",
 			expectedControlKargs: []string{
 				"ip=[2001::241]::[2001::200]:64:::none nameserver=[2001::100]",
@@ -148,7 +198,7 @@ func TestProcessGuestNetworkConfiguration(t *testing.T) {
 		{
 			name:              "Hosts - Dual Stack",
 			config:            createVsphereConfig(),
-			source:            createTFVarsSources(true, ipv4|ipv6, createControlPlaneConfigs(ipv4|ipv6)),
+			source:            createTFVarsSources(true, ipv4|ipv6),
 			expectedBootKargs: "ip=192.168.101.240::192.168.101.200:255.255.255.0:::none ip=[2001::240]:::64:::none nameserver=8.8.8.8",
 			expectedControlKargs: []string{
 				"ip=192.168.101.241::192.168.101.200:255.255.255.0:::none ip=[2001::241]:::64:::none nameserver=8.8.8.8",

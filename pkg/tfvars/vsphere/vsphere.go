@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -45,6 +46,7 @@ type TFVarsSources struct {
 	InstallConfig           *installconfig.InstallConfig
 	InfraID                 string
 	ControlPlaneMachines    []machineapi.Machine
+	IPAddresses             []ipamv1.IPAddress
 }
 
 // TFVars generate vSphere-specific Terraform variables
@@ -161,22 +163,24 @@ func getSubnetMask(prefix netip.Prefix) (string, error) {
 	return maskStr, nil
 }
 
-func constructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gateway string) (string, error) {
+func constructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gateways []string) (string, error) {
 	outKargs := ""
 
-	var gatewayIP netip.Addr
-	if len(gateway) > 0 {
-		ip, err := netip.ParseAddr(gateway)
-		if err != nil {
-			return "", err
+	for index, address := range ipAddrs {
+		var gatewayIP netip.Addr
+		gateway := gateways[index]
+		if len(gateway) > 0 {
+			ip, err := netip.ParseAddr(gateway)
+			if err != nil {
+				return "", err
+			}
+			if ip.Is6() {
+				gateway = fmt.Sprintf("[%s]", gateway)
+			}
+			gatewayIP = ip
 		}
-		if ip.Is6() {
-			gateway = fmt.Sprintf("[%s]", gateway)
-		}
-		gatewayIP = ip
-	}
 
-	for _, address := range ipAddrs {
+		//for _, address := range ipAddrs {
 		prefix, err := netip.ParsePrefix(address)
 		if err != nil {
 			return "", err
@@ -228,7 +232,12 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 		if host.Role == vtypes.BootstrapRole {
 			logrus.Debugf("Generating kargs for bootstrap")
 			network := host.NetworkDevice
-			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway)
+			// Copy the one gateway into array so construct method can determine where to use it.
+			gateways := make([]string, len(network.IPAddrs))
+			for i := 0; i < len(gateways); i++ {
+				gateways[i] = network.Gateway
+			}
+			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
 			if err != nil {
 				return err
 			}
@@ -237,13 +246,42 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 		}
 	}
 
-	// Generate control plane kargs using info from machine network config
-	for _, machine := range sources.ControlPlaneConfigs {
-		logrus.Debugf("Generating kargs for control plane %v", machine.GenerateName)
-		network := machine.Network.Devices[0]
-		kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway)
-		if err != nil {
-			return err
+	// Current logic assumes only 1 network defined per machine
+	for index, machine := range sources.ControlPlaneMachines {
+		logrus.Infof("Generating kargs for control plane %v.", machine.Name)
+		network := sources.ControlPlaneConfigs[index].Network.Devices[0]
+		var kargs string
+		var err error
+
+		// Check to see if AddressFromPool is in use.  If so, we'll grab IPAddress w/ the same name.
+		// If no AddressesFromPools, check for static IP defined.
+		if network.AddressesFromPools != nil {
+			var ipAddresses []string
+			var gateways []string
+			for idx := range network.AddressesFromPools {
+				for _, address := range sources.IPAddresses {
+					logrus.Debugf("Checking IPAdress %v.  Does it match? %v", address.Name, fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx))
+					if address.Name == fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx) {
+						ipAddresses = append(ipAddresses, fmt.Sprintf("%v/%v", address.Spec.Address, address.Spec.Prefix))
+						gateways = append(gateways, address.Spec.Gateway)
+						break
+					}
+				}
+			}
+			kargs, err = constructKargsFromNetworkConfig(ipAddresses, network.Nameservers, gateways)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Copy the one gateway into array so construct method can determine where to use it.
+			gateways := make([]string, len(network.IPAddrs))
+			for i := 0; i < len(gateways); i++ {
+				gateways[i] = network.Gateway
+			}
+			kargs, err = constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
+			if err != nil {
+				return err
+			}
 		}
 		cfg.ControlPlaneNetworkKargs = append(cfg.ControlPlaneNetworkKargs, kargs)
 	}

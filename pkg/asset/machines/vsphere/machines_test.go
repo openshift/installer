@@ -378,7 +378,7 @@ func TestConfigMasters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, _, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
+			machines, _, _, _, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
@@ -449,7 +449,7 @@ func TestHostsToMachines(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, _, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
+			machines, _, claims, ips, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			// Check machine counts
@@ -457,8 +457,18 @@ func TestHostsToMachines(t *testing.T) {
 				t.Errorf("machine count (%v) did not match expected (%v).", len(machines), tc.machineCount)
 			}
 
+			// Check Claim counts
+			if len(claims) != tc.machineCount {
+				t.Errorf("ip address claim count (%v) did not match expected (%v).", len(claims), tc.machineCount)
+			}
+
+			// Check ip address counts
+			if len(ips) != tc.machineCount {
+				t.Errorf("ip address count (%v) did not match expected (%v).", len(ips), tc.machineCount)
+			}
+
 			// Verify static IP was set on all machines
-			for _, machine := range machines {
+			for index, machine := range machines {
 				provider, success := machine.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec)
 				if !success {
 					t.Errorf("Unable to convert vshere machine provider spec.")
@@ -466,8 +476,8 @@ func TestHostsToMachines(t *testing.T) {
 
 				if len(provider.Network.Devices) == 1 {
 					// Check IP
-					if provider.Network.Devices[0].IPAddrs == nil || provider.Network.Devices[0].IPAddrs[0] == "" {
-						t.Errorf("Static ip is not set: %v", machine)
+					if provider.Network.Devices[0].AddressesFromPools == nil {
+						t.Errorf("AddressesFromPools is not set: %v", machine)					
 					}
 
 					// Check nameserver
@@ -475,7 +485,7 @@ func TestHostsToMachines(t *testing.T) {
 						t.Errorf("Nameserver is not set: %v", machine)
 					}
 
-					gateway := provider.Network.Devices[0].Gateway
+					gateway := ips[index].Spec.Gateway
 					ip, err := netip.ParseAddr(gateway)
 					if err != nil {
 						t.Error(err)

@@ -1030,6 +1030,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		ipAddresses, err := mastersAsset.IPAddresses()
+		if err != nil {
+			return err
+		}
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
 			var clusterMo mo.ClusterComputeResource
@@ -1093,6 +1097,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				InfraID:                 clusterID.InfraID,
 				InstallConfig:           installConfig,
 				ControlPlaneMachines:    controlPlanes,
+				IPAddresses:             ipAddresses,
 			},
 		)
 		if err != nil {
