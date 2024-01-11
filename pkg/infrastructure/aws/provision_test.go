@@ -3275,7 +3275,7 @@ func TestEnsureTargetGroup(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := ensureTargetGroup(context.TODO(), logger, &test.mockSvc, "tgName", "vpc-1", readyzPath, apiPort, map[string]string{})
+			res, err := EnsureTargetGroup(context.TODO(), logger, &test.mockSvc, "tgName", "vpc-1", readyzPath, apiPort, map[string]string{})
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedOut, res)
@@ -3384,7 +3384,7 @@ func TestEnsureLoadBalancer(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := ensureLoadBalancer(context.TODO(), logger, &test.mockSvc, "lbName", []string{}, true, map[string]string{})
+			res, err := EnsureLoadBalancer(context.TODO(), logger, &test.mockSvc, "lbName", []string{}, true, map[string]string{})
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedOut, res)

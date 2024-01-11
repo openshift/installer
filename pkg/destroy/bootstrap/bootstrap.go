@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	configv1 "github.com/openshift/api/config/v1"
-	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/clusterapi"
@@ -30,7 +30,7 @@ import (
 
 // Destroy uses Terraform to remove bootstrap resources.
 func Destroy(ctx context.Context, dir string) (err error) {
-	metadata, err := cluster.LoadMetadata(dir)
+	metadata, err := metadata.Load(dir)
 	if err != nil {
 		return err
 	}

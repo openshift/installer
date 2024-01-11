@@ -11,13 +11,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/gather/providers"
 )
 
 // New returns a Gather based on `metadata.json` in `rootDir`.
 func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, masters []string, rootDir string) (providers.Gather, error) {
-	metadata, err := cluster.LoadMetadata(rootDir)
+	metadata, err := metadata.Load(rootDir)
 	if err != nil {
 		return nil, err
 	}

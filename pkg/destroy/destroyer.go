@@ -4,13 +4,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/cluster/metadata"
 	"github.com/openshift/installer/pkg/destroy/providers"
 )
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
 func New(logger logrus.FieldLogger, rootDir string) (providers.Destroyer, error) {
-	metadata, err := cluster.LoadMetadata(rootDir)
+	metadata, err := metadata.Load(rootDir)
 	if err != nil {
 		return nil, err
 	}
