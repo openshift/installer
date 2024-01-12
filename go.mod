@@ -1,6 +1,6 @@
 module github.com/openshift/installer
 
-go 1.20
+go 1.21
 
 require (
 	cloud.google.com/go/monitoring v1.15.1
