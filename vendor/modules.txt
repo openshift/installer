@@ -8801,7 +8801,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.17
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20240104110125-c7a2d3b41e1f
+# github.com/openshift/api v0.0.0-20240115183315-0793e918179d
 ## explicit; go 1.21
 github.com/openshift/api/annotations
 github.com/openshift/api/config/v1

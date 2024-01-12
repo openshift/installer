@@ -1919,8 +1919,8 @@ github.com/opencontainers/selinux v1.10.1/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuh
 github.com/openshift/api v0.0.0-20200326160804-ecb9283fe820/go.mod h1:RKMJ5CBnljLfnej+BJ/xnOWc3kZDvJUaIAEq2oKSPtE=
 github.com/openshift/api v0.0.0-20200827090112-c05698d102cf/go.mod h1:M3xexPhgM8DISzzRpuFUy+jfPjQPIcs9yqEYj17mXV8=
 github.com/openshift/api v0.0.0-20200829102639-8a3a835f1acf/go.mod h1:M3xexPhgM8DISzzRpuFUy+jfPjQPIcs9yqEYj17mXV8=
-github.com/openshift/api v0.0.0-20240104110125-c7a2d3b41e1f h1:3BMVfQpz1xe8MmJprp1+NL8hrpl9I04JVP9EczdCOqE=
-github.com/openshift/api v0.0.0-20240104110125-c7a2d3b41e1f/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
+github.com/openshift/api v0.0.0-20240115183315-0793e918179d h1:gtwDqGPf5QmsV8jvOUoDNbtyeby9QeLdsybNQ8mGqHQ=
+github.com/openshift/api v0.0.0-20240115183315-0793e918179d/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
 github.com/openshift/assisted-image-service v0.0.0-20230829160050-0b98ec74397b h1:wLVEgmzQjs3t4Z96gZzSLF/ws6ULliAks7z1lozNJrE=
 github.com/openshift/assisted-image-service v0.0.0-20230829160050-0b98ec74397b/go.mod h1:KTt/pnfs9gt0McDPrb0zVTkwd0xIFNik/ZJROIBzsbc=
 github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8 h1:+fZLKbycDo4JeLwPGVSAgf2XPaJGLM341l9ZfrrlxG0=

@@ -12,3 +12,10 @@ tests:
       apiVersion: config.openshift.io/v1
       kind: Authentication
       spec: {}
+  - name: Shouldn't be able to use the OIDC type in a stable version of the resource
+    initial: |
+      apiVersion: config.openshift.io/v1
+      kind: Authentication
+      spec:
+        type: OIDC
+    expectedError: "spec.type: Unsupported value: \"OIDC\": supported values: \"\", \"None\", \"IntegratedOAuth\""
