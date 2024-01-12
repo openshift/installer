@@ -194,6 +194,29 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expectedError: `^test-path\.diskType: Invalid value: "invalidDiskType": diskType must be one of \[eagerZeroedThick thick thin\]$`,
 		},
+		{
+			name: "Additional tag IDs provided",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.TagIDs = []string{
+					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL",
+					"urn:vmomi:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9579:GLOBAL",
+				}
+				return p
+			}(),
+		},
+		{
+			name: "Additional invalid tag IDs provided",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.TagIDs = []string{
+					"urn:bad:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9578:GLOBAL",
+					"urn:bad:InventoryServiceTag:5736bf56-49f5-4667-b38c-b97e09dc9579:GLOBAL",
+				}
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.tagIDs\: Invalid value\:.*?: tag ID must be in the format of urn\:vmomi\:InventoryServiceTag\:<UUID>\:GLOBAL$`,
+		},
 
 		{
 			name:     "Valid Multi-zone platform",
