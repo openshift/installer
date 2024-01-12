@@ -88,7 +88,7 @@ func TFVars(
 
 	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)
 	if isURL {
-		imageFilePath, err := cache.DownloadImageFile(baseImage, cache.InstallerApplicationName, "")
+		imageFilePath, err := cache.DownloadImageFile(baseImage, cache.InstallerApplicationName)
 		if err != nil {
 			return nil, err
 		}

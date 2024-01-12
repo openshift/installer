@@ -30,7 +30,7 @@ func uploadBaseImage(cloud string, baseImage, imageName string, infraID string, 
 	// location. Otherwise will take local file path from the URL.
 	switch url.Scheme {
 	case "http", "https":
-		localFilePath, err = cache.DownloadImageFile(baseImage, cache.InstallerApplicationName, "")
+		localFilePath, err = cache.DownloadImageFile(baseImage, cache.InstallerApplicationName)
 		if err != nil {
 			return err
 		}

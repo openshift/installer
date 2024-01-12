@@ -75,7 +75,7 @@ type TFVarsSources struct {
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	cachedImage, err := cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName, "")
+	cachedImage, err := cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
 	}

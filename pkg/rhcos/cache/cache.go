@@ -262,7 +262,12 @@ func (u *urlWithIntegrity) download(dataType, applicationName string) (string, e
 // DownloadImageFile is a helper function that obtains an image file from a given URL,
 // puts it in the cache and returns the local file path.  If the file is compressed
 // by a known compressor, the file is uncompressed prior to being returned.
-func DownloadImageFile(baseURL string, applicationName string, sha256Checksum string) (string, error) {
+func DownloadImageFile(baseURL string, applicationName string) (string, error) {
+	return DownloadImageFileWithSha(baseURL, applicationName, "")
+}
+
+// DownloadImageFileWithSha sets the sha256Checksum which is checked on download.
+func DownloadImageFileWithSha(baseURL string, applicationName string, sha256Checksum string) (string, error) {
 	logrus.Debugf("Obtaining RHCOS image file from '%v'", baseURL)
 
 	var u urlWithIntegrity
@@ -271,13 +276,16 @@ func DownloadImageFile(baseURL string, applicationName string, sha256Checksum st
 		return "", err
 	}
 	q := parsedURL.Query()
+	if sha256Checksum != "" {
+		u.uncompressedSHA256 = sha256Checksum
+	}
 	if uncompressedSHA256, ok := q["sha256"]; ok {
+		if sha256Checksum != "" && uncompressedSHA256[0] != sha256Checksum {
+			return "", errors.Errorf("supplied sha256Checksum does not match URL")
+		}
 		u.uncompressedSHA256 = uncompressedSHA256[0]
 		q.Del("sha256")
 		parsedURL.RawQuery = q.Encode()
-	} else if sha256Checksum != "" {
-		// Use the expected sha if provided
-		u.uncompressedSHA256 = sha256Checksum
 	}
 	u.location = *parsedURL
 

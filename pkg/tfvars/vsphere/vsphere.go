@@ -55,7 +55,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	failureDomainMap, importOvaFailureDomainMap := createFailureDomainMaps(sources.InstallConfig.Config.VSphere.FailureDomains, sources.InfraID)
 
 	if len(importOvaFailureDomainMap) > 0 {
-		cachedImage, err = cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName, "")
+		cachedImage, err = cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to use cached vsphere image")
 		}

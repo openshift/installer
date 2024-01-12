@@ -38,7 +38,7 @@ type config struct {
 	InstanceInfos []map[string]interface{} `json:"instance_infos"`
 }
 
-type imageDownloadFunc func(baseURL, applicationName string, sha256Checksum string) (string, error)
+type imageDownloadFunc func(baseURL, applicationName string) (string, error)
 
 var (
 	imageDownloader imageDownloadFunc
@@ -66,7 +66,7 @@ func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string)
 
 // TFVars generates bare metal specific Terraform variables.
 func TFVars(numControlPlaneReplicas int64, libvirtURI string, apiVIPs []string, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, hostFiles []*asset.File, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
-	bootstrapOSImage, err := imageDownloader(bootstrapOSImage, cache.InstallerApplicationName, "")
+	bootstrapOSImage, err := imageDownloader(bootstrapOSImage, cache.InstallerApplicationName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
 	}
