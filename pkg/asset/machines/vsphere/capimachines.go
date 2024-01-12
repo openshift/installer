@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 
 	machinev1 "github.com/openshift/api/machine/v1beta1"
 	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 
 	capv "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -58,7 +60,7 @@ func getNetworkInventoryPath(vcenterContext vcentercontexts.VCenterContext, netw
 
 // Machines returns a list of capi machines.
 func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, vcenterContexts *vcentercontexts.VCenterContexts) ([]*asset.RuntimeFile, error) {
-	machines, _, _, _, err := Machines(clusterID, config, pool, osImage, role, "")
+	machines, _, ipAddressClaims, ipAddresses, err := Machines(clusterID, config, pool, osImage, role, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve machines: %w", err)
 	}
@@ -86,6 +88,18 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			})
 		}
 
+		customVMXKeys := map[string]string{
+			"guestinfo.hostname": machine.Name,
+		}
+
+		if ipAddressClaims != nil {
+			kargs, err := utils.ConstructNetworkKargsFromMachine(ipAddressClaims, ipAddresses, &machine)
+			if err != nil {
+				return nil, fmt.Errorf("unable to construct kargs from machine config: %w", err)
+			}
+			customVMXKeys["guestinfo.afterburn.initrd.network-kargs"] = kargs
+		}
+
 		vsphereMachine := &capv.VSphereMachine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -100,10 +114,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 			Spec: capv.VSphereMachineSpec{
 				VirtualMachineCloneSpec: capv.VirtualMachineCloneSpec{
-					CustomVMXKeys: map[string]string{
-						"guestinfo.hostname": machine.Name,
-					},
-					TagIDs: []string{vcenterContext.TagID},
+					CustomVMXKeys: customVMXKeys,
+					TagIDs:        []string{vcenterContext.TagID},
 					Network: capv.NetworkSpec{
 						Devices: capvNetworkDevices,
 					},
@@ -155,6 +167,18 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 
 	// as part of provisioning conrtol plane nodes, we need to create a bootstrap node as well
 	if role == "master" {
+		customVMXKeys := map[string]string{}
+
+		if ipAddressClaims != nil {
+			kargs, err := utils.ConstructKargsForBootstrap(config)
+			if err != nil {
+				return nil, fmt.Errorf("unable to construct kargs from machine config: %w", err)
+			}
+			customVMXKeys["guestinfo.afterburn.initrd.network-kargs"] = kargs
+		}
+
+		bootstrapSpec := capvMachines[0].Spec
+		bootstrapSpec.CustomVMXKeys = customVMXKeys
 		bootstrapVSphereMachine := &capv.VSphereMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-bootstrap", clusterID),
@@ -162,7 +186,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
-			Spec: capvMachines[0].Spec,
+			Spec: bootstrapSpec,
 		}
 
 		result = append(result, &asset.RuntimeFile{

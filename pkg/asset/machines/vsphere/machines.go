@@ -229,7 +229,7 @@ func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineP
 				if err != nil {
 					return nil, nil, errors.Wrap(err, "unable to determine address prefix")
 				}
-				ipClaim, ipAddr := generateCapiNetwork(machine.Name, ipAddress, networkDevice.Gateway, prefix, 0, idx)
+				ipClaim, ipAddr := generateCapiNetwork(&machine, ipAddress, networkDevice.Gateway, prefix, 0, idx)
 				ipClaims = append(ipClaims, *ipClaim)
 				ipAddrs = append(ipAddrs, *ipAddr)
 			}
@@ -240,7 +240,9 @@ func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineP
 }
 
 // generateCapiNetwork this function will create IPAddressClaim and IPAddress for the specified information.
-func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceIndex, ipIndex int) (*ipamv1.IPAddressClaim, *ipamv1.IPAddress) {
+func generateCapiNetwork(machine *machineapi.Machine, ipAddress, gateway string, prefix, deviceIndex, ipIndex int) (*ipamv1.IPAddressClaim, *ipamv1.IPAddress) {
+	machineName := machine.Name
+
 	// Generate PoolRef
 	apigroup := "installer.openshift.io"
 	poolRef := corev1.TypedLocalObjectReference{
@@ -248,6 +250,9 @@ func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceI
 		Kind:     "IPPool",
 		Name:     fmt.Sprintf("default-%d", ipIndex),
 	}
+
+	gv := machinev1.SchemeGroupVersion
+	machineRef := metav1.NewControllerRef(machine, gv.WithKind("Machine"))
 
 	// Generate IPAddressClaim
 	ipclaim := &ipamv1.IPAddressClaim{
@@ -258,6 +263,9 @@ func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceI
 		ObjectMeta: metav1.ObjectMeta{
 			Finalizers: []string{
 				machineapi.IPClaimProtectionFinalizer,
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				*machineRef,
 			},
 			Name:      fmt.Sprintf("%s-claim-%d-%d", machineName, deviceIndex, ipIndex),
 			Namespace: "openshift-machine-api",

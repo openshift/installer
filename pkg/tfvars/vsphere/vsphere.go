@@ -1,12 +1,8 @@
 package vsphere
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net"
-	"net/netip"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -16,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	vtypes "github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 type folder struct {
@@ -148,80 +145,6 @@ func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
 	return vcenterMap
 }
 
-func getSubnetMask(prefix netip.Prefix) (string, error) {
-	prefixLength := net.IPv4len * 8
-	if prefix.Addr().Is6() {
-		prefixLength = net.IPv6len * 8
-	}
-	ipMask := net.CIDRMask(prefix.Masked().Bits(), prefixLength)
-	maskBytes, err := hex.DecodeString(ipMask.String())
-	if err != nil {
-		return "", err
-	}
-	ip := net.IP(maskBytes)
-	maskStr := ip.To16().String()
-	return maskStr, nil
-}
-
-func constructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gateways []string) (string, error) {
-	outKargs := ""
-
-	for index, address := range ipAddrs {
-		var gatewayIP netip.Addr
-		gateway := gateways[index]
-		if len(gateway) > 0 {
-			ip, err := netip.ParseAddr(gateway)
-			if err != nil {
-				return "", err
-			}
-			if ip.Is6() {
-				gateway = fmt.Sprintf("[%s]", gateway)
-			}
-			gatewayIP = ip
-		}
-
-		//for _, address := range ipAddrs {
-		prefix, err := netip.ParsePrefix(address)
-		if err != nil {
-			return "", err
-		}
-		var ipStr, gatewayStr, maskStr string
-		addr := prefix.Addr()
-		switch {
-		case addr.Is6():
-			maskStr = fmt.Sprintf("%d", prefix.Bits())
-			ipStr = fmt.Sprintf("[%s]", addr.String())
-			if len(gateway) > 0 && gatewayIP.Is6() {
-				gatewayStr = gateway
-			}
-		case addr.Is4():
-			maskStr, err = getSubnetMask(prefix)
-			if err != nil {
-				return "", err
-			}
-			if len(gateway) > 0 && gatewayIP.Is4() {
-				gatewayStr = gateway
-			}
-			ipStr = addr.String()
-		default:
-			return "", errors.New("IP address must adhere to IPv4 or IPv6 format")
-		}
-		outKargs += fmt.Sprintf("ip=%s::%s:%s:::none ", ipStr, gatewayStr, maskStr)
-	}
-
-	for _, nameserver := range nameservers {
-		ip := net.ParseIP(nameserver)
-		if ip.To4() == nil {
-			nameserver = fmt.Sprintf("[%s]", nameserver)
-		}
-		outKargs += fmt.Sprintf("nameserver=%s ", nameserver)
-	}
-
-	outKargs = strings.Trim(outKargs, " ")
-	logrus.Debugf("Generated karg: [%v].", outKargs)
-	return outKargs, nil
-}
-
 // processGuestNetworkConfiguration takes the config and sources data and generates the kernel arguments (kargs)
 // needed to boot RHCOS with static IP configurations.
 func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error {
@@ -237,7 +160,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 			for i := 0; i < len(gateways); i++ {
 				gateways[i] = network.Gateway
 			}
-			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
+			kargs, err := utils.ConstructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
 			if err != nil {
 				return err
 			}
@@ -268,7 +191,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 					}
 				}
 			}
-			kargs, err = constructKargsFromNetworkConfig(ipAddresses, network.Nameservers, gateways)
+			kargs, err = utils.ConstructKargsFromNetworkConfig(ipAddresses, network.Nameservers, gateways)
 			if err != nil {
 				return err
 			}
@@ -278,7 +201,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 			for i := 0; i < len(gateways); i++ {
 				gateways[i] = network.Gateway
 			}
-			kargs, err = constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
+			kargs, err = utils.ConstructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, gateways)
 			if err != nil {
 				return err
 			}
