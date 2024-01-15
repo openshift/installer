@@ -16,11 +16,11 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 )
 
-type InfraHelper struct {
-	clusterapi.Provider
+type Provider struct {
+	clusterapi.DefaultCAPIProvider
 }
 
-func (a InfraHelper) PreProvision(in clusterapi.PreProvisionInput) error {
+func (p Provider) PreProvision(in clusterapi.PreProvisionInput) error {
 	// TODO(padillon): skip if users bring their own roles
 	if err := putIAMRoles(in.ClusterID, in.InstallConfig); err != nil {
 		return fmt.Errorf("failed to create IAM roles: %w", err)
@@ -28,7 +28,7 @@ func (a InfraHelper) PreProvision(in clusterapi.PreProvisionInput) error {
 	return nil
 }
 
-func (a InfraHelper) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableInput) error {
+func (p Provider) ControlPlaneAvailable(in clusterapi.ControlPlaneAvailableInput) error {
 	awsCluster := &capa.AWSCluster{}
 	key := client.ObjectKey{
 		Name:      in.InfraID,

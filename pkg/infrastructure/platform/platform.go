@@ -48,7 +48,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
 	case awstypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
-			return clusterapi.InitializeProvider(awscapi.InfraHelper{}), nil
+			return clusterapi.InitializeProvider(awscapi.Provider{}), nil
 		}
 		if fg.Enabled(configv1.FeatureGateInstallAlternateInfrastructureAWS) {
 			return awsinfra.InitializeProvider(), nil
