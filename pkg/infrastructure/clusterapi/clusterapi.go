@@ -285,7 +285,9 @@ func (i InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCon
 	return nil
 }
 
-type DefaultCAPIProvider struct{}
+type DefaultCAPIProvider struct {
+	Provider
+}
 
 func (d DefaultCAPIProvider) PreProvision(in PreProvisionInput) error {
 	logrus.Debugf("Default PreProvision: doing nothing")
