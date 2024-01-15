@@ -54,6 +54,10 @@ type Provider interface {
 	// such as IAM roles or policies.
 	PreProvision(in PreProvisionInput) error
 
+	// Ignition generates the ignition secrets for bootstrap and control-plane machines
+	// and handles any preconditions for ignition.
+	Ignition(in IgnitionInput) ([]client.Object, error)
+
 	// ControlPlaneAvailable is called once cluster.Spec.ControlPlaneEndpoint.IsValid()
 	// returns true, typically after load balancers have been provisioned. It can be used
 	// to create DNS records.
@@ -63,6 +67,11 @@ type Provider interface {
 type PreProvisionInput struct {
 	ClusterID     string
 	InstallConfig *installconfig.InstallConfig
+}
+
+type IgnitionInput struct {
+	MasterIgnData, BootstrapIgnData []byte
+	InfraID                         string
 }
 
 type ControlPlaneAvailableInput struct {
@@ -96,43 +105,6 @@ func (i InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 		manifests = append(manifests, m.Object)
 	}
 
-	// Gather the ignition files, store them in a secret, and add them to manifests.
-	{
-		masterIgn := string(masterIgnAsset.Files()[0].Data)
-		bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
-		if err != nil {
-			return fileList, errors.Wrap(err, "unable to inject installation info")
-		}
-		manifests = append(manifests,
-			&corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
-					Namespace: capiutils.Namespace,
-					Labels: map[string]string{
-						"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-					},
-				},
-				Data: map[string][]byte{
-					"format": []byte("ignition"),
-					"value":  []byte(masterIgn),
-				},
-			},
-			&corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
-					Namespace: capiutils.Namespace,
-					Labels: map[string]string{
-						"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-					},
-				},
-				Data: map[string][]byte{
-					"format": []byte("ignition"),
-					"value":  []byte(bootstrapIgn),
-				},
-			},
-		)
-	}
-
 	preProvisionInput := PreProvisionInput{
 		ClusterID:     clusterID.InfraID,
 		InstallConfig: installConfig,
@@ -140,6 +112,17 @@ func (i InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 	if err := i.capiProvider.PreProvision(preProvisionInput); err != nil {
 		return fileList, fmt.Errorf("failed during pre-provisioning: %w", err)
 	}
+
+	ignInput := IgnitionInput{
+		BootstrapIgnData: bootstrapIgnAsset.Files()[0].Data,
+		MasterIgnData:    masterIgnAsset.Files()[0].Data,
+		InfraID:          clusterID.InfraID,
+	}
+	ignSecrets, err := i.capiProvider.Ignition(ignInput)
+	if err != nil {
+		return fileList, fmt.Errorf("failed during ignition secret generation: %w", err)
+	}
+	manifests = append(manifests, ignSecrets...)
 
 	// TODO(vincepri): The context should be passed down from the caller,
 	// although today the Asset interface doesn't allow it, refactor once it does.
@@ -292,6 +275,45 @@ type DefaultCAPIProvider struct {
 func (d DefaultCAPIProvider) PreProvision(in PreProvisionInput) error {
 	logrus.Debugf("Default PreProvision: doing nothing")
 	return nil
+}
+
+func (d DefaultCAPIProvider) Ignition(in IgnitionInput) ([]client.Object, error) {
+	logrus.Debugf("Using default ignition secret generation")
+	ignSecrets := []client.Object{}
+	masterIgn := string(in.MasterIgnData)
+	bootstrapIgn, err := injectInstallInfo(in.BootstrapIgnData)
+	if err != nil {
+		return nil, fmt.Errorf("unable to inject installation info: %w", err)
+	}
+	ignSecrets = append(ignSecrets,
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%s", in.InfraID, "master"),
+				Namespace: capiutils.Namespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": in.InfraID,
+				},
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(masterIgn),
+			},
+		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%s", in.InfraID, "bootstrap"),
+				Namespace: capiutils.Namespace,
+				Labels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": in.InfraID,
+				},
+			},
+			Data: map[string][]byte{
+				"format": []byte("ignition"),
+				"value":  []byte(bootstrapIgn),
+			},
+		},
+	)
+	return ignSecrets, nil
 }
 
 func (d DefaultCAPIProvider) ControlPlaneAvailable(in ControlPlaneAvailableInput) error {
