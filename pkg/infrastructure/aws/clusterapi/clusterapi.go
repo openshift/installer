@@ -17,7 +17,7 @@ import (
 )
 
 type InfraHelper struct {
-	clusterapi.CAPIInfraHelper
+	clusterapi.Provider
 }
 
 func (a InfraHelper) PreProvision(in clusterapi.PreProvisionInput) error {
