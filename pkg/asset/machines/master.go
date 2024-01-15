@@ -461,10 +461,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		ipClaims = data.IPClaims
 		ipAddrs = data.IPAddresses
 
-		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
-			controlPlaneMachineSet = nil
-		}
-
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
 	case powervstypes.Name:
 		mpool := defaultPowerVSMachinePoolPlatform(ic)
