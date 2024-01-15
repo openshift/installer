@@ -32,6 +32,16 @@ var (
 	longTimeout    = 10 * time.Minute
 )
 
+const (
+	// ocpDefaultLabelFmt is the format string for the default label
+	// added to the OpenShift created GCP resources.
+	ocpDefaultLabelFmt = "kubernetes-io-cluster-%s"
+
+	// capgProviderOwnedLabelFmt is the format string for the label
+	// used for resources created by the Cluster API GCP provider.
+	capgProviderOwnedLabelFmt = "capg-cluster-%s"
+)
+
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
 	Logger            logrus.FieldLogger
@@ -233,7 +243,8 @@ func (o *ClusterUninstaller) clusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) clusterLabelFilter() string {
-	return fmt.Sprintf("labels.kubernetes-io-cluster-%s = \"owned\"", o.ClusterID)
+	return fmt.Sprintf("(labels.%s = \"owned\") OR (labels.%s = \"owned\")",
+		fmt.Sprintf(ocpDefaultLabelFmt, o.ClusterID), fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID))
 }
 
 func (o *ClusterUninstaller) clusterLabelOrClusterIDFilter() string {
