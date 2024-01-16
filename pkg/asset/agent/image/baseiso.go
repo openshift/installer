@@ -88,7 +88,8 @@ func downloadIso(archName string) (string, error) {
 	}
 
 	url := format.Disk.Location
-	cachedImage, err := cache.DownloadImageFile(url, cache.AgentApplicationName)
+	sha := format.Disk.Sha256
+	cachedImage, err := cache.DownloadImageFileWithSha(url, cache.AgentApplicationName, sha)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to download base ISO image %s", url)
 	}
