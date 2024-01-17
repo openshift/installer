@@ -2304,7 +2304,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: "disabling CloudController capability available only for baremetal platforms",
+			expectedError: "disabling CloudCredential capability available only for baremetal platforms",
 		},
 		{
 			name: "CloudCredential is disabled in cloud gcp",
@@ -2317,7 +2317,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: "disabling CloudController capability available only for baremetal platforms",
+			expectedError: "disabling CloudCredential capability available only for baremetal platforms",
 		},
 		{
 			name: "CloudCredential is enabled in baremetal",
