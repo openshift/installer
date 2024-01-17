@@ -213,7 +213,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 			// check if platform is cloud
 			if c.None == nil && c.BareMetal == nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("capabilities"), c.Capabilities,
-					"disabling CloudController capability available only for baremetal platforms"))
+					"disabling CloudCredential capability available only for baremetal platforms"))
 			}
 		}
 	}
