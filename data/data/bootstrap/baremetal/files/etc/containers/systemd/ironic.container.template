@@ -25,6 +25,7 @@ Environment="IRONIC_HTPASSWD=${IRONIC_HTPASSWD}"
 Environment="INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD}"
 Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
 Environment="HTTP_PORT=${HTTP_PORT}"
+Environment="OS_DEFAULT__FORCE_RAW_IMAGES=False"
 
 [Service]
 EnvironmentFile=/etc/ironic.env
