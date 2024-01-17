@@ -109,7 +109,7 @@ func createBaremetalHost(host *baremetal.Host, bmc baremetalhost.BMCDetails) bar
 
 // Hosts returns the HostSettings with details of the hardware being
 // used to construct the cluster.
-func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSettings, error) {
+func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataSecret string) (*HostSettings, error) {
 	settings := &HostSettings{}
 
 	if config.Platform.BareMetal == nil {
@@ -152,9 +152,9 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
-			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
-				Method: "install_coreos",
-			}
+
+			// userDataSecret carries a reference to the master ignition file
+			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
 			numMasters++
 		}
 

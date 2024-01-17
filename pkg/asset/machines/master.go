@@ -376,7 +376,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 
-		hostSettings, err := baremetal.Hosts(ic, machines)
+		hostSettings, err := baremetal.Hosts(ic, machines, masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to assemble host data")
 		}
