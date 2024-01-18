@@ -45,7 +45,7 @@ func StartSimulator(setVersionToSupported bool) (*simulator.Server, error) {
 	}
 
 	model.Folder = 1
-	model.Datacenter = 2
+	model.Datacenter = 5
 	model.OpaqueNetwork = 1
 	err := model.Create()
 	if err != nil {
