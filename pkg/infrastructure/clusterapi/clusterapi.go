@@ -286,6 +286,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	manifests := []client.Object{}
 	manifests = append(manifests, infraManifests...)
 	manifests = append(manifests, machineManifests...)
+
 	for _, m := range manifests {
 		key := client.ObjectKey{
 			Name:      m.GetName(),
