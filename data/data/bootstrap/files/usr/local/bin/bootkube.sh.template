@@ -93,6 +93,13 @@ then
 
 	rm --recursive --force api-bootstrap
 
+  # A more desireable end state would be require wiring up the infrastructure in some way and read it from rendered-manifest-dir
+	CLUSTER_PROFILE_ANNOTATION="self-managed-high-availability"
+  if [ "$BOOTSTRAP_INPLACE" = true ]
+  then
+	  CLUSTER_PROFILE_ANNOTATION="single-node-developer"
+  fi
+
 	bootkube_podman_run \
 		--name api-render \
 		--volume "$PWD:/assets:z" \
@@ -100,6 +107,7 @@ then
 		/usr/bin/render \
 		--asset-output-dir=/assets/api-bootstrap \
 		--rendered-manifest-dir=/assets/manifests \
+		--cluster-profile=${CLUSTER_PROFILE_ANNOTATION} \
 		--payload-version=$VERSION
 
 	cp api-bootstrap/manifests/* manifests/
