@@ -7,7 +7,7 @@
 # solutions. Once all providers have alternate implementations, this image will
 # not be needed. 
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
 ARG TAGS="altinfra"
 ARG OPENSHIFT_INSTALL_CLUSTER_API=""
 WORKDIR /go/src/github.com/openshift/installer
