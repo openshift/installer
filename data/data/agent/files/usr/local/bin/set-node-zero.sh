@@ -67,7 +67,8 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
 # definitions:
 # apply-host-config.service
 # assisted-service-pod.service
-# create-cluster-and-infraenv.service
+# agent-register-cluster.service 
+# agent-register-infraenv.service
 # install-status.service
 # start-cluster-installation.service
 BOOTSTRAP_HOST_MAC=${NODE_ZERO_MAC}

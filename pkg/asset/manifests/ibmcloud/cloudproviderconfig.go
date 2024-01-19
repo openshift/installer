@@ -3,9 +3,14 @@ package ibmcloud
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/sirupsen/logrus"
+
+	configv1 "github.com/openshift/api/config/v1"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -33,10 +38,13 @@ type provider struct {
 	G2VPCName                string `gcfg:"g2VpcName"`
 	G2WorkerServiceAccountID string `gcfg:"g2workerServiceAccountID"`
 	G2VPCSubnetNames         string `gcfg:"g2VpcSubnetNames"`
+	IAMEndpointOverride      string `gcfg:"iamEndpointOverride,omitempty"`
+	VPCEndpointOverride      string `gcfg:"g2EndpointOverride,omitempty"`
+	RMEndpointOverride       string `gcfg:"rmEndpointOverride,omitempty"`
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, vpcName string, subnets []string, controlPlaneZones []string, computeZones []string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, vpcName string, subnets []string, controlPlaneZones []string, computeZones []string, serviceEndpoints []configv1.IBMCloudServiceEndpoint) (string, error) {
 	if vpcName == "" {
 		vpcName = fmt.Sprintf("%s-vpc", infraID)
 	}
@@ -67,6 +75,23 @@ func CloudProviderConfig(infraID string, accountID string, region string, resour
 			G2VPCSubnetNames:         subnetNames,
 		},
 	}
+
+	// Add any IBM Cloud Service Endpoint overrides as necessary
+	for _, endpoint := range serviceEndpoints {
+		switch endpoint.Name {
+		case configv1.IBMCloudServiceIAM:
+			config.Provider.IAMEndpointOverride = endpoint.URL
+		case configv1.IBMCloudServiceVPC:
+			// Trim the version suffix ('/v1', '/v21', etc.) from the VPC URL since the CCM appends it
+			suffixRegex := regexp.MustCompile(`(^.*)/v\d+[/]{0,1}$`)
+			config.Provider.VPCEndpointOverride = suffixRegex.ReplaceAllString(endpoint.URL, "${1}")
+		case configv1.IBMCloudServiceResourceManager:
+			config.Provider.RMEndpointOverride = endpoint.URL
+		default:
+			logrus.Debugf("ignoring unnecessary endpoint override for cloud provider config: %s", endpoint.Name)
+		}
+	}
+
 	buf := &bytes.Buffer{}
 	template := template.Must(template.New("ibmcloud cloudproviderconfig").Parse(configTmpl))
 	if err := template.Execute(buf, config); err != nil {
@@ -105,5 +130,6 @@ g2ResourceGroupName = {{.Provider.G2ResourceGroupName}}
 g2VpcName = {{.Provider.G2VPCName}}
 g2workerServiceAccountID = {{.Provider.G2WorkerServiceAccountID}}
 g2VpcSubnetNames = {{.Provider.G2VPCSubnetNames}}
+{{ if ne .Provider.IAMEndpointOverride ""}}{{ printf "iamEndpointOverride = %s\n" .Provider.IAMEndpointOverride }}{{ end }}{{ if ne .Provider.VPCEndpointOverride ""}}{{ printf "g2EndpointOverride = %s\n" .Provider.VPCEndpointOverride }}{{ end }}{{ if ne .Provider.RMEndpointOverride ""}}{{ printf "rmEndpointOverride = %s\n" .Provider.RMEndpointOverride }}{{ end }}
 
 `

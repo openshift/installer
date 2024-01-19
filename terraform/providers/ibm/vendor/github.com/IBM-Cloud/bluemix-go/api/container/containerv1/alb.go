@@ -6,18 +6,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/client"
 )
 
-type ClusterALB struct {
-	ID                string      `json:"id"`
-	Region            string      `json:"region"`
-	DataCenter        string      `json:"dataCenter"`
-	IsPaid            bool        `json:"isPaid"`
-	IngressHostname   string      `json:"ingressHostname"`
-	IngressSecretName string      `json:"ingressSecretName"`
-	ALBs              []ALBConfig `json:"alb"`
-}
-
 // ALBConfig config for alb configuration
-// swagger:model
 type ALBConfig struct {
 	ALBID             string `json:"albID" description:"The ALB id"`
 	ClusterID         string `json:"clusterID"`
@@ -33,18 +22,13 @@ type ALBConfig struct {
 	DisableDeployment bool   `json:"disableDeployment" description:"Indicate whether to disable deployment only on disable alb"`
 }
 
-// ClusterALBSecret albsecret related information for cluster
-// swagger:model
-type ClusterALBSecret struct {
-	ID         string            `json:"id"`
-	Region     string            `json:"region"`
-	DataCenter string            `json:"dataCenter"`
-	IsPaid     bool              `json:"isPaid"`
-	ALBSecrets []ALBSecretConfig `json:"albSecrets" description:"All the ALB secrets created in this cluster"`
+// AlbCreateResp used to send back the albid on a create request
+type AlbCreateResp struct {
+	Alb     string `json:"alb"`
+	Cluster string `json:"cluster"`
 }
 
 // ALBSecretConfig config for alb-secret configuration
-// swagger:model
 type ALBSecretConfig struct {
 	SecretName          string `json:"secretName" description:"Name of the ALB secret"`
 	ClusterID           string `json:"clusterID"`
@@ -62,6 +46,31 @@ type ALBSecretsPerCRN struct {
 	ALBSecrets []string `json:"albsecrets" description:"ALB secrets correponding to a CRN"`
 }
 
+// ALBUpdatePolicy represents the body for interacting with the update ALB APIs.
+type ALBUpdatePolicy struct {
+	AutoUpdate    bool `json:"autoUpdate" binding:"required"`
+	LatestVersion bool `json:"latestVersion"`
+}
+
+type ClusterALB struct {
+	ID                string      `json:"id"`
+	Region            string      `json:"region"`
+	DataCenter        string      `json:"dataCenter"`
+	IsPaid            bool        `json:"isPaid"`
+	IngressHostname   string      `json:"ingressHostname"`
+	IngressSecretName string      `json:"ingressSecretName"`
+	ALBs              []ALBConfig `json:"alb"`
+}
+
+// ClusterALBSecret albsecret related information for cluster
+type ClusterALBSecret struct {
+	ID         string            `json:"id"`
+	Region     string            `json:"region"`
+	DataCenter string            `json:"dataCenter"`
+	IsPaid     bool              `json:"isPaid"`
+	ALBSecrets []ALBSecretConfig `json:"albSecrets" description:"All the ALB secrets created in this cluster"`
+}
+
 // CreateALB struct representation of ALB arriving in create requests
 type CreateALB struct {
 	Zone            string `json:"zone"`
@@ -73,27 +82,26 @@ type CreateALB struct {
 	IngressImage    string `json:"ingressImage,omitempty"`
 }
 
-// AlbCreateResp used to send back the albid on a create request
-type AlbCreateResp struct {
-	Alb     string `json:"alb"`
-	Cluster string `json:"cluster"`
-}
-
-//Clusters interface
+// Clusters interface
 type Albs interface {
-	CreateALB(alb CreateALB, clusterID string, target ClusterTargetHeader) (AlbCreateResp, error)
-	ListClusterALBs(clusterNameOrID string, target ClusterTargetHeader) ([]ALBConfig, error)
-	GetALB(albID string, target ClusterTargetHeader) (ALBConfig, error)
+	ChangeALBUpdatePolicy(clusterID string, config ALBUpdatePolicy, target ClusterTargetHeader) error
 	ConfigureALB(albID string, config ALBConfig, disableDeployment bool, target ClusterTargetHeader) error
-	RemoveALB(albID string, target ClusterTargetHeader) error
+	CreateALB(alb CreateALB, clusterID string, target ClusterTargetHeader) (AlbCreateResp, error)
 	DeployALBCert(config ALBSecretConfig, target ClusterTargetHeader) error
-	UpdateALBCert(config ALBSecretConfig, target ClusterTargetHeader) error
-	RemoveALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) error
-	RemoveALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) error
-	GetClusterALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) (ALBSecretConfig, error)
-	GetClusterALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) (ALBSecretConfig, error)
-	ListALBCerts(clusterID string, target ClusterTargetHeader) ([]ALBSecretConfig, error)
+	DisableALB(albID string, target ClusterTargetHeader) error
+	EnableALB(albID string, config ALBConfig, target ClusterTargetHeader) error
+	GetALB(albID string, target ClusterTargetHeader) (ALBConfig, error)
 	GetALBTypes(target ClusterTargetHeader) ([]string, error)
+	GetALBUpdatePolicy(clusterID string, target ClusterTargetHeader) (ALBUpdatePolicy, error)
+	GetClusterALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) (ALBSecretConfig, error)
+	GetClusterALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) (ALBSecretConfig, error)
+	ListALBCerts(clusterID string, target ClusterTargetHeader) ([]ALBSecretConfig, error)
+	ListClusterALBs(clusterNameOrID string, target ClusterTargetHeader) ([]ALBConfig, error)
+	RemoveALB(albID string, target ClusterTargetHeader) error
+	RemoveALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) error
+	RemoveALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) error
+	UpdateALBCert(config ALBSecretConfig, target ClusterTargetHeader) error
+	UpdateALBs(clusterID string, target ClusterTargetHeader) error
 }
 
 type alb struct {
@@ -129,11 +137,25 @@ func (r *alb) GetALB(albID string, target ClusterTargetHeader) (ALBConfig, error
 	return successV, err
 }
 
-// ConfigureALB enables or disables alb for cluster
-func (r *alb) ConfigureALB(albID string, config ALBConfig, disableDeployment bool, target ClusterTargetHeader) error {
+// EnableALB enables alb for a cluster
+func (r *alb) EnableALB(albID string, config ALBConfig, target ClusterTargetHeader) error {
 	var successV interface{}
+	_, err := r.client.Post("/v1/alb/albs", config, &successV, target.ToMap())
+	return err
+}
+
+// DisableALB disables the alb for a cluster
+func (r *alb) DisableALB(albID string, target ClusterTargetHeader) error {
+	_, err := r.client.Delete(fmt.Sprintf("/v1/alb/albs/%s", albID), target.ToMap())
+	return err
+}
+
+// ConfigureALB enables or disables alb for cluster
+//
+// Deprecated: Unsupported API endpoint, use EnableALB and DisableALB instead.
+func (r *alb) ConfigureALB(albID string, config ALBConfig, disableDeployment bool, target ClusterTargetHeader) error {
 	if config.Enable {
-		_, err := r.client.Post("/v1/alb/albs", config, &successV, target.ToMap())
+		_, err := r.client.Post("/v1/alb/albs", config, nil, target.ToMap())
 		return err
 	}
 	_, err := r.client.Delete(fmt.Sprintf("/v1/alb/albs/%s?disableDeployment=%t", albID, disableDeployment), target.ToMap())
@@ -141,37 +163,48 @@ func (r *alb) ConfigureALB(albID string, config ALBConfig, disableDeployment boo
 }
 
 // RemoveALB removes the alb
+//
+// Deprecated: Unsupported API endpoint, use DisableALB instead.
 func (r *alb) RemoveALB(albID string, target ClusterTargetHeader) error {
 	_, err := r.client.Delete(fmt.Sprintf("/v1/alb/albs/%s", albID), target.ToMap())
 	return err
 }
 
 // DeployALBCert deploys alb-cert
+//
+// Deprecated: Unsupported API endpoint, use CreateIngressSecret instead.
 func (r *alb) DeployALBCert(config ALBSecretConfig, target ClusterTargetHeader) error {
-	var successV interface{}
-	_, err := r.client.Post("/v1/alb/albsecrets", config, &successV, target.ToMap())
+	_, err := r.client.Post("/v1/alb/albsecrets", config, nil, target.ToMap())
 	return err
 }
 
 // UpdateALBCert updates alb-cert
+//
+// Deprecated: Unsupported API endpoint, use UpdateIngressSecret instead.
 func (r *alb) UpdateALBCert(config ALBSecretConfig, target ClusterTargetHeader) error {
 	_, err := r.client.Put("/v1/alb/albsecrets", config, nil, target.ToMap())
 	return err
 }
 
 // RemoveALBCertBySecretName removes the alb-cert
+//
+// Deprecated: Unsupported API endpoint, use DeleteIngressSecret instead.
 func (r *alb) RemoveALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) error {
 	_, err := r.client.Delete(fmt.Sprintf("/v1/alb/clusters/%s/albsecrets?albSecretName=%s", clusterID, secretName), target.ToMap())
 	return err
 }
 
 // RemoveALBCertByCertCRN removes the alb-cert
+//
+// Deprecated: Unsupported API endpoint.
 func (r *alb) RemoveALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) error {
 	_, err := r.client.Delete(fmt.Sprintf("/v1/alb/clusters/%s/albsecrets?certCrn=%s", clusterID, certCRN), target.ToMap())
 	return err
 }
 
 // GetClusterALBCertBySecretName returns details about specified alb cert for given secretName
+//
+// Deprecated: Unsupported API endpoint.
 func (r *alb) GetClusterALBCertBySecretName(clusterID string, secretName string, target ClusterTargetHeader) (ALBSecretConfig, error) {
 	var successV ALBSecretConfig
 	_, err := r.client.Get(fmt.Sprintf("/v1/alb/clusters/%s/albsecrets?albSecretName=%s", clusterID, secretName), &successV, target.ToMap())
@@ -179,13 +212,17 @@ func (r *alb) GetClusterALBCertBySecretName(clusterID string, secretName string,
 }
 
 // GetClusterALBCertByCertCrn returns details about specified alb cert for given certCRN
+//
+// Deprecated: Unsupported API endpoint, use GetIngressSecret instead.
 func (r *alb) GetClusterALBCertByCertCRN(clusterID string, certCRN string, target ClusterTargetHeader) (ALBSecretConfig, error) {
 	var successV ALBSecretConfig
 	_, err := r.client.Get(fmt.Sprintf("/v1/alb/clusters/%s/albsecrets?certCrn=%s", clusterID, certCRN), &successV, target.ToMap())
 	return successV, err
 }
 
-// ListALBCerts for cluster...
+// ListALBCerts for cluster
+//
+// Deprecated: Unsupported API endpoint, use GetIngressSecretList instead.
 func (r *alb) ListALBCerts(clusterID string, target ClusterTargetHeader) ([]ALBSecretConfig, error) {
 	var successV ClusterALBSecret
 	_, err := r.client.Get(fmt.Sprintf("/v1/alb/clusters/%s/albsecrets", clusterID), &successV, target.ToMap())
@@ -193,8 +230,29 @@ func (r *alb) ListALBCerts(clusterID string, target ClusterTargetHeader) ([]ALBS
 }
 
 // GetALBTypes returns list of available alb types
+//
+// Deprecated: Unsupported API endpoint.
 func (r *alb) GetALBTypes(target ClusterTargetHeader) ([]string, error) {
 	var successV []string
 	_, err := r.client.Get("/v1/alb/albtypes", &successV, target.ToMap())
 	return successV, err
+}
+
+// GetALBUpdatePolicy returns the ALB update policy for cluster
+func (r *alb) GetALBUpdatePolicy(clusterID string, target ClusterTargetHeader) (ALBUpdatePolicy, error) {
+	var successV ALBUpdatePolicy
+	_, err := r.client.Get(fmt.Sprintf("/v1/alb/clusters/%s/updatepolicy", clusterID), &successV, target.ToMap())
+	return successV, err
+}
+
+// ChangeALBUpdatePolicy changes the ALB update policy for cluster
+func (r *alb) ChangeALBUpdatePolicy(clusterID string, config ALBUpdatePolicy, target ClusterTargetHeader) error {
+	_, err := r.client.Put(fmt.Sprintf("/v1/alb/clusters/%s/updatepolicy", clusterID), config, nil, target.ToMap())
+	return err
+}
+
+// UpdateALBs forces a one-time update of all ALB to the latest build
+func (r *alb) UpdateALBs(clusterID string, target ClusterTargetHeader) error {
+	_, err := r.client.Put(fmt.Sprintf("/v1/alb/clusters/%s/update", clusterID), nil, nil, target.ToMap())
+	return err
 }

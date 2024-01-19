@@ -21513,7 +21513,7 @@ func (s *AmazonRedshiftSource) SetName(v string) *AmazonRedshiftSource {
 type AmazonRedshiftTarget struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the data of the Amazon Reshift target node.
+	// Specifies the data of the Amazon Redshift target node.
 	Data *AmazonRedshiftNodeData `type:"structure"`
 
 	// The nodes that are inputs to the data target.
@@ -25849,6 +25849,9 @@ type CodeGenConfigurationNode struct {
 	// Specifies a target that uses Postgres SQL.
 	PostgreSQLCatalogTarget *PostgreSQLCatalogTarget `type:"structure"`
 
+	// Specifies a Glue DataBrew recipe node.
+	Recipe *Recipe `type:"structure"`
+
 	// Specifies an Amazon Redshift data store.
 	RedshiftSource *RedshiftSource `type:"structure"`
 
@@ -25917,6 +25920,12 @@ type CodeGenConfigurationNode struct {
 	// Specifies a transform that chooses one DynamicFrame from a collection of
 	// DynamicFrames. The output is the selected DynamicFrame
 	SelectFromCollection *SelectFromCollection `type:"structure"`
+
+	// Specifies a Snowflake data source.
+	SnowflakeSource *SnowflakeSource `type:"structure"`
+
+	// Specifies a target that writes to a Snowflake data source.
+	SnowflakeTarget *SnowflakeTarget `type:"structure"`
 
 	// Specifies a connector to an Apache Spark data source.
 	SparkConnectorSource *SparkConnectorSource `type:"structure"`
@@ -26152,6 +26161,11 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("PostgreSQLCatalogTarget", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.Recipe != nil {
+		if err := s.Recipe.Validate(); err != nil {
+			invalidParams.AddNested("Recipe", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.RedshiftSource != nil {
 		if err := s.RedshiftSource.Validate(); err != nil {
 			invalidParams.AddNested("RedshiftSource", err.(request.ErrInvalidParams))
@@ -26255,6 +26269,16 @@ func (s *CodeGenConfigurationNode) Validate() error {
 	if s.SelectFromCollection != nil {
 		if err := s.SelectFromCollection.Validate(); err != nil {
 			invalidParams.AddNested("SelectFromCollection", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SnowflakeSource != nil {
+		if err := s.SnowflakeSource.Validate(); err != nil {
+			invalidParams.AddNested("SnowflakeSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SnowflakeTarget != nil {
+		if err := s.SnowflakeTarget.Validate(); err != nil {
+			invalidParams.AddNested("SnowflakeTarget", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.SparkConnectorSource != nil {
@@ -26528,6 +26552,12 @@ func (s *CodeGenConfigurationNode) SetPostgreSQLCatalogTarget(v *PostgreSQLCatal
 	return s
 }
 
+// SetRecipe sets the Recipe field's value.
+func (s *CodeGenConfigurationNode) SetRecipe(v *Recipe) *CodeGenConfigurationNode {
+	s.Recipe = v
+	return s
+}
+
 // SetRedshiftSource sets the RedshiftSource field's value.
 func (s *CodeGenConfigurationNode) SetRedshiftSource(v *RedshiftSource) *CodeGenConfigurationNode {
 	s.RedshiftSource = v
@@ -26651,6 +26681,18 @@ func (s *CodeGenConfigurationNode) SetSelectFields(v *SelectFields) *CodeGenConf
 // SetSelectFromCollection sets the SelectFromCollection field's value.
 func (s *CodeGenConfigurationNode) SetSelectFromCollection(v *SelectFromCollection) *CodeGenConfigurationNode {
 	s.SelectFromCollection = v
+	return s
+}
+
+// SetSnowflakeSource sets the SnowflakeSource field's value.
+func (s *CodeGenConfigurationNode) SetSnowflakeSource(v *SnowflakeSource) *CodeGenConfigurationNode {
+	s.SnowflakeSource = v
+	return s
+}
+
+// SetSnowflakeTarget sets the SnowflakeTarget field's value.
+func (s *CodeGenConfigurationNode) SetSnowflakeTarget(v *SnowflakeTarget) *CodeGenConfigurationNode {
+	s.SnowflakeTarget = v
 	return s
 }
 
@@ -27952,6 +27994,9 @@ type Connection struct {
 	//    SASL SCRAM password (if the user has the Glue encrypt passwords setting
 	//    selected).
 	//
+	//    * KAFKA_SASL_SCRAM_SECRETS_ARN - The Amazon Resource Name of a secret
+	//    in Amazon Web Services Secrets Manager.
+	//
 	//    * KAFKA_SASL_GSSAPI_KEYTAB - The S3 location of a Kerberos keytab file.
 	//    A keytab stores long-term keys for one or more principals. For more information,
 	//    see MIT Kerberos Documentation: Keytab (https://web.mit.edu/kerberos/krb5-latest/doc/basic/keytab_def.html).
@@ -29080,6 +29125,12 @@ type CrawlerTargets struct {
 	// Specifies Amazon DynamoDB targets.
 	DynamoDBTargets []*DynamoDBTarget `type:"list"`
 
+	// Specifies Apache Hudi data store targets.
+	HudiTargets []*HudiTarget `type:"list"`
+
+	// Specifies Apache Iceberg data store targets.
+	IcebergTargets []*IcebergTarget `type:"list"`
+
 	// Specifies JDBC targets.
 	JdbcTargets []*JdbcTarget `type:"list"`
 
@@ -29143,6 +29194,18 @@ func (s *CrawlerTargets) SetDeltaTargets(v []*DeltaTarget) *CrawlerTargets {
 // SetDynamoDBTargets sets the DynamoDBTargets field's value.
 func (s *CrawlerTargets) SetDynamoDBTargets(v []*DynamoDBTarget) *CrawlerTargets {
 	s.DynamoDBTargets = v
+	return s
+}
+
+// SetHudiTargets sets the HudiTargets field's value.
+func (s *CrawlerTargets) SetHudiTargets(v []*HudiTarget) *CrawlerTargets {
+	s.HudiTargets = v
+	return s
+}
+
+// SetIcebergTargets sets the IcebergTargets field's value.
+func (s *CrawlerTargets) SetIcebergTargets(v []*IcebergTarget) *CrawlerTargets {
+	s.IcebergTargets = v
 	return s
 }
 
@@ -30971,28 +31034,48 @@ type CreateJobInput struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// a value of G.1X, G.2X, G.4X, G.8X or G.025X for Spark jobs. Accepts the value
 	// Z.2X for Ray jobs.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
 	//
-	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
-	//    of m emory, 128 GB disk), and provides up to 8 Ray workers based on the
-	//    autoscaler.
+	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPUs, 4
+	//    GB of memory) with 84GB disk (approximately 34GB free), and provides 1
+	//    executor per worker. We recommend this worker type for low volume streaming
+	//    jobs. This worker type is only available for Glue version 3.0 streaming
+	//    jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -32555,24 +32638,43 @@ type CreateSessionInput struct {
 	// Consult the documentation for other job types.
 	Timeout *int64 `min:"1" type:"integer"`
 
-	// The type of predefined worker that is allocated to use for the session. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// The type of predefined worker that is allocated when a job runs. Accepts
+	// a value of G.1X, G.2X, G.4X, or G.8X for Spark jobs. Accepts the value Z.2X
+	// for Ray notebooks.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -32773,6 +32875,10 @@ type CreateTableInput struct {
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
+	// Specifies an OpenTableFormatInput structure when creating an open format
+	// table.
+	OpenTableFormatInput *OpenTableFormatInput_ `type:"structure"`
+
 	// A list of partition indexes, PartitionIndex structures, to create in the
 	// table.
 	PartitionIndexes []*PartitionIndex `type:"list"`
@@ -32822,6 +32928,11 @@ func (s *CreateTableInput) Validate() error {
 	if s.TransactionId != nil && len(*s.TransactionId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TransactionId", 1))
 	}
+	if s.OpenTableFormatInput != nil {
+		if err := s.OpenTableFormatInput.Validate(); err != nil {
+			invalidParams.AddNested("OpenTableFormatInput", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.PartitionIndexes != nil {
 		for i, v := range s.PartitionIndexes {
 			if v == nil {
@@ -32853,6 +32964,12 @@ func (s *CreateTableInput) SetCatalogId(v string) *CreateTableInput {
 // SetDatabaseName sets the DatabaseName field's value.
 func (s *CreateTableInput) SetDatabaseName(v string) *CreateTableInput {
 	s.DatabaseName = &v
+	return s
+}
+
+// SetOpenTableFormatInput sets the OpenTableFormatInput field's value.
+func (s *CreateTableInput) SetOpenTableFormatInput(v *OpenTableFormatInput_) *CreateTableInput {
+	s.OpenTableFormatInput = v
 	return s
 }
 
@@ -49505,6 +49622,197 @@ func (s *GrokClassifier) SetVersion(v int64) *GrokClassifier {
 	return s
 }
 
+// Specifies an Apache Hudi data source.
+type HudiTarget struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the connection to use to connect to the Hudi target. If your
+	// Hudi files are stored in buckets that require VPC authorization, you can
+	// set their connection properties here.
+	ConnectionName *string `type:"string"`
+
+	// A list of glob patterns used to exclude from the crawl. For more information,
+	// see Catalog Tables with a Crawler (https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html).
+	Exclusions []*string `type:"list"`
+
+	// The maximum depth of Amazon S3 paths that the crawler can traverse to discover
+	// the Hudi metadata folder in your Amazon S3 path. Used to limit the crawler
+	// run time.
+	MaximumTraversalDepth *int64 `type:"integer"`
+
+	// An array of Amazon S3 location strings for Hudi, each indicating the root
+	// folder with which the metadata files for a Hudi table resides. The Hudi folder
+	// may be located in a child folder of the root folder.
+	//
+	// The crawler will scan all folders underneath a path for a Hudi folder.
+	Paths []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HudiTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s HudiTarget) GoString() string {
+	return s.String()
+}
+
+// SetConnectionName sets the ConnectionName field's value.
+func (s *HudiTarget) SetConnectionName(v string) *HudiTarget {
+	s.ConnectionName = &v
+	return s
+}
+
+// SetExclusions sets the Exclusions field's value.
+func (s *HudiTarget) SetExclusions(v []*string) *HudiTarget {
+	s.Exclusions = v
+	return s
+}
+
+// SetMaximumTraversalDepth sets the MaximumTraversalDepth field's value.
+func (s *HudiTarget) SetMaximumTraversalDepth(v int64) *HudiTarget {
+	s.MaximumTraversalDepth = &v
+	return s
+}
+
+// SetPaths sets the Paths field's value.
+func (s *HudiTarget) SetPaths(v []*string) *HudiTarget {
+	s.Paths = v
+	return s
+}
+
+// A structure that defines an Apache Iceberg metadata table to create in the
+// catalog.
+type IcebergInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// A required metadata operation. Can only be set to CREATE.
+	//
+	// MetadataOperation is a required field
+	MetadataOperation *string `type:"string" required:"true" enum:"MetadataOperation"`
+
+	// The table version for the Iceberg table. Defaults to 2.
+	Version *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IcebergInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IcebergInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *IcebergInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "IcebergInput_"}
+	if s.MetadataOperation == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetadataOperation"))
+	}
+	if s.Version != nil && len(*s.Version) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMetadataOperation sets the MetadataOperation field's value.
+func (s *IcebergInput_) SetMetadataOperation(v string) *IcebergInput_ {
+	s.MetadataOperation = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *IcebergInput_) SetVersion(v string) *IcebergInput_ {
+	s.Version = &v
+	return s
+}
+
+// Specifies an Apache Iceberg data source where Iceberg tables are stored in
+// Amazon S3.
+type IcebergTarget struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the connection to use to connect to the Iceberg target.
+	ConnectionName *string `type:"string"`
+
+	// A list of glob patterns used to exclude from the crawl. For more information,
+	// see Catalog Tables with a Crawler (https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html).
+	Exclusions []*string `type:"list"`
+
+	// The maximum depth of Amazon S3 paths that the crawler can traverse to discover
+	// the Iceberg metadata folder in your Amazon S3 path. Used to limit the crawler
+	// run time.
+	MaximumTraversalDepth *int64 `type:"integer"`
+
+	// One or more Amazon S3 paths that contains Iceberg metadata folders as s3://bucket/prefix.
+	Paths []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IcebergTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s IcebergTarget) GoString() string {
+	return s.String()
+}
+
+// SetConnectionName sets the ConnectionName field's value.
+func (s *IcebergTarget) SetConnectionName(v string) *IcebergTarget {
+	s.ConnectionName = &v
+	return s
+}
+
+// SetExclusions sets the Exclusions field's value.
+func (s *IcebergTarget) SetExclusions(v []*string) *IcebergTarget {
+	s.Exclusions = v
+	return s
+}
+
+// SetMaximumTraversalDepth sets the MaximumTraversalDepth field's value.
+func (s *IcebergTarget) SetMaximumTraversalDepth(v int64) *IcebergTarget {
+	s.MaximumTraversalDepth = &v
+	return s
+}
+
+// SetPaths sets the Paths field's value.
+func (s *IcebergTarget) SetPaths(v []*string) *IcebergTarget {
+	s.Paths = v
+	return s
+}
+
 // The same unique identifier was associated with two different records.
 type IdempotentParameterMismatchException struct {
 	_            struct{}                  `type:"structure"`
@@ -50687,46 +50995,48 @@ type Job struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, G.4X, G.8X, or G.025X for Spark jobs. Accepts
-	// the value Z.2X for Ray jobs.
+	// a value of G.1X, G.2X, G.4X, G.8X or G.025X for Spark jobs. Accepts the value
+	// Z.2X for Ray jobs.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for workloads such as data transforms, joins, and queries,
-	//    to offers a scalable and cost effective way to run most jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for workloads such as data transforms, joins, and queries,
-	//    to offers a scalable and cost effective way to run most jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPU, 64 GB
-	//    of memory, 256 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for jobs whose workloads contain your most demanding
-	//    transforms, aggregations, joins, and queries. This worker type is available
-	//    only for Glue version 3.0 or later Spark ETL jobs in the following Amazon
-	//    Web Services Regions: US East (Ohio), US East (N. Virginia), US West (Oregon),
-	//    Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo),
-	//    Canada (Central), Europe (Frankfurt), Europe (Ireland), and Europe (Stockholm).
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
 	//
-	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPU, 128 GB
-	//    of memory, 512 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for jobs whose workloads contain your most demanding
-	//    transforms, aggregations, joins, and queries. This worker type is available
-	//    only for Glue version 3.0 or later Spark ETL jobs, in the same Amazon
-	//    Web Services Regions as supported for the G.4X worker type.
+	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPUs, 4
+	//    GB of memory) with 84GB disk (approximately 34GB free), and provides 1
+	//    executor per worker. We recommend this worker type for low volume streaming
+	//    jobs. This worker type is only available for Glue version 3.0 streaming
+	//    jobs.
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
-	//
-	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
-	//    of m emory, 128 GB disk), and provides a default of 8 Ray workers (1 per
-	//    vCPU).
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -51274,28 +51584,48 @@ type JobRun struct {
 	TriggerName *string `min:"1" type:"string"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// a value of G.1X, G.2X, G.4X, G.8X or G.025X for Spark jobs. Accepts the value
 	// Z.2X for Ray jobs.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
 	//
-	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
-	//    of m emory, 128 GB disk), and provides up to 8 Ray workers (one per vCPU)
-	//    based on the autoscaler.
+	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPUs, 4
+	//    GB of memory) with 84GB disk (approximately 34GB free), and provides 1
+	//    executor per worker. We recommend this worker type for low volume streaming
+	//    jobs. This worker type is only available for Glue version 3.0 streaming
+	//    jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -51605,28 +51935,48 @@ type JobUpdate struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// a value of G.1X, G.2X, G.4X, G.8X or G.025X for Spark jobs. Accepts the value
 	// Z.2X for Ray jobs.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
 	//
-	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
-	//    of m emory, 128 GB disk), and provides up to 8 Ray workers based on the
-	//    autoscaler.
+	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPUs, 4
+	//    GB of memory) with 84GB disk (approximately 34GB free), and provides 1
+	//    executor per worker. We recommend this worker type for low volume streaming
+	//    jobs. This worker type is only available for Glue version 3.0 streaming
+	//    jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -52125,6 +52475,13 @@ type KafkaStreamingSourceOptions struct {
 	// values are "earliest" or "latest". The default value is "latest".
 	StartingOffsets *string `type:"string"`
 
+	// The timestamp of the record in the Kafka topic to start reading data from.
+	// The possible values are a timestamp string in UTC format of the pattern yyyy-mm-ddTHH:MM:SSZ
+	// (where Z represents a UTC timezone offset with a +/-. For example: "2023-04-04T08:00:00+08:00").
+	//
+	// Only one of StartingTimestamp or StartingOffsets must be set.
+	StartingTimestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
 	// A Java regex string that identifies the topic list to subscribe to. You must
 	// specify at least one of "topicName", "assign" or "subscribePattern".
 	SubscribePattern *string `type:"string"`
@@ -52245,6 +52602,12 @@ func (s *KafkaStreamingSourceOptions) SetSecurityProtocol(v string) *KafkaStream
 // SetStartingOffsets sets the StartingOffsets field's value.
 func (s *KafkaStreamingSourceOptions) SetStartingOffsets(v string) *KafkaStreamingSourceOptions {
 	s.StartingOffsets = &v
+	return s
+}
+
+// SetStartingTimestamp sets the StartingTimestamp field's value.
+func (s *KafkaStreamingSourceOptions) SetStartingTimestamp(v time.Time) *KafkaStreamingSourceOptions {
+	s.StartingTimestamp = &v
 	return s
 }
 
@@ -52387,9 +52750,20 @@ type KinesisStreamingSourceOptions struct {
 	RoleSessionName *string `type:"string"`
 
 	// The starting position in the Kinesis data stream to read data from. The possible
-	// values are "latest", "trim_horizon", or "earliest". The default value is
-	// "latest".
+	// values are "latest", "trim_horizon", "earliest", or a timestamp string in
+	// UTC format in the pattern yyyy-mm-ddTHH:MM:SSZ (where Z represents a UTC
+	// timezone offset with a +/-. For example: "2023-04-04T08:00:00-04:00"). The
+	// default value is "latest".
+	//
+	// Note: Using a value that is a timestamp string in UTC format for "startingPosition"
+	// is supported only for Glue version 4.0 or later.
 	StartingPosition *string `type:"string" enum:"StartingPosition"`
+
+	// The timestamp of the record in the Kinesis data stream to start reading data
+	// from. The possible values are a timestamp string in UTC format of the pattern
+	// yyyy-mm-ddTHH:MM:SSZ (where Z represents a UTC timezone offset with a +/-.
+	// For example: "2023-04-04T08:00:00+08:00").
+	StartingTimestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The Amazon Resource Name (ARN) of the Kinesis data stream.
 	StreamArn *string `type:"string"`
@@ -52521,6 +52895,12 @@ func (s *KinesisStreamingSourceOptions) SetRoleSessionName(v string) *KinesisStr
 // SetStartingPosition sets the StartingPosition field's value.
 func (s *KinesisStreamingSourceOptions) SetStartingPosition(v string) *KinesisStreamingSourceOptions {
 	s.StartingPosition = &v
+	return s
+}
+
+// SetStartingTimestamp sets the StartingTimestamp field's value.
+func (s *KinesisStreamingSourceOptions) SetStartingTimestamp(v time.Time) *KinesisStreamingSourceOptions {
+	s.StartingTimestamp = &v
 	return s
 }
 
@@ -56413,6 +56793,54 @@ func (s *NullValueField) SetValue(v string) *NullValueField {
 	return s
 }
 
+// A structure representing an open format table.
+type OpenTableFormatInput_ struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies an IcebergInput structure that defines an Apache Iceberg metadata
+	// table.
+	IcebergInput *IcebergInput_ `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OpenTableFormatInput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OpenTableFormatInput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OpenTableFormatInput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OpenTableFormatInput_"}
+	if s.IcebergInput != nil {
+		if err := s.IcebergInput.Validate(); err != nil {
+			invalidParams.AddNested("IcebergInput", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIcebergInput sets the IcebergInput field's value.
+func (s *OpenTableFormatInput_) SetIcebergInput(v *IcebergInput_) *OpenTableFormatInput_ {
+	s.IcebergInput = v
+	return s
+}
+
 // The operation timed out.
 type OperationTimeoutException struct {
 	_            struct{}                  `type:"structure"`
@@ -58546,6 +58974,153 @@ func (s *QuerySchemaVersionMetadataOutput) SetNextToken(v string) *QuerySchemaVe
 // SetSchemaVersionId sets the SchemaVersionId field's value.
 func (s *QuerySchemaVersionMetadataOutput) SetSchemaVersionId(v string) *QuerySchemaVersionMetadataOutput {
 	s.SchemaVersionId = &v
+	return s
+}
+
+// A Glue Studio node that uses a Glue DataBrew recipe in Glue jobs.
+type Recipe struct {
+	_ struct{} `type:"structure"`
+
+	// The nodes that are inputs to the recipe node, identified by id.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the Glue Studio node.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// A reference to the DataBrew recipe used by the node.
+	//
+	// RecipeReference is a required field
+	RecipeReference *RecipeReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Recipe) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Recipe) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Recipe) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Recipe"}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.RecipeReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("RecipeReference"))
+	}
+	if s.RecipeReference != nil {
+		if err := s.RecipeReference.Validate(); err != nil {
+			invalidParams.AddNested("RecipeReference", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *Recipe) SetInputs(v []*string) *Recipe {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *Recipe) SetName(v string) *Recipe {
+	s.Name = &v
+	return s
+}
+
+// SetRecipeReference sets the RecipeReference field's value.
+func (s *Recipe) SetRecipeReference(v *RecipeReference) *Recipe {
+	s.RecipeReference = v
+	return s
+}
+
+// A reference to a Glue DataBrew recipe.
+type RecipeReference struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the DataBrew recipe.
+	//
+	// RecipeArn is a required field
+	RecipeArn *string `type:"string" required:"true"`
+
+	// The RecipeVersion of the DataBrew recipe.
+	//
+	// RecipeVersion is a required field
+	RecipeVersion *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecipeReference) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RecipeReference) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RecipeReference) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RecipeReference"}
+	if s.RecipeArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("RecipeArn"))
+	}
+	if s.RecipeVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("RecipeVersion"))
+	}
+	if s.RecipeVersion != nil && len(*s.RecipeVersion) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RecipeVersion", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRecipeArn sets the RecipeArn field's value.
+func (s *RecipeReference) SetRecipeArn(v string) *RecipeReference {
+	s.RecipeArn = &v
+	return s
+}
+
+// SetRecipeVersion sets the RecipeVersion field's value.
+func (s *RecipeReference) SetRecipeVersion(v string) *RecipeReference {
+	s.RecipeVersion = &v
 	return s
 }
 
@@ -63594,6 +64169,386 @@ func (s *SkewedInfo) SetSkewedColumnValues(v []*string) *SkewedInfo {
 	return s
 }
 
+// Specifies configuration for Snowflake nodes in Glue Studio.
+type SnowflakeNodeData struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies what action to take when writing to a table with preexisting data.
+	// Valid values: append, merge, truncate, drop.
+	Action *string `type:"string"`
+
+	// Specifies additional options passed to the Snowflake connector. If options
+	// are specified elsewhere in this node, this will take precedence.
+	AdditionalOptions map[string]*string `type:"map"`
+
+	// Specifies whether automatic query pushdown is enabled. If pushdown is enabled,
+	// then when a query is run on Spark, if part of the query can be "pushed down"
+	// to the Snowflake server, it is pushed down. This improves performance of
+	// some queries.
+	AutoPushdown *bool `type:"boolean"`
+
+	// Specifies a Glue Data Catalog Connection to a Snowflake endpoint.
+	Connection *Option `type:"structure"`
+
+	// Specifies a Snowflake database for your node to use.
+	Database *string `type:"string"`
+
+	// Not currently used.
+	IamRole *Option `type:"structure"`
+
+	// Specifies a merge action. Valid values: simple, custom. If simple, merge
+	// behavior is defined by MergeWhenMatched and MergeWhenNotMatched. If custom,
+	// defined by MergeClause.
+	MergeAction *string `type:"string"`
+
+	// A SQL statement that specifies a custom merge behavior.
+	MergeClause *string `type:"string"`
+
+	// Specifies how to resolve records that match preexisting data when merging.
+	// Valid values: update, delete.
+	MergeWhenMatched *string `type:"string"`
+
+	// Specifies how to process records that do not match preexisting data when
+	// merging. Valid values: insert, none.
+	MergeWhenNotMatched *string `type:"string"`
+
+	// A SQL string run after the Snowflake connector performs its standard actions.
+	PostAction *string `type:"string"`
+
+	// A SQL string run before the Snowflake connector performs its standard actions.
+	PreAction *string `type:"string"`
+
+	// A SQL string used to retrieve data with the query sourcetype.
+	SampleQuery *string `type:"string"`
+
+	// Specifies a Snowflake database schema for your node to use.
+	Schema *string `type:"string"`
+
+	// Specifies the columns combined to identify a record when detecting matches
+	// for merges and upserts. A list of structures with value, label and description
+	// keys. Each structure describes a column.
+	SelectedColumns []*Option `type:"list"`
+
+	// Specifies how retrieved data is specified. Valid values: "table", "query".
+	SourceType *string `type:"string"`
+
+	// The name of a staging table used when performing merge or upsert append actions.
+	// Data is written to this table, then moved to table by a generated postaction.
+	StagingTable *string `type:"string"`
+
+	// Specifies a Snowflake table for your node to use.
+	Table *string `type:"string"`
+
+	// Manually defines the target schema for the node. A list of structures with
+	// value , label and description keys. Each structure defines a column.
+	TableSchema []*Option `type:"list"`
+
+	// Not currently used.
+	TempDir *string `type:"string"`
+
+	// Used when Action is append. Specifies the resolution behavior when a row
+	// already exists. If true, preexisting rows will be updated. If false, those
+	// rows will be inserted.
+	Upsert *bool `type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeNodeData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeNodeData) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *SnowflakeNodeData) SetAction(v string) *SnowflakeNodeData {
+	s.Action = &v
+	return s
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *SnowflakeNodeData) SetAdditionalOptions(v map[string]*string) *SnowflakeNodeData {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetAutoPushdown sets the AutoPushdown field's value.
+func (s *SnowflakeNodeData) SetAutoPushdown(v bool) *SnowflakeNodeData {
+	s.AutoPushdown = &v
+	return s
+}
+
+// SetConnection sets the Connection field's value.
+func (s *SnowflakeNodeData) SetConnection(v *Option) *SnowflakeNodeData {
+	s.Connection = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *SnowflakeNodeData) SetDatabase(v string) *SnowflakeNodeData {
+	s.Database = &v
+	return s
+}
+
+// SetIamRole sets the IamRole field's value.
+func (s *SnowflakeNodeData) SetIamRole(v *Option) *SnowflakeNodeData {
+	s.IamRole = v
+	return s
+}
+
+// SetMergeAction sets the MergeAction field's value.
+func (s *SnowflakeNodeData) SetMergeAction(v string) *SnowflakeNodeData {
+	s.MergeAction = &v
+	return s
+}
+
+// SetMergeClause sets the MergeClause field's value.
+func (s *SnowflakeNodeData) SetMergeClause(v string) *SnowflakeNodeData {
+	s.MergeClause = &v
+	return s
+}
+
+// SetMergeWhenMatched sets the MergeWhenMatched field's value.
+func (s *SnowflakeNodeData) SetMergeWhenMatched(v string) *SnowflakeNodeData {
+	s.MergeWhenMatched = &v
+	return s
+}
+
+// SetMergeWhenNotMatched sets the MergeWhenNotMatched field's value.
+func (s *SnowflakeNodeData) SetMergeWhenNotMatched(v string) *SnowflakeNodeData {
+	s.MergeWhenNotMatched = &v
+	return s
+}
+
+// SetPostAction sets the PostAction field's value.
+func (s *SnowflakeNodeData) SetPostAction(v string) *SnowflakeNodeData {
+	s.PostAction = &v
+	return s
+}
+
+// SetPreAction sets the PreAction field's value.
+func (s *SnowflakeNodeData) SetPreAction(v string) *SnowflakeNodeData {
+	s.PreAction = &v
+	return s
+}
+
+// SetSampleQuery sets the SampleQuery field's value.
+func (s *SnowflakeNodeData) SetSampleQuery(v string) *SnowflakeNodeData {
+	s.SampleQuery = &v
+	return s
+}
+
+// SetSchema sets the Schema field's value.
+func (s *SnowflakeNodeData) SetSchema(v string) *SnowflakeNodeData {
+	s.Schema = &v
+	return s
+}
+
+// SetSelectedColumns sets the SelectedColumns field's value.
+func (s *SnowflakeNodeData) SetSelectedColumns(v []*Option) *SnowflakeNodeData {
+	s.SelectedColumns = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *SnowflakeNodeData) SetSourceType(v string) *SnowflakeNodeData {
+	s.SourceType = &v
+	return s
+}
+
+// SetStagingTable sets the StagingTable field's value.
+func (s *SnowflakeNodeData) SetStagingTable(v string) *SnowflakeNodeData {
+	s.StagingTable = &v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *SnowflakeNodeData) SetTable(v string) *SnowflakeNodeData {
+	s.Table = &v
+	return s
+}
+
+// SetTableSchema sets the TableSchema field's value.
+func (s *SnowflakeNodeData) SetTableSchema(v []*Option) *SnowflakeNodeData {
+	s.TableSchema = v
+	return s
+}
+
+// SetTempDir sets the TempDir field's value.
+func (s *SnowflakeNodeData) SetTempDir(v string) *SnowflakeNodeData {
+	s.TempDir = &v
+	return s
+}
+
+// SetUpsert sets the Upsert field's value.
+func (s *SnowflakeNodeData) SetUpsert(v bool) *SnowflakeNodeData {
+	s.Upsert = &v
+	return s
+}
+
+// Specifies a Snowflake data source.
+type SnowflakeSource struct {
+	_ struct{} `type:"structure"`
+
+	// Configuration for the Snowflake data source.
+	//
+	// Data is a required field
+	Data *SnowflakeNodeData `type:"structure" required:"true"`
+
+	// The name of the Snowflake data source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies user-defined schemas for your output data.
+	OutputSchemas []*GlueSchema `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SnowflakeSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SnowflakeSource"}
+	if s.Data == nil {
+		invalidParams.Add(request.NewErrParamRequired("Data"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetData sets the Data field's value.
+func (s *SnowflakeSource) SetData(v *SnowflakeNodeData) *SnowflakeSource {
+	s.Data = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *SnowflakeSource) SetName(v string) *SnowflakeSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *SnowflakeSource) SetOutputSchemas(v []*GlueSchema) *SnowflakeSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// Specifies a Snowflake target.
+type SnowflakeTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the data of the Snowflake target node.
+	//
+	// Data is a required field
+	Data *SnowflakeNodeData `type:"structure" required:"true"`
+
+	// The nodes that are inputs to the data target.
+	Inputs []*string `min:"1" type:"list"`
+
+	// The name of the Snowflake target.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s SnowflakeTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SnowflakeTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SnowflakeTarget"}
+	if s.Data == nil {
+		invalidParams.Add(request.NewErrParamRequired("Data"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetData sets the Data field's value.
+func (s *SnowflakeTarget) SetData(v *SnowflakeNodeData) *SnowflakeTarget {
+	s.Data = v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *SnowflakeTarget) SetInputs(v []*string) *SnowflakeTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *SnowflakeTarget) SetName(v string) *SnowflakeTarget {
+	s.Name = &v
+	return s
+}
+
 // Specifies a field to sort by and a sort order.
 type SortCriterion struct {
 	_ struct{} `type:"structure"`
@@ -65257,28 +66212,48 @@ type StartJobRunInput struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// a value of G.1X, G.2X, G.4X, G.8X or G.025X for Spark jobs. Accepts the value
 	// Z.2X for Ray jobs.
 	//
-	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
-	//    memory and a 50GB disk, and 2 executors per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPUs, 16 GB
+	//    of memory) with 84GB disk (approximately 34GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
-	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPUs, 32 GB
+	//    of memory) with 128GB disk (approximately 77GB free), and provides 1 executor
+	//    per worker. We recommend this worker type for workloads such as data transforms,
+	//    joins, and queries, to offers a scalable and cost effective way to run
+	//    most jobs.
 	//
-	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
-	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPUs, 64 GB
+	//    of memory) with 256GB disk (approximately 235GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs in the following Amazon Web Services Regions: US East (Ohio),
+	//    US East (N. Virginia), US West (Oregon), Asia Pacific (Singapore), Asia
+	//    Pacific (Sydney), Asia Pacific (Tokyo), Canada (Central), Europe (Frankfurt),
+	//    Europe (Ireland), and Europe (Stockholm).
 	//
-	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
-	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for low volume streaming jobs. This worker type is only
-	//    available for Glue version 3.0 streaming jobs.
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPUs, 128 GB
+	//    of memory) with 512GB disk (approximately 487GB free), and provides 1
+	//    executor per worker. We recommend this worker type for jobs whose workloads
+	//    contain your most demanding transforms, aggregations, joins, and queries.
+	//    This worker type is available only for Glue version 3.0 or later Spark
+	//    ETL jobs, in the same Amazon Web Services Regions as supported for the
+	//    G.4X worker type.
 	//
-	//    * For the Z.2X worker type, each worker maps to 2 DPU (8vCPU, 64 GB of
-	//    m emory, 128 GB disk), and provides up to 8 Ray workers (one per vCPU)
-	//    based on the autoscaler.
+	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPUs, 4
+	//    GB of memory) with 84GB disk (approximately 34GB free), and provides 1
+	//    executor per worker. We recommend this worker type for low volume streaming
+	//    jobs. This worker type is only available for Glue version 3.0 streaming
+	//    jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPUs, 64 GB
+	//    of memory) with 128 GB disk (approximately 120GB free), and provides up
+	//    to 8 Ray workers based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -73167,6 +74142,33 @@ const (
 
 	// ConnectionPropertyKeyConnectorClassName is a ConnectionPropertyKey enum value
 	ConnectionPropertyKeyConnectorClassName = "CONNECTOR_CLASS_NAME"
+
+	// ConnectionPropertyKeyKafkaSaslMechanism is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslMechanism = "KAFKA_SASL_MECHANISM"
+
+	// ConnectionPropertyKeyKafkaSaslScramUsername is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslScramUsername = "KAFKA_SASL_SCRAM_USERNAME"
+
+	// ConnectionPropertyKeyKafkaSaslScramPassword is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslScramPassword = "KAFKA_SASL_SCRAM_PASSWORD"
+
+	// ConnectionPropertyKeyKafkaSaslScramSecretsArn is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslScramSecretsArn = "KAFKA_SASL_SCRAM_SECRETS_ARN"
+
+	// ConnectionPropertyKeyEncryptedKafkaSaslScramPassword is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyEncryptedKafkaSaslScramPassword = "ENCRYPTED_KAFKA_SASL_SCRAM_PASSWORD"
+
+	// ConnectionPropertyKeyKafkaSaslGssapiKeytab is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslGssapiKeytab = "KAFKA_SASL_GSSAPI_KEYTAB"
+
+	// ConnectionPropertyKeyKafkaSaslGssapiKrb5Conf is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslGssapiKrb5Conf = "KAFKA_SASL_GSSAPI_KRB5_CONF"
+
+	// ConnectionPropertyKeyKafkaSaslGssapiService is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslGssapiService = "KAFKA_SASL_GSSAPI_SERVICE"
+
+	// ConnectionPropertyKeyKafkaSaslGssapiPrincipal is a ConnectionPropertyKey enum value
+	ConnectionPropertyKeyKafkaSaslGssapiPrincipal = "KAFKA_SASL_GSSAPI_PRINCIPAL"
 )
 
 // ConnectionPropertyKey_Values returns all elements of the ConnectionPropertyKey enum
@@ -73202,6 +74204,15 @@ func ConnectionPropertyKey_Values() []string {
 		ConnectionPropertyKeyConnectorUrl,
 		ConnectionPropertyKeyConnectorType,
 		ConnectionPropertyKeyConnectorClassName,
+		ConnectionPropertyKeyKafkaSaslMechanism,
+		ConnectionPropertyKeyKafkaSaslScramUsername,
+		ConnectionPropertyKeyKafkaSaslScramPassword,
+		ConnectionPropertyKeyKafkaSaslScramSecretsArn,
+		ConnectionPropertyKeyEncryptedKafkaSaslScramPassword,
+		ConnectionPropertyKeyKafkaSaslGssapiKeytab,
+		ConnectionPropertyKeyKafkaSaslGssapiKrb5Conf,
+		ConnectionPropertyKeyKafkaSaslGssapiService,
+		ConnectionPropertyKeyKafkaSaslGssapiPrincipal,
 	}
 }
 
@@ -74122,6 +75133,18 @@ func MLUserDataEncryptionModeString_Values() []string {
 }
 
 const (
+	// MetadataOperationCreate is a MetadataOperation enum value
+	MetadataOperationCreate = "CREATE"
+)
+
+// MetadataOperation_Values returns all elements of the MetadataOperation enum
+func MetadataOperation_Values() []string {
+	return []string{
+		MetadataOperationCreate,
+	}
+}
+
+const (
 	// NodeTypeCrawler is a NodeType enum value
 	NodeTypeCrawler = "CRAWLER"
 
@@ -74279,6 +75302,12 @@ const (
 
 	// PermissionTypeCellFilterPermission is a PermissionType enum value
 	PermissionTypeCellFilterPermission = "CELL_FILTER_PERMISSION"
+
+	// PermissionTypeNestedPermission is a PermissionType enum value
+	PermissionTypeNestedPermission = "NESTED_PERMISSION"
+
+	// PermissionTypeNestedCellPermission is a PermissionType enum value
+	PermissionTypeNestedCellPermission = "NESTED_CELL_PERMISSION"
 )
 
 // PermissionType_Values returns all elements of the PermissionType enum
@@ -74286,6 +75315,8 @@ func PermissionType_Values() []string {
 	return []string{
 		PermissionTypeColumnPermission,
 		PermissionTypeCellFilterPermission,
+		PermissionTypeNestedPermission,
+		PermissionTypeNestedCellPermission,
 	}
 }
 
@@ -74662,6 +75693,9 @@ const (
 
 	// StartingPositionEarliest is a StartingPosition enum value
 	StartingPositionEarliest = "earliest"
+
+	// StartingPositionTimestamp is a StartingPosition enum value
+	StartingPositionTimestamp = "timestamp"
 )
 
 // StartingPosition_Values returns all elements of the StartingPosition enum
@@ -74670,6 +75704,7 @@ func StartingPosition_Values() []string {
 		StartingPositionLatest,
 		StartingPositionTrimHorizon,
 		StartingPositionEarliest,
+		StartingPositionTimestamp,
 	}
 }
 

@@ -32,7 +32,7 @@ func (f *IBMPIKeyClient) Get(id string) (*models.SSHKey, error) {
 		WithTenantID(tenantid).WithSshkeyName(id)
 	resp, err := f.session.Power.PCloudTenantsSSHKeys.PcloudTenantsSshkeysGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetPIKeyOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetPIKeyOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get PI Key %s", id)
@@ -48,7 +48,7 @@ func (f *IBMPIKeyClient) GetAll() (*models.SSHKeys, error) {
 		WithTenantID(tenantid)
 	resp, err := f.session.Power.PCloudTenantsSSHKeys.PcloudTenantsSshkeysGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all PI Keys: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all PI Keys: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all PI Keys")
@@ -64,7 +64,7 @@ func (f *IBMPIKeyClient) Create(body *models.SSHKey) (*models.SSHKey, error) {
 		WithTenantID(tenantid).WithBody(body)
 	postok, postcreated, err := f.session.Power.PCloudTenantsSSHKeys.PcloudTenantsSshkeysPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreatePIKeyOperationFailed, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreatePIKeyOperationFailed, err))
 	}
 	if postok != nil && postok.Payload != nil {
 		return postok.Payload, nil

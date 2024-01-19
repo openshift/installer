@@ -218,6 +218,10 @@ func (m *VPNConnectionUpdate) ContextValidate(ctx context.Context, formats strfm
 
 func (m *VPNConnectionUpdate) contextValidatePeerGatewayAddress(ctx context.Context, formats strfmt.Registry) error {
 
+	if swag.IsZero(m.PeerGatewayAddress) { // not required
+		return nil
+	}
+
 	if err := m.PeerGatewayAddress.ContextValidate(ctx, formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("peerGatewayAddress")

@@ -66,7 +66,7 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetReader) ReadRespons
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/remote-copy] pcloud.cloudinstances.volumes.remoteCopyRelationship.get", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK) IsServerError()
 // IsCode returns true when this pcloud cloudinstances volumes remote copy relationship get o k response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get o k response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetOK) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetBadRequest) IsCode(
 	return code == 400
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get bad request response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/remote-copy][%d] pcloudCloudinstancesVolumesRemoteCopyRelationshipGetBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetUnauthorized) IsSer
 // IsCode returns true when this pcloud cloudinstances volumes remote copy relationship get unauthorized response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get unauthorized response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetForbidden) IsCode(c
 	return code == 403
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get forbidden response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/remote-copy][%d] pcloudCloudinstancesVolumesRemoteCopyRelationshipGetForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetNotFound) IsServerE
 // IsCode returns true when this pcloud cloudinstances volumes remote copy relationship get not found response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get not found response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetTooManyRequests) Is
 	return code == 429
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get too many requests response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetTooManyRequests) Code() int {
+	return 429
+}
+
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetTooManyRequests) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}/remote-copy][%d] pcloudCloudinstancesVolumesRemoteCopyRelationshipGetTooManyRequests  %+v", 429, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetInternalServerError
 // IsCode returns true when this pcloud cloudinstances volumes remote copy relationship get internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes remote copy relationship get internal server error response
+func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesVolumesRemoteCopyRelationshipGetInternalServerError) Error() string {

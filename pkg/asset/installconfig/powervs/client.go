@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
@@ -14,6 +15,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/resourcerecordsv1"
+	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -40,18 +42,21 @@ type API interface {
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
 	ListServiceInstances(ctx context.Context) ([]string, error)
-	ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error)
+	ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error)
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
+	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
+	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
 }
 
 // Client makes calls to the PowerVS API.
 type Client struct {
-	APIKey         string
-	BXCli          *BxClient
-	managementAPI  *resourcemanagerv2.ResourceManagerV2
-	controllerAPI  *resourcecontrollerv2.ResourceControllerV2
-	vpcAPI         *vpcv1.VpcV1
-	dnsServicesAPI *dnssvcsv1.DnsSvcsV1
+	APIKey            string
+	BXCli             *BxClient
+	managementAPI     *resourcemanagerv2.ResourceManagerV2
+	controllerAPI     *resourcecontrollerv2.ResourceControllerV2
+	vpcAPI            *vpcv1.VpcV1
+	dnsServicesAPI    *dnssvcsv1.DnsSvcsV1
+	transitGatewayAPI *transitgatewayapisv1.TransitGatewayApisV1
 }
 
 // cisServiceID is the Cloud Internet Services' catalog service ID.
@@ -138,6 +143,7 @@ func (c *Client) loadSDKServices() error {
 		c.loadResourceControllerAPI,
 		c.loadVPCV1API,
 		c.loadDNSServicesAPI,
+		c.loadTransitGatewayAPI,
 	}
 
 	// Call all the load functions.
@@ -504,6 +510,22 @@ func (c *Client) loadDNSServicesAPI() error {
 	return nil
 }
 
+func (c *Client) loadTransitGatewayAPI() error {
+	authenticator := &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+	versionDate := "2023-07-04"
+	tgSvc, err := transitgatewayapisv1.NewTransitGatewayApisV1(&transitgatewayapisv1.TransitGatewayApisV1Options{
+		Authenticator: authenticator,
+		Version:       &versionDate,
+	})
+	if err != nil {
+		return err
+	}
+	c.transitGatewayAPI = tgSvc
+	return nil
+}
+
 // SetVPCServiceURLForRegion will set the VPC Service URL to a specific IBM Cloud Region, in order to access Region scoped resources
 func (c *Client) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
 	regionOptions := c.vpcAPI.NewGetRegionOptions(region)
@@ -663,14 +685,8 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	return serviceInstances, nil
 }
 
-// TransitGatewayEnabledZone returns if a zone is configured for transit gateways rather than cloud connections.
-func TransitGatewayEnabledZone(zone string) bool {
-	// @TBD - HACK.  Waiting for officially supported detection function
-	return zone == "dal10"
-}
-
-// ServiceInstanceIDToCRN returns the CRN of the matching service instance GUID which was passed in.
-func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
+// ServiceInstanceGUIDToName returns the name of the matching service instance GUID which was passed in.
+func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error) {
 	var (
 		options   *resourcecontrollerv2.ListResourceInstancesOptions
 		resources *resourcecontrollerv2.ResourceInstancesList
@@ -724,10 +740,10 @@ func (c *Client) ServiceInstanceIDToCRN(ctx context.Context, id string) (string,
 
 			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
 				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
-					if resourceInstance.CRN == nil {
+					if resourceInstance.Name == nil {
 						return "", nil
 					}
-					return *resourceInstance.CRN, nil
+					return *resourceInstance.Name, nil
 				}
 			}
 		}
@@ -764,4 +780,112 @@ func (c *Client) GetDatacenterCapabilities(ctx context.Context, region string) (
 		return nil, fmt.Errorf("failed to get datacenter capabilities: %w", err)
 	}
 	return getOk.Payload.Capabilities, nil
+}
+
+// GetAttachedTransitGateway finds an existing Transit Gateway attached to the provided PowerVS cloud instance.
+func (c *Client) GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error) {
+	var (
+		gateways []transitgatewayapisv1.TransitGateway
+		gateway  transitgatewayapisv1.TransitGateway
+		err      error
+		conns    []transitgatewayapisv1.TransitConnection
+		conn     transitgatewayapisv1.TransitConnection
+	)
+	gateways, err = c.getTransitGateways(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, gateway = range gateways {
+		conns, err = c.getTransitConnections(ctx, *gateway.ID)
+		if err != nil {
+			return "", err
+		}
+		for _, conn = range conns {
+			if *conn.NetworkType == "power_virtual_server" && strings.Contains(*conn.NetworkID, svcInsID) {
+				return *conn.TransitGateway.ID, nil
+			}
+		}
+	}
+	return "", nil
+}
+
+// GetTGConnectionVPC checks if the VPC subnet is attached to the provided Transit Gateway.
+func (c *Client) GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error) {
+	conns, err := c.getTransitConnections(ctx, gatewayID)
+	if err != nil {
+		return "", err
+	}
+	for _, conn := range conns {
+		if *conn.NetworkType == "vpc" && strings.Contains(*conn.NetworkID, vpcSubnetID) {
+			return *conn.ID, nil
+		}
+	}
+	return "", nil
+}
+
+func (c *Client) getTransitGateways(ctx context.Context) ([]transitgatewayapisv1.TransitGateway, error) {
+	var (
+		listTransitGatewaysOptions *transitgatewayapisv1.ListTransitGatewaysOptions
+		gatewayCollection          *transitgatewayapisv1.TransitGatewayCollection
+		response                   *core.DetailedResponse
+		err                        error
+		perPage                    int64 = 32
+		moreData                         = true
+	)
+
+	listTransitGatewaysOptions = c.transitGatewayAPI.NewListTransitGatewaysOptions()
+	listTransitGatewaysOptions.Limit = &perPage
+
+	result := []transitgatewayapisv1.TransitGateway{}
+
+	for moreData {
+		// https://github.com/IBM/networking-go-sdk/blob/master/transitgatewayapisv1/transit_gateway_apis_v1.go#L184
+		gatewayCollection, response, err = c.transitGatewayAPI.ListTransitGatewaysWithContext(ctx, listTransitGatewaysOptions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list transit gateways: %w and the respose is: %s", err, response)
+		}
+
+		result = append(result, gatewayCollection.TransitGateways...)
+
+		if gatewayCollection.Next != nil {
+			listTransitGatewaysOptions.SetStart(*gatewayCollection.Next.Start)
+		}
+
+		moreData = gatewayCollection.Next != nil
+	}
+
+	return result, nil
+}
+
+func (c *Client) getTransitConnections(ctx context.Context, tgID string) ([]transitgatewayapisv1.TransitConnection, error) {
+	var (
+		listConnectionsOptions *transitgatewayapisv1.ListConnectionsOptions
+		connectionCollection   *transitgatewayapisv1.TransitConnectionCollection
+		response               *core.DetailedResponse
+		err                    error
+		perPage                int64 = 32
+		moreData                     = true
+	)
+
+	listConnectionsOptions = c.transitGatewayAPI.NewListConnectionsOptions()
+	listConnectionsOptions.Limit = &perPage
+
+	result := []transitgatewayapisv1.TransitConnection{}
+
+	for moreData {
+		connectionCollection, response, err = c.transitGatewayAPI.ListConnectionsWithContext(ctx, listConnectionsOptions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list transit gateways: %w and the respose is: %s", err, response)
+		}
+
+		result = append(result, connectionCollection.Connections...)
+
+		if connectionCollection.Next != nil {
+			listConnectionsOptions.SetStart(*connectionCollection.Next.Start)
+		}
+
+		moreData = connectionCollection.Next != nil
+	}
+
+	return result, nil
 }

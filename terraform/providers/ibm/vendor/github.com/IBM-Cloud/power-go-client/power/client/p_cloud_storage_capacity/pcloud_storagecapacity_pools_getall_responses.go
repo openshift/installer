@@ -29,6 +29,12 @@ func (o *PcloudStoragecapacityPoolsGetallReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudStoragecapacityPoolsGetallBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudStoragecapacityPoolsGetallUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -41,6 +47,12 @@ func (o *PcloudStoragecapacityPoolsGetallReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudStoragecapacityPoolsGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudStoragecapacityPoolsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -48,7 +60,7 @@ func (o *PcloudStoragecapacityPoolsGetallReader) ReadResponse(response runtime.C
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools] pcloud.storagecapacity.pools.getall", response, response.Code())
 	}
 }
 
@@ -91,6 +103,11 @@ func (o *PcloudStoragecapacityPoolsGetallOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the pcloud storagecapacity pools getall o k response
+func (o *PcloudStoragecapacityPoolsGetallOK) Code() int {
+	return 200
+}
+
 func (o *PcloudStoragecapacityPoolsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallOK  %+v", 200, o.Payload)
 }
@@ -106,6 +123,74 @@ func (o *PcloudStoragecapacityPoolsGetallOK) GetPayload() *models.StoragePoolsCa
 func (o *PcloudStoragecapacityPoolsGetallOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.StoragePoolsCapacity)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudStoragecapacityPoolsGetallBadRequest creates a PcloudStoragecapacityPoolsGetallBadRequest with default headers values
+func NewPcloudStoragecapacityPoolsGetallBadRequest() *PcloudStoragecapacityPoolsGetallBadRequest {
+	return &PcloudStoragecapacityPoolsGetallBadRequest{}
+}
+
+/*
+PcloudStoragecapacityPoolsGetallBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudStoragecapacityPoolsGetallBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud storagecapacity pools getall bad request response has a 2xx status code
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud storagecapacity pools getall bad request response has a 3xx status code
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud storagecapacity pools getall bad request response has a 4xx status code
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud storagecapacity pools getall bad request response has a 5xx status code
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud storagecapacity pools getall bad request response a status code equal to that given
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud storagecapacity pools getall bad request response
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudStoragecapacityPoolsGetallBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -152,6 +237,11 @@ func (o *PcloudStoragecapacityPoolsGetallUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud storagecapacity pools getall unauthorized response a status code equal to that given
 func (o *PcloudStoragecapacityPoolsGetallUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud storagecapacity pools getall unauthorized response
+func (o *PcloudStoragecapacityPoolsGetallUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudStoragecapacityPoolsGetallUnauthorized) Error() string {
@@ -217,6 +307,11 @@ func (o *PcloudStoragecapacityPoolsGetallForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud storagecapacity pools getall forbidden response
+func (o *PcloudStoragecapacityPoolsGetallForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudStoragecapacityPoolsGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallForbidden  %+v", 403, o.Payload)
 }
@@ -230,6 +325,74 @@ func (o *PcloudStoragecapacityPoolsGetallForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudStoragecapacityPoolsGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudStoragecapacityPoolsGetallNotFound creates a PcloudStoragecapacityPoolsGetallNotFound with default headers values
+func NewPcloudStoragecapacityPoolsGetallNotFound() *PcloudStoragecapacityPoolsGetallNotFound {
+	return &PcloudStoragecapacityPoolsGetallNotFound{}
+}
+
+/*
+PcloudStoragecapacityPoolsGetallNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudStoragecapacityPoolsGetallNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud storagecapacity pools getall not found response has a 2xx status code
+func (o *PcloudStoragecapacityPoolsGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud storagecapacity pools getall not found response has a 3xx status code
+func (o *PcloudStoragecapacityPoolsGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud storagecapacity pools getall not found response has a 4xx status code
+func (o *PcloudStoragecapacityPoolsGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud storagecapacity pools getall not found response has a 5xx status code
+func (o *PcloudStoragecapacityPoolsGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud storagecapacity pools getall not found response a status code equal to that given
+func (o *PcloudStoragecapacityPoolsGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud storagecapacity pools getall not found response
+func (o *PcloudStoragecapacityPoolsGetallNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudStoragecapacityPoolsGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudStoragecapacityPoolsGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-capacity/storage-pools][%d] pcloudStoragecapacityPoolsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudStoragecapacityPoolsGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudStoragecapacityPoolsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -278,6 +441,11 @@ func (o *PcloudStoragecapacityPoolsGetallInternalServerError) IsServerError() bo
 // IsCode returns true when this pcloud storagecapacity pools getall internal server error response a status code equal to that given
 func (o *PcloudStoragecapacityPoolsGetallInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud storagecapacity pools getall internal server error response
+func (o *PcloudStoragecapacityPoolsGetallInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudStoragecapacityPoolsGetallInternalServerError) Error() string {

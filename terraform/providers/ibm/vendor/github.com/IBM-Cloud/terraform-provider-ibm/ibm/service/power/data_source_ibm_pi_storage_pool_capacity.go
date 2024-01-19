@@ -54,6 +54,11 @@ func DataSourceIBMPIStoragePoolCapacity() *schema.Resource {
 				Computed:    true,
 				Description: "Total pool capacity (GB)",
 			},
+			ReplicationEnabled: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Replication status of the storage pool",
+			},
 		},
 	}
 }
@@ -75,10 +80,9 @@ func dataSourceIBMPIStoragePoolCapacityRead(ctx context.Context, d *schema.Resou
 	}
 
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, storagePool))
-
 	d.Set(MaxAllocationSize, *sp.MaxAllocationSize)
 	d.Set(StorageType, sp.StorageType)
 	d.Set(TotalCapacity, sp.TotalCapacity)
-
+	d.Set(ReplicationEnabled, *sp.ReplicationEnabled)
 	return nil
 }

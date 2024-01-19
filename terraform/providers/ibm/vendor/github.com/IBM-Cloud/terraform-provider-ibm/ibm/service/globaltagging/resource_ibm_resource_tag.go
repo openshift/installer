@@ -142,13 +142,6 @@ func resourceIBMResourceTagCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
-	schematicTags := os.Getenv("IC_ENV_TAGS")
-	var envTags []string
-	if schematicTags != "" {
-		envTags = strings.Split(schematicTags, ",")
-		add = append(add, envTags...)
-	}
-
 	AttachTagOptions := &globaltaggingv1.AttachTagOptions{}
 	AttachTagOptions.Resources = resources
 	AttachTagOptions.TagNames = add
@@ -158,6 +151,16 @@ func resourceIBMResourceTagCreate(d *schema.ResourceData, meta interface{}) erro
 
 		if tType == service {
 			AttachTagOptions.AccountID = flex.PtrToString(accountID)
+		}
+	}
+
+	// Fetch tags from schematics only if they are user tags
+	if strings.TrimSpace(tagType) == "" || tagType == "user" {
+		schematicTags := os.Getenv("IC_ENV_TAGS")
+		var envTags []string
+		if schematicTags != "" {
+			envTags = strings.Split(schematicTags, ",")
+			add = append(add, envTags...)
 		}
 	}
 

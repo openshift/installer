@@ -6,12 +6,9 @@ package secretsmanager
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 )
@@ -22,9 +19,11 @@ func DataSourceIbmSmArbitrarySecret() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"secret_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The ID of the secret.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"secret_id", "name"},
+				Description:  "The ID of the secret.",
 			},
 			"created_by": &schema.Schema{
 				Type:        schema.TypeString,
@@ -73,14 +72,23 @@ func DataSourceIbmSmArbitrarySecret() *schema.Resource {
 				Description: "The number of locks of the secret.",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The human-readable name of your secret.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{"secret_id", "name"},
+				RequiredWith: []string{"secret_group_name"},
+				Description:  "The human-readable name of your secret.",
 			},
 			"secret_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "A v4 UUID identifier, or `default` secret group.",
+			},
+			"secret_group_name": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"name"},
+				Description:  "The human-readable name of your secret group.",
 			},
 			"secret_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -123,29 +131,16 @@ func DataSourceIbmSmArbitrarySecret() *schema.Resource {
 }
 
 func dataSourceIbmSmArbitrarySecretRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
-	if err != nil {
-		return diag.FromErr(err)
+
+	secret, region, instanceId, diagError := getSecretByIdOrByName(context, d, meta, ArbitrarySecretType)
+	if diagError != nil {
+		return diagError
 	}
 
-	region := getRegion(secretsManagerClient, d)
-	instanceId := d.Get("instance_id").(string)
-	secretsManagerClient = getClientWithInstanceEndpoint(secretsManagerClient, instanceId, region, getEndpointType(secretsManagerClient, d))
+	arbitrarySecret := secret.(*secretsmanagerv2.ArbitrarySecret)
+	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, *arbitrarySecret.ID))
 
-	getSecretOptions := &secretsmanagerv2.GetSecretOptions{}
-
-	secretId := d.Get("secret_id").(string)
-	getSecretOptions.SetID(secretId)
-
-	secretIntf, response, err := secretsManagerClient.GetSecretWithContext(context, getSecretOptions)
-	if err != nil {
-		log.Printf("[DEBUG] GetSecretWithContext failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("GetSecretWithContext failed %s\n%s", err, response))
-	}
-	arbitrarySecret := secretIntf.(*secretsmanagerv2.ArbitrarySecret)
-
-	d.SetId(fmt.Sprintf("%s/%s/%s", region, instanceId, secretId))
-
+	var err error
 	if err = d.Set("region", region); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting region: %s", err))
 	}

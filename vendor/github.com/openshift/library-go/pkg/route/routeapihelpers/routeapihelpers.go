@@ -4,6 +4,7 @@ package routeapihelpers
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	routev1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -45,28 +46,35 @@ func IngressURI(route *routev1.Route, host string) (*url.URL, *routev1.RouteIngr
 	return nil, nil, fmt.Errorf("no ingress for host %s in route %s in namespace %s", host, route.ObjectMeta.Name, route.ObjectMeta.Namespace)
 }
 
-// ValidateHost checks that a route's host name satisfies DNS requirements, with
-// the assumption that the caller has already checked for an empty host name.
-// Unless the allowNonCompliant annotation is set to true, host name must have
-// at least two labels, with each label no more than 63 characters from the set of
-// alphanumeric characters, '-' or '.', and must start and end with an alphanumeric
-// character. A trailing dot is allowed. The total host name length must be no more
-// than 253 characters.
-// If allowNonCompliant is set to true, it uses a smaller set of conditions from
-// IsDNS1123Subdomain, e.g. character set as described above, and total host name
-// length must be no more than 253 characters.
+// ValidateHost checks that a route's host name satisfies OpenShift DNS requirements,
+// with the assumption that the caller is not passing in an empty host name.
+//
+// ValidateHost mimics the host validation in the validateRoute method in
+// openshift-apiserver/pkg/route/apis/route/validation/validation package.
+//
+// The host name length must be no more than 253 characters.  The only characters
+// allowed in host name are alphanumeric characters, '-' or '.', and it must start
+// and end with an alphanumeric character. A trailing dot is NOT allowed.
+//
+// If the allowNonCompliant annotation is not set to true, the host name must in
+// addition consist of one or more labels, with each label no more than 63 characters
+// from the character set described above, and each label must start and end with an
+// alphanumeric character.
 func ValidateHost(host string, allowNonCompliant string, hostPath *field.Path) field.ErrorList {
 	result := field.ErrorList{}
 
-	if allowNonCompliant == "true" {
-		errs := kvalidation.IsDNS1123Subdomain(host)
-		if len(errs) != 0 {
-			result = append(result, field.Invalid(hostPath, host, fmt.Sprintf("host must conform to DNS naming conventions: %v", errs)))
-		}
-	} else {
-		errs := kvalidation.IsFullyQualifiedDomainName(hostPath, host)
-		if len(errs) != 0 {
-			result = append(result, field.Invalid(hostPath, host, fmt.Sprintf("host must conform to DNS 1123 naming conventions: %v", errs)))
+	errs := kvalidation.IsDNS1123Subdomain(host)
+	if len(errs) != 0 {
+		result = append(result, field.Invalid(hostPath, host, fmt.Sprintf("host must conform to DNS naming conventions: %v", errs)))
+	}
+
+	if allowNonCompliant != "true" {
+		segments := strings.Split(host, ".")
+		for _, s := range segments {
+			errs := kvalidation.IsDNS1123Label(s)
+			for _, e := range errs {
+				result = append(result, field.Invalid(hostPath, host, e))
+			}
 		}
 	}
 	return result

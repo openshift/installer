@@ -124,11 +124,19 @@ Issuing `make testacc` will now run the testcase with names matching `TestAccIBM
 
 You will also need to export the following environment variables for running the Acceptance tests.
 * `IC_API_KEY`- The IBM Cloud API Key
+* `IC_REGION` - The IBM Cloud [region](https://cloud.ibm.com/docs/overview?topic=overview-locations) used by test resources - defaults to `us-south`
 * `IAAS_CLASSIC_API_KEY` - The IBM Cloud Classic Infrastructure API Key
 * `IAAS_CLASSIC_USERNAME` - The IBM Cloud Classic Infrastructure username associated with the Classic InfrastAPI Key.
 
 Additional environment variables may be required depending on the tests being run. Check console log for warning messages about required variables. 
 
+Alternatively, look for the name of the function by PreCheck under the specific test case and inspect [ibm/acctest/acctest.go](https://github.com/IBM-Cloud/terraform-provider-ibm/blob/master/ibm/acctest/acctest.go) to find the list of environment variables required for the test.
+
+```
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { acc.TestAccPreCheck(t) },
+		Providers:    acc.TestAccProviders,
+```
 
 # IBM Cloud Ansible Modules
 

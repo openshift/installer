@@ -41,6 +41,12 @@ func (o *PcloudTasksDeleteReader) ReadResponse(response runtime.ClientResponse, 
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudTasksDeleteForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudTasksDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudTasksDeleteReader) ReadResponse(response runtime.ClientResponse, 
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/tasks/{task_id}] pcloud.tasks.delete", response, response.Code())
 	}
 }
 
@@ -101,6 +107,11 @@ func (o *PcloudTasksDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud tasks delete o k response a status code equal to that given
 func (o *PcloudTasksDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud tasks delete o k response
+func (o *PcloudTasksDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudTasksDeleteOK) Error() string {
@@ -162,6 +173,11 @@ func (o *PcloudTasksDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud tasks delete bad request response a status code equal to that given
 func (o *PcloudTasksDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud tasks delete bad request response
+func (o *PcloudTasksDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudTasksDeleteBadRequest) Error() string {
@@ -227,6 +243,11 @@ func (o *PcloudTasksDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud tasks delete unauthorized response
+func (o *PcloudTasksDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudTasksDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -240,6 +261,74 @@ func (o *PcloudTasksDeleteUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudTasksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTasksDeleteForbidden creates a PcloudTasksDeleteForbidden with default headers values
+func NewPcloudTasksDeleteForbidden() *PcloudTasksDeleteForbidden {
+	return &PcloudTasksDeleteForbidden{}
+}
+
+/*
+PcloudTasksDeleteForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudTasksDeleteForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tasks delete forbidden response has a 2xx status code
+func (o *PcloudTasksDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tasks delete forbidden response has a 3xx status code
+func (o *PcloudTasksDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tasks delete forbidden response has a 4xx status code
+func (o *PcloudTasksDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tasks delete forbidden response has a 5xx status code
+func (o *PcloudTasksDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tasks delete forbidden response a status code equal to that given
+func (o *PcloudTasksDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud tasks delete forbidden response
+func (o *PcloudTasksDeleteForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudTasksDeleteForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTasksDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTasksDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTasksDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -288,6 +377,11 @@ func (o *PcloudTasksDeleteNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud tasks delete not found response a status code equal to that given
 func (o *PcloudTasksDeleteNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud tasks delete not found response
+func (o *PcloudTasksDeleteNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudTasksDeleteNotFound) Error() string {
@@ -353,6 +447,11 @@ func (o *PcloudTasksDeleteGone) IsCode(code int) bool {
 	return code == 410
 }
 
+// Code gets the status code for the pcloud tasks delete gone response
+func (o *PcloudTasksDeleteGone) Code() int {
+	return 410
+}
+
 func (o *PcloudTasksDeleteGone) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tasks/{task_id}][%d] pcloudTasksDeleteGone  %+v", 410, o.Payload)
 }
@@ -414,6 +513,11 @@ func (o *PcloudTasksDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud tasks delete internal server error response a status code equal to that given
 func (o *PcloudTasksDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud tasks delete internal server error response
+func (o *PcloudTasksDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudTasksDeleteInternalServerError) Error() string {

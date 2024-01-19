@@ -56,9 +56,8 @@ data "azurerm_storage_account_sas" "ignition" {
 }
 
 resource "azurerm_storage_container" "ignition" {
-  name                  = "ignition"
-  storage_account_name  = var.storage_account_name
-  container_access_type = "private"
+  name                 = "ignition"
+  storage_account_name = var.storage_account_name
 }
 
 resource "azurerm_storage_blob" "ignition" {
@@ -66,7 +65,7 @@ resource "azurerm_storage_blob" "ignition" {
   source                 = var.ignition_bootstrap_file
   storage_account_name   = var.storage_account_name
   storage_container_name = azurerm_storage_container.ignition.name
-  type                   = "Block"
+  type                   = var.azure_keyvault_key_name != "" ? "Page" : "Block"
 }
 
 data "ignition_config" "redirect" {

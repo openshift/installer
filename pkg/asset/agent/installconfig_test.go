@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -53,7 +54,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
@@ -269,34 +270,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
 		},
 		{
-			name: "invalid networkType for SNO cluster",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OpenShiftSDN
-compute:
-  - architecture: amd64
-    hyperthreading: Enabled
-    name: worker
-    platform: {}
-    replicas: 0
-controlPlane:
-  architecture: amd64
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 1
-platform:
-  none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: Networking.NetworkType: Invalid value: \"OpenShiftSDN\": Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster",
-		},
-		{
 			name: "invalid platform for SNO cluster",
 			data: `
 apiVersion: v1
@@ -304,7 +277,7 @@ metadata:
   name: test-cluster
 baseDomain: test-domain
 networking:
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
 compute:
   - architecture: amd64
     hyperthreading: Enabled
@@ -324,34 +297,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
-		},
-		{
-			name: "invalid architecture for SNO cluster",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OVNKubernetes
-compute:
-  - architecture: s390x
-    hyperthreading: Enabled
-    name: worker
-    platform: {}
-    replicas: 0
-controlPlane:
-  architecture: s390x
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 1
-platform:
-  none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", \"ppc64le\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", \"ppc64le\"]",
 		},
 		{
 			name: "invalid platform.baremetal for architecture ppc64le",
@@ -393,19 +338,116 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
 		},
 		{
-			name: "unsupported platformName for external platform",
+			name: "invalid platform.baremetal for architecture s390x",
 			data: `
 apiVersion: v1
 metadata:
-    name: test-cluster
+  name: test-cluster
 baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+compute:
+  - architecture: s390x
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: s390x
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
 platform:
-  external:
-    platformName: some-cloud-provider
+  baremetal:
+    apiVIP: 192.168.122.10
+    ingressVIP: 192.168.122.11
+    hosts:
+    - name: host1
+      bootMACAddress: 52:54:01:aa:aa:a1
+    - name: host2
+      bootMACAddress: 52:54:01:bb:bb:b1
+    - name: host3
+      bootMACAddress: 52:54:01:cc:cc:c1
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform.External.PlatformName: Unsupported value: "some-cloud-provider": supported values: "oci"`,
+			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
+		},
+		{
+			name: "generic platformName for external platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+platform:
+  external:
+   platformName: some-cloud-provider
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(1),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					External: &external.Platform{
+						PlatformName:           "some-cloud-provider",
+						CloudControllerManager: "",
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
 		},
 		{
 			name: "unsupported CloudControllerManager for external platform",
@@ -567,7 +609,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork:
@@ -606,8 +648,6 @@ platform:
     hosts:
       - name: host1
         bootMACAddress: 52:54:01:aa:aa:a1
-        bmc:
-          address: addr
       - name: host2
         bootMACAddress: 52:54:01:bb:bb:b1
       - name: host3
@@ -632,7 +672,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
 					},
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -680,7 +720,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 								BootMACAddress:  "52:54:01:aa:aa:a1",
 								BootMode:        "UEFI",
 								HardwareProfile: "default",
-								BMC:             baremetal.BMC{Address: "addr"},
 							},
 							{
 								Name:            "host2",
@@ -731,7 +770,7 @@ networking:
   clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-  networkType: OpenShiftSDN
+  networkType: OVNKubernetes
   machineNetwork:
   - cidr: 192.168.122.0/23
   serviceNetwork: 
@@ -776,7 +815,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					MachineNetwork: []types.MachineNetworkEntry{
 						{CIDR: *ipnet.MustParseCIDR("192.168.122.0/23")},
 					},
-					NetworkType:    "OpenShiftSDN",
+					NetworkType:    "OVNKubernetes",
 					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
 					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
@@ -837,6 +876,102 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
+		},
+		{
+			name: "provisioningNetwork invalid for baremetal cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    name: worker
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  name: master
+  replicas: 3
+platform:
+  baremetal:
+    provisioningNetwork: "UNMANAGED"
+    ingressVIPs:
+      - 192.168.122.11
+    apiVIPs:
+      - 192.168.122.10
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: platform.baremetal.provisioningNetwork: Unsupported value: \"UNMANAGED\": supported values: \"Disabled\", \"Managed\", \"Unmanaged\"",
+		},
+		{
+			name: "Provisioning validation failures for baremetal cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.122.0/23
+  serviceNetwork:
+  - 172.30.0.0/16
+compute:
+  - architecture: amd64
+    name: worker
+    replicas: 0
+controlPlane:
+  architecture: amd64
+  name: master
+  replicas: 3
+platform:
+  baremetal:
+    ingressVIPs:
+      - 192.168.122.11
+    apiVIPs:
+      - 192.168.122.10
+    clusterProvisioningIP: "172.22.0.11"
+    provisioningNetwork: "Managed"
+    provisioningMACAddress: "52:54:00:6e:3b:02"
+    provisioningNetworkInterface: "eth11"
+    provisioningDHCPExternal: true
+    provisioningDHCPRange: 172.22.0.10,172.22.0.254
+    hosts:
+      - name: host1
+        bootMACAddress: 52:54:01:aa:aa:a1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+      - name: host2
+        bootMACAddress: 52:54:01:bb:bb:b1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+      - name: host3
+        bootMACAddress: 52:54:01:cc:cc:c1
+        bmc:
+          username: "admin"
+          password: "password"
+          address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [Platform.BareMetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, Platform.BareMetal.hosts[2].BMC.Address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
 		},
 	}
 	for _, tc := range cases {

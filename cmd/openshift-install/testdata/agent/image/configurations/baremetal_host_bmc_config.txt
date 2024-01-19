@@ -1,0 +1,167 @@
+# Verify a default configuration for the compact topology on baremetal using install-config hosts with BMC configuration 
+
+exec openshift-install agent create image --dir $WORK
+
+stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.80'
+
+exists $WORK/agent.x86_64.iso
+exists $WORK/auth/kubeconfig
+exists $WORK/auth/kubeadmin-password
+isocmp agent.x86_64.iso /etc/assisted/manifests/agent-cluster-install.yaml expected/agent-cluster-install.yaml
+
+-- install-config.yaml --
+apiVersion: v1
+baseDomain: test.metalkube.org
+controlPlane:
+  name: master
+  replicas: 3
+compute:
+- name: worker
+  replicas: 0
+metadata:
+  namespace: cluster0
+  name: ostest
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OVNKubernetes
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  baremetal:
+    apiVIP: 192.168.111.5
+    apiVips:
+      - 192.168.111.5
+    ingressVIP: 192.168.111.4
+    ingressVips:
+      - 192.168.111.4
+    provisioningNetworkInterface: enp1s0
+    provisioningNetworkCIDR: 172.22.0.0/24 
+    provisioningNetwork: Managed 
+    provisioningDHCPRange: 172.22.0.10,172.22.0.254
+    hosts:
+    - name: master-0 
+      bootMACAddress: 00:00:00:aa:bb:01
+      bmc:
+        address: http://172.22.0.10:8000/redfish/v1/Systems/d3fe1eb9-f04c-465d-b5d6-d267f0a0059b
+        username: foo
+        password: pwd1
+        disableCertificateVerification: false
+      networkConfig:
+        interfaces:
+        - ipv4:
+            address:
+            - ip: 192.168.111.80
+              prefix-length: 24
+            dhcp: false
+            enabled: true
+          mac-address: 00:00:00:aa:bb:01
+          name: eth0
+          state: up
+          type: ethernet
+        routes:
+          config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.111.1
+            next-hop-interface: eth0
+            table-id: 254
+    - name: master-1
+      bootMACAddress: 00:00:00:aa:bb:02
+      bmc:
+        address: http://172.22.0.11:8000/redfish/v1/Systems/65bf6806-b634-4494-bccf-032ebdecc65d
+        username: foo
+        password: pwd2
+        disableCertificateVerification: false
+      networkConfig:
+        interfaces:
+        - ipv4:
+            address:
+            - ip: 192.168.111.81
+              prefix-length: 24
+            dhcp: false
+            enabled: true
+          mac-address: 00:00:00:aa:bb:02
+          name: eth0
+          state: up
+          type: ethernet
+        routes:
+          config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.111.1
+            next-hop-interface: eth0
+            table-id: 254
+    - name: master-2
+      bootMACAddress: 00:00:00:aa:bb:03
+      bmc:
+        address: http://172.22.0.12:8000/redfish/v1/Systems/ff67e706-28c4-42f6-b9a2-ce714195300a
+        username: foo
+        password: pwd3
+        disableCertificateVerification: false
+      networkConfig:
+        interfaces:
+        - ipv4:
+            address:
+            - ip: 192.168.111.82
+              prefix-length: 24
+            dhcp: false
+            enabled: true
+          mac-address: 00:00:00:aa:bb:03
+          name: eth0
+          state: up
+          type: ethernet
+        routes:
+          config:
+          - destination: 0.0.0.0/0
+            next-hop-address: 192.168.111.1
+            next-hop-interface: eth0
+            table-id: 254
+sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
+
+-- agent-config.yaml --
+apiVersion: v1alpha1
+metadata:
+  name: ostest
+  namespace: cluster0
+rendezvousIP: 192.168.111.80
+
+-- expected/agent-cluster-install.yaml --
+metadata:
+  annotations:
+    agent-install.openshift.io/install-config-overrides: '{"platform":{"baremetal":{"hosts":[{"name":"master-0","bmc":{"username":"foo","password":"pwd1","address":"http://172.22.0.10:8000/redfish/v1/Systems/d3fe1eb9-f04c-465d-b5d6-d267f0a0059b","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:01","hardwareProfile":""},{"name":"master-1","bmc":{"username":"foo","password":"pwd2","address":"http://172.22.0.11:8000/redfish/v1/Systems/65bf6806-b634-4494-bccf-032ebdecc65d","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:02","hardwareProfile":""},{"name":"master-2","bmc":{"username":"foo","password":"pwd3","address":"http://172.22.0.12:8000/redfish/v1/Systems/ff67e706-28c4-42f6-b9a2-ce714195300a","disableCertificateVerification":false},"role":"","bootMACAddress":"00:00:00:aa:bb:03","hardwareProfile":""}],"clusterProvisioningIP":"172.22.0.3","provisioningNetwork":"Managed","provisioningNetworkInterface":"enp1s0","provisioningNetworkCIDR":"172.22.0.0/24","provisioningDHCPRange":"172.22.0.10,172.22.0.254"}}}'
+  creationTimestamp: null
+  name: ostest
+  namespace: cluster0
+spec:
+  apiVIP: 192.168.111.5
+  apiVIPs:
+  - 192.168.111.5
+  clusterDeploymentRef:
+    name: ostest
+  imageSetRef:
+    name: openshift-was not built correctly
+  ingressVIP: 192.168.111.4
+  ingressVIPs:
+  - 192.168.111.4
+  networking:
+    clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+    machineNetwork:
+    - cidr: 192.168.111.0/24
+    networkType: OVNKubernetes
+    serviceNetwork:
+    - 172.30.0.0/16
+  platformType: BareMetal
+  provisionRequirements:
+    controlPlaneAgents: 3
+  sshPublicKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+status:
+  debugInfo:
+    eventsURL: ""
+    logsURL: ""
+  progress:
+    totalPercentage: 0

@@ -72,7 +72,7 @@ func (o *PcloudCloudinstancesVolumesPutReader) ReadResponse(response runtime.Cli
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}] pcloud.cloudinstances.volumes.put", response, response.Code())
 	}
 }
 
@@ -113,6 +113,11 @@ func (o *PcloudCloudinstancesVolumesPutOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances volumes put o k response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesPutOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes put o k response
+func (o *PcloudCloudinstancesVolumesPutOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesVolumesPutOK) Error() string {
@@ -178,6 +183,11 @@ func (o *PcloudCloudinstancesVolumesPutBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes put bad request response
+func (o *PcloudCloudinstancesVolumesPutBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudCloudinstancesVolumesPutBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}][%d] pcloudCloudinstancesVolumesPutBadRequest  %+v", 400, o.Payload)
 }
@@ -239,6 +249,11 @@ func (o *PcloudCloudinstancesVolumesPutUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances volumes put unauthorized response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesPutUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes put unauthorized response
+func (o *PcloudCloudinstancesVolumesPutUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudCloudinstancesVolumesPutUnauthorized) Error() string {
@@ -304,6 +319,11 @@ func (o *PcloudCloudinstancesVolumesPutForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes put forbidden response
+func (o *PcloudCloudinstancesVolumesPutForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudCloudinstancesVolumesPutForbidden) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}][%d] pcloudCloudinstancesVolumesPutForbidden  %+v", 403, o.Payload)
 }
@@ -365,6 +385,11 @@ func (o *PcloudCloudinstancesVolumesPutNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances volumes put not found response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesPutNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes put not found response
+func (o *PcloudCloudinstancesVolumesPutNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudCloudinstancesVolumesPutNotFound) Error() string {
@@ -430,6 +455,11 @@ func (o *PcloudCloudinstancesVolumesPutConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes put conflict response
+func (o *PcloudCloudinstancesVolumesPutConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudCloudinstancesVolumesPutConflict) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}][%d] pcloudCloudinstancesVolumesPutConflict  %+v", 409, o.Payload)
 }
@@ -493,6 +523,11 @@ func (o *PcloudCloudinstancesVolumesPutUnprocessableEntity) IsCode(code int) boo
 	return code == 422
 }
 
+// Code gets the status code for the pcloud cloudinstances volumes put unprocessable entity response
+func (o *PcloudCloudinstancesVolumesPutUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudCloudinstancesVolumesPutUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/volumes/{volume_id}][%d] pcloudCloudinstancesVolumesPutUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -554,6 +589,11 @@ func (o *PcloudCloudinstancesVolumesPutInternalServerError) IsServerError() bool
 // IsCode returns true when this pcloud cloudinstances volumes put internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesVolumesPutInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances volumes put internal server error response
+func (o *PcloudCloudinstancesVolumesPutInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesVolumesPutInternalServerError) Error() string {

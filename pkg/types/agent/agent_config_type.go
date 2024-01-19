@@ -37,4 +37,5 @@ type Host struct {
 	// list of interfaces and mac addresses
 	Interfaces    []*aiv1beta1.Interface `json:"interfaces,omitempty"`
 	NetworkConfig aiv1beta1.NetConfig    `json:"networkConfig,omitempty"`
+	BMC           baremetal.BMC
 }

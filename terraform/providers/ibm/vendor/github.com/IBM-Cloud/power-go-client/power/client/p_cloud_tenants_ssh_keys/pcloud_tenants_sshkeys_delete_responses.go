@@ -41,6 +41,18 @@ func (o *PcloudTenantsSshkeysDeleteReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudTenantsSshkeysDeleteForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudTenantsSshkeysDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewPcloudTenantsSshkeysDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +66,7 @@ func (o *PcloudTenantsSshkeysDeleteReader) ReadResponse(response runtime.ClientR
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}] pcloud.tenants.sshkeys.delete", response, response.Code())
 	}
 }
 
@@ -95,6 +107,11 @@ func (o *PcloudTenantsSshkeysDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys delete o k response a status code equal to that given
 func (o *PcloudTenantsSshkeysDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete o k response
+func (o *PcloudTenantsSshkeysDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudTenantsSshkeysDeleteOK) Error() string {
@@ -156,6 +173,11 @@ func (o *PcloudTenantsSshkeysDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys delete bad request response a status code equal to that given
 func (o *PcloudTenantsSshkeysDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete bad request response
+func (o *PcloudTenantsSshkeysDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudTenantsSshkeysDeleteBadRequest) Error() string {
@@ -221,6 +243,11 @@ func (o *PcloudTenantsSshkeysDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud tenants sshkeys delete unauthorized response
+func (o *PcloudTenantsSshkeysDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudTenantsSshkeysDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -234,6 +261,142 @@ func (o *PcloudTenantsSshkeysDeleteUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudTenantsSshkeysDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysDeleteForbidden creates a PcloudTenantsSshkeysDeleteForbidden with default headers values
+func NewPcloudTenantsSshkeysDeleteForbidden() *PcloudTenantsSshkeysDeleteForbidden {
+	return &PcloudTenantsSshkeysDeleteForbidden{}
+}
+
+/*
+PcloudTenantsSshkeysDeleteForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudTenantsSshkeysDeleteForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys delete forbidden response has a 2xx status code
+func (o *PcloudTenantsSshkeysDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys delete forbidden response has a 3xx status code
+func (o *PcloudTenantsSshkeysDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys delete forbidden response has a 4xx status code
+func (o *PcloudTenantsSshkeysDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys delete forbidden response has a 5xx status code
+func (o *PcloudTenantsSshkeysDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys delete forbidden response a status code equal to that given
+func (o *PcloudTenantsSshkeysDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete forbidden response
+func (o *PcloudTenantsSshkeysDeleteForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudTenantsSshkeysDeleteForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysDeleteNotFound creates a PcloudTenantsSshkeysDeleteNotFound with default headers values
+func NewPcloudTenantsSshkeysDeleteNotFound() *PcloudTenantsSshkeysDeleteNotFound {
+	return &PcloudTenantsSshkeysDeleteNotFound{}
+}
+
+/*
+PcloudTenantsSshkeysDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudTenantsSshkeysDeleteNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys delete not found response has a 2xx status code
+func (o *PcloudTenantsSshkeysDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys delete not found response has a 3xx status code
+func (o *PcloudTenantsSshkeysDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys delete not found response has a 4xx status code
+func (o *PcloudTenantsSshkeysDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys delete not found response has a 5xx status code
+func (o *PcloudTenantsSshkeysDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys delete not found response a status code equal to that given
+func (o *PcloudTenantsSshkeysDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete not found response
+func (o *PcloudTenantsSshkeysDeleteNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudTenantsSshkeysDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/tenants/{tenant_id}/sshkeys/{sshkey_name}][%d] pcloudTenantsSshkeysDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -282,6 +445,11 @@ func (o *PcloudTenantsSshkeysDeleteGone) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys delete gone response a status code equal to that given
 func (o *PcloudTenantsSshkeysDeleteGone) IsCode(code int) bool {
 	return code == 410
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete gone response
+func (o *PcloudTenantsSshkeysDeleteGone) Code() int {
+	return 410
 }
 
 func (o *PcloudTenantsSshkeysDeleteGone) Error() string {
@@ -345,6 +513,11 @@ func (o *PcloudTenantsSshkeysDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys delete internal server error response a status code equal to that given
 func (o *PcloudTenantsSshkeysDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud tenants sshkeys delete internal server error response
+func (o *PcloudTenantsSshkeysDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudTenantsSshkeysDeleteInternalServerError) Error() string {

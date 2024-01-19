@@ -84,6 +84,12 @@ func ResourceIBMKmskey() *schema.Resource {
 				ValidateFunc: validate.ValidateAllowedStringValues([]string{"public", "private"}),
 				Description:  "public or private",
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "description of the key",
+			},
 			"standard_key": {
 				Type:        schema.TypeBool,
 				Default:     false,
@@ -92,10 +98,11 @@ func ResourceIBMKmskey() *schema.Resource {
 				Description: "Standard key type",
 			},
 			"payload": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-				ForceNew: true,
+				Type:      schema.TypeString,
+				Sensitive: true,
+				Computed:  true,
+				Optional:  true,
+				ForceNew:  true,
 			},
 			"encrypted_nonce": {
 				Type:        schema.TypeString,
@@ -176,7 +183,10 @@ func resourceIBMKmsKeyCreate(d *schema.ResourceData, meta interface{}) error {
 
 	kpAPI.Config.KeyRing = d.Get("key_ring_id").(string)
 
-	key, err := kpAPI.CreateImportedKey(context.Background(), keyData.Name, keyData.Expiration, keyData.Payload, keyData.EncryptedNonce, keyData.IV, keyData.Extractable)
+	key, err := kpAPI.CreateKeyWithOptions(context.Background(), keyData.Name, keyData.Extractable,
+		kp.WithExpiration(keyData.Expiration),
+		kp.WithPayload(keyData.Payload, &keyData.EncryptedNonce, &keyData.IV, false),
+		kp.WithDescription(keyData.Description))
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error while creating key: %s", err)
 	}
@@ -283,6 +293,7 @@ func setKeyDetails(d *schema.ResourceData, meta interface{}, instanceID string, 
 	d.Set("key_id", key.ID)
 	d.Set("standard_key", key.Extractable)
 	d.Set("payload", d.Get("payload"))
+	d.Set("description", key.Description)
 	d.Set("encrypted_nonce", key.EncryptedNonce)
 	d.Set("iv_value", key.IV)
 	d.Set("key_name", key.Name)
@@ -369,6 +380,7 @@ func ExtractAndValidateKeyDataFromSchema(d *schema.ResourceData, meta interface{
 		Extractable:    d.Get("standard_key").(bool),
 		Expiration:     expiration,
 		Payload:        d.Get("payload").(string),
+		Description:    d.Get("description").(string),
 		EncryptedNonce: d.Get("encrypted_nonce").(string),
 		IV:             d.Get("iv_value").(string),
 	}

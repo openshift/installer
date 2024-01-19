@@ -294,6 +294,10 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 
 // ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if ic.Platform.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
+		return nil
+	}
+
 	allErrs := field.ErrorList{}
 
 	client, err := NewClient(context.TODO())

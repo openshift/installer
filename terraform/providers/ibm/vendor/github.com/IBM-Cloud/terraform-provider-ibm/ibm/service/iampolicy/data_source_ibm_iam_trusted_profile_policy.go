@@ -154,7 +154,7 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"key": {
 										Type:        schema.TypeString,
-										Required:    true,
+										Optional:    true,
 										Description: "Key of the condition",
 									},
 									"operator": {
@@ -164,9 +164,34 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 									},
 									"value": {
 										Type:        schema.TypeList,
-										Required:    true,
+										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "Value of the condition",
+									},
+									"conditions": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: "Additional Rule conditions enforced by the policy",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"key": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "Key of the condition",
+												},
+												"operator": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: "Operator of the condition",
+												},
+												"value": {
+													Type:        schema.TypeList,
+													Required:    true,
+													Elem:        &schema.Schema{Type: schema.TypeString},
+													Description: "Value of the condition",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -180,6 +205,44 @@ func DataSourceIBMIAMTrustedProfilePolicy() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Pattern rule follows for time-based condition",
+						},
+						"template": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Computed:    true,
+							Description: "Template meta data created from policy assignment",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Policy template id",
+									},
+									"version": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Policy template version",
+									},
+									"assignment_id": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "policy assignment id",
+									},
+									"root_id": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "orchestrator template id",
+									},
+									"root_version": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "orchestrator template version",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -287,6 +350,10 @@ func dataSourceIBMIAMTrustedProfilePolicyRead(d *schema.ResourceData, meta inter
 		}
 		if policy.Pattern != nil {
 			p["pattern"] = policy.Pattern
+		}
+		if policy.Template != nil {
+			templateMap := flattenPolicyTemplateMetaData(policy.Template)
+			p["template"] = []map[string]interface{}{templateMap}
 		}
 		profilePolicies = append(profilePolicies, p)
 	}

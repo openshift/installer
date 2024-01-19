@@ -50,7 +50,7 @@ func DataSourceIBMMetricsRouterTargets() *schema.Resource {
 						"destination_crn": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The CRN of the destination service instance or resource.",
+							Description: "The CRN of the destination service instance or resource. Ensure you have a service authorization between IBM Cloud Metrics Routing and your Cloud resource. Read [S2S authorization](https://cloud.ibm.com/docs/metrics-router?topic=metrics-router-target-monitoring&interface=ui#target-monitoring-ui) for details.",
 						},
 						"target_type": &schema.Schema{
 							Type:        schema.TypeString,

@@ -35,6 +35,12 @@ func ResourceIBMKmsKeyWithPolicyOverrides() *schema.Resource {
 				Description:      "Key protect or HPCS instance GUID or CRN",
 				DiffSuppressFunc: suppressKMSInstanceIDDiff,
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "description of the key",
+			},
 			"key_ring_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -74,10 +80,11 @@ func ResourceIBMKmsKeyWithPolicyOverrides() *schema.Resource {
 				Description: "Standard key type",
 			},
 			"payload": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-				ForceNew: true,
+				Type:      schema.TypeString,
+				Sensitive: true,
+				Computed:  true,
+				Optional:  true,
+				ForceNew:  true,
 			},
 			"encrypted_nonce": {
 				Type:        schema.TypeString,

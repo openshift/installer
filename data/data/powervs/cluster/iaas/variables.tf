@@ -12,3 +12,8 @@ variable "powervs_zone" {
   type        = string
   description = "The Power VS zone in which to create resources."
 }
+
+variable "service_instance_name" {
+  type        = string
+  description = "Optionally, the service instance name of an existing object before cluster creation"
+}

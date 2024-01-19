@@ -60,7 +60,7 @@ func (o *PcloudVolumegroupsDeleteReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}] pcloud.volumegroups.delete", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudVolumegroupsDeleteAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups delete accepted response a status code equal to that given
 func (o *PcloudVolumegroupsDeleteAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud volumegroups delete accepted response
+func (o *PcloudVolumegroupsDeleteAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudVolumegroupsDeleteAccepted) Error() string {
@@ -162,6 +167,11 @@ func (o *PcloudVolumegroupsDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups delete bad request response a status code equal to that given
 func (o *PcloudVolumegroupsDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud volumegroups delete bad request response
+func (o *PcloudVolumegroupsDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudVolumegroupsDeleteBadRequest) Error() string {
@@ -227,6 +237,11 @@ func (o *PcloudVolumegroupsDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud volumegroups delete unauthorized response
+func (o *PcloudVolumegroupsDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudVolumegroupsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}][%d] pcloudVolumegroupsDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -288,6 +303,11 @@ func (o *PcloudVolumegroupsDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups delete forbidden response a status code equal to that given
 func (o *PcloudVolumegroupsDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud volumegroups delete forbidden response
+func (o *PcloudVolumegroupsDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudVolumegroupsDeleteForbidden) Error() string {
@@ -353,6 +373,11 @@ func (o *PcloudVolumegroupsDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud volumegroups delete not found response
+func (o *PcloudVolumegroupsDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVolumegroupsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}][%d] pcloudVolumegroupsDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -414,6 +439,11 @@ func (o *PcloudVolumegroupsDeleteInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups delete internal server error response a status code equal to that given
 func (o *PcloudVolumegroupsDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud volumegroups delete internal server error response
+func (o *PcloudVolumegroupsDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVolumegroupsDeleteInternalServerError) Error() string {

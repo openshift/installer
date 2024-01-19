@@ -73,7 +73,7 @@ func DataSourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Tool name.",
+				Description: "Name of the tool.",
 			},
 			"updated_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -89,7 +89,7 @@ func DataSourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 						"git_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Set this value to 'github' for github.com, the GUID of an existing custom GitHub Enterprise server, or 'githubcustom'.",
+							Description: "Set this value to 'github' for github.com, or 'githubcustom' for a custom GitHub Enterprise server.",
 						},
 						"title": &schema.Schema{
 							Type:        schema.TypeString,
@@ -280,10 +280,10 @@ func dataSourceIBMCdToolchainToolGithubconsolidatedRead(context context.Context,
 func dataSourceIBMCdToolchainToolGithubconsolidatedToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
-		modelMap["ui_href"] = *model.UIHref
+		modelMap["ui_href"] = model.UIHref
 	}
 	if model.APIHref != nil {
-		modelMap["api_href"] = *model.APIHref
+		modelMap["api_href"] = model.APIHref
 	}
 	return modelMap, nil
 }

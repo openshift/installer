@@ -60,7 +60,7 @@ func (o *PcloudSppplacementgroupsGetallReader) ReadResponse(response runtime.Cli
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups] pcloud.sppplacementgroups.getall", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudSppplacementgroupsGetallOK) IsServerError() bool {
 // IsCode returns true when this pcloud sppplacementgroups getall o k response a status code equal to that given
 func (o *PcloudSppplacementgroupsGetallOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud sppplacementgroups getall o k response
+func (o *PcloudSppplacementgroupsGetallOK) Code() int {
+	return 200
 }
 
 func (o *PcloudSppplacementgroupsGetallOK) Error() string {
@@ -166,6 +171,11 @@ func (o *PcloudSppplacementgroupsGetallBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud sppplacementgroups getall bad request response
+func (o *PcloudSppplacementgroupsGetallBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudSppplacementgroupsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups][%d] pcloudSppplacementgroupsGetallBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *PcloudSppplacementgroupsGetallUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud sppplacementgroups getall unauthorized response a status code equal to that given
 func (o *PcloudSppplacementgroupsGetallUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud sppplacementgroups getall unauthorized response
+func (o *PcloudSppplacementgroupsGetallUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudSppplacementgroupsGetallUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *PcloudSppplacementgroupsGetallForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud sppplacementgroups getall forbidden response
+func (o *PcloudSppplacementgroupsGetallForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudSppplacementgroupsGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups][%d] pcloudSppplacementgroupsGetallForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *PcloudSppplacementgroupsGetallNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud sppplacementgroups getall not found response
+func (o *PcloudSppplacementgroupsGetallNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudSppplacementgroupsGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups][%d] pcloudSppplacementgroupsGetallNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *PcloudSppplacementgroupsGetallInternalServerError) IsServerError() bool
 // IsCode returns true when this pcloud sppplacementgroups getall internal server error response a status code equal to that given
 func (o *PcloudSppplacementgroupsGetallInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud sppplacementgroups getall internal server error response
+func (o *PcloudSppplacementgroupsGetallInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudSppplacementgroupsGetallInternalServerError) Error() string {

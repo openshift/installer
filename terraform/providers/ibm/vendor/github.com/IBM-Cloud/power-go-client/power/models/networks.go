@@ -85,6 +85,11 @@ func (m *Networks) contextValidateNetworks(ctx context.Context, formats strfmt.R
 	for i := 0; i < len(m.Networks); i++ {
 
 		if m.Networks[i] != nil {
+
+			if swag.IsZero(m.Networks[i]) { // not required
+				return nil
+			}
+
 			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("networks" + "." + strconv.Itoa(i))

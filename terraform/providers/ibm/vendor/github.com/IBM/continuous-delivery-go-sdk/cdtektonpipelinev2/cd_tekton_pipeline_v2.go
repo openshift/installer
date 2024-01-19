@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.68.2-ac7def68-20230310-195410
+ * IBM OpenAPI SDK Code Generator Version: 3.76.0-ad3e6f96-20230724-172814
  */
 
 // Package cdtektonpipelinev2 : Operations and models for the CdTektonPipelineV2 service
@@ -120,6 +120,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"us-east": "https://api.us-east.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the us-east region.
 		"eu-de": "https://api.eu-de.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the eu-de region.
 		"eu-gb": "https://api.eu-gb.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the eu-gb region.
+		"eu-es": "https://api.eu-es.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the eu-es region.
 		"jp-osa": "https://api.jp-osa.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the jp-osa region.
 		"jp-tok": "https://api.jp-tok.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the jp-tok region.
 		"au-syd": "https://api.au-syd.devops.cloud.ibm.com/pipeline/v2", // The host URL for Tekton Pipeline Service in the au-syd region.
@@ -1792,6 +1793,9 @@ func (cdTektonPipeline *CdTektonPipelineV2) CreateTektonPipelineTriggerWithConte
 	if createTektonPipelineTriggerOptions.Events != nil {
 		body["events"] = createTektonPipelineTriggerOptions.Events
 	}
+	if createTektonPipelineTriggerOptions.Favorite != nil {
+		body["favorite"] = createTektonPipelineTriggerOptions.Favorite
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -2523,7 +2527,8 @@ type CreateTektonPipelineOptions struct {
 	// work.
 	EnablePartialCloning *bool `json:"enable_partial_cloning,omitempty"`
 
-	// Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+	// Specify the worker used to run the trigger, as a worker object containing the worker ID only. If omitted, or
+	// specified as `worker: { id: 'public' }`, the IBM Managed shared workers are used.
 	Worker *WorkerIdentity `json:"worker,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -2669,11 +2674,11 @@ type CreateTektonPipelineRunOptions struct {
 
 	// An object containing string values only that provides additional `text` properties, or overrides existing
 	// pipeline/trigger properties, to use for the created run.
-	TriggerProperties []Property `json:"trigger_properties,omitempty"`
+	TriggerProperties map[string]interface{} `json:"trigger_properties,omitempty"`
 
 	// An object containing string values only that provides additional `secure` properties, or overrides existing `secure`
 	// pipeline/trigger properties, to use for the created run.
-	SecureTriggerProperties []Property `json:"secure_trigger_properties,omitempty"`
+	SecureTriggerProperties map[string]interface{} `json:"secure_trigger_properties,omitempty"`
 
 	// An object containing string values only that provides the request headers. Use `$(header.header_key_name)` to access
 	// it in a TriggerBinding. Most commonly used as part of a Generic Webhook to provide a verification token or signature
@@ -2711,13 +2716,13 @@ func (_options *CreateTektonPipelineRunOptions) SetTriggerName(triggerName strin
 }
 
 // SetTriggerProperties : Allow user to set TriggerProperties
-func (_options *CreateTektonPipelineRunOptions) SetTriggerProperties(triggerProperties []Property) *CreateTektonPipelineRunOptions {
+func (_options *CreateTektonPipelineRunOptions) SetTriggerProperties(triggerProperties map[string]interface{}) *CreateTektonPipelineRunOptions {
 	_options.TriggerProperties = triggerProperties
 	return _options
 }
 
 // SetSecureTriggerProperties : Allow user to set SecureTriggerProperties
-func (_options *CreateTektonPipelineRunOptions) SetSecureTriggerProperties(secureTriggerProperties []Property) *CreateTektonPipelineRunOptions {
+func (_options *CreateTektonPipelineRunOptions) SetSecureTriggerProperties(secureTriggerProperties map[string]interface{}) *CreateTektonPipelineRunOptions {
 	_options.SecureTriggerProperties = secureTriggerProperties
 	return _options
 }
@@ -2764,7 +2769,8 @@ type CreateTektonPipelineTriggerOptions struct {
 	// Trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Specify the worker used to run the trigger. Use `worker: { id: 'public' }` to use the IBM Managed workers. Use
+	// `worker: { id: 'inherit' }` to inherit the worker used by the pipeline.
 	Worker *WorkerIdentity `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -2796,6 +2802,9 @@ type CreateTektonPipelineTriggerOptions struct {
 	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
 	// the equivalent 'pull request' events.
 	Events []string `json:"events"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2904,6 +2913,12 @@ func (_options *CreateTektonPipelineTriggerOptions) SetSource(source *TriggerSou
 // SetEvents : Allow user to set Events
 func (_options *CreateTektonPipelineTriggerOptions) SetEvents(events []string) *CreateTektonPipelineTriggerOptions {
 	_options.Events = events
+	return _options
+}
+
+// SetFavorite : Allow user to set Favorite
+func (_options *CreateTektonPipelineTriggerOptions) SetFavorite(favorite bool) *CreateTektonPipelineTriggerOptions {
+	_options.Favorite = core.BoolPtr(favorite)
 	return _options
 }
 
@@ -4230,7 +4245,7 @@ type PipelineRun struct {
 	// Reference to the pipeline definition of a pipeline run.
 	Definition *RunDefinition `json:"definition,omitempty"`
 
-	// worker details used in this pipeline run.
+	// Worker details used in this pipeline run.
 	Worker *PipelineRunWorker `json:"worker" validate:"required"`
 
 	// The ID of the pipeline to which this pipeline run belongs.
@@ -4265,6 +4280,9 @@ type PipelineRun struct {
 
 	// URL for the details page of this pipeline run.
 	RunURL *string `json:"run_url" validate:"required"`
+
+	// Error message that provides details when a pipeline run encounters an error.
+	ErrorMessage *string `json:"error_message,omitempty"`
 }
 
 // Constants associated with the PipelineRun.Status property.
@@ -4352,6 +4370,10 @@ func UnmarshalPipelineRun(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "error_message", &obj.ErrorMessage)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -4363,11 +4385,11 @@ type PipelineRunTrigger struct {
 
 	// An object containing string values only that provides additional `text` properties, or overrides existing
 	// pipeline/trigger properties, to use for the created run.
-	Properties []Property `json:"properties,omitempty"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
 
 	// An object containing string values only that provides additional `secure` properties, or overrides existing `secure`
 	// pipeline/trigger properties, to use for the created run.
-	SecureProperties []Property `json:"secure_properties,omitempty"`
+	SecureProperties map[string]interface{} `json:"secure_properties,omitempty"`
 
 	// An object containing string values only that provides the request headers. Use `$(header.header_key_name)` to access
 	// it in a TriggerBinding. Most commonly used as part of a Generic Webhook to provide a verification token or signature
@@ -4395,11 +4417,11 @@ func UnmarshalPipelineRunTrigger(m map[string]json.RawMessage, result interface{
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "properties", &obj.Properties, UnmarshalProperty)
+	err = core.UnmarshalPrimitive(m, "properties", &obj.Properties)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "secure_properties", &obj.SecureProperties, UnmarshalProperty)
+	err = core.UnmarshalPrimitive(m, "secure_properties", &obj.SecureProperties)
 	if err != nil {
 		return
 	}
@@ -4415,7 +4437,7 @@ func UnmarshalPipelineRunTrigger(m map[string]json.RawMessage, result interface{
 	return
 }
 
-// PipelineRunWorker : worker details used in this pipeline run.
+// PipelineRunWorker : Worker details used in this pipeline run.
 type PipelineRunWorker struct {
 	// Name of the worker. Computed based on the worker ID.
 	Name *string `json:"name,omitempty"`
@@ -4560,16 +4582,6 @@ const (
 	PropertyTypeSingleSelectConst = "single_select"
 	PropertyTypeTextConst = "text"
 )
-
-// NewProperty : Instantiate Property (Generic Model Constructor)
-func (*CdTektonPipelineV2) NewProperty(name string, typeVar string) (_model *Property, err error) {
-	_model = &Property{
-		Name: core.StringPtr(name),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
 
 // UnmarshalProperty unmarshals an instance of Property from the specified map of raw messages.
 func UnmarshalProperty(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -5050,7 +5062,7 @@ type TektonPipeline struct {
 	// Tekton pipeline triggers list.
 	Triggers []TriggerIntf `json:"triggers" validate:"required"`
 
-	// Default pipeline worker used to run the pipeline.
+	// Details of the worker used to run the pipeline.
 	Worker *Worker `json:"worker" validate:"required"`
 
 	// URL for this pipeline showing the list of pipeline runs.
@@ -5179,7 +5191,8 @@ type TektonPipelinePatch struct {
 	// work.
 	EnablePartialCloning *bool `json:"enable_partial_cloning,omitempty"`
 
-	// Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+	// Specify the worker used to run the trigger, as a worker object containing the worker ID only. If omitted, or
+	// specified as `worker: { id: 'public' }`, the IBM Managed shared workers are used.
 	Worker *WorkerIdentity `json:"worker,omitempty"`
 }
 
@@ -5295,7 +5308,7 @@ type Trigger struct {
 	// Optional trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Details of the worker used to run the trigger.
 	Worker *Worker `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -5304,6 +5317,9 @@ type Trigger struct {
 
 	// Flag whether the trigger is enabled.
 	Enabled *bool `json:"enabled,omitempty"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 
 	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
 	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
@@ -5391,6 +5407,10 @@ func UnmarshalTrigger(m map[string]json.RawMessage, result interface{}) (err err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalTriggerSource)
 	if err != nil {
 		return
@@ -5434,11 +5454,12 @@ type TriggerPatch struct {
 	// Trigger tags array. Optional tags for the trigger.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Specify the worker used to run the trigger. Use `worker: { id: 'public' }` to use the IBM Managed workers. Use
+	// `worker: { id: 'inherit' }` to inherit the worker used by the pipeline.
 	Worker *WorkerIdentity `json:"worker,omitempty"`
 
-	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
-	// for this trigger.
+	// Defines the maximum number of concurrent runs for this trigger. If set to 0 then the custom concurrency limit is
+	// disabled for this trigger.
 	MaxConcurrentRuns *int64 `json:"max_concurrent_runs,omitempty"`
 
 	// Defines if this trigger is enabled.
@@ -5466,6 +5487,9 @@ type TriggerPatch struct {
 	// 'pull_request' and 'pull_request_closed'. For SCM repositories that use 'merge request' events, such events map to
 	// the equivalent 'pull request' events.
 	Events []string `json:"events"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 }
 
 // Constants associated with the TriggerPatch.Type property.
@@ -5534,6 +5558,10 @@ func UnmarshalTriggerPatch(m map[string]json.RawMessage, result interface{}) (er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "events", &obj.Events)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
 	if err != nil {
 		return
 	}
@@ -5920,7 +5948,7 @@ func UnmarshalUserInfo(m map[string]json.RawMessage, result interface{}) (err er
 	return
 }
 
-// Worker : Default pipeline worker used to run the pipeline.
+// Worker : Details of the worker used to run the pipeline.
 type Worker struct {
 	// Name of the worker. Computed based on the worker ID.
 	Name *string `json:"name,omitempty"`
@@ -5951,7 +5979,8 @@ func UnmarshalWorker(m map[string]json.RawMessage, result interface{}) (err erro
 	return
 }
 
-// WorkerIdentity : Worker object containing worker ID only. If omitted the IBM Managed shared workers are used by default.
+// WorkerIdentity : Specify the worker used to run the trigger, as a worker object containing the worker ID only. If omitted, or
+// specified as `worker: { id: 'public' }`, the IBM Managed shared workers are used.
 type WorkerIdentity struct {
 	// ID of the worker.
 	ID *string `json:"id" validate:"required"`
@@ -6003,7 +6032,7 @@ type TriggerGenericTrigger struct {
 	// Optional trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Details of the worker used to run the trigger.
 	Worker *Worker `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -6012,6 +6041,9 @@ type TriggerGenericTrigger struct {
 
 	// Flag whether the trigger is enabled.
 	Enabled *bool `json:"enabled" validate:"required"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 
 	// Only needed for generic webhook trigger type. Secret used to start generic webhook trigger.
 	Secret *GenericSecret `json:"secret,omitempty"`
@@ -6067,6 +6099,10 @@ func UnmarshalTriggerGenericTrigger(m map[string]json.RawMessage, result interfa
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "secret", &obj.Secret, UnmarshalGenericSecret)
 	if err != nil {
 		return
@@ -6104,7 +6140,7 @@ type TriggerManualTrigger struct {
 	// Optional trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Details of the worker used to run the trigger.
 	Worker *Worker `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -6113,6 +6149,9 @@ type TriggerManualTrigger struct {
 
 	// Flag whether the trigger is enabled.
 	Enabled *bool `json:"enabled" validate:"required"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 }
 
 func (*TriggerManualTrigger) isaTrigger() bool {
@@ -6162,6 +6201,10 @@ func UnmarshalTriggerManualTrigger(m map[string]json.RawMessage, result interfac
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -6192,7 +6235,7 @@ type TriggerScmTrigger struct {
 	// Optional trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Details of the worker used to run the trigger.
 	Worker *Worker `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -6201,6 +6244,9 @@ type TriggerScmTrigger struct {
 
 	// Flag whether the trigger is enabled.
 	Enabled *bool `json:"enabled" validate:"required"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 
 	// Source repository for a Git trigger. Only required for Git triggers. The referenced repository URL must match the
 	// URL of a repository tool integration in the parent toolchain. Obtain the list of integrations from the toolchain API
@@ -6269,6 +6315,10 @@ func UnmarshalTriggerScmTrigger(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalModel(m, "source", &obj.Source, UnmarshalTriggerSource)
 	if err != nil {
 		return
@@ -6306,7 +6356,7 @@ type TriggerTimerTrigger struct {
 	// Optional trigger tags array.
 	Tags []string `json:"tags"`
 
-	// Worker used to run the trigger. If not specified the trigger will use the default pipeline worker.
+	// Details of the worker used to run the trigger.
 	Worker *Worker `json:"worker,omitempty"`
 
 	// Defines the maximum number of concurrent runs for this trigger. If omitted then the concurrency limit is disabled
@@ -6315,6 +6365,9 @@ type TriggerTimerTrigger struct {
 
 	// Flag whether the trigger is enabled.
 	Enabled *bool `json:"enabled" validate:"required"`
+
+	// Mark the trigger as a favorite.
+	Favorite *bool `json:"favorite,omitempty"`
 
 	// Only needed for timer triggers. Cron expression that indicates when this trigger will activate. Maximum frequency is
 	// every 5 minutes. The string is based on UNIX crontab syntax: minute, hour, day of month, month, day of week.
@@ -6371,6 +6424,10 @@ func UnmarshalTriggerTimerTrigger(m map[string]json.RawMessage, result interface
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "enabled", &obj.Enabled)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "favorite", &obj.Favorite)
 	if err != nil {
 		return
 	}

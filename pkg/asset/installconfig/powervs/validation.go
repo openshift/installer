@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -275,4 +276,34 @@ func ValidateSystemTypeForRegion(client API, ic *types.InstallConfig) error {
 		return nil
 	}
 	return fmt.Errorf("%s is not available in: %s", requested, ic.PowerVS.Region)
+}
+
+// ValidateServiceInstance validates the optional service instance GUID in our install config.
+func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	serviceInstances, err := client.ListServiceInstances(ctx)
+	if err != nil {
+		return err
+	}
+
+	switch ic.PowerVS.ServiceInstanceGUID {
+	case "":
+		return nil
+	default:
+		found := false
+		for _, serviceInstance := range serviceInstances {
+			guid := strings.SplitN(serviceInstance, " ", 2)[1]
+			if guid == ic.PowerVS.ServiceInstanceGUID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.New("platform:powervs:serviceInstanceGUID has an invalid guid")
+		}
+	}
+
+	return nil
 }

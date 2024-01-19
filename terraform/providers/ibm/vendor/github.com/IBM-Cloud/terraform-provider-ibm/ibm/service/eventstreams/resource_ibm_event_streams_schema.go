@@ -293,7 +293,17 @@ func resourceIBMEventStreamsSchemaDelete(context context.Context, d *schema.Reso
 	schemaID := d.Get("schema_id").(string)
 	deleteSchemaOptions.SetID(schemaID)
 
-	response, err := schemaregistryClient.DeleteSchemaWithContext(context, deleteSchemaOptions)
+	setSchemaOptions := &schemaregistryv1.SetSchemaStateOptions{}
+	setSchemaOptions.SetID(schemaID)
+	setSchemaOptions.SetState("DISABLED")
+
+	// set schema state to disabled before deleting
+	response, err := schemaregistryClient.SetSchemaStateWithContext(context, setSchemaOptions)
+	if err != nil {
+		log.Printf("[DEBUG] SetSchemaStateWithContext failed %s\n%s", err, response)
+	}
+
+	response, err = schemaregistryClient.DeleteSchemaWithContext(context, deleteSchemaOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteSchemaWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("DeleteSchemaWithContext failed %s\n%s", err, response))

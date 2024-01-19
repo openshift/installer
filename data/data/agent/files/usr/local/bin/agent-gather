@@ -28,9 +28,10 @@ function gather_agent_data() {
 	( >&2 echo -n "Gathering agent installation data" )
 	mkdir -p "${ARTIFACTS_DIR}/etc"
 	cp -a /etc/assisted{,-service} "${ARTIFACTS_DIR}/etc/"
-	# Redact pull secrets
+	# Redact pull secrets and platform passwords
 	for manifest in "${ARTIFACTS_DIR}"/etc/assisted/manifests/*; do
 		sed -i -e '/"auth":/ s/: *"[A-Za-z0-9+/]*=*"/: "<redacted>"/g' "${manifest}"
+		sed -i -e '/install-config-overrides/ s/"password":"[^"]*/"password":"<redacted>/g' "${manifest}"
 	done
 	( >&2 echo -n ".")
 	mkdir "${ARTIFACTS_DIR}/etc/containers"
@@ -80,6 +81,30 @@ function gather_storage_data() {
 	( >&2 echo " Done")
 }
 
+function gather_container_status() {
+	( >&2 echo  -n "Gathering container status" )
+	mkdir -p "${ARTIFACTS_DIR}/"
+	( >&2 echo -n ".")
+	sudo podman ps -a > "${ARTIFACTS_DIR}/container-status"
+	( >&2 echo " Done")
+}
+
+function gather_database_data() {
+	( >&2 echo  -n "Gathering assisted database data" )
+	db_container=$(sudo podman ps -a | grep assisted-db)
+	if [[ "$db_container" != "" ]]; then
+		mkdir -p "${ARTIFACTS_DIR}/postgresql"
+		( >&2 echo -n ".")
+		sudo podman exec assisted-db psql -d installer -c 'select id, status_info, status, validations_info from hosts' > "${ARTIFACTS_DIR}/postgresql/hosts-status"
+		( >&2 echo -n ".")
+		sudo podman exec assisted-db psql -d installer -c 'select id, status_info, status, validations_info from clusters' > "${ARTIFACTS_DIR}/postgresql/clusters-status"
+		( >&2 echo -n ".")
+	else
+		( >&2 echo ".. Skipping, assisted-db container not running.")
+	fi
+	( >&2 echo " Done")
+}
+
 function Help()
 {
 	echo "Gathers the necessary data for troubleshooting OpenShift's agent based installation"
@@ -120,6 +145,8 @@ gather_agent_data
 gather_config_status
 gather_network_data
 gather_storage_data
+gather_container_status
+gather_database_data
 
 # Set permissions so regular users can delete the extracted content
 find "$ARTIFACTS_DIR" -type d -exec chmod a+rwx "{}" \;

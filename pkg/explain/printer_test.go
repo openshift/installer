@@ -84,6 +84,9 @@ func Test_PrintFields(t *testing.T) {
     networking <object>
       Networking is the configuration for the pod network provider in the cluster.
 
+    operatorPublishingStrategy <object>
+      OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to perform the installation.
 
@@ -212,6 +215,9 @@ func Test_PrintFields(t *testing.T) {
 
     controlPlaneSubnet <string>
       ControlPlaneSubnet specifies an existing subnet for use by the control plane nodes
+
+    customerManagedKey <object>
+      CustomerManagedKey has the keys needed to encrypt the storage account.
 
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on Azure for machine pools which do not define their own platform configuration.

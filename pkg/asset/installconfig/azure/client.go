@@ -2,6 +2,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	azenc "github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -source=./client.go -destination=mock/azureclient_generated.go -package=mock
@@ -65,7 +65,7 @@ func (c *Client) GetVirtualNetwork(ctx context.Context, resourceGroupName, virtu
 
 	vnet, err := vnetClient.Get(ctx, resourceGroupName, virtualNetwork, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get virtual network %s", virtualNetwork)
+		return nil, fmt.Errorf("failed to get virtual network %s: %w", virtualNetwork, err)
 	}
 
 	return &vnet, nil
@@ -83,7 +83,7 @@ func (c *Client) getSubnet(ctx context.Context, resourceGroupName, virtualNetwor
 
 	subnet, err := subnetsClient.Get(ctx, resourceGroupName, virtualNetwork, subNetwork, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get subnet %s", subNetwork)
+		return nil, fmt.Errorf("failed to get subnet %s: %w", subNetwork, err)
 	}
 
 	return &subnet, nil
@@ -131,7 +131,7 @@ func (c *Client) ListLocations(ctx context.Context) (*[]azsubs.Location, error) 
 
 	locations, err := subsClient.ListLocations(ctx, c.ssn.Credentials.SubscriptionID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list locations")
+		return nil, fmt.Errorf("failed to list locations: %w", err)
 	}
 
 	return locations.Value, nil
@@ -156,7 +156,7 @@ func (c *Client) GetResourcesProvider(ctx context.Context, resourceProviderNames
 
 	provider, err := providersClient.Get(ctx, resourceProviderNamespace, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get resource provider %s", resourceProviderNamespace)
+		return nil, fmt.Errorf("failed to get resource provider %s: %w", resourceProviderNamespace, err)
 	}
 
 	return &provider, nil
@@ -180,7 +180,7 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.Resour
 
 	for skuPage, err := client.List(ctx); skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
 		if err != nil {
-			return nil, errors.Wrap(err, "error fetching SKU pages")
+			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
 		for _, page := range skuPage.Values() {
 			for _, diskRegion := range to.StringSlice(page.Locations) {
@@ -195,7 +195,7 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.Resour
 		return sku, nil
 	}
 
-	return nil, errors.Errorf("no disks for specified subscription in region %s", region)
+	return nil, fmt.Errorf("no disks for specified subscription in region %s", region)
 }
 
 // GetGroup returns resource group for the groupName.
@@ -207,7 +207,7 @@ func (c *Client) GetGroup(ctx context.Context, groupName string) (*azres.Group, 
 
 	res, err := client.Get(ctx, groupName)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get resource group")
+		return nil, fmt.Errorf("failed to get resource group: %w", err)
 	}
 	return &res, nil
 }
@@ -222,7 +222,7 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 	var res []string
 	for resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil); resPage.NotDone(); err = resPage.NextWithContext(ctx) {
 		if err != nil {
-			return nil, errors.Wrap(err, "error fetching resource pages")
+			return nil, fmt.Errorf("error fetching resource pages: %w", err)
 		}
 		for _, page := range resPage.Values() {
 			res = append(res, to.String(page.ID))
@@ -240,7 +240,7 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 
 	for page, err := client.List(ctx); page.NotDone(); err = page.NextWithContext(ctx) {
 		if err != nil {
-			return nil, errors.Wrap(err, "error fetching SKU pages")
+			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
 		for _, sku := range page.Values() {
 			// Filter out resources that are not virtualMachines
@@ -271,7 +271,7 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 
 	diskEncryptionSet, err := client.Get(ctx, groupName, diskEncryptionSetName)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get disk encryption set")
+		return nil, fmt.Errorf("failed to get disk encryption set: %w", err)
 	}
 
 	return &diskEncryptionSet, nil
@@ -281,7 +281,7 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 func (c *Client) GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error) {
 	typeMeta, err := c.GetVirtualMachineSku(ctx, name, region)
 	if err != nil {
-		return "", fmt.Errorf("error connecting to Azure client: %v", err)
+		return "", fmt.Errorf("error connecting to Azure client: %w", err)
 	}
 	if typeMeta == nil {
 		return "", fmt.Errorf("not found in region %s", region)
@@ -298,7 +298,7 @@ func (c *Client) GetVirtualMachineFamily(ctx context.Context, name, region strin
 func (c *Client) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
 	typeMeta, err := c.GetVirtualMachineSku(ctx, instanceType, region)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to Azure client: %v", err)
+		return nil, fmt.Errorf("error connecting to Azure client: %w", err)
 	}
 	if typeMeta == nil {
 		return nil, fmt.Errorf("not found in region %s", region)
@@ -330,7 +330,10 @@ func (c *Client) GetMarketplaceImage(ctx context.Context, region, publisher, off
 	defer cancel()
 
 	image, err := client.Get(ctx, region, publisher, offer, sku, version)
-	return image, errors.Wrap(err, "could not get marketplace image")
+	if err != nil {
+		return image, fmt.Errorf("could not get marketplace image: %w", err)
+	}
+	return image, nil
 }
 
 // AreMarketplaceImageTermsAccepted tests whether the terms have been accepted for the specified marketplace VM image.

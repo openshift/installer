@@ -2475,7 +2475,7 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 }
 
 // UpdateAccountSettings : Update account configurations
-// Allows a user to configure settings on their account with regards to MFA, MFA excemption list,  session lifetimes,
+// Allows a user to configure settings on their account with regards to MFA, MFA excemption list, session lifetimes,
 // access control for creating new identities, and enforcing IP restrictions on token creation.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettings(updateAccountSettingsOptions *UpdateAccountSettingsOptions) (result *AccountSettingsResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.UpdateAccountSettingsWithContext(context.Background(), updateAccountSettingsOptions)
@@ -2764,8 +2764,8 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 	return
 }
 
-// ListAccountSettingsAssignments : List Assignments
-// List Account Settings Template Assignments.
+// ListAccountSettingsAssignments : List assignments
+// List account settings assignments.
 func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignments(listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListAccountSettingsAssignmentsWithContext(context.Background(), listAccountSettingsAssignmentsOptions)
 }
@@ -2847,8 +2847,8 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx 
 	return
 }
 
-// CreateAccountSettingsAssignment : Create Assignment
-// Create an assigment for an Account Settings Template.
+// CreateAccountSettingsAssignment : Create assignment
+// Create an assigment for an account settings template.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignment(createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateAccountSettingsAssignmentWithContext(context.Background(), createAccountSettingsAssignmentOptions)
 }
@@ -2922,8 +2922,8 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx
 	return
 }
 
-// GetAccountSettingsAssignment : Get Assignment
-// Get an assigment for an Account Settings Template.
+// GetAccountSettingsAssignment : Get assignment
+// Get an assigment for an account settings template.
 func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignment(getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetAccountSettingsAssignmentWithContext(context.Background(), getAccountSettingsAssignmentOptions)
 }
@@ -2986,8 +2986,9 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx co
 	return
 }
 
-// DeleteAccountSettingsAssignment : Delete Assignment
-// Delete an Account Settings assignment. This will remove any resources created by this assignment.
+// DeleteAccountSettingsAssignment : Delete assignment
+// Delete an account settings template assignment. This removes any IAM resources created by this assignment in child
+// accounts.
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignment(deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteAccountSettingsAssignmentWithContext(context.Background(), deleteAccountSettingsAssignmentOptions)
 }
@@ -3046,8 +3047,9 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx
 	return
 }
 
-// UpdateAccountSettingsAssignment : Update Assignment
-// Update an Account Settings assignment in order to retry failed assignments or migrate resources to a new version.
+// UpdateAccountSettingsAssignment : Update assignment
+// Update an account settings assignment. Call this method to retry failed assignments or migrate the settings in child
+// accounts to a new version.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignment(updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.UpdateAccountSettingsAssignmentWithContext(context.Background(), updateAccountSettingsAssignmentOptions)
 }
@@ -3119,8 +3121,8 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx
 	return
 }
 
-// ListAccountSettingsTemplates : List Account Settings Templates
-// List Account Settings Templates for an Enterprise Account.
+// ListAccountSettingsTemplates : List account settings templates
+// List account settings templates in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplates(listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListAccountSettingsTemplatesWithContext(context.Background(), listAccountSettingsTemplatesOptions)
 }
@@ -3190,8 +3192,8 @@ func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx co
 	return
 }
 
-// CreateAccountSettingsTemplate : Create an Account Settings Template
-// Create a new Account Settings Template for an Enterprise Account.
+// CreateAccountSettingsTemplate : Create an account settings template
+// Create a new account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplate(createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateAccountSettingsTemplateWithContext(context.Background(), createAccountSettingsTemplateOptions)
 }
@@ -3265,8 +3267,8 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx c
 	return
 }
 
-// GetLatestAccountSettingsTemplateVersion : Get latest version of an Account Settings Template
-// Get latest version of an Account Settings Template for an Enterprise Account.
+// GetLatestAccountSettingsTemplateVersion : Get latest version of an account settings template
+// Get the latest version of a specific account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersion(getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetLatestAccountSettingsTemplateVersionWithContext(context.Background(), getLatestAccountSettingsTemplateVersionOptions)
 }
@@ -3329,8 +3331,9 @@ func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithCon
 	return
 }
 
-// DeleteAllVersionsOfAccountSettingsTemplate : Delete all versions of an Account Settings Template
-// Delete all versions of an Account Settings Template for an Enterprise Account.
+// DeleteAllVersionsOfAccountSettingsTemplate : Delete all versions of an account settings template
+// Delete all versions of an account settings template in an enterprise account. If any version is assigned to child
+// accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplate(deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteAllVersionsOfAccountSettingsTemplateWithContext(context.Background(), deleteAllVersionsOfAccountSettingsTemplateOptions)
 }
@@ -3377,8 +3380,8 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWith
 	return
 }
 
-// ListVersionsOfAccountSettingsTemplate : List Account Settings Template versions
-// List versions of an Account Settings Template in an Enterprise Account.
+// ListVersionsOfAccountSettingsTemplate : List account settings template versions
+// List the versions of a specific account settings template in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplate(listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListVersionsOfAccountSettingsTemplateWithContext(context.Background(), listVersionsOfAccountSettingsTemplateOptions)
 }
@@ -3453,8 +3456,8 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithConte
 	return
 }
 
-// CreateAccountSettingsTemplateVersion : Create a new version of an Account Settings Template
-// Create a new version of an Account Settings Template in an Enterprise Account.
+// CreateAccountSettingsTemplateVersion : Create a new version of an account settings template
+// Create a new version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersion(createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateAccountSettingsTemplateVersionWithContext(context.Background(), createAccountSettingsTemplateVersionOptions)
 }
@@ -3532,8 +3535,8 @@ func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContex
 	return
 }
 
-// GetAccountSettingsTemplateVersion : Get version of an Account Settings Template
-// Get a specific version of an Account Settings Template in an Enterprise Account.
+// GetAccountSettingsTemplateVersion : Get version of an account settings template
+// Get a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersion(getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetAccountSettingsTemplateVersionWithContext(context.Background(), getAccountSettingsTemplateVersionOptions)
 }
@@ -3597,8 +3600,8 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(c
 	return
 }
 
-// UpdateAccountSettingsTemplateVersion : Update version of an Account Settings Template
-// Update a specific version of an Account Settings Template in an Enterprise Account.
+// UpdateAccountSettingsTemplateVersion : Update version of an account settings template
+// Update a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersion(updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.UpdateAccountSettingsTemplateVersionWithContext(context.Background(), updateAccountSettingsTemplateVersionOptions)
 }
@@ -3680,8 +3683,8 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContex
 	return
 }
 
-// DeleteAccountSettingsTemplateVersion : Delete version of an Account Settings Template
-// Delete a specific version of an Account Settings Template in an Enterprise Account.
+// DeleteAccountSettingsTemplateVersion : Delete version of an account settings template
+// Delete a specific version of an account settings template in an Enterprise Account.
 func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersion(deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteAccountSettingsTemplateVersionWithContext(context.Background(), deleteAccountSettingsTemplateVersionOptions)
 }
@@ -3730,7 +3733,7 @@ func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContex
 }
 
 // CommitAccountSettingsTemplate : Commit a template version
-// Commit a specific version of an Account Settings Template in an Enterprise Account. A Template must be committed
+// Commit a specific version of an account settings template in an Enterprise Account. A Template must be committed
 // before being assigned, and once committed, can no longer be modified.
 func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplate(commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.CommitAccountSettingsTemplateWithContext(context.Background(), commitAccountSettingsTemplateOptions)
@@ -3909,8 +3912,8 @@ func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getR
 	return
 }
 
-// ListTrustedProfileAssignments : List Assignments
-// List Trusted Profile Template Assignments.
+// ListTrustedProfileAssignments : List assignments
+// List trusted profile template assignments.
 func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignments(listTrustedProfileAssignmentsOptions *ListTrustedProfileAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListTrustedProfileAssignmentsWithContext(context.Background(), listTrustedProfileAssignmentsOptions)
 }
@@ -3992,8 +3995,8 @@ func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx c
 	return
 }
 
-// CreateTrustedProfileAssignment : Create Assignment
-// Create an assigment for a Trusted Profile Template.
+// CreateTrustedProfileAssignment : Create assignment
+// Create an assigment for a trusted profile template.
 func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignment(createTrustedProfileAssignmentOptions *CreateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateTrustedProfileAssignmentWithContext(context.Background(), createTrustedProfileAssignmentOptions)
 }
@@ -4067,8 +4070,8 @@ func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx 
 	return
 }
 
-// GetTrustedProfileAssignment : Get Assignment
-// Get an assigment for a Trusted Profile Template.
+// GetTrustedProfileAssignment : Get assignment
+// Get an assigment for a trusted profile template.
 func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignment(getTrustedProfileAssignmentOptions *GetTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetTrustedProfileAssignmentWithContext(context.Background(), getTrustedProfileAssignmentOptions)
 }
@@ -4131,8 +4134,8 @@ func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx con
 	return
 }
 
-// DeleteTrustedProfileAssignment : Delete Assignment
-// Delete a Trusted Profile assignment. This will remove any resources created by this assignment.
+// DeleteTrustedProfileAssignment : Delete assignment
+// Delete a trusted profile assignment. This removes any IAM resources created by this assignment in child accounts.
 func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignment(deleteTrustedProfileAssignmentOptions *DeleteTrustedProfileAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteTrustedProfileAssignmentWithContext(context.Background(), deleteTrustedProfileAssignmentOptions)
 }
@@ -4191,8 +4194,9 @@ func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx 
 	return
 }
 
-// UpdateTrustedProfileAssignment : Update Assignment
-// Update a Trusted Profile assignment in order to retry failed assignments or migrate resources to a new version.
+// UpdateTrustedProfileAssignment : Update assignment
+// Update a trusted profile assignment. Call this method to retry failed assignments or migrate the trusted profile in
+// child accounts to a new version.
 func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignment(updateTrustedProfileAssignmentOptions *UpdateTrustedProfileAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.UpdateTrustedProfileAssignmentWithContext(context.Background(), updateTrustedProfileAssignmentOptions)
 }
@@ -4264,8 +4268,8 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 	return
 }
 
-// ListProfileTemplates : List Profile Templates
-// List Trusted Profile Templates for an Enterprise Account.
+// ListProfileTemplates : List trusted profile templates
+// List the trusted profile templates in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListProfileTemplates(listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListProfileTemplatesWithContext(context.Background(), listProfileTemplatesOptions)
 }
@@ -4335,8 +4339,8 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 	return
 }
 
-// CreateProfileTemplate : Create a Profile Template
-// Create a new Trusted Profile Template for an Enterprise Account.
+// CreateProfileTemplate : Create a trusted profile template
+// Create a new trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateProfileTemplate(createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateProfileTemplateWithContext(context.Background(), createProfileTemplateOptions)
 }
@@ -4413,8 +4417,8 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	return
 }
 
-// GetLatestProfileTemplateVersion : Get latest version of a Profile Template
-// Get latest version of a Trusted Profile Template for an Enterprise Account.
+// GetLatestProfileTemplateVersion : Get latest version of a trusted profile template
+// Get the latest version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersion(getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetLatestProfileTemplateVersionWithContext(context.Background(), getLatestProfileTemplateVersionOptions)
 }
@@ -4477,8 +4481,9 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 	return
 }
 
-// DeleteAllVersionsOfProfileTemplate : Delete all versions of a Profile Template
-// Delete all versions of a Trusted Profile Template for an Enterprise Account.
+// DeleteAllVersionsOfProfileTemplate : Delete all versions of a trusted profile template
+// Delete all versions of a trusted profile template in an enterprise account. If any version is assigned to child
+// accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplate(deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteAllVersionsOfProfileTemplateWithContext(context.Background(), deleteAllVersionsOfProfileTemplateOptions)
 }
@@ -4525,8 +4530,8 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 	return
 }
 
-// ListVersionsOfProfileTemplate : List Profile Template versions
-// List versions of a Trusted Profile Template in an Enterprise Account.
+// ListVersionsOfProfileTemplate : List trusted profile template versions
+// List the versions of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplate(listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
 	return iamIdentity.ListVersionsOfProfileTemplateWithContext(context.Background(), listVersionsOfProfileTemplateOptions)
 }
@@ -4601,8 +4606,8 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 	return
 }
 
-// CreateProfileTemplateVersion : Create a new version of a Profile Template
-// Create a new version of a Trusted Profile Template in an Enterprise Account.
+// CreateProfileTemplateVersion : Create new version of a trusted profile template
+// Create a new version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersion(createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.CreateProfileTemplateVersionWithContext(context.Background(), createProfileTemplateVersionOptions)
 }
@@ -4683,8 +4688,8 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	return
 }
 
-// GetProfileTemplateVersion : Get version of a Profile Template
-// Get a specific version of a Trusted Profile Template in an Enterprise Account.
+// GetProfileTemplateVersion : Get version of trusted profile template
+// Get a specific version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) GetProfileTemplateVersion(getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.GetProfileTemplateVersionWithContext(context.Background(), getProfileTemplateVersionOptions)
 }
@@ -4748,8 +4753,8 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 	return
 }
 
-// UpdateProfileTemplateVersion : Update version of a Profile Template
-// Update a specific version of a Trusted Profile Template in an Enterprise Account.
+// UpdateProfileTemplateVersion : Update version of trusted profile template
+// Update a specific version of a trusted profile template in an enterprise account.
 func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersion(updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
 	return iamIdentity.UpdateProfileTemplateVersionWithContext(context.Background(), updateProfileTemplateVersionOptions)
 }
@@ -4834,8 +4839,9 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	return
 }
 
-// DeleteProfileTemplateVersion : Delete version of a Profile Template
-// Delete a specific version of a Trusted Profile Template in an Enterprise Account.
+// DeleteProfileTemplateVersion : Delete version of trusted profile template
+// Delete a specific version of a trusted profile template in an enterprise account. If the version is assigned to child
+// accounts, you must first delete the assignment.
 func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersion(deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.DeleteProfileTemplateVersionWithContext(context.Background(), deleteProfileTemplateVersionOptions)
 }
@@ -4884,8 +4890,8 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 }
 
 // CommitProfileTemplate : Commit a template version
-// Commit a specific version of a Trusted Profile Template in an Enterprise Account. A Template must be committed before
-// being assigned, and once committed, can no longer be modified.
+// Commit a specific version of a trusted profile template in an enterprise account. You must commit a template before
+// you can assign it to child accounts. Once a template is committed, you can no longer modify the template.
 func (iamIdentity *IamIdentityV1) CommitProfileTemplate(commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
 	return iamIdentity.CommitProfileTemplateWithContext(context.Background(), commitProfileTemplateOptions)
 }
@@ -4970,9 +4976,10 @@ func UnmarshalAccountBasedMfaEnrollment(m map[string]json.RawMessage, result int
 
 // AccountSettingsComponent : AccountSettingsComponent struct
 type AccountSettingsComponent struct {
-	// Defines whether or not creating a Service Id is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
 
@@ -5024,9 +5031,10 @@ type AccountSettingsComponent struct {
 }
 
 // Constants associated with the AccountSettingsComponent.RestrictCreateServiceID property.
-// Defines whether or not creating a Service Id is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsComponentRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
@@ -5117,9 +5125,10 @@ type AccountSettingsResponse struct {
 	// Unique ID of the account.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Defines whether or not creating a Service Id is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id" validate:"required"`
 
@@ -5178,9 +5187,10 @@ type AccountSettingsResponse struct {
 }
 
 // Constants associated with the AccountSettingsResponse.RestrictCreateServiceID property.
-// Defines whether or not creating a Service Id is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
@@ -5302,7 +5312,7 @@ type AccountSettingsTemplateList struct {
 	// Link to the next available page. If 'next' property is not part of the response no next page is available.
 	Next *string `json:"next,omitempty"`
 
-	// List of Account Settings Templates based on the query paramters and the page size. The account_settings_templates
+	// List of account settings templates based on the query paramters and the page size. The account_settings_templates
 	// array is always part of the response but might be empty depending on the query parameter values provided.
 	AccountSettingsTemplates []AccountSettingsTemplateResponse `json:"account_settings_templates" validate:"required"`
 }
@@ -5342,7 +5352,7 @@ func UnmarshalAccountSettingsTemplateList(m map[string]json.RawMessage, result i
 	return
 }
 
-// AccountSettingsTemplateResponse : Response body format for Account Settings Template REST requests.
+// AccountSettingsTemplateResponse : Response body format for account settings template REST requests.
 type AccountSettingsTemplateResponse struct {
 	// ID of the the template.
 	ID *string `json:"id" validate:"required"`
@@ -5353,10 +5363,10 @@ type AccountSettingsTemplateResponse struct {
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account.
 	Name *string `json:"name" validate:"required"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	// Committed flag determines if the template is ready for assignment.
@@ -5885,10 +5895,10 @@ func UnmarshalApikeyActivityUser(m map[string]json.RawMessage, result interface{
 
 // CommitAccountSettingsTemplateOptions : The CommitAccountSettingsTemplate options.
 type CommitAccountSettingsTemplateOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Version of the Account Settings Template.
+	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -5923,7 +5933,7 @@ func (options *CommitAccountSettingsTemplateOptions) SetHeaders(param map[string
 
 // CommitProfileTemplateOptions : The CommitProfileTemplate options.
 type CommitProfileTemplateOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Version of the Profile Template.
@@ -6029,10 +6039,10 @@ type CreateAccountSettingsTemplateOptions struct {
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
@@ -6078,16 +6088,16 @@ func (options *CreateAccountSettingsTemplateOptions) SetHeaders(param map[string
 
 // CreateAccountSettingsTemplateVersionOptions : The CreateAccountSettingsTemplateVersion options.
 type CreateAccountSettingsTemplateVersionOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
@@ -6157,8 +6167,7 @@ type CreateAPIKeyOptions struct {
 
 	// You can optionally passthrough the API key value for this API key. If passed, NO validation of that apiKey value is
 	// done, i.e. the value can be non-URL safe. If omitted, the API key management will create an URL safe opaque API key
-	// value. The value of the API key is checked for uniqueness. Please ensure enough variations when passing in this
-	// value.
+	// value. The value of the API key is checked for uniqueness. Ensure enough variations when passing in this value.
 	Apikey *string `json:"apikey,omitempty"`
 
 	// Send true or false to set whether the API key value is retrievable in the future by using the Get details of an API
@@ -6513,16 +6522,18 @@ type CreateProfileTemplateOptions struct {
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account. Required field when
+	// creating a new template. Otherwise this field is optional. If the field is included it will change the name value
+	// for all existing versions of the template.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	// Input body parameters for the TemplateProfileComponent.
 	Profile *TemplateProfileComponentRequest `json:"profile,omitempty"`
 
-	// Policy templates to be deployed for the Profile component.
+	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -6572,22 +6583,24 @@ func (options *CreateProfileTemplateOptions) SetHeaders(param map[string]string)
 
 // CreateProfileTemplateVersionOptions : The CreateProfileTemplateVersion options.
 type CreateProfileTemplateVersionOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account. Required field when
+	// creating a new template. Otherwise this field is optional. If the field is included it will change the name value
+	// for all existing versions of the template.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	// Input body parameters for the TemplateProfileComponent.
 	Profile *TemplateProfileComponentRequest `json:"profile,omitempty"`
 
-	// Policy templates to be deployed for the Profile component.
+	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -6861,10 +6874,10 @@ func (options *DeleteAccountSettingsAssignmentOptions) SetHeaders(param map[stri
 
 // DeleteAccountSettingsTemplateVersionOptions : The DeleteAccountSettingsTemplateVersion options.
 type DeleteAccountSettingsTemplateVersionOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Version of the Account Settings Template.
+	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -6899,7 +6912,7 @@ func (options *DeleteAccountSettingsTemplateVersionOptions) SetHeaders(param map
 
 // DeleteAllVersionsOfAccountSettingsTemplateOptions : The DeleteAllVersionsOfAccountSettingsTemplate options.
 type DeleteAllVersionsOfAccountSettingsTemplateOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -6927,7 +6940,7 @@ func (options *DeleteAllVersionsOfAccountSettingsTemplateOptions) SetHeaders(par
 
 // DeleteAllVersionsOfProfileTemplateOptions : The DeleteAllVersionsOfProfileTemplate options.
 type DeleteAllVersionsOfProfileTemplateOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -7143,7 +7156,7 @@ func (options *DeleteProfileOptions) SetHeaders(param map[string]string) *Delete
 
 // DeleteProfileTemplateVersionOptions : The DeleteProfileTemplateVersion options.
 type DeleteProfileTemplateVersionOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Version of the Profile Template.
@@ -7472,10 +7485,10 @@ func (options *GetAccountSettingsOptions) SetHeaders(param map[string]string) *G
 
 // GetAccountSettingsTemplateVersionOptions : The GetAccountSettingsTemplateVersion options.
 type GetAccountSettingsTemplateVersionOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Version of the Account Settings Template.
+	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
 	// Defines if the entity history is included in the response.
@@ -7526,7 +7539,7 @@ type GetAPIKeyOptions struct {
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
 	// Defines if the entity's activity is included in the response. Retrieving activity data is an expensive operation, so
-	// please only request this when needed.
+	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -7639,7 +7652,7 @@ func (options *GetClaimRuleOptions) SetHeaders(param map[string]string) *GetClai
 
 // GetLatestAccountSettingsTemplateVersionOptions : The GetLatestAccountSettingsTemplateVersion options.
 type GetLatestAccountSettingsTemplateVersionOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Defines if the entity history is included in the response.
@@ -7676,7 +7689,7 @@ func (options *GetLatestAccountSettingsTemplateVersionOptions) SetHeaders(param 
 
 // GetLatestProfileTemplateVersionOptions : The GetLatestProfileTemplateVersion options.
 type GetLatestProfileTemplateVersionOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Defines if the entity history is included in the response.
@@ -7915,7 +7928,7 @@ type GetProfileOptions struct {
 	ProfileID *string `json:"profile-id" validate:"required,ne="`
 
 	// Defines if the entity's activity is included in the response. Retrieving activity data is an expensive operation, so
-	// please only request this when needed.
+	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -7949,7 +7962,7 @@ func (options *GetProfileOptions) SetHeaders(param map[string]string) *GetProfil
 
 // GetProfileTemplateVersionOptions : The GetProfileTemplateVersion options.
 type GetProfileTemplateVersionOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Version of the Profile Template.
@@ -8041,7 +8054,7 @@ type GetServiceIDOptions struct {
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
 	// Defines if the entity's activity is included in the response. Retrieving activity data is an expensive operation, so
-	// please only request this when needed.
+	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -8363,7 +8376,7 @@ func (options *ListAccountSettingsAssignmentsOptions) SetHeaders(param map[strin
 
 // ListAccountSettingsTemplatesOptions : The ListAccountSettingsTemplates options.
 type ListAccountSettingsTemplatesOptions struct {
-	// Account ID of the Account Settings Templates to query. This parameter is required unless using a pagetoken.
+	// Account ID of the account settings templates to query. This parameter is required unless using a pagetoken.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// Optional size of a single page.
@@ -8628,7 +8641,7 @@ func (options *ListLinksOptions) SetHeaders(param map[string]string) *ListLinksO
 
 // ListProfileTemplatesOptions : The ListProfileTemplates options.
 type ListProfileTemplatesOptions struct {
-	// Account ID of the Profile Templates to query. This parameter is required unless using a pagetoken.
+	// Account ID of the trusted profile templates to query. This parameter is required unless using a pagetoken.
 	AccountID *string `json:"account_id,omitempty"`
 
 	// Optional size of a single page.
@@ -8637,7 +8650,7 @@ type ListProfileTemplatesOptions struct {
 	// Optional Prev or Next page token returned from a previous query execution. Default is start with first page.
 	Pagetoken *string `json:"pagetoken,omitempty"`
 
-	// Optional sort property. If specified, the returned templated are sorted according to this property.
+	// Optional sort property. If specified, the returned templates are sorted according to this property.
 	Sort *string `json:"sort,omitempty"`
 
 	// Optional sort order.
@@ -8651,7 +8664,7 @@ type ListProfileTemplatesOptions struct {
 }
 
 // Constants associated with the ListProfileTemplatesOptions.Sort property.
-// Optional sort property. If specified, the returned templated are sorted according to this property.
+// Optional sort property. If specified, the returned templates are sorted according to this property.
 const (
 	ListProfileTemplatesOptionsSortCreatedAtConst = "created_at"
 	ListProfileTemplatesOptionsSortLastModifiedAtConst = "last_modified_at"
@@ -9021,7 +9034,7 @@ func (options *ListTrustedProfileAssignmentsOptions) SetHeaders(param map[string
 
 // ListVersionsOfAccountSettingsTemplateOptions : The ListVersionsOfAccountSettingsTemplate options.
 type ListVersionsOfAccountSettingsTemplateOptions struct {
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Optional size of a single page.
@@ -9109,7 +9122,7 @@ func (options *ListVersionsOfAccountSettingsTemplateOptions) SetHeaders(param ma
 
 // ListVersionsOfProfileTemplateOptions : The ListVersionsOfProfileTemplate options.
 type ListVersionsOfProfileTemplateOptions struct {
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Optional size of a single page.
@@ -10409,27 +10422,27 @@ type TemplateAssignmentResponse struct {
 	// Assignment record Id.
 	ID *string `json:"id" validate:"required"`
 
-	// Enterprise Account Id.
+	// Enterprise account Id.
 	AccountID *string `json:"account_id" validate:"required"`
 
 	// Template Id.
 	TemplateID *string `json:"template_id" validate:"required"`
 
-	// Template Version.
+	// Template version.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
-	// Assignment Target Type.
+	// Assignment target type.
 	TargetType *string `json:"target_type" validate:"required"`
 
-	// Assignment Target.
+	// Assignment target.
 	Target *string `json:"target" validate:"required"`
 
-	// Assignment Status.
+	// Assignment status.
 	Status *string `json:"status" validate:"required"`
 
-	// Status breakdown per target account of resources created or errors encountered in attempting to create those
-	// resources. Resources are only included in the response providing the assignment is not in progress. Resources are
-	// also only included when getting a single assignment, and excluded by list apis.
+	// Status breakdown per target account of IAM resources created or errors encountered in attempting to create those IAM
+	// resources. IAM resources are only included in the response providing the assignment is not in progress. IAM
+	// resources are also only included when getting a single assignment, and excluded by list APIs.
 	Resources []TemplateAssignmentResponseResource `json:"resources,omitempty"`
 
 	// Assignment history.
@@ -10527,14 +10540,14 @@ func UnmarshalTemplateAssignmentResponse(m map[string]json.RawMessage, result in
 
 // TemplateAssignmentResponseResource : Overview of resources assignment per target account.
 type TemplateAssignmentResponseResource struct {
-	// Target account the resource is created in.
+	// Target account where the IAM resource is created.
 	Target *string `json:"target" validate:"required"`
 
 	Profile *TemplateAssignmentResponseResourceDetail `json:"profile,omitempty"`
 
 	AccountSettings *TemplateAssignmentResponseResourceDetail `json:"account_settings,omitempty"`
 
-	// Policy resource(s) included only for Trusted Profile Assignments with Policy references.
+	// Policy resource(s) included only for trusted profile assignments with policy references.
 	PolicyTemplateRefs []TemplateAssignmentResponseResourceDetail `json:"policy_template_refs,omitempty"`
 }
 
@@ -10566,7 +10579,7 @@ type TemplateAssignmentResponseResourceDetail struct {
 	// Policy Template Id, only returned for a profile assignment with policy references.
 	ID *string `json:"id,omitempty"`
 
-	// Policy verser, only returned for a profile assignment with policy references.
+	// Policy version, only returned for a profile assignment with policy references.
 	Version *string `json:"version,omitempty"`
 
 	// Body parameters for created resource.
@@ -10727,6 +10740,14 @@ type TrustedProfile struct {
 	// ID of the account that this trusted profile belong to.
 	AccountID *string `json:"account_id" validate:"required"`
 
+	// ID of the IAM template that was used to create an enterprise-managed trusted profile in your account. When returned,
+	// this indicates that the trusted profile is created from and managed by a template in the root enterprise account.
+	TemplateID *string `json:"template_id,omitempty"`
+
+	// ID of the assignment that was used to create an enterprise-managed trusted profile in your account. When returned,
+	// this indicates that the trusted profile is created from and managed by a template in the root enterprise account.
+	AssignmentID *string `json:"assignment_id,omitempty"`
+
 	// IMS acount ID of the trusted profile.
 	ImsAccountID *int64 `json:"ims_account_id,omitempty"`
 
@@ -10779,6 +10800,14 @@ func UnmarshalTrustedProfile(m map[string]json.RawMessage, result interface{}) (
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "template_id", &obj.TemplateID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "assignment_id", &obj.AssignmentID)
 	if err != nil {
 		return
 	}
@@ -10936,10 +10965,10 @@ type TrustedProfileTemplateResponse struct {
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id" validate:"required"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account.
 	Name *string `json:"name" validate:"required"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	// Committed flag determines if the template is ready for assignment.
@@ -10948,10 +10977,10 @@ type TrustedProfileTemplateResponse struct {
 	// Input body parameters for the TemplateProfileComponent.
 	Profile *TemplateProfileComponentResponse `json:"profile,omitempty"`
 
-	// Policy templates to be deployed for the Profile component.
+	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
-	// History of the Profile Template.
+	// History of the trusted profile template.
 	History []EnityHistoryRecord `json:"history,omitempty"`
 
 	// Entity tag for this templateId-version combination.
@@ -10960,13 +10989,13 @@ type TrustedProfileTemplateResponse struct {
 	// Cloud resource name.
 	CRN *string `json:"crn,omitempty"`
 
-	// Template Created At.
+	// Timestamp of when the template was created.
 	CreatedAt *string `json:"created_at,omitempty"`
 
 	// IAMid of the creator.
 	CreatedByID *string `json:"created_by_id,omitempty"`
 
-	// Template last modified at.
+	// Timestamp of when the template was last modified.
 	LastModifiedAt *string `json:"last_modified_at,omitempty"`
 
 	// IAMid of the identity that made the latest modification.
@@ -11161,14 +11190,13 @@ type UpdateAccountSettingsAssignmentOptions struct {
 	// ID of the Assignment Record.
 	AssignmentID *string `json:"assignment_id" validate:"required,ne="`
 
-	// Version of the Assignment to be updated. Specify the version that you retrieved when reading the Assignment. This
+	// Version of the assignment to be updated. Specify the version that you retrieved when reading the assignment. This
 	// value  helps identifying parallel usage of this API. Pass * to indicate to update any version available. This might
 	// result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Template version which shall be applied to the assignment. Providing the existing version indicates to retry all
-	// failed assignments. Providing a new version start the assignment process from the beginning, migrating previously
-	// assignment resources to the new Version.
+	// Template version to be applied to the assignment. To retry all failed assignemtns, provide the existing version. To
+	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
 	// Allows users to set headers on API requests
@@ -11218,15 +11246,17 @@ type UpdateAccountSettingsOptions struct {
 	// The id of the account to update the settings for.
 	AccountID *string `json:"account_id" validate:"required,ne="`
 
-	// Defines whether or not creating a Service Id is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
-	//   * NOT_SET - to unset a previously set value.
+	// Defines whether or not creating a service ID is access controlled. Valid values:
+	//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+	// IDs, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create service IDs
+	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreateServiceID *string `json:"restrict_create_service_id,omitempty"`
 
 	// Defines whether or not creating platform API keys is access controlled. Valid values:
-	//   * RESTRICTED - to apply access control
-	//   * NOT_RESTRICTED - to remove access control
+	//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API
+	// keys, including the account owner
+	//   * NOT_RESTRICTED - all members of an account can create platform API keys
 	//   * NOT_SET - to 'unset' a previous set value.
 	RestrictCreatePlatformApikey *string `json:"restrict_create_platform_apikey,omitempty"`
 
@@ -11276,10 +11306,11 @@ type UpdateAccountSettingsOptions struct {
 }
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreateServiceID property.
-// Defines whether or not creating a Service Id is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
-//   * NOT_SET - to unset a previously set value.
+// Defines whether or not creating a service ID is access controlled. Valid values:
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
+// IDs, including the account owner
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
 	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotSetConst = "NOT_SET"
@@ -11288,8 +11319,9 @@ const (
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   * RESTRICTED - to apply access control
-//   * NOT_RESTRICTED - to remove access control
+//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
+// including the account owner
+//   * NOT_RESTRICTED - all members of an account can create platform API keys
 //   * NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
@@ -11404,24 +11436,24 @@ func (options *UpdateAccountSettingsOptions) SetHeaders(param map[string]string)
 
 // UpdateAccountSettingsTemplateVersionOptions : The UpdateAccountSettingsTemplateVersion options.
 type UpdateAccountSettingsTemplateVersionOptions struct {
-	// Entity tag of the Template to be updated. Specify the tag that you retrieved when reading the Account Settings
-	// Template. This value  helps identifying parallel usage of this API. Pass * to indicate to update any version
+	// Entity tag of the Template to be updated. Specify the tag that you retrieved when reading the account settings
+	// template. This value helps identifying parallel usage of this API. Pass * to indicate to update any version
 	// available. This might result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// ID of the Account Settings Template.
+	// ID of the account settings template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
-	// Version of the Account Settings Template.
+	// Version of the account settings template.
 	Version *string `json:"version" validate:"required,ne="`
 
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	AccountSettings *AccountSettingsComponent `json:"account_settings,omitempty"`
@@ -11727,11 +11759,11 @@ func (options *UpdateProfileOptions) SetHeaders(param map[string]string) *Update
 // UpdateProfileTemplateVersionOptions : The UpdateProfileTemplateVersion options.
 type UpdateProfileTemplateVersionOptions struct {
 	// Entity tag of the Template to be updated. Specify the tag that you retrieved when reading the Profile Template. This
-	// value  helps identifying parallel usage of this API. Pass * to indicate to update any version available. This might
+	// value helps identifying parallel usage of this API. Pass * to indicate to update any version available. This might
 	// result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// ID of the Profile Template.
+	// ID of the trusted profile template.
 	TemplateID *string `json:"template_id" validate:"required,ne="`
 
 	// Version of the Profile Template.
@@ -11740,16 +11772,18 @@ type UpdateProfileTemplateVersionOptions struct {
 	// ID of the account where the template resides.
 	AccountID *string `json:"account_id,omitempty"`
 
-	// Name of the Template.
+	// The name of the trusted profile template. This is visible only in the enterprise account. Required field when
+	// creating a new template. Otherwise this field is optional. If the field is included it will change the name value
+	// for all existing versions of the template.
 	Name *string `json:"name,omitempty"`
 
-	// Description of the Template.
+	// The description of the trusted profile template. Describe the template for enterprise account users.
 	Description *string `json:"description,omitempty"`
 
 	// Input body parameters for the TemplateProfileComponent.
 	Profile *TemplateProfileComponentRequest `json:"profile,omitempty"`
 
-	// Policy templates to be deployed for the Profile component.
+	// Existing policy templates that you can reference to assign access in the trusted profile component.
 	PolicyTemplateReferences []PolicyTemplateReference `json:"policy_template_references,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -11899,9 +11933,8 @@ type UpdateTrustedProfileAssignmentOptions struct {
 	// result in stale updates.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	// Template version which shall be applied to the assignment. Providing the existing version indicates to retry all
-	// failed assignments. Providing a new version start the assignment process from the beginning, migrating previously
-	// assignment resources to the new Version.
+	// Template version to be applied to the assignment. To retry all failed assignemtns, provide the existing version. To
+	// migrate to a different version, provide the new version number.
 	TemplateVersion *int64 `json:"template_version" validate:"required"`
 
 	// Allows users to set headers on API requests

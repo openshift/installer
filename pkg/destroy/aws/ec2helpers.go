@@ -143,6 +143,8 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 		return terminateEC2Instance(ctx, client, iam.New(session), id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(ctx, client, id, logger)
+	case "carrier-gateway":
+		return deleteEC2CarrierGateway(ctx, client, id, logger)
 	case "natgateway":
 		return deleteEC2NATGateway(ctx, client, id, logger)
 	case "placement-group":
@@ -327,6 +329,22 @@ func deleteEC2InternetGateway(ctx context.Context, client *ec2.EC2, id string, l
 		InternetGatewayId: &id,
 	})
 	if err != nil {
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2CarrierGateway(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteCarrierGatewayWithContext(ctx, &ec2.DeleteCarrierGatewayInput{
+		CarrierGatewayId: &id,
+	})
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidCarrierGatewayID.NotFound" {
+			return nil
+		}
 		return err
 	}
 

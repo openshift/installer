@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.37.1-66e80f2e-20210813-202232
+ * IBM OpenAPI SDK Code Generator Version: 3.78.0-67aec9b7-20230818-174940
  */
 
 // Package schemaregistryv1 : Operations and models for the SchemaregistryV1 service
@@ -35,7 +35,7 @@ import (
 
 // SchemaregistryV1 : IBM Event Streams schema registry management
 //
-// Version: 1.0.0
+// API Version: 1.0.0
 type SchemaregistryV1 struct {
 	Service *core.BaseService
 }
@@ -383,7 +383,7 @@ func (schemaregistry *SchemaregistryV1) GetSchemaRuleWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"id":   *getSchemaRuleOptions.ID,
+		"id": *getSchemaRuleOptions.ID,
 		"rule": *getSchemaRuleOptions.Rule,
 	}
 
@@ -445,7 +445,7 @@ func (schemaregistry *SchemaregistryV1) UpdateSchemaRuleWithContext(ctx context.
 	}
 
 	pathParamsMap := map[string]string{
-		"id":   *updateSchemaRuleOptions.ID,
+		"id": *updateSchemaRuleOptions.ID,
 		"rule": *updateSchemaRuleOptions.Rule,
 	}
 
@@ -520,7 +520,7 @@ func (schemaregistry *SchemaregistryV1) DeleteSchemaRuleWithContext(ctx context.
 	}
 
 	pathParamsMap := map[string]string{
-		"id":   *deleteSchemaRuleOptions.ID,
+		"id": *deleteSchemaRuleOptions.ID,
 		"rule": *deleteSchemaRuleOptions.Rule,
 	}
 
@@ -539,6 +539,123 @@ func (schemaregistry *SchemaregistryV1) DeleteSchemaRuleWithContext(ctx context.
 	sdkHeaders := common.GetSdkHeaders("schemaregistry", "V1", "DeleteSchemaRule")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = schemaregistry.Service.Request(request, nil)
+
+	return
+}
+
+// SetSchemaState : Set schema state
+// Sets schema state.
+func (schemaregistry *SchemaregistryV1) SetSchemaState(setSchemaStateOptions *SetSchemaStateOptions) (response *core.DetailedResponse, err error) {
+	return schemaregistry.SetSchemaStateWithContext(context.Background(), setSchemaStateOptions)
+}
+
+// SetSchemaStateWithContext is an alternate form of the SetSchemaState method which supports a Context parameter
+func (schemaregistry *SchemaregistryV1) SetSchemaStateWithContext(ctx context.Context, setSchemaStateOptions *SetSchemaStateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(setSchemaStateOptions, "setSchemaStateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(setSchemaStateOptions, "setSchemaStateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *setSchemaStateOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = schemaregistry.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(schemaregistry.Service.Options.URL, `/artifacts/{id}/state`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range setSchemaStateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("schemaregistry", "V1", "SetSchemaState")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if setSchemaStateOptions.State != nil {
+		body["state"] = setSchemaStateOptions.State
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = schemaregistry.Service.Request(request, nil)
+
+	return
+}
+
+// SetSchemaVersionState : Set schema version state
+// Sets schema version state.
+func (schemaregistry *SchemaregistryV1) SetSchemaVersionState(setSchemaVersionStateOptions *SetSchemaVersionStateOptions) (response *core.DetailedResponse, err error) {
+	return schemaregistry.SetSchemaVersionStateWithContext(context.Background(), setSchemaVersionStateOptions)
+}
+
+// SetSchemaVersionStateWithContext is an alternate form of the SetSchemaVersionState method which supports a Context parameter
+func (schemaregistry *SchemaregistryV1) SetSchemaVersionStateWithContext(ctx context.Context, setSchemaVersionStateOptions *SetSchemaVersionStateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(setSchemaVersionStateOptions, "setSchemaVersionStateOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(setSchemaVersionStateOptions, "setSchemaVersionStateOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *setSchemaVersionStateOptions.ID,
+		"version": fmt.Sprint(*setSchemaVersionStateOptions.Version),
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = schemaregistry.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(schemaregistry.Service.Options.URL, `/artifacts/{id}/versions/{version}/state`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range setSchemaVersionStateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("schemaregistry", "V1", "SetSchemaVersionState")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if setSchemaVersionStateOptions.State != nil {
+		body["state"] = setSchemaVersionStateOptions.State
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
 	}
 
 	request, err := builder.Build()
@@ -589,6 +706,10 @@ func (schemaregistry *SchemaregistryV1) ListVersionsWithContext(ctx context.Cont
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if listVersionsOptions.Jsonformat != nil {
+		builder.AddQuery("jsonformat", fmt.Sprint(*listVersionsOptions.Jsonformat))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -688,7 +809,7 @@ func (schemaregistry *SchemaregistryV1) GetVersionWithContext(ctx context.Contex
 	}
 
 	pathParamsMap := map[string]string{
-		"id":      *getVersionOptions.ID,
+		"id": *getVersionOptions.ID,
 		"version": fmt.Sprint(*getVersionOptions.Version),
 	}
 
@@ -738,7 +859,7 @@ func (schemaregistry *SchemaregistryV1) DeleteVersionWithContext(ctx context.Con
 	}
 
 	pathParamsMap := map[string]string{
-		"id":      *deleteVersionOptions.ID,
+		"id": *deleteVersionOptions.ID,
 		"version": fmt.Sprint(*deleteVersionOptions.Version),
 	}
 
@@ -799,6 +920,10 @@ func (schemaregistry *SchemaregistryV1) ListSchemasWithContext(ctx context.Conte
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if listSchemasOptions.Jsonformat != nil {
+		builder.AddQuery("jsonformat", fmt.Sprint(*listSchemasOptions.Jsonformat))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1104,20 +1229,20 @@ const (
 // Constants associated with the CreateSchemaRuleOptions.Config property.
 // The configuration value for the rule. Which values are valid depends on the value of this object's `type` property.
 const (
-	CreateSchemaRuleOptionsConfigBackwardConst           = "BACKWARD"
+	CreateSchemaRuleOptionsConfigBackwardConst = "BACKWARD"
 	CreateSchemaRuleOptionsConfigBackwardTransitiveConst = "BACKWARD_TRANSITIVE"
-	CreateSchemaRuleOptionsConfigForwardConst            = "FORWARD"
-	CreateSchemaRuleOptionsConfigForwardTransitiveConst  = "FORWARD_TRANSITIVE"
-	CreateSchemaRuleOptionsConfigFullConst               = "FULL"
-	CreateSchemaRuleOptionsConfigFullTransitiveConst     = "FULL_TRANSITIVE"
-	CreateSchemaRuleOptionsConfigNoneConst               = "NONE"
+	CreateSchemaRuleOptionsConfigForwardConst = "FORWARD"
+	CreateSchemaRuleOptionsConfigForwardTransitiveConst = "FORWARD_TRANSITIVE"
+	CreateSchemaRuleOptionsConfigFullConst = "FULL"
+	CreateSchemaRuleOptionsConfigFullTransitiveConst = "FULL_TRANSITIVE"
+	CreateSchemaRuleOptionsConfigNoneConst = "NONE"
 )
 
 // NewCreateSchemaRuleOptions : Instantiate CreateSchemaRuleOptions
 func (*SchemaregistryV1) NewCreateSchemaRuleOptions(id string, typeVar string, config string) *CreateSchemaRuleOptions {
 	return &CreateSchemaRuleOptions{
-		ID:     core.StringPtr(id),
-		Type:   core.StringPtr(typeVar),
+		ID: core.StringPtr(id),
+		Type: core.StringPtr(typeVar),
 		Config: core.StringPtr(config),
 	}
 }
@@ -1232,7 +1357,7 @@ const (
 // NewDeleteSchemaRuleOptions : Instantiate DeleteSchemaRuleOptions
 func (*SchemaregistryV1) NewDeleteSchemaRuleOptions(id string, rule string) *DeleteSchemaRuleOptions {
 	return &DeleteSchemaRuleOptions{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Rule: core.StringPtr(rule),
 	}
 }
@@ -1270,7 +1395,7 @@ type DeleteVersionOptions struct {
 // NewDeleteVersionOptions : Instantiate DeleteVersionOptions
 func (*SchemaregistryV1) NewDeleteVersionOptions(id string, version int64) *DeleteVersionOptions {
 	return &DeleteVersionOptions{
-		ID:      core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Version: core.Int64Ptr(version),
 	}
 }
@@ -1376,7 +1501,7 @@ const (
 // NewGetSchemaRuleOptions : Instantiate GetSchemaRuleOptions
 func (*SchemaregistryV1) NewGetSchemaRuleOptions(id string, rule string) *GetSchemaRuleOptions {
 	return &GetSchemaRuleOptions{
-		ID:   core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Rule: core.StringPtr(rule),
 	}
 }
@@ -1414,7 +1539,7 @@ type GetVersionOptions struct {
 // NewGetVersionOptions : Instantiate GetVersionOptions
 func (*SchemaregistryV1) NewGetVersionOptions(id string, version int64) *GetVersionOptions {
 	return &GetVersionOptions{
-		ID:      core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Version: core.Int64Ptr(version),
 	}
 }
@@ -1439,6 +1564,8 @@ func (options *GetVersionOptions) SetHeaders(param map[string]string) *GetVersio
 
 // ListSchemasOptions : The ListSchemas options.
 type ListSchemasOptions struct {
+	// format of the response to be returned, allowed values are 'string' and 'object'.
+	Jsonformat *string `json:"jsonformat,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1447,6 +1574,12 @@ type ListSchemasOptions struct {
 // NewListSchemasOptions : Instantiate ListSchemasOptions
 func (*SchemaregistryV1) NewListSchemasOptions() *ListSchemasOptions {
 	return &ListSchemasOptions{}
+}
+
+// SetJsonformat : Allow user to set Jsonformat
+func (_options *ListSchemasOptions) SetJsonformat(jsonformat string) *ListSchemasOptions {
+	_options.Jsonformat = core.StringPtr(jsonformat)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1459,6 +1592,9 @@ func (options *ListSchemasOptions) SetHeaders(param map[string]string) *ListSche
 type ListVersionsOptions struct {
 	// The schema ID for which the list of versions will be returned.
 	ID *string `json:"-" validate:"required,ne="`
+
+	// format of the response to be returned, allowed values are 'number' and 'object'.
+	Jsonformat *string `json:"jsonformat,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1477,8 +1613,99 @@ func (_options *ListVersionsOptions) SetID(id string) *ListVersionsOptions {
 	return _options
 }
 
+// SetJsonformat : Allow user to set Jsonformat
+func (_options *ListVersionsOptions) SetJsonformat(jsonformat string) *ListVersionsOptions {
+	_options.Jsonformat = core.StringPtr(jsonformat)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListVersionsOptions) SetHeaders(param map[string]string) *ListVersionsOptions {
+	options.Headers = param
+	return options
+}
+
+// SetSchemaStateOptions : The SetSchemaState options.
+type SetSchemaStateOptions struct {
+	// The ID of a schema.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The state of the schema or schema version.
+	State *string `json:"state,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewSetSchemaStateOptions : Instantiate SetSchemaStateOptions
+func (*SchemaregistryV1) NewSetSchemaStateOptions(id string) *SetSchemaStateOptions {
+	return &SetSchemaStateOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *SetSchemaStateOptions) SetID(id string) *SetSchemaStateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *SetSchemaStateOptions) SetState(stateVar string) *SetSchemaStateOptions {
+	_options.State = core.StringPtr(stateVar)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SetSchemaStateOptions) SetHeaders(param map[string]string) *SetSchemaStateOptions {
+	options.Headers = param
+	return options
+}
+
+// SetSchemaVersionStateOptions : The SetSchemaVersionState options.
+type SetSchemaVersionStateOptions struct {
+	// The ID of a schema.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The version number that identifies the particular schema version to return.
+	Version *int64 `json:"version" validate:"required"`
+
+	// The state of the schema or schema version.
+	State *string `json:"state,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+
+// NewSetSchemaVersionStateOptions : Instantiate SetSchemaVersionStateOptions
+func (*SchemaregistryV1) NewSetSchemaVersionStateOptions(id string, version int64) *SetSchemaVersionStateOptions {
+	return &SetSchemaVersionStateOptions{
+		ID: core.StringPtr(id),
+		Version: core.Int64Ptr(version),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *SetSchemaVersionStateOptions) SetID(id string) *SetSchemaVersionStateOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetVersion : Allow user to set Version
+func (_options *SetSchemaVersionStateOptions) SetVersion(version int64) *SetSchemaVersionStateOptions {
+	_options.Version = core.Int64Ptr(version)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *SetSchemaVersionStateOptions) SetState(stateVar string) *SetSchemaVersionStateOptions {
+	_options.State = core.StringPtr(stateVar)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SetSchemaVersionStateOptions) SetHeaders(param map[string]string) *SetSchemaVersionStateOptions {
 	options.Headers = param
 	return options
 }
@@ -1513,20 +1740,20 @@ const (
 // Constants associated with the UpdateGlobalRuleOptions.Config property.
 // The configuration value for the rule. Which values are valid depends on the value of this object's `type` property.
 const (
-	UpdateGlobalRuleOptionsConfigBackwardConst           = "BACKWARD"
+	UpdateGlobalRuleOptionsConfigBackwardConst = "BACKWARD"
 	UpdateGlobalRuleOptionsConfigBackwardTransitiveConst = "BACKWARD_TRANSITIVE"
-	UpdateGlobalRuleOptionsConfigForwardConst            = "FORWARD"
-	UpdateGlobalRuleOptionsConfigForwardTransitiveConst  = "FORWARD_TRANSITIVE"
-	UpdateGlobalRuleOptionsConfigFullConst               = "FULL"
-	UpdateGlobalRuleOptionsConfigFullTransitiveConst     = "FULL_TRANSITIVE"
-	UpdateGlobalRuleOptionsConfigNoneConst               = "NONE"
+	UpdateGlobalRuleOptionsConfigForwardConst = "FORWARD"
+	UpdateGlobalRuleOptionsConfigForwardTransitiveConst = "FORWARD_TRANSITIVE"
+	UpdateGlobalRuleOptionsConfigFullConst = "FULL"
+	UpdateGlobalRuleOptionsConfigFullTransitiveConst = "FULL_TRANSITIVE"
+	UpdateGlobalRuleOptionsConfigNoneConst = "NONE"
 )
 
 // NewUpdateGlobalRuleOptions : Instantiate UpdateGlobalRuleOptions
 func (*SchemaregistryV1) NewUpdateGlobalRuleOptions(rule string, typeVar string, config string) *UpdateGlobalRuleOptions {
 	return &UpdateGlobalRuleOptions{
-		Rule:   core.StringPtr(rule),
-		Type:   core.StringPtr(typeVar),
+		Rule: core.StringPtr(rule),
+		Type: core.StringPtr(typeVar),
 		Config: core.StringPtr(config),
 	}
 }
@@ -1625,21 +1852,21 @@ const (
 // Constants associated with the UpdateSchemaRuleOptions.Config property.
 // The configuration value for the rule. Which values are valid depends on the value of this object's `type` property.
 const (
-	UpdateSchemaRuleOptionsConfigBackwardConst           = "BACKWARD"
+	UpdateSchemaRuleOptionsConfigBackwardConst = "BACKWARD"
 	UpdateSchemaRuleOptionsConfigBackwardTransitiveConst = "BACKWARD_TRANSITIVE"
-	UpdateSchemaRuleOptionsConfigForwardConst            = "FORWARD"
-	UpdateSchemaRuleOptionsConfigForwardTransitiveConst  = "FORWARD_TRANSITIVE"
-	UpdateSchemaRuleOptionsConfigFullConst               = "FULL"
-	UpdateSchemaRuleOptionsConfigFullTransitiveConst     = "FULL_TRANSITIVE"
-	UpdateSchemaRuleOptionsConfigNoneConst               = "NONE"
+	UpdateSchemaRuleOptionsConfigForwardConst = "FORWARD"
+	UpdateSchemaRuleOptionsConfigForwardTransitiveConst = "FORWARD_TRANSITIVE"
+	UpdateSchemaRuleOptionsConfigFullConst = "FULL"
+	UpdateSchemaRuleOptionsConfigFullTransitiveConst = "FULL_TRANSITIVE"
+	UpdateSchemaRuleOptionsConfigNoneConst = "NONE"
 )
 
 // NewUpdateSchemaRuleOptions : Instantiate UpdateSchemaRuleOptions
 func (*SchemaregistryV1) NewUpdateSchemaRuleOptions(id string, rule string, typeVar string, config string) *UpdateSchemaRuleOptions {
 	return &UpdateSchemaRuleOptions{
-		ID:     core.StringPtr(id),
-		Rule:   core.StringPtr(rule),
-		Type:   core.StringPtr(typeVar),
+		ID: core.StringPtr(id),
+		Rule: core.StringPtr(rule),
+		Type: core.StringPtr(typeVar),
 		Config: core.StringPtr(config),
 	}
 }
@@ -1673,6 +1900,11 @@ func (options *UpdateSchemaRuleOptions) SetHeaders(param map[string]string) *Upd
 	options.Headers = param
 	return options
 }
+
+// AllowedStates : Valid values for the `state` property to set schema state.
+type AllowedStates struct {
+}
+
 
 // CompatibilityRuleConfig : Valid values for the `config` property of a compatibility rule.
 type CompatibilityRuleConfig struct {
@@ -1734,19 +1966,19 @@ const (
 // Constants associated with the Rule.Config property.
 // The configuration value for the rule. Which values are valid depends on the value of this object's `type` property.
 const (
-	RuleConfigBackwardConst           = "BACKWARD"
+	RuleConfigBackwardConst = "BACKWARD"
 	RuleConfigBackwardTransitiveConst = "BACKWARD_TRANSITIVE"
-	RuleConfigForwardConst            = "FORWARD"
-	RuleConfigForwardTransitiveConst  = "FORWARD_TRANSITIVE"
-	RuleConfigFullConst               = "FULL"
-	RuleConfigFullTransitiveConst     = "FULL_TRANSITIVE"
-	RuleConfigNoneConst               = "NONE"
+	RuleConfigForwardConst = "FORWARD"
+	RuleConfigForwardTransitiveConst = "FORWARD_TRANSITIVE"
+	RuleConfigFullConst = "FULL"
+	RuleConfigFullTransitiveConst = "FULL_TRANSITIVE"
+	RuleConfigNoneConst = "NONE"
 )
 
 // NewRule : Instantiate Rule (Generic Model Constructor)
 func (*SchemaregistryV1) NewRule(typeVar string, config string) (_model *Rule, err error) {
 	_model = &Rule{
-		Type:   core.StringPtr(typeVar),
+		Type: core.StringPtr(typeVar),
 		Config: core.StringPtr(config),
 	}
 	err = core.ValidateStruct(_model, "required parameters")

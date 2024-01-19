@@ -41,7 +41,7 @@ func (o *ClusterUninstaller) listIAMAuthorizations() (cloudResources, error) {
 
 // policyMatches returns true if the IAM Policy matches the one set up to allow
 // the VPC service to read from the COS bucket containing the uploaded RHCOS image.
-func (o *ClusterUninstaller) policyMatches(policy iampolicymanagementv1.Policy) bool {
+func (o *ClusterUninstaller) policyMatches(policy iampolicymanagementv1.PolicyTemplateMetaData) bool {
 	// Ideally we would match using the description field of the Policy type. However,
 	// this is not currently supported in the IBM Terraform Provider. An issue has
 	// been opened for this: https://github.com/IBM-Cloud/terraform-provider-ibm/issues/2894

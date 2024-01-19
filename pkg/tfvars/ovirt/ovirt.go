@@ -7,7 +7,7 @@ import (
 
 	"github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/rhcos"
-	"github.com/openshift/installer/pkg/tfvars/internal/cache"
+	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
@@ -88,7 +88,7 @@ func TFVars(
 
 	imageName, isURL := rhcos.GenerateOpenStackImageName(baseImage, infraID)
 	if isURL {
-		imageFilePath, err := cache.DownloadImageFile(baseImage)
+		imageFilePath, err := cache.DownloadImageFile(baseImage, cache.InstallerApplicationName)
 		if err != nil {
 			return nil, err
 		}

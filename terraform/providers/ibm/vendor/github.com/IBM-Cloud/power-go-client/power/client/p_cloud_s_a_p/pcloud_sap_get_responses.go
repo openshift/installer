@@ -41,6 +41,12 @@ func (o *PcloudSapGetReader) ReadResponse(response runtime.ClientResponse, consu
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudSapGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudSapGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudSapGetReader) ReadResponse(response runtime.ClientResponse, consu
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}] pcloud.sap.get", response, response.Code())
 	}
 }
 
@@ -95,6 +101,11 @@ func (o *PcloudSapGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud sap get o k response a status code equal to that given
 func (o *PcloudSapGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud sap get o k response
+func (o *PcloudSapGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudSapGetOK) Error() string {
@@ -160,6 +171,11 @@ func (o *PcloudSapGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud sap get bad request response
+func (o *PcloudSapGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudSapGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetBadRequest  %+v", 400, o.Payload)
 }
@@ -223,6 +239,11 @@ func (o *PcloudSapGetUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud sap get unauthorized response
+func (o *PcloudSapGetUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudSapGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetUnauthorized  %+v", 401, o.Payload)
 }
@@ -236,6 +257,74 @@ func (o *PcloudSapGetUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudSapGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSapGetForbidden creates a PcloudSapGetForbidden with default headers values
+func NewPcloudSapGetForbidden() *PcloudSapGetForbidden {
+	return &PcloudSapGetForbidden{}
+}
+
+/*
+PcloudSapGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudSapGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sap get forbidden response has a 2xx status code
+func (o *PcloudSapGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap get forbidden response has a 3xx status code
+func (o *PcloudSapGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap get forbidden response has a 4xx status code
+func (o *PcloudSapGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sap get forbidden response has a 5xx status code
+func (o *PcloudSapGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap get forbidden response a status code equal to that given
+func (o *PcloudSapGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud sap get forbidden response
+func (o *PcloudSapGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudSapGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSapGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap/{sap_profile_id}][%d] pcloudSapGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSapGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSapGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -284,6 +373,11 @@ func (o *PcloudSapGetNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud sap get not found response a status code equal to that given
 func (o *PcloudSapGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud sap get not found response
+func (o *PcloudSapGetNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudSapGetNotFound) Error() string {
@@ -347,6 +441,11 @@ func (o *PcloudSapGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud sap get internal server error response a status code equal to that given
 func (o *PcloudSapGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud sap get internal server error response
+func (o *PcloudSapGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudSapGetInternalServerError) Error() string {

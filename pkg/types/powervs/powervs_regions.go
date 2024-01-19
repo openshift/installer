@@ -26,6 +26,30 @@ var Regions = map[string]Region{
 		Zones:       []string{"dal10"},
 		SysTypes:    []string{"s922", "e980"},
 	},
+	"eu-de": {
+		Description: "Frankfurt, Germany",
+		VPCRegion:   "eu-de",
+		Zones:       []string{"eu-de-1", "eu-de-2"},
+		SysTypes:    []string{"s922", "e980"},
+	},
+	"mad": {
+		Description: "Madrid, Spain",
+		VPCRegion:   "eu-es",
+		Zones:       []string{"mad02", "mad04"},
+		SysTypes:    []string{"s1022"},
+	},
+	"sao": {
+		Description: "São Paulo, Brazil",
+		VPCRegion:   "br-sao",
+		Zones:       []string{"sao04"},
+		SysTypes:    []string{"s922", "e980"},
+	},
+	"wdc": {
+		Description: "Washington DC, USA",
+		VPCRegion:   "us-east",
+		Zones:       []string{"wdc06", "wdc07"},
+		SysTypes:    []string{"s922", "e980"},
+	},
 }
 
 // VPCRegionForPowerVSRegion returns the VPC region for the specified PowerVS region.

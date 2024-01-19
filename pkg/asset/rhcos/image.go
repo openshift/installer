@@ -168,7 +168,7 @@ func osImage(config *types.InstallConfig) (string, error) {
 			}
 
 			// Add the sha256 query to the url
-			// This will later be used in pkg/tfvars/internal/cache/cache.go
+			// This will later be used in pkg/rhcos/cache/cache.go
 			q := u.Query()
 			q.Set("sha256", artifact.Sha256)
 

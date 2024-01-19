@@ -98,7 +98,7 @@ func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret stri
 	files := []string{}
 
 	for _, srcFile := range agentTuiFilenames {
-		extracted, err := release.ExtractFile("agent-installer-utils", srcFile)
+		extracted, err := release.ExtractFile("agent-installer-utils", srcFile, a.CPUArch)
 		if err != nil {
 			return nil, err
 		}

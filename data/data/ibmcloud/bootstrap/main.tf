@@ -6,6 +6,9 @@ locals {
   # If we need to setup SecurityGroupRules to SSH to bootstrap, for non-public clusters (no Floating IP)
   # combine the Control Plane and Compute subnet CIDRs, to create rules for ingress on those CIDR's
   all_subnet_cidrs = local.public_endpoints ? [] : concat(data.ibm_is_subnet.control_plane_subnets[*].ipv4_cidr_block, data.ibm_is_subnet.compute_subnets[*].ipv4_cidr_block)
+
+  # If a boot volume encryption key CRN was supplied, create a list containing that CRN, otherwise an empty list for a dynamic block of boot volumes
+  boot_volume_key_crns = var.ibmcloud_control_plane_boot_volume_key == "" ? [] : [var.ibmcloud_control_plane_boot_volume_key]
 }
 
 ############################################
@@ -38,6 +41,13 @@ resource "ibm_is_instance" "bootstrap_node" {
     name            = "eth0"
     subnet          = var.control_plane_subnet_id_list[0]
     security_groups = concat(var.control_plane_security_group_id_list, [ibm_is_security_group.bootstrap.id])
+  }
+
+  dynamic "boot_volume" {
+    for_each = local.boot_volume_key_crns
+    content {
+      encryption = boot_volume.value
+    }
   }
 
   dedicated_host = length(var.control_plane_dedicated_host_id_list) > 0 ? var.control_plane_dedicated_host_id_list[0] : null

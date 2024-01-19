@@ -66,7 +66,7 @@ func (o *PcloudCloudinstancesImagesExportPostReader) ReadResponse(response runti
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}/export] pcloud.cloudinstances.images.export.post", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudCloudinstancesImagesExportPostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images export post accepted response a status code equal to that given
 func (o *PcloudCloudinstancesImagesExportPostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud cloudinstances images export post accepted response
+func (o *PcloudCloudinstancesImagesExportPostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudCloudinstancesImagesExportPostAccepted) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudCloudinstancesImagesExportPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images export post bad request response a status code equal to that given
 func (o *PcloudCloudinstancesImagesExportPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud cloudinstances images export post bad request response
+func (o *PcloudCloudinstancesImagesExportPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudCloudinstancesImagesExportPostBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudCloudinstancesImagesExportPostUnauthorized) IsCode(code int) bool
 	return code == 401
 }
 
+// Code gets the status code for the pcloud cloudinstances images export post unauthorized response
+func (o *PcloudCloudinstancesImagesExportPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudCloudinstancesImagesExportPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudCloudinstancesImagesExportPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudCloudinstancesImagesExportPostForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images export post forbidden response a status code equal to that given
 func (o *PcloudCloudinstancesImagesExportPostForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances images export post forbidden response
+func (o *PcloudCloudinstancesImagesExportPostForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudCloudinstancesImagesExportPostForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudCloudinstancesImagesExportPostNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud cloudinstances images export post not found response
+func (o *PcloudCloudinstancesImagesExportPostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudCloudinstancesImagesExportPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudCloudinstancesImagesExportPostNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudCloudinstancesImagesExportPostUnprocessableEntity) IsCode(code in
 	return code == 422
 }
 
+// Code gets the status code for the pcloud cloudinstances images export post unprocessable entity response
+func (o *PcloudCloudinstancesImagesExportPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudCloudinstancesImagesExportPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudCloudinstancesImagesExportPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudCloudinstancesImagesExportPostInternalServerError) IsServerError(
 // IsCode returns true when this pcloud cloudinstances images export post internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesImagesExportPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances images export post internal server error response
+func (o *PcloudCloudinstancesImagesExportPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesImagesExportPostInternalServerError) Error() string {

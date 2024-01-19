@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 )
 
@@ -21,6 +22,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 		name                   string
 		installConfig          *types.InstallConfig
 		expectedInfrastructure *configv1.Infrastructure
+		expectedFilesGenerated int
 	}{{
 		name:          "vanilla aws",
 		installConfig: icBuild.build(icBuild.forAWS()),
@@ -29,6 +31,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.withAWSPlatformSpec(),
 			infraBuild.withAWSPlatformStatus(),
 		),
+		expectedFilesGenerated: 1,
 	}, {
 		name: "service endpoints",
 		installConfig: icBuild.build(
@@ -39,6 +42,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.forPlatform(configv1.AWSPlatformType),
 			infraBuild.withServiceEndpoint("service", "https://endpoint"),
 		),
+		expectedFilesGenerated: 1,
 	}, {
 		name: "azure resource tags",
 		installConfig: icBuild.build(
@@ -49,6 +53,26 @@ func TestGenerateInfrastructure(t *testing.T) {
 			infraBuild.forPlatform(configv1.AzurePlatformType),
 			infraBuild.withResourceTags([]configv1.AzureResourceTag{{Key: "key", Value: "value"}}),
 		),
+		expectedFilesGenerated: 1,
+	}, {
+		name:          "default GCP custom DNS",
+		installConfig: icBuild.build(icBuild.forGCP()),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.GCPPlatformType),
+			infraBuild.withGCPClusterHostedDNS("Disabled"),
+		),
+		expectedFilesGenerated: 2,
+	}, {
+		name: "GCP custom DNS",
+		installConfig: icBuild.build(
+			icBuild.forGCP(),
+			icBuild.withGCPUserProvisionedDNS("Enabled"),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.GCPPlatformType),
+			infraBuild.withGCPClusterHostedDNS("Enabled"),
+		),
+		expectedFilesGenerated: 2,
 	}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -67,12 +91,13 @@ func TestGenerateInfrastructure(t *testing.T) {
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}
-			if !assert.Len(t, infraAsset.FileList, 1, "expected only one file to be generated") {
+
+			if !assert.Len(t, infraAsset.FileList, tc.expectedFilesGenerated, "did not generate expected amount of files") {
 				return
 			}
-			assert.Equal(t, infraAsset.FileList[0].Filename, "manifests/cluster-infrastructure-02-config.yml")
+			assert.Equal(t, infraAsset.FileList[tc.expectedFilesGenerated-1].Filename, "manifests/cluster-infrastructure-02-config.yml")
 			var actualInfra configv1.Infrastructure
-			err = yaml.Unmarshal(infraAsset.FileList[0].Data, &actualInfra)
+			err = yaml.Unmarshal(infraAsset.FileList[tc.expectedFilesGenerated-1].Data, &actualInfra)
 			if !assert.NoError(t, err, "failed to unmarshal infra manifest") {
 				return
 			}
@@ -110,6 +135,15 @@ func (b icBuildNamespace) forAWS() icOption {
 	}
 }
 
+func (b icBuildNamespace) forGCP() icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.GCP != nil {
+			return
+		}
+		ic.Platform.GCP = &gcptypes.Platform{}
+	}
+}
+
 func (b icBuildNamespace) forNone() icOption {
 	return func(ic *types.InstallConfig) {
 		if ic.Platform.None != nil {
@@ -136,6 +170,16 @@ func (b icBuildNamespace) withLBType(lbType configv1.AWSLBType) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forAWS()(ic)
 		ic.Platform.AWS.LBType = lbType
+	}
+}
+
+func (b icBuildNamespace) withGCPUserProvisionedDNS(enabled string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forGCP()(ic)
+		if enabled == "Enabled" {
+			ic.Platform.GCP.UserProvisionedDNS = gcptypes.UserProvisionedDNSEnabled
+			ic.FeatureGates = []string{"GCPClusterHostedDNS=true"}
+		}
 	}
 }
 
@@ -241,5 +285,25 @@ func (b infraBuildNamespace) withResourceTags(tags []configv1.AzureResourceTag) 
 	return func(infra *configv1.Infrastructure) {
 		b.withAzurePlatformStatus()(infra)
 		infra.Status.PlatformStatus.Azure.ResourceTags = tags
+	}
+}
+
+func (b infraBuildNamespace) withGCPPlatformStatus() infraOption {
+	return func(infra *configv1.Infrastructure) {
+		if infra.Status.PlatformStatus.GCP != nil {
+			return
+		}
+		infra.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{}
+	}
+}
+
+func (b infraBuildNamespace) withGCPClusterHostedDNS(enabled string) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withGCPPlatformStatus()(infra)
+		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
+		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
+		if enabled == "Enabled" {
+			infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
+		}
 	}
 }

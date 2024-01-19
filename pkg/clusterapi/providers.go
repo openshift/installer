@@ -100,7 +100,7 @@ func (p Provider) Extract(dir string) error {
 	}
 
 	// Ensure the directory exists.
-	logrus.Debugf("creating %s directory", dir)
+	logrus.Debugf("Creating %s directory", dir)
 	if err := os.MkdirAll(dir, 0o777); err != nil {
 		return errors.Wrapf(err, "could not make directory for the %s provider", p.Name)
 	}
@@ -115,7 +115,7 @@ func (p Provider) Extract(dir string) error {
 		if err != nil {
 			return errors.Wrapf(err, "failed to sanitize archive file %q", name)
 		}
-		logrus.Debugf("extracting %s file", path)
+		logrus.Debugf("Extracting %s file", path)
 		if err := unpackFile(f, path); err != nil {
 			return errors.Wrapf(err, "failed to extract %q", path)
 		}

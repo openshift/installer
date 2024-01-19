@@ -47,6 +47,18 @@ func (o *PcloudTenantsSshkeysPostReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudTenantsSshkeysPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudTenantsSshkeysPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudTenantsSshkeysPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -66,7 +78,7 @@ func (o *PcloudTenantsSshkeysPostReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys] pcloud.tenants.sshkeys.post", response, response.Code())
 	}
 }
 
@@ -107,6 +119,11 @@ func (o *PcloudTenantsSshkeysPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys post o k response a status code equal to that given
 func (o *PcloudTenantsSshkeysPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post o k response
+func (o *PcloudTenantsSshkeysPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudTenantsSshkeysPostOK) Error() string {
@@ -172,6 +189,11 @@ func (o *PcloudTenantsSshkeysPostCreated) IsCode(code int) bool {
 	return code == 201
 }
 
+// Code gets the status code for the pcloud tenants sshkeys post created response
+func (o *PcloudTenantsSshkeysPostCreated) Code() int {
+	return 201
+}
+
 func (o *PcloudTenantsSshkeysPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostCreated  %+v", 201, o.Payload)
 }
@@ -233,6 +255,11 @@ func (o *PcloudTenantsSshkeysPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys post bad request response a status code equal to that given
 func (o *PcloudTenantsSshkeysPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post bad request response
+func (o *PcloudTenantsSshkeysPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudTenantsSshkeysPostBadRequest) Error() string {
@@ -298,6 +325,11 @@ func (o *PcloudTenantsSshkeysPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud tenants sshkeys post unauthorized response
+func (o *PcloudTenantsSshkeysPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudTenantsSshkeysPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -311,6 +343,142 @@ func (o *PcloudTenantsSshkeysPostUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudTenantsSshkeysPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysPostForbidden creates a PcloudTenantsSshkeysPostForbidden with default headers values
+func NewPcloudTenantsSshkeysPostForbidden() *PcloudTenantsSshkeysPostForbidden {
+	return &PcloudTenantsSshkeysPostForbidden{}
+}
+
+/*
+PcloudTenantsSshkeysPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudTenantsSshkeysPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys post forbidden response has a 2xx status code
+func (o *PcloudTenantsSshkeysPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys post forbidden response has a 3xx status code
+func (o *PcloudTenantsSshkeysPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys post forbidden response has a 4xx status code
+func (o *PcloudTenantsSshkeysPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys post forbidden response has a 5xx status code
+func (o *PcloudTenantsSshkeysPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys post forbidden response a status code equal to that given
+func (o *PcloudTenantsSshkeysPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post forbidden response
+func (o *PcloudTenantsSshkeysPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudTenantsSshkeysPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsSshkeysPostNotFound creates a PcloudTenantsSshkeysPostNotFound with default headers values
+func NewPcloudTenantsSshkeysPostNotFound() *PcloudTenantsSshkeysPostNotFound {
+	return &PcloudTenantsSshkeysPostNotFound{}
+}
+
+/*
+PcloudTenantsSshkeysPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudTenantsSshkeysPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants sshkeys post not found response has a 2xx status code
+func (o *PcloudTenantsSshkeysPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants sshkeys post not found response has a 3xx status code
+func (o *PcloudTenantsSshkeysPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants sshkeys post not found response has a 4xx status code
+func (o *PcloudTenantsSshkeysPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants sshkeys post not found response has a 5xx status code
+func (o *PcloudTenantsSshkeysPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants sshkeys post not found response a status code equal to that given
+func (o *PcloudTenantsSshkeysPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post not found response
+func (o *PcloudTenantsSshkeysPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudTenantsSshkeysPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsSshkeysPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsSshkeysPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -359,6 +527,11 @@ func (o *PcloudTenantsSshkeysPostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys post conflict response a status code equal to that given
 func (o *PcloudTenantsSshkeysPostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post conflict response
+func (o *PcloudTenantsSshkeysPostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudTenantsSshkeysPostConflict) Error() string {
@@ -424,6 +597,11 @@ func (o *PcloudTenantsSshkeysPostUnprocessableEntity) IsCode(code int) bool {
 	return code == 422
 }
 
+// Code gets the status code for the pcloud tenants sshkeys post unprocessable entity response
+func (o *PcloudTenantsSshkeysPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudTenantsSshkeysPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/tenants/{tenant_id}/sshkeys][%d] pcloudTenantsSshkeysPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -485,6 +663,11 @@ func (o *PcloudTenantsSshkeysPostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud tenants sshkeys post internal server error response a status code equal to that given
 func (o *PcloudTenantsSshkeysPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud tenants sshkeys post internal server error response
+func (o *PcloudTenantsSshkeysPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudTenantsSshkeysPostInternalServerError) Error() string {

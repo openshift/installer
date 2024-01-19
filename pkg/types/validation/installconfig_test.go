@@ -235,6 +235,7 @@ func validIPv4NetworkingConfig() *types.Networking {
 				HostPrefix: 28,
 			},
 		},
+		ClusterNetworkMTU: 0,
 	}
 }
 
@@ -502,6 +503,76 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: ``,
+		},
+		{
+			name: "networking clusterNetworkMTU - valid high limit ovn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8901
+				fmt.Println(c.Platform.Name())
+				return c
+			}(),
+		},
+		{
+			name: "networking clusterNetworkMTU - valid low limit",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 1000
+				return c
+			}(),
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid value lower",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetworkMTU = 999
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 999: cluster network MTU is lower than the minimum value of 1000$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid value ovn",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8951
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 8951: cluster network MTU exceeds the maximum value with the network plugin OVNKubernetes of 8901$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid jumbo value",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetworkMTU = 9002
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 9002: cluster network MTU exceeds the maximum value of 9001$`,
+		},
+		{
+			name: "networking clusterNetworkMTU - invalid for non-aws",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+				c.Networking.ClusterNetworkMTU = 8901
+				c.Platform = types.Platform{
+					None: &none.Platform{},
+				}
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetworkMTU: Invalid value: 8901: cluster network MTU is allowed only in AWS deployments`,
+		},
+		{
+			name: "networking clusterNetworkMTU - unsupported network type",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.NetworkType = string(operv1.NetworkTypeOpenShiftSDN)
+				c.Networking.ClusterNetworkMTU = 8000
+				return c
+			}(),
+			expectedError: `networking.networkType: Invalid value: "OpenShiftSDN": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, networking.clusterNetworkMTU: Invalid value: 8000: cluster network MTU is not valid with network plugin OpenShiftSDN`,
 		},
 		{
 			name: "missing control plane",
@@ -1293,28 +1364,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
 		},
 		{
-			name: "invalid dual-stack configuration, bad plugin",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
-				c.Networking = validDualStackNetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
-				return c
-			}(),
-			expectedError: `IPv6 is not supported for this networking plugin`,
-		},
-		{
-			name: "invalid single-stack IPv6 configuration, bad plugin",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{None: &none.Platform{}}
-				c.Networking = validIPv6NetworkingConfig()
-				c.Networking.NetworkType = "OpenShiftSDN"
-				return c
-			}(),
-			expectedError: `IPv6 is not supported for this networking plugin`,
-		},
-		{
 			name: "invalid dual-stack configuration, machine has no IPv6",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -1519,6 +1568,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential)
 				return c
 			}(),
 		},
@@ -1564,8 +1614,8 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid additional enabled capability specified",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11",
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"openshift-samples"}}
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityOpenShiftSamples)
 				return c
 			}(),
 		},
@@ -1589,6 +1639,18 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `capabilities.additionalEnabledCapabilities\[0\]: Unsupported value: "not-valid": supported values: .*`,
 		},
+		{
+			name: "baremetal platform requires the baremetal capability",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "None", AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{"marketplace"}}
+				return c
+			}(),
+			expectedError: `additionalEnabledCapabilities: Invalid value: \[\]v1.ClusterVersionCapability{"marketplace"}: platform baremetal requires the baremetal capability`,
+		},
 		//VIP tests
 		{
 			name: "apivip_v4_not_in_machinenetwork_cidr",
@@ -1606,6 +1668,24 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"192.168.222.1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
+		},
+		{
+			name: "apivip_v4_not_in_machinenetwork_cidr_usermanaged_loadbalancer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{Type: configv1.LoadBalancerTypeUserManaged}
+				c.Platform.BareMetal.APIVIPs = []string{"192.168.222.1"}
+
+				return c
+			}(),
 		},
 		{
 			name: "apivip_v6_not_in_machinenetwork_cidr",
@@ -1638,7 +1718,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+			expectedError: "[networking.networkType: Invalid value: \"OpenShiftSDN\": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, platform.baremetal.ingressVIPs: Invalid value: \"10.0.0.4\": IP expected to be in one of the machine networks: ffd0::/48]",
 		},
 		{
 			name: "ingressvips_v6_on_openshiftsdn",
@@ -1654,7 +1734,7 @@ func TestValidateInstallConfig(t *testing.T) {
 
 				return c
 			}(),
-			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"ffd0::1\": IPv6 is not supported on OpenShiftSDN",
+			expectedError: "[networking.networkType: Invalid value: \"OpenShiftSDN\": networkType OpenShiftSDN is deprecated, please use OVNKubernetes, platform.baremetal.apiVIPs: Invalid value: \"10.0.0.5\": IP expected to be in one of the machine networks: ffd0::/48]",
 		},
 		{
 			name: "too_many_apivips",
@@ -1889,6 +1969,21 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.baremetal.apiVIPs: Invalid value: \"fe80::1\": VIP for API must not be one of the Ingress VIPs",
+		},
+		{
+			name: "identical_apivip_ingressvip_usermanaged_loadbalancer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform = types.Platform{
+					BareMetal: validBareMetalPlatform(),
+				}
+				c.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{Type: configv1.LoadBalancerTypeUserManaged}
+				c.Platform.BareMetal.APIVIPs = []string{"fe80::1"}
+				c.Platform.BareMetal.IngressVIPs = []string{"fe80::1"}
+
+				return c
+			}(),
 		},
 		{
 			name: "identical_apivips_ingressvips_multiple_ips",
@@ -2176,6 +2271,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
 				}
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential)
 				return c
 			}(),
 		},
@@ -2185,7 +2281,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential},
 				}
 				return c
 			}(),
@@ -2196,7 +2292,66 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "CloudCredential is enabled in cloud",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent,
+				}
+				return c
+			}(),
+		},
+		{
+			name: "CloudCredential is disabled in cloud aws",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+				}
+				return c
+			}(),
+			expectedError: "disabling CloudCredential capability available only for baremetal platforms",
+		},
+		{
+			name: "CloudCredential is disabled in cloud gcp",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.GCP = validGCPPlatform()
+				c.AWS = nil
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+				}
+				return c
+			}(),
+			expectedError: "disabling CloudCredential capability available only for baremetal platforms",
+		},
+		{
+			name: "CloudCredential is enabled in baremetal",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.BareMetal = validBareMetalPlatform()
+				c.AWS = nil
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetCurrent,
+				}
+				return c
+			}(),
+		},
+		{
+			name: "CloudCredential is disabled in baremetal",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.BareMetal = validBareMetalPlatform()
+				c.AWS = nil
+				c.Capabilities = &types.Capabilities{
+					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
 				}
 				return c
 			}(),

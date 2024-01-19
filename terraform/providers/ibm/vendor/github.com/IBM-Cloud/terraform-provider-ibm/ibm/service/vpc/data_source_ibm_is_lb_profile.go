@@ -76,10 +76,10 @@ func dataSourceIBMISLbProfileRead(context context.Context, d *schema.ResourceDat
 	d.Set("name", *lbProfile.Name)
 	d.Set("href", *lbProfile.Href)
 	d.Set("family", *lbProfile.Family)
-	log.Printf("[INFO] UJJK lbprofile udp %v", lbProfile.UDPSupported)
+	log.Printf("[INFO] lbprofile udp %v", lbProfile.UDPSupported)
 	if lbProfile.UDPSupported != nil {
 		udpSupport := lbProfile.UDPSupported
-		log.Printf("[INFO] UJJK lbprofile udp %s", reflect.TypeOf(udpSupport).String())
+		log.Printf("[INFO] lbprofile udp %s", reflect.TypeOf(udpSupport).String())
 
 		switch reflect.TypeOf(udpSupport).String() {
 		case "*vpcv1.LoadBalancerProfileUDPSupportedFixed":

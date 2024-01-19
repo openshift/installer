@@ -47,6 +47,12 @@ func (o *PcloudPvminstancesSnapshotsGetallReader) ReadResponse(response runtime.
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesSnapshotsGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudPvminstancesSnapshotsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudPvminstancesSnapshotsGetallReader) ReadResponse(response runtime.
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots] pcloud.pvminstances.snapshots.getall", response, response.Code())
 	}
 }
 
@@ -95,6 +101,11 @@ func (o *PcloudPvminstancesSnapshotsGetallOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances snapshots getall o k response a status code equal to that given
 func (o *PcloudPvminstancesSnapshotsGetallOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances snapshots getall o k response
+func (o *PcloudPvminstancesSnapshotsGetallOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesSnapshotsGetallOK) Error() string {
@@ -160,6 +171,11 @@ func (o *PcloudPvminstancesSnapshotsGetallBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud pvminstances snapshots getall bad request response
+func (o *PcloudPvminstancesSnapshotsGetallBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudPvminstancesSnapshotsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsGetallBadRequest  %+v", 400, o.Payload)
 }
@@ -221,6 +237,11 @@ func (o *PcloudPvminstancesSnapshotsGetallUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances snapshots getall unauthorized response a status code equal to that given
 func (o *PcloudPvminstancesSnapshotsGetallUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud pvminstances snapshots getall unauthorized response
+func (o *PcloudPvminstancesSnapshotsGetallUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudPvminstancesSnapshotsGetallUnauthorized) Error() string {
@@ -286,6 +307,11 @@ func (o *PcloudPvminstancesSnapshotsGetallForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud pvminstances snapshots getall forbidden response
+func (o *PcloudPvminstancesSnapshotsGetallForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudPvminstancesSnapshotsGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsGetallForbidden  %+v", 403, o.Payload)
 }
@@ -299,6 +325,74 @@ func (o *PcloudPvminstancesSnapshotsGetallForbidden) GetPayload() *models.Error 
 }
 
 func (o *PcloudPvminstancesSnapshotsGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesSnapshotsGetallNotFound creates a PcloudPvminstancesSnapshotsGetallNotFound with default headers values
+func NewPcloudPvminstancesSnapshotsGetallNotFound() *PcloudPvminstancesSnapshotsGetallNotFound {
+	return &PcloudPvminstancesSnapshotsGetallNotFound{}
+}
+
+/*
+PcloudPvminstancesSnapshotsGetallNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesSnapshotsGetallNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances snapshots getall not found response has a 2xx status code
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances snapshots getall not found response has a 3xx status code
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances snapshots getall not found response has a 4xx status code
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances snapshots getall not found response has a 5xx status code
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances snapshots getall not found response a status code equal to that given
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances snapshots getall not found response
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/snapshots][%d] pcloudPvminstancesSnapshotsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesSnapshotsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -347,6 +441,11 @@ func (o *PcloudPvminstancesSnapshotsGetallInternalServerError) IsServerError() b
 // IsCode returns true when this pcloud pvminstances snapshots getall internal server error response a status code equal to that given
 func (o *PcloudPvminstancesSnapshotsGetallInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances snapshots getall internal server error response
+func (o *PcloudPvminstancesSnapshotsGetallInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesSnapshotsGetallInternalServerError) Error() string {

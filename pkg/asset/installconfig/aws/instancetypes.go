@@ -2,17 +2,18 @@ package aws
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
 )
 
 // InstanceType holds metadata for an instance type.
 type InstanceType struct {
 	DefaultVCpus int64
 	MemInMiB     int64
+	Arches       []string
 }
 
 // instanceTypes retrieves a list of instance types for the given region.
@@ -27,11 +28,12 @@ func instanceTypes(ctx context.Context, session *session.Session, region string)
 				types[*info.InstanceType] = InstanceType{
 					DefaultVCpus: aws.Int64Value(info.VCpuInfo.DefaultVCpus),
 					MemInMiB:     aws.Int64Value(info.MemoryInfo.SizeInMiB),
+					Arches:       aws.StringValueSlice(info.ProcessorInfo.SupportedArchitectures),
 				}
 			}
 			return !lastPage
 		}); err != nil {
-		return nil, errors.Wrap(err, "fetching instance types")
+		return nil, fmt.Errorf("fetching instance types: %w", err)
 	}
 
 	return types, nil

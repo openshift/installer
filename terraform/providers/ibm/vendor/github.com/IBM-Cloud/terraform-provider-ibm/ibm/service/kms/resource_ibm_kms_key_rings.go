@@ -16,6 +16,7 @@ import (
 func ResourceIBMKmskeyRings() *schema.Resource {
 	return &schema.Resource{
 		Create:   resourceIBMKmsKeyRingCreate,
+		Update:   resourceIBMKmsKeyRingUpdate,
 		Delete:   resourceIBMKmsKeyRingDelete,
 		Read:     resourceIBMKmsKeyRingRead,
 		Importer: &schema.ResourceImporter{},
@@ -34,6 +35,13 @@ func ResourceIBMKmskeyRings() *schema.Resource {
 				ForceNew:     true,
 				Description:  "User defined unique ID for the key ring",
 				ValidateFunc: validate.InvokeValidator("ibm_kms_key_rings", "key_ring_id"),
+			},
+			"force_delete": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "set to true to force delete this key ring. This allows key ring deletion as long as all keys inside have key state equals to 5 (destroyed). Keys are moved to the default key ring.",
+				ForceNew:    false,
+				Default:     false,
 			},
 			"endpoint_type": {
 				Type:         schema.TypeString,
@@ -94,6 +102,15 @@ func resourceIBMKmsKeyRingCreate(d *schema.ResourceData, meta interface{}) error
 	return resourceIBMKmsKeyRingRead(d, meta)
 }
 
+func resourceIBMKmsKeyRingUpdate(d *schema.ResourceData, meta interface{}) error {
+
+	if d.HasChange("force_delete") {
+		d.Set("force_delete", d.Get("force_delete").(bool))
+	}
+	return resourceIBMKmsKeyRingRead(d, meta)
+
+}
+
 func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
 	id := strings.Split(d.Id(), ":keyRing:")
 	if len(id) < 2 {
@@ -131,9 +148,13 @@ func resourceIBMKmsKeyRingDelete(d *schema.ResourceData, meta interface{}) error
 	if err != nil {
 		return err
 	}
-	err = kpAPI.DeleteKeyRing(context.Background(), id[0])
+	force_delete := d.Get("force_delete").(bool)
+
+	err = kpAPI.DeleteKeyRing(context.Background(), id[0], kp.WithForce(force_delete))
 	if err != nil {
 		kpError := err.(*kp.Error)
+		// Key ring deletion used to occur by silencing the 409 failed deletion and allowing instance deletion to clean it up
+		// Will be deprecated in the future in favor of force_delete flag
 		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
 			return nil
 		} else {

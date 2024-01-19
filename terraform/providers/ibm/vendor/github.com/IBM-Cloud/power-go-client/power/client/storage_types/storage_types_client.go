@@ -36,7 +36,11 @@ type ClientService interface {
 }
 
 /*
-ServiceBrokerStoragetypesGet availables storage types in a region
+	ServiceBrokerStoragetypesGet availables storage types in a region
+
+	This API is deprecated for /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-tiers.
+
+>*Note*: Support for this API will be available till 31st October 2023.
 */
 func (a *Client) ServiceBrokerStoragetypesGet(params *ServiceBrokerStoragetypesGetParams, opts ...ClientOption) (*ServiceBrokerStoragetypesGetOK, error) {
 	// TODO: Validate the params before sending

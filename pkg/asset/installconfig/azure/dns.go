@@ -2,13 +2,13 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/pkg/errors"
 )
 
 // DNSConfig exposes functions to choose the DNS settings
@@ -85,7 +85,7 @@ func (config DNSConfig) GetDNSZone() (*Zone, error) {
 		},
 	}, &zoneName)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed UserInput")
+		return nil, fmt.Errorf("failed UserInput: %w", err)
 	}
 
 	return &Zone{

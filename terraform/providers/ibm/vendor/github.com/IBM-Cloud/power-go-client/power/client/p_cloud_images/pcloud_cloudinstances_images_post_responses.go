@@ -53,6 +53,12 @@ func (o *PcloudCloudinstancesImagesPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudCloudinstancesImagesPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudCloudinstancesImagesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -72,7 +78,7 @@ func (o *PcloudCloudinstancesImagesPostReader) ReadResponse(response runtime.Cli
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images] pcloud.cloudinstances.images.post", response, response.Code())
 	}
 }
 
@@ -113,6 +119,11 @@ func (o *PcloudCloudinstancesImagesPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images post o k response a status code equal to that given
 func (o *PcloudCloudinstancesImagesPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances images post o k response
+func (o *PcloudCloudinstancesImagesPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesImagesPostOK) Error() string {
@@ -178,6 +189,11 @@ func (o *PcloudCloudinstancesImagesPostCreated) IsCode(code int) bool {
 	return code == 201
 }
 
+// Code gets the status code for the pcloud cloudinstances images post created response
+func (o *PcloudCloudinstancesImagesPostCreated) Code() int {
+	return 201
+}
+
 func (o *PcloudCloudinstancesImagesPostCreated) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostCreated  %+v", 201, o.Payload)
 }
@@ -239,6 +255,11 @@ func (o *PcloudCloudinstancesImagesPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images post bad request response a status code equal to that given
 func (o *PcloudCloudinstancesImagesPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud cloudinstances images post bad request response
+func (o *PcloudCloudinstancesImagesPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudCloudinstancesImagesPostBadRequest) Error() string {
@@ -304,6 +325,11 @@ func (o *PcloudCloudinstancesImagesPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud cloudinstances images post unauthorized response
+func (o *PcloudCloudinstancesImagesPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudCloudinstancesImagesPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -367,6 +393,11 @@ func (o *PcloudCloudinstancesImagesPostForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud cloudinstances images post forbidden response
+func (o *PcloudCloudinstancesImagesPostForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudCloudinstancesImagesPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostForbidden  %+v", 403, o.Payload)
 }
@@ -380,6 +411,74 @@ func (o *PcloudCloudinstancesImagesPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudinstancesImagesPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesImagesPostNotFound creates a PcloudCloudinstancesImagesPostNotFound with default headers values
+func NewPcloudCloudinstancesImagesPostNotFound() *PcloudCloudinstancesImagesPostNotFound {
+	return &PcloudCloudinstancesImagesPostNotFound{}
+}
+
+/*
+PcloudCloudinstancesImagesPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesImagesPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances images post not found response has a 2xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances images post not found response has a 3xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances images post not found response has a 4xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances images post not found response has a 5xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances images post not found response a status code equal to that given
+func (o *PcloudCloudinstancesImagesPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances images post not found response
+func (o *PcloudCloudinstancesImagesPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -428,6 +527,11 @@ func (o *PcloudCloudinstancesImagesPostConflict) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images post conflict response a status code equal to that given
 func (o *PcloudCloudinstancesImagesPostConflict) IsCode(code int) bool {
 	return code == 409
+}
+
+// Code gets the status code for the pcloud cloudinstances images post conflict response
+func (o *PcloudCloudinstancesImagesPostConflict) Code() int {
+	return 409
 }
 
 func (o *PcloudCloudinstancesImagesPostConflict) Error() string {
@@ -493,6 +597,11 @@ func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) IsCode(code int) boo
 	return code == 422
 }
 
+// Code gets the status code for the pcloud cloudinstances images post unprocessable entity response
+func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudCloudinstancesImagesPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -554,6 +663,11 @@ func (o *PcloudCloudinstancesImagesPostInternalServerError) IsServerError() bool
 // IsCode returns true when this pcloud cloudinstances images post internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesImagesPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances images post internal server error response
+func (o *PcloudCloudinstancesImagesPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesImagesPostInternalServerError) Error() string {

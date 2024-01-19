@@ -85,6 +85,11 @@ func (m *Jobs) contextValidateJobs(ctx context.Context, formats strfmt.Registry)
 	for i := 0; i < len(m.Jobs); i++ {
 
 		if m.Jobs[i] != nil {
+
+			if swag.IsZero(m.Jobs[i]) { // not required
+				return nil
+			}
+
 			if err := m.Jobs[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("jobs" + "." + strconv.Itoa(i))

@@ -139,7 +139,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case ibmcloudtypes.Name:
-		client, err := ibmcloud.NewClient()
+		client, err := ibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
 		if err != nil {
 			return err
 		}

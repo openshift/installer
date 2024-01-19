@@ -164,6 +164,11 @@ func (m *NetworkPort) ContextValidate(ctx context.Context, formats strfmt.Regist
 func (m *NetworkPort) contextValidatePvmInstance(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.PvmInstance != nil {
+
+		if swag.IsZero(m.PvmInstance) { // not required
+			return nil
+		}
+
 		if err := m.PvmInstance.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("pvmInstance")

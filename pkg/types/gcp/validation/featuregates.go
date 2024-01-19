@@ -6,6 +6,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/featuregates"
+	"github.com/openshift/installer/pkg/types/gcp"
 )
 
 // GatedFeatures determines all of the install config fields that should
@@ -22,6 +23,11 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			FeatureGateName: configv1.FeatureGateGCPLabelsTags,
 			Condition:       len(g.UserTags) > 0,
 			Field:           field.NewPath("platform", "gcp", "userTags"),
+		},
+		{
+			FeatureGateName: configv1.FeatureGateGCPClusterHostedDNS,
+			Condition:       g.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+			Field:           field.NewPath("platform", "gcp", "userProvisionedDNS"),
 		},
 	}
 }

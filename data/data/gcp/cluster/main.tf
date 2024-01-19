@@ -67,6 +67,8 @@ module "network" {
 }
 
 module "dns" {
+  count = var.gcp_user_provisioned_dns ? 0 : 1
+
   source = "./dns"
 
   cluster_id         = var.cluster_id

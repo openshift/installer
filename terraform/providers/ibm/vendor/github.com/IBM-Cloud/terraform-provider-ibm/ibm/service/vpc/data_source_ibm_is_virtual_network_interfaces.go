@@ -9,7 +9,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM/vpc-beta-go-sdk/vpcbetav1"
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -344,40 +344,42 @@ func DataSourceIBMIsVirtualNetworkInterfaces() *schema.Resource {
 					},
 				},
 			},
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group these virtual network interfaces belong to",
+			},
 		},
 	}
 }
 
 func dataSourceIBMIsVirtualNetworkInterfacesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vpcbetaClient, err := meta.(conns.ClientSession).VpcV1BetaAPI()
+	vpcClient, err := meta.(conns.ClientSession).VpcV1API()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	listVirtualNetworkInterfacesOptions := &vpcbetav1.ListVirtualNetworkInterfacesOptions{}
-
-	vniCollection, response, err := vpcbetaClient.ListVirtualNetworkInterfacesWithContext(context, listVirtualNetworkInterfacesOptions)
-	//log.Printf(len(vniCollection.VirtualNetworkInterfaces))
-	if err != nil {
-		log.Printf("[DEBUG] VirtualNetworkInterfacesPager.GetAll() failed %s\n%s", err, response)
-		return diag.FromErr(fmt.Errorf("VirtualNetworkInterfacesPager.GetAll() failed %s\n%s", err, response))
+	listVirtualNetworkInterfacesOptions := &vpcv1.ListVirtualNetworkInterfacesOptions{}
+	if resgroupintf, ok := d.GetOk("resource_group"); ok {
+		resGroup := resgroupintf.(string)
+		listVirtualNetworkInterfacesOptions.ResourceGroupID = &resGroup
 	}
-	// var pager *vpcbetav1.VirtualNetworkInterfacesPager
-	// pager, err = vpcbetaClient.NewVirtualNetworkInterfacesPager(listVirtualNetworkInterfacesOptions)
-	// if err != nil {
-	// 	return diag.FromErr(err)
-	// }
+	var pager *vpcv1.VirtualNetworkInterfacesPager
+	pager, err = vpcClient.NewVirtualNetworkInterfacesPager(listVirtualNetworkInterfacesOptions)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	// allItems, err := pager.GetAll()
-	// if err != nil {
-	// 	log.Printf("[DEBUG] VirtualNetworkInterfacesPager.GetAll() failed %s", err)
-	// 	return diag.FromErr(fmt.Errorf("VirtualNetworkInterfacesPager.GetAll() failed %s", err))
-	// }
+	allItems, err := pager.GetAll()
+	if err != nil {
+		log.Printf("[DEBUG] VirtualNetworkInterfacesPager.GetAll() failed %s", err)
+		return diag.FromErr(fmt.Errorf("VirtualNetworkInterfacesPager.GetAll() failed %s", err))
+	}
 
 	d.SetId(dataSourceIBMIsVirtualNetworkInterfacesID(d))
 
 	mapSlice := []map[string]interface{}{}
-	for _, modelItem := range vniCollection.VirtualNetworkInterfaces {
+	for _, modelItem := range allItems {
 		modelMap, err := dataSourceIBMIsVirtualNetworkInterfacesVirtualNetworkInterfaceToMap(&modelItem)
 		if err != nil {
 			return diag.FromErr(err)
@@ -397,7 +399,7 @@ func dataSourceIBMIsVirtualNetworkInterfacesID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceIBMIsVirtualNetworkInterfacesVirtualNetworkInterfaceToMap(model *vpcbetav1.VirtualNetworkInterface) (map[string]interface{}, error) {
+func dataSourceIBMIsVirtualNetworkInterfacesVirtualNetworkInterfaceToMap(model *vpcv1.VirtualNetworkInterface) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.AutoDelete != nil {
 		modelMap["auto_delete"] = *model.AutoDelete

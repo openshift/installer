@@ -12,7 +12,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/exported"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo"
 	"github.com/Azure/azure-sdk-for-go/sdk/internal/temporal"
 )
 
@@ -83,7 +82,7 @@ func (b *BearerTokenPolicy) Do(req *policy.Request) (*http.Response, error) {
 		err = b.authenticateAndAuthorize(req)(policy.TokenRequestOptions{Scopes: b.scopes})
 	}
 	if err != nil {
-		return nil, ensureNonRetriable(err)
+		return nil, shared.NonRetriableError(err)
 	}
 
 	res, err := req.Next()
@@ -99,22 +98,8 @@ func (b *BearerTokenPolicy) Do(req *policy.Request) (*http.Response, error) {
 			}
 		}
 	}
-	return res, ensureNonRetriable(err)
-}
-
-func ensureNonRetriable(err error) error {
-	var nre errorinfo.NonRetriable
-	if err != nil && !errors.As(err, &nre) {
-		err = btpError{err}
+	if err != nil {
+		err = shared.NonRetriableError(err)
 	}
-	return err
+	return res, err
 }
-
-// btpError is a wrapper that ensures RetryPolicy doesn't retry requests BearerTokenPolicy couldn't authorize
-type btpError struct {
-	error
-}
-
-func (btpError) NonRetriable() {}
-
-var _ errorinfo.NonRetriable = (*btpError)(nil)
