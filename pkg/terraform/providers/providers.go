@@ -15,6 +15,8 @@ import (
 var (
 	// AliCloud is the provider for creating resources in the alibaba cloud.
 	AliCloud = provider("alicloud")
+	// AVgcp is a custom gcp provider for creating signed urls.
+	AVgcp = provider("avgcp")
 	// AWS is the provider for creating resources in AWS.
 	AWS = provider("aws")
 	// AzureRM is the provider for creating resources in the Azure clouds.
