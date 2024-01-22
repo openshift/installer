@@ -16,7 +16,6 @@ import (
 	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 
-	_ "github.com/openshift/installer/pkg/destroy/alibabacloud"
 	_ "github.com/openshift/installer/pkg/destroy/aws"
 	_ "github.com/openshift/installer/pkg/destroy/azure"
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"

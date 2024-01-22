@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure"
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/terraform/stages/alibabacloud"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
 	"github.com/openshift/installer/pkg/terraform/stages/baremetal"
@@ -22,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform/stages/ovirt"
 	"github.com/openshift/installer/pkg/terraform/stages/powervs"
 	"github.com/openshift/installer/pkg/terraform/stages/vsphere"
-	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -42,8 +40,6 @@ import (
 // ProviderForPlatform returns the stages to run to provision the infrastructure for the specified platform.
 func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastructure.Provider, error) {
 	switch platform {
-	case alibabacloudtypes.Name:
-		return terraform.InitializeProvider(alibabacloud.PlatformStages), nil
 	case awstypes.Name:
 		if fg.Enabled(configv1.FeatureGateInstallAlternateInfrastructureAWS) {
 			return awsinfra.InitializeProvider(), nil

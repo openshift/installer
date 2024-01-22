@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -82,9 +81,6 @@ type MachinePool struct {
 // MachinePoolPlatform is the platform-specific configuration for a machine
 // pool. Only one of the platforms should be set.
 type MachinePoolPlatform struct {
-	// AlibabaCloud is the configuration used when installing on Alibaba Cloud.
-	AlibabaCloud *alibabacloud.MachinePool `json:"alibabacloud,omitempty"`
-
 	// AWS is the configuration used when installing on AWS.
 	AWS *aws.MachinePool `json:"aws,omitempty"`
 
@@ -126,8 +122,6 @@ func (p *MachinePoolPlatform) Name() string {
 	switch {
 	case p == nil:
 		return ""
-	case p.AlibabaCloud != nil:
-		return alibabacloud.Name
 	case p.AWS != nil:
 		return aws.Name
 	case p.Azure != nil:
