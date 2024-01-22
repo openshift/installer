@@ -30,10 +30,6 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
-const (
-	manifestDir = "cluster-api"
-)
-
 var _ asset.WritableRuntimeAsset = (*Cluster)(nil)
 
 // Cluster generates manifests for target cluster
@@ -77,7 +73,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(manifestDir), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
 		return err
 	}
 
@@ -188,11 +184,11 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		}
 		m.Data = objData
 
-		// If the filename is already a path, do not append the manifestDir.
-		if filepath.Dir(m.Filename) == manifestDir {
+		// If the filename is already a path, do not append the manifest dir.
+		if filepath.Dir(m.Filename) == capiutils.ManifestDir {
 			continue
 		}
-		m.Filename = filepath.Join(manifestDir, m.Filename)
+		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
 	}
 
 	asset.SortManifestFiles(c.FileList)
@@ -215,15 +211,15 @@ func (c *Cluster) RuntimeFiles() []*asset.RuntimeFile {
 
 // Load returns the openshift asset from disk.
 func (c *Cluster) Load(f asset.FileFetcher) (bool, error) {
-	yamlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yaml"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
-	ymlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	ymlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yml files")
 	}
-	jsonFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.json"))
+	jsonFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.json"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.json files")
 	}
