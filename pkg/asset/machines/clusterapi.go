@@ -3,15 +3,20 @@ package machines
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -19,17 +24,56 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
-// GenerateClusterAPI generates manifests for target cluster.
-func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, rhcosImage *rhcos.Image) (*capiutils.GenerateMachinesOutput, error) {
+var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
+
+// ClusterAPI is the asset for CAPI control-plane manifests.
+type ClusterAPI struct {
+	FileList []*asset.RuntimeFile
+}
+
+// Name returns a human friendly name for the operator.
+func (c *ClusterAPI) Name() string {
+	return "Cluster API Machine Manifests"
+}
+
+// Dependencies returns all of the dependencies directly needed by the
+// ClusterAPI machines asset.
+func (c *ClusterAPI) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
+		new(rhcos.Image),
+	}
+}
+
+// Generate generates Cluster API machine manifests.
+func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
+	installConfig := &installconfig.InstallConfig{}
+	clusterID := &installconfig.ClusterID{}
+	rhcosImage := new(rhcos.Image)
+	dependencies.Get(installConfig, clusterID, rhcosImage)
+
+	// If the feature gate is not enabled, do not generate any manifests.
+	if !capiutils.IsEnabled(installConfig) {
+		return nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
+		return err
+	}
+
+	c.FileList = []*asset.RuntimeFile{}
+
 	var err error
-	result := &capiutils.GenerateMachinesOutput{}
 	ic := installConfig.Config
 	pool := *ic.ControlPlane
+	ctx := context.TODO()
 
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -37,7 +81,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 		if len(ic.Platform.AWS.Subnets) > 0 {
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			for id, subnet := range subnetMeta {
 				subnets[subnet.Zone.Name] = id
@@ -64,7 +108,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 			} else {
 				mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				zoneDefaults = true
 			}
@@ -100,9 +144,9 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 			installConfig.Config.Platform.AWS.UserTags,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		result.Manifests = append(result.Manifests, awsMachines...)
+		c.FileList = append(c.FileList, awsMachines...)
 
 		// TODO(vincepri): The following code is almost duplicated from aws.AWSMachines.
 		// Refactor and generalize around a bootstrap pool, with a single machine and
@@ -142,7 +186,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 			)
 		}
 
-		result.Manifests = append(result.Manifests, &asset.RuntimeFile{
+		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapAWSMachine.Name)},
 			Object: bootstrapAWSMachine,
 		})
@@ -167,7 +211,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 			},
 		}
 
-		result.Manifests = append(result.Manifests, &asset.RuntimeFile{
+		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
 			Object: bootstrapMachine,
 		})
@@ -176,5 +220,76 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 	default:
 		// TODO: support other platforms
 	}
-	return result, nil
+
+	// Create the infrastructure manifests.
+	for _, m := range c.FileList {
+		objData, err := yaml.Marshal(m.Object)
+		if err != nil {
+			return errors.Wrapf(err, "failed to marshal Cluster API machine manifest %s", m.Filename)
+		}
+		m.Data = objData
+
+		// If the filename is already a path, do not append the manifest dir.
+		if filepath.Dir(m.Filename) == capiutils.ManifestDir {
+			continue
+		}
+		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
+	}
+	asset.SortManifestFiles(c.FileList)
+	return nil
+}
+
+// Files returns the files generated by the asset.
+func (c *ClusterAPI) Files() []*asset.File {
+	files := []*asset.File{}
+	for _, f := range c.FileList {
+		files = append(files, &f.File)
+	}
+	return files
+}
+
+// RuntimeFiles returns the files generated by the asset.
+func (c *ClusterAPI) RuntimeFiles() []*asset.RuntimeFile {
+	return c.FileList
+}
+
+// Load returns the openshift asset from disk.
+func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
+	yamlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yaml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yaml files")
+	}
+	ymlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yml"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.yml files")
+	}
+	jsonFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.json"))
+	if err != nil {
+		return false, errors.Wrap(err, "failed to load *.json files")
+	}
+	fileList := append(yamlFileList, ymlFileList...) //nolint:gocritic
+	fileList = append(fileList, jsonFileList...)
+
+	for _, file := range fileList {
+		u := &unstructured.Unstructured{}
+		if err := yaml.Unmarshal(file.Data, u); err != nil {
+			return false, errors.Wrap(err, "failed to unmarshal file")
+		}
+		obj, err := clusterapi.Scheme.New(u.GroupVersionKind())
+		if err != nil {
+			return false, errors.Wrap(err, "failed to create object")
+		}
+		if err := clusterapi.Scheme.Convert(u, obj, nil); err != nil {
+			return false, errors.Wrap(err, "failed to convert object")
+		}
+		c.FileList = append(c.FileList, &asset.RuntimeFile{
+			File: asset.File{
+				Filename: file.Filename,
+				Data:     file.Data},
+			Object: obj.(client.Object),
+		})
+	}
+
+	asset.SortManifestFiles(c.FileList)
+	return len(c.FileList) > 0, nil
 }
