@@ -1,6 +1,7 @@
 package image
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 const (
 	agentISOFilename    = "agent.%s.iso"
 	iso9660Level1ExtLen = 3
+	ignitionMaxSize     = 262144
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
@@ -105,19 +107,12 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
-	fi, err := os.Stat(ignitionImgPath)
+	err = a.updateIgnitionInfo(len(ignitionBuff))
 	if err != nil {
 		return err
 	}
 
-	// Verify that the current compressed ignition archive does not exceed the
-	// embed area (usually 256 Kb)
-	if len(ignitionBuff) > int(fi.Size()) {
-		return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fi.Size())
-	}
-
-	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
+	ignitionImg, err := os.OpenFile(filepath.Join(a.tmpPath, "images", "ignition.img"), os.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
@@ -126,6 +121,44 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	_, err = ignitionImg.Write(ignitionBuff)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// updateIgnitionInfo updates igninfo.json with the current size of
+// the ignition buffer.
+func (a *AgentImage) updateIgnitionInfo(ignitionSize int) error {
+	ignInfoPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
+	ignInfoRaw, err := os.ReadFile(ignInfoPath)
+	if err != nil {
+		return err
+	}
+
+	type ignInfo struct {
+		File   string `json:"file"`
+		Length int64  `json:"length"`
+		Offset int64  `json:"offset"`
+	}
+	var info ignInfo
+	err = json.Unmarshal(ignInfoRaw, &info)
+	if err != nil {
+		return err
+	}
+
+	info.Length = int64(ignitionSize)
+	newIgnInfoRaw, err := json.Marshal(info)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(ignInfoPath, newIgnInfoRaw, 0)
+	if err != nil {
+		return err
+	}
+
+	if ignitionSize > ignitionMaxSize {
+		logrus.Warnf("ignition content length (%d) exceeds default embed area size (%d), increasing final image size", ignitionSize, ignitionMaxSize)
 	}
 
 	return nil
