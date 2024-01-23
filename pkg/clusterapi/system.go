@@ -172,7 +172,22 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			),
 		)
 	case gcp.Name:
-		// TODO
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&GCP,
+				[]string{
+					"-v=2",
+					"--metrics-bind-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+				},
+				map[string]string{
+					// TODO: Authentication must be handled in a more complex way detailed here: https://issues.redhat.com/browse/CORS-3218
+					"GOOGLE_APPLICATION_CREDENTIALS": filepath.Join(os.Getenv("HOME"), ".gcp", "osServiceAccount.json"),
+				},
+			),
+		)
 	case ibmcloud.Name:
 		// TODO
 	case nutanix.Name:
