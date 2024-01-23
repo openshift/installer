@@ -655,7 +655,7 @@ func (Server) SwaggerDoc() map[string]string {
 }
 
 var map_Upstream = map[string]string{
-	"":        "Upstream can either be of type SystemResolvConf, or of type Network.\n\n* For an Upstream of type SystemResolvConf, no further fields are necessary:\n  The upstream will be configured to use /etc/resolv.conf.\n* For an Upstream of type Network, a NetworkResolver field needs to be defined\n  with an IP address or IP:port if the upstream listens on a port other than 53.",
+	"":        "Upstream can either be of type SystemResolvConf, or of type Network.\n\n  - For an Upstream of type SystemResolvConf, no further fields are necessary:\n    The upstream will be configured to use /etc/resolv.conf.\n  - For an Upstream of type Network, a NetworkResolver field needs to be defined\n    with an IP address or IP:port if the upstream listens on a port other than 53.",
 	"type":    "Type defines whether this upstream contains an IP/IP:port resolver or the local /etc/resolv.conf. Type accepts 2 possible values: SystemResolvConf or Network.\n\n* When SystemResolvConf is used, the Upstream structure does not require any further fields to be defined:\n  /etc/resolv.conf will be used\n* When Network is used, the Upstream structure must contain at least an Address",
 	"address": "Address must be defined when Type is set to Network. It will be ignored otherwise. It must be a valid ipv4 or ipv6 address.",
 	"port":    "Port may be defined when Type is set to Network. It will be ignored otherwise. Port must be between 65535",
