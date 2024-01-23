@@ -179,13 +179,28 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	}
 }
 
-func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
-	return powervstypes.MachinePool{
+func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.MachinePool {
+	var (
+		defaultMp powervstypes.MachinePool
+		sysTypes  []string
+		err       error
+	)
+
+	defaultMp = powervstypes.MachinePool{
 		MemoryGiB:  32,
 		Processors: intstr.FromString("0.5"),
 		ProcType:   machinev1.PowerVSProcessorTypeShared,
 		SysType:    "s922",
 	}
+
+	sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region)
+	if err == nil {
+		defaultMp.SysType = sysTypes[0]
+	} else {
+		logrus.Warnf("For given region %v, AvailableSysTypes returns %v", ic.PowerVS.Region, err)
+	}
+
+	return defaultMp
 }
 
 func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
@@ -661,7 +676,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case powervstypes.Name:
-			mpool := defaultPowerVSMachinePoolPlatform()
+			mpool := defaultPowerVSMachinePoolPlatform(ic)
 			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.PowerVS)
 			pool.Platform.PowerVS = &mpool
