@@ -82,7 +82,7 @@ resource "azurerm_storage_account" "cluster" {
     }
   }
 
-  dynamic identity {
+  dynamic "identity" {
     for_each = var.azure_keyvault_name != "" ? [1] : []
     content {
       type         = "UserAssigned"

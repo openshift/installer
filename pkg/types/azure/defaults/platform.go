@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"github.com/openshift/installer/pkg/types/azure"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 var (
@@ -21,6 +22,9 @@ func SetPlatformDefaults(p *azure.Platform) {
 	}
 	if p.OutboundType == "" {
 		p.OutboundType = azure.LoadbalancerOutboundType
+	}
+	if p.UserProvisionedDNS == "" {
+		p.UserProvisionedDNS = dnstypes.UserProvisionedDNSDisabled
 	}
 }
 

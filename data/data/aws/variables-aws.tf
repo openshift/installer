@@ -53,12 +53,12 @@ EOF
 }
 
 variable "aws_master_root_volume_type" {
-  type = string
+  type        = string
   description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
-  type = string
+  type        = string
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
@@ -141,48 +141,48 @@ EOF
 }
 
 variable "aws_vpc" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) An existing network (VPC ID) into which the cluster should be installed."
 }
 
 variable "aws_public_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing public subnets into which the cluster should be installed."
 }
 
 variable "aws_private_subnets" {
-  type = list(string)
-  default = null
+  type        = list(string)
+  default     = null
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
 
 variable "aws_internal_zone" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) An existing hosted zone (zone ID) to use for the internal API."
 }
 
 variable "aws_internal_zone_role" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "(optional) A role to assume when using an existing hosted zone from another account."
 }
 
 
 variable "aws_publish_strategy" {
-  type = string
+  type        = string
   description = "The cluster publishing strategy, either Internal or External"
 }
 
 variable "aws_ignition_bucket" {
-  type = string
+  type        = string
   description = "The S3 bucket where the ignition configuration is stored"
 }
 
 variable "aws_bootstrap_stub_ignition" {
-  type = string
+  type        = string
   description = <<EOF
 The stub Ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the s3 bucket
 specified in aws_ignition_bucket.
@@ -225,5 +225,13 @@ a Public Route Table and the default route entry pointing to the carrier gateway
 'wavelength-zone' is associated on that route table.
 
 Example: `{ "us-east-1-nyc-1a"=local-zone, "us-east-1-wl1-nyc-wlz-1"=wavelength-zone }`
+EOF
+}
+
+variable "aws_user_provisioned_dns" {
+  type        = bool
+  default     = false
+  description = <<EOF
+When true the user has selected to configure their own dns solution, and no dns records will be created.
 EOF
 }

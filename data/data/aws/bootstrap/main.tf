@@ -126,8 +126,8 @@ EOF
 
 resource "aws_iam_role_policy" "bootstrap" {
   count = var.aws_master_iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-bootstrap-policy"
-  role = aws_iam_role.bootstrap[0].id
+  name  = "${var.cluster_id}-bootstrap-policy"
+  role  = aws_iam_role.bootstrap[0].id
 
   policy = <<EOF
 {

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -123,6 +124,10 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && p.Network == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "must provide a VPC network when supplying subnets"))
+	}
+
+	if !dnstypes.ValidUserProvisionedDNSType(p.UserProvisionedDNS) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "valid values are Enabled or Disabled"))
 	}
 
 	// check if configured userLabels are valid.

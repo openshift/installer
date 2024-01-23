@@ -98,6 +98,6 @@ EOF
 }
 
 variable "iam_role_name" {
-  type = string
+  type        = string
   description = "The name of the existing role to use for the instance profile"
 }

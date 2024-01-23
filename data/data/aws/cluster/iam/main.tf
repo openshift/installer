@@ -55,8 +55,8 @@ resource "aws_iam_role_policy" "worker_policy" {
   // Please see: docs/dev/aws/iam_permissions.md
 
   count = var.worker_iam_role_name == "" ? 1 : 0
-  name = "${var.cluster_id}-worker-policy"
-  role = aws_iam_role.worker_role[0].id
+  name  = "${var.cluster_id}-worker-policy"
+  role  = aws_iam_role.worker_role[0].id
 
   policy = <<EOF
 {

@@ -46,7 +46,7 @@ import (
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/openshift/installer/pkg/types/gcp"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
@@ -829,12 +829,9 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 	if err := assetStore.Fetch(installConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
 	}
-	switch installConfig.Config.Platform.Name() { //nolint:gocritic
-	case gcp.Name:
-		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
-			return nil
-		}
-	default:
+
+	userProvisionedDNS := installConfig.Config.Platform.UserProvisionedDNS()
+	if userProvisionedDNS != dnstypes.UserProvisionedDNSEnabled {
 		return nil
 	}
 

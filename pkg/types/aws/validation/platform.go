@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 )
 
 // tagRegex is used to check that the keys and values of a tag contain only valid characters.
@@ -49,6 +50,10 @@ func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.
 			errMsg := "when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified"
 			allErrs = append(allErrs, field.Forbidden(fldPath.Child("credentialsMode"), errMsg))
 		}
+	}
+
+	if !dnstypes.ValidUserProvisionedDNSType(p.UserProvisionedDNS) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "valid values are Enabled or Disabled"))
 	}
 
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)

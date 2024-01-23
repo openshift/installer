@@ -24,7 +24,7 @@ var PlatformStages = []terraform.Stage{
 		"gcp",
 		"cluster",
 		[]providers.Provider{providers.Google},
-		stages.WithCustomExtractLBConfig(extractGCPLBConfig),
+		stages.WithCustomExtractLBConfig(stages.ExtractLBConfig),
 	),
 	stages.NewStage(
 		"gcp",

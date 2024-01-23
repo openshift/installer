@@ -59,6 +59,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	dnstypes "github.com/openshift/installer/pkg/types/dns"
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -331,6 +332,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Proxy:                     installConfig.Config.Proxy,
 			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
 			MasterSecurityGroups:      securityGroups,
+			UserProvisionedDNS:        installConfig.Config.AWS.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -427,6 +429,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				KeyVault:                        managedKeys.KeyVault,
 				UserAssignedIdentityKey:         managedKeys.UserAssignedIdentityKey,
 				LBPrivate:                       lbPrivate,
+				UserProvisionedDNS:              installConfig.Config.Azure.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled,
 			},
 		)
 		if err != nil {
@@ -534,7 +537,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
-				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == dnstypes.UserProvisionedDNSEnabled,
 			},
 		)
 		if err != nil {

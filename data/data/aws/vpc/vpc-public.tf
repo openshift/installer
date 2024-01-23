@@ -1,9 +1,9 @@
 locals {
-  has_wavelength_zones = contains(values(var.edge_zones_type), "wavelength-zone")
+  has_wavelength_zones = contains(values(var.aws_edge_zones_type), "wavelength-zone")
 }
 
 resource "aws_internet_gateway" "igw" {
-  count = var.vpc == null ? 1 : 0
+  count = var.aws_vpc == null ? 1 : 0
 
   vpc_id = data.aws_vpc.cluster_vpc.id
 
@@ -11,12 +11,12 @@ resource "aws_internet_gateway" "igw" {
     {
       "Name" = "${var.cluster_id}-igw"
     },
-    var.tags,
+    local.tags,
   )
 }
 
 resource "aws_route_table" "default" {
-  count = var.vpc == null ? 1 : 0
+  count = var.aws_vpc == null ? 1 : 0
 
   vpc_id = data.aws_vpc.cluster_vpc.id
 
@@ -24,19 +24,19 @@ resource "aws_route_table" "default" {
     {
       "Name" = "${var.cluster_id}-public"
     },
-    var.tags,
+    local.tags,
   )
 }
 
 resource "aws_main_route_table_association" "main_vpc_routes" {
-  count = var.vpc == null ? 1 : 0
+  count = var.aws_vpc == null ? 1 : 0
 
   vpc_id         = data.aws_vpc.cluster_vpc.id
   route_table_id = aws_route_table.default[0].id
 }
 
 resource "aws_route" "igw_route" {
-  count = var.vpc == null ? 1 : 0
+  count = var.aws_vpc == null ? 1 : 0
 
   destination_cidr_block = "0.0.0.0/0"
   route_table_id         = aws_route_table.default[0].id
@@ -48,58 +48,58 @@ resource "aws_route" "igw_route" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  count = var.public_subnets == null ? length(var.availability_zones) : 0
+  count = var.aws_public_subnets == null ? length(local.availability_zones) : 0
 
   vpc_id            = data.aws_vpc.cluster_vpc.id
-  cidr_block        = cidrsubnet(local.new_public_cidr_range, ceil(log(length(var.availability_zones), 2)), count.index)
-  availability_zone = var.availability_zones[count.index]
+  cidr_block        = cidrsubnet(local.new_public_cidr_range, ceil(log(length(local.availability_zones), 2)), count.index)
+  availability_zone = local.availability_zones[count.index]
 
   tags = merge(
     {
-      "Name" = "${var.cluster_id}-public-${var.availability_zones[count.index]}"
+      "Name" = "${var.cluster_id}-public-${local.availability_zones[count.index]}"
     },
-    var.tags,
+    local.tags,
   )
 }
 
 resource "aws_subnet" "edge_public_subnet" {
-  count = var.edge_zones == null ? 0 : length(var.edge_zones)
+  count = local.edge_zones == null ? 0 : length(local.edge_zones)
 
   vpc_id            = data.aws_vpc.cluster_vpc.id
-  cidr_block        = cidrsubnet(local.new_edge_public_cidr_range, ceil(log(length(var.edge_zones), 2)), count.index)
-  availability_zone = var.edge_zones[count.index]
+  cidr_block        = cidrsubnet(local.new_edge_public_cidr_range, ceil(log(length(local.edge_zones), 2)), count.index)
+  availability_zone = local.edge_zones[count.index]
 
   tags = merge(
     {
-      "Name" = "${var.cluster_id}-public-${var.edge_zones[count.index]}"
+      "Name" = "${var.cluster_id}-public-${local.edge_zones[count.index]}"
     },
-    var.tags,
+    local.tags,
   )
 }
 
 resource "aws_route_table_association" "route_net" {
-  count = var.public_subnets == null ? length(var.availability_zones) : 0
+  count = var.aws_public_subnets == null ? length(local.availability_zones) : 0
 
   route_table_id = aws_route_table.default[0].id
   subnet_id      = aws_subnet.public_subnet[count.index].id
 }
 
 resource "aws_route_table_association" "edge_public_routing" {
-  count = var.edge_zones == null ? 0 : length(var.edge_zones)
+  count = local.edge_zones == null ? 0 : length(local.edge_zones)
 
-  route_table_id = lookup(var.edge_zones_type, aws_subnet.edge_public_subnet[count.index].availability_zone, "") == "wavelength-zone" ? aws_route_table.carrier[0].id : aws_route_table.default[0].id
+  route_table_id = lookup(var.aws_edge_zones_type, aws_subnet.edge_public_subnet[count.index].availability_zone, "") == "wavelength-zone" ? aws_route_table.carrier[0].id : aws_route_table.default[0].id
   subnet_id      = aws_subnet.edge_public_subnet[count.index].id
 }
 
 resource "aws_eip" "nat_eip" {
-  count = var.public_subnets == null ? length(var.availability_zones) : 0
+  count = var.aws_public_subnets == null ? length(local.availability_zones) : 0
   vpc   = true
 
   tags = merge(
     {
-      "Name" = "${var.cluster_id}-eip-${var.availability_zones[count.index]}"
+      "Name" = "${var.cluster_id}-eip-${local.availability_zones[count.index]}"
     },
-    var.tags,
+    local.tags,
   )
 
   # Terraform does not declare an explicit dependency towards the internet gateway.
@@ -109,16 +109,16 @@ resource "aws_eip" "nat_eip" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  count = var.public_subnets == null ? length(var.availability_zones) : 0
+  count = var.aws_public_subnets == null ? length(local.availability_zones) : 0
 
   allocation_id = aws_eip.nat_eip[count.index].id
   subnet_id     = aws_subnet.public_subnet[count.index].id
 
   tags = merge(
     {
-      "Name" = "${var.cluster_id}-nat-${var.availability_zones[count.index]}"
+      "Name" = "${var.cluster_id}-nat-${local.availability_zones[count.index]}"
     },
-    var.tags,
+    local.tags,
   )
 
   # https://issues.redhat.com/browse/OCPBUGS-891
@@ -136,7 +136,7 @@ resource "aws_ec2_carrier_gateway" "carrier" {
     {
       "Name" = "${var.cluster_id}-cagw"
     },
-    var.tags,
+    local.tags,
   )
 }
 
@@ -149,7 +149,7 @@ resource "aws_route_table" "carrier" {
     {
       "Name" = "${var.cluster_id}-public-carrier"
     },
-    var.tags,
+    local.tags,
   )
 }
 
