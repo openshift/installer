@@ -58,6 +58,8 @@ module "master" {
 }
 
 module "dns" {
+  count = var.azure_user_provisioned_dns ? 0 : 1
+
   source                          = "./dns"
   cluster_domain                  = var.cluster_domain
   cluster_id                      = var.cluster_id

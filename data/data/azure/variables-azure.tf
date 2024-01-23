@@ -302,3 +302,12 @@ variable "azure_user_assigned_identity_key" {
   description = "Defines the user identity key used for the encryption of storage account."
   default     = ""
 }
+
+variable "azure_user_provisioned_dns" {
+  type    = bool
+  default = false
+
+  description = <<EOF
+When true the user has selected to configure their own dns solution, and no dns records will be created.
+EOF
+}

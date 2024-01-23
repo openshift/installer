@@ -33,7 +33,7 @@ resource "google_compute_forwarding_rule" "api_internal" {
   name        = "${var.cluster_id}-api-internal"
   description = local.description
 
-  ip_address      = var.cluster_ip
+  ip_address      = var.cluster_internal_ip
   backend_service = google_compute_region_backend_service.api_internal.self_link
   ports           = ["6443", "22623"]
   subnetwork      = var.master_subnet

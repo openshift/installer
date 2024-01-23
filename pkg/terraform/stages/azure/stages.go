@@ -13,6 +13,7 @@ var PlatformStages = []terraform.Stage{
 		typesazure.Name,
 		"vnet",
 		[]providers.Provider{providers.AzureRM},
+		stages.WithCustomExtractLBConfig(stages.ExtractLBConfig),
 	),
 	stages.NewStage(
 		typesazure.Name,
