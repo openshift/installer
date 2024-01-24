@@ -183,7 +183,19 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 
 		if streamArch.Images.PowerVS != nil {
-			vpcRegion := powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			var (
+				vpcRegion string
+				err       error
+			)
+			if config.Platform.PowerVS.VPCRegion != "" {
+				vpcRegion = config.Platform.PowerVS.VPCRegion
+			} else {
+				vpcRegion = powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			}
+			vpcRegion, err = powervs.COSRegionForVPCRegion(vpcRegion)
+			if err != nil {
+				return "", fmt.Errorf("%s: No Power COS region found", st.FormatPrefix(archName))
+			}
 			img := streamArch.Images.PowerVS.Regions[vpcRegion]
 			logrus.Debug("Power VS using image ", img.Object)
 			return fmt.Sprintf("%s/%s", img.Bucket, img.Object), nil
