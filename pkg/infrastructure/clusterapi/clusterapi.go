@@ -23,8 +23,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/types"
@@ -52,18 +54,22 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 //
 //nolint:gocyclo
 func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+	manifestsAsset := &manifests.Manifests{}
 	capiManifestsAsset := &capimanifests.Cluster{}
 	capiMachinesAsset := &machines.ClusterAPI{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	parents.Get(
+		manifestsAsset,
 		capiManifestsAsset,
 		clusterKubeconfigAsset,
 		clusterID,
 		installConfig,
+		rhcosImage,
 		bootstrapIgnAsset,
 		masterIgnAsset,
 		capiMachinesAsset,
@@ -96,8 +102,10 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
-			InfraID:       clusterID.InfraID,
-			InstallConfig: installConfig,
+			InfraID:        clusterID.InfraID,
+			InstallConfig:  installConfig,
+			RhcosImage:     rhcosImage,
+			ManifestsAsset: manifestsAsset,
 		}
 
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {
