@@ -21,7 +21,6 @@ import (
 const (
 	agentISOFilename    = "agent.%s.iso"
 	iso9660Level1ExtLen = 3
-	ignitionMaxSize     = 262144
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
@@ -107,12 +106,22 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	err = a.updateIgnitionInfo(len(ignitionBuff))
+	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
+	fi, err := os.Stat(ignitionImgPath)
 	if err != nil {
 		return err
 	}
 
-	ignitionImg, err := os.OpenFile(filepath.Join(a.tmpPath, "images", "ignition.img"), os.O_WRONLY, 0)
+	// Check if current compressed ignition archive is greater than the embed area
+	if len(ignitionBuff) > int(fi.Size()) {
+		err = a.updateIgnitionInfo(len(ignitionBuff))
+		if err != nil {
+			return err
+		}
+		logrus.Debugf("ignition content length (%d) exceeds default embed area size (%d), increasing final image size", len(ignitionBuff), fi.Size())
+	}
+
+	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
@@ -132,6 +141,10 @@ func (a *AgentImage) updateIgnitionInfo(ignitionSize int) error {
 	ignInfoPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
 	ignInfoRaw, err := os.ReadFile(ignInfoPath)
 	if err != nil {
+		// Skip the update if the file does not exist
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -155,10 +168,6 @@ func (a *AgentImage) updateIgnitionInfo(ignitionSize int) error {
 	err = os.WriteFile(ignInfoPath, newIgnInfoRaw, 0)
 	if err != nil {
 		return err
-	}
-
-	if ignitionSize > ignitionMaxSize {
-		logrus.Warnf("ignition content length (%d) exceeds default embed area size (%d), increasing final image size", ignitionSize, ignitionMaxSize)
 	}
 
 	return nil

@@ -1,6 +1,6 @@
 # Verify that storing large additional manifests is supported.
 
-exec openshift-install agent create image --dir $WORK
+exec openshift-install agent create image --dir $WORK --log-level=debug
 
 exists $WORK/agent.x86_64.iso
 stderr 'ignition content length.*exceeds default embed area size.*increasing final image size'
