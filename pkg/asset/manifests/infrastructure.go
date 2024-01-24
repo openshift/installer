@@ -18,6 +18,7 @@ import (
 	nutanixinfra "github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -148,6 +149,12 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				resourceTags = append(resourceTags, configv1.AzureResourceTag{Key: k, Value: v})
 			}
 			config.Status.PlatformStatus.Azure.ResourceTags = resourceTags
+		}
+	case alibabacloud.Name:
+		config.Spec.PlatformSpec.Type = configv1.AlibabaCloudPlatformType
+		config.Status.PlatformStatus.AlibabaCloud = &configv1.AlibabaCloudPlatformStatus{
+			Region:          installConfig.Config.Platform.AlibabaCloud.Region,
+			ResourceGroupID: installConfig.Config.Platform.AlibabaCloud.ResourceGroupID,
 		}
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType

@@ -31,6 +31,7 @@ import (
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -46,6 +47,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -333,6 +335,50 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 
 		switch ic.Platform.Name() {
+		case alibabacloudtypes.Name:
+			client, err := installConfig.AlibabaCloud.Client()
+			if err != nil {
+				return err
+			}
+			vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
+			if err != nil {
+				return errors.Wrap(err, "failed to get VSwitchs map")
+			}
+
+			mpool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
+			mpool.ImageID = string(*rhcosImage)
+			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.AlibabaCloud)
+			if len(mpool.Zones) == 0 {
+				if len(vswitchMaps) > 0 {
+					for zone := range vswitchMaps {
+						mpool.Zones = append(mpool.Zones, zone)
+					}
+				} else {
+					azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
+					if err != nil || len(azs) == 0 {
+						return errors.Wrap(err, "failed to fetch availability zones")
+					}
+					mpool.Zones = azs
+				}
+			}
+
+			pool.Platform.AlibabaCloud = &mpool
+			sets, err := alibabacloud.MachineSets(
+				clusterID.InfraID,
+				ic,
+				&pool,
+				"worker",
+				workerUserDataSecretName,
+				installConfig.Config.Platform.AlibabaCloud.Tags,
+				vswitchMaps,
+			)
+			if err != nil {
+				return errors.Wrap(err, "failed to create worker machine objects")
+			}
+			for _, set := range sets {
+				machineSets = append(machineSets, set)
+			}
 		case awstypes.Name:
 			subnets := icaws.Subnets{}
 			zones := icaws.Zones{}
@@ -771,6 +817,7 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	)
 	machinev1.Install(scheme)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
+		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
 	)

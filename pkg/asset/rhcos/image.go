@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -176,6 +177,12 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return u.String(), nil
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
+	case alibabacloud.Name:
+		osimage, err := st.GetAliyunImage(archName, config.Platform.AlibabaCloud.Region)
+		if err != nil {
+			return "", err
+		}
+		return osimage, nil
 	case powervs.Name:
 		// Check for image URL override
 		if config.Platform.PowerVS.ClusterOSImage != "" {

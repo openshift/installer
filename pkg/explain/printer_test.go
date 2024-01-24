@@ -55,7 +55,7 @@ func Test_PrintFields(t *testing.T) {
       CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied. 
  If this field is set, then the installer will not attempt to query the cloud permissions before attempting installation. If the field is not set or empty, then the installer will perform its normal verification that the credentials provided are sufficient to perform an installation. 
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
- For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
+ For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
     featureGates <[]string>
       FeatureGates enables a set of custom feature gates. May only be used in conjunction with FeatureSet "CustomNoUpgrade". Features may be enabled or disabled by providing a true or false value for the feature gate. E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
@@ -109,6 +109,9 @@ func Test_PrintFields(t *testing.T) {
 	}, {
 		path: []string{"platform"},
 		desc: `FIELDS:
+    alibabacloud <object>
+      AlibabaCloud is the configuration used when installing on Alibaba Cloud.
+
     aws <object>
       AWS is the configuration used when installing on AWS.
 

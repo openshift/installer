@@ -44,6 +44,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcospkg "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
+	alibabacloudtfvars "github.com/openshift/installer/pkg/tfvars/alibabacloud"
 	awstfvars "github.com/openshift/installer/pkg/tfvars/aws"
 	azuretfvars "github.com/openshift/installer/pkg/tfvars/azure"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
@@ -56,6 +57,7 @@ import (
 	powervstfvars "github.com/openshift/installer/pkg/tfvars/powervs"
 	vspheretfvars "github.com/openshift/installer/pkg/tfvars/vsphere"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -1101,6 +1103,76 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 
+	case alibabacloud.Name:
+		client, err := installConfig.AlibabaCloud.Client()
+		if err != nil {
+			return errors.Wrapf(err, "failed to create new client use region %s", installConfig.Config.Platform.AlibabaCloud.Region)
+		}
+		bucket := fmt.Sprintf("%s-bootstrap", clusterID.InfraID)
+		object := "bootstrap.ign"
+		signURL, err := client.GetOSSObjectSignURL(bucket, object)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get a presigned URL for OSS object %s", object)
+		}
+
+		auth := alibabacloudtfvars.Auth{
+			AccessKey: client.AccessKeyID,
+			SecretKey: client.AccessKeySecret,
+		}
+
+		masters, err := mastersAsset.Machines()
+		if err != nil {
+			return errors.Wrapf(err, "failed to get master machine info")
+		}
+		masterConfigs := make([]*machinev1.AlibabaCloudMachineProviderConfig, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*machinev1.AlibabaCloudMachineProviderConfig)
+		}
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return errors.Wrapf(err, "failed to get worker machine info")
+		}
+		workerConfigs := make([]*machinev1.AlibabaCloudMachineProviderConfig, len(workers))
+		for i, w := range workers {
+			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*machinev1.AlibabaCloudMachineProviderConfig)
+		}
+
+		natGatewayZones, err := client.ListEnhanhcedNatGatewayAvailableZones()
+		if err != nil {
+			return errors.Wrapf(err, "failed to list available zones for NAT gateway")
+		}
+		natGatewayZoneID := natGatewayZones.Zones[0].ZoneId
+
+		vswitchIDs := []string{}
+		if len(installConfig.Config.AlibabaCloud.VSwitchIDs) > 0 {
+			vswitchIDs = installConfig.Config.AlibabaCloud.VSwitchIDs
+		}
+		data, err := alibabacloudtfvars.TFVars(
+			alibabacloudtfvars.TFVarsSources{
+				Auth:                  auth,
+				VpcID:                 installConfig.Config.AlibabaCloud.VpcID,
+				VSwitchIDs:            vswitchIDs,
+				PrivateZoneID:         installConfig.Config.AlibabaCloud.PrivateZoneID,
+				ResourceGroupID:       installConfig.Config.AlibabaCloud.ResourceGroupID,
+				BaseDomain:            installConfig.Config.BaseDomain,
+				NatGatewayZoneID:      natGatewayZoneID,
+				MasterConfigs:         masterConfigs,
+				WorkerConfigs:         workerConfigs,
+				IgnitionBucket:        bucket,
+				IgnitionPresignedURL:  signURL,
+				AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
+				Architecture:          installConfig.Config.ControlPlane.Architecture,
+				Publish:               installConfig.Config.Publish,
+				Proxy:                 installConfig.Config.Proxy,
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
+		}
+		t.FileList = append(t.FileList, &asset.File{
+			Filename: TfPlatformVarsFileName,
+			Data:     data,
+		})
 	case nutanix.Name:
 		if rhcosImage == nil {
 			return errors.New("unable to retrieve rhcos image")

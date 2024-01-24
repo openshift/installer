@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -44,6 +45,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -160,6 +162,38 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	machines := []machinev1beta1.Machine{}
 	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	switch ic.Platform.Name() {
+	case alibabacloudtypes.Name:
+		client, err := installConfig.AlibabaCloud.Client()
+		if err != nil {
+			return err
+		}
+		vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
+		if err != nil {
+			return errors.Wrap(err, "failed to get VSwitchs map")
+		}
+		mpool := alibabacloudtypes.DefaultMasterMachinePoolPlatform()
+		mpool.ImageID = string(*rhcosImage)
+		mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.AlibabaCloud)
+		if len(mpool.Zones) == 0 {
+			if len(vswitchMaps) > 0 {
+				for zone := range vswitchMaps {
+					mpool.Zones = append(mpool.Zones, zone)
+				}
+			} else {
+				azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
+				if err != nil || len(azs) == 0 {
+					return errors.Wrap(err, "failed to fetch availability zones")
+				}
+				mpool.Zones = azs
+			}
+		}
+
+		pool.Platform.AlibabaCloud = &mpool
+		machines, err = alibabacloud.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName, installConfig.Config.Platform.AlibabaCloud.Tags, vswitchMaps)
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
 	case awstypes.Name:
 		subnets := map[string]string{}
 		if len(ic.Platform.AWS.Subnets) > 0 {
@@ -674,6 +708,7 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		&machinev1beta1.GCPMachineProviderSpec{},
 	)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
+		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
 		&machinev1.ControlPlaneMachineSet{},
