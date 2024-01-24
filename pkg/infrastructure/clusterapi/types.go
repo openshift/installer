@@ -6,6 +6,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 )
 
 // Provider is the base interface that cloud platforms
@@ -26,8 +27,10 @@ type PreProvider interface {
 
 // PreProvisionInput collects the args passed to the PreProvision call.
 type PreProvisionInput struct {
-	InfraID       string
-	InstallConfig *installconfig.InstallConfig
+	InfraID            string
+	InstallConfig      *installconfig.InstallConfig
+	RhcosImage         *rhcos.Image
+	MastersSchedulable bool
 }
 
 // IgnitionProvider handles preconditions for bootstrap ignition and

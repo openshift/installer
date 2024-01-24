@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
@@ -23,8 +24,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure"
 	"github.com/openshift/installer/pkg/types"
@@ -52,18 +55,22 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 //
 //nolint:gocyclo
 func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+	manifestsAsset := &manifests.Manifests{}
 	capiManifestsAsset := &capimanifests.Cluster{}
 	capiMachinesAsset := &machines.ClusterAPI{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	parents.Get(
+		manifestsAsset,
 		capiManifestsAsset,
 		clusterKubeconfigAsset,
 		clusterID,
 		installConfig,
+		rhcosImage,
 		bootstrapIgnAsset,
 		masterIgnAsset,
 		capiMachinesAsset,
@@ -95,9 +102,16 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	}()
 
 	if p, ok := i.impl.(PreProvider); ok {
+		mastersSchedulable, err := areMastersSchedulable(manifestsAsset)
+		if err != nil {
+			return fileList, fmt.Errorf("unable to determine whether Control plane nodes are schedulable: %w", err)
+		}
+
 		preProvisionInput := PreProvisionInput{
-			InfraID:       clusterID.InfraID,
-			InstallConfig: installConfig,
+			InfraID:            clusterID.InfraID,
+			InstallConfig:      installConfig,
+			RhcosImage:         rhcosImage,
+			MastersSchedulable: mastersSchedulable,
 		}
 
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {
@@ -349,4 +363,17 @@ func IgnitionSecret(ign []byte, infraID, role string) *corev1.Secret {
 			"value":  ign,
 		},
 	}
+}
+
+func areMastersSchedulable(manifestsAsset *manifests.Manifests) (bool, error) {
+	for _, f := range manifestsAsset.Files() {
+		if f.Filename == manifests.SchedulerCfgFilename {
+			schedulerConfig := configv1.Scheduler{}
+			if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
+				return false, fmt.Errorf("unable to decode the scheduler manifest: %w", err)
+			}
+			return schedulerConfig.Spec.MastersSchedulable, nil
+		}
+	}
+	return false, nil
 }
