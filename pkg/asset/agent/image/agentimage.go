@@ -35,7 +35,7 @@ type AgentImage struct {
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
 
-// IgnInfo is a struct to store details of the igninfo
+// IgnInfo is a struct to store details of the igninfo.
 type IgnInfo struct {
 	File   string `json:"file"`
 	Length int64  `json:"length"`
@@ -103,9 +103,8 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-// Fetching the ignition details from igninfo.json file
+// Fetching the ignition details from igninfo.json file.
 func (a *AgentImage) fetchIgnitionInfo(ignInfoJSONPath string) error {
-
 	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
 	if err != nil {
 		logrus.Warnf("Failed to read json %s", ignInfoJSONPath)
@@ -148,7 +147,6 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		ignImagePath = filepath.Join(a.tmpPath, ignInfo.File)
 		ignStartOffset = ignInfo.Offset
 		ignMaxLength = ignInfo.Length
-
 	} else {
 		// Defaulting the ignition image path if no info file is found
 		ignImagePath = filepath.Join(a.tmpPath, "images", "ignition.img")
@@ -179,7 +177,7 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	defer ignitionImg.Close()
 
 	// Adjusting the ignition image file to the offset of ignition content (in case of cdboot.img)
-	_, err = ignitionImg.Seek(ignStartOffset, 0)
+	_, err = ignitionImg.Seek(ignStartOffset, io.SeekStart)
 	if err != nil {
 		return err
 	}
