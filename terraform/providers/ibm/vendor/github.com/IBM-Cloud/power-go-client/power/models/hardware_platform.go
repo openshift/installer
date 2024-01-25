@@ -100,6 +100,11 @@ func (m *HardwarePlatform) contextValidateHostsResources(ctx context.Context, fo
 	for i := 0; i < len(m.HostsResources); i++ {
 
 		if m.HostsResources[i] != nil {
+
+			if swag.IsZero(m.HostsResources[i]) { // not required
+				return nil
+			}
+
 			if err := m.HostsResources[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("hostsResources" + "." + strconv.Itoa(i))

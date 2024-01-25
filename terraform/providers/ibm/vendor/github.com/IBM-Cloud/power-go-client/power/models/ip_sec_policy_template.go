@@ -133,6 +133,7 @@ func (m *IPSecPolicyTemplate) ContextValidate(ctx context.Context, formats strfm
 func (m *IPSecPolicyTemplate) contextValidateKeyLifetime(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.KeyLifetime != nil {
+
 		if err := m.KeyLifetime.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("keyLifetime")

@@ -29,8 +29,32 @@ func (o *ServiceBrokerSwaggerspecReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewServiceBrokerSwaggerspecBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 401:
+		result := NewServiceBrokerSwaggerspecUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceBrokerSwaggerspecForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceBrokerSwaggerspecNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /v1/swagger.json] serviceBroker.swaggerspec", response, response.Code())
 	}
 }
 
@@ -73,6 +97,11 @@ func (o *ServiceBrokerSwaggerspecOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the service broker swaggerspec o k response
+func (o *ServiceBrokerSwaggerspecOK) Code() int {
+	return 200
+}
+
 func (o *ServiceBrokerSwaggerspecOK) Error() string {
 	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecOK  %+v", 200, o.Payload)
 }
@@ -89,6 +118,278 @@ func (o *ServiceBrokerSwaggerspecOK) readResponse(response runtime.ClientRespons
 
 	// response payload
 	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerSwaggerspecBadRequest creates a ServiceBrokerSwaggerspecBadRequest with default headers values
+func NewServiceBrokerSwaggerspecBadRequest() *ServiceBrokerSwaggerspecBadRequest {
+	return &ServiceBrokerSwaggerspecBadRequest{}
+}
+
+/*
+ServiceBrokerSwaggerspecBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type ServiceBrokerSwaggerspecBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker swaggerspec bad request response has a 2xx status code
+func (o *ServiceBrokerSwaggerspecBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker swaggerspec bad request response has a 3xx status code
+func (o *ServiceBrokerSwaggerspecBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker swaggerspec bad request response has a 4xx status code
+func (o *ServiceBrokerSwaggerspecBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker swaggerspec bad request response has a 5xx status code
+func (o *ServiceBrokerSwaggerspecBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker swaggerspec bad request response a status code equal to that given
+func (o *ServiceBrokerSwaggerspecBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service broker swaggerspec bad request response
+func (o *ServiceBrokerSwaggerspecBadRequest) Code() int {
+	return 400
+}
+
+func (o *ServiceBrokerSwaggerspecBadRequest) Error() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecBadRequest) String() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerSwaggerspecBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerSwaggerspecUnauthorized creates a ServiceBrokerSwaggerspecUnauthorized with default headers values
+func NewServiceBrokerSwaggerspecUnauthorized() *ServiceBrokerSwaggerspecUnauthorized {
+	return &ServiceBrokerSwaggerspecUnauthorized{}
+}
+
+/*
+ServiceBrokerSwaggerspecUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceBrokerSwaggerspecUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker swaggerspec unauthorized response has a 2xx status code
+func (o *ServiceBrokerSwaggerspecUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker swaggerspec unauthorized response has a 3xx status code
+func (o *ServiceBrokerSwaggerspecUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker swaggerspec unauthorized response has a 4xx status code
+func (o *ServiceBrokerSwaggerspecUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker swaggerspec unauthorized response has a 5xx status code
+func (o *ServiceBrokerSwaggerspecUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker swaggerspec unauthorized response a status code equal to that given
+func (o *ServiceBrokerSwaggerspecUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service broker swaggerspec unauthorized response
+func (o *ServiceBrokerSwaggerspecUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceBrokerSwaggerspecUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerSwaggerspecUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerSwaggerspecForbidden creates a ServiceBrokerSwaggerspecForbidden with default headers values
+func NewServiceBrokerSwaggerspecForbidden() *ServiceBrokerSwaggerspecForbidden {
+	return &ServiceBrokerSwaggerspecForbidden{}
+}
+
+/*
+ServiceBrokerSwaggerspecForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceBrokerSwaggerspecForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker swaggerspec forbidden response has a 2xx status code
+func (o *ServiceBrokerSwaggerspecForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker swaggerspec forbidden response has a 3xx status code
+func (o *ServiceBrokerSwaggerspecForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker swaggerspec forbidden response has a 4xx status code
+func (o *ServiceBrokerSwaggerspecForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker swaggerspec forbidden response has a 5xx status code
+func (o *ServiceBrokerSwaggerspecForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker swaggerspec forbidden response a status code equal to that given
+func (o *ServiceBrokerSwaggerspecForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service broker swaggerspec forbidden response
+func (o *ServiceBrokerSwaggerspecForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceBrokerSwaggerspecForbidden) Error() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecForbidden) String() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerSwaggerspecForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerSwaggerspecNotFound creates a ServiceBrokerSwaggerspecNotFound with default headers values
+func NewServiceBrokerSwaggerspecNotFound() *ServiceBrokerSwaggerspecNotFound {
+	return &ServiceBrokerSwaggerspecNotFound{}
+}
+
+/*
+ServiceBrokerSwaggerspecNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceBrokerSwaggerspecNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker swaggerspec not found response has a 2xx status code
+func (o *ServiceBrokerSwaggerspecNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker swaggerspec not found response has a 3xx status code
+func (o *ServiceBrokerSwaggerspecNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker swaggerspec not found response has a 4xx status code
+func (o *ServiceBrokerSwaggerspecNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker swaggerspec not found response has a 5xx status code
+func (o *ServiceBrokerSwaggerspecNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker swaggerspec not found response a status code equal to that given
+func (o *ServiceBrokerSwaggerspecNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service broker swaggerspec not found response
+func (o *ServiceBrokerSwaggerspecNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceBrokerSwaggerspecNotFound) Error() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecNotFound) String() string {
+	return fmt.Sprintf("[GET /v1/swagger.json][%d] serviceBrokerSwaggerspecNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerSwaggerspecNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerSwaggerspecNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

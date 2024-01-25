@@ -36,7 +36,7 @@ func (o *InternalV1TransitgatewayGetReader) ReadResponse(response runtime.Client
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /internal/v1/transit-gateway/{powervs_service_crn}] internal.v1.transitgateway.get", response, response.Code())
 	}
 }
 
@@ -77,6 +77,11 @@ func (o *InternalV1TransitgatewayGetOK) IsServerError() bool {
 // IsCode returns true when this internal v1 transitgateway get o k response a status code equal to that given
 func (o *InternalV1TransitgatewayGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the internal v1 transitgateway get o k response
+func (o *InternalV1TransitgatewayGetOK) Code() int {
+	return 200
 }
 
 func (o *InternalV1TransitgatewayGetOK) Error() string {
@@ -140,6 +145,11 @@ func (o *InternalV1TransitgatewayGetForbidden) IsServerError() bool {
 // IsCode returns true when this internal v1 transitgateway get forbidden response a status code equal to that given
 func (o *InternalV1TransitgatewayGetForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the internal v1 transitgateway get forbidden response
+func (o *InternalV1TransitgatewayGetForbidden) Code() int {
+	return 403
 }
 
 func (o *InternalV1TransitgatewayGetForbidden) Error() string {

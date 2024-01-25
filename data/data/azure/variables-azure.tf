@@ -278,3 +278,33 @@ variable "azure_master_virtualized_trusted_platform_module" {
   description = "Defines whether the instance should have vTPM enabled."
   default     = ""
 }
+
+variable "azure_keyvault_resource_group" {
+  type        = string
+  description = "Defines the resource group of the key vault used for storage account encryption."
+  default     = ""
+}
+
+variable "azure_keyvault_name" {
+  type        = string
+  description = "Defines the name of the key vault used for storage account encryption."
+  default     = ""
+}
+
+variable "azure_keyvault_key_name" {
+  type        = string
+  description = "Defines the key in the key vault used for storage account encryption."
+  default     = ""
+}
+
+variable "azure_user_assigned_identity_key" {
+  type        = string
+  description = "Defines the user identity key used for the encryption of storage account."
+  default     = ""
+}
+
+variable "azure_resource_group_metadata_tags" {
+  type        = map(string)
+  description = "Metadata Azure tags to be applied to the cluster resource group."
+  default     = {}
+}

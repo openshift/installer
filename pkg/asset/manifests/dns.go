@@ -18,7 +18,6 @@ import (
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	icpowervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
-	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -88,18 +87,6 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case alibabacloudtypes.Name:
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			config.Spec.PublicZone = &configv1.DNSZone{
-				ID:   installConfig.Config.BaseDomain,
-				Tags: map[string]string{"type": "public"},
-			}
-		}
-		// On Alibaba Cloud can be fetched using `ID` as a pre-determined private zone name
-		config.Spec.PrivateZone = &configv1.DNSZone{
-			ID:   installConfig.Config.ClusterDomain(),
-			Tags: map[string]string{"type": "private"},
-		}
 	case awstypes.Name:
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(context.TODO())
@@ -135,7 +122,8 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			return err
 		}
 
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy ||
+			(installConfig.Config.Publish == types.MixedPublishingStrategy && installConfig.Config.OperatorPublishingStrategy.Ingress != "Internal") {
 			//currently, this guesses the azure resource IDs from known parameter.
 			config.Spec.PublicZone = &configv1.DNSZone{
 				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
@@ -147,6 +135,13 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}
 		}
 	case gcptypes.Name:
+		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
+		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.GCP.UserProvisionedDNS == gcptypes.UserProvisionedDNSEnabled {
+			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			break
+		}
 		client, err := icgcp.NewClient(context.Background())
 		if err != nil {
 			return err
@@ -177,7 +172,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
 	case ibmcloudtypes.Name:
-		client, err := icibmcloud.NewClient()
+		client, err := icibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}

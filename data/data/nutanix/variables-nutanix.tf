@@ -22,9 +22,10 @@ variable "nutanix_password" {
   description = "Prism Central user password"
 }
 
-variable "nutanix_prism_element_uuid" {
-  type        = string
-  description = "This is the uuid of the Prism Element cluster."
+variable "nutanix_prism_element_uuids" {
+  type        = list(string)
+  default     = []
+  description = "This is the uuids of the Prism Element clusters."
 }
 
 variable "nutanix_image_uri" {
@@ -37,9 +38,10 @@ variable "nutanix_image" {
   description = "This is the name to the image that will be imported into Prism Central."
 }
 
-variable "nutanix_subnet_uuid" {
-  type        = string
-  description = "This is the uuid of the publicly accessible subnet for cluster ingress and access."
+variable "nutanix_subnet_uuids" {
+  type        = list(string)
+  default     = []
+  description = "This is the uuids of the publicly accessible subnets for cluster ingress and access."
 }
 
 variable "nutanix_bootstrap_ignition_image" {

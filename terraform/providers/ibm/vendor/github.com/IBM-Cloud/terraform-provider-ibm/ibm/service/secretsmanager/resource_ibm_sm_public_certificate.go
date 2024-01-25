@@ -781,8 +781,9 @@ func resourceIbmSmPublicCertificateMapToSecretPrototype(d *schema.ResourceData) 
 			model.Dns = core.StringPtr(d.Get("dns").(string))
 		}
 	}
-	if _, ok := d.GetOk("bundle_certs"); ok {
-		model.BundleCerts = core.BoolPtr(d.Get("bundle_certs").(bool))
+	bundleCerts, ok := d.GetOkExists("bundle_certs")
+	if ok {
+		model.BundleCerts = core.BoolPtr(bundleCerts.(bool))
 	}
 	if _, ok := d.GetOk("rotation"); ok {
 		RotationModel, err := resourceIbmSmPublicCertificateMapToPublicCertificateRotationPolicy(d.Get("rotation").([]interface{})[0].(map[string]interface{}))

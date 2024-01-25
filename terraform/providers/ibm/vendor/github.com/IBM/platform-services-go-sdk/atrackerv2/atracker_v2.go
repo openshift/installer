@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.57.1-4c556507-20220928-143422
+ * IBM OpenAPI SDK Code Generator Version: 3.80.0-29334a73-20230925-151553
  */
 
 // Package atrackerv2 : Operations and models for the AtrackerV2 service
@@ -121,6 +121,8 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"private.eu-de":    "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-de region.
 		"eu-gb":            "https://eu-gb.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
 		"private.eu-gb":    "https://private.eu-gb.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"eu-es":            "https://eu-es.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-es region.
+		"private.eu-es":    "https://private.eu-es.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-es region.
 		"au-syd":           "https://au-syd.atracker.cloud.ibm.com",           // The server for IBM Cloud Activity Tracker Service in the au-syd region.
 		"private.au-syd":   "https://private.au-syd.atracker.cloud.ibm.com",   // The server for IBM Cloud Activity Tracker Service in the au-syd region.
 		"ca-tor":           "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
@@ -1020,111 +1022,6 @@ func (atracker *AtrackerV2) PutSettingsWithContext(ctx context.Context, putSetti
 	return
 }
 
-// PostMigration : Migrate Activity Tracker Event Routing configurations from v1 to v2
-// Migrate all v1 Activity Tracker Event Routing targets and routes to v2 under an IBM account.
-func (atracker *AtrackerV2) PostMigration(postMigrationOptions *PostMigrationOptions) (result *Migration, response *core.DetailedResponse, err error) {
-	return atracker.PostMigrationWithContext(context.Background(), postMigrationOptions)
-}
-
-// PostMigrationWithContext is an alternate form of the PostMigration method which supports a Context parameter
-func (atracker *AtrackerV2) PostMigrationWithContext(ctx context.Context, postMigrationOptions *PostMigrationOptions) (result *Migration, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(postMigrationOptions, "postMigrationOptions")
-	if err != nil {
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = atracker.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(atracker.Service.Options.URL, `/api/v2/migration`, nil)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range postMigrationOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("atracker", "V2", "PostMigration")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = atracker.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMigration)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetMigration : Get the migration status
-// Retrieve the status of the migration process.  This can be used after the POST /migration to monitor the progress of
-// the migration process.
-func (atracker *AtrackerV2) GetMigration(getMigrationOptions *GetMigrationOptions) (result *Migration, response *core.DetailedResponse, err error) {
-	return atracker.GetMigrationWithContext(context.Background(), getMigrationOptions)
-}
-
-// GetMigrationWithContext is an alternate form of the GetMigration method which supports a Context parameter
-func (atracker *AtrackerV2) GetMigrationWithContext(ctx context.Context, getMigrationOptions *GetMigrationOptions) (result *Migration, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(getMigrationOptions, "getMigrationOptions")
-	if err != nil {
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = atracker.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(atracker.Service.Options.URL, `/api/v2/migration`, nil)
-	if err != nil {
-		return
-	}
-
-	for headerName, headerValue := range getMigrationOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("atracker", "V2", "GetMigration")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = atracker.Service.Request(request, &rawResponse)
-	if err != nil {
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMigration)
-		if err != nil {
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
 // CosEndpoint : Property values for a Cloud Object Storage Endpoint in responses.
 type CosEndpoint struct {
 	// The host name of the Cloud Object Storage endpoint.
@@ -1491,24 +1388,6 @@ func UnmarshalEventstreamsEndpointPrototype(m map[string]json.RawMessage, result
 	return
 }
 
-// GetMigrationOptions : The GetMigration options.
-type GetMigrationOptions struct {
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewGetMigrationOptions : Instantiate GetMigrationOptions
-func (*AtrackerV2) NewGetMigrationOptions() *GetMigrationOptions {
-	return &GetMigrationOptions{}
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *GetMigrationOptions) SetHeaders(param map[string]string) *GetMigrationOptions {
-	options.Headers = param
-	return options
-}
-
 // GetRouteOptions : The GetRoute options.
 type GetRouteOptions struct {
 	// The v4 UUID that uniquely identifies the route.
@@ -1676,138 +1555,6 @@ func UnmarshalLogdnaEndpointPrototype(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
-}
-
-// Migration : The Activity Tracker Event Routing migration response contains an overall status of the migration process.
-type Migration struct {
-	// The overall migration progress as a percentage.
-	Progress *int64 `json:"progress" validate:"required"`
-
-	// The overall status of the migration.
-	Status *string `json:"status" validate:"required"`
-
-	// List containing the migration status for each of the routes and targets that are or will be migrated.
-	MigrationItems []MigrationItem `json:"migration_items" validate:"required"`
-}
-
-// Constants associated with the Migration.Status property.
-// The overall status of the migration.
-const (
-	MigrationStatusCanceledConst    = "canceled"
-	MigrationStatusCompletedConst   = "completed"
-	MigrationStatusFailedConst      = "failed"
-	MigrationStatusInProgressConst  = "in_progress"
-	MigrationStatusNotRequiredConst = "not_required"
-	MigrationStatusNotStartedConst  = "not_started"
-	MigrationStatusPendingConst     = "pending"
-)
-
-// UnmarshalMigration unmarshals an instance of Migration from the specified map of raw messages.
-func UnmarshalMigration(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(Migration)
-	err = core.UnmarshalPrimitive(m, "progress", &obj.Progress)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "migration_items", &obj.MigrationItems, UnmarshalMigrationItem)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// MigrationItem : The Activity Tracker Event Routing migration status for an individual route or target.
-type MigrationItem struct {
-	// The type of the resource being migrated.
-	ResourceType *string `json:"resource_type" validate:"required"`
-
-	// The uuid of the route or target.
-	ID *string `json:"id" validate:"required"`
-
-	// The region where the resource is defined.
-	Region *string `json:"region" validate:"required"`
-
-	// The status of the migration for this resource.
-	Status *string `json:"status" validate:"required"`
-
-	// The detailed status message of the migration for this resource.  In the event of a failure this will contain the
-	// details as to why the migration failed for this resource.
-	DetailedStatus []string `json:"detailed_status" validate:"required"`
-
-	// Migration error encountered.
-	Error *string `json:"error,omitempty"`
-}
-
-// Constants associated with the MigrationItem.ResourceType property.
-// The type of the resource being migrated.
-const (
-	MigrationItemResourceTypePrivateEndpointConst = "private_endpoint"
-	MigrationItemResourceTypeRouteConst           = "route"
-	MigrationItemResourceTypeTargetConst          = "target"
-)
-
-// Constants associated with the MigrationItem.Status property.
-// The status of the migration for this resource.
-const (
-	MigrationItemStatusCompletedConst  = "completed"
-	MigrationItemStatusFailedConst     = "failed"
-	MigrationItemStatusInProgressConst = "in_progress"
-	MigrationItemStatusNotStartedConst = "not_started"
-	MigrationItemStatusPendingConst    = "pending"
-)
-
-// UnmarshalMigrationItem unmarshals an instance of MigrationItem from the specified map of raw messages.
-func UnmarshalMigrationItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(MigrationItem)
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "region", &obj.Region)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "detailed_status", &obj.DetailedStatus)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "error", &obj.Error)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// PostMigrationOptions : The PostMigration options.
-type PostMigrationOptions struct {
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewPostMigrationOptions : Instantiate PostMigrationOptions
-func (*AtrackerV2) NewPostMigrationOptions() *PostMigrationOptions {
-	return &PostMigrationOptions{}
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *PostMigrationOptions) SetHeaders(param map[string]string) *PostMigrationOptions {
-	options.Headers = param
-	return options
 }
 
 // PutSettingsOptions : The PutSettings options.
@@ -2161,7 +1908,7 @@ type Settings struct {
 	// If you set this true then you cannot access api through public network.
 	PrivateAPIEndpointOnly *bool `json:"private_api_endpoint_only" validate:"required"`
 
-	// The lowest API version of targets or routes that customer might have under his or her account.
+	// API version used for configuring IBM Cloud Activity Tracker Event Routing resources in the account.
 	APIVersion *int64 `json:"api_version" validate:"required"`
 
 	// An optional message containing information about the audit log locations.
@@ -2250,6 +1997,7 @@ type Target struct {
 // The type of the target.
 const (
 	TargetTargetTypeCloudObjectStorageConst = "cloud_object_storage"
+	TargetTargetTypeEventStreamsConst       = "event_streams"
 	TargetTargetTypeLogdnaConst             = "logdna"
 )
 

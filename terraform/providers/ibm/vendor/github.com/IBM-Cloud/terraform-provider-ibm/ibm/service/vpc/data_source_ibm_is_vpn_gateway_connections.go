@@ -112,7 +112,30 @@ func DataSourceIBMISVPNGatewayConnections() *schema.Resource {
 							Computed:    true,
 							Description: "VPN gateway connection status",
 						},
-
+						isVPNGatewayConnectionStatusreasons: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current status (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the status reason.",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the status reason.",
+									},
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about this status reason.",
+									},
+								},
+							},
+						},
 						isVPNGatewayConnectionTunnels: {
 							Type:        schema.TypeList,
 							Computed:    true,
@@ -202,6 +225,7 @@ func dataSourceIBMVPNGatewayConnectionsRead(d *schema.ResourceData, meta interfa
 		gatewayconnection[isVPNGatewayConnectionPeerAddress] = *data.PeerAddress
 		gatewayconnection[isVPNGatewayConnectionResourcetype] = *data.ResourceType
 		gatewayconnection[isVPNGatewayConnectionStatus] = *data.Status
+		gatewayconnection[isVPNGatewayConnectionStatusreasons] = resourceVPNGatewayConnectionFlattenLifecycleReasons(data.StatusReasons)
 		//if data.Tunnels != nil {
 		if len(data.Tunnels) > 0 {
 			vpcTunnelsList := make([]map[string]interface{}, 0)

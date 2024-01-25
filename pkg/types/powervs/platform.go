@@ -46,4 +46,10 @@ type Platform struct {
 	// platform configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// ServiceInstanceGUID is the GUID of the Power IAAS instance created from the IBM Cloud Catalog
+	// before the cluster is completed.  Leave unset to allow the installer to create a service
+	// instance during cluster creation.
+	// +optional
+	ServiceInstanceGUID string `json:"serviceInstanceGUID,omitempty"`
 }

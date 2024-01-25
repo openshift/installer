@@ -51,9 +51,21 @@ variable "ibmcloud_image_filepath" {
   description = "The file path to the RHCOS image"
 }
 
+variable "ibmcloud_terraform_private_visibility" {
+  type        = bool
+  description = "Specified whether the IBM Cloud terraform provider visibility mode should be private, for endpoint usage."
+  default     = false
+}
+
 #######################################
 # Top-level module variables (optional)
 #######################################
+
+variable "ibmcloud_endpoints_json_file" {
+  type        = string
+  description = "JSON file containing IBM Cloud service endpoints"
+  default     = ""
+}
 
 variable "ibmcloud_preexisting_vpc" {
   type        = bool
@@ -70,6 +82,12 @@ variable "ibmcloud_vpc_permitted" {
 variable "ibmcloud_vpc" {
   type        = string
   description = "The name of an existing cluster VPC."
+  default     = null
+}
+
+variable "ibmcloud_control_plane_boot_volume_key" {
+  type        = string
+  description = "IBM Cloud Key Protect key CRN to use to encrypt the control plane's volume(s)."
   default     = null
 }
 

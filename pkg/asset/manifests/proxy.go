@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -142,8 +141,6 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 	switch platform {
 	case aws.Name, gcp.Name, azure.Name, openstack.Name:
 		set.Insert("169.254.169.254")
-	case alibabacloud.Name:
-		set.Insert("100.100.100.200")
 	}
 
 	// TODO: Add support for additional cloud providers.

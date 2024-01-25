@@ -80,6 +80,16 @@ func ResourceIBMIAMTrustedProfile() *schema.Resource {
 				Computed:    true,
 				Description: "IMS user ID of the trusted profile.",
 			},
+			"template_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Template id the profile was created from.",
+			},
+			"assignment_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Id of assignment that assigned the template.",
+			},
 			"history": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -209,6 +219,13 @@ func resourceIBMIamTrustedProfileRead(context context.Context, d *schema.Resourc
 	if err = d.Set("ims_user_id", flex.IntValue(trustedProfile.ImsUserID)); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting ims_user_id: %s", err))
 	}
+	if err = d.Set("template_id", trustedProfile.TemplateID); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting template_id: %s", err))
+	}
+	if err = d.Set("assignment_id", trustedProfile.AssignmentID); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting assignment_id: %s", err))
+	}
+
 	history := []map[string]interface{}{}
 	if trustedProfile.History != nil {
 		for _, historyItem := range trustedProfile.History {

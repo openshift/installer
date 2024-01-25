@@ -8,10 +8,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 )
 
 const (
@@ -227,18 +228,18 @@ func resourceIBMTransitGatewayRouteReportRead(d *schema.ResourceData, meta inter
 	}
 
 	gatewayId := parts[0]
-	ID := parts[1]
+	routeReportID := parts[1]
 
 	getTransitGatewayRouteReportOptions := &transitgatewayapisv1.GetTransitGatewayRouteReportOptions{}
 	getTransitGatewayRouteReportOptions.SetTransitGatewayID(gatewayId)
-	getTransitGatewayRouteReportOptions.SetID(ID)
+	getTransitGatewayRouteReportOptions.SetID(routeReportID)
 	instance, response, err := client.GetTransitGatewayRouteReport(getTransitGatewayRouteReportOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("Error Getting Transit Gateway Route Report (%s): %s\n%s", ID, err, response)
+		return fmt.Errorf("Error Getting Transit Gateway Route Report (%s): %s\n%s", routeReportID, err, response)
 	}
 
 	d.Set(tgRouteReportId, *instance.ID)

@@ -17,6 +17,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
@@ -43,9 +44,6 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
-	goodACIDualStackVIPs.SetAnnotations(map[string]string{
-		installConfigOverrides: `{"platform":{"baremetal":{"apiVIPs":["192.168.122.10","2001:db8:1111:2222:ffff:ffff:ffff:cafe"],"ingressVIPs":["192.168.122.11","2001:db8:1111:2222:ffff:ffff:ffff:dead"]}}}`,
-	})
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
 	goodACIDualStackVIPs.Spec.IngressVIPs = []string{"192.168.122.11", "2001:db8:1111:2222:ffff:ffff:ffff:dead"}
 
@@ -87,10 +85,10 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	}
 
 	goodExternalPlatformACI := getGoodACI()
-	goodExternalPlatformACI.Spec.APIVIP = ""
-	goodExternalPlatformACI.Spec.IngressVIP = ""
 	goodExternalPlatformACI.Spec.APIVIPs = nil
 	goodExternalPlatformACI.Spec.IngressVIPs = nil
+	goodExternalPlatformACI.Spec.APIVIP = ""
+	goodExternalPlatformACI.Spec.IngressVIP = ""
 	val := true
 	goodExternalPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
@@ -110,11 +108,11 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	}
 
 	goodExternalOCIPlatformACI := getGoodACI()
-	goodExternalOCIPlatformACI.Spec.APIVIP = ""
-	goodExternalOCIPlatformACI.Spec.IngressVIP = ""
+	val = true
 	goodExternalOCIPlatformACI.Spec.APIVIPs = nil
 	goodExternalOCIPlatformACI.Spec.IngressVIPs = nil
-	val = true
+	goodExternalOCIPlatformACI.Spec.APIVIP = ""
+	goodExternalOCIPlatformACI.Spec.IngressVIP = ""
 	goodExternalOCIPlatformACI.Spec.Networking.UserManagedNetworking = &val
 	goodExternalOCIPlatformACI.Spec.PlatformType = hiveext.ExternalPlatformType
 	goodExternalOCIPlatformACI.Spec.ExternalPlatformSpec = &hiveext.ExternalPlatformSpec{
@@ -122,6 +120,11 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	}
 	goodExternalOCIPlatformACI.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"external":{"platformName":"oci","cloudControllerManager":"External"}}}`,
+	})
+
+	goodBaremetalPlatformBMCACI := getGoodACI()
+	goodBaremetalPlatformBMCACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"platform":{"baremetal":{"hosts":[{"name":"control-0.example.org","bmc":{"username":"bmc-user","password":"password","address":"172.22.0.10","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:01","hardwareProfile":""},{"name":"control-1.example.org","bmc":{"username":"user2","password":"foo","address":"172.22.0.11","disableCertificateVerification":false},"role":"master","bootMACAddress":"98:af:65:a5:8d:02","hardwareProfile":""},{"name":"control-2.example.org","bmc":{"username":"admin","password":"bar","address":"172.22.0.12","disableCertificateVerification":true},"role":"master","bootMACAddress":"98:af:65:a5:8d:03","hardwareProfile":""}],"clusterProvisioningIP":"172.22.0.3","provisioningNetwork":"Managed","provisioningNetworkInterface":"eth0","provisioningNetworkCIDR":"172.22.0.0/24","provisioningDHCPRange":"172.22.0.10,172.22.0.254"}}}`,
 	})
 
 	cases := []struct {
@@ -134,6 +137,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "missing install config",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
+				&agentconfig.AgentHosts{},
 			},
 			expectedError: "missing configuration or manifest file",
 		},
@@ -141,6 +145,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration",
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfig(),
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -148,6 +153,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with unspecified network type should result with ACI having default network type",
 			dependencies: []asset.Asset{
 				installConfigWithoutNetworkType,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodACI,
 		},
@@ -155,6 +161,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with FIPS annotation",
 			dependencies: []asset.Asset{
 				installConfigWithFIPS,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodFIPSACI,
 		},
@@ -162,6 +169,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with proxy",
 			dependencies: []asset.Asset{
 				installConfigWithProxy,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodProxyACI,
 		},
@@ -169,6 +177,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration dual stack",
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfigDualStack(),
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: getGoodACIDualStack(),
 		},
@@ -176,6 +185,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration dual stack dual vips",
 			dependencies: []asset.Asset{
 				getValidOptionalInstallConfigDualStackDualVIPs(),
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodACIDualStackVIPs,
 		},
@@ -183,6 +193,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with capabilities",
 			dependencies: []asset.Asset{
 				installConfigWithCapabilities,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodCapabilitiesACI,
 		},
@@ -190,6 +201,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with custom network type",
 			dependencies: []asset.Asset{
 				installConfigWithNetworkOverride,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodNetworkOverrideACI,
 		},
@@ -197,6 +209,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration with CPU Partitioning",
 			dependencies: []asset.Asset{
 				installConfigWithCPUPartitioning,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodCPUPartitioningACI,
 		},
@@ -204,6 +217,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration external generic platform",
 			dependencies: []asset.Asset{
 				installConfigWExternalPlatform,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodExternalPlatformACI,
 		},
@@ -211,8 +225,17 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 			name: "valid configuration external OCI platform",
 			dependencies: []asset.Asset{
 				installConfigWExternalOCIPlatform,
+				&agentconfig.AgentHosts{},
 			},
 			expectedConfig: goodExternalOCIPlatformACI,
+		},
+		{
+			name: "valid configuration BMC and provisioning network",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfigWithProvisioning(),
+				getAgentHostsWithBMCConfig(),
+			},
+			expectedConfig: goodBaremetalPlatformBMCACI,
 		},
 	}
 	for _, tc := range cases {

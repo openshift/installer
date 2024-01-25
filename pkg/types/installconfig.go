@@ -8,7 +8,6 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -37,7 +36,6 @@ var (
 	// platform names in alphabetical order. This is the list of
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
-		alibabacloud.Name,
 		aws.Name,
 		azure.Name,
 		gcp.Name,
@@ -71,6 +69,9 @@ const (
 	ExternalPublishingStrategy PublishingStrategy = "External"
 	// InternalPublishingStrategy exposes the endpoints for the cluster to the private network only.
 	InternalPublishingStrategy PublishingStrategy = "Internal"
+	// MixedPublishingStrategy allows for the api server and the ingress to be configured individually for exposure to
+	// private network or Internet.
+	MixedPublishingStrategy PublishingStrategy = "Mixed"
 )
 
 // PolicyType is for usage polices that are applied to additionalTrustBundle.
@@ -155,6 +156,9 @@ type InstallConfig struct {
 	// +optional
 	Publish PublishingStrategy `json:"publish,omitempty"`
 
+	// OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
+	OperatorPublishingStrategy *OperatorPublishingStrategy `json:"operatorPublishingStrategy,omitempty"`
+
 	// FIPS configures https://www.nist.gov/itl/fips-general-information
 	//
 	// +kubebuilder:default=false
@@ -188,7 +192,6 @@ type InstallConfig struct {
 	// AzureStack: "Manual"
 	// GCP: "Mint", "Passthrough", "Manual"
 	// IBMCloud: "Manual"
-	// AlibabaCloud: "Manual"
 	// PowerVS: "Manual"
 	// Nutanix: "Manual"
 	// +optional
@@ -256,10 +259,6 @@ const (
 // Platform is the configuration for the specific platform upon which to perform
 // the installation. Only one of the platform configuration should be set.
 type Platform struct {
-	// AlibabaCloud is the configuration used when installing on Alibaba Cloud.
-	// +optional
-	AlibabaCloud *alibabacloud.Platform `json:"alibabacloud,omitempty"`
-
 	// AWS is the configuration used when installing on AWS.
 	// +optional
 	AWS *aws.Platform `json:"aws,omitempty"`
@@ -313,6 +312,22 @@ type Platform struct {
 	Nutanix *nutanix.Platform `json:"nutanix,omitempty"`
 }
 
+// OperatorPublishingStrategy is used to control the visibility of the components which can be used to have a mix of public
+// and private resources.
+type OperatorPublishingStrategy struct {
+	// Ingress sets the visibility of the created dns resources.
+	// +kubebuilder:validation:Enum="";External;Internal
+	// +kubebuilder:default=External
+	// +optional
+	Ingress string `json:"ingress,omitempty"`
+
+	// APIServer sets the visibility of the load balancers servicing the APIserver.
+	// +kubebuilder:validation:Enum="";External;Internal
+	// +kubebuilder:default=External
+	// +optional
+	APIServer string `json:"apiserver,omitempty"`
+}
+
 // Name returns a string representation of the platform (e.g. "aws" if
 // AWS is non-nil).  It returns an empty string if no platform is
 // configured.
@@ -320,8 +335,6 @@ func (p *Platform) Name() string {
 	switch {
 	case p == nil:
 		return ""
-	case p.AlibabaCloud != nil:
-		return alibabacloud.Name
 	case p.AWS != nil:
 		return aws.Name
 	case p.Azure != nil:
@@ -385,6 +398,13 @@ type Networking struct {
 	// +kubebuilder:validation:MaxItems=1
 	// +optional
 	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
+
+	// ClusterNetworkMTU is the Maximum Transmit (MTU) Unit size in bytes to allocate to the cluster network.
+	// For example, 1200 would set the MTU of the entire overlay network. If the deployment does
+	// not require changes in the network plugin, leave it unset and the MTU will be calculated
+	// automatically based on the host network MTU.
+	// +optional
+	ClusterNetworkMTU uint32 `json:"clusterNetworkMTU,omitempty"`
 
 	// Deprecated types, scheduled to be removed
 

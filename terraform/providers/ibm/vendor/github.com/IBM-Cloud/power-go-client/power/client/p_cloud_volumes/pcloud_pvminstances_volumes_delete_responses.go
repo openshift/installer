@@ -66,7 +66,7 @@ func (o *PcloudPvminstancesVolumesDeleteReader) ReadResponse(response runtime.Cl
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}] pcloud.pvminstances.volumes.delete", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudPvminstancesVolumesDeleteAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes delete accepted response a status code equal to that given
 func (o *PcloudPvminstancesVolumesDeleteAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud pvminstances volumes delete accepted response
+func (o *PcloudPvminstancesVolumesDeleteAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudPvminstancesVolumesDeleteAccepted) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudPvminstancesVolumesDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes delete bad request response a status code equal to that given
 func (o *PcloudPvminstancesVolumesDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances volumes delete bad request response
+func (o *PcloudPvminstancesVolumesDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesVolumesDeleteBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudPvminstancesVolumesDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances volumes delete unauthorized response
+func (o *PcloudPvminstancesVolumesDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesVolumesDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudPvminstancesVolumesDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances volumes delete forbidden response a status code equal to that given
 func (o *PcloudPvminstancesVolumesDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances volumes delete forbidden response
+func (o *PcloudPvminstancesVolumesDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesVolumesDeleteForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudPvminstancesVolumesDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances volumes delete not found response
+func (o *PcloudPvminstancesVolumesDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesVolumesDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudPvminstancesVolumesDeleteConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud pvminstances volumes delete conflict response
+func (o *PcloudPvminstancesVolumesDeleteConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudPvminstancesVolumesDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes/{volume_id}][%d] pcloudPvminstancesVolumesDeleteConflict  %+v", 409, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudPvminstancesVolumesDeleteInternalServerError) IsServerError() boo
 // IsCode returns true when this pcloud pvminstances volumes delete internal server error response a status code equal to that given
 func (o *PcloudPvminstancesVolumesDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances volumes delete internal server error response
+func (o *PcloudPvminstancesVolumesDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesVolumesDeleteInternalServerError) Error() string {

@@ -10,35 +10,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {
-		return nil, fmt.Errorf("non vsphere configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non vsphere configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != vsphere.Name {
-		return nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
 	}
 
 	var failureDomain vsphere.FailureDomain
 	var machines []machineapi.Machine
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
-	replicas := int64(1)
+	replicas := int32(1)
 
 	numOfZones := len(mpool.Zones)
 
 	zones, err := getDefinedZonesFromTopology(platform)
 	if err != nil {
-		return machines, err
+		return machines, nil, err
 	}
 
 	if pool.Replicas != nil {
-		replicas = *pool.Replicas
+		replicas = int32(*pool.Replicas)
 	}
 
 	// Create hosts to populate from.  Copying so we can remove without changing original
@@ -53,7 +55,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 	}
 
-	for idx := int64(0); idx < replicas; idx++ {
+	failureDomains := []machinev1.VSphereFailureDomain{}
+
+	vsphereMachineProvider := &machineapi.VSphereMachineProviderSpec{}
+
+	for idx := int32(0); idx < replicas; idx++ {
 		logrus.Debugf("Creating %v machine %v", role, idx)
 		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
@@ -66,7 +72,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		logrus.Debugf("Desired zone: %v", desiredZone)
 
 		if _, exists := zones[desiredZone]; !exists {
-			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
+			return nil, nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
 		}
 
 		failureDomain = zones[desiredZone]
@@ -77,6 +83,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
 
+		if !hasFailureDomain(failureDomains, failureDomain.Name) {
+			failureDomains = append(failureDomains, machinev1.VSphereFailureDomain{
+				Name: failureDomain.Name,
+			})
+		}
+
 		osImageForZone := failureDomain.Topology.Template
 		if failureDomain.Topology.Template == "" {
 			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
@@ -84,11 +96,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to find vCenter in failure domains")
+			return nil, nil, errors.Wrap(err, "unable to find vCenter in failure domains")
 		}
 		provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImageForZone, userDataSecret)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 
 		// Apply static IP if configured
@@ -112,8 +124,74 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		}
 		machines = append(machines, machine)
+
+		vsphereMachineProvider = provider.DeepCopy()
 	}
-	return machines, nil
+
+	// when multiple zones are defined, network and workspace are derived from the topology
+	origProv := vsphereMachineProvider.DeepCopy()
+	if len(failureDomains) > 1 {
+		vsphereMachineProvider.Network = machineapi.NetworkSpec{}
+		vsphereMachineProvider.Workspace = &machineapi.Workspace{}
+		vsphereMachineProvider.Template = ""
+	}
+
+	if len(hosts) > 0 {
+		vsphereMachineProvider.Network.Devices = []machineapi.NetworkDeviceSpec{
+			{
+				AddressesFromPools: origProv.Network.Devices[0].AddressesFromPools,
+				Nameservers:        origProv.Network.Devices[0].Nameservers,
+			},
+		}
+	}
+
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					FailureDomains: &machinev1.FailureDomains{
+						Platform: v1.VSpherePlatformType,
+						VSphere:  failureDomains,
+					},
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: vsphereMachineProvider},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return machines, controlPlaneMachineSet, nil
 }
 
 // applyNetworkConfig this function will apply the static ip configuration to the networkDevice
@@ -178,4 +256,13 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string) {
+}
+
+func hasFailureDomain(failureDomains []machinev1.VSphereFailureDomain, failureDomain string) bool {
+	for _, fd := range failureDomains {
+		if fd.Name == failureDomain {
+			return true
+		}
+	}
+	return false
 }

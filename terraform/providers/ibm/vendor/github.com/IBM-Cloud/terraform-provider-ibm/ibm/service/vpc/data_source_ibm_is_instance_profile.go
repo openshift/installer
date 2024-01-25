@@ -486,6 +486,24 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 					},
 				},
 			},
+			"numa_count": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"value": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The value for this profile field.",
+						},
+					},
+				},
+			},
 			"port_speed": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -503,6 +521,11 @@ func DataSourceIBMISInstanceProfile() *schema.Resource {
 						},
 					},
 				},
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The status of the instance profile.",
 			},
 			isInstanceVCPUArchitecture: &schema.Schema{
 				Type:     schema.TypeList,
@@ -638,6 +661,9 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 		}
 
 	}
+	if profile.Status != nil {
+		d.Set("status", profile.Status)
+	}
 	if profile.Bandwidth != nil {
 		err = d.Set("bandwidth", dataSourceInstanceProfileFlattenBandwidth(*profile.Bandwidth.(*vpcv1.InstanceProfileBandwidth)))
 		if err != nil {
@@ -692,6 +718,12 @@ func instanceProfileGet(d *schema.ResourceData, meta interface{}, name string) e
 	}
 	if profile.NetworkInterfaceCount != nil {
 		err = d.Set("network_interface_count", dataSourceInstanceProfileFlattenNetworkInterfaceCount(*profile.NetworkInterfaceCount.(*vpcv1.InstanceProfileNetworkInterfaceCount)))
+		if err != nil {
+			return err
+		}
+	}
+	if profile.NumaCount != nil {
+		err = d.Set("numa_count", dataSourceInstanceProfileFlattenNumaCount(*profile.NumaCount.(*vpcv1.InstanceProfileNumaCount)))
 		if err != nil {
 			return err
 		}
@@ -1181,4 +1213,25 @@ func dataSourceInstanceProfileTotalVolumeBandwidthToMap(bandwidthItem vpcv1.Inst
 	}
 
 	return bandwidthMap
+}
+
+func dataSourceInstanceProfileFlattenNumaCount(result vpcv1.InstanceProfileNumaCount) (finalList []map[string]interface{}) {
+	finalList = []map[string]interface{}{}
+	finalMap := dataSourceInstanceProfileNumaCountToMap(result)
+	finalList = append(finalList, finalMap)
+
+	return finalList
+}
+
+func dataSourceInstanceProfileNumaCountToMap(numaItem vpcv1.InstanceProfileNumaCount) (numaMap map[string]interface{}) {
+	numaMap = map[string]interface{}{}
+
+	if numaItem.Type != nil {
+		numaMap["type"] = numaItem.Type
+	}
+	if numaItem.Value != nil {
+		numaMap["value"] = numaItem.Value
+	}
+
+	return numaMap
 }

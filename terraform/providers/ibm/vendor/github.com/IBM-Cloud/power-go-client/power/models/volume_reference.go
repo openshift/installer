@@ -55,6 +55,9 @@ type VolumeReference struct {
 	// Required: true
 	Href *string `json:"href"`
 
+	// Amount of iops assigned to the volume
+	IoThrottleRate string `json:"ioThrottleRate,omitempty"`
+
 	// Last Update Date
 	// Required: true
 	// Format: date-time

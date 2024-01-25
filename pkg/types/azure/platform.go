@@ -97,6 +97,28 @@ type Platform struct {
 	// Resources created by the cluster itself may not include these tags.
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
+
+	// CustomerManagedKey has the keys needed to encrypt the storage account.
+	CustomerManagedKey *CustomerManagedKey `json:"customerManagedKey,omitempty"`
+}
+
+// KeyVault defines an Azure Key Vault.
+type KeyVault struct {
+	// ResourceGroup defines the Azure resource group used by the key
+	// vault.
+	ResourceGroup string `json:"resourceGroup"`
+	// Name is the name of the key vault.
+	Name string `json:"name"`
+	// KeyName is the name of the key vault key.
+	KeyName string `json:"keyName"`
+}
+
+// CustomerManagedKey defines the customer managed key settings for encryption of the Azure storage account.
+type CustomerManagedKey struct {
+	// KeyVault is the keyvault used for the customer created key required for encryption.
+	KeyVault KeyVault `json:"keyVault,omitempty"`
+	// UserAssignedIdentityKey is the name of the user identity that has access to the managed key.
+	UserAssignedIdentityKey string `json:"userAssignedIdentityKey,omitempty"`
 }
 
 // CloudEnvironment is the name of the Azure cloud environment

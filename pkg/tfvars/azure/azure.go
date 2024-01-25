@@ -65,10 +65,15 @@ type config struct {
 	UseMarketplaceImage                     bool              `json:"azure_use_marketplace_image"`
 	MarketplaceImageHasPlan                 bool              `json:"azure_marketplace_image_has_plan"`
 	OSImage                                 `json:",inline"`
-	SecurityEncryptionType                  string `json:"azure_master_security_encryption_type,omitempty"`
-	SecureVirtualMachineDiskEncryptionSetID string `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
-	SecureBoot                              string `json:"azure_master_secure_boot,omitempty"`
-	VirtualizedTrustedPlatformModule        string `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	SecurityEncryptionType                  string            `json:"azure_master_security_encryption_type,omitempty"`
+	SecureVirtualMachineDiskEncryptionSetID string            `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
+	SecureBoot                              string            `json:"azure_master_secure_boot,omitempty"`
+	VirtualizedTrustedPlatformModule        string            `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	KeyVaultResourceGroup                   string            `json:"azure_keyvault_resource_group,omitempty"`
+	KeyVaultName                            string            `json:"azure_keyvault_name,omitempty"`
+	KeyVaultKeyName                         string            `json:"azure_keyvault_key_name,omitempty"`
+	UserAssignedIdentity                    string            `json:"azure_user_assigned_identity_key,omitempty"`
+	ResourceGroupMetadataTags               map[string]string `json:"azure_resource_group_metadata_tags"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -90,6 +95,9 @@ type TFVarsSources struct {
 	HyperVGeneration                string
 	VMArchitecture                  types.Architecture
 	InfrastructureName              string
+	KeyVault                        azure.KeyVault
+	UserAssignedIdentityKey         string
+	LBPrivate                       bool
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -150,6 +158,16 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Version:   masterConfig.Image.Version,
 	}
 
+	// Metadata tags to be added to the resource group for the cluster destroy
+	metadataTags := map[string]string{}
+	metadataTags[azure.TagMetadataRegion] = region
+	if len(sources.BaseDomainResourceGroupName) > 0 {
+		metadataTags[azure.TagMetadataBaseDomainRG] = sources.BaseDomainResourceGroupName
+	}
+	if len(masterConfig.NetworkResourceGroup) > 0 {
+		metadataTags[azure.TagMetadataNetworkRG] = masterConfig.NetworkResourceGroup
+	}
+
 	cfg := &config{
 		Auth:                                    sources.Auth,
 		Environment:                             environment,
@@ -164,7 +182,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VolumeSize:                              masterConfig.OSDisk.DiskSizeGB,
 		ImageURL:                                sources.ImageURL,
 		ImageRelease:                            sources.ImageRelease,
-		Private:                                 sources.Publish == types.InternalPublishingStrategy,
+		Private:                                 sources.Publish == types.InternalPublishingStrategy || sources.LBPrivate,
 		OutboundType:                            string(sources.OutboundType),
 		ResourceGroupName:                       sources.ResourceGroupName,
 		BaseDomainResourceGroupName:             sources.BaseDomainResourceGroupName,
@@ -187,6 +205,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		SecureVirtualMachineDiskEncryptionSetID: masterConfig.OSDisk.ManagedDisk.SecurityProfile.DiskEncryptionSet.ID,
 		SecureBoot:                              secureBoot,
 		VirtualizedTrustedPlatformModule:        virtualizedTrustedPlatformModule,
+		KeyVaultResourceGroup:                   sources.KeyVault.ResourceGroup,
+		KeyVaultName:                            sources.KeyVault.Name,
+		KeyVaultKeyName:                         sources.KeyVault.KeyName,
+		UserAssignedIdentity:                    sources.UserAssignedIdentityKey,
+		ResourceGroupMetadataTags:               metadataTags,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

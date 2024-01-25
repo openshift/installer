@@ -85,6 +85,11 @@ func (m *CloudConnectionEndpointVPC) contextValidateVpcs(ctx context.Context, fo
 	for i := 0; i < len(m.Vpcs); i++ {
 
 		if m.Vpcs[i] != nil {
+
+			if swag.IsZero(m.Vpcs[i]) { // not required
+				return nil
+			}
+
 			if err := m.Vpcs[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("vpcs" + "." + strconv.Itoa(i))

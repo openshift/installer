@@ -72,7 +72,7 @@ func (o *PcloudPvminstancesCapturePostReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture] pcloud.pvminstances.capture.post", response, response.Code())
 	}
 }
 
@@ -113,6 +113,11 @@ func (o *PcloudPvminstancesCapturePostOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances capture post o k response a status code equal to that given
 func (o *PcloudPvminstancesCapturePostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances capture post o k response
+func (o *PcloudPvminstancesCapturePostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesCapturePostOK) Error() string {
@@ -176,6 +181,11 @@ func (o *PcloudPvminstancesCapturePostAccepted) IsCode(code int) bool {
 	return code == 202
 }
 
+// Code gets the status code for the pcloud pvminstances capture post accepted response
+func (o *PcloudPvminstancesCapturePostAccepted) Code() int {
+	return 202
+}
+
 func (o *PcloudPvminstancesCapturePostAccepted) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostAccepted  %+v", 202, o.Payload)
 }
@@ -235,6 +245,11 @@ func (o *PcloudPvminstancesCapturePostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances capture post bad request response a status code equal to that given
 func (o *PcloudPvminstancesCapturePostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances capture post bad request response
+func (o *PcloudPvminstancesCapturePostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesCapturePostBadRequest) Error() string {
@@ -300,6 +315,11 @@ func (o *PcloudPvminstancesCapturePostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances capture post unauthorized response
+func (o *PcloudPvminstancesCapturePostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesCapturePostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostUnauthorized  %+v", 401, o.Payload)
 }
@@ -361,6 +381,11 @@ func (o *PcloudPvminstancesCapturePostForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances capture post forbidden response a status code equal to that given
 func (o *PcloudPvminstancesCapturePostForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances capture post forbidden response
+func (o *PcloudPvminstancesCapturePostForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudPvminstancesCapturePostForbidden) Error() string {
@@ -426,6 +451,11 @@ func (o *PcloudPvminstancesCapturePostNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud pvminstances capture post not found response
+func (o *PcloudPvminstancesCapturePostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudPvminstancesCapturePostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostNotFound  %+v", 404, o.Payload)
 }
@@ -489,6 +519,11 @@ func (o *PcloudPvminstancesCapturePostUnprocessableEntity) IsCode(code int) bool
 	return code == 422
 }
 
+// Code gets the status code for the pcloud pvminstances capture post unprocessable entity response
+func (o *PcloudPvminstancesCapturePostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesCapturePostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudPvminstancesCapturePostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -550,6 +585,11 @@ func (o *PcloudPvminstancesCapturePostInternalServerError) IsServerError() bool 
 // IsCode returns true when this pcloud pvminstances capture post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesCapturePostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances capture post internal server error response
+func (o *PcloudPvminstancesCapturePostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesCapturePostInternalServerError) Error() string {

@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
@@ -183,7 +186,7 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 		return allErrs
 	}
 
-	// Make sure the encryptionKey exists
+	// Make sure the encryptionKey exists and meets requirements for use
 	key, err := client.GetEncryptionKey(context.TODO(), bootVolume.EncryptionKey)
 	if err != nil {
 		return field.ErrorList{field.InternalError(path.Child("encryptionKey"), err)}
@@ -191,6 +194,18 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 
 	if key == nil {
 		return field.ErrorList{field.NotFound(path.Child("encryptionKey"), bootVolume.EncryptionKey)}
+	}
+
+	if key.CRN != bootVolume.EncryptionKey {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, fmt.Sprintf("key CRN does not match: %s", key.CRN)))
+	}
+
+	if key.State != 1 {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, "key is disabled"))
+	}
+
+	if key.Deleted != nil && *key.Deleted {
+		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, "key has been deleted"))
 	}
 
 	return allErrs
@@ -412,6 +427,52 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata 
 	}
 
 	return nil
+}
+
+// ValidateServiceEndpoints will validate a series of service endpoint overrides.
+func ValidateServiceEndpoints(ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+	serviceEndpointsPath := field.NewPath("platform").Child("ibmcloud").Child("serviceEndpoints")
+	// Verify services are valid for override and are not duplicated and that are in valid URI format and accessible.
+	overriddenServices := map[configv1.IBMCloudServiceName]bool{}
+	for id, service := range ic.Platform.IBMCloud.ServiceEndpoints {
+		// Check if we have a duplicate service (case is ignored)
+		if _, ok := overriddenServices[service.Name]; ok {
+			allErrs = append(allErrs, field.Duplicate(serviceEndpointsPath.Index(id).Child("name"), service.Name))
+			continue
+		}
+		// Add service to map to track for duplicates
+		overriddenServices[service.Name] = true
+
+		// Check that the provided service name is an expected override service
+		if _, ok := ibmcloud.IBMCloudServiceOverrides[service.Name]; !ok {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("name"), service.Name, "not a supported override service"))
+		}
+
+		// Check if the service URL is valid
+		err := validateEndpoint(service.URL)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("url"), service.URL, err.Error()))
+		}
+	}
+
+	return allErrs.ToAggregate()
+}
+
+// validateEndpoint will validate an endpoint meets acceptable URI requirements.
+func validateEndpoint(endpoint string) error {
+	// Ignore local unit tests
+	if endpoint == "e2e.unittest.local" {
+		return nil
+	}
+	// NOTE(cjschaef): At this time we expect the endpoint to be an absolute URI (besides local unittests checked above)
+	_, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+	// Verify the endpoint is accessible
+	_, err = http.Head(endpoint) //nolint:gosec // we expect the user to provide safe endpoints, as we only wish to validation the server responds
+	return err
 }
 
 // getMachinePoolZones will return the zones if they have been specified or return nil if the MachinePoolPlatform or values are not specified

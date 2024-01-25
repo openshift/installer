@@ -217,6 +217,19 @@ func getAdditionalTrustBundleValidOptionalInstallConfig() *agent.OptionalInstall
 	return validIC
 }
 
+// getValidOptionalInstallConfigWithProvisioning returns a valid optional install config with baremetal provisioning network settings.
+func getValidOptionalInstallConfigWithProvisioning() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.Platform.BareMetal.ClusterProvisioningIP = "172.22.0.3"
+	installConfig.Config.Platform.BareMetal.ProvisioningNetwork = "Managed"
+	installConfig.Config.Platform.BareMetal.ProvisioningBridge = "ostestpr"
+	installConfig.Config.Platform.BareMetal.ProvisioningMACAddress = "52:54:00:a6:e6:87"
+	installConfig.Config.Platform.BareMetal.ProvisioningNetworkInterface = "eth0"
+	installConfig.Config.Platform.BareMetal.ProvisioningNetworkCIDR = ipnet.MustParseCIDR("172.22.0.0/24")
+	installConfig.Config.Platform.BareMetal.ProvisioningDHCPRange = "172.22.0.10,172.22.0.254"
+	return installConfig
+}
+
 func getValidAgentConfig() *agentconfig.AgentConfig {
 	return &agentconfig.AgentConfig{
 		Config: &agenttypes.Config{
@@ -382,6 +395,61 @@ func getAgentHostsNoHosts() *agentconfig.AgentHosts {
 	return &agentconfig.AgentHosts{}
 }
 
+func getAgentHostsWithBMCConfig() *agentconfig.AgentHosts {
+	return &agentconfig.AgentHosts{
+		Hosts: []agenttypes.Host{
+			{
+				Hostname: "control-0.example.org",
+				Role:     "master",
+				Interfaces: []*v1beta1.Interface{
+					{
+						Name:       "enp2s0",
+						MacAddress: "98:af:65:a5:8d:01",
+					},
+				},
+				BMC: baremetal.BMC{
+					Username:                       "bmc-user",
+					Password:                       "password",
+					Address:                        "172.22.0.10",
+					DisableCertificateVerification: true,
+				},
+			},
+			{
+				Hostname: "control-1.example.org",
+				Role:     "master",
+				Interfaces: []*v1beta1.Interface{
+					{
+						Name:       "enp2s0",
+						MacAddress: "98:af:65:a5:8d:02",
+					},
+				},
+				BMC: baremetal.BMC{
+					Username:                       "user2",
+					Password:                       "foo",
+					Address:                        "172.22.0.11",
+					DisableCertificateVerification: false,
+				},
+			},
+			{
+				Hostname: "control-2.example.org",
+				Role:     "master",
+				Interfaces: []*v1beta1.Interface{
+					{
+						Name:       "enp2s0",
+						MacAddress: "98:af:65:a5:8d:03",
+					},
+				},
+				BMC: baremetal.BMC{
+					Username:                       "admin",
+					Password:                       "bar",
+					Address:                        "172.22.0.12",
+					DisableCertificateVerification: true,
+				},
+			},
+		},
+	}
+}
+
 func getGoodACI() *hiveext.AgentClusterInstall {
 	goodACI := &hiveext.AgentClusterInstall{
 		ObjectMeta: metav1.ObjectMeta{
@@ -415,10 +483,10 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 				ControlPlaneAgents: 3,
 				WorkerAgents:       5,
 			},
-			APIVIP:       "192.168.122.10",
-			IngressVIP:   "192.168.122.11",
 			APIVIPs:      []string{"192.168.122.10"},
 			IngressVIPs:  []string{"192.168.122.11"},
+			APIVIP:       "192.168.122.10",
+			IngressVIP:   "192.168.122.11",
 			PlatformType: hiveext.BareMetalPlatformType,
 		},
 	}

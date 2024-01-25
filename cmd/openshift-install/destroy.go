@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -15,7 +16,6 @@ import (
 	quotaasset "github.com/openshift/installer/pkg/destroy/quota"
 	"github.com/openshift/installer/pkg/metrics/timer"
 
-	_ "github.com/openshift/installer/pkg/destroy/alibabacloud"
 	_ "github.com/openshift/installer/pkg/destroy/aws"
 	_ "github.com/openshift/installer/pkg/destroy/azure"
 	_ "github.com/openshift/installer/pkg/destroy/baremetal"
@@ -125,7 +125,7 @@ func newDestroyBootstrapCmd() *cobra.Command {
 			defer cleanup()
 
 			timer.StartTimer(timer.TotalTimeElapsed)
-			err := bootstrap.Destroy(command.RootOpts.Dir)
+			err := bootstrap.Destroy(context.TODO(), command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}

@@ -61,6 +61,7 @@ module "iaas" {
   # define and pass variables to:
   # data/data/powervs/bootstrap/iaas/variables.tf
   #
-  cluster_id     = var.cluster_id
-  resource_group = var.powervs_resource_group
+  cluster_id            = var.cluster_id
+  resource_group        = var.powervs_resource_group
+  service_instance_name = var.powervs_service_instance_name
 }

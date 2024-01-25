@@ -189,13 +189,12 @@ func ResourceIBMISLB() *schema.Resource {
 			},
 
 			isLBSecurityGroups: {
-				Type:          schema.TypeSet,
-				Computed:      true,
-				Optional:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				Set:           schema.HashString,
-				Description:   "Load Balancer securitygroups list",
-				ConflictsWith: []string{isLBProfile},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         schema.HashString,
+				Description: "Load Balancer securitygroups list",
 			},
 
 			isLBSecurityGroupsSupported: {

@@ -75,6 +75,10 @@ func (a *redfishVirtualMediaAccessDetails) BootInterface() string {
 	return "redfish-virtual-media"
 }
 
+func (a *redfishVirtualMediaAccessDetails) FirmwareInterface() string {
+	return "redfish"
+}
+
 func (a *redfishVirtualMediaAccessDetails) ManagementInterface() string {
 	return ""
 }
@@ -84,7 +88,7 @@ func (a *redfishVirtualMediaAccessDetails) PowerInterface() string {
 }
 
 func (a *redfishVirtualMediaAccessDetails) RAIDInterface() string {
-	return "no-raid"
+	return "redfish"
 }
 
 func (a *redfishVirtualMediaAccessDetails) VendorInterface() string {

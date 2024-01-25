@@ -1,32 +1,48 @@
 # This Dockerfile builds an image containing Mac and Linux/AMD64 versions of
 # the installer layered on top of the cluster-native Linux installer image.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS macbuilder
+FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS providers
+
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS macbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_amd64 terraform/bin/darwin_amd64
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS macarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS macarmbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwin_arm64 terraform/bin/darwin_arm64
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS linuxbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS linuxbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_amd64 terraform/bin/linux_amd64
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.15 AS linuxarmbuilder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS linuxarmbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux_arm64 terraform/bin/linux_arm64
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
-FROM registry.ci.openshift.org/ocp/4.15:installer
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.16 AS builder
+ARG TAGS=""
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+RUN go run -mod=vendor hack/build-coreos-manifest.go
+
+FROM registry.ci.openshift.org/ocp/4.16:base
 COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac/openshift-install
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac_arm64/openshift-install
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install
 COPY --from=linuxarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_arm64/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/bin/manifests/ /manifests/
+
+# We're not really an operator, we're just getting some data into the release image.
+LABEL io.openshift.release.operator=true

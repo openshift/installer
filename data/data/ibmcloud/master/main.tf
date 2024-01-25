@@ -1,9 +1,11 @@
 locals {
-  prefix              = var.cluster_id
-  port_kubernetes_api = 6443
-  port_machine_config = 22623
-  subnet_count        = length(var.control_plane_subnet_id_list)
-  zone_count          = length(var.control_plane_subnet_zone_list)
+  # If a boot volume encryption key CRN was supplied, create a list containing that CRN, otherwise an empty list for a dynamic block of boot volumes
+  boot_volume_key_crns = var.ibmcloud_control_plane_boot_volume_key == "" ? [] : [var.ibmcloud_control_plane_boot_volume_key]
+  prefix               = var.cluster_id
+  port_kubernetes_api  = 6443
+  port_machine_config  = 22623
+  subnet_count         = length(var.control_plane_subnet_id_list)
+  zone_count           = length(var.control_plane_subnet_zone_list)
 }
 
 ############################################
@@ -23,6 +25,13 @@ resource "ibm_is_instance" "master_node" {
     name            = "eth0"
     subnet          = var.control_plane_subnet_id_list[count.index % local.subnet_count]
     security_groups = var.control_plane_security_group_id_list
+  }
+
+  dynamic "boot_volume" {
+    for_each = local.boot_volume_key_crns
+    content {
+      encryption = boot_volume.value
+    }
   }
 
   dedicated_host = length(var.control_plane_dedicated_host_id_list) > 0 ? var.control_plane_dedicated_host_id_list[count.index % local.zone_count] : null

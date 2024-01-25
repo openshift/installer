@@ -858,7 +858,6 @@ func ResourceIBMSchematicsAction() *schema.Resource {
 			},
 			"sys_lock": {
 				Type:        schema.TypeList,
-				Optional:    true,
 				Computed:    true,
 				Description: "System lock status.",
 				Elem: &schema.Resource{
@@ -1071,14 +1070,6 @@ func resourceIBMSchematicsActionCreate(context context.Context, d *schema.Resour
 			settings = append(settings, settingsItem)
 		}
 		createActionOptions.SetSettings(settings)
-	}
-	if _, ok := d.GetOk("state"); ok {
-		state := resourceIBMSchematicsActionMapToActionState(d.Get("state.0").(map[string]interface{}))
-		createActionOptions.SetState(&state)
-	}
-	if _, ok := d.GetOk("sys_lock"); ok {
-		sysLock := resourceIBMSchematicsActionMapToSystemLock(d.Get("sys_lock.0").(map[string]interface{}))
-		createActionOptions.SetSysLock(&sysLock)
 	}
 	if _, ok := d.GetOk("x_github_token"); ok {
 		createActionOptions.SetXGithubToken(d.Get("x_github_token").(string))
@@ -1913,23 +1904,6 @@ func resourceIBMSchematicsActionUpdate(context context.Context, d *schema.Resour
 		updateActionOptions.SetSettings(settings)
 		hasChange = true
 	}
-	if d.HasChange("state") {
-		stateAttr := d.Get("state").([]interface{})
-		if len(stateAttr) > 0 {
-			state := resourceIBMSchematicsActionMapToActionState(d.Get("state.0").(map[string]interface{}))
-			updateActionOptions.SetState(&state)
-			hasChange = true
-		}
-	}
-	if d.HasChange("sys_lock") {
-		sysLockAttr := d.Get("sys_lock").([]interface{})
-		if len(sysLockAttr) > 0 {
-			sysLock := resourceIBMSchematicsActionMapToSystemLock(d.Get("sys_lock.0").(map[string]interface{}))
-			updateActionOptions.SetSysLock(&sysLock)
-			hasChange = true
-		}
-	}
-
 	if hasChange {
 		_, response, err := schematicsClient.UpdateActionWithContext(context, updateActionOptions)
 		if err != nil {

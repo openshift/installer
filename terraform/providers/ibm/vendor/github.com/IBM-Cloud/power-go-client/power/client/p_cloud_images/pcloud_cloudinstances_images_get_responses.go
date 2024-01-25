@@ -60,7 +60,7 @@ func (o *PcloudCloudinstancesImagesGetReader) ReadResponse(response runtime.Clie
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}] pcloud.cloudinstances.images.get", response, response.Code())
 	}
 }
 
@@ -101,6 +101,11 @@ func (o *PcloudCloudinstancesImagesGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images get o k response a status code equal to that given
 func (o *PcloudCloudinstancesImagesGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances images get o k response
+func (o *PcloudCloudinstancesImagesGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesImagesGetOK) Error() string {
@@ -166,6 +171,11 @@ func (o *PcloudCloudinstancesImagesGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud cloudinstances images get bad request response
+func (o *PcloudCloudinstancesImagesGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudCloudinstancesImagesGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}][%d] pcloudCloudinstancesImagesGetBadRequest  %+v", 400, o.Payload)
 }
@@ -227,6 +237,11 @@ func (o *PcloudCloudinstancesImagesGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances images get unauthorized response a status code equal to that given
 func (o *PcloudCloudinstancesImagesGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud cloudinstances images get unauthorized response
+func (o *PcloudCloudinstancesImagesGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudCloudinstancesImagesGetUnauthorized) Error() string {
@@ -292,6 +307,11 @@ func (o *PcloudCloudinstancesImagesGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud cloudinstances images get forbidden response
+func (o *PcloudCloudinstancesImagesGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudCloudinstancesImagesGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}][%d] pcloudCloudinstancesImagesGetForbidden  %+v", 403, o.Payload)
 }
@@ -355,6 +375,11 @@ func (o *PcloudCloudinstancesImagesGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud cloudinstances images get not found response
+func (o *PcloudCloudinstancesImagesGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudCloudinstancesImagesGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/images/{image_id}][%d] pcloudCloudinstancesImagesGetNotFound  %+v", 404, o.Payload)
 }
@@ -416,6 +441,11 @@ func (o *PcloudCloudinstancesImagesGetInternalServerError) IsServerError() bool 
 // IsCode returns true when this pcloud cloudinstances images get internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesImagesGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances images get internal server error response
+func (o *PcloudCloudinstancesImagesGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesImagesGetInternalServerError) Error() string {

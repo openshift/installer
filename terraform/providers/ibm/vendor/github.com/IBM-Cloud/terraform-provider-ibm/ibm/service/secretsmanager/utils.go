@@ -1,14 +1,29 @@
 package secretsmanager
 
 import (
+	"context"
 	"fmt"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+)
+
+const (
+	ArbitrarySecretType        = "arbitrary"
+	UsernamePasswordSecretType = "username_password"
+	IAMCredentialsSecretType   = "iam_credentials"
+	KvSecretType               = "kv"
+	ImportedCertSecretType     = "imported_cert"
+	PublicCertSecretType       = "public_cert"
+	PrivateCertSecretType      = "private_cert"
 )
 
 func getRegion(originalClient *secretsmanagerv2.SecretsManagerV2, d *schema.ResourceData) string {
@@ -115,4 +130,54 @@ func DateTimeToRFC3339(dt *strfmt.DateTime) (s string) {
 		s = time.Time(*dt).Format(time.RFC3339)
 	}
 	return
+}
+
+func getSecretByIdOrByName(context context.Context, d *schema.ResourceData, meta interface{}, secretType string) (secretsmanagerv2.SecretIntf, string, string, diag.Diagnostics) {
+
+	secretsManagerClient, err := meta.(conns.ClientSession).SecretsManagerV2()
+	if err != nil {
+		return nil, "", "", diag.FromErr(err)
+	}
+	region := getRegion(secretsManagerClient, d)
+	instanceId := d.Get("instance_id").(string)
+	secretsManagerClient = getClientWithInstanceEndpoint(secretsManagerClient, instanceId, region, getEndpointType(secretsManagerClient, d))
+
+	secretId := d.Get("secret_id").(string)
+	secretName := d.Get("name").(string)
+	groupName := d.Get("secret_group_name").(string)
+
+	log.Printf("[DEBUG] getSecretByIdOrByName %q %q %q %q\n", secretId, secretName, groupName, secretType)
+
+	var secretIntf secretsmanagerv2.SecretIntf
+	var response *core.DetailedResponse
+
+	if secretId != "" {
+		getSecretOptions := &secretsmanagerv2.GetSecretOptions{}
+		getSecretOptions.SetID(secretId)
+
+		secretIntf, response, err = secretsManagerClient.GetSecretWithContext(context, getSecretOptions)
+		if err != nil {
+			log.Printf("[DEBUG] GetSecretWithContext failed %s\n%s", err, response)
+			return nil, "", "", diag.FromErr(fmt.Errorf("GetSecretWithContext failed %s\n%s", err, response))
+		}
+		return secretIntf, region, instanceId, nil
+	}
+
+	if secretName != "" && groupName != "" {
+		// Locate secret by name
+		getSecretByNameOptions := &secretsmanagerv2.GetSecretByNameTypeOptions{}
+
+		getSecretByNameOptions.SetName(secretName)
+		getSecretByNameOptions.SetSecretType(secretType)
+		getSecretByNameOptions.SetSecretGroupName(groupName)
+
+		secretIntf, response, err = secretsManagerClient.GetSecretByNameTypeWithContext(context, getSecretByNameOptions)
+		if err != nil {
+			log.Printf("[DEBUG] GetSecretByNameTypeWithContext failed %s\n%s", err, response)
+			return nil, "", "", diag.FromErr(fmt.Errorf("GetSecretByNameTypeWithContext failed %s\n%s", err, response))
+		}
+		return secretIntf, region, instanceId, nil
+	}
+
+	return nil, "", "", diag.FromErr(fmt.Errorf("Missing required arguments. Please make sure that either \"secret_id\" or \"name\" and \"secret_group_name\" are provided\n"))
 }

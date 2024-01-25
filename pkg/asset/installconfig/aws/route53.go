@@ -6,9 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -45,7 +45,7 @@ func (c *Client) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.Get
 	// validate that the hosted zone exists
 	hostedZoneOutput, err := r53.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZone)})
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get hosted zone: %s", hostedZone)
+		return nil, fmt.Errorf("could not get hosted zone: %s: %w", hostedZone, err)
 	}
 	return hostedZoneOutput, nil
 }
@@ -57,7 +57,7 @@ func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, 
 	problematicRecords, err := c.GetSubDomainDNSRecords(zone, ic, cfg)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(zonePath,
-			errors.Wrapf(err, "could not list record sets for domain %q", zoneName)))
+			fmt.Errorf("could not list record sets for domain %q: %w", zoneName, err)))
 	}
 
 	if len(problematicRecords) > 0 {
@@ -78,7 +78,7 @@ func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *type
 
 	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
 	if !isHostedZoneDomainParentOfClusterDomain(hostedZone, dottedClusterDomain) {
-		return nil, errors.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
+		return nil, fmt.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
 	}
 
 	r53 := route53.New(c.ssn, cfg)
@@ -131,7 +131,7 @@ func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dot
 func (c *Client) GetBaseDomain(baseDomainName string) (*route53.HostedZone, error) {
 	baseDomainZone, err := GetPublicZone(c.ssn, baseDomainName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not find public zone: %s", baseDomainName)
+		return nil, fmt.Errorf("could not find public zone: %s: %w", baseDomainName, err)
 	}
 	return baseDomainZone, nil
 }
@@ -145,4 +145,74 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 
 	creds := stscreds.NewCredentials(sess, roleARN)
 	return &aws.Config{Credentials: creds}
+}
+
+// CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
+func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cfg *aws.Config) error {
+	zone, err := c.GetBaseDomain(ic.BaseDomain)
+	if err != nil {
+		return err
+	}
+
+	params := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
+		},
+		HostedZoneId: zone.Id,
+	}
+	for _, prefix := range []string{"api", "api-int"} {
+		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
+			Action: aws.String("UPSERT"),
+			ResourceRecordSet: &route53.ResourceRecordSet{
+				Name: aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
+				Type: aws.String("A"),
+				AliasTarget: &route53.AliasTarget{
+					DNSName:              aws.String(target),
+					HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
+					EvaluateTargetHealth: aws.Bool(true),
+				},
+			},
+		})
+	}
+	svc := route53.New(c.ssn, cfg)
+	if _, err := svc.ChangeResourceRecordSets(params); err != nil {
+		return fmt.Errorf("failed to create records for api/api-int: %w", err)
+	}
+	return nil
+}
+
+// See https://docs.aws.amazon.com/general/latest/gr/elb.html#elb_region
+
+var hostedZoneIDPerRegionNLBMap = map[string]string{
+	endpoints.AfSouth1RegionID:     "Z203XCE67M25HM",
+	endpoints.ApEast1RegionID:      "Z12Y7K3UBGUAD1",
+	endpoints.ApNortheast1RegionID: "Z31USIVHYNEOWT",
+	endpoints.ApNortheast2RegionID: "ZIBE1TIR4HY56",
+	endpoints.ApNortheast3RegionID: "Z1GWIQ4HH19I5X",
+	endpoints.ApSouth1RegionID:     "ZVDDRBQ08TROA",
+	endpoints.ApSouth2RegionID:     "Z0711778386UTO08407HT",
+	endpoints.ApSoutheast1RegionID: "ZKVM4W9LS7TM",
+	endpoints.ApSoutheast2RegionID: "ZCT6FZBF4DROD",
+	endpoints.ApSoutheast3RegionID: "Z01971771FYVNCOVWJU1G",
+	endpoints.ApSoutheast4RegionID: "Z01156963G8MIIL7X90IV",
+	endpoints.CaCentral1RegionID:   "Z2EPGBW3API2WT",
+	endpoints.CnNorth1RegionID:     "Z3QFB96KMJ7ED6",
+	endpoints.CnNorthwest1RegionID: "ZQEIKTCZ8352D",
+	endpoints.EuCentral1RegionID:   "Z3F0SRJ5LGBH90",
+	endpoints.EuCentral2RegionID:   "Z02239872DOALSIDCX66S",
+	endpoints.EuNorth1RegionID:     "Z1UDT6IFJ4EJM",
+	endpoints.EuSouth1RegionID:     "Z23146JA1KNAFP",
+	endpoints.EuSouth2RegionID:     "Z1011216NVTVYADP1SSV",
+	endpoints.EuWest1RegionID:      "Z2IFOLAFXWLO4F",
+	endpoints.EuWest2RegionID:      "ZD4D7Y8KGAS4G",
+	endpoints.EuWest3RegionID:      "Z1CMS0P5QUZ6D5",
+	endpoints.MeCentral1RegionID:   "Z00282643NTTLPANJJG2P",
+	endpoints.MeSouth1RegionID:     "Z3QSRYVP46NYYV",
+	endpoints.SaEast1RegionID:      "ZTK26PT1VY4CU",
+	endpoints.UsEast1RegionID:      "Z26RNL4JYFTOTI",
+	endpoints.UsEast2RegionID:      "ZLMOA37VPKANP",
+	endpoints.UsGovEast1RegionID:   "Z1ZSMQQ6Q24QQ8",
+	endpoints.UsGovWest1RegionID:   "ZMG1MZ2THAWF1",
+	endpoints.UsWest1RegionID:      "Z24FKFUX50B4VW",
+	endpoints.UsWest2RegionID:      "Z18D5FSROUN65G",
 }

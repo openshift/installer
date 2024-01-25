@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/openshift/installer/pkg/types/alibabacloud"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -25,22 +25,23 @@ type ClusterMetadata struct {
 	// InfraID is an ID that is used to identify cloud resources created by the installer.
 	InfraID                 string `json:"infraID"`
 	ClusterPlatformMetadata `json:",inline"`
+	FeatureSet              configv1.FeatureSet          `json:"featureSet"`
+	CustomFeatureSet        *configv1.CustomFeatureGates `json:"customFeatureSet"`
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.
 type ClusterPlatformMetadata struct {
-	AlibabaCloud *alibabacloud.Metadata `json:"alibabacloud,omitempty"`
-	AWS          *aws.Metadata          `json:"aws,omitempty"`
-	OpenStack    *openstack.Metadata    `json:"openstack,omitempty"`
-	Libvirt      *libvirt.Metadata      `json:"libvirt,omitempty"`
-	Azure        *azure.Metadata        `json:"azure,omitempty"`
-	GCP          *gcp.Metadata          `json:"gcp,omitempty"`
-	IBMCloud     *ibmcloud.Metadata     `json:"ibmcloud,omitempty"`
-	BareMetal    *baremetal.Metadata    `json:"baremetal,omitempty"`
-	Ovirt        *ovirt.Metadata        `json:"ovirt,omitempty"`
-	PowerVS      *powervs.Metadata      `json:"powervs,omitempty"`
-	VSphere      *vsphere.Metadata      `json:"vsphere,omitempty"`
-	Nutanix      *nutanix.Metadata      `json:"nutanix,omitempty"`
+	AWS       *aws.Metadata       `json:"aws,omitempty"`
+	OpenStack *openstack.Metadata `json:"openstack,omitempty"`
+	Libvirt   *libvirt.Metadata   `json:"libvirt,omitempty"`
+	Azure     *azure.Metadata     `json:"azure,omitempty"`
+	GCP       *gcp.Metadata       `json:"gcp,omitempty"`
+	IBMCloud  *ibmcloud.Metadata  `json:"ibmcloud,omitempty"`
+	BareMetal *baremetal.Metadata `json:"baremetal,omitempty"`
+	Ovirt     *ovirt.Metadata     `json:"ovirt,omitempty"`
+	PowerVS   *powervs.Metadata   `json:"powervs,omitempty"`
+	VSphere   *vsphere.Metadata   `json:"vsphere,omitempty"`
+	Nutanix   *nutanix.Metadata   `json:"nutanix,omitempty"`
 }
 
 // Platform returns a string representation of the platform
@@ -49,9 +50,6 @@ type ClusterPlatformMetadata struct {
 func (cpm *ClusterPlatformMetadata) Platform() string {
 	if cpm == nil {
 		return ""
-	}
-	if cpm.AlibabaCloud != nil {
-		return alibabacloud.Name
 	}
 	if cpm.AWS != nil {
 		return aws.Name

@@ -29,6 +29,12 @@ func (o *PcloudNetworksPortsGetReader) ReadResponse(response runtime.ClientRespo
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudNetworksPortsGetBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudNetworksPortsGetUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudNetworksPortsGetReader) ReadResponse(response runtime.ClientRespo
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}] pcloud.networks.ports.get", response, response.Code())
 	}
 }
 
@@ -97,6 +103,11 @@ func (o *PcloudNetworksPortsGetOK) IsCode(code int) bool {
 	return code == 200
 }
 
+// Code gets the status code for the pcloud networks ports get o k response
+func (o *PcloudNetworksPortsGetOK) Code() int {
+	return 200
+}
+
 func (o *PcloudNetworksPortsGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsGetOK  %+v", 200, o.Payload)
 }
@@ -112,6 +123,74 @@ func (o *PcloudNetworksPortsGetOK) GetPayload() *models.NetworkPort {
 func (o *PcloudNetworksPortsGetOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.NetworkPort)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudNetworksPortsGetBadRequest creates a PcloudNetworksPortsGetBadRequest with default headers values
+func NewPcloudNetworksPortsGetBadRequest() *PcloudNetworksPortsGetBadRequest {
+	return &PcloudNetworksPortsGetBadRequest{}
+}
+
+/*
+PcloudNetworksPortsGetBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudNetworksPortsGetBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud networks ports get bad request response has a 2xx status code
+func (o *PcloudNetworksPortsGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud networks ports get bad request response has a 3xx status code
+func (o *PcloudNetworksPortsGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud networks ports get bad request response has a 4xx status code
+func (o *PcloudNetworksPortsGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud networks ports get bad request response has a 5xx status code
+func (o *PcloudNetworksPortsGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud networks ports get bad request response a status code equal to that given
+func (o *PcloudNetworksPortsGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud networks ports get bad request response
+func (o *PcloudNetworksPortsGetBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudNetworksPortsGetBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudNetworksPortsGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudNetworksPortsGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudNetworksPortsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -158,6 +237,11 @@ func (o *PcloudNetworksPortsGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports get unauthorized response a status code equal to that given
 func (o *PcloudNetworksPortsGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud networks ports get unauthorized response
+func (o *PcloudNetworksPortsGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudNetworksPortsGetUnauthorized) Error() string {
@@ -223,6 +307,11 @@ func (o *PcloudNetworksPortsGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud networks ports get forbidden response
+func (o *PcloudNetworksPortsGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudNetworksPortsGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsGetForbidden  %+v", 403, o.Payload)
 }
@@ -286,6 +375,11 @@ func (o *PcloudNetworksPortsGetNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud networks ports get not found response
+func (o *PcloudNetworksPortsGetNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudNetworksPortsGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/networks/{network_id}/ports/{port_id}][%d] pcloudNetworksPortsGetNotFound  %+v", 404, o.Payload)
 }
@@ -347,6 +441,11 @@ func (o *PcloudNetworksPortsGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud networks ports get internal server error response a status code equal to that given
 func (o *PcloudNetworksPortsGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud networks ports get internal server error response
+func (o *PcloudNetworksPortsGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudNetworksPortsGetInternalServerError) Error() string {

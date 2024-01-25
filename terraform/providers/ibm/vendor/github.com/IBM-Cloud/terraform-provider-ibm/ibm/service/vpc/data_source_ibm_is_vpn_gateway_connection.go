@@ -205,6 +205,30 @@ func DataSourceIBMISVPNGatewayConnection() *schema.Resource {
 				Computed:    true,
 				Description: "The status of a VPN gateway connection.",
 			},
+			"status_reasons": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current status (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the status reason.",
+						},
+						"message": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the status reason.",
+						},
+						"more_info": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about this status reason.",
+						},
+					},
+				},
+			},
 			"routing_protocol": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -381,6 +405,9 @@ func dataSourceIBMIsVPNGatewayConnectionRead(context context.Context, d *schema.
 	}
 	if err = d.Set("status", vpnGatewayConnection.Status); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting status: %s", err))
+	}
+	if err := d.Set("status_reasons", resourceVPNGatewayConnectionFlattenLifecycleReasons(vpnGatewayConnection.StatusReasons)); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting status_reasons: %s", err))
 	}
 	if err = d.Set("routing_protocol", vpnGatewayConnection.RoutingProtocol); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting routing_protocol: %s", err))

@@ -35,6 +35,12 @@ func (o *PcloudVolumegroupsActionPostReader) ReadResponse(response runtime.Clien
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudVolumegroupsActionPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudVolumegroupsActionPostForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudVolumegroupsActionPostReader) ReadResponse(response runtime.Clien
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action] pcloud.volumegroups.action.post", response, response.Code())
 	}
 }
 
@@ -101,6 +107,11 @@ func (o *PcloudVolumegroupsActionPostAccepted) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups action post accepted response a status code equal to that given
 func (o *PcloudVolumegroupsActionPostAccepted) IsCode(code int) bool {
 	return code == 202
+}
+
+// Code gets the status code for the pcloud volumegroups action post accepted response
+func (o *PcloudVolumegroupsActionPostAccepted) Code() int {
+	return 202
 }
 
 func (o *PcloudVolumegroupsActionPostAccepted) Error() string {
@@ -164,6 +175,11 @@ func (o *PcloudVolumegroupsActionPostBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud volumegroups action post bad request response
+func (o *PcloudVolumegroupsActionPostBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVolumegroupsActionPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostBadRequest  %+v", 400, o.Payload)
 }
@@ -177,6 +193,74 @@ func (o *PcloudVolumegroupsActionPostBadRequest) GetPayload() *models.Error {
 }
 
 func (o *PcloudVolumegroupsActionPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsActionPostUnauthorized creates a PcloudVolumegroupsActionPostUnauthorized with default headers values
+func NewPcloudVolumegroupsActionPostUnauthorized() *PcloudVolumegroupsActionPostUnauthorized {
+	return &PcloudVolumegroupsActionPostUnauthorized{}
+}
+
+/*
+PcloudVolumegroupsActionPostUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudVolumegroupsActionPostUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups action post unauthorized response has a 2xx status code
+func (o *PcloudVolumegroupsActionPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups action post unauthorized response has a 3xx status code
+func (o *PcloudVolumegroupsActionPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups action post unauthorized response has a 4xx status code
+func (o *PcloudVolumegroupsActionPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups action post unauthorized response has a 5xx status code
+func (o *PcloudVolumegroupsActionPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups action post unauthorized response a status code equal to that given
+func (o *PcloudVolumegroupsActionPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud volumegroups action post unauthorized response
+func (o *PcloudVolumegroupsActionPostUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudVolumegroupsActionPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsActionPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsActionPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsActionPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -225,6 +309,11 @@ func (o *PcloudVolumegroupsActionPostForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups action post forbidden response a status code equal to that given
 func (o *PcloudVolumegroupsActionPostForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud volumegroups action post forbidden response
+func (o *PcloudVolumegroupsActionPostForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudVolumegroupsActionPostForbidden) Error() string {
@@ -290,6 +379,11 @@ func (o *PcloudVolumegroupsActionPostNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud volumegroups action post not found response
+func (o *PcloudVolumegroupsActionPostNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudVolumegroupsActionPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostNotFound  %+v", 404, o.Payload)
 }
@@ -353,6 +447,11 @@ func (o *PcloudVolumegroupsActionPostUnprocessableEntity) IsCode(code int) bool 
 	return code == 422
 }
 
+// Code gets the status code for the pcloud volumegroups action post unprocessable entity response
+func (o *PcloudVolumegroupsActionPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudVolumegroupsActionPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/action][%d] pcloudVolumegroupsActionPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -414,6 +513,11 @@ func (o *PcloudVolumegroupsActionPostInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups action post internal server error response a status code equal to that given
 func (o *PcloudVolumegroupsActionPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud volumegroups action post internal server error response
+func (o *PcloudVolumegroupsActionPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVolumegroupsActionPostInternalServerError) Error() string {

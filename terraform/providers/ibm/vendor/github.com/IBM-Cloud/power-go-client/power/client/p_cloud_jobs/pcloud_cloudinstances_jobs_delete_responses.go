@@ -66,7 +66,7 @@ func (o *PcloudCloudinstancesJobsDeleteReader) ReadResponse(response runtime.Cli
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}] pcloud.cloudinstances.jobs.delete", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudCloudinstancesJobsDeleteOK) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs delete o k response a status code equal to that given
 func (o *PcloudCloudinstancesJobsDeleteOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs delete o k response
+func (o *PcloudCloudinstancesJobsDeleteOK) Code() int {
+	return 200
 }
 
 func (o *PcloudCloudinstancesJobsDeleteOK) Error() string {
@@ -168,6 +173,11 @@ func (o *PcloudCloudinstancesJobsDeleteBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs delete bad request response a status code equal to that given
 func (o *PcloudCloudinstancesJobsDeleteBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs delete bad request response
+func (o *PcloudCloudinstancesJobsDeleteBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudCloudinstancesJobsDeleteBadRequest) Error() string {
@@ -233,6 +243,11 @@ func (o *PcloudCloudinstancesJobsDeleteUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs delete unauthorized response
+func (o *PcloudCloudinstancesJobsDeleteUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudCloudinstancesJobsDeleteUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteUnauthorized  %+v", 401, o.Payload)
 }
@@ -294,6 +309,11 @@ func (o *PcloudCloudinstancesJobsDeleteForbidden) IsServerError() bool {
 // IsCode returns true when this pcloud cloudinstances jobs delete forbidden response a status code equal to that given
 func (o *PcloudCloudinstancesJobsDeleteForbidden) IsCode(code int) bool {
 	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs delete forbidden response
+func (o *PcloudCloudinstancesJobsDeleteForbidden) Code() int {
+	return 403
 }
 
 func (o *PcloudCloudinstancesJobsDeleteForbidden) Error() string {
@@ -359,6 +379,11 @@ func (o *PcloudCloudinstancesJobsDeleteNotFound) IsCode(code int) bool {
 	return code == 404
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs delete not found response
+func (o *PcloudCloudinstancesJobsDeleteNotFound) Code() int {
+	return 404
+}
+
 func (o *PcloudCloudinstancesJobsDeleteNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteNotFound  %+v", 404, o.Payload)
 }
@@ -422,6 +447,11 @@ func (o *PcloudCloudinstancesJobsDeleteConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud cloudinstances jobs delete conflict response
+func (o *PcloudCloudinstancesJobsDeleteConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudCloudinstancesJobsDeleteConflict) Error() string {
 	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/jobs/{job_id}][%d] pcloudCloudinstancesJobsDeleteConflict  %+v", 409, o.Payload)
 }
@@ -483,6 +513,11 @@ func (o *PcloudCloudinstancesJobsDeleteInternalServerError) IsServerError() bool
 // IsCode returns true when this pcloud cloudinstances jobs delete internal server error response a status code equal to that given
 func (o *PcloudCloudinstancesJobsDeleteInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud cloudinstances jobs delete internal server error response
+func (o *PcloudCloudinstancesJobsDeleteInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudCloudinstancesJobsDeleteInternalServerError) Error() string {

@@ -29,7 +29,7 @@ func (f *IBMPIStorageCapacityClient) GetAllStoragePoolsCapacity() (*models.Stora
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the capacity for all storage pools: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get the capacity for all storage pools: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get the capacity for all storage pools")
@@ -44,7 +44,7 @@ func (f *IBMPIStorageCapacityClient) GetStoragePoolCapacity(storagePool string) 
 		WithCloudInstanceID(f.cloudInstanceID).WithStoragePoolName(storagePool)
 	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityPoolsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the capacity for storage pool %s: %w", storagePool, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get the capacity for storage pool %s: %w", storagePool, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get the capacity for storage pool %s", storagePool)
@@ -59,7 +59,7 @@ func (f *IBMPIStorageCapacityClient) GetStorageTypeCapacity(storageType string) 
 		WithCloudInstanceID(f.cloudInstanceID).WithStorageTypeName(storageType)
 	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the capacity for storage type %s: %w", storageType, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get the capacity for storage type %s: %w", storageType, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get the capacity for storage type %s", storageType)
@@ -74,7 +74,7 @@ func (f *IBMPIStorageCapacityClient) GetAllStorageTypesCapacity() (*models.Stora
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudStorageCapacity.PcloudStoragecapacityTypesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the capacity for all storage types %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get the capacity for all storage types %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get the capacity for all storage types")

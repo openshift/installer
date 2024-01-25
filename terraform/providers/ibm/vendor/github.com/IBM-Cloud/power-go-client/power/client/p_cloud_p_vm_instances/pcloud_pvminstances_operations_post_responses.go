@@ -41,6 +41,12 @@ func (o *PcloudPvminstancesOperationsPostReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesOperationsPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudPvminstancesOperationsPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -60,7 +66,7 @@ func (o *PcloudPvminstancesOperationsPostReader) ReadResponse(response runtime.C
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations] pcloud.pvminstances.operations.post", response, response.Code())
 	}
 }
 
@@ -101,6 +107,11 @@ func (o *PcloudPvminstancesOperationsPostOK) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances operations post o k response a status code equal to that given
 func (o *PcloudPvminstancesOperationsPostOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud pvminstances operations post o k response
+func (o *PcloudPvminstancesOperationsPostOK) Code() int {
+	return 200
 }
 
 func (o *PcloudPvminstancesOperationsPostOK) Error() string {
@@ -162,6 +173,11 @@ func (o *PcloudPvminstancesOperationsPostBadRequest) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances operations post bad request response a status code equal to that given
 func (o *PcloudPvminstancesOperationsPostBadRequest) IsCode(code int) bool {
 	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances operations post bad request response
+func (o *PcloudPvminstancesOperationsPostBadRequest) Code() int {
+	return 400
 }
 
 func (o *PcloudPvminstancesOperationsPostBadRequest) Error() string {
@@ -227,6 +243,11 @@ func (o *PcloudPvminstancesOperationsPostUnauthorized) IsCode(code int) bool {
 	return code == 401
 }
 
+// Code gets the status code for the pcloud pvminstances operations post unauthorized response
+func (o *PcloudPvminstancesOperationsPostUnauthorized) Code() int {
+	return 401
+}
+
 func (o *PcloudPvminstancesOperationsPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnauthorized  %+v", 401, o.Payload)
 }
@@ -240,6 +261,74 @@ func (o *PcloudPvminstancesOperationsPostUnauthorized) GetPayload() *models.Erro
 }
 
 func (o *PcloudPvminstancesOperationsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesOperationsPostForbidden creates a PcloudPvminstancesOperationsPostForbidden with default headers values
+func NewPcloudPvminstancesOperationsPostForbidden() *PcloudPvminstancesOperationsPostForbidden {
+	return &PcloudPvminstancesOperationsPostForbidden{}
+}
+
+/*
+PcloudPvminstancesOperationsPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesOperationsPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances operations post forbidden response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post forbidden response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post forbidden response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post forbidden response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post forbidden response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances operations post forbidden response
+func (o *PcloudPvminstancesOperationsPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -288,6 +377,11 @@ func (o *PcloudPvminstancesOperationsPostNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud pvminstances operations post not found response a status code equal to that given
 func (o *PcloudPvminstancesOperationsPostNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances operations post not found response
+func (o *PcloudPvminstancesOperationsPostNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudPvminstancesOperationsPostNotFound) Error() string {
@@ -353,6 +447,11 @@ func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsCode(code int) b
 	return code == 422
 }
 
+// Code gets the status code for the pcloud pvminstances operations post unprocessable entity response
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) Code() int {
+	return 422
+}
+
 func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnprocessableEntity  %+v", 422, o.Payload)
 }
@@ -414,6 +513,11 @@ func (o *PcloudPvminstancesOperationsPostInternalServerError) IsServerError() bo
 // IsCode returns true when this pcloud pvminstances operations post internal server error response a status code equal to that given
 func (o *PcloudPvminstancesOperationsPostInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud pvminstances operations post internal server error response
+func (o *PcloudPvminstancesOperationsPostInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudPvminstancesOperationsPostInternalServerError) Error() string {

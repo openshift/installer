@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -31,11 +30,10 @@ const (
 // InstallConfig generates the install-config.yaml file.
 type InstallConfig struct {
 	AssetBase
-	AWS          *aws.Metadata          `json:"aws,omitempty"`
-	Azure        *icazure.Metadata      `json:"azure,omitempty"`
-	IBMCloud     *icibmcloud.Metadata   `json:"ibmcloud,omitempty"`
-	AlibabaCloud *alibabacloud.Metadata `json:"alibabacloud,omitempty"`
-	PowerVS      *icpowervs.Metadata    `json:"powervs,omitempty"`
+	AWS      *aws.Metadata        `json:"aws,omitempty"`
+	Azure    *icazure.Metadata    `json:"azure,omitempty"`
+	IBMCloud *icibmcloud.Metadata `json:"ibmcloud,omitempty"`
+	PowerVS  *icpowervs.Metadata  `json:"powervs,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -56,7 +54,6 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 		&sshPublicKey{},
 		&baseDomain{},
 		&clusterName{},
-		&networking{},
 		&pullSecret{},
 		&platform{},
 	}
@@ -67,14 +64,12 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
-	networking := &networking{}
 	pullSecret := &pullSecret{}
 	platform := &platform{}
 	parents.Get(
 		sshPublicKey,
 		baseDomain,
 		clusterName,
-		networking,
 		pullSecret,
 		platform,
 	)
@@ -89,12 +84,8 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		PullSecret: pullSecret.PullSecret,
-		Networking: &types.Networking{
-			MachineNetwork: networking.machineNetwork,
-		},
 	}
 
-	a.Config.AlibabaCloud = platform.AlibabaCloud
 	a.Config.AWS = platform.AWS
 	a.Config.Libvirt = platform.Libvirt
 	a.Config.None = platform.None
@@ -152,14 +143,11 @@ func (a *InstallConfig) finish(filename string) error {
 			return err
 		}
 	}
-	if a.Config.AlibabaCloud != nil {
-		a.AlibabaCloud = alibabacloud.NewMetadata(a.Config.AlibabaCloud.Region, a.Config.AlibabaCloud.VSwitchIDs)
-	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
 	if a.Config.IBMCloud != nil {
-		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain, a.Config.IBMCloud.Region, a.Config.IBMCloud.ControlPlaneSubnets, a.Config.IBMCloud.ComputeSubnets)
+		a.IBMCloud = icibmcloud.NewMetadata(a.Config)
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config.BaseDomain)
@@ -183,14 +171,12 @@ func (a *InstallConfig) finish(filename string) error {
 // underlying platform. In some cases, platforms also duplicate validations
 // that have already been checked by validation.ValidateInstallConfig().
 func (a *InstallConfig) platformValidation() error {
-	if a.Config.Platform.AlibabaCloud != nil {
-		client, err := a.AlibabaCloud.Client()
-		if err != nil {
-			return err
-		}
-		return alibabacloud.Validate(client, a.Config)
-	}
 	if a.Config.Platform.Azure != nil {
+		if a.Config.Platform.Azure.IsARO() {
+			// ARO performs platform validation in the Resource Provider before
+			// the Installer is called
+			return nil
+		}
 		client, err := a.Azure.Client()
 		if err != nil {
 			return err
@@ -205,7 +191,12 @@ func (a *InstallConfig) platformValidation() error {
 		return icgcp.Validate(client, a.Config)
 	}
 	if a.Config.Platform.IBMCloud != nil {
-		client, err := icibmcloud.NewClient()
+		// Validate the Service Endpoints now, before performing any additional validation of the InstallConfig
+		err := icibmcloud.ValidateServiceEndpoints(a.Config)
+		if err != nil {
+			return err
+		}
+		client, err := icibmcloud.NewClient(a.Config.Platform.IBMCloud.ServiceEndpoints)
 		if err != nil {
 			return err
 		}

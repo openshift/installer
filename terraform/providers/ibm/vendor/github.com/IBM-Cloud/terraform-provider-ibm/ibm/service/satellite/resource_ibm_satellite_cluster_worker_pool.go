@@ -109,8 +109,10 @@ func ResourceIBMSatelliteClusterWorkerPool() *schema.Resource {
 				Computed: true,
 			},
 			"entitlement": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Entitlement option reduces additional OCP Licence cost in Openshift Clusters",
 			},
 			"operating_system": {
 				Type:        schema.TypeString,
@@ -259,6 +261,11 @@ func resourceIBMSatelliteClusterWorkerPoolCreate(d *schema.ResourceData, meta in
 	if v, ok := d.GetOk("isolation"); ok {
 		isolation := v.(string)
 		createWorkerPoolOptions.Isolation = &isolation
+	}
+
+	if v, ok := d.GetOk("entitlement"); ok {
+		entitlement := v.(string)
+		createWorkerPoolOptions.Entitlement = &entitlement
 	}
 
 	instance, response, err := satClient.CreateSatelliteWorkerPool(createWorkerPoolOptions)

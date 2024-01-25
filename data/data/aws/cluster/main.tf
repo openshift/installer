@@ -107,6 +107,7 @@ module "vpc" {
 
   edge_zones         = distinct(var.aws_edge_local_zones)
   edge_parent_gw_map = var.aws_edge_parent_zones_index
+  edge_zones_type    = var.aws_edge_zones_type
 
   tags = local.tags
 }

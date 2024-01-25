@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
@@ -73,15 +72,15 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 					continue
 				}
 				if subnet.SubnetArn == nil {
-					lastError = errors.Errorf("%s has no ARN", *subnet.SubnetId)
+					lastError = fmt.Errorf("%s has no ARN", *subnet.SubnetId)
 					return false
 				}
 				if subnet.VpcId == nil {
-					lastError = errors.Errorf("%s has no VPC", *subnet.SubnetId)
+					lastError = fmt.Errorf("%s has no VPC", *subnet.SubnetId)
 					return false
 				}
 				if subnet.AvailabilityZone == nil {
-					lastError = errors.Errorf("%s has not availability zone", *subnet.SubnetId)
+					lastError = fmt.Errorf("%s has not availability zone", *subnet.SubnetId)
 					return false
 				}
 
@@ -89,7 +88,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 					subnetGroups.VPC = *subnet.VpcId
 					vpcFromSubnet = *subnet.SubnetId
 				} else if *subnet.VpcId != subnetGroups.VPC {
-					lastError = errors.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, subnetGroups.VPC)
+					lastError = fmt.Errorf("all subnets must belong to the same VPC: %s is from %s, but %s is from %s", *subnet.SubnetId, *subnet.VpcId, vpcFromSubnet, subnetGroups.VPC)
 					return false
 				}
 				metas[aws.StringValue(subnet.SubnetId)] = Subnet{
@@ -108,7 +107,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		err = lastError
 	}
 	if err != nil {
-		return subnetGroups, errors.Wrap(err, "describing subnets")
+		return subnetGroups, fmt.Errorf("describing subnets: %w", err)
 	}
 
 	var routeTables []*ec2.RouteTable
@@ -126,12 +125,12 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		},
 	)
 	if err != nil {
-		return subnetGroups, errors.Wrap(err, "describing route tables")
+		return subnetGroups, fmt.Errorf("describing route tables: %w", err)
 	}
 
 	azs, err := client.DescribeAvailabilityZonesWithContext(ctx, &ec2.DescribeAvailabilityZonesInput{ZoneNames: zoneNames})
 	if err != nil {
-		return subnetGroups, errors.Wrap(err, "describing availability zones")
+		return subnetGroups, fmt.Errorf("describing availability zones: %w", err)
 	}
 	for _, az := range azs.AvailabilityZones {
 		availabilityZones[*az.ZoneName] = az
@@ -142,7 +141,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 	for _, id := range ids {
 		meta, ok := metas[id]
 		if !ok {
-			return subnetGroups, errors.Errorf("failed to find %s", id)
+			return subnetGroups, fmt.Errorf("failed to find %s", id)
 		}
 
 		isPublic, err := isSubnetPublic(routeTables, id)
@@ -153,8 +152,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 
 		zoneName := meta.Zone.Name
 		if _, ok := availabilityZones[zoneName]; !ok {
-			errMsg := fmt.Sprintf("unable to read properties of zone name %s from the list %v", zoneName, zoneNames)
-			return subnetGroups, errors.Wrap(err, errMsg)
+			return subnetGroups, fmt.Errorf("unable to read properties of zone name %s from the list %v: %w", zoneName, zoneNames, err)
 		}
 		zone := availabilityZones[zoneName]
 		meta.Zone.Type = aws.StringValue(zone.ZoneType)
@@ -164,7 +162,8 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		}
 
 		// AWS Local Zones are grouped as Edge subnets
-		if meta.Zone.Type == typesaws.LocalZoneType {
+		if meta.Zone.Type == typesaws.LocalZoneType ||
+			meta.Zone.Type == typesaws.WavelengthZoneType {
 			subnetGroups.Edge[id] = meta
 			continue
 		}
@@ -226,6 +225,9 @@ func isSubnetPublic(rt []*ec2.RouteTable, subnetID string) (bool, error) {
 		// or other virtual gateway (starting with vgv)
 		// or vpc peering connections (starting with pcx).
 		if strings.HasPrefix(aws.StringValue(route.GatewayId), "igw") {
+			return true, nil
+		}
+		if strings.HasPrefix(aws.StringValue(route.CarrierGatewayId), "cagw") {
 			return true, nil
 		}
 	}

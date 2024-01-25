@@ -155,6 +155,22 @@ func TestValidateMachinePool(t *testing.T) {
 			expectedErrMsg: "",
 		},
 		{
+			name:     "multi-zone duplicate zones defined for control plane pool",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Name: types.MachinePoolControlPlaneRoleName,
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						Zones: []string{
+							"test-east-1a",
+							"test-east-1a",
+						},
+					},
+				},
+			},
+			expectedErrMsg: `test-path.zones\[1]: Duplicate value: "test-east-1a"`,
+		},
+		{
 			name:     "multi-zone no zones defined for compute pool",
 			platform: validPlatform(),
 			pool: &types.MachinePool{
@@ -165,6 +181,22 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expectedZones:  &[]string{"test-east-1a", "test-east-2a"},
 			expectedErrMsg: "",
+		},
+		{
+			name:     "multi-zone duplicate zones defined for compute pool",
+			platform: validPlatform(),
+			pool: &types.MachinePool{
+				Name: types.MachinePoolComputeRoleName,
+				Platform: types.MachinePoolPlatform{
+					VSphere: &vsphere.MachinePool{
+						Zones: []string{
+							"test-east-1a",
+							"test-east-1a",
+						},
+					},
+				},
+			},
+			expectedErrMsg: `test-path.zones\[1]: Duplicate value: "test-east-1a"`,
 		},
 		{
 			name:     "multi-zone undefined zone",

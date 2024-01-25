@@ -47,6 +47,12 @@ func (o *PcloudVolumegroupsGetallReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVolumegroupsGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudVolumegroupsGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -54,7 +60,7 @@ func (o *PcloudVolumegroupsGetallReader) ReadResponse(response runtime.ClientRes
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups] pcloud.volumegroups.getall", response, response.Code())
 	}
 }
 
@@ -95,6 +101,11 @@ func (o *PcloudVolumegroupsGetallOK) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups getall o k response a status code equal to that given
 func (o *PcloudVolumegroupsGetallOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud volumegroups getall o k response
+func (o *PcloudVolumegroupsGetallOK) Code() int {
+	return 200
 }
 
 func (o *PcloudVolumegroupsGetallOK) Error() string {
@@ -160,6 +171,11 @@ func (o *PcloudVolumegroupsGetallBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud volumegroups getall bad request response
+func (o *PcloudVolumegroupsGetallBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudVolumegroupsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsGetallBadRequest  %+v", 400, o.Payload)
 }
@@ -221,6 +237,11 @@ func (o *PcloudVolumegroupsGetallUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups getall unauthorized response a status code equal to that given
 func (o *PcloudVolumegroupsGetallUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud volumegroups getall unauthorized response
+func (o *PcloudVolumegroupsGetallUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudVolumegroupsGetallUnauthorized) Error() string {
@@ -286,6 +307,11 @@ func (o *PcloudVolumegroupsGetallForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud volumegroups getall forbidden response
+func (o *PcloudVolumegroupsGetallForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudVolumegroupsGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsGetallForbidden  %+v", 403, o.Payload)
 }
@@ -299,6 +325,74 @@ func (o *PcloudVolumegroupsGetallForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudVolumegroupsGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsGetallNotFound creates a PcloudVolumegroupsGetallNotFound with default headers values
+func NewPcloudVolumegroupsGetallNotFound() *PcloudVolumegroupsGetallNotFound {
+	return &PcloudVolumegroupsGetallNotFound{}
+}
+
+/*
+PcloudVolumegroupsGetallNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVolumegroupsGetallNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups getall not found response has a 2xx status code
+func (o *PcloudVolumegroupsGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups getall not found response has a 3xx status code
+func (o *PcloudVolumegroupsGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups getall not found response has a 4xx status code
+func (o *PcloudVolumegroupsGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups getall not found response has a 5xx status code
+func (o *PcloudVolumegroupsGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups getall not found response a status code equal to that given
+func (o *PcloudVolumegroupsGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud volumegroups getall not found response
+func (o *PcloudVolumegroupsGetallNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVolumegroupsGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -347,6 +441,11 @@ func (o *PcloudVolumegroupsGetallInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud volumegroups getall internal server error response a status code equal to that given
 func (o *PcloudVolumegroupsGetallInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud volumegroups getall internal server error response
+func (o *PcloudVolumegroupsGetallInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudVolumegroupsGetallInternalServerError) Error() string {

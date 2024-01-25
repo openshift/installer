@@ -21,6 +21,7 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids = concat(
     aws_route_table.private_routes.*.id,
     aws_route_table.default.*.id,
+    aws_route_table.carrier.*.id,
   )
 
   tags = var.tags

@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.61.0-1667892a-20221109-194550
+ * IBM OpenAPI SDK Code Generator Version: 3.80.0-29334a73-20230925-151553
  */
 
 // Package metricsrouterv3 : Operations and models for the MetricsRouterV3 service
@@ -113,15 +113,17 @@ func NewMetricsRouterV3(options *MetricsRouterV3Options) (service *MetricsRouter
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
 		"au-syd":           "https://au-syd.metrics-router.cloud.ibm.com/api/v3",           // The server for IBM Cloud Metrics Routing Service in the au-syd region.
-		"private.au-syd":   "https://private.au-syd.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the au-syd region with private endpoint.
+		"private.au-syd":   "https://private.au-syd.metrics-router.cloud.ibm.com/api/v3",   // The server for IBM Cloud Metrics Routing Service in the au-syd region.
 		"eu-de":            "https://eu-de.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-de region.
-		"private.eu-de":    "https://private.eu-de.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-de region with private endpoint.
+		"private.eu-de":    "https://private.eu-de.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-de region.
 		"eu-gb":            "https://eu-gb.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-gb region.
-		"private.eu-gb":    "https://private.eu-gb.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-gb region with private endpoint.
+		"private.eu-gb":    "https://private.eu-gb.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-gb region.
+		"eu-es":            "https://eu-es.metrics-router.cloud.ibm.com/api/v3",            // The server for IBM Cloud Metrics Routing Service in the eu-es region.
+		"private.eu-es":    "https://private.eu-es.metrics-router.cloud.ibm.com/api/v3",    // The server for IBM Cloud Metrics Routing Service in the eu-es region.
 		"us-east":          "https://us-east.metrics-router.cloud.ibm.com/api/v3",          // The server for IBM Cloud Metrics Routing Service in the us-east region.
-		"private.us-east":  "https://private.us-east.metrics-router.cloud.ibm.com/api/v3",  // The server for IBM Cloud Metrics Routing Service in the us-east region with private endpoint.
+		"private.us-east":  "https://private.us-east.metrics-router.cloud.ibm.com/api/v3",  // The server for IBM Cloud Metrics Routing Service in the us-east region.
 		"us-south":         "https://us-south.metrics-router.cloud.ibm.com/api/v3",         // The server for IBM Cloud Metrics Routing Service in the us-south region.
-		"private.us-south": "https://private.us-south.metrics-router.cloud.ibm.com/api/v3", // The server for IBM Cloud Metrics Routing Service in the us-south region with private endpoint.
+		"private.us-south": "https://private.us-south.metrics-router.cloud.ibm.com/api/v3", // The server for IBM Cloud Metrics Routing Service in the us-south region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -961,7 +963,10 @@ type CreateTargetOptions struct {
 	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
-	// The CRN of a destination service instance or resource.
+	// Cloud Resource Name (CRN) of the destination resource. Ensure you have a service authorization between IBM Cloud
+	// Metrics Routing and your Cloud resource. See [service-to-service
+	// authorization](https://cloud.ibm.com/docs/metrics-router?topic=metrics-router-target-monitoring&interface=ui#target-monitoring-ui)
+	// for details.
 	DestinationCRN *string `json:"destination_crn" validate:"required"`
 
 	// Include this optional field if you want to create a target in a different region other than the one you are
@@ -1495,7 +1500,10 @@ type Target struct {
 	// The crn of the target resource.
 	CRN *string `json:"crn" validate:"required"`
 
-	// The CRN of the destination service instance or resource.
+	// Cloud Resource Name (CRN) of the destination resource. Ensure you have a service authorization between IBM Cloud
+	// Metrics Routing and your Cloud resource. See [service-to-service
+	// authorization](https://cloud.ibm.com/docs/metrics-router?topic=metrics-router-target-monitoring&interface=ui#target-monitoring-ui)
+	// for details.
 	DestinationCRN *string `json:"destination_crn" validate:"required"`
 
 	// The type of the target.
@@ -1762,7 +1770,10 @@ type UpdateTargetOptions struct {
 	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name,omitempty"`
 
-	// The CRN of the destination service instance or resource.
+	// Cloud Resource Name (CRN) of the destination resource. Ensure you have a service authorization between IBM Cloud
+	// Metrics Routing and your Cloud resource. See [service-to-service
+	// authorization](https://cloud.ibm.com/docs/metrics-router?topic=metrics-router-target-monitoring&interface=ui#target-monitoring-ui)
+	// for details.
 	DestinationCRN *string `json:"destination_crn,omitempty"`
 
 	// Allows users to set headers on API requests

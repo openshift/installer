@@ -29,7 +29,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
-	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -45,7 +44,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -162,38 +160,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	machines := []machinev1beta1.Machine{}
 	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	switch ic.Platform.Name() {
-	case alibabacloudtypes.Name:
-		client, err := installConfig.AlibabaCloud.Client()
-		if err != nil {
-			return err
-		}
-		vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
-		if err != nil {
-			return errors.Wrap(err, "failed to get VSwitchs map")
-		}
-		mpool := alibabacloudtypes.DefaultMasterMachinePoolPlatform()
-		mpool.ImageID = string(*rhcosImage)
-		mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
-		mpool.Set(pool.Platform.AlibabaCloud)
-		if len(mpool.Zones) == 0 {
-			if len(vswitchMaps) > 0 {
-				for zone := range vswitchMaps {
-					mpool.Zones = append(mpool.Zones, zone)
-				}
-			} else {
-				azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
-				if err != nil || len(azs) == 0 {
-					return errors.Wrap(err, "failed to fetch availability zones")
-				}
-				mpool.Zones = azs
-			}
-		}
-
-		pool.Platform.AlibabaCloud = &mpool
-		machines, err = alibabacloud.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName, installConfig.Config.Platform.AlibabaCloud.Tags, vswitchMaps)
-		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
-		}
 	case awstypes.Name:
 		subnets := map[string]string{}
 		if len(ic.Platform.AWS.Subnets) > 0 {
@@ -301,7 +267,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.IBMCloud)
 		if len(mpool.Zones) == 0 {
-			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region)
+			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -473,13 +439,18 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
-		machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+
+		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
+			controlPlaneMachineSet = nil
+		}
+
 		vsphere.ConfigMasters(machines, clusterID.InfraID)
 	case powervstypes.Name:
-		mpool := defaultPowerVSMachinePoolPlatform()
+		mpool := defaultPowerVSMachinePoolPlatform(ic)
 		mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.PowerVS)
 		// Only the service instance is guaranteed to exist and be passed via the install config
@@ -703,7 +674,6 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		&machinev1beta1.GCPMachineProviderSpec{},
 	)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
-		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
 		&machinev1.ControlPlaneMachineSet{},
@@ -756,16 +726,23 @@ func IsMachineManifest(file *asset.File) bool {
 	} else if matched {
 		return true
 	}
-	if matched, err := filepath.Match(masterMachineFileNamePattern, filename); err != nil {
-		panic("bad format for master machine file name pattern")
-	} else if matched {
-		return true
+	for _, pattern := range []struct {
+		Pattern string
+		Type    string
+	}{
+		{Pattern: secretFileNamePattern, Type: "secret"},
+		{Pattern: networkConfigSecretFileNamePattern, Type: "network config secret"},
+		{Pattern: hostFileNamePattern, Type: "host"},
+		{Pattern: masterMachineFileNamePattern, Type: "master machine"},
+		{Pattern: workerMachineSetFileNamePattern, Type: "worker machineset"},
+	} {
+		if matched, err := filepath.Match(pattern.Pattern, filename); err != nil {
+			panic(fmt.Sprintf("bad format for %s file name pattern", pattern.Type))
+		} else if matched {
+			return true
+		}
 	}
-	if matched, err := filepath.Match(workerMachineSetFileNamePattern, filename); err != nil {
-		panic("bad format for worker machine file name pattern")
-	} else {
-		return matched
-	}
+	return false
 }
 
 func createSecretAssetFiles(resources []corev1.Secret, fileName string) ([]*asset.File, error) {

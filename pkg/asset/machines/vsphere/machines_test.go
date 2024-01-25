@@ -215,6 +215,26 @@ var machinePoolReducedZones = types.MachinePool{
 	Architecture:   types.ArchitectureAMD64,
 }
 
+var machinePoolSingleZones = types.MachinePool{
+	Name:     "master",
+	Replicas: &machinePoolReplicas,
+	Platform: types.MachinePoolPlatform{
+		VSphere: &vsphere.MachinePool{
+			NumCPUs:           4,
+			NumCoresPerSocket: 2,
+			MemoryMiB:         16384,
+			OSDisk: vsphere.OSDisk{
+				DiskSizeGB: 60,
+			},
+			Zones: []string{
+				"deployzone-us-east-1a",
+			},
+		},
+	},
+	Hyperthreading: "true",
+	Architecture:   types.ArchitectureAMD64,
+}
+
 var machinePoolUndefinedZones = types.MachinePool{
 	Name:     "master",
 	Replicas: &machinePoolReplicas,
@@ -345,6 +365,21 @@ func TestConfigMasters(t *testing.T) {
 			},
 		},
 		{
+			testCase:                   "all masters in single zone / pool",
+			machinePool:                &machinePoolSingleZones,
+			maxAllowedWorkspaceMatches: 3,
+			installConfig:              installConfig,
+			workspaces: []machineapi.Workspace{
+				{
+					Server:       "your.vcenter.example.com",
+					Datacenter:   "dc1",
+					Folder:       "/dc1/vm/folder1",
+					Datastore:    "/dc1/datastore/datastore1",
+					ResourcePool: "/dc1/host/c1/Resources/rp1",
+				},
+			},
+		},
+		{
 			testCase:                   "full path to cluster resource pool when no pool provided via placement constraint",
 			machinePool:                &machinePoolValidZones,
 			maxAllowedWorkspaceMatches: 1,
@@ -378,7 +413,7 @@ func TestConfigMasters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
+			machines, cpms, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
@@ -402,6 +437,14 @@ func TestConfigMasters(t *testing.T) {
 					}
 					if count < tc.minAllowedWorkspaceMatches {
 						t.Errorf("machine workspace was enountered too few times[min: %d]", tc.minAllowedWorkspaceMatches)
+					}
+				}
+
+				if cpms != nil {
+					// Make sure FDs equal same quantity as config
+					fds := cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains
+					if len(fds.VSphere) != len(tc.workspaces) {
+						t.Errorf("machine workspace count %d does not equal number of failure domains [count: %d] in CPMS", len(tc.workspaces), len(fds.VSphere))
 					}
 				}
 			}
@@ -449,7 +492,7 @@ func TestHostsToMachines(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
+			machines, _, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			// Check machine counts

@@ -31,7 +31,6 @@ import (
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/baremetal"
@@ -47,7 +46,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -179,13 +177,28 @@ func defaultVSphereMachinePoolPlatform() vspheretypes.MachinePool {
 	}
 }
 
-func defaultPowerVSMachinePoolPlatform() powervstypes.MachinePool {
-	return powervstypes.MachinePool{
+func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.MachinePool {
+	var (
+		defaultMp powervstypes.MachinePool
+		sysTypes  []string
+		err       error
+	)
+
+	defaultMp = powervstypes.MachinePool{
 		MemoryGiB:  32,
 		Processors: intstr.FromString("0.5"),
 		ProcType:   machinev1.PowerVSProcessorTypeShared,
 		SysType:    "s922",
 	}
+
+	sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region)
+	if err == nil {
+		defaultMp.SysType = sysTypes[0]
+	} else {
+		logrus.Warnf("For given region %v, AvailableSysTypes returns %v", ic.PowerVS.Region, err)
+	}
+
+	return defaultMp
 }
 
 func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
@@ -203,11 +216,13 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 // using the existing preferred instance list used by worker compute pool.
 // Each machine set in the edge pool, created for each zone, can use different instance
 // types depending on the instance offerings in the location (Local Zones).
-func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, zones icaws.Zones) (ok bool, err error) {
+func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, zones icaws.Zones) (ok bool) {
+	allZonesFound := true
 	for zone := range zones {
 		preferredType, err := aws.PreferredInstanceType(ctx, meta, defaultTypes, []string{zone})
 		if err != nil {
-			logrus.Warn(errors.Wrap(err, fmt.Sprintf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest", zone, defaultTypes)))
+			logrus.Warnf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest: %v", zone, defaultTypes, err)
+			allZonesFound = false
 			continue
 		}
 		if _, ok := zones[zone]; !ok {
@@ -215,7 +230,7 @@ func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []strin
 		}
 		zones[zone].PreferredInstanceType = preferredType
 	}
-	return true, nil
+	return allZonesFound
 }
 
 // Worker generates the machinesets for `worker` machine pool.
@@ -318,50 +333,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 
 		switch ic.Platform.Name() {
-		case alibabacloudtypes.Name:
-			client, err := installConfig.AlibabaCloud.Client()
-			if err != nil {
-				return err
-			}
-			vswitchMaps, err := installConfig.AlibabaCloud.VSwitchMaps()
-			if err != nil {
-				return errors.Wrap(err, "failed to get VSwitchs map")
-			}
-
-			mpool := alibabacloudtypes.DefaultWorkerMachinePoolPlatform()
-			mpool.ImageID = string(*rhcosImage)
-			mpool.Set(ic.Platform.AlibabaCloud.DefaultMachinePlatform)
-			mpool.Set(pool.Platform.AlibabaCloud)
-			if len(mpool.Zones) == 0 {
-				if len(vswitchMaps) > 0 {
-					for zone := range vswitchMaps {
-						mpool.Zones = append(mpool.Zones, zone)
-					}
-				} else {
-					azs, err := client.GetAvailableZonesByInstanceType(mpool.InstanceType)
-					if err != nil || len(azs) == 0 {
-						return errors.Wrap(err, "failed to fetch availability zones")
-					}
-					mpool.Zones = azs
-				}
-			}
-
-			pool.Platform.AlibabaCloud = &mpool
-			sets, err := alibabacloud.MachineSets(
-				clusterID.InfraID,
-				ic,
-				&pool,
-				"worker",
-				workerUserDataSecretName,
-				installConfig.Config.Platform.AlibabaCloud.Tags,
-				vswitchMaps,
-			)
-			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
-			}
-			for _, set := range sets {
-				machineSets = append(machineSets, set)
-			}
 		case awstypes.Name:
 			subnets := icaws.Subnets{}
 			zones := icaws.Zones{}
@@ -429,12 +400,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, configv1.HighlyAvailableTopologyMode)
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					ok, err := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
-					if err != nil {
-						return errors.Wrap(err, "failed to find default instance type for edge pool, you must define on the compute pool")
-					}
+					ok := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
 					if !ok {
-						logrus.Warn(errors.Wrap(err, "failed to find preferred instance type for edge pool, using default"))
+						logrus.Warnf("failed to find preferred instance type for one or more zones in the %s pool, using default: %s", pool.Name, instanceTypes[0])
 						mpool.InstanceType = instanceTypes[0]
 					}
 				default:
@@ -575,7 +543,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.IBMCloud)
 			if len(mpool.Zones) == 0 {
-				azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region)
+				azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
@@ -636,7 +604,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				logrus.Debug("Generating worker machines with static IPs.")
 				templateName := clusterID.InfraID + "-rhcos"
 
-				machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+				machines, _, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
 				if err != nil {
 					return errors.Wrap(err, "failed to create worker machine objects")
 				}
@@ -662,7 +630,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case powervstypes.Name:
-			mpool := defaultPowerVSMachinePoolPlatform()
+			mpool := defaultPowerVSMachinePoolPlatform(ic)
 			mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.PowerVS)
 			pool.Platform.PowerVS = &mpool
@@ -803,7 +771,6 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	)
 	machinev1.Install(scheme)
 	scheme.AddKnownTypes(machinev1.GroupVersion,
-		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
 	)

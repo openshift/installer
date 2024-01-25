@@ -14,6 +14,7 @@ import (
 type Region struct {
 	Description string
 	VPCRegion   string
+	COSRegion   string
 	Zones       []string
 	SysTypes    []string
 }
@@ -23,7 +24,36 @@ var Regions = map[string]Region{
 	"dal": {
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
+		COSRegion:   "us-south",
 		Zones:       []string{"dal10"},
+		SysTypes:    []string{"s922", "e980"},
+	},
+	"eu-de": {
+		Description: "Frankfurt, Germany",
+		VPCRegion:   "eu-de",
+		COSRegion:   "eu-de",
+		Zones:       []string{"eu-de-1", "eu-de-2"},
+		SysTypes:    []string{"s922", "e980"},
+	},
+	"mad": {
+		Description: "Madrid, Spain",
+		VPCRegion:   "eu-es",
+		COSRegion:   "eu-de", // @HACK - PowerVS says COS not supported in this region
+		Zones:       []string{"mad02", "mad04"},
+		SysTypes:    []string{"s1022"},
+	},
+	"sao": {
+		Description: "São Paulo, Brazil",
+		VPCRegion:   "br-sao",
+		COSRegion:   "br-sao",
+		Zones:       []string{"sao04"},
+		SysTypes:    []string{"s922", "e980"},
+	},
+	"wdc": {
+		Description: "Washington DC, USA",
+		VPCRegion:   "us-east",
+		COSRegion:   "us-east",
+		Zones:       []string{"wdc06", "wdc07"},
 		SysTypes:    []string{"s922", "e980"},
 	},
 }
@@ -111,4 +141,34 @@ func AllKnownSysTypes() sets.Set[string] {
 		sysTypes.Insert(region.SysTypes...)
 	}
 	return sysTypes
+}
+
+// COSRegionForVPCRegion returns the corresponding COS region for the given VPC region.
+func COSRegionForVPCRegion(vpcRegion string) (string, error) {
+	for r := range Regions {
+		if vpcRegion == Regions[r].VPCRegion {
+			return Regions[r].COSRegion, nil
+		}
+	}
+
+	return "", fmt.Errorf("COS region corresponding to a VPC region %s not found ", vpcRegion)
+}
+
+// COSRegionForPowerVSRegion returns the IBM COS region for the specified PowerVS region.
+func COSRegionForPowerVSRegion(region string) (string, error) {
+	if r, ok := Regions[region]; ok {
+		return r.COSRegion, nil
+	}
+
+	return "", fmt.Errorf("COS region corresponding to a PowerVS region %s not found ", region)
+}
+
+// ValidateCOSRegion validates that given COS region is known/tested.
+func ValidateCOSRegion(region string) bool {
+	for r := range Regions {
+		if region == Regions[r].COSRegion {
+			return true
+		}
+	}
+	return false
 }

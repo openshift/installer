@@ -85,6 +85,11 @@ func (m *SSHKeys) contextValidateSSHKeys(ctx context.Context, formats strfmt.Reg
 	for i := 0; i < len(m.SSHKeys); i++ {
 
 		if m.SSHKeys[i] != nil {
+
+			if swag.IsZero(m.SSHKeys[i]) { // not required
+				return nil
+			}
+
 			if err := m.SSHKeys[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("sshKeys" + "." + strconv.Itoa(i))

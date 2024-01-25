@@ -35,14 +35,13 @@ module "pi_network" {
   }
   source = "./power_network"
 
-  cluster_id              = var.cluster_id
-  cloud_instance_id       = module.iaas.si_guid
-  resource_group          = var.powervs_resource_group
-  machine_cidr            = var.machine_v4_cidrs[0]
-  vpc_crn                 = module.vpc.vpc_crn
-  dns_server              = module.dns.dns_server
-  enable_snat             = var.powervs_enable_snat
-  transit_gateway_enabled = var.powervs_transit_gateway_enabled
+  cluster_id        = var.cluster_id
+  cloud_instance_id = module.iaas.si_guid
+  resource_group    = var.powervs_resource_group
+  machine_cidr      = var.machine_v4_cidrs[0]
+  vpc_crn           = module.vpc.vpc_crn
+  dns_server        = module.dns.dns_server
+  enable_snat       = var.powervs_enable_snat
 }
 
 resource "ibm_pi_key" "cluster_key" {
@@ -56,12 +55,12 @@ module "master" {
   providers = {
     ibm = ibm.powervs
   }
-  source            = "./master"
-  cloud_instance_id = module.iaas.si_guid
-  cluster_id        = var.cluster_id
-  resource_group    = var.powervs_resource_group
-  instance_count    = var.master_count
+  source = "./master"
 
+  cloud_instance_id   = module.iaas.si_guid
+  cluster_id          = var.cluster_id
+  resource_group      = var.powervs_resource_group
+  instance_count      = var.master_count
   api_key             = var.powervs_api_key
   powervs_region      = var.powervs_region
   powervs_zone        = var.powervs_zone
@@ -148,12 +147,13 @@ module "transit_gateway" {
   }
   source = "./transit_gateway"
 
-  cluster_id              = var.cluster_id
-  resource_group          = var.powervs_resource_group
-  service_instance_crn    = module.iaas.si_crn
-  transit_gateway_enabled = var.powervs_transit_gateway_enabled
-  vpc_crn                 = module.vpc.vpc_crn
-  vpc_region              = var.powervs_vpc_region
+  cluster_id               = var.cluster_id
+  resource_group           = var.powervs_resource_group
+  service_instance_crn     = module.iaas.si_crn
+  attached_transit_gateway = var.powervs_attached_transit_gateway
+  tg_connection_vpc_id     = var.powervs_tg_connection_vpc_id
+  vpc_crn                  = module.vpc.vpc_crn
+  vpc_region               = var.powervs_vpc_region
 }
 
 module "iaas" {
@@ -166,7 +166,8 @@ module "iaas" {
   # define and pass variables to:
   # data/data/powervs/cluster/iaas/variables.tf
   #
-  cluster_id     = var.cluster_id
-  resource_group = var.powervs_resource_group
-  powervs_zone   = var.powervs_zone
+  cluster_id            = var.cluster_id
+  resource_group        = var.powervs_resource_group
+  powervs_zone          = var.powervs_zone
+  service_instance_name = var.powervs_service_instance_name
 }

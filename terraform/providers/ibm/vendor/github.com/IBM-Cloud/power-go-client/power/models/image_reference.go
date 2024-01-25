@@ -238,6 +238,7 @@ func (m *ImageReference) ContextValidate(ctx context.Context, formats strfmt.Reg
 func (m *ImageReference) contextValidateSpecifications(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Specifications != nil {
+
 		if err := m.Specifications.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("specifications")

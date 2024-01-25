@@ -492,11 +492,11 @@ func (c *Route53) ChangeResourceRecordSetsRequest(input *ChangeResourceRecordSet
 // # Change Propagation to Route 53 DNS Servers
 //
 // When you submit a ChangeResourceRecordSets request, Route 53 propagates your
-// changes to all of the Route 53 authoritative DNS servers. While your changes
-// are propagating, GetChange returns a status of PENDING. When propagation
-// is complete, GetChange returns a status of INSYNC. Changes generally propagate
-// to all Route 53 name servers within 60 seconds. For more information, see
-// GetChange (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html).
+// changes to all of the Route 53 authoritative DNS servers managing the hosted
+// zone. While your changes are propagating, GetChange returns a status of PENDING.
+// When propagation is complete, GetChange returns a status of INSYNC. Changes
+// generally propagate to all Route 53 name servers managing the hosted zone
+// within 60 seconds. For more information, see GetChange (https://docs.aws.amazon.com/Route53/latest/APIReference/API_GetChange.html).
 //
 // # Limits on ChangeResourceRecordSets Requests
 //
@@ -3500,11 +3500,11 @@ func (c *Route53) GetChangeRequest(input *GetChangeInput) (req *request.Request,
 // the following values:
 //
 //   - PENDING indicates that the changes in this request have not propagated
-//     to all Amazon Route 53 DNS servers. This is the initial status of all
-//     change batch requests.
+//     to all Amazon Route 53 DNS servers managing the hosted zone. This is the
+//     initial status of all change batch requests.
 //
 //   - INSYNC indicates that the changes have propagated to all Route 53 DNS
-//     servers.
+//     servers managing the hosted zone.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7155,6 +7155,11 @@ func (c *Route53) TestDNSAnswerRequest(input *TestDNSAnswerInput) (req *request.
 //
 // This call only supports querying public hosted zones.
 //
+// The TestDnsAnswer returns information similar to what you would expect from
+// the answer section of the dig command. Therefore, if you query for the name
+// servers of a subdomain that point to the parent name servers, those will
+// not be returned.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -9574,6 +9579,11 @@ type CreateHostedZoneInput struct {
 	// the ID that Amazon Route 53 assigned to the reusable delegation set when
 	// you created it. For more information about reusable delegation sets, see
 	// CreateReusableDelegationSet (https://docs.aws.amazon.com/Route53/latest/APIReference/API_CreateReusableDelegationSet.html).
+	//
+	// If you are using a reusable delegation set to create a public hosted zone
+	// for a subdomain, make sure that the parent hosted zone doesn't use one or
+	// more of the same name servers. If you have overlapping nameservers, the operation
+	// will cause a ConflictingDomainsExist error.
 	DelegationSetId *string `type:"string"`
 
 	// (Optional) A complex type that contains the following optional values:
@@ -20427,6 +20437,9 @@ const (
 
 	// CloudWatchRegionApSoutheast4 is a CloudWatchRegion enum value
 	CloudWatchRegionApSoutheast4 = "ap-southeast-4"
+
+	// CloudWatchRegionIlCentral1 is a CloudWatchRegion enum value
+	CloudWatchRegionIlCentral1 = "il-central-1"
 )
 
 // CloudWatchRegion_Values returns all elements of the CloudWatchRegion enum
@@ -20466,6 +20479,7 @@ func CloudWatchRegion_Values() []string {
 		CloudWatchRegionUsIsoWest1,
 		CloudWatchRegionUsIsobEast1,
 		CloudWatchRegionApSoutheast4,
+		CloudWatchRegionIlCentral1,
 	}
 }
 
@@ -20796,6 +20810,9 @@ const (
 
 	// ResourceRecordSetRegionApSoutheast4 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionApSoutheast4 = "ap-southeast-4"
+
+	// ResourceRecordSetRegionIlCentral1 is a ResourceRecordSetRegion enum value
+	ResourceRecordSetRegionIlCentral1 = "il-central-1"
 )
 
 // ResourceRecordSetRegion_Values returns all elements of the ResourceRecordSetRegion enum
@@ -20830,6 +20847,7 @@ func ResourceRecordSetRegion_Values() []string {
 		ResourceRecordSetRegionEuSouth1,
 		ResourceRecordSetRegionEuSouth2,
 		ResourceRecordSetRegionApSoutheast4,
+		ResourceRecordSetRegionIlCentral1,
 	}
 }
 
@@ -20988,6 +21006,9 @@ const (
 
 	// VPCRegionApSoutheast4 is a VPCRegion enum value
 	VPCRegionApSoutheast4 = "ap-southeast-4"
+
+	// VPCRegionIlCentral1 is a VPCRegion enum value
+	VPCRegionIlCentral1 = "il-central-1"
 )
 
 // VPCRegion_Values returns all elements of the VPCRegion enum
@@ -21026,5 +21047,6 @@ func VPCRegion_Values() []string {
 		VPCRegionEuSouth1,
 		VPCRegionEuSouth2,
 		VPCRegionApSoutheast4,
+		VPCRegionIlCentral1,
 	}
 }

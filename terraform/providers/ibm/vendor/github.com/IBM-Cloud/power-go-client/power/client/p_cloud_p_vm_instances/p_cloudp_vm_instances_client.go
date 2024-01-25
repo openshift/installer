@@ -72,6 +72,8 @@ type ClientService interface {
 
 	PcloudV2PvminstancesCapturePost(params *PcloudV2PvminstancesCapturePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesCapturePostAccepted, error)
 
+	PcloudV2PvminstancesGetall(params *PcloudV2PvminstancesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesGetallOK, error)
+
 	SetTransport(transport runtime.ClientTransport)
 }
 
@@ -115,7 +117,11 @@ func (a *Client) PcloudPvminstancesActionPost(params *PcloudPvminstancesActionPo
 }
 
 /*
-PcloudPvminstancesCapturePost captures a p VM instance and create a deployable image
+	PcloudPvminstancesCapturePost captures a p VM instance and create a deployable image
+
+	This API is deprecated for /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture.
+
+>*Note*: Support for this API is available till Oct 2022.
 */
 func (a *Client) PcloudPvminstancesCapturePost(params *PcloudPvminstancesCapturePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesCapturePostOK, *PcloudPvminstancesCapturePostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -895,6 +901,45 @@ func (a *Client) PcloudV2PvminstancesCapturePost(params *PcloudV2PvminstancesCap
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.v2.pvminstances.capture.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PcloudV2PvminstancesGetall gets all the pvm instances for this cloud instance
+*/
+func (a *Client) PcloudV2PvminstancesGetall(params *PcloudV2PvminstancesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesGetallOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudV2PvminstancesGetallParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.v2.pvminstances.getall",
+		Method:             "GET",
+		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudV2PvminstancesGetallReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PcloudV2PvminstancesGetallOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.pvminstances.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

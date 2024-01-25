@@ -23,9 +23,11 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	configv1 "github.com/openshift/api/config/v1"
 	icibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/version"
 )
 
@@ -57,6 +59,10 @@ type ClusterUninstaller struct {
 	dnsServicesSvc         *dnssvcsv1.DnsSvcsV1
 	dnsRecordsSvc          *dnsrecordsv1.DnsRecordsV1
 	maxRetryAttempt        int
+	serviceEndpoints       []configv1.IBMCloudServiceEndpoint
+
+	// Cache endpoint override for IBM Cloud IAM, if one was provided in serviceEndpoints
+	iamServiceEndpointOverride string
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -68,7 +74,7 @@ type ClusterUninstaller struct {
 
 // New returns an IBMCloud destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
-	return &ClusterUninstaller{
+	cUninstaller := &ClusterUninstaller{
 		ClusterName:         metadata.ClusterName,
 		Context:             context.Background(),
 		Logger:              logger,
@@ -79,11 +85,21 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		DNSInstanceID:       metadata.ClusterPlatformMetadata.IBMCloud.DNSInstanceID,
 		Region:              metadata.ClusterPlatformMetadata.IBMCloud.Region,
 		ResourceGroupName:   metadata.ClusterPlatformMetadata.IBMCloud.ResourceGroupName,
+		serviceEndpoints:    metadata.ClusterPlatformMetadata.IBMCloud.ServiceEndpoints,
 		UserProvidedSubnets: metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
 		UserProvidedVPC:     metadata.ClusterPlatformMetadata.IBMCloud.VPC,
 		pendingItemTracker:  newPendingItemTracker(),
 		maxRetryAttempt:     30,
-	}, nil
+	}
+
+	for _, endpoint := range cUninstaller.serviceEndpoints {
+		if endpoint.Name == configv1.IBMCloudServiceIAM {
+			cUninstaller.iamServiceEndpointOverride = endpoint.URL
+			break
+		}
+	}
+
+	return cUninstaller, nil
 }
 
 // Retry ...
@@ -219,13 +235,17 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	userAgentString := fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)
 
 	// ResourceManagerV2
-	rmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	rmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
-	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(&resourcemanagerv2.ResourceManagerV2Options{
+	rmOptions := &resourcemanagerv2.ResourceManagerV2Options{
 		Authenticator: rmAuthenticator,
-	})
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceResourceManager, o.serviceEndpoints); overrideURL != "" {
+		rmOptions.URL = overrideURL
+	}
+	o.managementSvc, err = resourcemanagerv2.NewResourceManagerV2(rmOptions)
 	if err != nil {
 		return err
 	}
@@ -238,26 +258,34 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// ResourceControllerV2
-	rcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	rcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
-	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(&resourcecontrollerv2.ResourceControllerV2Options{
+	rcOptions := &resourcecontrollerv2.ResourceControllerV2Options{
 		Authenticator: rcAuthenticator,
-	})
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceResourceController, o.serviceEndpoints); overrideURL != "" {
+		rcOptions.URL = overrideURL
+	}
+	o.controllerSvc, err = resourcecontrollerv2.NewResourceControllerV2(rcOptions)
 	if err != nil {
 		return err
 	}
 	o.controllerSvc.Service.SetUserAgent(userAgentString)
 
 	// IamPolicyManagementV1
-	ipmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	ipmAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
-	o.iamPolicyManagementSvc, err = iampolicymanagementv1.NewIamPolicyManagementV1(&iampolicymanagementv1.IamPolicyManagementV1Options{
+	ipmOptions := &iampolicymanagementv1.IamPolicyManagementV1Options{
 		Authenticator: ipmAuthenticator,
-	})
+	}
+	if o.iamServiceEndpointOverride != "" {
+		ipmOptions.URL = o.iamServiceEndpointOverride
+	}
+	o.iamPolicyManagementSvc, err = iampolicymanagementv1.NewIamPolicyManagementV1(ipmOptions)
 	if err != nil {
 		return err
 	}
@@ -265,14 +293,20 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 
 	if len(o.CISInstanceCRN) > 0 {
 		// ZonesV1
-		zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 		if err != nil {
 			return err
 		}
-		o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+		zonesOptions := &zonesv1.ZonesV1Options{
 			Authenticator: zAuthenticator,
 			Crn:           core.StringPtr(o.CISInstanceCRN),
-		})
+		}
+		// Check for CIS override endpoint once for zonesv1 and dnsrecordsv1 API calls
+		overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCIS, o.serviceEndpoints)
+		if overrideURL != "" {
+			zonesOptions.URL = overrideURL
+		}
+		o.zonesSvc, err = zonesv1.NewZonesV1(zonesOptions)
 		if err != nil {
 			return err
 		}
@@ -296,28 +330,36 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		}
 
 		// DnsRecordsV1
-		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 		if err != nil {
 			return err
 		}
-		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+		dnsRecordsOptions := &dnsrecordsv1.DnsRecordsV1Options{
 			Authenticator:  dnsAuthenticator,
 			Crn:            core.StringPtr(o.CISInstanceCRN),
 			ZoneIdentifier: core.StringPtr(zoneID),
-		})
+		}
+		if overrideURL != "" {
+			dnsRecordsOptions.URL = overrideURL
+		}
+		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(dnsRecordsOptions)
 		if err != nil {
 			return err
 		}
 		o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 	} else if len(o.DNSInstanceID) > 0 {
 		// DnsSvcsV1
-		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 		if err != nil {
 			return err
 		}
-		o.dnsServicesSvc, err = dnssvcsv1.NewDnsSvcsV1(&dnssvcsv1.DnsSvcsV1Options{
+		dnssvcsOptions := &dnssvcsv1.DnsSvcsV1Options{
 			Authenticator: dnsAuthenticator,
-		})
+		}
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceDNSServices, o.serviceEndpoints); overrideURL != "" {
+			dnssvcsOptions.URL = overrideURL
+		}
+		o.dnsServicesSvc, err = dnssvcsv1.NewDnsSvcsV1(dnssvcsOptions)
 		if err != nil {
 			return err
 		}
@@ -345,13 +387,17 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 
 	// VpcV1
-	vpcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+	vpcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey, o.iamServiceEndpointOverride)
 	if err != nil {
 		return err
 	}
-	o.vpcSvc, err = vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
+	vpcOptions := &vpcv1.VpcV1Options{
 		Authenticator: vpcAuthenticator,
-	})
+	}
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceVPC, o.serviceEndpoints); overrideURL != "" {
+		vpcOptions.URL = overrideURL
+	}
+	o.vpcSvc, err = vpcv1.NewVpcV1(vpcOptions)
 	if err != nil {
 		return err
 	}

@@ -118,34 +118,69 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 
 	dhcpNetRegex := fmt.Sprintf("^DHCPSERVER.*%s.*_Private$", clusterID)
 
-	serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
+	var config *machinev1.PowerVSMachineProviderConfig
 
-	//Setting only the mandatory parameters
-	config := &machinev1.PowerVSMachineProviderConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "PowerVSMachineProviderConfig",
-			APIVersion: machinev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{},
-		ServiceInstance: machinev1.PowerVSResource{
-			Type: machinev1.PowerVSResourceTypeName,
-			Name: &serviceName,
-		},
-		Image: machinev1.PowerVSResource{
-			Type: machinev1.PowerVSResourceTypeName,
-			Name: &image,
-		},
-		UserDataSecret: &machinev1.PowerVSSecretReference{
-			Name: userDataSecret,
-		},
-		CredentialsSecret: &machinev1.PowerVSSecretReference{
-			Name: "powervs-credentials",
-		},
-		SystemType:    mpool.SysType,
-		ProcessorType: mpool.ProcType,
-		Processors:    mpool.Processors,
-		MemoryGiB:     mpool.MemoryGiB,
-		KeyPairName:   fmt.Sprintf("%s-key", clusterID),
+	// If a service instance GUID was not passed in the install-config.yaml file, then
+	// we tell the machine provider to use a specific name via XXXTypeName.  Otherwide,
+	// we tell the machine provider the given GUID via XXXTypeID.
+	if platform.ServiceInstanceGUID == "" {
+		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
+
+		// Setting only the mandatory parameters
+		config = &machinev1.PowerVSMachineProviderConfig{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "PowerVSMachineProviderConfig",
+				APIVersion: machinev1.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{},
+			ServiceInstance: machinev1.PowerVSResource{
+				Type: machinev1.PowerVSResourceTypeName,
+				Name: &serviceName,
+			},
+			Image: machinev1.PowerVSResource{
+				Type: machinev1.PowerVSResourceTypeName,
+				Name: &image,
+			},
+			UserDataSecret: &machinev1.PowerVSSecretReference{
+				Name: userDataSecret,
+			},
+			CredentialsSecret: &machinev1.PowerVSSecretReference{
+				Name: "powervs-credentials",
+			},
+			SystemType:    mpool.SysType,
+			ProcessorType: mpool.ProcType,
+			Processors:    mpool.Processors,
+			MemoryGiB:     mpool.MemoryGiB,
+			KeyPairName:   fmt.Sprintf("%s-key", clusterID),
+		}
+	} else {
+		// Setting only the mandatory parameters
+		config = &machinev1.PowerVSMachineProviderConfig{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "PowerVSMachineProviderConfig",
+				APIVersion: machinev1.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{},
+			ServiceInstance: machinev1.PowerVSResource{
+				Type: machinev1.PowerVSResourceTypeID,
+				ID:   &platform.ServiceInstanceGUID,
+			},
+			Image: machinev1.PowerVSResource{
+				Type: machinev1.PowerVSResourceTypeName,
+				Name: &image,
+			},
+			UserDataSecret: &machinev1.PowerVSSecretReference{
+				Name: userDataSecret,
+			},
+			CredentialsSecret: &machinev1.PowerVSSecretReference{
+				Name: "powervs-credentials",
+			},
+			SystemType:    mpool.SysType,
+			ProcessorType: mpool.ProcType,
+			Processors:    mpool.Processors,
+			MemoryGiB:     mpool.MemoryGiB,
+			KeyPairName:   fmt.Sprintf("%s-key", clusterID),
+		}
 	}
 	if network != "" {
 		config.Network = machinev1.PowerVSResource{

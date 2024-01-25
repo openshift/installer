@@ -85,6 +85,11 @@ func (m *SAPProfiles) contextValidateProfiles(ctx context.Context, formats strfm
 	for i := 0; i < len(m.Profiles); i++ {
 
 		if m.Profiles[i] != nil {
+
+			if swag.IsZero(m.Profiles[i]) { // not required
+				return nil
+			}
+
 			if err := m.Profiles[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("profiles" + "." + strconv.Itoa(i))

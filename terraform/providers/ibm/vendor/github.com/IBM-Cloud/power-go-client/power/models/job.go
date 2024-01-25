@@ -144,6 +144,7 @@ func (m *Job) ContextValidate(ctx context.Context, formats strfmt.Registry) erro
 func (m *Job) contextValidateOperation(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Operation != nil {
+
 		if err := m.Operation.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("operation")
@@ -160,6 +161,7 @@ func (m *Job) contextValidateOperation(ctx context.Context, formats strfmt.Regis
 func (m *Job) contextValidateStatus(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.Status != nil {
+
 		if err := m.Status.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("status")

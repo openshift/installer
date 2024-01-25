@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -51,14 +52,24 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 	}
 
 	if len(vspherePool.Zones) > 0 {
+		var zoneRefs []string
 		if len(platform.FailureDomains) == 0 {
 			return append(allErrs, field.Required(fldPath.Child("zones"), "failureDomains must be defined if zones are defined"))
 		}
-		for _, zone := range vspherePool.Zones {
+		for index, zone := range vspherePool.Zones {
 			err := validate.ClusterName1035(zone)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), vspherePool.Zones, err.Error()))
 			}
+
+			// This checks to make sure ref is not duplicated
+			if slices.Contains(zoneRefs, zone) {
+				allErrs = append(allErrs, field.Duplicate(fldPath.Child("zones").Index(index), zone))
+			} else {
+				zoneRefs = append(zoneRefs, zone)
+			}
+
+			// Verify zone references a valid failure domain
 			zoneDefined := false
 			for _, failureDomain := range platform.FailureDomains {
 				if failureDomain.Name == zone {

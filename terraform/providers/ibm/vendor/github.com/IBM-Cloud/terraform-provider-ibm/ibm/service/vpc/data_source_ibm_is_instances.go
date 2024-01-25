@@ -116,6 +116,11 @@ func DataSourceIBMISInstances() *schema.Resource {
 							Computed:    true,
 							Description: "Instance memory",
 						},
+						"numa_count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The number of NUMA nodes this virtual server instance is provisioned on. This property may be absent if the instance's `status` is not `running`.",
+						},
 						isInstanceMetadataServiceEnabled: {
 							Type:        schema.TypeBool,
 							Computed:    true,
@@ -835,6 +840,9 @@ func instancesList(d *schema.ResourceData, meta interface{}) error {
 		l["crn"] = *instance.CRN
 		l["name"] = *instance.Name
 		l["memory"] = *instance.Memory
+		if instance.NumaCount != nil {
+			l["numa_count"] = *instance.NumaCount
+		}
 		if instance.MetadataService != nil {
 			l[isInstanceMetadataServiceEnabled] = *instance.MetadataService.Enabled
 			metadataService := []map[string]interface{}{}

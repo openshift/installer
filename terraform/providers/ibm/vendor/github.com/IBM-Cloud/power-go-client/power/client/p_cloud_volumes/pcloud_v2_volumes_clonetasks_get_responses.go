@@ -66,7 +66,7 @@ func (o *PcloudV2VolumesClonetasksGetReader) ReadResponse(response runtime.Clien
 		}
 		return nil, result
 	default:
-		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
+		return nil, runtime.NewAPIError("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}] pcloud.v2.volumes.clonetasks.get", response, response.Code())
 	}
 }
 
@@ -107,6 +107,11 @@ func (o *PcloudV2VolumesClonetasksGetOK) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumes clonetasks get o k response a status code equal to that given
 func (o *PcloudV2VolumesClonetasksGetOK) IsCode(code int) bool {
 	return code == 200
+}
+
+// Code gets the status code for the pcloud v2 volumes clonetasks get o k response
+func (o *PcloudV2VolumesClonetasksGetOK) Code() int {
+	return 200
 }
 
 func (o *PcloudV2VolumesClonetasksGetOK) Error() string {
@@ -172,6 +177,11 @@ func (o *PcloudV2VolumesClonetasksGetBadRequest) IsCode(code int) bool {
 	return code == 400
 }
 
+// Code gets the status code for the pcloud v2 volumes clonetasks get bad request response
+func (o *PcloudV2VolumesClonetasksGetBadRequest) Code() int {
+	return 400
+}
+
 func (o *PcloudV2VolumesClonetasksGetBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetBadRequest  %+v", 400, o.Payload)
 }
@@ -233,6 +243,11 @@ func (o *PcloudV2VolumesClonetasksGetUnauthorized) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumes clonetasks get unauthorized response a status code equal to that given
 func (o *PcloudV2VolumesClonetasksGetUnauthorized) IsCode(code int) bool {
 	return code == 401
+}
+
+// Code gets the status code for the pcloud v2 volumes clonetasks get unauthorized response
+func (o *PcloudV2VolumesClonetasksGetUnauthorized) Code() int {
+	return 401
 }
 
 func (o *PcloudV2VolumesClonetasksGetUnauthorized) Error() string {
@@ -298,6 +313,11 @@ func (o *PcloudV2VolumesClonetasksGetForbidden) IsCode(code int) bool {
 	return code == 403
 }
 
+// Code gets the status code for the pcloud v2 volumes clonetasks get forbidden response
+func (o *PcloudV2VolumesClonetasksGetForbidden) Code() int {
+	return 403
+}
+
 func (o *PcloudV2VolumesClonetasksGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetForbidden  %+v", 403, o.Payload)
 }
@@ -359,6 +379,11 @@ func (o *PcloudV2VolumesClonetasksGetNotFound) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumes clonetasks get not found response a status code equal to that given
 func (o *PcloudV2VolumesClonetasksGetNotFound) IsCode(code int) bool {
 	return code == 404
+}
+
+// Code gets the status code for the pcloud v2 volumes clonetasks get not found response
+func (o *PcloudV2VolumesClonetasksGetNotFound) Code() int {
+	return 404
 }
 
 func (o *PcloudV2VolumesClonetasksGetNotFound) Error() string {
@@ -424,6 +449,11 @@ func (o *PcloudV2VolumesClonetasksGetConflict) IsCode(code int) bool {
 	return code == 409
 }
 
+// Code gets the status code for the pcloud v2 volumes clonetasks get conflict response
+func (o *PcloudV2VolumesClonetasksGetConflict) Code() int {
+	return 409
+}
+
 func (o *PcloudV2VolumesClonetasksGetConflict) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes/clone-tasks/{clone_task_id}][%d] pcloudV2VolumesClonetasksGetConflict  %+v", 409, o.Payload)
 }
@@ -485,6 +515,11 @@ func (o *PcloudV2VolumesClonetasksGetInternalServerError) IsServerError() bool {
 // IsCode returns true when this pcloud v2 volumes clonetasks get internal server error response a status code equal to that given
 func (o *PcloudV2VolumesClonetasksGetInternalServerError) IsCode(code int) bool {
 	return code == 500
+}
+
+// Code gets the status code for the pcloud v2 volumes clonetasks get internal server error response
+func (o *PcloudV2VolumesClonetasksGetInternalServerError) Code() int {
+	return 500
 }
 
 func (o *PcloudV2VolumesClonetasksGetInternalServerError) Error() string {

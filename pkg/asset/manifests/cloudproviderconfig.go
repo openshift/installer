@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
-	alibabacloudmanifests "github.com/openshift/installer/pkg/asset/manifests/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
@@ -22,7 +21,6 @@ import (
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	powervsmanifests "github.com/openshift/installer/pkg/asset/manifests/powervs"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
-	alibabacloudtypes "github.com/openshift/installer/pkg/types/alibabacloud"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
@@ -109,17 +107,6 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		// Note that the newline is required in order to be valid yaml.
 		cm.Data[cloudProviderConfigDataKey] = `[Global]
 `
-	case alibabacloudtypes.Name:
-		alibabacloudConfig, err := alibabacloudmanifests.CloudConfig{
-			Global: alibabacloudmanifests.GlobalConfig{
-				ClusterID: clusterID.InfraID,
-				Region:    installConfig.Config.AlibabaCloud.Region,
-			},
-		}.JSON()
-		if err != nil {
-			return errors.Wrap(err, "could not create Alibaba Cloud provider config")
-		}
-		cm.Data[cloudProviderConfigDataKey] = alibabacloudConfig
 	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(*installConfig.Config)
 		if err != nil {
@@ -216,7 +203,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		compute.Set(installConfig.Config.WorkerMachinePool().Platform.IBMCloud)
 
 		if len(controlPlane.Zones) == 0 || len(compute.Zones) == 0 {
-			zones, err := ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region)
+			zones, err := ibmcloudmachines.AvailabilityZones(installConfig.Config.IBMCloud.Region, installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
 			if err != nil {
 				return errors.Wrapf(err, "could not get availability zones for %s", installConfig.Config.IBMCloud.Region)
 			}
@@ -237,6 +224,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			subnetNames,
 			controlPlane.Zones,
 			compute.Zones,
+			installConfig.Config.Platform.IBMCloud.ServiceEndpoints,
 		)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
@@ -270,7 +258,16 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
 		}
 
-		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
+		var (
+			serviceGUID string
+			serviceName string
+		)
+
+		if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
+			serviceName = fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
+		} else {
+			serviceGUID = installConfig.Config.PowerVS.ServiceInstanceGUID
+		}
 
 		powervsConfig, err := powervsmanifests.CloudProviderConfig(
 			clusterID.InfraID,
@@ -279,6 +276,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			vpcRegion,
 			installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			vpcSubnets,
+			serviceGUID,
 			serviceName,
 			installConfig.Config.PowerVS.Region,
 			installConfig.Config.PowerVS.Zone,

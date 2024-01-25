@@ -216,6 +216,14 @@ var (
 		Name: to.StringPtr("VMImage"),
 		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
 			HyperVGeneration: azenc.HyperVGenerationTypesV1,
+			Plan:             &azenc.PurchasePlan{},
+		},
+	}
+
+	marketplaceImageAPIResultNoPlan = azenc.VirtualMachineImage{
+		Name: to.StringPtr("VMImage"),
+		VirtualMachineImageProperties: &azenc.VirtualMachineImageProperties{
+			HyperVGeneration: azenc.HyperVGenerationTypesV1,
 		},
 	}
 
@@ -1283,7 +1291,7 @@ func TestAzureMarketplaceImage(t *testing.T) {
 		},
 	}, nil).AnyTimes()
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, erroringOSImageSKU).Return(true, nil).AnyTimes()
-	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, noPlanOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResult, nil).AnyTimes()
+	azureClient.EXPECT().GetMarketplaceImage(gomock.Any(), validRegion, validOSImagePublisher, validOSImageOffer, noPlanOSImageSKU, validOSImageVersion).Return(marketplaceImageAPIResultNoPlan, nil).AnyTimes()
 	// Should not check terms of images with no purchase plan
 	azureClient.EXPECT().AreMarketplaceImageTermsAccepted(gomock.Any(), validOSImagePublisher, validOSImageOffer, noPlanOSImageSKU).MaxTimes(0)
 

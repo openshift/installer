@@ -85,9 +85,31 @@ func DataSourceIBMSchematicsWorkspace() *schema.Resource {
 							Computed:    true,
 							Description: "The version of the software template that you chose to install from the IBM Cloud catalog.",
 						},
-					},
-				},
-			},
+						"service_extensions": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of service data",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of the Service Data.",
+									},
+									"value": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Value of the Service Data.",
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Type of the value string, int, bool.",
+									},
+								},
+							},
+						},
+					}}},
 			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -300,6 +322,11 @@ func DataSourceIBMSchematicsWorkspace() *schema.Resource {
 				Description: "A list of input variables that are associated with the workspace.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of the variable.",
+						},
 						"type": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -323,7 +350,7 @@ func DataSourceIBMSchematicsWorkspace() *schema.Resource {
 							Computed:    true,
 							Description: "Cloud data type of the variable. eg. resource_group_id, region, vpc_id.",
 						},
-						"default_value": &schema.Schema{
+						"default": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Default value for the variable only if the override value is not specified.",
@@ -400,6 +427,58 @@ func DataSourceIBMSchematicsWorkspace() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The source of this meta-data.",
+						},
+						"metadata": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "A list of input variables that are associated with the workspace.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"default_value": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Default value for the variable only if the override value is not specified.",
+									},
+									"description": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The description of the meta data.",
+									},
+									"hidden": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "If **true**, the variable is not displayed on UI or Command line.",
+									},
+									"required": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "If the variable required?.",
+									},
+									"options": {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The list of possible values for this variable.  If type is **integer** or **date**, then the array of string is  converted to array of integers or date during the runtime.",
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"type": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Type of the variable.",
+									},
+									"secure": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "If set to `true`, the value of your input variable is protected and not returned in your API response.",
+									},
+								},
+							},
+						},
+						"value": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The value of the variable. Applicable for the integer type.",
 						},
 					},
 				},
@@ -670,8 +749,9 @@ func dataSourceIBMSchematicsWorkspaceRead(context context.Context, d *schema.Res
 		if err = d.Set("template_values", templateData[0]["values"]); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error reading values: %s", err))
 		}
-		if err = d.Set("template_values_metadata", templateData[0]["values_metadata"]); err != nil {
-			return diag.FromErr(fmt.Errorf("[ERROR] Error reading values_metadata: %s", err))
+		err = d.Set("template_values_metadata", dataSourceWorkspaceResponseFlattenValuesMetadata(templateData[0]["values_metadata"]))
+		if err != nil {
+			fmt.Println(fmt.Errorf("[ERROR] Error reading template_values_metadata %s", err))
 		}
 		if err = d.Set("template_inputs", templateData[0]["variablestore"]); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error reading variablestore: %s", err))
@@ -799,8 +879,29 @@ func dataSourceWorkspaceResponseCatalogRefToMap(catalogRefItem schematicsv1.Cata
 	if catalogRefItem.OfferingVersion != nil {
 		catalogRefMap["offering_version"] = catalogRefItem.OfferingVersion
 	}
-
+	if catalogRefItem.ServiceExtensions != nil {
+		serviceExtensionsList := []map[string]interface{}{}
+		for _, serviceExtensionsItem := range catalogRefItem.ServiceExtensions {
+			serviceExtensionsList = append(serviceExtensionsList, dataSourceWorkspaceResponseCatalogRefServiceExtensionsToMap(serviceExtensionsItem))
+		}
+		catalogRefMap["service_extensions"] = serviceExtensionsList
+	}
 	return catalogRefMap
+}
+
+func dataSourceWorkspaceResponseCatalogRefServiceExtensionsToMap(serviceExtensionsItem schematicsv1.ServiceExtensions) (serviceExtensionMap map[string]interface{}) {
+	serviceExtensionMap = map[string]interface{}{}
+
+	if serviceExtensionsItem.Name != nil {
+		serviceExtensionMap["name"] = *serviceExtensionsItem.Name
+	}
+	if serviceExtensionsItem.Type != nil {
+		serviceExtensionMap["type"] = serviceExtensionsItem.Type
+	}
+	if serviceExtensionsItem.Value != nil {
+		serviceExtensionMap["value"] = *serviceExtensionsItem.Value
+	}
+	return serviceExtensionMap
 }
 
 func dataSourceWorkspaceResponseFlattenRuntimeData(result []schematicsv1.TemplateRunTimeDataResponse) (runtimeData []map[string]interface{}) {
@@ -915,12 +1016,11 @@ func dataSourceWorkspaceResponseTemplateDataToMap(templateDataItem schematicsv1.
 		templateDataMap["values"] = templateDataItem.Values
 	}
 	if templateDataItem.ValuesMetadata != nil {
-		valuesMetadata := []map[string]interface{}{}
+		valuesMetadataList := []interface{}{}
 		for _, valuesMetadataItem := range templateDataItem.ValuesMetadata {
-			valuesMetadataItemMap := dataSourceIbmSchematicsWorkspaceVariableMetadataToMap(&valuesMetadataItem)
-			valuesMetadata = append(valuesMetadata, valuesMetadataItemMap)
+			valuesMetadataList = append(valuesMetadataList, valuesMetadataItem)
 		}
-		templateDataMap["values_metadata"] = valuesMetadata
+		templateDataMap["values_metadata"] = valuesMetadataList
 	}
 	if templateDataItem.ValuesURL != nil {
 		templateDataMap["values_url"] = templateDataItem.ValuesURL
@@ -934,6 +1034,111 @@ func dataSourceWorkspaceResponseTemplateDataToMap(templateDataItem schematicsv1.
 	}
 
 	return templateDataMap
+}
+
+func dataSourceWorkspaceResponseFlattenValuesMetadata(result interface{}) (valuesMetadata []map[string]interface{}) {
+	if result != nil {
+		for _, res := range result.([]interface{}) {
+			valuesMetadataMap := dataSourceWorkspaceResponseValuesMetadataToMap(res.(map[string]interface{}))
+			valuesMetadata = append(valuesMetadata, valuesMetadataMap)
+		}
+	}
+	return valuesMetadata
+}
+
+func dataSourceWorkspaceResponseValuesMetadataToMap(valuesMetadataItem map[string]interface{}) map[string]interface{} {
+	valuesMetadataMap := map[string]interface{}{}
+
+	if valuesMetadataItem["name"] != nil {
+		valuesMetadataMap["name"] = valuesMetadataItem["name"].(string)
+	}
+	if valuesMetadataItem["type"] != nil {
+		valuesMetadataMap["type"] = valuesMetadataItem["type"].(string)
+	}
+
+	if valuesMetadataItem["aliases"] != nil {
+		valuesMetadataMap["aliases"] = valuesMetadataItem["aliases"]
+	}
+
+	if valuesMetadataItem["description"] != nil {
+		valuesMetadataMap["description"] = valuesMetadataItem["description"].(string)
+	}
+
+	if valuesMetadataItem["cloud_data_type"] != nil {
+		valuesMetadataMap["cloud_data_type"] = valuesMetadataItem["cloud_data_type"].(string)
+	}
+
+	if valuesMetadataItem["default"] != nil {
+		valuesMetadataMap["default"] = valuesMetadataItem["default"].(string)
+	}
+
+	if valuesMetadataItem["link_status"] != nil {
+		valuesMetadataMap["link_status"] = valuesMetadataItem["link_status"].(string)
+	}
+
+	if valuesMetadataItem["secure"] != nil {
+		valuesMetadataMap["secure"] = valuesMetadataItem["secure"]
+	}
+
+	if valuesMetadataItem["immutable"] != nil {
+		valuesMetadataMap["immutable"] = valuesMetadataItem["immutable"]
+	}
+
+	if valuesMetadataItem["hidden"] != nil {
+		valuesMetadataMap["hidden"] = valuesMetadataItem["hidden"]
+	}
+
+	if valuesMetadataItem["required"] != nil {
+		valuesMetadataMap["required"] = valuesMetadataItem["required"]
+	}
+
+	if valuesMetadataItem["options"] != nil {
+		valuesMetadataMap["options"] = valuesMetadataItem["options"]
+	}
+
+	if valuesMetadataItem["min_value"] != nil {
+		valuesMetadataMap["min_value"] = valuesMetadataItem["min_value"]
+	}
+
+	if valuesMetadataItem["max_value"] != nil {
+		valuesMetadataMap["max_value"] = valuesMetadataItem["max_value"]
+	}
+
+	if valuesMetadataItem["min_length"] != nil {
+		valuesMetadataMap["min_length"] = valuesMetadataItem["min_length"]
+	}
+
+	if valuesMetadataItem["max_length"] != nil {
+		valuesMetadataMap["max_length"] = valuesMetadataItem["max_length"]
+	}
+
+	if valuesMetadataItem["matches"] != nil {
+		valuesMetadataMap["matches"] = valuesMetadataItem["matches"].(string)
+	}
+
+	if valuesMetadataItem["position"] != nil {
+		valuesMetadataMap["position"] = valuesMetadataItem["position"]
+	}
+
+	if valuesMetadataItem["group_by"] != nil {
+		valuesMetadataMap["group_by"] = valuesMetadataItem["group_by"].(string)
+	}
+
+	if valuesMetadataItem["source"] != nil {
+		valuesMetadataMap["source"] = valuesMetadataItem["source"].(string)
+	}
+
+	if valuesMetadataItem["metadata"] != nil {
+		metadataList := []map[string]interface{}{}
+
+		valuesMetadataMap["metadata"] = append(metadataList, valuesMetadataItem["metadata"].(map[string]interface{}))
+
+	}
+	if valuesMetadataItem["value"] != nil {
+		valuesMetadataMap["value"] = valuesMetadataItem["value"].(string)
+	}
+
+	return valuesMetadataMap
 }
 func dataSourceIbmSchematicsWorkspaceVariableMetadataToMap(model *schematicsv1.VariableMetadata) map[string]interface{} {
 	modelMap := make(map[string]interface{})

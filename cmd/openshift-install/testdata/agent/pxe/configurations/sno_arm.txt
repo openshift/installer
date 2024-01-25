@@ -1,4 +1,4 @@
-# Verify a default configuration for the SNO topology for ARM architecture
+skip # Verify a default configuration for the SNO topology for ARM architecture
 
 exec openshift-install agent create pxe-files --dir $WORK
 

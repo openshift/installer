@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.60.0-13f6e1ba-20221019-164457
+ * IBM OpenAPI SDK Code Generator Version: 3.77.0-42417df0-20230811-192318
  */
 
 // Package cdtoolchainv2 : Operations and models for the CdToolchainV2 service
@@ -125,6 +125,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"au-syd": "https://api.au-syd.devops.cloud.ibm.com/toolchain/v2", // The toolchain API endpoint in the au-syd region
 		"ca-tor": "https://api.ca-tor.devops.cloud.ibm.com/toolchain/v2", // The toolchain API endpoint in the ca-tor region
 		"br-sao": "https://api.br-sao.devops.cloud.ibm.com/toolchain/v2", // The toolchain API endpoint in the br-sao region
+		"eu-es": "https://api.eu-es.devops.cloud.ibm.com/toolchain/v2", // The toolchain API endpoint in the eu-es region
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -220,6 +221,9 @@ func (cdToolchain *CdToolchainV2) ListToolchainsWithContext(ctx context.Context,
 	}
 	if listToolchainsOptions.Start != nil {
 		builder.AddQuery("start", fmt.Sprint(*listToolchainsOptions.Start))
+	}
+	if listToolchainsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listToolchainsOptions.Name))
 	}
 
 	request, err := builder.Build()
@@ -1062,6 +1066,9 @@ type ListToolchainsOptions struct {
 	// Pagination token.
 	Start *string `json:"start,omitempty"`
 
+	// Exact name of toolchain to look up. This parameter is case sensitive.
+	Name *string `json:"name,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -1088,6 +1095,12 @@ func (_options *ListToolchainsOptions) SetLimit(limit int64) *ListToolchainsOpti
 // SetStart : Allow user to set Start
 func (_options *ListToolchainsOptions) SetStart(start string) *ListToolchainsOptions {
 	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListToolchainsOptions) SetName(name string) *ListToolchainsOptions {
+	_options.Name = core.StringPtr(name)
 	return _options
 }
 
@@ -1172,7 +1185,7 @@ type ToolModel struct {
 	// Information on URIs to access this resource through the UI or API.
 	Referent *ToolModelReferent `json:"referent" validate:"required"`
 
-	// Tool name.
+	// Name of the tool.
 	Name *string `json:"name,omitempty"`
 
 	// Latest tool update timestamp.
@@ -1284,7 +1297,7 @@ type Toolchain struct {
 	// Toolchain name.
 	Name *string `json:"name" validate:"required"`
 
-	// Toolchain description.
+	// Describes the toolchain.
 	Description *string `json:"description" validate:"required"`
 
 	// Account ID where toolchain can be found.
@@ -1534,7 +1547,7 @@ type ToolchainModel struct {
 	// Toolchain name.
 	Name *string `json:"name" validate:"required"`
 
-	// Toolchain description.
+	// Describes the toolchain.
 	Description *string `json:"description" validate:"required"`
 
 	// Account ID where toolchain can be found.
@@ -1628,7 +1641,7 @@ type ToolchainPatch struct {
 	// Toolchain name.
 	Name *string `json:"name" validate:"required"`
 
-	// Toolchain description.
+	// Describes the toolchain.
 	Description *string `json:"description" validate:"required"`
 
 	// Account ID where toolchain can be found.
@@ -1722,7 +1735,7 @@ type ToolchainPost struct {
 	// Toolchain name.
 	Name *string `json:"name" validate:"required"`
 
-	// Toolchain description.
+	// Describes the toolchain.
 	Description *string `json:"description" validate:"required"`
 
 	// Account ID where toolchain can be found.
@@ -1871,7 +1884,7 @@ type ToolchainTool struct {
 	// Information on URIs to access this resource through the UI or API.
 	Referent *ToolModelReferent `json:"referent" validate:"required"`
 
-	// Tool name.
+	// Name of the tool.
 	Name *string `json:"name,omitempty"`
 
 	// Latest tool update timestamp.
@@ -2136,7 +2149,7 @@ type ToolchainToolPatch struct {
 	// Information on URIs to access this resource through the UI or API.
 	Referent *ToolModelReferent `json:"referent" validate:"required"`
 
-	// Tool name.
+	// Name of the tool.
 	Name *string `json:"name,omitempty"`
 
 	// Latest tool update timestamp.
@@ -2245,7 +2258,7 @@ type ToolchainToolPost struct {
 	// Information on URIs to access this resource through the UI or API.
 	Referent *ToolModelReferent `json:"referent" validate:"required"`
 
-	// Tool name.
+	// Name of the tool.
 	Name *string `json:"name,omitempty"`
 
 	// Latest tool update timestamp.

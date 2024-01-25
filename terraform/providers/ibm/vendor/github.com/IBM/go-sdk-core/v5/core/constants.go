@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2022.
+// (C) Copyright IBM Corp. 2019, 2023.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ const (
 	AUTHTYPE_CP4D         = "cp4d"
 	AUTHTYPE_CONTAINER    = "container"
 	AUTHTYPE_VPC          = "vpc"
+	AUTHTYPE_MCSP         = "mcsp"
 
 	// Names of properties that can be defined as part of an external configuration (credential file, env vars, etc.).
 	// Example:  export MYSERVICE_URL=https://myurl

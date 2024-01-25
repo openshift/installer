@@ -382,6 +382,65 @@ func DataSourceIBMCmCatalog() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"target_account_contexts": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of target accounts contexts on this catalog.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"api_key": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "API key of the target account.",
+							Sensitive:   true,
+						},
+						"trusted_profile": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "Trusted profile information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"trusted_profile_id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Trusted profile ID.",
+									},
+									"catalog_crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "CRN of this catalog.",
+									},
+									"catalog_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of this catalog.",
+									},
+									"target_service_id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Target service ID.",
+									},
+								},
+							},
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Unique identifier/name for this target account context.",
+						},
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Label for this target account context.",
+						},
+						"project_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Project ID.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -532,6 +591,20 @@ func dataSourceIBMCmCatalogRead(context context.Context, d *schema.ResourceData,
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting metadata %s", err))
 		}
+	}
+
+	targetAccountContexts := []map[string]interface{}{}
+	if catalog.TargetAccountContexts != nil {
+		for _, tacItem := range catalog.TargetAccountContexts {
+			tacItemMap, err := resourceIBMCmCatalogTargetAccountContextToMap(&tacItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			targetAccountContexts = append(targetAccountContexts, tacItemMap)
+		}
+	}
+	if err = d.Set("target_account_contexts", targetAccountContexts); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting target_account_contexts: %s", err))
 	}
 
 	return nil
