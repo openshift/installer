@@ -320,6 +320,15 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.name: Required value: must specify the name`,
 		},
 		{
+			name: "Multi-zone platform failureDomain duplicate names",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[1].Name = p.FailureDomains[0].Name
+				return p
+			}(),
+			expectedError: `test-path\.failureDomains\.name\[1\]: Duplicate value: "test-east-1a"`,
+		},
+		{
 			name: "Multi-zone platform failureDomain zone missing tag category",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()

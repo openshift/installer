@@ -1,6 +1,0 @@
-*.iml
-.idea/
-vendor/
-bin/
-.DS_Store
-TestZipDirWithSymbolLinks/

@@ -46,6 +46,7 @@ type ClusterUninstaller struct {
 	InfraID                     string
 	ResourceGroupName           string
 	BaseDomainResourceGroupName string
+	NetworkResourceGroupName    string
 
 	Logger logrus.FieldLogger
 
@@ -126,15 +127,10 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		return nil, err
 	}
 
-	group := metadata.Azure.ResourceGroupName
-	if len(group) == 0 {
-		group = metadata.InfraID + "-rg"
-	}
-
 	return &ClusterUninstaller{
 		Session:                     session,
 		InfraID:                     metadata.InfraID,
-		ResourceGroupName:           group,
+		ResourceGroupName:           metadata.Azure.ResourceGroupName,
 		Logger:                      logger,
 		BaseDomainResourceGroupName: metadata.Azure.BaseDomainResourceGroupName,
 		CloudName:                   cloudName,
@@ -155,6 +151,38 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	timeout := 120 * time.Minute
 	waitCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	// Retrieve metadata from resource group tags, if available
+	filter := fmt.Sprintf("tagName eq 'kubernetes.io_cluster.%s' and tagValue eq 'owned'", o.InfraID)
+	groupPager, err := o.resourceGroupsClient.ListComplete(waitCtx, filter, to.Int32Ptr(1))
+	if err != nil {
+		return nil, fmt.Errorf("could not list resource groups: %w", err)
+	}
+
+	for ; groupPager.NotDone(); err = groupPager.NextWithContext(waitCtx) {
+		if err != nil {
+			o.Logger.Debugf("failed to advance to next resource group list page: %v", err)
+			continue
+		}
+		group := groupPager.Value()
+		if len(o.ResourceGroupName) == 0 {
+			o.ResourceGroupName = to.String(group.Name)
+			o.Logger.Debugf("found resource group name=%s from tags", o.ResourceGroupName)
+		}
+		if len(o.BaseDomainResourceGroupName) == 0 {
+			o.BaseDomainResourceGroupName = to.String(group.Tags[azure.TagMetadataBaseDomainRG])
+			o.Logger.Debugf("found base domain resource group name=%s from tags", o.BaseDomainResourceGroupName)
+		}
+		if len(o.NetworkResourceGroupName) == 0 {
+			o.NetworkResourceGroupName = to.String(group.Tags[azure.TagMetadataNetworkRG])
+			o.Logger.Debugf("found network resource group name=%s from tags", o.NetworkResourceGroupName)
+		}
+	}
+
+	if len(o.ResourceGroupName) == 0 {
+		o.ResourceGroupName = o.InfraID + "-rg"
+		o.Logger.Debugf("using default resource group name=%s", o.ResourceGroupName)
+	}
 
 	err = wait.PollUntilContextCancel(
 		waitCtx,

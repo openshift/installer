@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	// AliCloud is the provider for creating resources in the alibaba cloud.
-	AliCloud = provider("alicloud")
 	// AWS is the provider for creating resources in AWS.
 	AWS = provider("aws")
 	// AzureRM is the provider for creating resources in the Azure clouds.
