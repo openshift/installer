@@ -74,9 +74,9 @@ type TFVarsSources struct {
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
 
-	cosRegion, err := powervstypes.VPCRegionForPowerVSRegion(sources.Region)
+	cosRegion, err := powervstypes.COSRegionForVPCRegion(sources.VPCRegion)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find COS region for PowerVS region")
+		return nil, fmt.Errorf("failed to find COS region for VPC region")
 	}
 
 	var processor, dnsGUID string

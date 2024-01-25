@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -177,12 +176,6 @@ func osImage(config *types.InstallConfig) (string, error) {
 			return u.String(), nil
 		}
 		return "", fmt.Errorf("%s: No vmware build found", st.FormatPrefix(archName))
-	case alibabacloud.Name:
-		osimage, err := st.GetAliyunImage(archName, config.Platform.AlibabaCloud.Region)
-		if err != nil {
-			return "", err
-		}
-		return osimage, nil
 	case powervs.Name:
 		// Check for image URL override
 		if config.Platform.PowerVS.ClusterOSImage != "" {
@@ -190,7 +183,19 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 
 		if streamArch.Images.PowerVS != nil {
-			vpcRegion := powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			var (
+				vpcRegion string
+				err       error
+			)
+			if config.Platform.PowerVS.VPCRegion != "" {
+				vpcRegion = config.Platform.PowerVS.VPCRegion
+			} else {
+				vpcRegion = powervs.Regions[config.Platform.PowerVS.Region].VPCRegion
+			}
+			vpcRegion, err = powervs.COSRegionForVPCRegion(vpcRegion)
+			if err != nil {
+				return "", fmt.Errorf("%s: No Power COS region found", st.FormatPrefix(archName))
+			}
 			img := streamArch.Images.PowerVS.Regions[vpcRegion]
 			logrus.Debug("Power VS using image ", img.Object)
 			return fmt.Sprintf("%s/%s", img.Bucket, img.Object), nil

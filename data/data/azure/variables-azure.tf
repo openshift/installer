@@ -302,3 +302,9 @@ variable "azure_user_assigned_identity_key" {
   description = "Defines the user identity key used for the encryption of storage account."
   default     = ""
 }
+
+variable "azure_resource_group_metadata_tags" {
+  type        = map(string)
+  description = "Metadata Azure tags to be applied to the cluster resource group."
+  default     = {}
+}

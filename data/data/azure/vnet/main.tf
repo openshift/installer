@@ -28,7 +28,7 @@ resource "azurerm_resource_group" "main" {
 
   name     = "${var.cluster_id}-rg"
   location = var.azure_region
-  tags     = var.azure_extra_tags
+  tags     = merge(var.azure_extra_tags, var.azure_resource_group_metadata_tags)
 }
 
 data "azurerm_resource_group" "main" {

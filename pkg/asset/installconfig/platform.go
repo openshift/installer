@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	alibabacloudconfig "github.com/openshift/installer/pkg/asset/installconfig/alibabacloud"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	baremetalconfig "github.com/openshift/installer/pkg/asset/installconfig/baremetal"
@@ -21,7 +20,6 @@ import (
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/alibabacloud"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -58,11 +56,6 @@ func (a *platform) Generate(asset.Parents) error {
 	}
 
 	switch platform {
-	case alibabacloud.Name:
-		a.AlibabaCloud, err = alibabacloudconfig.Platform()
-		if err != nil {
-			return err
-		}
 	case aws.Name:
 		a.AWS, err = awsconfig.Platform()
 		if err != nil {

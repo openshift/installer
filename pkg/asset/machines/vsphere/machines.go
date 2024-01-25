@@ -83,9 +83,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
 
-		failureDomains = append(failureDomains, machinev1.VSphereFailureDomain{
-			Name: failureDomain.Name,
-		})
+		if !hasFailureDomain(failureDomains, failureDomain.Name) {
+			failureDomains = append(failureDomains, machinev1.VSphereFailureDomain{
+				Name: failureDomain.Name,
+			})
+		}
 
 		osImageForZone := failureDomain.Topology.Template
 		if failureDomain.Topology.Template == "" {
@@ -254,4 +256,13 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []machineapi.Machine, clusterID string) {
+}
+
+func hasFailureDomain(failureDomains []machinev1.VSphereFailureDomain, failureDomain string) bool {
+	for _, fd := range failureDomains {
+		if fd.Name == failureDomain {
+			return true
+		}
+	}
+	return false
 }
