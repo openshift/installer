@@ -944,6 +944,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, c := range controlPlanes {
 			var clusterMo mo.ClusterComputeResource
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+
 			rpObj, err := finder.ResourcePool(ctx, controlPlaneConfigs[i].Workspace.ResourcePool)
 			if err != nil {
 				return err
@@ -954,16 +955,23 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				return err
 			}
 
-			clusterObj := object.NewClusterComputeResource(vim25Client, clusterRef.Reference())
+			// When using finder.ObjectReference the InventoryPath is defined
+			// NewClusterComputeResource I don't believe assigns that value.
+			clusterObjRef, err := finder.ObjectReference(ctx, clusterRef.Reference())
+			if err != nil {
+				return err
+			}
+
+			clusterObj, ok := clusterObjRef.(*object.ClusterComputeResource)
+			if !ok {
+				return errors.New("unable to convert cluster object reference to object cluster compute resource")
+			}
 			err = clusterObj.Properties(ctx, clusterRef.Reference(), []string{"name", "summary"}, &clusterMo)
 			if err != nil {
 				return err
 			}
 
-			clusterPath := strings.SplitAfter(controlPlaneConfigs[i].Workspace.ResourcePool, clusterMo.Name)
-
-			networkPath := path.Join(clusterPath[0], controlPlaneConfigs[i].Network.Devices[0].NetworkName)
-
+			networkPath := path.Join(clusterObj.InventoryPath, controlPlaneConfigs[i].Network.Devices[0].NetworkName)
 			netObj, err := finder.Network(ctx, networkPath)
 			if err != nil {
 				return err
