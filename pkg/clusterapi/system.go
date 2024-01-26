@@ -278,6 +278,8 @@ func (c *system) getInfrastructureController(provider *Provider, args []string, 
 	defaultManifestPath := filepath.Join(c.componentDir, fmt.Sprintf("/%s-infrastructure-components.yaml", provider.Name))
 	if _, err := os.Stat(defaultManifestPath); err == nil {
 		manifests = append(manifests, defaultManifestPath)
+	} else {
+		logrus.Infof("Failed to find manifests for provider %s at %s", provider.Name, defaultManifestPath)
 	}
 	return &controller{
 		Provider:   provider,

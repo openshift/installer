@@ -19,7 +19,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 // GenerateClusterAPI generates manifests for target cluster.
@@ -30,7 +32,7 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 	pool := *ic.ControlPlane
 
 	switch ic.Platform.Name() {
-	case "aws":
+	case awstypes.Name:
 		subnets := map[string]string{}
 		if len(ic.Platform.AWS.Subnets) > 0 {
 			subnetMeta, err := installConfig.AWS.PrivateSubnets(ctx)
@@ -169,7 +171,8 @@ func GenerateClusterAPI(ctx context.Context, installConfig *installconfig.Instal
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
 			Object: bootstrapMachine,
 		})
-	case "azure":
+	case azuretypes.Name:
+		// TODO: implement
 	default:
 		// TODO: support other platforms
 	}
