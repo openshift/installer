@@ -3,6 +3,7 @@ package targets
 import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -66,7 +67,7 @@ var (
 		&cluster.Metadata{},
 		&machine.MasterIgnitionCustomizations{},
 		&machine.WorkerIgnitionCustomizations{},
-		&cluster.TerraformVariables{},
+		&tfvars.TerraformVariables{},
 		&kubeconfig.AdminClient{},
 		&password.KubeadminPassword{},
 		&tls.JournalCertKey{},
