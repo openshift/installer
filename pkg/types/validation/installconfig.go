@@ -53,7 +53,7 @@ import (
 )
 
 // list of known plugins that require hostPrefix to be set
-var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOVNKubernetes))
+var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOpenShiftSDN), string(operv1.NetworkTypeOVNKubernetes))
 
 // ValidateInstallConfig checks that the specified install config is valid.
 //
@@ -297,6 +297,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 
 	switch {
 	case hasIPv4 && hasIPv6:
+		if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "networkType"), n.NetworkType, "dual-stack IPv4/IPv6 is not supported for this networking plugin"))
+		}
+
 		if len(n.ServiceNetwork) != 2 {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
 		}
@@ -338,6 +342,10 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 
 	case hasIPv6:
+		if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "networkType"), n.NetworkType, "IPv6 is not supported for this networking plugin"))
+		}
+
 		switch {
 		case p.BareMetal != nil:
 		case p.VSphere != nil:
@@ -374,10 +382,6 @@ func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *
 	//              this check once some more general validation of the supported NetworkTypes is in place.
 	if n.NetworkType == "Kuryr" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType Kuryr is not supported on OpenShift later than 4.14"))
-	}
-
-	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is not supported, please use OVNKubernetes"))
 	}
 
 	if len(n.MachineNetwork) > 0 {
@@ -779,6 +783,10 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
 				}
 			}
+
+			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, "IPv6 is not supported on OpenShiftSDN"))
+			}
 		}
 
 		if len(vips.Ingress) == 0 {
@@ -821,6 +829,10 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, r
 				if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
 					allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 				}
+			}
+
+			if utilsnet.IsIPv6String(vip) && n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, "IPv6 is not supported on OpenShiftSDN"))
 			}
 		}
 
