@@ -26,7 +26,7 @@ The Cluster API system is formed of a set of binaries. The core Cluster API mana
 The binaries are built and packaged during the standard installer build process, `hack/build.sh`. Cluster API specific build flow is contained in the `hack/build-cluster-api.sh` script:
 - Only enabled if the `OPENSHIFT_INSTALL_CLUSTER_API` environment variable is set.
 - Builds (as needed) every binary listed as a Go Module in  the `cluster-api` folder.
-- Downloads (as needed) the specified version of `envtest` to pacakge `kube-apiserver` and `etcd`.
+- Downloads (as needed) the specified version of `envtest` to package `kube-apiserver` and `etcd`.
 - Produces a single `cluster-api.zip` file which is then copied in `pkg/clusterapi/mirror`.
 
 To build an `openshift-install` binary with Cluster API bundled:

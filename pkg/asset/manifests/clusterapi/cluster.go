@@ -26,6 +26,8 @@ import (
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 const (
@@ -142,7 +144,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 
 	var out *capiutils.GenerateClusterAssetsOutput
 	switch platform := installConfig.Config.Platform.Name(); platform {
-	case "aws":
+	case awstypes.Name:
 		// Move this somewhere else.
 		// if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
 		// 	return errors.Wrap(err, "failed to create IAM roles")
@@ -152,11 +154,11 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to generate AWS manifests")
 		}
-	case "azure":
+	case azuretypes.Name:
 		var err error
 		out, err = azure.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate AWS manifests")
+			return errors.Wrap(err, "failed to generate Azure manifests")
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
