@@ -1364,6 +1364,28 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `Invalid value: "IPv6": single-stack IPv6 is not supported for this platform`,
 		},
 		{
+			name: "invalid dual-stack configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
+			name: "invalid single-stack IPv6 configuration, bad plugin",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{None: &none.Platform{}}
+				c.Networking = validIPv6NetworkingConfig()
+				c.Networking.NetworkType = "OpenShiftSDN"
+				return c
+			}(),
+			expectedError: `IPv6 is not supported for this networking plugin`,
+		},
+		{
 			name: "invalid dual-stack configuration, machine has no IPv6",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
