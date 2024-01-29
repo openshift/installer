@@ -19,11 +19,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/asset/manifests/gcp"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 var _ asset.WritableRuntimeAsset = (*Cluster)(nil)
@@ -104,6 +106,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = azure.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate Azure manifests")
+		}
+	case gcptypes.Name:
+		var err error
+		out, err = gcp.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return fmt.Errorf("failed to generate GCP manifests: %w", err)
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
