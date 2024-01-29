@@ -88,7 +88,6 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	// TODO(vincepri): The context should be passed down from the caller,
 	// although today the Asset interface doesn't allow it, refactor once it does.
 	ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
-	defer cancel()
 	go func() {
 		<-ctx.Done()
 		cancel()
@@ -323,6 +322,9 @@ func (i *InfraProvider) DestroyBootstrap(dir string) error {
 			return fmt.Errorf("failed to delete bootstrap machine: %w", err)
 		}
 	}
+	logrus.Infof("Finished destroying bootstrap resources")
+	clusterapi.System().Teardown()
+
 	return nil
 }
 
