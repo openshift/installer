@@ -18,8 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
+
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
+	vspherectx "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
@@ -30,6 +33,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
@@ -51,15 +55,18 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&installconfig.ClusterID{},
 		new(rhcos.Image),
+		&vspherectx.VCenterContexts{},
 	}
 }
 
 // Generate generates Cluster API machine manifests.
 func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
+
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
+	vsphereContexts := &vspherectx.VCenterContexts{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, rhcosImage)
+	dependencies.Get(installConfig, clusterID, rhcosImage, vsphereContexts)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
@@ -249,12 +256,42 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)
 		}
 		c.FileList = append(c.FileList, bootstrapMachines...)
+	case vspheretypes.Name:
+		mpool := defaultVSphereMachinePoolPlatform()
+		mpool.NumCPUs = 4
+		mpool.NumCoresPerSocket = 4
+		mpool.MemoryMiB = 16384
+		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.VSphere)
 
+		// The machinepool has no zones defined, there are FailureDomains
+		// This is a vSphere zonal installation. Generate machinepool zone
+		// list.
+
+		fdCount := int64(len(ic.Platform.VSphere.FailureDomains))
+		var idx int64
+		if len(mpool.Zones) == 0 && len(ic.VSphere.FailureDomains) != 0 {
+			for i := int64(0); i < *(ic.ControlPlane.Replicas); i++ {
+				idx = i
+				if idx >= fdCount {
+					idx = i % fdCount
+				}
+				mpool.Zones = append(mpool.Zones, ic.VSphere.FailureDomains[idx].Name)
+			}
+		}
+
+		pool.Platform.VSphere = &mpool
+		templateName := clusterID.InfraID + "-rhcos"
+
+		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", vsphereContexts)
+		if err != nil {
+			errors.Wrap(err, "unable to generate CAPI machines for vSphere")
+		}
 	default:
 		// TODO: support other platforms
 	}
 
-	// Create the infrastructure manifests.
+	// Create the machine manifests.
 	for _, m := range c.FileList {
 		objData, err := yaml.Marshal(m.Object)
 		if err != nil {
