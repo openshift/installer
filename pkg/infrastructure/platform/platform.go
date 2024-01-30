@@ -11,6 +11,7 @@ import (
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
+	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
@@ -71,6 +72,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case ovirttypes.Name:
 		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(vspherecapi.InfraProvider{}), nil
+		}
 		return terraform.InitializeProvider(vsphere.PlatformStages), nil
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"
