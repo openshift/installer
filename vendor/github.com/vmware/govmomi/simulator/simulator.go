@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -98,7 +97,7 @@ type Server struct {
 // New returns an initialized simulator Service instance
 func New(instance *ServiceInstance) *Service {
 	s := &Service{
-		readAll: ioutil.ReadAll,
+		readAll: io.ReadAll,
 		sm:      Map.SessionManager(),
 		sdk:     make(map[string]*Registry),
 	}
@@ -241,11 +240,14 @@ func (s *Service) RoundTrip(ctx context.Context, request, response soap.HasFault
 
 	// Every request has a "This" field.
 	this := req.Elem().FieldByName("This")
+	// Copy request body
+	body := reflect.New(req.Type().Elem())
+	deepCopy(req.Interface(), body.Interface())
 
 	method := &Method{
 		Name: req.Elem().Type().Name(),
 		This: this.Interface().(types.ManagedObjectReference),
-		Body: req.Interface(),
+		Body: body.Interface(),
 	}
 
 	res := s.call(&Context{
@@ -338,8 +340,8 @@ func (r *response) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 // About generates some info about the simulator.
 func (s *Service) About(w http.ResponseWriter, r *http.Request) {
 	var about struct {
-		Methods []string
-		Types   []string
+		Methods []string `json:"methods"`
+		Types   []string `json:"types"`
 	}
 
 	seen := make(map[string]bool)
@@ -421,7 +423,9 @@ func (s *Service) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 
 // RegisterSDK adds an HTTP handler for the Registry's Path and Namespace.
 // If r.Path is already registered, r's objects are added to the existing Registry.
-func (s *Service) RegisterSDK(r *Registry) {
+// An optional set of aliases can be provided to register the same handler for
+// multiple paths.
+func (s *Service) RegisterSDK(r *Registry, alias ...string) {
 	if existing, ok := s.sdk[r.Path]; ok {
 		for id, obj := range r.objects {
 			existing.objects[id] = obj
@@ -435,6 +439,11 @@ func (s *Service) RegisterSDK(r *Registry) {
 
 	s.sdk[r.Path] = r
 	s.ServeMux.HandleFunc(r.Path, s.ServeSDK)
+
+	for _, p := range alias {
+		s.sdk[p] = r
+		s.ServeMux.HandleFunc(p, s.ServeSDK)
+	}
 }
 
 // StatusSDK can be used to simulate an /sdk HTTP response code other than 200.
@@ -654,12 +663,9 @@ func defaultIP(addr *net.TCPAddr) string {
 
 // NewServer returns an http Server instance for the given service
 func (s *Service) NewServer() *Server {
-	s.RegisterSDK(Map)
+	s.RegisterSDK(Map, Map.Path+"/vimService")
 
 	mux := s.ServeMux
-	vim := Map.Path + "/vimService"
-	s.sdk[vim] = s.sdk[vim25.Path]
-	mux.HandleFunc(vim, s.ServeSDK)
 	mux.HandleFunc(Map.Path+"/vimServiceVersions.xml", s.ServiceVersions)
 	mux.HandleFunc(folderPrefix, s.ServeDatastore)
 	mux.HandleFunc(guestPrefix, ServeGuest)
@@ -768,7 +774,7 @@ func (s *Server) CertificateFile() (string, error) {
 		return s.caFile, nil
 	}
 
-	f, err := ioutil.TempFile("", "vcsim-")
+	f, err := os.CreateTemp("", "vcsim-")
 	if err != nil {
 		return "", err
 	}
