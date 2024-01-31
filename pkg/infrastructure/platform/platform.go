@@ -73,7 +73,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
-			return clusterapi.InitializeProvider(vspherecapi.InfraProvider{}), nil
+			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
 		}
 		return terraform.InitializeProvider(vsphere.PlatformStages), nil
 	case nonetypes.Name:

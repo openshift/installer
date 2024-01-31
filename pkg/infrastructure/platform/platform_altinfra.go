@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/aws"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
+	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/featuregates"
@@ -32,8 +33,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return nil, nil
 	case vspheretypes.Name:
-		panic("not implemented")
-		return nil, nil
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
+		}
 	}
 	return nil, fmt.Errorf("platform %q is not supported in the altinfra Installer build", platform)
 }

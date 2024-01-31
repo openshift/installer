@@ -3,27 +3,25 @@ package vsphere
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
-
-	machinev1 "github.com/openshift/api/machine/v1beta1"
-	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
-
+	"k8s.io/utils/ptr"
 	capv "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	machinev1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 )
 
-// ProviderSpecFromRawExtension unmarshals the JSON-encoded spec
+// ProviderSpecFromRawExtension unmarshals the JSON-encoded spec.
 func ProviderSpecFromRawExtension(rawExtension *runtime.RawExtension) (*machinev1.VSphereMachineProviderSpec, error) {
 	if rawExtension == nil {
 		return &machinev1.VSphereMachineProviderSpec{}, nil
@@ -31,13 +29,13 @@ func ProviderSpecFromRawExtension(rawExtension *runtime.RawExtension) (*machinev
 
 	spec := new(machinev1.VSphereMachineProviderSpec)
 	if err := json.Unmarshal(rawExtension.Raw, &spec); err != nil {
-		return nil, fmt.Errorf("error unmarshalling providerSpec: %v", err)
+		return nil, fmt.Errorf("error unmarshalling providerSpec: %w", err)
 	}
 
 	return spec, nil
 }
 
-func getNetworkInventoryPath(vcenterContext vcentercontexts.VCenterContext, networkName string, providerSpec *machinev1.VSphereMachineProviderSpec) (string, error) {
+func getNetworkInventoryPath(vcenterContext vsphere.VCenterContext, networkName string, providerSpec *machinev1.VSphereMachineProviderSpec) (string, error) {
 	// if networkName is a path, we'll assume that a full path was provided by the admin
 	if strings.Contains(networkName, "/") {
 		return networkName, nil
@@ -57,22 +55,23 @@ func getNetworkInventoryPath(vcenterContext vcentercontexts.VCenterContext, netw
 	return "", fmt.Errorf("unable to find network %s in resource pool %s", networkName, providerSpec.Workspace.ResourcePool)
 }
 
-// Machines returns a list of capi machines.
-func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, vcenterContexts *vcentercontexts.VCenterContexts) ([]*asset.RuntimeFile, error) {
+// GenerateMachines returns a list of capi machines.
+func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
 	machines, _, err := Machines(clusterID, config, pool, osImage, role, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve machines: %w", err)
 	}
 
-	capvMachines := []*capv.VSphereMachine{}
-
-	var result []*asset.RuntimeFile
+	capvMachines := make([]*capv.VSphereMachine, 0, len(machines))
+	result := make([]*asset.RuntimeFile, 0, len(machines))
 
 	for _, machine := range machines {
-		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machinev1.VSphereMachineProviderSpec)
+		providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1.VSphereMachineProviderSpec)
+		if !ok {
+			return nil, errors.New("unable to convert ProviderSpec to VSphereMachineProviderSpec")
+		}
 
-		vcenterContext := vcenterContexts.VCenters[providerSpec.Workspace.Server]
-
+		vcenterContext := metadata.VCenterContexts[providerSpec.Workspace.Server]
 		resourcePool := providerSpec.Workspace.ResourcePool
 
 		capvNetworkDevices := []capv.NetworkDeviceSpec{}
@@ -106,7 +105,6 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Spec: capv.VSphereMachineSpec{
 				VirtualMachineCloneSpec: capv.VirtualMachineCloneSpec{
 					CustomVMXKeys: customVMXKeys,
-					TagIDs:        []string{vcenterContext.TagID},
 					Network: capv.NetworkSpec{
 						Devices: capvNetworkDevices,
 					},
@@ -140,7 +138,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Spec: capi.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capi.Bootstrap{
-					DataSecretName: pointer.String(fmt.Sprintf("%s-%s", clusterID, role)),
+					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -187,7 +185,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			Spec: capi.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capi.Bootstrap{
-					DataSecretName: pointer.String(fmt.Sprintf("%s-bootstrap", clusterID)),
+					DataSecretName: ptr.To(fmt.Sprintf("%s-bootstrap", clusterID)),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -196,13 +194,10 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 		}
-
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapVSphereMachine.Name)},
 			Object: bootstrapMachine,
 		})
-
 	}
-
 	return result, nil
 }

@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
@@ -52,7 +51,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&openshiftinstall.Config{},
 		&manifests.FeatureGate{},
-		&vcentercontexts.VCenterContexts{},
 		new(rhcos.Image),
 	}
 }
@@ -63,9 +61,8 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &manifests.FeatureGate{}
-	vcenterContexts := &vcentercontexts.VCenterContexts{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage, vcenterContexts)
+	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
@@ -117,11 +114,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = gcp.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return fmt.Errorf("failed to generate GCP manifests: %w", err)
+		}
 	case vsphereplatform.Name:
 		var err error
 		out, err = vsphere.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate vSphere manifests")
+			return fmt.Errorf("failed to generate vSphere manifests %w", err)
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)

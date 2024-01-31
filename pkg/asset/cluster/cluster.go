@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
-	vcentercontexts "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -62,7 +61,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
-		&vcentercontexts.VCenterContexts{},
 		&quota.PlatformQuotaCheck{},
 		&tfvars.TerraformVariables{},
 		&password.KubeadminPassword{},

@@ -28,10 +28,11 @@ type PreProvider interface {
 
 // PreProvisionInput collects the args passed to the PreProvision call.
 type PreProvisionInput struct {
-	InfraID        string
-	InstallConfig  *installconfig.InstallConfig
-	RhcosImage     *rhcos.Image
-	ManifestsAsset *manifests.Manifests
+	InfraID          string
+	InstallConfig    *installconfig.InstallConfig
+	RhcosImage       *rhcos.Image
+	ManifestsAsset   *manifests.Manifests
+	MachineManifests []client.Object
 }
 
 // IgnitionProvider handles preconditions for bootstrap ignition and

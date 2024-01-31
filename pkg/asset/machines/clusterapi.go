@@ -18,14 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
-
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
-	vspherectx "github.com/openshift/installer/pkg/asset/cluster/vsphere"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
@@ -55,18 +53,17 @@ func (c *ClusterAPI) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&installconfig.ClusterID{},
 		new(rhcos.Image),
-		&vspherectx.VCenterContexts{},
 	}
 }
 
 // Generate generates Cluster API machine manifests.
+//
+//nolint:gocyclo
 func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
-
 	installConfig := &installconfig.InstallConfig{}
 	clusterID := &installconfig.ClusterID{}
-	vsphereContexts := &vspherectx.VCenterContexts{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, rhcosImage, vsphereContexts)
+	dependencies.Get(installConfig, clusterID, rhcosImage)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
@@ -264,6 +261,15 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.VSphere.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.VSphere)
 
+		platform := ic.VSphere
+
+		for _, v := range platform.VCenters {
+			err := installConfig.VSphere.Networks(ctx, v, platform.FailureDomains)
+			if err != nil {
+				return err
+			}
+		}
+
 		// The machinepool has no zones defined, there are FailureDomains
 		// This is a vSphere zonal installation. Generate machinepool zone
 		// list.
@@ -283,9 +289,9 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
-		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", vsphereContexts)
+		c.FileList, err = vspherecapi.GenerateMachines(ctx, clusterID.InfraID, ic, &pool, templateName, "master", installConfig.VSphere)
 		if err != nil {
-			errors.Wrap(err, "unable to generate CAPI machines for vSphere")
+			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
 	default:
 		// TODO: support other platforms
