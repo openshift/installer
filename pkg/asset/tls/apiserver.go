@@ -336,7 +336,7 @@ func (c *KubeAPIServerLBSignerCertKey) Generate(parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-apiserver-lb-signer", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears,
+		Validity:  ValidityOneDay/12,
 		IsCA:      true,
 	}
 
