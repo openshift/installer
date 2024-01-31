@@ -1475,39 +1475,6 @@
                           ]
                         }
                       }
-                    },
-                    "workloadSources": {
-                      "resources": {
-                        "operations": {
-                          "methods": {
-                            "get": {
-                              "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
-                              "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/workloadIdentityPools/{workloadIdentityPoolsId}/namespaces/{namespacesId}/workloadSources/{workloadSourcesId}/operations/{operationsId}",
-                              "httpMethod": "GET",
-                              "id": "iam.projects.locations.workloadIdentityPools.namespaces.workloadSources.operations.get",
-                              "parameterOrder": [
-                                "name"
-                              ],
-                              "parameters": {
-                                "name": {
-                                  "description": "The name of the operation resource.",
-                                  "location": "path",
-                                  "pattern": "^projects/[^/]+/locations/[^/]+/workloadIdentityPools/[^/]+/namespaces/[^/]+/workloadSources/[^/]+/operations/[^/]+$",
-                                  "required": true,
-                                  "type": "string"
-                                }
-                              },
-                              "path": "v1/{+name}",
-                              "response": {
-                                "$ref": "Operation"
-                              },
-                              "scopes": [
-                                "https://www.googleapis.com/auth/cloud-platform"
-                              ]
-                            }
-                          }
-                        }
-                      }
                     }
                   }
                 },
@@ -2883,7 +2850,7 @@
       }
     }
   },
-  "revision": "20230622",
+  "revision": "20230914",
   "rootUrl": "https://iam.googleapis.com/",
   "schemas": {
     "AdminAuditData": {
@@ -3190,6 +3157,10 @@
           "description": "Required. The OIDC issuer URI. Must be a valid URI using the 'https' scheme.",
           "type": "string"
         },
+        "jwksJson": {
+          "description": "OIDC JWKs in JSON String format. For details on the definition of a JWK, see https://tools.ietf.org/html/rfc7517. If not set, the `jwks_uri` from the discovery document(fetched from the .well-known path of the `issuer_uri`) will be used. Currently, RSA and EC asymmetric keys are supported. The JWK must use following format and include only the following fields: { \"keys\": [ { \"kty\": \"RSA/EC\", \"alg\": \"\", \"use\": \"sig\", \"kid\": \"\", \"n\": \"\", \"e\": \"\", \"x\": \"\", \"y\": \"\", \"crv\": \"\" } ] }",
+          "type": "string"
+        },
         "webSsoConfig": {
           "$ref": "GoogleIamAdminV1WorkforcePoolProviderOidcWebSsoConfig",
           "description": "Required. Configuration for web single sign-on for the OIDC provider. Here, web sign-in refers to console sign-in and gcloud sign-in through the browser."
@@ -3244,13 +3215,13 @@
           ],
           "enumDescriptions": [
             "No assertion claims behavior specified.",
-            "Merge the UserInfo Endpoint Claims with ID Token Claims, preferring UserInfo Claim Values for the same Claim Name. Only possible for flows granting an Access Token, which comprise only the Authorization Code Flow at the moment.",
+            "Merge the UserInfo Endpoint Claims with ID Token Claims, preferring UserInfo Claim Values for the same Claim Name. This option is available only for the Authorization Code Flow.",
             "Only include ID Token Claims."
           ],
           "type": "string"
         },
         "responseType": {
-          "description": "Required. The Response Type to request for in the OIDC Authorization Request for web sign-in.",
+          "description": "Required. The Response Type to request for in the OIDC Authorization Request for web sign-in. The `CODE` Response Type is recommended to avoid the Implicit Flow, for security reasons.",
           "enum": [
             "RESPONSE_TYPE_UNSPECIFIED",
             "CODE",
@@ -3271,7 +3242,7 @@
       "id": "GoogleIamAdminV1WorkforcePoolProviderSaml",
       "properties": {
         "idpMetadataXml": {
-          "description": "Required. SAML Identity provider configuration metadata xml doc. The xml document should comply with [SAML 2.0 specification](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf). The max size of the acceptable xml document will be bounded to 128k characters. The metadata xml document should satisfy the following constraints: 1) Must contain an Identity Provider Entity ID. 2) Must contain at least one non-expired signing key certificate. 3) For each signing key: a) Valid from should be no more than 7 days from now. b) Valid to should be no more than 14 years in the future. 4) Up to 3 IdP signing keys are allowed in the metadata xml. When updating the provider's metadata xml, at least one non-expired signing key must overlap with the existing metadata. This requirement is skipped if there are no non-expired signing keys present in the existing metadata.",
+          "description": "Required. SAML Identity provider configuration metadata xml doc. The xml document should comply with [SAML 2.0 specification](https://docs.oasis-open.org/security/saml/v2.0/saml-metadata-2.0-os.pdf). The max size of the acceptable xml document will be bounded to 128k characters. The metadata xml document should satisfy the following constraints: 1) Must contain an Identity Provider Entity ID. 2) Must contain at least one non-expired signing key certificate. 3) For each signing key: a) Valid from should be no more than 7 days from now. b) Valid to should be no more than 15 years in the future. 4) Up to 3 IdP signing keys are allowed in the metadata xml. When updating the provider's metadata xml, at least one non-expired signing key must overlap with the existing metadata. This requirement is skipped if there are no non-expired signing keys present in the existing metadata.",
           "type": "string"
         }
       },
@@ -3624,8 +3595,52 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "OperationMetadata": {
+      "description": "Represents the metadata of the long-running operation.",
+      "id": "OperationMetadata",
+      "properties": {
+        "apiVersion": {
+          "description": "Output only. API version used to start the operation.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "cancelRequested": {
+          "description": "Output only. Identifies whether the user has requested cancellation of the operation. Operations that have been cancelled successfully have Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.",
+          "readOnly": true,
+          "type": "boolean"
+        },
+        "createTime": {
+          "description": "Output only. The time the operation was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "endTime": {
+          "description": "Output only. The time the operation finished running.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "statusDetail": {
+          "description": "Output only. Human-readable status of the operation, if any.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "target": {
+          "description": "Output only. Server-defined resource path for the target of the operation.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "verb": {
+          "description": "Output only. Name of the verb executed by the operation.",
+          "readOnly": true,
+          "type": "string"
         }
       },
       "type": "object"
@@ -3675,6 +3690,7 @@
           "type": "string"
         },
         "onlyInPredefinedRoles": {
+          "deprecated": true,
           "type": "boolean"
         },
         "primaryPermission": {
@@ -3726,7 +3742,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } **YAML example:** bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
+      "description": "An Identity and Access Management (IAM) policy, which specifies access controls for Google Cloud resources. A `Policy` is a collection of `bindings`. A `binding` binds one or more `members`, or principals, to a single `role`. Principals can be user accounts, service accounts, Google groups, and domains (such as G Suite). A `role` is a named list of permissions; each `role` can be an IAM predefined role or a user-created custom role. For some types of Google Cloud resources, a `binding` can also specify a `condition`, which is a logical expression that allows access to a resource only if the expression evaluates to `true`. A condition can add constraints based on attributes of the request, the resource, or both. To learn which resources support conditions in their IAM policies, see the [IAM documentation](https://cloud.google.com/iam/help/conditions/resource-policies). **JSON example:** ``` { \"bindings\": [ { \"role\": \"roles/resourcemanager.organizationAdmin\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-project-id@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/resourcemanager.organizationViewer\", \"members\": [ \"user:eve@example.com\" ], \"condition\": { \"title\": \"expirable access\", \"description\": \"Does not grant access after Sep 2020\", \"expression\": \"request.time \u003c timestamp('2020-10-01T00:00:00.000Z')\", } } ], \"etag\": \"BwWWja0YfJA=\", \"version\": 3 } ``` **YAML example:** ``` bindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-project-id@appspot.gserviceaccount.com role: roles/resourcemanager.organizationAdmin - members: - user:eve@example.com role: roles/resourcemanager.organizationViewer condition: title: expirable access description: Does not grant access after Sep 2020 expression: request.time \u003c timestamp('2020-10-01T00:00:00.000Z') etag: BwWWja0YfJA= version: 3 ``` For a description of IAM and its features, see the [IAM documentation](https://cloud.google.com/iam/docs/).",
       "id": "Policy",
       "properties": {
         "auditConfigs": {
@@ -3942,14 +3958,14 @@
       "id": "Saml",
       "properties": {
         "idpMetadataXml": {
-          "description": "Required. SAML Identity provider configuration metadata xml doc. The xml document should comply with [SAML 2.0 specification](https://www.oasis-open.org/committees/download.php/56785/sstc-saml-metadata-errata-2.0-wd-05.pdf). The max size of the acceptable xml document will be bounded to 128k characters. The metadata xml document should satisfy the following constraints: 1) Must contain an Identity Provider Entity ID. 2) Must contain at least one non-expired signing key certificate. 3) For each signing key: a) Valid from should be no more than 7 days from now. b) Valid to should be no more than 14 years in the future. 4) Upto 3 IdP signing keys are allowed in the metadata xml. When updating the provider's metadata xml, at lease one non-expired signing key must overlap with the existing metadata. This requirement is skipped if there are no non-expired signing keys present in the existing metadata",
+          "description": "Required. SAML Identity provider configuration metadata xml doc. The xml document should comply with [SAML 2.0 specification](https://www.oasis-open.org/committees/download.php/56785/sstc-saml-metadata-errata-2.0-wd-05.pdf). The max size of the acceptable xml document will be bounded to 128k characters. The metadata xml document should satisfy the following constraints: 1) Must contain an Identity Provider Entity ID. 2) Must contain at least one non-expired signing key certificate. 3) For each signing key: a) Valid from should be no more than 7 days from now. b) Valid to should be no more than 15 years in the future. 4) Upto 3 IdP signing keys are allowed in the metadata xml. When updating the provider's metadata xml, at lease one non-expired signing key must overlap with the existing metadata. This requirement is skipped if there are no non-expired signing keys present in the existing metadata",
           "type": "string"
         }
       },
       "type": "object"
     },
     "ServiceAccount": {
-      "description": "An IAM service account. A service account is an account for an application or a virtual machine (VM) instance, not a person. You can use a service account to call Google APIs. To learn more, read the [overview of service accounts](https://cloud.google.com/iam/help/service-accounts/overview). When you create a service account, you specify the project ID that owns the service account, as well as a name that must be unique within the project. IAM uses these values to create an email address that identifies the service //",
+      "description": "An IAM service account. A service account is an account for an application or a virtual machine (VM) instance, not a person. You can use a service account to call Google APIs. To learn more, read the [overview of service accounts](https://cloud.google.com/iam/help/service-accounts/overview). When you create a service account, you specify the project ID that owns the service account, as well as a name that must be unique within the project. IAM uses these values to create an email address that identifies the service account. //",
       "id": "ServiceAccount",
       "properties": {
         "description": {
@@ -3971,6 +3987,7 @@
           "type": "string"
         },
         "etag": {
+          "deprecated": true,
           "description": "Deprecated. Do not use.",
           "format": "byte",
           "type": "string"
@@ -4109,6 +4126,7 @@
       "id": "SignBlobRequest",
       "properties": {
         "bytesToSign": {
+          "deprecated": true,
           "description": "Required. Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The bytes to sign.",
           "format": "byte",
           "type": "string"
@@ -4121,10 +4139,12 @@
       "id": "SignBlobResponse",
       "properties": {
         "keyId": {
+          "deprecated": true,
           "description": "Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The id of the key used to sign the blob.",
           "type": "string"
         },
         "signature": {
+          "deprecated": true,
           "description": "Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The signed blob.",
           "format": "byte",
           "type": "string"
@@ -4137,6 +4157,7 @@
       "id": "SignJwtRequest",
       "properties": {
         "payload": {
+          "deprecated": true,
           "description": "Required. Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The JWT payload to sign. Must be a serialized JSON object that contains a JWT Claims Set. For example: `{\"sub\": \"user@example.com\", \"iat\": 313435}` If the JWT Claims Set contains an expiration time (`exp`) claim, it must be an integer timestamp that is not in the past and no more than 12 hours in the future. If the JWT Claims Set does not contain an expiration time (`exp`) claim, this claim is added automatically, with a timestamp that is 1 hour in the future.",
           "type": "string"
         }
@@ -4148,10 +4169,12 @@
       "id": "SignJwtResponse",
       "properties": {
         "keyId": {
+          "deprecated": true,
           "description": "Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The id of the key used to sign the JWT.",
           "type": "string"
         },
         "signedJwt": {
+          "deprecated": true,
           "description": "Deprecated. [Migrate to Service Account Credentials API](https://cloud.google.com/iam/help/credentials/migrate-api). The signed JWT.",
           "type": "string"
         }
@@ -4311,6 +4334,12 @@
           "description": "A user-specified display name of the pool in Google Cloud Console. Cannot exceed 32 characters.",
           "type": "string"
         },
+        "expireTime": {
+          "description": "Output only. Time after which the workforce pool will be permanently purged and cannot be recovered.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
         "name": {
           "description": "Output only. The resource name of the pool. Format: `locations/{location}/workforcePools/{workforce_pool_id}`",
           "readOnly": true,
@@ -4368,6 +4397,12 @@
         },
         "displayName": {
           "description": "A user-specified display name for the provider. Cannot exceed 32 characters.",
+          "type": "string"
+        },
+        "expireTime": {
+          "description": "Output only. Time after which the workload pool provider will be permanently purged and cannot be recovered.",
+          "format": "google-datetime",
+          "readOnly": true,
           "type": "string"
         },
         "name": {
@@ -4451,7 +4486,7 @@
       "type": "object"
     },
     "WorkloadIdentityPool": {
-      "description": "Represents a collection of external workload identities. You can define IAM policies to grant these identities access to Google Cloud resources.",
+      "description": "Represents a collection of workload identities. You can define IAM policies to grant these identities access to Google Cloud resources.",
       "id": "WorkloadIdentityPool",
       "properties": {
         "description": {
@@ -4466,18 +4501,10 @@
           "description": "A display name for the pool. Cannot exceed 32 characters.",
           "type": "string"
         },
-        "identityMode": {
-          "description": "Immutable. The identity mode of the pool.",
-          "enum": [
-            "IDENTITY_MODE_UNSPECIFIED",
-            "FEDERATION_ONLY",
-            "TRUST_DOMAIN"
-          ],
-          "enumDescriptions": [
-            "Existing pools will be in this mode. For existing worklod identity pools created through the public API, they will act as if they are set to FEDERATION_ONLY.",
-            "With FEDERATION_ONLY mode, providers can be created at the root level within the pool. Attribute mappings must specify a \"google.subject\" claim that specifies the identity of the federation workload. Namespace or any sub-namespace resources is not allowed with this mode.",
-            "With TRUST_DOMAIN mode, providers can be created at the root level within the pool. Attribute mappings must specify the \"google.namespace\" and \"google.workload_identifier\" claims that, respectively, specify the namespace and individual sub-namespace identifier for the workload. Namespaces and sub-Namespace resources are allowed."
-          ],
+        "expireTime": {
+          "description": "Output only. Time after which the workload identity pool will be permanently purged and cannot be recovered.",
+          "format": "google-datetime",
+          "readOnly": true,
           "type": "string"
         },
         "name": {
@@ -4521,7 +4548,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Maps attributes from authentication credentials issued by an external identity provider to Google Cloud attributes, such as `subject` and `segment`. Each key must be a string specifying the Google Cloud IAM attribute to map to. The following keys are supported: * `google.subject`: The principal IAM is authenticating. You can reference this value in IAM bindings. This is also the subject that appears in Cloud Logging logs. Cannot exceed 127 bytes. * `google.groups`: Groups the external identity belongs to. You can grant groups access to resources using an IAM `principalSet` binding; access applies to all members of the group. You can also provide custom attributes by specifying `attribute.{custom_attribute}`, where `{custom_attribute}` is the name of the custom attribute to be mapped. You can define a maximum of 50 custom attributes. The maximum length of a mapped attribute key is 100 characters, and the key may only contain the characters [a-z0-9_]. You can reference these attributes in IAM policies to define fine-grained access for a workload to Google Cloud resources. For example: * `google.subject`: `principal://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/subject/{value}` * `google.groups`: `principalSet://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/group/{value}` * `attribute.{custom_attribute}`: `principalSet://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/attribute.{custom_attribute}/{value}` Each value must be a [Common Expression Language] (https://opensource.google/projects/cel) function that maps an identity provider credential to the normalized attribute specified by the corresponding map key. You can use the `assertion` keyword in the expression to access a JSON representation of the authentication credential issued by the provider. The maximum length of an attribute mapping expression is 2048 characters. When evaluated, the total size of all mapped attributes must not exceed 8KB. For AWS providers, if no attribute mapping is defined, the following default mapping applies: ``` { \"google.subject\":\"assertion.arn\", \"attribute.aws_role\": \"assertion.arn.contains('assumed-role')\" \" ? assertion.arn.extract('{account_arn}assumed-role/')\" \" + 'assumed-role/'\" \" + assertion.arn.extract('assumed-role/{role_name}/')\" \" : assertion.arn\", } ``` If any custom attribute mappings are defined, they must include a mapping to the `google.subject` attribute. For OIDC providers, you must supply a custom mapping, which must include the `google.subject` attribute. For example, the following maps the `sub` claim of the incoming credential to the `subject` attribute on a Google token: ``` {\"google.subject\": \"assertion.sub\"} ```",
+          "description": " Maps attributes from authentication credentials issued by an external identity provider to Google Cloud attributes, such as `subject` and `segment`. Each key must be a string specifying the Google Cloud IAM attribute to map to. The following keys are supported: * `google.subject`: The principal IAM is authenticating. You can reference this value in IAM bindings. This is also the subject that appears in Cloud Logging logs. Cannot exceed 127 bytes. * `google.groups`: Groups the external identity belongs to. You can grant groups access to resources using an IAM `principalSet` binding; access applies to all members of the group. You can also provide custom attributes by specifying `attribute.{custom_attribute}`, where `{custom_attribute}` is the name of the custom attribute to be mapped. You can define a maximum of 50 custom attributes. The maximum length of a mapped attribute key is 100 characters, and the key may only contain the characters [a-z0-9_]. You can reference these attributes in IAM policies to define fine-grained access for a workload to Google Cloud resources. For example: * `google.subject`: `principal://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/subject/{value}` * `google.groups`: `principalSet://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/group/{value}` * `attribute.{custom_attribute}`: `principalSet://iam.googleapis.com/projects/{project}/locations/{location}/workloadIdentityPools/{pool}/attribute.{custom_attribute}/{value}` Each value must be a [Common Expression Language] (https://opensource.google/projects/cel) function that maps an identity provider credential to the normalized attribute specified by the corresponding map key. You can use the `assertion` keyword in the expression to access a JSON representation of the authentication credential issued by the provider. The maximum length of an attribute mapping expression is 2048 characters. When evaluated, the total size of all mapped attributes must not exceed 8KB. For AWS providers, if no attribute mapping is defined, the following default mapping applies: ``` { \"google.subject\":\"assertion.arn\", \"attribute.aws_role\": \"assertion.arn.contains('assumed-role')\" \" ? assertion.arn.extract('{account_arn}assumed-role/')\" \" + 'assumed-role/'\" \" + assertion.arn.extract('assumed-role/{role_name}/')\" \" : assertion.arn\", } ``` If any custom attribute mappings are defined, they must include a mapping to the `google.subject` attribute. For OIDC providers, you must supply a custom mapping, which must include the `google.subject` attribute. For example, the following maps the `sub` claim of the incoming credential to the `subject` attribute on a Google token: ``` {\"google.subject\": \"assertion.sub\"} ```",
           "type": "object"
         },
         "aws": {
@@ -4538,6 +4565,12 @@
         },
         "displayName": {
           "description": "A display name for the provider. Cannot exceed 32 characters.",
+          "type": "string"
+        },
+        "expireTime": {
+          "description": "Output only. Time after which the workload identity pool provider will be permanently purged and cannot be recovered.",
+          "format": "google-datetime",
+          "readOnly": true,
           "type": "string"
         },
         "name": {

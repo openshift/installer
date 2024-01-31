@@ -964,7 +964,7 @@
       }
     }
   },
-  "revision": "20230619",
+  "revision": "20230913",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "AddEnableRulesMetadata": {
@@ -974,7 +974,7 @@
       "type": "object"
     },
     "AddEnableRulesResponse": {
-      "description": "The response message of \"AddEnableRules\" method.",
+      "description": "The response message of `AddEnableRules` method.",
       "id": "AddEnableRulesResponse",
       "properties": {
         "addedValues": {
@@ -1212,6 +1212,7 @@
           "type": "string"
         },
         "minDeadline": {
+          "deprecated": true,
           "description": "Deprecated, do not use.",
           "format": "double",
           "type": "number"
@@ -1440,6 +1441,7 @@
           "type": "array"
         },
         "referenceDocsUri": {
+          "deprecated": true,
           "description": "Link to automatically generated reference documentation. Example: https://cloud.google.com/nodejs/docs/reference/asset/latest",
           "type": "string"
         }
@@ -1469,7 +1471,7 @@
           "type": "string"
         },
         "name": {
-          "description": "Output only. The resource name of the policy. For example, We only allow consumer policy name as \"default\" for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`. Legacy format: `projects/12345/consumerPoly`",
+          "description": "Output only. The resource name of the policy. We only allow consumer policy name as `default` for now: `projects/12345/consumerPolicies/default`, `folders/12345/consumerPolicies/default`, `organizations/12345/consumerPolicies/default`.",
           "readOnly": true,
           "type": "string"
         },
@@ -1619,6 +1621,13 @@
         "environment": {
           "description": "The service controller environment to use. If empty, no control plane feature (like quota and billing) will be enabled. The recommended value for most services is servicecontrol.googleapis.com",
           "type": "string"
+        },
+        "methodPolicies": {
+          "description": "Defines policies applying to the API methods of the service.",
+          "items": {
+            "$ref": "MethodPolicy"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1869,13 +1878,15 @@
           "type": "string"
         },
         "groups": {
-          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). go/predefined-service-groups. Example: `groups/googleServices`.",
+          "deprecated": true,
+          "description": "DEPRECATED: Please use field `values`. Service group should have prefix `groups/`. The names of the service groups that are enabled (Not Implemented). Example: `groups/googleServices`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "services": {
+          "deprecated": true,
           "description": "DEPRECATED: Please use field `values`. Service should have prefix `services/`. The names of the services that are enabled. Example: `storage.googleapis.com`.",
           "items": {
             "type": "string"
@@ -1883,7 +1894,7 @@
           "type": "array"
         },
         "values": {
-          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, groups/googleServices`, groups/allServices`.",
+          "description": "The names of the services or service groups that are enabled. Example: `services/storage.googleapis.com`, `groups/googleServices`, `groups/allServices`.",
           "items": {
             "type": "string"
           },
@@ -1914,6 +1925,7 @@
       "id": "Endpoint",
       "properties": {
         "aliases": {
+          "deprecated": true,
           "description": "Unimplemented. Dot not use. DEPRECATED: This field is no longer supported. Instead of using aliases, please specify multiple google.api.Endpoint for each of the intended aliases. Additional names that this endpoint will be hosted on.",
           "items": {
             "type": "string"
@@ -2106,6 +2118,25 @@
         },
         "typeUrl": {
           "description": "The field type URL, without the scheme, for message or enumeration types. Example: `\"type.googleapis.com/google.protobuf.Timestamp\"`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "FieldPolicy": {
+      "description": "Google API Policy Annotation This message defines a simple API policy annotation that can be used to annotate API request and response message fields with applicable policies. One field may have multiple applicable policies that must all be satisfied before a request can be processed. This policy annotation is used to generate the overall policy that will be used for automatic runtime policy enforcement and documentation generation.",
+      "id": "FieldPolicy",
+      "properties": {
+        "resourcePermission": {
+          "description": "Specifies the required permission(s) for the resource referred to by the field. It requires the field contains a valid resource reference, and the request must pass the permission checks to proceed. For example, \"resourcemanager.projects.get\".",
+          "type": "string"
+        },
+        "resourceType": {
+          "description": "Specifies the resource type for the resource referred to by the field.",
+          "type": "string"
+        },
+        "selector": {
+          "description": "Selects one or more request or response message fields to apply this `FieldPolicy`. When a `FieldPolicy` is used in proto annotation, the selector must be left as empty. The service config generator will automatically fill the correct value. When a `FieldPolicy` is used in service config, the selector must be a comma-separated string with valid request or response field paths, such as \"foo.bar\" or \"foo.bar,foo.baz\".",
           "type": "string"
         }
       },
@@ -2932,6 +2963,24 @@
       },
       "type": "object"
     },
+    "MethodPolicy": {
+      "description": "Defines policies applying to an RPC method.",
+      "id": "MethodPolicy",
+      "properties": {
+        "requestPolicies": {
+          "description": "Policies that are applicable to the request message.",
+          "items": {
+            "$ref": "FieldPolicy"
+          },
+          "type": "array"
+        },
+        "selector": {
+          "description": "Selects a method to which these policies should be enforced, for example, \"google.pubsub.v1.Subscriber.CreateSubscription\". Refer to selector for syntax details. NOTE: This field must not be set in the proto annotation. It will be automatically filled by the service config compiler .",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "MethodSettings": {
       "description": "Describes the generator configuration for a method.",
       "id": "MethodSettings",
@@ -3064,6 +3113,7 @@
           "type": "string"
         },
         "launchStage": {
+          "deprecated": true,
           "description": "Deprecated. Must use the MetricDescriptor.launch_stage instead.",
           "enum": [
             "LAUNCH_STAGE_UNSPECIFIED",
@@ -3273,7 +3323,7 @@
             "description": "Properties of the object. Contains field @type with type URL.",
             "type": "any"
           },
-          "description": "The normal response of the operation in case of success. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
+          "description": "The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.",
           "type": "object"
         }
       },
@@ -3355,6 +3405,41 @@
         "common": {
           "$ref": "CommonLanguageSettings",
           "description": "Some settings."
+        }
+      },
+      "type": "object"
+    },
+    "ProducerQuotaPolicy": {
+      "description": "Quota policy created by service producer.",
+      "id": "ProducerQuotaPolicy",
+      "properties": {
+        "container": {
+          "description": "The cloud resource container at which the quota policy is created. The format is `{container_type}/{container_number}`",
+          "type": "string"
+        },
+        "dimensions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": " If this map is nonempty, then this policy applies only to specific values for dimensions defined in the limit unit. For example, a policy on a limit with the unit `1/{project}/{region}` could contain an entry with the key `region` and the value `us-east-1`; the policy is only applied to quota consumed in that region. This map has the following restrictions: * Keys that are not defined in the limit's unit are not valid keys. Any string appearing in {brackets} in the unit (besides {project} or {user}) is a defined key. * `project` is not a valid key; the project is already specified in the parent resource name. * `user` is not a valid key; the API does not support quota policies that apply only to a specific user. * If `region` appears as a key, its value must be a valid Cloud region. * If `zone` appears as a key, its value must be a valid Cloud zone. * If any valid key other than `region` or `zone` appears in the map, then all valid keys other than `region` or `zone` must also appear in the map.",
+          "type": "object"
+        },
+        "metric": {
+          "description": "The name of the metric to which this policy applies. An example name would be: `compute.googleapis.com/cpus`",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name of the policy. This name is generated by the server when the policy is created. Example names would be: `organizations/123/services/compute.googleapis.com/consumerQuotaMetrics/compute.googleapis.com%2Fcpus/limits/%2Fproject%2Fregion/producerQuotaPolicies/4a3f2c1d`",
+          "type": "string"
+        },
+        "policyValue": {
+          "description": "The quota policy value. Can be any nonnegative integer, or -1 (unlimited quota).",
+          "format": "int64",
+          "type": "string"
+        },
+        "unit": {
+          "description": "The limit unit of the limit to which this policy applies. An example unit would be: `1/{project}/{region}` Note that `{project}` and `{region}` are not placeholders in this example; the literal characters `{` and `}` occur in the string.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3499,6 +3584,10 @@
         "producerOverride": {
           "$ref": "QuotaOverride",
           "description": "Producer override on this quota bucket."
+        },
+        "producerQuotaPolicy": {
+          "$ref": "ProducerQuotaPolicy",
+          "description": "Producer policy inherited from the closet ancestor of the current consumer."
         }
       },
       "type": "object"
@@ -3599,7 +3688,7 @@
       "type": "object"
     },
     "RemoveEnableRulesResponse": {
-      "description": "The response message of \"RemoveEnableRules\" method.",
+      "description": "The response message of `RemoveEnableRules` method.",
       "id": "RemoveEnableRulesResponse",
       "properties": {
         "parent": {
@@ -3607,6 +3696,7 @@
           "type": "string"
         },
         "removedValues": {
+          "deprecated": true,
           "description": "The values removed from the parent consumer policy.",
           "items": {
             "type": "string"
@@ -3898,9 +3988,9 @@
       "properties": {},
       "type": "object"
     },
-    "UpdateConsumerPolicyLROMetadata": {
-      "description": "Metadata for the `UpdateConsumerPolicyLRO` method.",
-      "id": "UpdateConsumerPolicyLROMetadata",
+    "UpdateConsumerPolicyMetadata": {
+      "description": "Metadata for the `UpdateConsumerPolicy` method.",
+      "id": "UpdateConsumerPolicyMetadata",
       "properties": {},
       "type": "object"
     },
