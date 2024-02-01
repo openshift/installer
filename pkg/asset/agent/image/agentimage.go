@@ -179,6 +179,10 @@ func (a *AgentImage) appendKargs(kargs []byte) error {
 // normalizeFilesExtension scans the extracted ISO files and trims
 // the file extensions longer than three chars.
 func (a *AgentImage) normalizeFilesExtension() error {
+	var skipFiles = map[string]bool{
+		"boot.catalog": true, // Required for arm64 iso
+	}
+
 	return filepath.WalkDir(a.tmpPath, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -191,6 +195,11 @@ func (a *AgentImage) normalizeFilesExtension() error {
 		ext := filepath.Ext(p)
 		// ext includes also the dot separator
 		if len(ext) > iso9660Level1ExtLen+1 {
+			b := filepath.Base(p)
+			if _, ok := skipFiles[filepath.Base(b)]; ok {
+				return nil
+			}
+
 			// Replaces file extensions longer than three chars
 			np := p[:len(p)-len(ext)] + ext[:iso9660Level1ExtLen+1]
 			err = os.Rename(p, np)
