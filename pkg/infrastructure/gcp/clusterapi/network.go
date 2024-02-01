@@ -11,20 +11,26 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
-type apiTypeStr string
 type loadBalancerType string
 
-var (
-	api         apiTypeStr = "api"
-	apiInternal apiTypeStr = "api-internal"
-
+const (
 	externalLoadBalancer loadBalancerType = "EXTERNAL"
 	internalLoadBalancer loadBalancerType = "INTERNAL"
+
+	internalLoadBalancerPort = 6443
+	externalLoadBalancerPort = 6080
 )
 
-func createHealthCheck(ctx context.Context, ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID, apiType apiTypeStr, port int64) error {
+var (
+	apiStrLookup = map[loadBalancerType]string{
+		externalLoadBalancer: "api",
+		internalLoadBalancer: "api-internal",
+	}
+)
+
+func createHealthCheck(ctx context.Context, ic *installconfig.InstallConfig, clusterID string, lbType loadBalancerType, port int64) error {
 	healthCheck := &compute.HealthCheck{
-		Name:               fmt.Sprintf("%s-%s", clusterID.InfraID, apiType),
+		Name:               fmt.Sprintf("%s-%s", clusterID, apiStrLookup[lbType]),
 		Description:        "Created By OpenShift Installer",
 		HealthyThreshold:   3,
 		UnhealthyThreshold: 3,
@@ -47,29 +53,21 @@ func createHealthCheck(ctx context.Context, ic *installconfig.InstallConfig, clu
 
 	// TODO: Do we need a child context ?
 	if _, err := service.HealthChecks.Insert(ic.Config.GCP.ProjectID, healthCheck).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("failed to create %s health check: %w", apiType, err)
+		return fmt.Errorf("failed to create %s health check: %w", apiStrLookup[lbType], err)
 	}
 
 	return nil
 }
 
-func createApiHealthCheck(ctx context.Context, ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
-	return createHealthCheck(ctx, ic, clusterID, api, 6080)
-}
-
-func createApiIntHealthCheck(ctx context.Context, ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID) error {
-	return createHealthCheck(ctx, ic, clusterID, apiInternal, 6443)
-}
-
 // createLoadBalancerAddress creates a static ip address for the load balancer.
-func createLoadBalancerAddress(ctx context.Context, ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID, subnetSelfLink string, lbType loadBalancerType) (string, error) {
+func createLoadBalancerAddress(ctx context.Context, ic *installconfig.InstallConfig, clusterID string, subnetSelfLink string, lbType loadBalancerType) (string, error) {
 	if lbType == externalLoadBalancer && ic.Config.Publish != types.ExternalPublishingStrategy {
 		return "", nil
 	}
 
-	name := fmt.Sprintf("%s-cluster-ip", clusterID.InfraID)
+	name := fmt.Sprintf("%s-cluster-ip", clusterID)
 	if lbType == internalLoadBalancer {
-		name = fmt.Sprintf("%s-cluster-public-ip", clusterID.InfraID)
+		name = fmt.Sprintf("%s-cluster-public-ip", clusterID)
 	}
 
 	labels := mergeLabels(ic, clusterID)
