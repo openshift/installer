@@ -1,7 +1,6 @@
 package clusterapi
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,10 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
@@ -28,10 +24,6 @@ import (
 	"github.com/openshift/installer/pkg/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
-)
-
-const (
-	manifestDir = "cluster-api"
 )
 
 var _ asset.WritableRuntimeAsset = (*Cluster)(nil)
@@ -55,8 +47,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.ClusterID{},
 		&openshiftinstall.Config{},
 		&manifests.FeatureGate{},
-		&bootstrap.Bootstrap{},
-		&machine.Master{},
 		new(rhcos.Image),
 	}
 }
@@ -67,17 +57,15 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	openshiftInstall := &openshiftinstall.Config{}
 	featureGate := &manifests.FeatureGate{}
-	bootstrapIgnAsset := &bootstrap.Bootstrap{}
-	masterIgnAsset := &machine.Master{}
 	rhcosImage := new(rhcos.Image)
-	dependencies.Get(installConfig, clusterID, openshiftInstall, bootstrapIgnAsset, masterIgnAsset, featureGate, rhcosImage)
+	dependencies.Get(installConfig, clusterID, openshiftInstall, featureGate, rhcosImage)
 
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(manifestDir), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
 		return err
 	}
 
@@ -98,49 +86,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		Spec: clusterv1.ClusterSpec{},
 	}
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
-
-	// Gather the ignition files, and store them in a secret.
-	{
-		masterIgn := string(masterIgnAsset.Files()[0].Data)
-		bootstrapIgn, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
-		if err != nil {
-			return errors.Wrap(err, "unable to inject installation info")
-		}
-		c.FileList = append(c.FileList,
-			&asset.RuntimeFile{
-				File: asset.File{Filename: "01_ignition-secret-master.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "master"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(masterIgn),
-					},
-				},
-			},
-			&asset.RuntimeFile{
-				File: asset.File{Filename: "01_ignition-secret-bootstrap.yaml"},
-				Object: &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap"),
-						Namespace: capiutils.Namespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": clusterID.InfraID,
-						},
-					},
-					Data: map[string][]byte{
-						"format": []byte("ignition"),
-						"value":  []byte(bootstrapIgn),
-					},
-				},
-			},
-		)
-	}
 
 	var out *capiutils.GenerateClusterAssetsOutput
 	switch platform := installConfig.Config.Platform.Name(); platform {
@@ -173,13 +118,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	// Append the infrastructure manifests.
 	c.FileList = append(c.FileList, out.Manifests...)
 
-	// Generate the machines for the cluster, and append them to the list of manifests.
-	mc, err := machines.GenerateClusterAPI(context.TODO(), installConfig, clusterID, rhcosImage)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate machines")
-	}
-	c.FileList = append(c.FileList, mc.Manifests...)
-
 	// Create the infrastructure manifests.
 	for _, m := range c.FileList {
 		objData, err := yaml.Marshal(m.Object)
@@ -188,11 +126,11 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		}
 		m.Data = objData
 
-		// If the filename is already a path, do not append the manifestDir.
-		if filepath.Dir(m.Filename) == manifestDir {
+		// If the filename is already a path, do not append the manifest dir.
+		if filepath.Dir(m.Filename) == capiutils.ManifestDir {
 			continue
 		}
-		m.Filename = filepath.Join(manifestDir, m.Filename)
+		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
 	}
 
 	asset.SortManifestFiles(c.FileList)
@@ -215,15 +153,15 @@ func (c *Cluster) RuntimeFiles() []*asset.RuntimeFile {
 
 // Load returns the openshift asset from disk.
 func (c *Cluster) Load(f asset.FileFetcher) (bool, error) {
-	yamlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yaml"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
-	ymlFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.yml"))
+	ymlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yml files")
 	}
-	jsonFileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*.json"))
+	jsonFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.json"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.json files")
 	}
