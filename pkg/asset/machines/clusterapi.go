@@ -22,12 +22,14 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
+	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
@@ -217,6 +219,37 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		})
 	case azuretypes.Name:
 		// TODO: implement
+	case gcptypes.Name:
+		// Generate GCP master machines using ControPlane machinepool
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
+		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.GCP)
+		pool.Platform.GCP = &mpool
+
+		gcpMachines, err := gcp.GenerateMachines(
+			installConfig,
+			clusterID.InfraID,
+			&pool,
+			string(*rhcosImage),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create master machine objects %w", err)
+		}
+		c.FileList = append(c.FileList, gcpMachines...)
+
+		// Generate GCP bootstrap machines
+		bootstrapMachines, err := gcp.GenerateBootstrapMachines(
+			capiutils.GenerateBoostrapMachineName(clusterID.InfraID),
+			installConfig,
+			clusterID.InfraID,
+			&pool,
+			string(*rhcosImage),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create bootstrap machine objects %w", err)
+		}
+		c.FileList = append(c.FileList, bootstrapMachines...)
+
 	default:
 		// TODO: support other platforms
 	}

@@ -1,5 +1,9 @@
 package gcp
 
+import (
+	"fmt"
+)
+
 // UserProvisionedDNS indicates whether the DNS solution is provisioned by the Installer or the user.
 type UserProvisionedDNS string
 
@@ -104,4 +108,9 @@ type UserTag struct {
 	// must contain only uppercase, lowercase alphanumeric characters, and the following
 	// special characters `_-.@%=+:,*#&(){}[]` and spaces.
 	Value string `json:"value"`
+}
+
+// DefaultSubnetName sets a default name for the subnet.
+func DefaultSubnetName(infraID, role string) string {
+	return fmt.Sprintf("%s-%s-subnet", infraID, role)
 }
