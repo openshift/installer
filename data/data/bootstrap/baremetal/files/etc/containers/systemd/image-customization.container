@@ -19,6 +19,7 @@ Volume=/opt/openshift:/opt/openshift:z,ro
 Environment="DEPLOY_ISO=/shared/html/images/ironic-python-agent.iso"
 Environment="DEPLOY_INITRD=/shared/html/images/ironic-python-agent.initramfs"
 Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
+Environment="IRONIC_INSPECTOR_BASE_URL=${IRONIC_BASE_URL}"
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
 Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
