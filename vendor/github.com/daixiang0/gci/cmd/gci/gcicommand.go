@@ -49,15 +49,15 @@ func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdI
 
 	sectionHelp := `Sections define how inputs will be processed. Section names are case-insensitive and may contain parameters in (). The section order is standard > default > custom > blank > dot. The default value is [standard,default].
 standard - standard section that Golang provides officially, like "fmt"
-Prefix(github.com/daixiang0) - custom section, groups all imports with the specified Prefix. Imports will be matched to the longest Prefix.
+Prefix(github.com/daixiang0) - custom section, groups all imports with the specified Prefix. Imports will be matched to the longest Prefix. Multiple custom prefixes may be provided, they will be rendered as distinct sections separated by newline. You can regroup multiple prefixes by separating them with comma: Prefix(github.com/daixiang0,gitlab.com/daixiang0,daixiang0)
 default - default section, contains all rest imports
-blank - blank section, contains all blank imports. This section is not presed unless explicitly enabled.
-dot - dot section, contains all dot imports. This section is not presed unless explicitly enabled.`
+blank - blank section, contains all blank imports.
+dot - dot section, contains all dot imports.`
 
 	skipGenerated = cmd.Flags().Bool("skip-generated", false, "Skip generated files")
 
 	customOrder = cmd.Flags().Bool("custom-order", false, "Enable custom order of sections")
-	sectionStrings = cmd.Flags().StringSliceP("section", "s", section.DefaultSections().String(), sectionHelp)
+	sectionStrings = cmd.Flags().StringArrayP("section", "s", section.DefaultSections().String(), sectionHelp)
 
 	// deprecated
 	noInlineComments = cmd.Flags().Bool("NoInlineComments", false, "Drops inline comments while formatting")
