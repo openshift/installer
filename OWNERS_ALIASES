@@ -128,6 +128,7 @@ aliases:
     - lukewarmtemp
     - yasminvalim
     - jbtrystram
+    - madhu-pillai
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -147,6 +148,7 @@ aliases:
     - lukewarmtemp
     - yasminvalim
     - jbtrystram
+    - madhu-pillai
   agent-reviewers:
     - andfasano
     - bfournie
