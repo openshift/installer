@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC.
+// Copyright 2024 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -2599,6 +2599,106 @@ func (s *GoogleApiServiceusageV1beta1ServiceIdentity) MarshalJSON() ([]byte, err
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleApiServiceusageV2alphaConsumerPolicy: Consumer Policy is a set
+// of rules that define what services or service groups can be used for
+// a cloud resource hierarchy.
+type GoogleApiServiceusageV2alphaConsumerPolicy struct {
+	// Annotations: Optional. Annotations is an unstructured key-value map
+	// stored with a policy that may be set by external tools to store and
+	// retrieve arbitrary metadata. They are not queryable and should be
+	// preserved when modifying objects. AIP-128
+	// (https://google.aip.dev/128#annotations)
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// CreateTime: Output only. The time the policy was created. For
+	// singleton policies, this is the first touch of the policy.
+	CreateTime string `json:"createTime,omitempty"`
+
+	// EnableRules: Enable rules define usable services, groups, and
+	// categories. There can currently be at most one `EnableRule`. This
+	// restriction will be lifted in later releases.
+	EnableRules []*GoogleApiServiceusageV2alphaEnableRule `json:"enableRules,omitempty"`
+
+	// Etag: Output only. An opaque tag indicating the current version of
+	// the policy, used for concurrency control.
+	Etag string `json:"etag,omitempty"`
+
+	// Name: Output only. The resource name of the policy. Only the
+	// `default` policy is supported:
+	// `projects/12345/consumerPolicies/default`,
+	// `folders/12345/consumerPolicies/default`,
+	// `organizations/12345/consumerPolicies/default`.
+	Name string `json:"name,omitempty"`
+
+	// UpdateTime: Output only. The time the policy was last updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Annotations") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Annotations") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleApiServiceusageV2alphaConsumerPolicy) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaConsumerPolicy
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2alphaEnableRule: The consumer policy rule that
+// defines enabled services, groups, and categories.
+type GoogleApiServiceusageV2alphaEnableRule struct {
+	// Categories: The names of the categories that are enabled. Example:
+	// `categories/googleServices`.
+	Categories []string `json:"categories,omitempty"`
+
+	// Groups: The names of the service groups that are enabled. Example:
+	// `services/container.googleapis.com/groups/dependencies`.
+	Groups []string `json:"groups,omitempty"`
+
+	// Services: The names of the services that are enabled. Example:
+	// `services/storage.googleapis.com`.
+	Services []string `json:"services,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Categories") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Categories") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleApiServiceusageV2alphaEnableRule) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleApiServiceusageV2alphaEnableRule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata: Metadata
+// for the `UpdateConsumerPolicy` method.
+type GoogleApiServiceusageV2alphaUpdateConsumerPolicyMetadata struct {
+}
+
 // Http: Defines the HTTP configuration for an API service. It contains
 // a list of HttpRule, each specifying the mapping of an RPC method to
 // one or more HTTP REST API methods.
@@ -3456,6 +3556,14 @@ func (s *MethodPolicy) MarshalJSON() ([]byte, error) {
 
 // MethodSettings: Describes the generator configuration for a method.
 type MethodSettings struct {
+	// AutoPopulatedFields: List of top-level fields of the request message,
+	// that should be automatically populated by the client libraries based
+	// on their (google.api.field_info).format. Currently supported format:
+	// UUID4. Example of a YAML configuration: publishing: method_settings:
+	// - selector: google.example.v1.ExampleService.CreateExample
+	// auto_populated_fields: - request_id
+	AutoPopulatedFields []string `json:"autoPopulatedFields,omitempty"`
+
 	// LongRunning: Describes settings to use for long-running operations
 	// when generating API methods for RPCs. Complements RPCs that use the
 	// annotations in google/longrunning/operations.proto. Example of a YAML
@@ -3471,20 +3579,21 @@ type MethodSettings struct {
 	// options.
 	Selector string `json:"selector,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "LongRunning") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "AutoPopulatedFields")
+	// to unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
 	// non-pointer, non-interface field appearing in ForceSendFields will be
 	// sent to the server regardless of whether the field is empty or not.
 	// This may be used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "LongRunning") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "AutoPopulatedFields") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -3938,7 +4047,7 @@ type MonitoredResourceDescriptor struct {
 
 	// Type: Required. The monitored resource type. For example, the type
 	// "cloudsql_database" represents databases in Google Cloud SQL. For a
-	// list of types, see Monitoring resource types
+	// list of types, see Monitored resource types
 	// (https://cloud.google.com/monitoring/api/resources) and Logging
 	// resource types
 	// (https://cloud.google.com/logging/docs/api/v2/resource-list).
@@ -4409,6 +4518,11 @@ type Publishing struct {
 	// documentation. Example:
 	// https://cloud.google.com/pubsub/lite/docs/reference/rpc
 	ProtoReferenceDocumentationUri string `json:"protoReferenceDocumentationUri,omitempty"`
+
+	// RestReferenceDocumentationUri: Optional link to REST reference
+	// documentation. Example:
+	// https://cloud.google.com/pubsub/lite/docs/reference/rest
+	RestReferenceDocumentationUri string `json:"restReferenceDocumentationUri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ApiShortName") to
 	// unconditionally include in API requests. By default, fields with
