@@ -5,6 +5,8 @@ import (
 	"net"
 	"strings"
 
+	utilsnet "k8s.io/utils/net"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -51,7 +53,7 @@ type TemplateData struct {
 	ClusterOSImage string
 
 	// API VIP for use by ironic during bootstrap.
-	APIVIP string
+	APIVIPs []string
 
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*baremetal.Host
@@ -71,6 +73,25 @@ type TemplateData struct {
 	ExternalSubnetCIDR int
 
 	ExternalMACAddress string
+
+	// ExternalURLv6 is a callback URL for the node if the node and the BMC use different network families
+	ExternalURLv6 string
+}
+
+func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string) {
+	if len(apiVIPs) > 1 {
+		// IPv6 BMCs may not be able to reach IPv4 servers, use the right callback URL for them.
+		// Warning: when backporting to 4.12 or earlier, change the port to 80!
+		externalURL := fmt.Sprintf("http://%s/", net.JoinHostPort(apiVIPs[1], "6180"))
+		if utilsnet.IsIPv6String(apiVIPs[1]) {
+			externalURLv6 = externalURL
+		}
+		if utilsnet.IsIPv4String(apiVIPs[1]) {
+			externalURLv4 = externalURL
+		}
+	}
+
+	return
 }
 
 // GetTemplateData returns platform-specific data for bootstrap templates.
@@ -86,8 +107,12 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
 
+	_, externalURLv6 := externalURLs(config.APIVIPs)
+
+	templateData.ExternalURLv6 = externalURLv6
+
 	if len(config.APIVIPs) > 0 {
-		templateData.APIVIP = config.APIVIPs[0]
+		templateData.APIVIPs = config.APIVIPs
 		templateData.BaremetalEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "6385"))
 		templateData.BaremetalIntrospectionEndpointOverride = fmt.Sprintf("http://%s/v1", net.JoinHostPort(config.APIVIPs[0], "5050"))
 	}

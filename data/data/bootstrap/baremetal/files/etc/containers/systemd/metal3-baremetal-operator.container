@@ -20,6 +20,7 @@ Environment="INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD}"
 Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
 Environment="HTTP_PORT=${HTTP_PORT}"
 Environment="IRONIC_ENDPOINT=${IRONIC_ENDPOINT}"
+Environment="IRONIC_EXTERNAL_URL_V6=${IRONIC_EXTERNAL_URL_V6}"
 
 [Service]
 EnvironmentFile=/etc/metal3.env
