@@ -98,7 +98,7 @@ require (
 	golang.org/x/term v0.13.0
 	google.golang.org/api v0.130.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5
-	google.golang.org/grpc v1.58.2
+	google.golang.org/grpc v1.58.3
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.28.3
@@ -174,7 +174,7 @@ require (
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
@@ -306,7 +306,8 @@ replace github.com/prometheus/client_golang => github.com/prometheus/client_gola
 replace golang.org/x/net => golang.org/x/net v0.5.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
+// https://issues.redhat.com/browse/OCPBUGS-27507
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
