@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpinfra "github.com/openshift/installer/pkg/infrastructure/gcp"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -69,8 +70,19 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 		Object: bootstrapGCPMachine,
 	})
 
+	// TODO: signedUrl
+	_, err := gcpinfra.ProvisionBootstrapStorage(installConfig, infraID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provision bootstrap resources: %w", err)
+	}
+
 	dataSecret := fmt.Sprintf("%s-%s", infraID, "bootstrap")
 	bootstrapCapiMachine := createCAPIMachine(bootstrapGCPMachine.Name, dataSecret, infraID)
+	bootstrapCapiMachine.Spec.Bootstrap.DataSecretName = ptr.To("user-data")
+	bootstrapCapiMachine.Spec.Bootstrap.ConfigRef = &v1.ObjectReference{
+		Name: "user-data",
+		// TODO: Add the signed url to json here.
+	}
 
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapCapiMachine.Name)},
