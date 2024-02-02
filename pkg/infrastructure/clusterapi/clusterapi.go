@@ -120,6 +120,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	for _, m := range infraManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed to create infrastructure manifest: %w", err)
 		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
@@ -133,12 +134,14 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 		}
 		cluster := &clusterv1.Cluster{}
 		if err := cl.Get(ctx, key, cluster); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, err
 		}
 		// Create the secret.
 		clusterKubeconfig := clusterKubeconfigAsset.Files()[0].Data
 		secret := utilkubeconfig.GenerateSecret(cluster, clusterKubeconfig)
 		if err := cl.Create(ctx, secret); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, err
 		}
 	}
@@ -165,12 +168,15 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 			cluster = c
 			return cluster.Status.InfrastructureReady, nil
 		}); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, err
 		}
 		if cluster == nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("error occurred during load balancer ready check")
 		}
 		if cluster.Spec.ControlPlaneEndpoint.Host == "" {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("control plane endpoint is not set")
 		}
 	}
@@ -183,6 +189,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 		}
 
 		if err := p.InfraReady(ctx, infraReadyInput); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed provisioning resources after infrastructure ready: %w", err)
 		}
 	} else {
@@ -191,6 +198,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 
 	bootstrapIgnData, err := injectInstallInfo(bootstrapIgnAsset.Files()[0].Data)
 	if err != nil {
+		clusterapi.System().Teardown()
 		return nil, fmt.Errorf("unable to inject installation info: %w", err)
 	}
 
@@ -204,6 +212,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 		}
 
 		if bootstrapIgnData, err = p.Ignition(ctx, ignInput); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed preparing ignition data: %w", err)
 		}
 	} else {
@@ -217,6 +226,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	for _, m := range machineManifests {
 		m.SetNamespace(capiutils.Namespace)
 		if err := cl.Create(ctx, m); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed to create control-plane manifest: %w", err)
 		}
 		logrus.Infof("Created manifest %+T, namespace=%s name=%s", m, m.GetNamespace(), m.GetName())
@@ -250,12 +260,14 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 					machine.Status.Phase != string(clusterv1.MachinePhaseRunning) {
 					return false, nil
 				} else if machine.Status.Phase == string(clusterv1.MachinePhaseFailed) {
+					clusterapi.System().Teardown()
 					return false, fmt.Errorf("machine %s failed to provision: %q", machine.Name, *machine.Status.FailureMessage)
 				}
 				logrus.Debugf("Machine %s is ready. Phase: %s", machine.Name, machine.Status.Phase)
 			}
 			return true, nil
 		}); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, err
 		}
 	}
@@ -268,6 +280,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 		}
 
 		if err = p.PostProvision(ctx, postMachineInput); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed during post-machine creation hook: %w", err)
 		}
 	}
@@ -282,16 +295,19 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 			Namespace: m.GetNamespace(),
 		}
 		if err := cl.Get(ctx, key, m); err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed to get manifest: %w", err)
 		}
 
 		gvk, err := cl.GroupVersionKindFor(m)
 		if err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed to get GVK for manifest: %w", err)
 		}
 		fileName := fmt.Sprintf("%s-%s-%s.yaml", gvk.Kind, m.GetNamespace(), m.GetName())
 		objData, err := yaml.Marshal(m)
 		if err != nil {
+			clusterapi.System().Teardown()
 			return fileList, fmt.Errorf("failed to create infrastructure manifest %s from InstallConfig: %w", fileName, err)
 		}
 		fileList = append(fileList, &asset.File{
