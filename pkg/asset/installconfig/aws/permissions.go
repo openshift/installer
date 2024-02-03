@@ -138,6 +138,7 @@ var permissions = map[PermissionGroup][]string{
 		"iam:PutRolePolicy",
 		"iam:RemoveRoleFromInstanceProfile",
 		"iam:SimulatePrincipalPolicy",
+		"iam:TagInstanceProfile",
 		"iam:TagRole",
 
 		// Route53 related perms
