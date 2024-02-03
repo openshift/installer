@@ -151,6 +151,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
+		config.Spec.PlatformSpec.BareMetal = &configv1.BareMetalPlatformSpec{}
 		config.Status.PlatformStatus.BareMetal = &configv1.BareMetalPlatformStatus{
 			APIServerInternalIP:  installConfig.Config.Platform.BareMetal.APIVIPs[0],
 			IngressIP:            installConfig.Config.Platform.BareMetal.IngressVIPs[0],
@@ -158,6 +159,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			IngressIPs:           installConfig.Config.Platform.BareMetal.IngressVIPs,
 			LoadBalancer:         installConfig.Config.Platform.BareMetal.LoadBalancer,
 		}
+		config.Spec.PlatformSpec.BareMetal.APIServerInternalIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.APIVIPs)
+		config.Spec.PlatformSpec.BareMetal.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.IngressVIPs)
+		config.Spec.PlatformSpec.BareMetal.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
+		config.Status.PlatformStatus.BareMetal.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
 	case gcp.Name:
 		config.Spec.PlatformSpec.Type = configv1.GCPPlatformType
 		config.Status.PlatformStatus.GCP = &configv1.GCPPlatformStatus{
@@ -229,6 +234,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:
 		config.Spec.PlatformSpec.Type = configv1.OpenStackPlatformType
+		config.Spec.PlatformSpec.OpenStack = &configv1.OpenStackPlatformSpec{}
 		config.Status.PlatformStatus.OpenStack = &configv1.OpenStackPlatformStatus{
 			APIServerInternalIP:  installConfig.Config.OpenStack.APIVIPs[0],
 			IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
@@ -236,8 +242,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
 			LoadBalancer:         installConfig.Config.OpenStack.LoadBalancer,
 		}
+		config.Spec.PlatformSpec.OpenStack.APIServerInternalIPs = types.StringsToIPs(installConfig.Config.Platform.OpenStack.APIVIPs)
+		config.Spec.PlatformSpec.OpenStack.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.OpenStack.IngressVIPs)
+		config.Spec.PlatformSpec.OpenStack.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
+		config.Status.PlatformStatus.OpenStack.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
 	case vsphere.Name:
 		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
+		config.Spec.PlatformSpec.VSphere = &configv1.VSpherePlatformSpec{}
 		if len(installConfig.Config.VSphere.APIVIPs) > 0 {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{
 				APIServerInternalIP:  installConfig.Config.VSphere.APIVIPs[0],
@@ -246,6 +257,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 				LoadBalancer:         installConfig.Config.VSphere.LoadBalancer,
 			}
+		} else {
+			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{}
 		}
 
 		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig, clusterID.InfraID)
@@ -253,6 +266,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			cloudProviderConfigMapKey = "vsphere.conf"
 		}
 
+		config.Status.PlatformStatus.VSphere.MachineNetworks = types.MachineNetworksToCIDRs(installConfig.Config.MachineNetwork)
 	case ovirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.OvirtPlatformType
 		config.Status.PlatformStatus.Ovirt = &configv1.OvirtPlatformStatus{

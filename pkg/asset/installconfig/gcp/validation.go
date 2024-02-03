@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/validate"
+	mapiutil "github.com/openshift/machine-api-provider-gcp/pkg/cloud/gcp/actuators/util"
 )
 
 type resourceRequirements struct {
@@ -44,6 +45,8 @@ var (
 	}
 )
 
+const unknownArchitecture = ""
+
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
@@ -67,7 +70,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements, arch string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
@@ -94,6 +97,13 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	if typeMeta.MemoryMb < req.minimumMemory {
 		errMsg := fmt.Sprintf("instance type does not meet minimum resource requirements of %d MB Memory", req.minimumMemory)
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+	}
+
+	if arch != unknownArchitecture {
+		if typeArch := mapiutil.CPUArchitecture(instanceType); string(typeArch) != arch {
+			errMsg := fmt.Sprintf("instance type architecture %s does not match specified architecture %s", typeArch, arch)
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
+		}
 	}
 
 	return allErrs
@@ -149,13 +159,16 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 					ic.GCP.DefaultMachinePlatform.Zones,
 					ic.GCP.DefaultMachinePlatform.InstanceType,
 					defaultInstanceReq,
+					unknownArchitecture,
 				)...)
 		}
 	}
 
 	zones := defaultZones
 	instanceType := defaultInstanceType
+	arch := types.ArchitectureAMD64
 	if ic.ControlPlane != nil {
+		arch = string(ic.ControlPlane.Architecture)
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(ic.ControlPlane.Architecture)
 		}
@@ -177,6 +190,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			zones,
 			instanceType,
 			controlPlaneReq,
+			arch,
 		)...)
 
 	for idx, compute := range ic.Compute {
@@ -186,6 +200,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if instanceType == "" {
 			instanceType = DefaultInstanceTypeForArch(compute.Architecture)
 		}
+		arch := compute.Architecture
 		if compute.Platform.GCP != nil {
 			if compute.Platform.GCP.InstanceType != "" {
 				instanceType = compute.Platform.GCP.InstanceType
@@ -203,6 +218,7 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 				zones,
 				instanceType,
 				computeReq,
+				string(arch),
 			)...)
 	}
 
