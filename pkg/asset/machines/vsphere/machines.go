@@ -247,6 +247,7 @@ func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.
 			Folder:       folder,
 			ResourcePool: resourcePool,
 		},
+		TagIDs:            failureDomain.Topology.TagIDs,
 		NumCPUs:           mpool.NumCPUs,
 		NumCoresPerSocket: mpool.NumCoresPerSocket,
 		MemoryMiB:         mpool.MemoryMiB,

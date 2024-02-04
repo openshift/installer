@@ -52,6 +52,10 @@ spec:
                 type:
                   description: type identifies the cluster managed, user facing authentication mode in use. Specifically, it manages the component that responds to login attempts. The default is IntegratedOAuth.
                   type: string
+                  enum:
+                    - ""
+                    - None
+                    - IntegratedOAuth
                 webhookTokenAuthenticator:
                   description: "webhookTokenAuthenticator configures a remote token reviewer. These remote authentication webhooks can be used to verify bearer tokens via the tokenreviews.authentication.k8s.io REST API. This is required to honor bearer tokens that are provisioned by an external authentication service. \n Can only be set if \"Type\" is set to \"None\"."
                   type: object

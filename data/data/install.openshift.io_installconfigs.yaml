@@ -4420,6 +4420,14 @@ spec:
                               minLength: 1
                               pattern: ^/.*?/host/.*?/Resources.*
                               type: string
+                            tagIDs:
+                              description: tagIDs is an optional set of tags to add
+                                to an instance. Specified tagIDs must use URN-notation
+                                instead of display names. A maximum of 10 tag IDs
+                                may be specified.
+                              items:
+                                type: string
+                              type: array
                             template:
                               description: template is the inventory path of the virtual
                                 machine or template that will be used for cloning.

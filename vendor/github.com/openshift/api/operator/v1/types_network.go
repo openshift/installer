@@ -390,6 +390,8 @@ type OVNKubernetesConfig struct {
 	// ipsecConfig enables and configures IPsec for pods on the pod network within the
 	// cluster.
 	// +optional
+	// +kubebuilder:default={"mode": "Disabled"}
+	// +default={"mode": "Disabled"}
 	IPsecConfig *IPsecConfig `json:"ipsecConfig,omitempty"`
 	// policyAuditConfig is the configuration for network policy audit events. If unset,
 	// reported defaults are used.
@@ -428,7 +430,19 @@ type HybridOverlayConfig struct {
 	HybridOverlayVXLANPort *uint32 `json:"hybridOverlayVXLANPort,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="self == oldSelf || has(self.mode)",message="ipsecConfig.mode is required"
 type IPsecConfig struct {
+	// mode defines the behaviour of the ipsec configuration within the platform.
+	// Valid values are `Disabled`, `External` and `Full`.
+	// When 'Disabled', ipsec will not be enabled at the node level.
+	// When 'External', ipsec is enabled on the node level but requires the user to configure the secure communication parameters.
+	// This mode is for external secure communications and the configuration can be done using the k8s-nmstate operator.
+	// When 'Full', ipsec is configured on the node level and inter-pod secure communication within the cluster is configured.
+	// Note with `Full`, if ipsec is desired for communication with external (to the cluster) entities (such as storage arrays), 
+	// this is left to the user to configure.
+	// +kubebuilder:validation:Enum=Disabled;External;Full
+	// +optional
+	Mode IPsecMode `json:"mode,omitempty"`
 }
 
 type IPForwardingMode string
@@ -690,4 +704,18 @@ const (
 	IPAMTypeDHCP IPAMType = "DHCP"
 	// IPAMTypeStatic uses static IP
 	IPAMTypeStatic IPAMType = "Static"
+)
+
+// IPsecMode enumerates the modes for IPsec configuration
+type IPsecMode string
+
+const (
+	// IPsecModeDisabled disables IPsec altogether
+	IPsecModeDisabled IPsecMode = "Disabled"
+	// IPsecModeExternal enables IPsec on the node level, but expects the user to configure it using k8s-nmstate or
+	// other means - it is most useful for secure communication from the cluster to external endpoints
+	IPsecModeExternal IPsecMode = "External"
+	// IPsecModeFull enables IPsec on the node level (the same as IPsecModeExternal), and configures it to secure communication
+	// between pods on the cluster network.
+	IPsecModeFull IPsecMode = "Full"
 )
