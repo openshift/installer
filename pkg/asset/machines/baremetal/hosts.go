@@ -156,6 +156,11 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 			// userDataSecret carries a reference to the master ignition file
 			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
 			numMasters++
+		} else {
+			// Pause workers until the real control plane is up.
+			newHost.ObjectMeta.Annotations = map[string]string{
+				"baremetalhost.metal3.io/paused": "",
+			}
 		}
 
 		settings.Hosts = append(settings.Hosts, newHost)
