@@ -178,7 +178,12 @@ func baseMetadata() *Metadata {
 				Region: region,
 			},
 		},
+		Publish: types.ExternalPublishingStrategy,
 	})
+}
+
+func setInternalPublishingStrategy(m *Metadata) {
+	m.publishStrategy = types.InternalPublishingStrategy
 }
 
 func TestAccountID(t *testing.T) {
@@ -406,6 +411,7 @@ func TestDNSInstance(t *testing.T) {
 	for _, tCase := range testCases {
 		t.Run(tCase.name, func(t *testing.T) {
 			metadata := baseMetadata()
+			setInternalPublishingStrategy(metadata)
 			metadata.client = ibmcloudClient
 			for _, edit := range tCase.edits {
 				edit(metadata)
@@ -438,6 +444,7 @@ func TestSetDNSInstance(t *testing.T) {
 	for _, tCase := range testCases {
 		t.Run(tCase.name, func(t *testing.T) {
 			metadata := baseMetadata()
+			setInternalPublishingStrategy(metadata)
 
 			metadata.dnsInstance = &DNSInstance{
 				ID:  tCase.dnsID,
