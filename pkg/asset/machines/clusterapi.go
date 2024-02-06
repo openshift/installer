@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
+	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -37,6 +38,7 @@ import (
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -389,6 +391,23 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			}
 			c.FileList = append(c.FileList, openStackMachines...)
 		}
+	case powervstypes.Name:
+		// Generate PowerVS master machines using ControPlane machinepool
+		mpool := defaultPowerVSMachinePoolPlatform(ic)
+		mpool.Set(ic.Platform.PowerVS.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.PowerVS)
+		pool.Platform.PowerVS = &mpool
+
+		powervsMachines, err := powervs.GenerateMachines(
+			clusterID.InfraID,
+			&pool,
+			"master",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create master machine objects %w", err)
+		}
+
+		c.FileList = append(c.FileList, powervsMachines...)
 	default:
 		// TODO: support other platforms
 	}
