@@ -48,12 +48,15 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 	defer cancel()
 
 	privateZoneName := fmt.Sprintf("%s-private-zone", clusterID)
-	potentialPrivateZoneName, err := getDNSZoneName(ctx, ic, false)
+
+	// A shared VPC install allows a user to preconfigure a private zone. If there is a private zone found,
+	// use the existing private zone otherwise default to the installer private zone patter above.
+	existingPrivateZoneName, err := getDNSZoneName(ctx, ic, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find private zone: %w", err)
 	}
-	if potentialPrivateZoneName != "" {
-		privateZoneName = potentialPrivateZoneName
+	if existingPrivateZoneName != "" {
+		privateZoneName = existingPrivateZoneName
 	}
 
 	records := []recordSet{
@@ -82,14 +85,14 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 	}
 
 	if ic.Config.Publish == types.ExternalPublishingStrategy {
-		potentialPublicZoneName, err := getDNSZoneName(ctx, ic, true)
+		existingPublicZoneName, err := getDNSZoneName(ctx, ic, true)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to find a public zone: %w", err)
 		}
 
 		apiRecord := recordSet{
 			projectID: ic.Config.GCP.ProjectID,
-			zoneName:  potentialPublicZoneName,
+			zoneName:  existingPublicZoneName,
 			record: &dns.ResourceRecordSet{
 				Name:    fmt.Sprintf("api.%s.", ic.Config.ClusterDomain()),
 				Type:    "A",
@@ -130,25 +133,23 @@ func createDNSRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 
 // createPrivateManagedZone will create a private managed zone in the GCP project specified in the install config. The
 // private managed zone should only be created when one is not specified in the install config.
-func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID string) error {
+func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
 	dnsService, err := dns.NewService(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}
 
-	labels := mergeLabels(ic, clusterID)
-
 	managedZone := &dns.ManagedZone{
 		Name:        fmt.Sprintf("%s-private-zone", clusterID),
 		Description: "Created By OpenShift Installer",
 		DnsName:     fmt.Sprintf("%s.", ic.Config.ClusterDomain()),
 		Visibility:  "private",
-		Labels:      labels,
+		Labels:      mergeLabels(ic, clusterID),
 		PrivateVisibilityConfig: &dns.ManagedZonePrivateVisibilityConfig{
 			Networks: []*dns.ManagedZonePrivateVisibilityConfigNetwork{
 				{
-					NetworkUrl: ic.Config.GCP.Network,
+					NetworkUrl: network,
 				},
 			},
 		},

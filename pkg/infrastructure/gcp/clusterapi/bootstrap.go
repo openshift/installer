@@ -1,4 +1,4 @@
-package gcp
+package clusterapi
 
 import (
 	"context"
@@ -52,18 +52,12 @@ func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, cluster
 		return fmt.Errorf("failed to create bucket handle: %w", err)
 	}
 
-	labels := map[string]string{}
-	labels[fmt.Sprintf("kubernetes-io-cluster-%s", clusterID)] = "owned"
-	for _, label := range ic.Config.GCP.UserLabels {
-		labels[label.Key] = label.Value
-	}
-
 	bucketAttrs := storage.BucketAttrs{
 		UniformBucketLevelAccess: storage.UniformBucketLevelAccess{
 			Enabled: true,
 		},
 		Location: ic.Config.GCP.Region,
-		Labels:   labels,
+		Labels:   mergeLabels(ic, clusterID),
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
@@ -85,7 +79,7 @@ func CreateSignedURL(handle *storage.BucketHandle, objectName string) (string, e
 	ctx := context.Background()
 	session, err := gcpic.GetSession(ctx)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create gcp session: %w", err)
 	}
 
 	// TODO: make sure all cases are handled including the cases required by https://github.com/openshift/installer/pull/7697
@@ -102,28 +96,29 @@ func CreateSignedURL(handle *storage.BucketHandle, objectName string) (string, e
 	// However, if the object is never created this could cause major issues.
 	url, err := handle.SignedURL(objectName, &opts)
 	if err != nil {
-		return "", fmt.Errorf("failed to create a signed url: %w", err)
+		return "", fmt.Errorf("failed to presign a URL: %w", err)
 	}
 
 	return url, nil
 }
 
 // ProvisionBootstrapStorage will provision the required storage bucket and signed url for the bootstrap process.
-func ProvisionBootstrapStorage(ic *installconfig.InstallConfig, clusterID string) (string, error) {
-	ctx := context.Background()
+func ProvisionBootstrapStorage(ctx context.Context, ic *installconfig.InstallConfig, clusterID string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
 
 	if err := CreateStorage(ctx, ic, clusterID, BootstrapIgnitionBucket); err != nil {
-		return "", nil
+		return "", fmt.Errorf("failed to create storage: %w", err)
 	}
 
 	bucketHandle, err := CreateBucketHandle(ctx, GetBootstrapStorageName(clusterID))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create bucket handle: %w", err)
 	}
 
 	url, err := CreateSignedURL(bucketHandle, BootstrapIgnitionBucket)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create signed url: %w", err)
 	}
 
 	return url, nil
@@ -132,7 +127,7 @@ func ProvisionBootstrapStorage(ic *installconfig.InstallConfig, clusterID string
 // FillBucket will add the contents to the bootstrap storage bucket object. The bucketName is the
 // name of the bucket, and the object name refers to the object that should be filled within the bucket.
 func FillBucket(ctx context.Context, bucketName, objectName, contents string) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
 	defer cancel()
 
 	bucketHandle, err := CreateBucketHandle(ctx, bucketName)
