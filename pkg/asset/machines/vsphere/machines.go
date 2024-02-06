@@ -136,12 +136,19 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		vsphereMachineProvider.Template = ""
 	}
 
+	// Only set AddressesFromPools and Nameservers if AddressesFromPools is > 0, else revert to
+	// the older static IP manifest way.
 	if len(hosts) > 0 {
-		vsphereMachineProvider.Network.Devices = []machineapi.NetworkDeviceSpec{
-			{
-				AddressesFromPools: origProv.Network.Devices[0].AddressesFromPools,
-				Nameservers:        origProv.Network.Devices[0].Nameservers,
-			},
+		if len(origProv.Network.Devices[0].AddressesFromPools) > 0 {
+			vsphereMachineProvider.Network.Devices = []machineapi.NetworkDeviceSpec{
+				{
+					AddressesFromPools: origProv.Network.Devices[0].AddressesFromPools,
+					Nameservers:        origProv.Network.Devices[0].Nameservers,
+				},
+			}
+		} else {
+			// Older static IP config, lets remove network since it'll come from FD
+			vsphereMachineProvider.Network = machineapi.NetworkSpec{}
 		}
 	}
 
