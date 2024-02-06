@@ -1,6 +1,7 @@
 package ibmcloud
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -58,14 +59,16 @@ func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
 	options := o.vpcSvc.NewDeleteVolumeOptions(item.id)
 	details, err := o.vpcSvc.DeleteVolumeWithContext(ctx, options)
 
-	if err != nil && details.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "Failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s", item.name, item.id, item.id)
-	}
+	if err != nil {
+		if details == nil || details.StatusCode != http.StatusNotFound {
+			return fmt.Errorf("failed to delete disk name=%s, id=%s.If this error continues to persist for more than 20 minutes then please try to manually cleanup the volume using - ibmcloud is vold %s: %w", item.name, item.id, item.id, err)
+		}
 
-	if err != nil && details.StatusCode == http.StatusNotFound {
-		// The resource is gone
-		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted disk %s", item.id)
+		if details.StatusCode == http.StatusNotFound {
+			// The resource is gone
+			o.deletePendingItems(item.typeName, []cloudResource{item})
+			o.Logger.Infof("Deleted disk %s", item.id)
+		}
 	}
 
 	return nil
@@ -81,9 +84,11 @@ func (o *ClusterUninstaller) waitForDiskDeletion(item cloudResource) error {
 		volumeOptions := o.vpcSvc.NewGetVolumeOptions(item.id)
 		_, response, err := o.vpcSvc.GetVolumeWithContext(ctx, volumeOptions)
 		// Keep retry, until GetVolume returns volume not found
-		if err != nil && response.StatusCode == http.StatusNotFound {
-			skip = true
-			return nil, skip
+		if err != nil {
+			if response != nil && response.StatusCode == http.StatusNotFound {
+				skip = true
+				return nil, skip
+			}
 		}
 		return err, false // continue retry as we are not seeing error which means volume is available
 	})
