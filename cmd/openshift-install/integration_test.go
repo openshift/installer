@@ -19,3 +19,7 @@ func TestMain(m *testing.M) {
 func TestAgentIntegration(t *testing.T) {
 	runAllIntegrationTests(t, "testdata/agent")
 }
+
+func TestInstallerIntegration(t *testing.T) {
+	runAllIntegrationTests(t, "testdata/installer")
+}
