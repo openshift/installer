@@ -44,6 +44,9 @@ type IgnitionProvider interface {
 
 // IgnitionInput collects the args passed to the IgnitionProvider call.
 type IgnitionInput struct {
+	// Client is the client for kube-apiserver running locally on the installer host.
+	// It can be used to read the status of the cluster object on the local control plane.
+	Client           client.Client
 	BootstrapIgnData []byte
 	InfraID          string
 	InstallConfig    *installconfig.InstallConfig

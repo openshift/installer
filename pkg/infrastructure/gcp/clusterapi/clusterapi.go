@@ -4,20 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 type Provider struct {
 }
+
+var _ clusterapi.PreProvider = (*Provider)(nil)
+var _ clusterapi.IgnitionProvider = (*Provider)(nil)
+var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
+var _ clusterapi.PostProvider = (*Provider)(nil)
 
 func (p Provider) Name() string {
 	return gcptypes.Name
@@ -39,7 +44,17 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("ignition failed to provision storage: %w", err)
 	}
 
-	if err := FillBucket(ctx, BootstrapIgnitionBucket, BootstrapIgnitionBucket, string(in.BootstrapIgnData)); err != nil {
+	editedIgnitionBytes, err := EditIgnition(ctx, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
+	}
+
+	ignitionBytes := in.BootstrapIgnData
+	if editedIgnitionBytes != nil {
+		ignitionBytes = editedIgnitionBytes
+	}
+
+	if err := FillBucket(ctx, BootstrapIgnitionBucket, BootstrapIgnitionBucket, string(ignitionBytes)); err != nil {
 		return nil, fmt.Errorf("ignition failed to fill bucket: %w", err)
 	}
 
@@ -64,25 +79,6 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 }
 
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
-	// Create the public (optional) and private load balancer static ip addresses
-	apiIntIPAddress, err := createLoadBalancerAddress(ctx, in.InstallConfig, in.InfraID, "", internalLoadBalancer)
-	if err != nil {
-		return nil
-	}
-	apiIPAddress, err := createLoadBalancerAddress(ctx, in.InstallConfig, in.InfraID, "", externalLoadBalancer)
-	if err != nil {
-		return nil
-	}
-
-	// Create the health checks related to the internal load balancer.
-	if err := createHealthCheck(ctx, in.InstallConfig, in.InfraID, internalLoadBalancer, internalLoadBalancerPort); err != nil {
-		return err
-	}
-	// Create the health checks related to the external load balancer.
-	if err := createHealthCheck(ctx, in.InstallConfig, in.InfraID, externalLoadBalancer, externalLoadBalancerPort); err != nil {
-		return err
-	}
-
 	gcpCluster := &capg.GCPCluster{}
 	key := client.ObjectKey{
 		Name:      in.InfraID,
@@ -92,18 +88,46 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get GCP cluster: %w", err)
 	}
 
-	if gcpCluster.Status.Network.SelfLink == nil {
-		return fmt.Errorf("failed to get GCP network: %w", err)
+	// public load balancer is created by CAPG. The health check for this load balancer is also created by
+	// the CAPG.
+	apiIPAddress := *gcpCluster.Status.Network.APIServerAddress
+
+	// Currently, the internal/private load balancer is not created by CAPG. The load balancer will be created
+	// by the installer for now
+	// TODO: remove the creation of the LB and health check here when supported by CAPG.
+	// https://github.com/kubernetes-sigs/cluster-api-provider-gcp/issues/903
+	// Create the public (optional) and private load balancer static ip addresses
+	// TODO: Do we then need to setup a subnet for internal load balancing ?
+	apiIntIPAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, getApiAddressName(in.InfraID))
+	if err != nil {
+		return fmt.Errorf("failed to create the internal load balancer address: %w", err)
 	}
 
-	// Create the private zone if one does not exist
-	if err := createPrivateManagedZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
-		return err
+	if in.InstallConfig.Config.GCP.UserProvisionedDNS != gcptypes.UserProvisionedDNSEnabled {
+		// Get the network from the GCP Cluster. The network is used to create the private managed zone.
+		if gcpCluster.Status.Network.SelfLink == nil {
+			return fmt.Errorf("failed to get GCP network: %w", err)
+		}
+
+		// Create the private zone if one does not exist
+		if err := createPrivateManagedZone(ctx, in.InstallConfig, in.InfraID, *gcpCluster.Status.Network.SelfLink); err != nil {
+			return fmt.Errorf("failed to create the private managed zone: %w", err)
+		}
+		// Create the public (optional) and private dns records
+		if err := createDNSRecords(ctx, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
+			return fmt.Errorf("failed to create DNS records: %w", err)
+		}
 	}
 
-	// Create the public (optional) and private dns records
-	if err := createDNSRecords(ctx, in.InstallConfig, in.InfraID, apiIPAddress, apiIntIPAddress); err != nil {
-		return err
+	return nil
+}
+
+func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	// Create the backend service for the internal load balancer
+	// TODO: remove when CAPG supports private installs and load balancer creation
+	if err := createInternalLBBackendService(ctx, in); err != nil {
+		return fmt.Errorf("failed to create the internal load balancer backend service: %w", err)
 	}
+
 	return nil
 }
