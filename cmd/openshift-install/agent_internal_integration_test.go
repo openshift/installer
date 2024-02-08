@@ -19,6 +19,8 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
+
+	"github.com/openshift/installer/pkg/asset/releaseimage"
 )
 
 // This file contains a number of functions useful for
@@ -101,6 +103,14 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 				}
 			}
 
+			// Let's get the current release version, so that
+			// it could be used within the tests
+			pullspec, err := releaseimage.Default()
+			if err != nil {
+				return err
+			}
+			e.Vars = append(e.Vars, fmt.Sprintf("RELEASE_IMAGE=%s", pullspec))
+
 			return nil
 		},
 
@@ -111,6 +121,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 			"initrdImgContains":       initrdImgContains,
 			"unconfiguredIgnContains": unconfiguredIgnContains,
 			"unconfiguredIgnCmp":      unconfiguredIgnCmp,
+			"expandFile":              expandFile,
 		},
 	})
 }
@@ -157,7 +168,6 @@ func archiveFileNames(isoPath string) (string, string, error) {
 	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
-// [!] ignitionContains `isoPath` `file` check if the specified file `file`
 // [!] unconfiguredIgnContains `file` check if the specified file `file`
 // is stored within the unconfigured ignition Storage Files.
 func unconfiguredIgnContains(ts *testscript.TestScript, neg bool, args []string) {
@@ -200,6 +210,7 @@ func ignitionStorageContains(ts *testscript.TestScript, neg bool, args []string)
 // [!] isoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
 // `isoFile` - extracted from the ISO embedded configuration file referenced
 // by `isoPath` - matches the content of the local file `expectedFile`.
+// Environment variables in `expectedFile` are substituted before the comparison.
 func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
 		ts.Fatalf("usage: isocmp isoPath file1 file2")
@@ -227,6 +238,7 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 // [!] unconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
 // of the file `fileInIgn` extracted from the unconfigured ignition
 // configuration file matches the content of the local file `expectedFile`.
+// Environment variables in in `expectedFile` are substituted before the comparison.
 func unconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
 		ts.Fatalf("usage: iunconfiguredIgnCmp file1 file2")
@@ -238,6 +250,7 @@ func unconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
 // [!] ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
 // `ignFile` - extracted from the ignition configuration file referenced
 // by `ignPath` - matches the content of the local file `expectedFile`.
+// Environment variables in in `expectedFile` are substituted before the comparison.
 func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
 		ts.Fatalf("usage: ignitionStorageCmp ignPath file1 file2")
@@ -267,9 +280,34 @@ func readIgnition(ts *testscript.TestScript, ignPath string) (config igntypes.Co
 	return config, err
 }
 
+// [!] expandFile `file...` can be used to substitute environment variables
+// references for each file specified.
+func expandFile(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 1 {
+		ts.Fatalf("usage: expandFile file...")
+	}
+
+	workDir := ts.Getenv("WORK")
+	for _, f := range args {
+		fileName := filepath.Join(workDir, f)
+		data, err := os.ReadFile(fileName)
+		ts.Check(err)
+
+		newData := expand(ts, data)
+		err = os.WriteFile(fileName, []byte(newData), 0)
+		ts.Check(err)
+	}
+}
+
+func expand(ts *testscript.TestScript, s []byte) string {
+	return os.Expand(string(s), func(key string) string {
+		return ts.Getenv(key)
+	})
+}
+
 func byteCompare(ts *testscript.TestScript, neg bool, aData, eData []byte, aFilePath, eFilePath string) {
 	aText := string(aData)
-	eText := string(eData)
+	eText := expand(ts, eData)
 
 	eq := aText == eText
 	if neg {
