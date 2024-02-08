@@ -167,7 +167,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 		agentClusterInstall := &hiveext.AgentClusterInstall{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getAgentClusterInstallName(installConfig),
-				Namespace: getObjectMetaNamespace(installConfig),
+				Namespace: installConfig.ClusterNamespace(),
 			},
 			Spec: hiveext.AgentClusterInstallSpec{
 				ImageSetRef: &hivev1.ClusterImageSetReference{

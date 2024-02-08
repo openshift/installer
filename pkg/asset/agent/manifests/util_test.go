@@ -454,7 +454,7 @@ func getGoodACI() *hiveext.AgentClusterInstall {
 	goodACI := &hiveext.AgentClusterInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getAgentClusterInstallName(getValidOptionalInstallConfig()),
-			Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+			Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 		},
 		Spec: hiveext.AgentClusterInstallSpec{
 			ImageSetRef: &hivev1.ClusterImageSetReference{

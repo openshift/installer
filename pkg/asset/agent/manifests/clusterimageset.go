@@ -65,7 +65,7 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 	}
 
 	if installConfig.Config != nil {
-		clusterImageSet.ObjectMeta.Namespace = getObjectMetaNamespace(installConfig)
+		clusterImageSet.ObjectMeta.Namespace = installConfig.ClusterNamespace()
 
 	}
 

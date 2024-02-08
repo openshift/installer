@@ -3,6 +3,7 @@ package nodejoiner
 import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/store"
 )
@@ -22,6 +23,7 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 	fetcher := store.NewAssetsFetcher(directory)
 	return fetcher.FetchAndPersist([]asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
+		&manifests.AgentPullSecret{},
 		// To be completed
 	})
 }

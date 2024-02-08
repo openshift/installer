@@ -18,8 +18,8 @@ func getInfraEnvName(ic *agent.OptionalInstallConfig) string {
 	return ic.ClusterName()
 }
 
-func getPullSecretName(ic *agent.OptionalInstallConfig) string {
-	return ic.ClusterName() + "-pull-secret"
+func getPullSecretName(clusterName string) string {
+	return clusterName + "-pull-secret"
 }
 
 func getProxy(ic *agent.OptionalInstallConfig) *aiv1beta1.Proxy {
@@ -28,13 +28,6 @@ func getProxy(ic *agent.OptionalInstallConfig) *aiv1beta1.Proxy {
 		HTTPSProxy: ic.Config.Proxy.HTTPSProxy,
 		NoProxy:    ic.Config.Proxy.NoProxy,
 	}
-}
-
-func getObjectMetaNamespace(ic *agent.OptionalInstallConfig) string {
-	if ic.Config != nil {
-		return ic.Config.Namespace
-	}
-	return ""
 }
 
 func getNMStateConfigName(ic *agent.OptionalInstallConfig) string {
