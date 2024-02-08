@@ -210,7 +210,7 @@ func ignitionStorageContains(ts *testscript.TestScript, neg bool, args []string)
 // [!] isoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
 // `isoFile` - extracted from the ISO embedded configuration file referenced
 // by `isoPath` - matches the content of the local file `expectedFile`.
-// Environment variables in in `expectedFile` are substituted before the comparison.
+// Environment variables in `expectedFile` are substituted before the comparison.
 func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
 		ts.Fatalf("usage: isocmp isoPath file1 file2")
@@ -281,7 +281,7 @@ func readIgnition(ts *testscript.TestScript, ignPath string) (config igntypes.Co
 }
 
 // [!] expandFile `file...` can be used to substitute environment variables
-// references for each file specified
+// references for each file specified.
 func expandFile(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 1 {
 		ts.Fatalf("usage: expandFile file...")
