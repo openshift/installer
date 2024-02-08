@@ -58,21 +58,20 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.29.0
-	github.com/openshift/api v0.0.0-20240115183315-0793e918179d
+	github.com/openshift/api v0.0.0-20240207185517-ae973131190e
 	github.com/openshift/assisted-image-service v0.0.0-20230829160050-0b98ec74397b
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20230926161409-848405da69e1
+	github.com/openshift/client-go v0.0.0-20231218140158-47f6d749b9d9
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a
-	github.com/openshift/library-go v0.0.0-20231003133513-3a0c1fc00519
+	github.com/openshift/library-go v0.0.0-20240207105404-126b47137408
 	github.com/openshift/machine-api-provider-gcp v0.0.1-0.20231014045125-6096cc86f3ba
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20231207164151-6b0b8ea7b16d
-	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
 	github.com/pborman/uuid v1.2.0
 	github.com/pelletier/go-toml v1.9.5
@@ -253,7 +252,7 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
@@ -295,9 +294,6 @@ replace sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provi
 replace sigs.k8s.io/cluster-api-provider-azure => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
 
 replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
-
-// Pin MCO so it doesn't get downgraded
-replace github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
