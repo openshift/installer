@@ -28,7 +28,7 @@ Environment="KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback"
 
 [Service]
 EnvironmentFile=/etc/ironic.env
-Restart=on-abnormal
+Restart=on-failure
 ExecStartPre=/usr/local/bin/setup-image-data.sh
 TimeoutStartSec=600
 ExecStopPost=podman secret rm pull-secret
