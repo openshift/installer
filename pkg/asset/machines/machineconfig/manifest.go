@@ -6,8 +6,8 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	"github.com/openshift/installer/pkg/asset"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
 const (
