@@ -44,16 +44,16 @@ func TestInfraEnv_Generate(t *testing.T) {
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getInfraEnvName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
@@ -70,20 +70,20 @@ func TestInfraEnv_Generate(t *testing.T) {
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
 					},
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+						Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 					},
 				},
 			},
@@ -97,20 +97,20 @@ func TestInfraEnv_Generate(t *testing.T) {
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
 					},
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+						Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					AdditionalNTPSources: getValidAgentConfigWithAdditionalNTPSources().Config.AdditionalNTPSources,
 				},
@@ -125,16 +125,16 @@ func TestInfraEnv_Generate(t *testing.T) {
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
 						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),

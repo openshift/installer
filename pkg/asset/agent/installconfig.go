@@ -257,6 +257,13 @@ func (a *OptionalInstallConfig) ClusterName() string {
 	return "agent-cluster"
 }
 
+func (a *OptionalInstallConfig) ClusterNamespace() string {
+	if a.Config != nil && a.Config.ObjectMeta.Namespace != "" {
+		return a.Config.ObjectMeta.Namespace
+	}
+	return ""
+}
+
 // GetBaremetalHosts gets the hosts defined for a baremetal platform.
 func (a *OptionalInstallConfig) GetBaremetalHosts() []*baremetal.Host {
 	if a.Config != nil && a.Config.Platform.Name() == baremetal.Name {

@@ -13,11 +13,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
 func TestAgentPullSecret_Generate(t *testing.T) {
-
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -25,16 +26,15 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 		expectedConfig *corev1.Secret
 	}{
 		{
-			name: "missing install config",
+			name: "retrieved from cluster",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
-			},
-			expectedError: "missing configuration or manifest file",
-		},
-		{
-			name: "valid configuration",
-			dependencies: []asset.Asset{
-				getValidOptionalInstallConfig(),
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ClusterID:  "ostest",
+					Namespace:  "cluster0",
+					PullSecret: "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
+				},
 			},
 			expectedConfig: &corev1.Secret{
 				TypeMeta: v1.TypeMeta{
@@ -42,8 +42,34 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 					APIVersion: "v1",
 				},
 				ObjectMeta: v1.ObjectMeta{
-					Name:      getPullSecretName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      "ostest-pull-secret",
+					Namespace: "cluster0",
+				},
+				StringData: map[string]string{
+					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
+				},
+			},
+		},
+		{
+			name: "missing install config",
+			dependencies: []asset.Asset{
+				&agent.OptionalInstallConfig{}, &workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall}, &joiner.ClusterInfo{},
+			},
+			expectedError: "missing configuration or manifest file",
+		},
+		{
+			name: "valid configuration",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfig(), &workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall}, &joiner.ClusterInfo{},
+			},
+			expectedConfig: &corev1.Secret{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				StringData: map[string]string{
 					".dockerconfigjson": "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",

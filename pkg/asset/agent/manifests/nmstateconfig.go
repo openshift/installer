@@ -98,7 +98,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
-					Namespace: getObjectMetaNamespace(installConfig),
+					Namespace: installConfig.ClusterNamespace(),
 					Labels:    getNMStateConfigLabels(installConfig),
 				},
 				Spec: aiv1beta1.NMStateConfigSpec{

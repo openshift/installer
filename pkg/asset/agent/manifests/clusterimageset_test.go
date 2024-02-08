@@ -64,7 +64,7 @@ func TestClusterImageSet_Generate(t *testing.T) {
 			expectedConfig: &hivev1.ClusterImageSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-was not built correctly",
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: hivev1.ClusterImageSetSpec{
 					ReleaseImage: currentRelease,

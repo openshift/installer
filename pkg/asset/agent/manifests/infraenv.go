@@ -56,16 +56,16 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 		infraEnv := &aiv1beta1.InfraEnv{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getInfraEnvName(installConfig),
-				Namespace: getObjectMetaNamespace(installConfig),
+				Namespace: installConfig.ClusterNamespace(),
 			},
 			Spec: aiv1beta1.InfraEnvSpec{
 				ClusterRef: &aiv1beta1.ClusterReference{
 					Name:      getClusterDeploymentName(installConfig),
-					Namespace: getObjectMetaNamespace(installConfig),
+					Namespace: installConfig.ClusterNamespace(),
 				},
 				SSHAuthorizedKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: getPullSecretName(installConfig),
+					Name: getPullSecretName(installConfig.ClusterName()),
 				},
 				NMStateConfigLabelSelector: metav1.LabelSelector{
 					MatchLabels: getNMStateConfigLabels(installConfig),
