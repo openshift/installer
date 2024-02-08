@@ -53,13 +53,13 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getClusterDeploymentName(installConfig),
-				Namespace: getObjectMetaNamespace(installConfig),
+				Namespace: installConfig.ClusterNamespace(),
 			},
 			Spec: hivev1.ClusterDeploymentSpec{
 				ClusterName: getClusterDeploymentName(installConfig),
 				BaseDomain:  installConfig.Config.BaseDomain,
 				PullSecretRef: &corev1.LocalObjectReference{
-					Name: getPullSecretName(installConfig),
+					Name: getPullSecretName(installConfig.ClusterName()),
 				},
 				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 					Group:   "extensions.hive.openshift.io",

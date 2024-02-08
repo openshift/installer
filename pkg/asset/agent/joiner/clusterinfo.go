@@ -20,6 +20,7 @@ type ClusterInfo struct {
 	ClusterID  string
 	APIDNSName string
 	PullSecret string
+	Namespace  string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -67,6 +68,8 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+
+	ci.Namespace = "cluster0"
 
 	return nil
 }

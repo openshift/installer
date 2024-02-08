@@ -45,13 +45,13 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: hivev1.ClusterDeploymentSpec{
 					ClusterName: getClusterDeploymentName(getValidOptionalInstallConfig()),
 					BaseDomain:  "testing.com",
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 						Group:   "extensions.hive.openshift.io",

@@ -51,7 +51,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
@@ -84,7 +84,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
@@ -110,7 +110,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
@@ -132,7 +132,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
