@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+
 	wd, err := os.Getwd()
 	if err != nil {
 		logrus.Fatal(err)
