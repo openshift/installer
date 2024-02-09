@@ -255,11 +255,11 @@ tests:
               ipv6:
                 internalMasqueradeSubnet: "abcd:eff01:2345:6789::2345:6789/20"
     expectedError: "Invalid value: \"string\": each segment of an IPv6 address must be a hexadecimal number between 0 and FFFF, failed on segment 2"
-  - name: Should not be able to create migration mode
+  - name: Should be able to create migration mode
     initial: |
       apiVersion: operator.openshift.io/v1
       kind: Network
-      spec: 
+      spec:
         migration:
           mode: Live
     expected: |
@@ -269,7 +269,8 @@ tests:
         disableNetworkDiagnostics: false
         logLevel: Normal
         operatorLogLevel: Normal
-        migration: {}
+        migration:
+          mode: Live
   - name: "IPsec - Empty ipsecConfig is allowed in initial state"
     initial: |
       apiVersion: operator.openshift.io/v1

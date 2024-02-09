@@ -157,7 +157,6 @@ type NetworkMigration struct {
 	// An "Offline" migration operation will cause service interruption. During an "Offline" migration, two rounds of node reboots are required. The cluster network will be malfunctioning during the network migration.
 	// When omitted, this means no opinion and the platform is left to choose a reasonable default which is subject to change over time.
 	// The current default value is "Offline".
-	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
 	// +optional
 	Mode NetworkMigrationMode `json:"mode"`
 }

@@ -44,6 +44,7 @@ metadata:
     machineconfiguration.openshift.io/role: master
   name: 99-master-ssh
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -70,6 +71,7 @@ metadata:
     machineconfiguration.openshift.io/role: master
   name: 99-master-disable-hyperthreading
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -93,6 +95,7 @@ metadata:
     machineconfiguration.openshift.io/role: master
   name: 99-master-disable-hyperthreading
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -110,6 +113,7 @@ metadata:
     machineconfiguration.openshift.io/role: master
   name: 99-master-ssh
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
