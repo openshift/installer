@@ -2287,6 +2287,11 @@ spec:
                       operators to include the specified user tags in the tags of
                       the AWS resources that the operators create.
                     type: boolean
+                  publicIpv4Pool:
+                    description: PublicIpv4Pool is an optional field that can be used
+                      to tell the installation process to use Public IPv4 address
+                      that you bring to your AWS account with BYOIP.
+                    type: string
                   region:
                     description: Region specifies the AWS region where the cluster
                       will be created.

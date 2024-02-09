@@ -179,6 +179,9 @@ func Test_PrintFields(t *testing.T) {
     propagateUserTags <boolean>
       PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
+    publicIpv4Pool <string>
+      PublicIpv4Pool is an optional field that can be used to tell the installation process to use Public IPv4 address that you bring to your AWS account with BYOIP.
+
     region <string> -required-
       Region specifies the AWS region where the cluster will be created.
 
