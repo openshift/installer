@@ -24,9 +24,17 @@ resource "aws_lb" "api_external" {
 
   name                             = "${var.cluster_id}-ext"
   load_balancer_type               = "network"
-  subnets                          = data.aws_subnet.public.*.id
   internal                         = false
   enable_cross_zone_load_balancing = true
+
+  dynamic "subnet_mapping" {
+    for_each = range(length(data.aws_subnet.public))
+
+    content {
+      subnet_id     = data.aws_subnet.public[subnet_mapping.key].id
+      allocation_id = aws_eip.api_nlb_public[subnet_mapping.key].id
+    }
+  }
 
   tags = merge(
     {
@@ -38,7 +46,24 @@ resource "aws_lb" "api_external" {
   timeouts {
     create = "20m"
   }
+}
 
+resource "aws_eip" "api_nlb_public" {
+  count  = length(var.availability_zones)
+  domain = "vpc"
+
+  public_ipv4_pool = var.public_ipv4_pool == "" ? null : var.public_ipv4_pool
+
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-eip-${var.availability_zones[count.index]}-lb-api"
+    },
+    var.tags,
+  )
+
+  # Terraform does not declare an explicit dependency towards the internet gateway.
+  # this can cause the internet gateway to be deleted/detached before the EIPs.
+  # https://github.com/coreos/tectonic-installer/issues/1017#issuecomment-307780549
   depends_on = [aws_internet_gateway.igw]
 }
 
