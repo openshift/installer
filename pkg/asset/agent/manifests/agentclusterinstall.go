@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -125,6 +126,7 @@ func (*AgentClusterInstall) Name() string {
 // the asset.
 func (*AgentClusterInstall) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentHosts{},
 	}
@@ -132,9 +134,15 @@ func (*AgentClusterInstall) Dependencies() []asset.Asset {
 
 // Generate generates the AgentClusterInstall manifest.
 func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
 	agentHosts := &agentconfig.AgentHosts{}
-	dependencies.Get(agentHosts, installConfig)
+	dependencies.Get(agentWorkflow, agentHosts, installConfig)
+
+	// This manifest is not required for AddNodes workflow
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		return nil
+	}
 
 	if installConfig.Config != nil {
 		var numberOfWorkers int = 0

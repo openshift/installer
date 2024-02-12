@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
 	externaltype "github.com/openshift/installer/pkg/types/external"
@@ -136,6 +137,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "missing install config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&agent.OptionalInstallConfig{},
 				&agentconfig.AgentHosts{},
 			},
@@ -144,6 +146,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfig(),
 				&agentconfig.AgentHosts{},
 			},
@@ -152,6 +155,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with unspecified network type should result with ACI having default network type",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithoutNetworkType,
 				&agentconfig.AgentHosts{},
 			},
@@ -160,6 +164,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with FIPS annotation",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithFIPS,
 				&agentconfig.AgentHosts{},
 			},
@@ -168,6 +173,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with proxy",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithProxy,
 				&agentconfig.AgentHosts{},
 			},
@@ -176,6 +182,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration dual stack",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStack(),
 				&agentconfig.AgentHosts{},
 			},
@@ -184,6 +191,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration dual stack dual vips",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigDualStackDualVIPs(),
 				&agentconfig.AgentHosts{},
 			},
@@ -192,6 +200,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with capabilities",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCapabilities,
 				&agentconfig.AgentHosts{},
 			},
@@ -200,6 +209,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with custom network type",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithNetworkOverride,
 				&agentconfig.AgentHosts{},
 			},
@@ -208,6 +218,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration with CPU Partitioning",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWithCPUPartitioning,
 				&agentconfig.AgentHosts{},
 			},
@@ -216,6 +227,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration external generic platform",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalPlatform,
 				&agentconfig.AgentHosts{},
 			},
@@ -224,6 +236,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration external OCI platform",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				installConfigWExternalOCIPlatform,
 				&agentconfig.AgentHosts{},
 			},
@@ -232,6 +245,7 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		{
 			name: "valid configuration BMC and provisioning network",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfigWithProvisioning(),
 				getAgentHostsWithBMCConfig(),
 			},
