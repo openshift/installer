@@ -13,6 +13,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 var (
@@ -36,14 +37,21 @@ func (*ClusterDeployment) Name() string {
 // the asset.
 func (*ClusterDeployment) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
 		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the ClusterDeployment manifest.
 func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
+	dependencies.Get(agentWorkflow, installConfig)
+
+	// This manifest is not required for AddNodes workflow
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		return nil
+	}
 
 	if installConfig.Config != nil {
 		clusterDeployment := &hivev1.ClusterDeployment{
