@@ -201,7 +201,8 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 	if in.role == "master" {
 		cpFilter := machineapi.Filter{
 			Name:   "tag:Name",
-			Values: []string{fmt.Sprintf("%s-controlplane", in.clusterID)}}
+			Values: []string{fmt.Sprintf("%s-controlplane", in.clusterID)},
+		}
 		sgFilters = append(sgFilters, cpFilter)
 	}
 
