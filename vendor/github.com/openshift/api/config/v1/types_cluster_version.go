@@ -278,7 +278,7 @@ const (
 )
 
 // ClusterVersionCapability enumerates optional, core cluster components.
-// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning;MachineAPI;Build;DeploymentConfig;ImageRegistry;OperatorLifecycleManager;CloudCredential
+// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning;MachineAPI;Build;DeploymentConfig;ImageRegistry;OperatorLifecycleManager;CloudCredential;Ingress
 type ClusterVersionCapability string
 
 const (
@@ -376,6 +376,20 @@ const (
 	// ClusterVersionCapabilityCloudCredential manages credentials for cloud providers
 	// in openshift cluster
 	ClusterVersionCapabilityCloudCredential ClusterVersionCapability = "CloudCredential"
+
+	// ClusterVersionCapabilityIngress manages the cluster ingress operator
+	// which is responsible for running the ingress controllers (including OpenShift router).
+	//
+	// The following CRDs are part of the capability as well:
+	// IngressController
+	// DNSRecord
+	// GatewayClass
+	// Gateway
+	// HTTPRoute
+	// ReferenceGrant
+	//
+	// WARNING: This capability cannot be disabled on the standalone OpenShift.
+	ClusterVersionCapabilityIngress ClusterVersionCapability = "Ingress"
 )
 
 // KnownClusterVersionCapabilities includes all known optional, core cluster components.
@@ -394,10 +408,11 @@ var KnownClusterVersionCapabilities = []ClusterVersionCapability{
 	ClusterVersionCapabilityImageRegistry,
 	ClusterVersionCapabilityOperatorLifecycleManager,
 	ClusterVersionCapabilityCloudCredential,
+	ClusterVersionCapabilityIngress,
 }
 
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
-// +kubebuilder:validation:Enum=None;v4.11;v4.12;v4.13;v4.14;v4.15;vCurrent
+// +kubebuilder:validation:Enum=None;v4.11;v4.12;v4.13;v4.14;v4.15;v4.16;vCurrent
 type ClusterVersionCapabilitySet string
 
 const (
@@ -434,6 +449,12 @@ const (
 	// OpenShift.  This list will remain the same no matter which
 	// version of OpenShift is installed.
 	ClusterVersionCapabilitySet4_15 ClusterVersionCapabilitySet = "v4.15"
+
+	// ClusterVersionCapabilitySet4_16 is the recommended set of
+	// optional capabilities to enable for the 4.16 version of
+	// OpenShift.  This list will remain the same no matter which
+	// version of OpenShift is installed.
+	ClusterVersionCapabilitySet4_16 ClusterVersionCapabilitySet = "v4.16"
 
 	// ClusterVersionCapabilitySetCurrent is the recommended set
 	// of optional capabilities to enable for the cluster's
@@ -501,6 +522,23 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityOperatorLifecycleManager,
 		ClusterVersionCapabilityCloudCredential,
 	},
+	ClusterVersionCapabilitySet4_16: {
+		ClusterVersionCapabilityBaremetal,
+		ClusterVersionCapabilityConsole,
+		ClusterVersionCapabilityInsights,
+		ClusterVersionCapabilityMarketplace,
+		ClusterVersionCapabilityStorage,
+		ClusterVersionCapabilityOpenShiftSamples,
+		ClusterVersionCapabilityCSISnapshot,
+		ClusterVersionCapabilityNodeTuning,
+		ClusterVersionCapabilityMachineAPI,
+		ClusterVersionCapabilityBuild,
+		ClusterVersionCapabilityDeploymentConfig,
+		ClusterVersionCapabilityImageRegistry,
+		ClusterVersionCapabilityOperatorLifecycleManager,
+		ClusterVersionCapabilityCloudCredential,
+		ClusterVersionCapabilityIngress,
+	},
 	ClusterVersionCapabilitySetCurrent: {
 		ClusterVersionCapabilityBaremetal,
 		ClusterVersionCapabilityConsole,
@@ -516,6 +554,7 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityImageRegistry,
 		ClusterVersionCapabilityOperatorLifecycleManager,
 		ClusterVersionCapabilityCloudCredential,
+		ClusterVersionCapabilityIngress,
 	},
 }
 
@@ -691,7 +730,6 @@ type ConditionalUpdate struct {
 
 	// conditions represents the observations of the conditional update's
 	// current status. Known types are:
-	// * Evaluating, for whether the cluster-version operator will attempt to evaluate any risks[].matchingRules.
 	// * Recommended, for whether the update is recommended for the current cluster.
 	// +patchMergeKey=type
 	// +patchStrategy=merge

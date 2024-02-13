@@ -774,8 +774,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b h1:YWuSjZCQAPM8UUBLkYUk1e+rZcvWHJmFb6i6rM44Xs8=
 github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b/go.mod h1:3OVijpioIKYWTqjiG0zfF6wvoJ4fAXGbjdZuI2NgsRQ=
-github.com/openshift/api v0.0.0-20240207185517-ae973131190e h1:Iv005XrzYnrIl8ptQFI32t2IBgMOx1kkBrqWO3pCp+E=
-github.com/openshift/api v0.0.0-20240207185517-ae973131190e/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
+github.com/openshift/api v0.0.0-20240213032657-54b3334bfac5 h1:BtYHQIqReug+WOLohbP9ncc4sqn19iNOTPOqc/uwfZY=
+github.com/openshift/api v0.0.0-20240213032657-54b3334bfac5/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
 github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2 h1:ndmguZuF+ON5ytIaQ4KUAFIlhL3GoCCmDVQlDKNFGGk=
 github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2/go.mod h1:w4GeUpl8BnEzzzIqFAe06muoWJc54XQ4rDVdUKAJns8=
 github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8 h1:+fZLKbycDo4JeLwPGVSAgf2XPaJGLM341l9ZfrrlxG0=

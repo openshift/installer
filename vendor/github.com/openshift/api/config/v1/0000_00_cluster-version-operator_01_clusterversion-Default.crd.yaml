@@ -82,6 +82,7 @@ spec:
                       - ImageRegistry
                       - OperatorLifecycleManager
                       - CloudCredential
+                      - Ingress
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
@@ -97,6 +98,7 @@ spec:
                     - v4.13
                     - v4.14
                     - v4.15
+                    - v4.16
                     - vCurrent
                     type: string
                 type: object
@@ -295,6 +297,7 @@ spec:
                       - ImageRegistry
                       - OperatorLifecycleManager
                       - CloudCredential
+                      - Ingress
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
@@ -319,6 +322,7 @@ spec:
                       - ImageRegistry
                       - OperatorLifecycleManager
                       - CloudCredential
+                      - Ingress
                       type: string
                     type: array
                     x-kubernetes-list-type: atomic
@@ -338,10 +342,8 @@ spec:
                   properties:
                     conditions:
                       description: 'conditions represents the observations of the
-                        conditional update''s current status. Known types are: * Evaluating,
-                        for whether the cluster-version operator will attempt to evaluate
-                        any risks[].matchingRules. * Recommended, for whether the
-                        update is recommended for the current cluster.'
+                        conditional update''s current status. Known types are: * Recommended,
+                        for whether the update is recommended for the current cluster.'
                       items:
                         description: "Condition contains details for one aspect of
                           the current state of this API Resource. --- This struct

@@ -743,7 +743,7 @@ var map_ConditionalUpdate = map[string]string{
 	"":           "ConditionalUpdate represents an update which is recommended to some clusters on the version the current cluster is reconciling, but which may not be recommended for the current cluster.",
 	"release":    "release is the target of the update.",
 	"risks":      "risks represents the range of issues associated with updating to the target release. The cluster-version operator will evaluate all entries, and only recommend the update if there is at least one entry and all entries recommend the update.",
-	"conditions": "conditions represents the observations of the conditional update's current status. Known types are: * Evaluating, for whether the cluster-version operator will attempt to evaluate any risks[].matchingRules. * Recommended, for whether the update is recommended for the current cluster.",
+	"conditions": "conditions represents the observations of the conditional update's current status. Known types are: * Recommended, for whether the update is recommended for the current cluster.",
 }
 
 func (ConditionalUpdate) SwaggerDoc() map[string]string {
@@ -2435,6 +2435,15 @@ func (ProxyStatus) SwaggerDoc() map[string]string {
 	return map_ProxyStatus
 }
 
+var map_ProfileCustomizations = map[string]string{
+	"":                          "ProfileCustomizations contains various parameters for modifying the default behavior of certain profiles",
+	"dynamicResourceAllocation": "dynamicResourceAllocation allows to enable or disable dynamic resource allocation within the scheduler. Dynamic resource allocation is an API for requesting and sharing resources between pods and containers inside a pod. Third-party resource drivers are responsible for tracking and allocating resources. Different kinds of resources support arbitrary parameters for defining requirements and initialization. Valid values are Enabled, Disabled and omitted. When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time. The current default is Disabled.",
+}
+
+func (ProfileCustomizations) SwaggerDoc() map[string]string {
+	return map_ProfileCustomizations
+}
+
 var map_Scheduler = map[string]string{
 	"":         "Scheduler holds cluster-wide config information to run the Kubernetes Scheduler and influence its placement decisions. The canonical name for this config is `cluster`.\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"metadata": "metadata is the standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
@@ -2456,10 +2465,11 @@ func (SchedulerList) SwaggerDoc() map[string]string {
 }
 
 var map_SchedulerSpec = map[string]string{
-	"policy":              "DEPRECATED: the scheduler Policy API has been deprecated and will be removed in a future release. policy is a reference to a ConfigMap containing scheduler policy which has user specified predicates and priorities. If this ConfigMap is not available scheduler will default to use DefaultAlgorithmProvider. The namespace for this configmap is openshift-config.",
-	"profile":             "profile sets which scheduling profile should be set in order to configure scheduling decisions for new pods.\n\nValid values are \"LowNodeUtilization\", \"HighNodeUtilization\", \"NoScoring\" Defaults to \"LowNodeUtilization\"",
-	"defaultNodeSelector": "defaultNodeSelector helps set the cluster-wide default node selector to restrict pod placement to specific nodes. This is applied to the pods created in all namespaces and creates an intersection with any existing nodeSelectors already set on a pod, additionally constraining that pod's selector. For example, defaultNodeSelector: \"type=user-node,region=east\" would set nodeSelector field in pod spec to \"type=user-node,region=east\" to all pods created in all namespaces. Namespaces having project-wide node selectors won't be impacted even if this field is set. This adds an annotation section to the namespace. For example, if a new namespace is created with node-selector='type=user-node,region=east', the annotation openshift.io/node-selector: type=user-node,region=east gets added to the project. When the openshift.io/node-selector annotation is set on the project the value is used in preference to the value we are setting for defaultNodeSelector field. For instance, openshift.io/node-selector: \"type=user-node,region=west\" means that the default of \"type=user-node,region=east\" set in defaultNodeSelector would not be applied.",
-	"mastersSchedulable":  "MastersSchedulable allows masters nodes to be schedulable. When this flag is turned on, all the master nodes in the cluster will be made schedulable, so that workload pods can run on them. The default value for this field is false, meaning none of the master nodes are schedulable. Important Note: Once the workload pods start running on the master nodes, extreme care must be taken to ensure that cluster-critical control plane components are not impacted. Please turn on this field after doing due diligence.",
+	"policy":                "DEPRECATED: the scheduler Policy API has been deprecated and will be removed in a future release. policy is a reference to a ConfigMap containing scheduler policy which has user specified predicates and priorities. If this ConfigMap is not available scheduler will default to use DefaultAlgorithmProvider. The namespace for this configmap is openshift-config.",
+	"profile":               "profile sets which scheduling profile should be set in order to configure scheduling decisions for new pods.\n\nValid values are \"LowNodeUtilization\", \"HighNodeUtilization\", \"NoScoring\" Defaults to \"LowNodeUtilization\"",
+	"profileCustomizations": "profileCustomizations contains configuration for modifying the default behavior of existing scheduler profiles.",
+	"defaultNodeSelector":   "defaultNodeSelector helps set the cluster-wide default node selector to restrict pod placement to specific nodes. This is applied to the pods created in all namespaces and creates an intersection with any existing nodeSelectors already set on a pod, additionally constraining that pod's selector. For example, defaultNodeSelector: \"type=user-node,region=east\" would set nodeSelector field in pod spec to \"type=user-node,region=east\" to all pods created in all namespaces. Namespaces having project-wide node selectors won't be impacted even if this field is set. This adds an annotation section to the namespace. For example, if a new namespace is created with node-selector='type=user-node,region=east', the annotation openshift.io/node-selector: type=user-node,region=east gets added to the project. When the openshift.io/node-selector annotation is set on the project the value is used in preference to the value we are setting for defaultNodeSelector field. For instance, openshift.io/node-selector: \"type=user-node,region=west\" means that the default of \"type=user-node,region=east\" set in defaultNodeSelector would not be applied.",
+	"mastersSchedulable":    "MastersSchedulable allows masters nodes to be schedulable. When this flag is turned on, all the master nodes in the cluster will be made schedulable, so that workload pods can run on them. The default value for this field is false, meaning none of the master nodes are schedulable. Important Note: Once the workload pods start running on the master nodes, extreme care must be taken to ensure that cluster-critical control plane components are not impacted. Please turn on this field after doing due diligence.",
 }
 
 func (SchedulerSpec) SwaggerDoc() map[string]string {
