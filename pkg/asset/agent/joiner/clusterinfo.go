@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/url"
 
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -12,15 +14,20 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // ClusterInfo it's an asset used to retrieve config info
-// from an already existing cluster.
+// from an already existing cluster. A number of different resources
+// are inspected to extract the required configuration
 type ClusterInfo struct {
-	ClusterID  string
-	APIDNSName string
-	PullSecret string
-	Namespace  string
+	ClusterID    string
+	APIDNSName   string
+	PullSecret   string
+	Namespace    string
+	UserCaBundle string
+	Proxy        *types.Proxy
+	Architecture string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -53,18 +60,37 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-
-	err = ci.retrieveClusterID(config)
-	if err != nil {
-		return err
-	}
-
 	err = ci.retrieveAPIDNSName(config)
 	if err != nil {
 		return err
 	}
 
-	err = ci.retrievePullSecret(config)
+	clientset, err := configclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveClusterID(clientset)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveProxy(clientset)
+	if err != nil {
+		return err
+	}
+
+	k8sclientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	err = ci.retrievePullSecret(k8sclientset)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveUserTrustBundle(k8sclientset)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveArchitecture(k8sclientset)
 	if err != nil {
 		return err
 	}
@@ -87,17 +113,26 @@ func (ci *ClusterInfo) getRestConfig(kubeconfig string) (*rest.Config, error) {
 	return config, err
 }
 
-func (ci *ClusterInfo) retrieveClusterID(config *rest.Config) error {
-	clientset, err := configclient.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
+func (ci *ClusterInfo) retrieveClusterID(clientset *configclient.Clientset) error {
 	cv, err := clientset.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	ci.ClusterID = string(cv.Spec.ClusterID)
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveProxy(clientset *configclient.Clientset) error {
+	proxy, err := clientset.ConfigV1().Proxies().Get(context.Background(), "cluster", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	ci.Proxy = &types.Proxy{
+		HTTPProxy:  proxy.Spec.HTTPProxy,
+		HTTPSProxy: proxy.Spec.HTTPSProxy,
+		NoProxy:    proxy.Spec.NoProxy,
+	}
 
 	return nil
 }
@@ -112,17 +147,35 @@ func (ci *ClusterInfo) retrieveAPIDNSName(config *rest.Config) error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrievePullSecret(config *rest.Config) error {
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
+func (ci *ClusterInfo) retrievePullSecret(clientset *kubernetes.Clientset) error {
 	pullSecret, err := clientset.CoreV1().Secrets("openshift-config").Get(context.Background(), "pull-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	ci.PullSecret = string(pullSecret.Data[".dockerconfigjson"])
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveUserTrustBundle(clientset *kubernetes.Clientset) error {
+	userCaBundle, err := clientset.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	ci.UserCaBundle = userCaBundle.Data["ca-bundle.crt"]
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveArchitecture(clientset *kubernetes.Clientset) error {
+	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
 
 	return nil
 }

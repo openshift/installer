@@ -52,7 +52,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -85,7 +85,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -111,7 +111,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -133,7 +133,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{

@@ -39,10 +39,10 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	})
 
 	installConfigWithProxy := getValidOptionalInstallConfig()
-	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
+	installConfigWithProxy.Config.Proxy = (*types.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
 
 	goodProxyACI := getGoodACI()
-	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig()))
+	goodProxyACI.Spec.Proxy = (*hiveext.Proxy)(getProxy(getProxyValidOptionalInstallConfig().Config.Proxy))
 
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.Spec.APIVIPs = []string{"192.168.122.10", "2001:db8:1111:2222:ffff:ffff:ffff:cafe"}
