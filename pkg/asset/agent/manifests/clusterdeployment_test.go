@@ -15,6 +15,7 @@ import (
 	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -29,6 +30,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "missing config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&agent.OptionalInstallConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
@@ -36,6 +38,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "valid configurations",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &hivev1.ClusterDeployment{
