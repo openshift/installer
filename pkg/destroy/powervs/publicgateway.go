@@ -105,12 +105,19 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 			o.Logger.Debugf("listPublicGateways: Limit = %v", *publicGatewayCollection.Limit)
 		}
 		if publicGatewayCollection.Next != nil {
-			o.Logger.Debugf("listPublicGateways: Next = %v", *publicGatewayCollection.Next.Href)
-			listPublicGatewaysOptions.SetStart(*publicGatewayCollection.Next.Href)
+			start, err := publicGatewayCollection.GetNextStart()
+			if err != nil {
+				o.Logger.Debugf("listPublicGateways: err = %v", err)
+				return nil, fmt.Errorf("listPublicGateways: failed to GetNextStart: %w", err)
+			}
+			if start != nil {
+				o.Logger.Debugf("listPublicGateways: start = %v", *start)
+				listPublicGatewaysOptions.SetStart(*start)
+			}
+		} else {
+			o.Logger.Debugf("listPublicGateways: Next = nil")
+			moreData = false
 		}
-
-		moreData = publicGatewayCollection.Next != nil
-		o.Logger.Debugf("listPublicGateways: moreData = %v", moreData)
 	}
 	if !foundOne {
 		o.Logger.Debugf("listPublicGateways: NO matching publicGateway against: %s", o.InfraID)
@@ -134,11 +141,19 @@ func (o *ClusterUninstaller) listPublicGateways() (cloudResources, error) {
 				o.Logger.Debugf("listPublicGateways: Limit = %v", *publicGatewayCollection.Limit)
 			}
 			if publicGatewayCollection.Next != nil {
-				o.Logger.Debugf("listPublicGateways: Next = %v", *publicGatewayCollection.Next.Href)
-				listPublicGatewaysOptions.SetStart(*publicGatewayCollection.Next.Href)
+				start, err := publicGatewayCollection.GetNextStart()
+				if err != nil {
+					o.Logger.Debugf("listPublicGateways: err = %v", err)
+					return nil, fmt.Errorf("listPublicGateways: failed to GetNextStart: %w", err)
+				}
+				if start != nil {
+					o.Logger.Debugf("listPublicGateways: start = %v", *start)
+					listPublicGatewaysOptions.SetStart(*start)
+				}
+			} else {
+				o.Logger.Debugf("listPublicGateways: Next = nil")
+				moreData = false
 			}
-			moreData = publicGatewayCollection.Next != nil
-			o.Logger.Debugf("listPublicGateways: moreData = %v", moreData)
 		}
 	}
 
