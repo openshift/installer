@@ -72,14 +72,19 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 			o.Logger.Debugf("listTransitGateways: Limit = %v", *gatewayCollection.Limit)
 		}
 		if gatewayCollection.Next != nil {
-			o.Logger.Debugf("listTransitGateways: Next = %+v", *gatewayCollection.Next)
-			listTransitGatewaysOptions.SetStart(*gatewayCollection.Next.Start)
+			start, err := gatewayCollection.GetNextStart()
+			if err != nil {
+				o.Logger.Debugf("listTransitGateways: err = %v", err)
+				return nil, fmt.Errorf("listTransitGateways: failed to GetNextStart: %w", err)
+			}
+			if start != nil {
+				o.Logger.Debugf("listTransitGateways: start = %v", *start)
+				listTransitGatewaysOptions.SetStart(*start)
+			}
 		} else {
 			o.Logger.Debugf("listTransitGateways: Next = nil")
+			moreData = false
 		}
-
-		moreData = gatewayCollection.Next != nil
-		o.Logger.Debugf("listTransitGateways: moreData = %v", moreData)
 	}
 	if !foundOne {
 		o.Logger.Debugf("listTransitGateways: NO matching transit gateway against: %s", o.InfraID)
@@ -105,13 +110,19 @@ func (o *ClusterUninstaller) listTransitGateways() (cloudResources, error) {
 				o.Logger.Debugf("listTransitGateways: Limit = %v", *gatewayCollection.Limit)
 			}
 			if gatewayCollection.Next != nil {
-				o.Logger.Debugf("listTransitGateways: Next = %+v", *gatewayCollection.Next)
-				listTransitGatewaysOptions.SetStart(*gatewayCollection.Next.Start)
+				start, err := gatewayCollection.GetNextStart()
+				if err != nil {
+					o.Logger.Debugf("listTransitGateways: err = %v", err)
+					return nil, fmt.Errorf("listTransitGateways: failed to GetNextStart: %w", err)
+				}
+				if start != nil {
+					o.Logger.Debugf("listTransitGateways: start = %v", *start)
+					listTransitGatewaysOptions.SetStart(*start)
+				}
 			} else {
 				o.Logger.Debugf("listTransitGateways: Next = nil")
+				moreData = false
 			}
-			moreData = gatewayCollection.Next != nil
-			o.Logger.Debugf("listTransitGateways: moreData = %v", moreData)
 		}
 	}
 
@@ -302,17 +313,22 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 			o.Logger.Debugf("listTransitConnections: Limit = %v", *transitConnectionCollections.Limit)
 		}
 		if transitConnectionCollections.Next != nil {
-			o.Logger.Debugf("listTransitConnections: Next = %+v", *transitConnectionCollections.Next)
-			listConnectionsOptions.SetStart(*transitConnectionCollections.Next.Start)
+			start, err := transitConnectionCollections.GetNextStart()
+			if err != nil {
+				o.Logger.Debugf("listTransitConnections: err = %v", err)
+				return nil, fmt.Errorf("listTransitConnections: failed to GetNextStart: %w", err)
+			}
+			if start != nil {
+				o.Logger.Debugf("listTransitConnections: start = %v", *start)
+				listConnectionsOptions.SetStart(*start)
+			}
 		} else {
 			o.Logger.Debugf("listTransitConnections: Next = nil")
+			moreData = false
 		}
-
-		moreData = transitConnectionCollections.Next != nil
-		o.Logger.Debugf("listTransitConnections: moreData = %v", moreData)
 	}
 	if !foundOne {
-		o.Logger.Debugf("listTransitGateways: NO matching transit connections against: %s", o.InfraID)
+		o.Logger.Debugf("listTransitConnections: NO matching transit connections against: %s", o.InfraID)
 
 		listConnectionsOptions = o.tgClient.NewListConnectionsOptions()
 		listConnectionsOptions.SetLimit(perPage)
@@ -337,13 +353,19 @@ func (o *ClusterUninstaller) listTransitConnections(item cloudResource) (cloudRe
 				o.Logger.Debugf("listTransitConnections: Limit = %v", *transitConnectionCollections.Limit)
 			}
 			if transitConnectionCollections.Next != nil {
-				o.Logger.Debugf("listTransitConnections: Next = %+v", *transitConnectionCollections.Next)
-				listConnectionsOptions.SetStart(*transitConnectionCollections.Next.Start)
+				start, err := transitConnectionCollections.GetNextStart()
+				if err != nil {
+					o.Logger.Debugf("listTransitConnections: err = %v", err)
+					return nil, fmt.Errorf("listTransitConnections: failed to GetNextStart: %w", err)
+				}
+				if start != nil {
+					o.Logger.Debugf("listTransitConnections: start = %v", *start)
+					listConnectionsOptions.SetStart(*start)
+				}
 			} else {
 				o.Logger.Debugf("listTransitConnections: Next = nil")
+				moreData = false
 			}
-			moreData = transitConnectionCollections.Next != nil
-			o.Logger.Debugf("listTransitConnections: moreData = %v", moreData)
 		}
 	}
 
