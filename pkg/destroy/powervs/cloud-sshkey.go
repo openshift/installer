@@ -75,12 +75,19 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 			o.Logger.Debugf("listCloudSSHKeys: Limit = %v", *sshKeyCollection.Limit)
 		}
 		if sshKeyCollection.Next != nil {
-			o.Logger.Debugf("listCloudSSHKeys: Next = %v", *sshKeyCollection.Next.Href)
-			listKeysOptions.SetStart(*sshKeyCollection.Next.Href)
+			start, err := sshKeyCollection.GetNextStart()
+			if err != nil {
+				o.Logger.Debugf("listCloudSSHKeys: err = %v", err)
+				return nil, fmt.Errorf("listCloudSSHKeys: failed to GetNextStart: %w", err)
+			}
+			if start != nil {
+				o.Logger.Debugf("listCloudSSHKeys: start = %v", *start)
+				listKeysOptions.SetStart(*start)
+			}
+		} else {
+			o.Logger.Debugf("listCloudSSHKeys: Next = nil")
+			moreData = false
 		}
-
-		moreData = sshKeyCollection.Next != nil
-		o.Logger.Debugf("listCloudSSHKeys: moreData = %v", moreData)
 	}
 	if !foundOne {
 		o.Logger.Debugf("listCloudSSHKeys: NO matching sshKey against: %s", o.InfraID)
@@ -104,11 +111,19 @@ func (o *ClusterUninstaller) listCloudSSHKeys() (cloudResources, error) {
 				o.Logger.Debugf("listCloudSSHKeys: Limit = %v", *sshKeyCollection.Limit)
 			}
 			if sshKeyCollection.Next != nil {
-				o.Logger.Debugf("listCloudSSHKeys: Next = %v", *sshKeyCollection.Next.Href)
-				listKeysOptions.SetStart(*sshKeyCollection.Next.Href)
+				start, err := sshKeyCollection.GetNextStart()
+				if err != nil {
+					o.Logger.Debugf("listCloudSSHKeys: err = %v", err)
+					return nil, fmt.Errorf("listCloudSSHKeys: failed to GetNextStart: %w", err)
+				}
+				if start != nil {
+					o.Logger.Debugf("listCloudSSHKeys: start = %v", *start)
+					listKeysOptions.SetStart(*start)
+				}
+			} else {
+				o.Logger.Debugf("listCloudSSHKeys: Next = nil")
+				moreData = false
 			}
-			moreData = sshKeyCollection.Next != nil
-			o.Logger.Debugf("listCloudSSHKeys: moreData = %v", moreData)
 		}
 	}
 
