@@ -21,7 +21,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 	agenttype "github.com/openshift/installer/pkg/types/agent"
 )
@@ -63,6 +65,8 @@ func (*NMStateConfig) Name() string {
 // the asset.
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&agentconfig.AgentHosts{},
 		&agent.OptionalInstallConfig{},
 	}
@@ -70,10 +74,17 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
-
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	agentHosts := &agentconfig.AgentHosts{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(agentHosts, installConfig)
+	dependencies.Get(agentHosts, installConfig, agentWorkflow, clusterInfo)
+
+	// Temporary skip in case of add nodes workflow. Main input for this
+	// asset will be retrieved from the nodes-config.yaml asset
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		return nil
+	}
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
