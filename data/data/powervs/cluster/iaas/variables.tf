@@ -17,3 +17,8 @@ variable "service_instance_name" {
   type        = string
   description = "Optionally, the service instance name of an existing object before cluster creation"
 }
+
+variable "wait_for_workspace" {
+  type        = string
+  description = "Time to wait after creating a Power VS workspace to allow PER to initialize"
+}
