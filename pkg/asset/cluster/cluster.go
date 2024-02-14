@@ -19,9 +19,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	capimanifests "github.com/openshift/installer/pkg/asset/manifests/clusterapi"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/quota"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -67,6 +69,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 		&machines.ClusterAPI{},
+		new(rhcos.Image),
+		&manifests.Manifests{},
 	}
 }
 

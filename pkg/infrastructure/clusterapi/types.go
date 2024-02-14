@@ -44,6 +44,7 @@ type IgnitionProvider interface {
 
 // IgnitionInput collects the args passed to the IgnitionProvider call.
 type IgnitionInput struct {
+	Client           client.Client
 	BootstrapIgnData []byte
 	InfraID          string
 	InstallConfig    *installconfig.InstallConfig

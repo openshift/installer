@@ -206,6 +206,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	// bootstrap ignition behavior.
 	if p, ok := i.impl.(IgnitionProvider); ok {
 		ignInput := IgnitionInput{
+			Client:           cl,
 			BootstrapIgnData: bootstrapIgnData,
 			InfraID:          clusterID.InfraID,
 			InstallConfig:    installConfig,
