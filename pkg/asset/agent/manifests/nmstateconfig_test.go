@@ -14,6 +14,8 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types/agent"
 )
@@ -29,6 +31,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "agentHosts does not contain networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsNoHosts(),
 				getValidOptionalInstallConfig(),
 			},
@@ -39,6 +43,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "agentHosts with some hosts without networkconfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -72,6 +78,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -153,6 +161,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "invalid networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getInValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
