@@ -3,7 +3,7 @@ package workflow
 import "github.com/openshift/installer/pkg/asset"
 
 // AgentWorkflowAddNodes is meant just to define
-// the add nodes workflow
+// the add nodes workflow.
 type AgentWorkflowAddNodes struct {
 	AgentWorkflow
 }
@@ -17,7 +17,6 @@ func (*AgentWorkflowAddNodes) Name() string {
 
 // Generate generates the AgentWorkflow asset.
 func (a *AgentWorkflowAddNodes) Generate(dependencies asset.Parents) error {
-
 	a.Workflow = AgentWorkflowTypeAddNodes
 	a.File = &asset.File{
 		Filename: agentWorkflowFilename,

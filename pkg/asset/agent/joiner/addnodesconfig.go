@@ -7,24 +7,25 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/pkg/errors"
 )
 
 const (
 	addNodesParamsFile = ".addnodesparams"
 )
 
+// AddNodesConfig is used to store the current configuration
+// for the command.
 type AddNodesConfig struct {
 	File   *asset.File
 	Params Params
 }
 
-// Params is used to store the command line parameters
+// Params is used to store the command line parameters.
 type Params struct {
 	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
-// Save stores the current parameters on disk
+// Save stores the current parameters on disk.
 func (p *Params) Save(assetsDir string) error {
 	data, err := json.Marshal(p)
 	if err != nil {
@@ -32,7 +33,7 @@ func (p *Params) Save(assetsDir string) error {
 	}
 
 	fileName := filepath.Join(assetsDir, addNodesParamsFile)
-	return os.WriteFile(fileName, data, 0o644)
+	return os.WriteFile(fileName, data, 0o600)
 }
 
 // Name returns the human-friendly name of the asset.

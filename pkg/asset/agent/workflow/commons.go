@@ -5,7 +5,9 @@ package workflow
 type AgentWorkflowType string
 
 const (
-	AgentWorkflowTypeInstall  AgentWorkflowType = "install"
+	// AgentWorkflowTypeInstall identifies the install workflow.
+	AgentWorkflowTypeInstall AgentWorkflowType = "install"
+	// AgentWorkflowTypeAddNodes identifies the add nodes workflow.
 	AgentWorkflowTypeAddNodes AgentWorkflowType = "addnodes"
 
 	agentWorkflowFilename = ".agentworkflow"

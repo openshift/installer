@@ -5,11 +5,10 @@ import (
 	"os"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/pkg/errors"
 )
 
 // AgentWorkflow allows other assets to check
-// which is the workflow currently active
+// which is the workflow currently active.
 type AgentWorkflow struct {
 	File     *asset.File
 	Workflow AgentWorkflowType
@@ -30,7 +29,6 @@ func (*AgentWorkflow) Dependencies() []asset.Asset {
 
 // Generate generates the AgentWorkflow asset.
 func (a *AgentWorkflow) Generate(dependencies asset.Parents) error {
-
 	// Set install workflow as a default
 	a.Workflow = AgentWorkflowTypeInstall
 	a.File = &asset.File{
@@ -56,7 +54,7 @@ func (a *AgentWorkflow) Load(f asset.FileFetcher) (bool, error) {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		return false, errors.Wrap(err, fmt.Sprintf("failed to load %s file", agentWorkflowFilename))
+		return false, fmt.Errorf("failed to load %s file: %w", agentWorkflowFilename, err)
 	}
 
 	// Get the current workflow

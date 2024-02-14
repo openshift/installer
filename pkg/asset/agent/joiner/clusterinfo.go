@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/url"
 
-	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
@@ -18,7 +18,7 @@ import (
 // from an already existing cluster.
 type ClusterInfo struct {
 	ClusterID  string
-	ApiDnsName string
+	APIDNSName string
 	PullSecret string
 }
 
@@ -58,7 +58,7 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	err = ci.retrieveApiDnsName(config)
+	err = ci.retrieveAPIDNSName(config)
 	if err != nil {
 		return err
 	}
@@ -99,14 +99,13 @@ func (ci *ClusterInfo) retrieveClusterID(config *rest.Config) error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveApiDnsName(config *rest.Config) error {
-
-	parsedUrl, err := url.Parse(config.Host)
+func (ci *ClusterInfo) retrieveAPIDNSName(config *rest.Config) error {
+	parsedURL, err := url.Parse(config.Host)
 	if err != nil {
 		return err
 	}
 
-	ci.ApiDnsName = parsedUrl.Hostname()
+	ci.APIDNSName = parsedURL.Hostname()
 	return nil
 }
 
