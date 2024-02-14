@@ -1,6 +1,6 @@
 # Azure Compute Module for Go
 
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4)](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5)](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5)
 
 The `armcompute` module provides operations for working with Azure Compute.
 
@@ -20,7 +20,7 @@ This project uses [Go modules](https://github.com/golang/go/wiki/Modules) for ve
 Install the Azure Compute module:
 
 ```sh
-go get github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4
+go get github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5
 ```
 
 ## Authorization
@@ -57,46 +57,20 @@ clientFactory, err := armcompute.NewClientFactory(<subscription ID>, cred, &opti
 A client groups a set of related APIs, providing access to its functionality.  Create one or more clients to access the APIs you require using client factory.
 
 ```go
-client := clientFactory.NewLogAnalyticsClient()
+client := clientFactory.NewAvailabilitySetsClient()
 ```
 
 ## Fakes
 
-The `fake` package provides implementations for fake servers that can be used for testing.
+The fake package contains types used for constructing in-memory fake servers used in unit tests.
+This allows writing tests to cover various success/error conditions without the need for connecting to a live service.
 
-To create a fake server, declare an instance of the required fake server type(s).
-
-```go
-myFakeVirtualMachinesServer := fake.VirtualMachinesServer{}
-```
-
-Next, provide func implementations for the methods you wish to fake.
-The named return variables can be used to simplify return value construction.
-
-```go
-myFakeVirtualMachinesServer.Get = func(ctx context.Context, resourceGroupName string, vmName string, options *armcompute.VirtualMachinesClientGetOptions) (resp azfake.Responder[armcompute.VirtualMachinesClientGetResponse], errResp azfake.ErrorResponder) {
-	// TODO: resp.SetResponse(/* your fake armcompute.VirtualMachinesClientGetResponse response */)
-	return
-}
-```
-
-You connect the fake server to a client instance during construction through the optional transport.
-
-Use `NewTokenCredential()` from `azcore/fake` to obtain a fake credential.
-
-```go
-import azfake "github.com/Azure/azure-sdk-for-go/sdk/azcore/fake"
-
-client, err := armcompute.VirtualMachinesClient("subscriptionID", azfake.NewTokenCredential(), &arm.ClientOptions{
-	ClientOptions: azcore.ClientOptions{
-		Transport: fake.NewVirtualMachinesServerTransport(&myFakeVirtualMachinesServer),
-	},
-})
-```
+Please see https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/samples/fakes for details and examples on how to use fakes.
 
 ## More sample code
 
 - [Availability Set](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/compute/availabilityset)
+- [Creating a Fake](https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/compute/armcompute/fake_example_test.go)
 - [Virtual Machine](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/compute/create_vm)
 - [Dedicated Host](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/compute/dedicated_host)
 - [Disk](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/compute/disk)
