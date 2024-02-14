@@ -17,13 +17,14 @@ import (
 )
 
 const (
-	ArbitrarySecretType        = "arbitrary"
-	UsernamePasswordSecretType = "username_password"
-	IAMCredentialsSecretType   = "iam_credentials"
-	KvSecretType               = "kv"
-	ImportedCertSecretType     = "imported_cert"
-	PublicCertSecretType       = "public_cert"
-	PrivateCertSecretType      = "private_cert"
+	ArbitrarySecretType          = "arbitrary"
+	UsernamePasswordSecretType   = "username_password"
+	IAMCredentialsSecretType     = "iam_credentials"
+	ServiceCredentialsSecretType = "service_credentials"
+	KvSecretType                 = "kv"
+	ImportedCertSecretType       = "imported_cert"
+	PublicCertSecretType         = "public_cert"
+	PrivateCertSecretType        = "private_cert"
 )
 
 func getRegion(originalClient *secretsmanagerv2.SecretsManagerV2, d *schema.ResourceData) string {

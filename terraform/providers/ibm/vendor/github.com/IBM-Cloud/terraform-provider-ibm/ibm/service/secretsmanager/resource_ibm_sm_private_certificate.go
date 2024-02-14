@@ -245,9 +245,8 @@ func ResourceIbmSmPrivateCertificate() *schema.Resource {
 			},
 			"key_algorithm": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				ForceNew:    true,
-				Default:     "RSA2048",
 				Description: "The identifier for the cryptographic algorithm to be used to generate the public key that is associated with the certificate.The algorithm that you select determines the encryption algorithm (`RSA` or `ECDSA`) and key size to be used to generate keys and sign certificates. For longer living certificates, it is recommended to use longer keys to provide more encryption protection. Allowed values:  RSA2048, RSA4096, EC256, EC384.",
 			},
 			"next_rotation_date": &schema.Schema{

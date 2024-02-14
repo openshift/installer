@@ -30,6 +30,9 @@ type WorkspaceDetails struct {
 
 	// Link to Workspace Resource
 	Href string `json:"href,omitempty"`
+
+	// The Workspace Power Edge Router information
+	PowerEdgeRouter *WorkspacePowerEdgeRouterDetails `json:"powerEdgeRouter,omitempty"`
 }
 
 // Validate validates this workspace details
@@ -41,6 +44,10 @@ func (m *WorkspaceDetails) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCrn(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePowerEdgeRouter(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -72,8 +79,57 @@ func (m *WorkspaceDetails) validateCrn(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this workspace details based on context it is used
+func (m *WorkspaceDetails) validatePowerEdgeRouter(formats strfmt.Registry) error {
+	if swag.IsZero(m.PowerEdgeRouter) { // not required
+		return nil
+	}
+
+	if m.PowerEdgeRouter != nil {
+		if err := m.PowerEdgeRouter.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("powerEdgeRouter")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("powerEdgeRouter")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this workspace details based on the context it is used
 func (m *WorkspaceDetails) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidatePowerEdgeRouter(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *WorkspaceDetails) contextValidatePowerEdgeRouter(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.PowerEdgeRouter != nil {
+
+		if swag.IsZero(m.PowerEdgeRouter) { // not required
+			return nil
+		}
+
+		if err := m.PowerEdgeRouter.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("powerEdgeRouter")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("powerEdgeRouter")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

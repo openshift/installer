@@ -124,9 +124,13 @@ func resourceIbmSchematicsAgentHealthRead(context context.Context, d *schema.Res
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-		XFeatureAgents: core.BoolPtr(true),
-		Profile:        core.StringPtr("detailed"),
+		// XFeatureAgents: core.BoolPtr(true),
+		Profile: core.StringPtr("detailed"),
 	}
+	ff := map[string]string{
+		"X-Feature-Agents": "true",
+	}
+	getAgentDataOptions.Headers = ff
 
 	getAgentDataOptions.SetAgentID(parts[0])
 

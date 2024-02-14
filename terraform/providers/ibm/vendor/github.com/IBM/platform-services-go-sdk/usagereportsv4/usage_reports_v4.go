@@ -972,6 +972,91 @@ func (usageReports *UsageReportsV4) DeleteReportsSnapshotConfigWithContext(ctx c
 	return
 }
 
+// ValidateReportsSnapshotConfig : Verify billing to COS authorization
+// Verify billing service to COS bucket authorization for the given account_id. If COS bucket information is not
+// provided, COS bucket information is retrieved from the configuration file.
+func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfig(validateReportsSnapshotConfigOptions *ValidateReportsSnapshotConfigOptions) (result *SnapshotConfigValidateResponse, response *core.DetailedResponse, err error) {
+	return usageReports.ValidateReportsSnapshotConfigWithContext(context.Background(), validateReportsSnapshotConfigOptions)
+}
+
+// ValidateReportsSnapshotConfigWithContext is an alternate form of the ValidateReportsSnapshotConfig method which supports a Context parameter
+func (usageReports *UsageReportsV4) ValidateReportsSnapshotConfigWithContext(ctx context.Context, validateReportsSnapshotConfigOptions *ValidateReportsSnapshotConfigOptions) (result *SnapshotConfigValidateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(validateReportsSnapshotConfigOptions, "validateReportsSnapshotConfigOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(validateReportsSnapshotConfigOptions, "validateReportsSnapshotConfigOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = usageReports.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(usageReports.Service.Options.URL, `/v1/billing-reports-snapshot-config/validate`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range validateReportsSnapshotConfigOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("usage_reports", "V4", "ValidateReportsSnapshotConfig")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if validateReportsSnapshotConfigOptions.AccountID != nil {
+		body["account_id"] = validateReportsSnapshotConfigOptions.AccountID
+	}
+	if validateReportsSnapshotConfigOptions.Interval != nil {
+		body["interval"] = validateReportsSnapshotConfigOptions.Interval
+	}
+	if validateReportsSnapshotConfigOptions.CosBucket != nil {
+		body["cos_bucket"] = validateReportsSnapshotConfigOptions.CosBucket
+	}
+	if validateReportsSnapshotConfigOptions.CosLocation != nil {
+		body["cos_location"] = validateReportsSnapshotConfigOptions.CosLocation
+	}
+	if validateReportsSnapshotConfigOptions.CosReportsFolder != nil {
+		body["cos_reports_folder"] = validateReportsSnapshotConfigOptions.CosReportsFolder
+	}
+	if validateReportsSnapshotConfigOptions.ReportTypes != nil {
+		body["report_types"] = validateReportsSnapshotConfigOptions.ReportTypes
+	}
+	if validateReportsSnapshotConfigOptions.Versioning != nil {
+		body["versioning"] = validateReportsSnapshotConfigOptions.Versioning
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = usageReports.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSnapshotConfigValidateResponse)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // GetReportsSnapshot : Fetch the current or past snapshots
 // Returns the billing reports snapshots captured for the given Account Id in the specific time period.
 func (usageReports *UsageReportsV4) GetReportsSnapshot(getReportsSnapshotOptions *GetReportsSnapshotOptions) (result *SnapshotList, response *core.DetailedResponse, err error) {
@@ -3407,6 +3492,37 @@ func UnmarshalSnapshotConfig(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
+// SnapshotConfigValidateResponse : Validated billing service to COS bucket authorization.
+type SnapshotConfigValidateResponse struct {
+	// Account ID for which billing report snapshot is configured.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// The name of the COS bucket to store the snapshot of the billing reports.
+	CosBucket *string `json:"cos_bucket,omitempty"`
+
+	// Region of the COS instance.
+	CosLocation *string `json:"cos_location,omitempty"`
+}
+
+// UnmarshalSnapshotConfigValidateResponse unmarshals an instance of SnapshotConfigValidateResponse from the specified map of raw messages.
+func UnmarshalSnapshotConfigValidateResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SnapshotConfigValidateResponse)
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cos_bucket", &obj.CosBucket)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cos_location", &obj.CosLocation)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // Subscription : Subscription struct
 type Subscription struct {
 	// The ID of the subscription.
@@ -3696,6 +3812,111 @@ func (_options *UpdateReportsSnapshotConfigOptions) SetVersioning(versioning str
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateReportsSnapshotConfigOptions) SetHeaders(param map[string]string) *UpdateReportsSnapshotConfigOptions {
+	options.Headers = param
+	return options
+}
+
+// ValidateReportsSnapshotConfigOptions : The ValidateReportsSnapshotConfig options.
+type ValidateReportsSnapshotConfigOptions struct {
+	// Account ID for which billing report snapshot is configured.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Frequency of taking the snapshot of the billing reports.
+	Interval *string `json:"interval,omitempty"`
+
+	// The name of the COS bucket to store the snapshot of the billing reports.
+	CosBucket *string `json:"cos_bucket,omitempty"`
+
+	// Region of the COS instance.
+	CosLocation *string `json:"cos_location,omitempty"`
+
+	// The billing reports root folder to store the billing reports snapshots. Defaults to "IBMCloud-Billing-Reports".
+	CosReportsFolder *string `json:"cos_reports_folder,omitempty"`
+
+	// The type of billing reports to take snapshot of. Possible values are [account_summary, enterprise_summary,
+	// account_resource_instance_usage].
+	ReportTypes []string `json:"report_types,omitempty"`
+
+	// A new version of report is created or the existing report version is overwritten with every update. Defaults to
+	// "new".
+	Versioning *string `json:"versioning,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the ValidateReportsSnapshotConfigOptions.Interval property.
+// Frequency of taking the snapshot of the billing reports.
+const (
+	ValidateReportsSnapshotConfigOptionsIntervalDailyConst = "daily"
+)
+
+// Constants associated with the ValidateReportsSnapshotConfigOptions.ReportTypes property.
+const (
+	ValidateReportsSnapshotConfigOptionsReportTypesAccountResourceInstanceUsageConst = "account_resource_instance_usage"
+	ValidateReportsSnapshotConfigOptionsReportTypesAccountSummaryConst               = "account_summary"
+	ValidateReportsSnapshotConfigOptionsReportTypesEnterpriseSummaryConst            = "enterprise_summary"
+)
+
+// Constants associated with the ValidateReportsSnapshotConfigOptions.Versioning property.
+// A new version of report is created or the existing report version is overwritten with every update. Defaults to
+// "new".
+const (
+	ValidateReportsSnapshotConfigOptionsVersioningNewConst       = "new"
+	ValidateReportsSnapshotConfigOptionsVersioningOverwriteConst = "overwrite"
+)
+
+// NewValidateReportsSnapshotConfigOptions : Instantiate ValidateReportsSnapshotConfigOptions
+func (*UsageReportsV4) NewValidateReportsSnapshotConfigOptions(accountID string) *ValidateReportsSnapshotConfigOptions {
+	return &ValidateReportsSnapshotConfigOptions{
+		AccountID: core.StringPtr(accountID),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ValidateReportsSnapshotConfigOptions) SetAccountID(accountID string) *ValidateReportsSnapshotConfigOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetInterval : Allow user to set Interval
+func (_options *ValidateReportsSnapshotConfigOptions) SetInterval(interval string) *ValidateReportsSnapshotConfigOptions {
+	_options.Interval = core.StringPtr(interval)
+	return _options
+}
+
+// SetCosBucket : Allow user to set CosBucket
+func (_options *ValidateReportsSnapshotConfigOptions) SetCosBucket(cosBucket string) *ValidateReportsSnapshotConfigOptions {
+	_options.CosBucket = core.StringPtr(cosBucket)
+	return _options
+}
+
+// SetCosLocation : Allow user to set CosLocation
+func (_options *ValidateReportsSnapshotConfigOptions) SetCosLocation(cosLocation string) *ValidateReportsSnapshotConfigOptions {
+	_options.CosLocation = core.StringPtr(cosLocation)
+	return _options
+}
+
+// SetCosReportsFolder : Allow user to set CosReportsFolder
+func (_options *ValidateReportsSnapshotConfigOptions) SetCosReportsFolder(cosReportsFolder string) *ValidateReportsSnapshotConfigOptions {
+	_options.CosReportsFolder = core.StringPtr(cosReportsFolder)
+	return _options
+}
+
+// SetReportTypes : Allow user to set ReportTypes
+func (_options *ValidateReportsSnapshotConfigOptions) SetReportTypes(reportTypes []string) *ValidateReportsSnapshotConfigOptions {
+	_options.ReportTypes = reportTypes
+	return _options
+}
+
+// SetVersioning : Allow user to set Versioning
+func (_options *ValidateReportsSnapshotConfigOptions) SetVersioning(versioning string) *ValidateReportsSnapshotConfigOptions {
+	_options.Versioning = core.StringPtr(versioning)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ValidateReportsSnapshotConfigOptions) SetHeaders(param map[string]string) *ValidateReportsSnapshotConfigOptions {
 	options.Headers = param
 	return options
 }

@@ -163,25 +163,25 @@ func dataSourceIBMPICatalogImagesRead(ctx context.Context, d *schema.ResourceDat
 		}
 		if i.Specifications != nil {
 			s := i.Specifications
-			if &s.ImageType != nil {
+			if s.ImageType != "" {
 				image["image_type"] = s.ImageType
 			}
-			if &s.ContainerFormat != nil {
+			if s.ContainerFormat != "" {
 				image["container_format"] = s.ContainerFormat
 			}
-			if &s.DiskFormat != nil {
+			if s.DiskFormat != "" {
 				image["disk_format"] = s.DiskFormat
 			}
-			if &s.OperatingSystem != nil {
+			if s.OperatingSystem != "" {
 				image["operating_system"] = s.OperatingSystem
 			}
-			if &s.HypervisorType != nil {
+			if s.HypervisorType != "" {
 				image["hypervisor_type"] = s.HypervisorType
 			}
-			if &s.Architecture != nil {
+			if s.Architecture != "" {
 				image["architecture"] = s.Architecture
 			}
-			if &s.Endianness != nil {
+			if s.Endianness != "" {
 				image["endianness"] = s.Endianness
 			}
 		}

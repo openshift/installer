@@ -69,6 +69,17 @@ func DataSourceIBMIsBackupPolicy() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"match_resource_type": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The resource type this backup policy will apply to. Resources that have both a matching type and a matching user tag will be subject to the backup policy.",
+			},
+			"included_content": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The included content for backups created using this policy",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"match_user_tags": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -223,7 +234,7 @@ func dataSourceIBMIsBackupPolicyRead(context context.Context, d *schema.Resource
 			log.Printf("[DEBUG] GetBackupPolicyWithContext failed %s\n%s", err, response)
 			return diag.FromErr(fmt.Errorf("[ERROR] GetBackupPolicyWithContext failed %s\n%s", err, response))
 		}
-		backupPolicy = backupPolicyInfo
+		backupPolicy = backupPolicyInfo.(*vpcv1.BackupPolicy)
 
 	} else if v, ok := d.GetOk("name"); ok {
 
@@ -244,7 +255,10 @@ func dataSourceIBMIsBackupPolicyRead(context context.Context, d *schema.Resource
 				break
 			}
 			start = flex.GetNext(backupPolicyCollection.Next)
-			allrecs = append(allrecs, backupPolicyCollection.BackupPolicies...)
+			for _, backupPolicyInfo := range backupPolicyCollection.BackupPolicies {
+				backupPolicies := backupPolicyInfo.(*vpcv1.BackupPolicy)
+				allrecs = append(allrecs, *backupPolicies)
+			}
 			if start == "" {
 				break
 			}
@@ -316,13 +330,20 @@ func dataSourceIBMIsBackupPolicyRead(context context.Context, d *schema.Resource
 		}
 	}
 
-	matchResourceType := make([]string, 0)
-	if backupPolicy.MatchResourceTypes != nil {
-		for _, matchResourceTyp := range backupPolicy.MatchResourceTypes {
-			matchResourceType = append(matchResourceType, matchResourceTyp)
+	if backupPolicy.MatchResourceType != nil {
+		if err = d.Set("match_resource_types", []string{*backupPolicy.MatchResourceType}); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_types: %s", err))
+		}
+		if err = d.Set("match_resource_type", *backupPolicy.MatchResourceType); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_type: %s", err))
 		}
 	}
-	d.Set("match_resource_types", matchResourceType)
+
+	if backupPolicy.IncludedContent != nil {
+		if err = d.Set("included_content", backupPolicy.IncludedContent); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting included_content: %s", err))
+		}
+	}
 
 	matchUserTags := make([]string, 0)
 	if backupPolicy.MatchUserTags != nil {

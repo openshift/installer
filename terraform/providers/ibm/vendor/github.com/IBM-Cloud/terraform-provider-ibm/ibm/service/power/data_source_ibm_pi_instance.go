@@ -246,7 +246,6 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 	if powervmdata.Addresses != nil {
 		pvmaddress := make([]map[string]interface{}, len(powervmdata.Addresses))
 		for i, pvmip := range powervmdata.Addresses {
-
 			p := make(map[string]interface{})
 			p["ip"] = pvmip.IPAddress
 			p["network_name"] = pvmip.NetworkName
@@ -257,13 +256,10 @@ func dataSourceIBMPIInstancesRead(ctx context.Context, d *schema.ResourceData, m
 			pvmaddress[i] = p
 		}
 		d.Set("addresses", pvmaddress)
-
 	}
 
 	if powervmdata.Health != nil {
-
 		d.Set("health_status", powervmdata.Health.Status)
-
 	}
 
 	return nil

@@ -72,6 +72,14 @@ func DataSourceIBMISVPCRoutingTables() *schema.Resource {
 							Computed:    true,
 							Description: "Routing Table ID",
 						},
+						"advertise_routes_to": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The ingress sources to advertise routes to. Routes in the table with `advertise` enabled will be advertised to these sources.The enumerated values for this property are expected to expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected property value was encountered.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						isRoutingTableHref: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -240,6 +248,9 @@ func dataSourceIBMISVPCRoutingTablesList(d *schema.ResourceData, meta interface{
 		}
 		if routingTable.RouteVPCZoneIngress != nil {
 			rtable[isRoutingTableVPCZoneIngress] = *routingTable.RouteVPCZoneIngress
+		}
+		if routingTable.AdvertiseRoutesTo != nil {
+			rtable["advertise_routes_to"] = routingTable.AdvertiseRoutesTo
 		}
 		if routingTable.IsDefault != nil {
 			rtable[isRoutingTableDefault] = *routingTable.IsDefault
