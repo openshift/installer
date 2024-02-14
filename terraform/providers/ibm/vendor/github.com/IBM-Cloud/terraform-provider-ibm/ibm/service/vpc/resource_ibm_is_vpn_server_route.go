@@ -422,9 +422,9 @@ func isWaitForVPNServerRouteDeleted(context context.Context, sess *vpcv1.VpcV1, 
 				if response != nil && response.StatusCode == 404 {
 					return vpnServerRoute, isVPNServerRouteStatusDeleted, nil
 				}
-				return vpnServerRoute, isVPNServerRouteStatusDeleting, fmt.Errorf("The VPC route %s failed to delete: %s\n%s", d.Id(), err, response)
+				return vpnServerRoute, *vpnServerRoute.LifecycleState, fmt.Errorf("The VPC route %s failed to delete: %s\n%s", d.Id(), err, response)
 			}
-			return vpnServerRoute, isVPNServerRouteStatusDeleting, nil
+			return vpnServerRoute, *vpnServerRoute.LifecycleState, nil
 
 		},
 		Timeout:    d.Timeout(schema.TimeoutDelete),

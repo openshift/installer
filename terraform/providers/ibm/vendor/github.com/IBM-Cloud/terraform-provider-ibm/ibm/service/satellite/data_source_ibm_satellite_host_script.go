@@ -74,6 +74,11 @@ func DataSourceIBMSatelliteAttachHostScript() *schema.Resource {
 				Optional:     true,
 				ExactlyOneOf: []string{"host_provider", "custom_script"},
 			},
+			"host_link_agent_endpoint": {
+				Description: "The satellite link agent endpoint, required for reduced firewall attach script",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -153,6 +158,12 @@ func dataSourceIBMSatelliteAttachHostScriptRead(d *schema.ResourceData, meta int
 		host_os = "RHEL"
 		createRegOptions.OperatingSystem = &host_os
 		scriptPath = filepath.Join(scriptDir, "addHost.sh")
+	}
+
+	// If the user supplied link agent endpoint, use reduced firewall attach script
+	if hlae, ok := d.GetOk("host_link_agent_endpoint"); ok {
+		host_link_agent_endpoint := hlae.(string)
+		createRegOptions.HostLinkAgentEndpoint = &host_link_agent_endpoint
 	}
 
 	resp, err := satClient.AttachSatelliteHost(createRegOptions)

@@ -113,13 +113,13 @@ func ResourceIBMPIImage() *schema.Resource {
 			helpers.PIImageStorageType: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Type of storage",
+				Description: "Type of storage; If not specified, default is tier3",
 				ForceNew:    true,
 			},
 			helpers.PIImageStoragePool: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Storage pool where the image will be loaded, if provided then pi_image_storage_type and pi_affinity_policy will be ignored",
+				Description: "Storage pool where the image will be loaded, if provided then pi_affinity_policy will be ignored",
 				ForceNew:    true,
 			},
 			PIAffinityPolicy: {

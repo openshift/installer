@@ -48,13 +48,107 @@ func DataSourceIBMISImage() *schema.Resource {
 				ValidateFunc: validate.ValidateAllowedStringValues([]string{"public", "private"}),
 				Description:  "Whether the image is publicly visible or private to the account",
 			},
-
+			"resource_group": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The resource group for this IPsec policy.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this resource group.",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this resource group.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The user-defined name for this resource group.",
+						},
+					},
+				},
+			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The status of this image",
 			},
-
+			"status_reasons": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current status (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the status reason.",
+						},
+						"message": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the status reason.",
+						},
+						"more_info": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about this status reason.",
+						},
+					},
+				},
+			},
+			"operating_system": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"architecture": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The operating system architecture",
+						},
+						"dedicated_host_only": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Images with this operating system can only be used on dedicated hosts or dedicated host groups",
+						},
+						"display_name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A unique, display-friendly name for the operating system",
+						},
+						"family": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The software family for this operating system",
+						},
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this operating system",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The globally unique name for this operating system",
+						},
+						"vendor": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The vendor of the operating system",
+						},
+						"version": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The major release version of this operating system",
+						},
+					},
+				},
+			},
 			"os": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -207,6 +301,9 @@ func imageGetByName(d *schema.ResourceData, meta interface{}, name, visibility s
 	if *image.Status == "deprecated" {
 		fmt.Printf("[WARN] Given image %s is deprecated and soon will be obsolete.", name)
 	}
+	if len(image.StatusReasons) > 0 {
+		d.Set("status_reasons", dataSourceIBMIsImageFlattenStatusReasons(image.StatusReasons))
+	}
 	d.Set("name", *image.Name)
 	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *image.CRN, "", isImageAccessTagType)
 	if err != nil {
@@ -215,6 +312,19 @@ func imageGetByName(d *schema.ResourceData, meta interface{}, name, visibility s
 	}
 	d.Set(isImageAccessTags, accesstags)
 	d.Set("visibility", *image.Visibility)
+
+	if image.OperatingSystem != nil {
+		operatingSystemList := []map[string]interface{}{}
+		operatingSystemMap := dataSourceIBMISImageOperatingSystemToMap(*image.OperatingSystem)
+		operatingSystemList = append(operatingSystemList, operatingSystemMap)
+		d.Set("operating_system", operatingSystemList)
+	}
+	if image.ResourceGroup != nil {
+		resourceGroupList := []map[string]interface{}{}
+		resourceGroupMap := dataSourceImageResourceGroupToMap(*image.ResourceGroup)
+		resourceGroupList = append(resourceGroupList, resourceGroupMap)
+		d.Set("resource_group", resourceGroupList)
+	}
 	d.Set("os", *image.OperatingSystem.Name)
 	d.Set("architecture", *image.OperatingSystem.Architecture)
 	d.Set("crn", *image.CRN)
@@ -271,8 +381,23 @@ func imageGetById(d *schema.ResourceData, meta interface{}, identifier string) e
 	if *image.Status == "deprecated" {
 		fmt.Printf("[WARN] Given image %s is deprecated and soon will be obsolete.", name)
 	}
+	if len(image.StatusReasons) > 0 {
+		d.Set("status_reasons", dataSourceIBMIsImageFlattenStatusReasons(image.StatusReasons))
+	}
 	d.Set("name", *image.Name)
 	d.Set("visibility", *image.Visibility)
+	if image.OperatingSystem != nil {
+		operatingSystemList := []map[string]interface{}{}
+		operatingSystemMap := dataSourceIBMISImageOperatingSystemToMap(*image.OperatingSystem)
+		operatingSystemList = append(operatingSystemList, operatingSystemMap)
+		d.Set("operating_system", operatingSystemList)
+	}
+	if image.ResourceGroup != nil {
+		resourceGroupList := []map[string]interface{}{}
+		resourceGroupMap := dataSourceImageResourceGroupToMap(*image.ResourceGroup)
+		resourceGroupList = append(resourceGroupList, resourceGroupMap)
+		d.Set("resource_group", resourceGroupList)
+	}
 	d.Set("os", *image.OperatingSystem.Name)
 	d.Set("architecture", *image.OperatingSystem.Architecture)
 	d.Set("crn", *image.CRN)
@@ -297,6 +422,36 @@ func imageGetById(d *schema.ResourceData, meta interface{}, identifier string) e
 	return nil
 }
 
+func dataSourceIBMISImageOperatingSystemToMap(operatingSystemItem vpcv1.OperatingSystem) (operatingSystemMap map[string]interface{}) {
+	operatingSystemMap = map[string]interface{}{}
+
+	if operatingSystemItem.Architecture != nil {
+		operatingSystemMap["architecture"] = operatingSystemItem.Architecture
+	}
+	if operatingSystemItem.DedicatedHostOnly != nil {
+		operatingSystemMap["dedicated_host_only"] = operatingSystemItem.DedicatedHostOnly
+	}
+	if operatingSystemItem.DisplayName != nil {
+		operatingSystemMap["display_name"] = operatingSystemItem.DisplayName
+	}
+	if operatingSystemItem.Family != nil {
+		operatingSystemMap["family"] = operatingSystemItem.Family
+	}
+	if operatingSystemItem.Href != nil {
+		operatingSystemMap["href"] = operatingSystemItem.Href
+	}
+	if operatingSystemItem.Name != nil {
+		operatingSystemMap["name"] = operatingSystemItem.Name
+	}
+	if operatingSystemItem.Vendor != nil {
+		operatingSystemMap["vendor"] = operatingSystemItem.Vendor
+	}
+	if operatingSystemItem.Version != nil {
+		operatingSystemMap["version"] = operatingSystemItem.Version
+	}
+	return operatingSystemMap
+}
+
 func dataSourceImageCollectionCatalogOfferingToMap(imageCatalogOfferingItem vpcv1.ImageCatalogOffering) (imageCatalogOfferingMap map[string]interface{}) {
 	imageCatalogOfferingMap = map[string]interface{}{}
 	if imageCatalogOfferingItem.Managed != nil {
@@ -319,4 +474,41 @@ func dataSourceImageCollectionCatalogOfferingToMap(imageCatalogOfferingItem vpcv
 	}
 
 	return imageCatalogOfferingMap
+}
+
+func dataSourceIBMIsImageFlattenStatusReasons(result []vpcv1.ImageStatusReason) (statusReasons []map[string]interface{}) {
+	for _, statusReasonsItem := range result {
+		statusReasons = append(statusReasons, dataSourceIBMIsImageStatusReasonToMap(&statusReasonsItem))
+	}
+
+	return statusReasons
+}
+
+func dataSourceIBMIsImageStatusReasonToMap(model *vpcv1.ImageStatusReason) map[string]interface{} {
+	modelMap := make(map[string]interface{})
+	if model.Code != nil {
+		modelMap["code"] = *model.Code
+	}
+	if model.Message != nil {
+		modelMap["message"] = *model.Message
+	}
+	if model.MoreInfo != nil {
+		modelMap["more_info"] = *model.MoreInfo
+	}
+	return modelMap
+}
+func dataSourceImageResourceGroupToMap(resourceGroupItem vpcv1.ResourceGroupReference) (resourceGroupMap map[string]interface{}) {
+	resourceGroupMap = map[string]interface{}{}
+
+	if resourceGroupItem.Href != nil {
+		resourceGroupMap["href"] = resourceGroupItem.Href
+	}
+	if resourceGroupItem.ID != nil {
+		resourceGroupMap["id"] = resourceGroupItem.ID
+	}
+	if resourceGroupItem.Name != nil {
+		resourceGroupMap["name"] = resourceGroupItem.Name
+	}
+
+	return resourceGroupMap
 }
