@@ -367,6 +367,7 @@ data["networking"]["machineNetwork"] = machine_net
 data["platform"]["openstack"]["apiVIPs"] = api_vips
 data["platform"]["openstack"]["ingressVIPs"] = ingress_vips
 data["platform"]["openstack"]["controlPlanePort"] = ctrl_plane_port
+data["featureSet"] = "TechPreviewNoUpgrade"
 del data["platform"]["openstack"]["externalDNS"]
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
