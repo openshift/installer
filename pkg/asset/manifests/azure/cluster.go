@@ -138,7 +138,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	id.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureClusterIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: id,
-		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
+		File:   asset.File{Filename: "01_azure-cluster-controller-identity-default.yaml"},
 	})
 
 	return &capiutils.GenerateClusterAssetsOutput{
