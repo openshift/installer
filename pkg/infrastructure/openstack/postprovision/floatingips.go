@@ -9,7 +9,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -38,7 +38,7 @@ func FloatingIPs(ctx context.Context, c client.Client, cluster *capo.OpenStackCl
 		return err
 	}
 
-	network, err := getNetworkByName(networkClient, cluster.Spec.ExternalNetworkID)
+	network, err := networks.Get(networkClient, cluster.Status.ExternalNetwork.ID).Extract()
 	if err != nil {
 		return err
 	}
@@ -72,29 +72,6 @@ func getPortForInstance(client *gophercloud.ServiceClient, instanceID string) (*
 	}
 
 	return &allPorts[0], nil
-}
-
-// Get a network by name.
-func getNetworkByName(client *gophercloud.ServiceClient, name string) (*networks.Network, error) {
-	listOpts := networks.ListOpts{
-		Name: name,
-	}
-	allPages, err := networks.List(client, listOpts).AllPages()
-	if err != nil {
-		return nil, fmt.Errorf("failed to list networks: %w", err)
-	}
-	allNetworks, err := networks.ExtractNetworks(allPages)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract networks: %w", err)
-	}
-
-	if len(allNetworks) < 1 {
-		return nil, fmt.Errorf("found no matches for network %s", name)
-	} else if len(allNetworks) > 1 {
-		return nil, fmt.Errorf("found more than one match for network %s", name)
-	}
-
-	return &allNetworks[0], nil
 }
 
 // Create a floating IP.

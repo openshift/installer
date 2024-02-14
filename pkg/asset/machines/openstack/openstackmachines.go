@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -145,7 +145,9 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 					Subnet: &capo.SubnetFilter{
 						// NOTE(mandre) the format of the subnet name changes when letting CAPI create it.
 						// So solely rely on tags for now.
-						Tags: fmt.Sprintf("openshiftClusterID=%s", clusterID),
+						FilterByNeutronTags: capo.FilterByNeutronTags{
+							TagsAny: []capo.NeutronTag{capo.NeutronTag("openshiftClusterID=" + clusterID)},
+						},
 					},
 				},
 			},
@@ -175,30 +177,31 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 		securityGroups = append(securityGroups, capo.SecurityGroupFilter{ID: securityGroup})
 	}
 
-	// FIXME: Uncomment when the server group rework merged
-	// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/1779
-	// serverGroupName := clusterID + "-" + role
 	spec := capo.OpenStackMachineSpec{
-		CloudName: CloudName,
-		Flavor:    mpool.FlavorName,
+		Flavor: mpool.FlavorName,
 		IdentityRef: &capo.OpenStackIdentityReference{
-			Kind: "Secret",
-			Name: clusterID + "-cloud-config",
+			Name:      clusterID + "-cloud-config",
+			CloudName: CloudName,
 		},
-		// FIXME(stephenfin): We probably want a FIP for bootstrap?
-		// TODO: This is an image name. Migrate to a filter with Name when API v1alpha8 is released.
-		Image:          osImage,
+		Image: capo.ImageFilter{
+			Name: &osImage,
+		},
 		Ports:          append([]capo.PortOpts{port}, additionalPorts...),
 		SecurityGroups: securityGroups,
-		// FIXME: Uncomment when the server group rework merged
-		// https://github.com/kubernetes-sigs/cluster-api-provider-openstack/pull/1779
-		//ServerGroup: *capo.ServerGroupFilter{
-		//	"Name": serverGroupName,
-		// },
-		ServerMetadata: map[string]string{
-			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
-			"openshiftClusterID": clusterID,
+		ServerGroup: &capo.ServerGroupFilter{
+			Name: clusterID + "-" + role,
 		},
+		ServerMetadata: []capo.ServerMetadata{
+			{
+				Key:   "Name",
+				Value: fmt.Sprintf("%s-%s", clusterID, role),
+			},
+			{
+				Key:   "openshiftClusterID",
+				Value: clusterID,
+			},
+		},
+
 		Trunk: trunkSupport,
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),

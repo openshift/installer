@@ -344,3 +344,6 @@ replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+// Use CAPO master, with a carry patch that reverts it to Go v1.21
+replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20240327221400-3ab8f28c386c

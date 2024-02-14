@@ -19,7 +19,7 @@ import (
 	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	capgv1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	capiv1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
-	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
