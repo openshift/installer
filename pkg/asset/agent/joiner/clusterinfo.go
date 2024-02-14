@@ -22,6 +22,8 @@ import (
 // are inspected to extract the required configuration
 type ClusterInfo struct {
 	ClusterID    string
+	Version      string
+	ReleaseImage string
 	APIDNSName   string
 	PullSecret   string
 	Namespace    string
@@ -69,7 +71,7 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveClusterID(clientset)
+	err = ci.retrieveClusterData(clientset)
 	if err != nil {
 		return err
 	}
@@ -113,12 +115,14 @@ func (ci *ClusterInfo) getRestConfig(kubeconfig string) (*rest.Config, error) {
 	return config, err
 }
 
-func (ci *ClusterInfo) retrieveClusterID(clientset *configclient.Clientset) error {
+func (ci *ClusterInfo) retrieveClusterData(clientset *configclient.Clientset) error {
 	cv, err := clientset.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	ci.ClusterID = string(cv.Spec.ClusterID)
+	ci.ReleaseImage = cv.Status.History[0].Image
+	ci.Version = cv.Status.History[0].Version
 
 	return nil
 }
