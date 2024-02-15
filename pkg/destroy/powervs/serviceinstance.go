@@ -121,16 +121,24 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 				o.Logger.Debugf("listServiceInstances: type: %v", *resourceInstance.Type)
 			}
 
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
-				if strings.Contains(*resource.Name, o.InfraID) {
-					result = append(result, cloudResource{
-						key:      *resource.ID,
-						name:     *resource.Name,
-						status:   *resource.GUID,
-						typeName: serviceInstanceTypeName,
-						id:       *resource.ID,
-					})
-				}
+			if resourceInstance.Type == nil || resourceInstance.GUID == nil {
+				continue
+			}
+			if *resourceInstance.Type != "service_instance" && *resourceInstance.Type != "composite_instance" {
+				continue
+			}
+			if !strings.Contains(*resource.Name, o.InfraID) {
+				continue
+			}
+
+			if strings.Contains(*resource.Name, o.InfraID) {
+				result = append(result, cloudResource{
+					key:      *resource.ID,
+					name:     *resource.Name,
+					status:   *resource.GUID,
+					typeName: serviceInstanceTypeName,
+					id:       *resource.ID,
+				})
 			}
 		}
 
