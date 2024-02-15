@@ -64,15 +64,15 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	parents.Get(
-		manifestsAsset,
+		//manifestsAsset,
 		capiManifestsAsset,
 		clusterKubeconfigAsset,
 		clusterID,
 		installConfig,
-		rhcosImage,
+		//rhcosImage,
 		bootstrapIgnAsset,
 		masterIgnAsset,
-		capiMachinesAsset,
+		//capiMachinesAsset,
 	)
 
 	fileList := []*asset.File{}

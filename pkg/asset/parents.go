@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -19,6 +20,11 @@ func (p Parents) Add(assets ...Asset) {
 // parents collection.
 func (p Parents) Get(assets ...Asset) {
 	for _, a := range assets {
-		reflect.ValueOf(a).Elem().Set(reflect.ValueOf(p[reflect.TypeOf(a)]).Elem())
+		fmt.Printf("finding asset for type: %s\n", reflect.TypeOf(a))
+		if val, exists := p[reflect.TypeOf(a)]; exists {
+			reflect.ValueOf(a).Elem().Set(reflect.ValueOf(val).Elem())
+		} else {
+			panic(fmt.Sprintf("unable to find asset of type: %v", reflect.TypeOf(a)))
+		}
 	}
 }

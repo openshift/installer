@@ -26,6 +26,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		return nil, errors.Wrap(err, "failed to get availability zones")
 	}
 
+	platformSpec := installConfig.Config.AWS
+
 	awsCluster := &capa.AWSCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -198,6 +200,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 		awsCluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
 			ID: vpc,
+		}
+	} else {
+		subnetMappings := []capa.AWSSubnetMapping{}
+		// TO-DO: we are just using a slice allocation IDs for now. as they are used, they are removed from the slice.
+		if len(platformSpec.PublicIpv4Pool) > 0 {
+			for _, allocationId := range platformSpec.PublicIpv4Pool {
+				subnetMappings = append(subnetMappings, capa.AWSSubnetMapping{
+					AllocationID: allocationId,
+				})
+			}
+			awsCluster.Spec.ControlPlaneLoadBalancer.SubnetMappings = subnetMappings
 		}
 	}
 
