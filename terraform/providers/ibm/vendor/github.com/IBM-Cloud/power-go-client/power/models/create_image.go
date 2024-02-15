@@ -26,7 +26,7 @@ type CreateImage struct {
 	// Cloud Storage bucket name; bucket-name[/optional/folder]; required for import image
 	BucketName string `json:"bucketName,omitempty"`
 
-	// Type of Disk; will be ignored if storagePool or affinityPolicy is provided; Used only when importing an image from cloud storage.
+	// Type of Disk; if diskType is not provided the disk type will default to 'tier3'. Used only when importing an image from cloud storage.
 	DiskType string `json:"diskType,omitempty"`
 
 	// Cloud Storage image filename; required for import image
@@ -61,7 +61,7 @@ type CreateImage struct {
 	// The storage affinity data; ignored if storagePool is provided; Used only when importing an image from cloud storage.
 	StorageAffinity *StorageAffinity `json:"storageAffinity,omitempty"`
 
-	// Storage pool where the image will be loaded; if provided then storageAffinity and diskType will be ignored; Used only when importing an image from cloud storage.
+	// Storage pool where the image will be loaded; if provided then storageAffinity will be ignored; Used only when importing an image from cloud storage.
 	StoragePool string `json:"storagePool,omitempty"`
 }
 

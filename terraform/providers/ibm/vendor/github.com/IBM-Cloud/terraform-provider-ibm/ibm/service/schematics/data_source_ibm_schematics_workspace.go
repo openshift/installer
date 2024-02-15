@@ -5,6 +5,7 @@ package schematics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -86,30 +87,10 @@ func DataSourceIBMSchematicsWorkspace() *schema.Resource {
 							Description: "The version of the software template that you chose to install from the IBM Cloud catalog.",
 						},
 						"service_extensions": {
-							Type:        schema.TypeList,
+							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "List of service data",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"name": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Name of the Service Data.",
-									},
-									"value": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Value of the Service Data.",
-									},
-									"type": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Type of the value string, int, bool.",
-									},
-								},
-							},
-						},
-					}}},
+							Description: "Service extensions defined as string of json",
+						}}}},
 			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -880,28 +861,14 @@ func dataSourceWorkspaceResponseCatalogRefToMap(catalogRefItem schematicsv1.Cata
 		catalogRefMap["offering_version"] = catalogRefItem.OfferingVersion
 	}
 	if catalogRefItem.ServiceExtensions != nil {
-		serviceExtensionsList := []map[string]interface{}{}
-		for _, serviceExtensionsItem := range catalogRefItem.ServiceExtensions {
-			serviceExtensionsList = append(serviceExtensionsList, dataSourceWorkspaceResponseCatalogRefServiceExtensionsToMap(serviceExtensionsItem))
+		serviceExtensionsByte, err := json.MarshalIndent(catalogRefItem.ServiceExtensions, "", "")
+		if err != nil {
+			log.Printf("[DEBUG] Marshelling of service extensions failed %s", err)
 		}
-		catalogRefMap["service_extensions"] = serviceExtensionsList
+		serviceExtensionsJSON := string(serviceExtensionsByte[:])
+		catalogRefMap["service_extensions"] = serviceExtensionsJSON
 	}
 	return catalogRefMap
-}
-
-func dataSourceWorkspaceResponseCatalogRefServiceExtensionsToMap(serviceExtensionsItem schematicsv1.ServiceExtensions) (serviceExtensionMap map[string]interface{}) {
-	serviceExtensionMap = map[string]interface{}{}
-
-	if serviceExtensionsItem.Name != nil {
-		serviceExtensionMap["name"] = *serviceExtensionsItem.Name
-	}
-	if serviceExtensionsItem.Type != nil {
-		serviceExtensionMap["type"] = serviceExtensionsItem.Type
-	}
-	if serviceExtensionsItem.Value != nil {
-		serviceExtensionMap["value"] = *serviceExtensionsItem.Value
-	}
-	return serviceExtensionMap
 }
 
 func dataSourceWorkspaceResponseFlattenRuntimeData(result []schematicsv1.TemplateRunTimeDataResponse) (runtimeData []map[string]interface{}) {

@@ -126,6 +126,11 @@ func DataSourceIBMISVPCRoutingTableRoutes() *schema.Resource {
 							Computed:    true,
 							Description: "Routing Table Route Action",
 						},
+						"advertise": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether this route will be advertised to the ingress sources specified by the `advertise_routes_to` routing table property.",
+						},
 						isRoutingTableRouteDestination: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -215,6 +220,9 @@ func dataSourceIBMISVPCRoutingTableRoutesList(d *schema.ResourceData, meta inter
 		route["creator"] = creator
 		if instance.LifecycleState != nil {
 			route[isRoutingTableRouteLifecycleState] = *instance.LifecycleState
+		}
+		if instance.Advertise != nil {
+			route["advertise"] = *instance.Advertise
 		}
 		if instance.Destination != nil {
 			route[isRoutingTableRouteDestination] = *instance.Destination

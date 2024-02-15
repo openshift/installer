@@ -39,12 +39,10 @@ func DataSourceIBMPINetwork() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-
 			"vlan_id": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -77,6 +75,14 @@ func DataSourceIBMPINetwork() *schema.Resource {
 			},
 			"jumbo": {
 				Type:     schema.TypeBool,
+				Computed: true,
+			},
+			"mtu": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"access_config": {
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 		},
@@ -124,6 +130,8 @@ func dataSourceIBMPINetworkRead(ctx context.Context, d *schema.ResourceData, met
 		d.Set("dns", networkdata.DNSServers)
 	}
 	d.Set("jumbo", networkdata.Jumbo)
+	d.Set("mtu", networkdata.Mtu)
+	d.Set("access_config", networkdata.AccessConfig)
 
 	return nil
 

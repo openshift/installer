@@ -5,6 +5,7 @@ package project
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -79,13 +80,10 @@ func ResourceIbmProjectEnvironment() *schema.Resource {
 							},
 						},
 						"inputs": &schema.Schema{
-							Type:        schema.TypeList,
-							MaxItems:    1,
+							Type:        schema.TypeMap,
 							Optional:    true,
 							Description: "The input variables for configuration definition and environment.",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{},
-							},
+							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"compliance_profile": &schema.Schema{
 							Type:        schema.TypeList,
@@ -177,6 +175,11 @@ func ResourceIbmProjectEnvironment() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "A date and time value in the format YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.sssZ, matching the date and time format as specified by RFC 3339.",
+			},
+			"href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A URL.",
 			},
 			"project_environment_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -281,6 +284,9 @@ func resourceIbmProjectEnvironmentRead(context context.Context, d *schema.Resour
 	if err = d.Set("modified_at", flex.DateTimeToString(environment.ModifiedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting modified_at: %s", err))
 	}
+	if err = d.Set("href", environment.Href); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+	}
 	if err = d.Set("project_environment_id", environment.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting project_environment_id: %s", err))
 	}
@@ -370,12 +376,13 @@ func resourceIbmProjectEnvironmentMapToEnvironmentDefinitionRequiredProperties(m
 		}
 		model.Authorizations = AuthorizationsModel
 	}
-	if modelMap["inputs"] != nil && len(modelMap["inputs"].([]interface{})) > 0 {
-		InputsModel, err := resourceIbmProjectEnvironmentMapToInputVariable(modelMap["inputs"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
+	if modelMap["inputs"] != nil {
+		bytes, _ := json.Marshal(modelMap["inputs"].(map[string]interface{}))
+		newMap := make(map[string]interface{})
+		json.Unmarshal(bytes, &newMap)
+		if len(newMap) > 0 {
+			model.Inputs = newMap
 		}
-		model.Inputs = InputsModel
 	}
 	if modelMap["compliance_profile"] != nil && len(modelMap["compliance_profile"].([]interface{})) > 0 {
 		ComplianceProfileModel, err := resourceIbmProjectEnvironmentMapToProjectComplianceProfile(modelMap["compliance_profile"].([]interface{})[0].(map[string]interface{}))
@@ -398,11 +405,6 @@ func resourceIbmProjectEnvironmentMapToProjectConfigAuth(modelMap map[string]int
 	if modelMap["api_key"] != nil && modelMap["api_key"].(string) != "" {
 		model.ApiKey = core.StringPtr(modelMap["api_key"].(string))
 	}
-	return model, nil
-}
-
-func resourceIbmProjectEnvironmentMapToInputVariable(modelMap map[string]interface{}) (*projectv1.InputVariable, error) {
-	model := &projectv1.InputVariable{}
 	return model, nil
 }
 
@@ -441,12 +443,13 @@ func resourceIbmProjectEnvironmentMapToEnvironmentDefinitionProperties(modelMap 
 		}
 		model.Authorizations = AuthorizationsModel
 	}
-	if modelMap["inputs"] != nil && len(modelMap["inputs"].([]interface{})) > 0 {
-		InputsModel, err := resourceIbmProjectEnvironmentMapToInputVariable(modelMap["inputs"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
+	if modelMap["inputs"] != nil {
+		bytes, _ := json.Marshal(modelMap["inputs"].(map[string]interface{}))
+		newMap := make(map[string]interface{})
+		json.Unmarshal(bytes, &newMap)
+		if len(newMap) > 0 {
+			model.Inputs = newMap
 		}
-		model.Inputs = InputsModel
 	}
 	if modelMap["compliance_profile"] != nil && len(modelMap["compliance_profile"].([]interface{})) > 0 {
 		ComplianceProfileModel, err := resourceIbmProjectEnvironmentMapToProjectComplianceProfile(modelMap["compliance_profile"].([]interface{})[0].(map[string]interface{}))
@@ -469,15 +472,21 @@ func resourceIbmProjectEnvironmentEnvironmentDefinitionRequiredPropertiesToMap(m
 		if err != nil {
 			return modelMap, err
 		}
-		modelMap["authorizations"] = []map[string]interface{}{authorizationsMap}
+		if len(authorizationsMap) > 0 {
+			modelMap["authorizations"] = []map[string]interface{}{authorizationsMap}
+		}
 	}
 	if model.Inputs != nil {
-		inputsMap, err := resourceIbmProjectEnvironmentInputVariableToMap(model.Inputs)
-		if err != nil {
-			return modelMap, err
+		inputs := make(map[string]interface{})
+		for k, v := range model.Inputs {
+			bytes, err := json.Marshal(v)
+			if err != nil {
+				return modelMap, err
+			}
+			inputs[k] = string(bytes)
 		}
-		if len(inputsMap) > 0 {
-			modelMap["inputs"] = []map[string]interface{}{inputsMap}
+		if len(inputs) > 0 {
+			modelMap["inputs"] = inputs
 		}
 	}
 	if model.ComplianceProfile != nil {
@@ -503,11 +512,6 @@ func resourceIbmProjectEnvironmentProjectConfigAuthToMap(model *projectv1.Projec
 	if model.ApiKey != nil {
 		modelMap["api_key"] = model.ApiKey
 	}
-	return modelMap, nil
-}
-
-func resourceIbmProjectEnvironmentInputVariableToMap(model *projectv1.InputVariable) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
 	return modelMap, nil
 }
 

@@ -23,6 +23,9 @@ const (
 	isSnapshotSourceSnapshotId               = "source_snapshot_id"
 	isSnapshotSourceSnapshotRemoteRegionName = "source_snapshot_remote_region_name"
 	isSnapshotSourceVolumeRemoteRegionName   = "snapshot_source_volume_remote_region_name"
+	isSnapshotConsistencyGroupId             = "snapshot_consistency_group_id"
+	isSnapshotConsistencyGroupCrn            = "snapshot_consistency_group_crn"
+	isSnapshotConsistencyGroup               = "snapshot_consistency_group"
 )
 
 func DataSourceSnapshots() *schema.Resource {
@@ -109,6 +112,18 @@ func DataSourceSnapshots() *schema.Resource {
 				Optional:    true,
 			},
 
+			isSnapshotConsistencyGroupId: {
+				Type:        schema.TypeString,
+				Description: "Filters the collection to resources with a source snapshot with the exact snapshot consistency group id.",
+				Optional:    true,
+			},
+
+			isSnapshotConsistencyGroupCrn: {
+				Type:        schema.TypeString,
+				Description: "Filters the collection to resources with a source snapshot with the exact snapshot consistency group crn.",
+				Optional:    true,
+			},
+
 			isSnapshots: {
 				Type:        schema.TypeList,
 				Description: "List of snapshots",
@@ -178,6 +193,55 @@ func DataSourceSnapshots() *schema.Resource {
 												},
 											},
 										},
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
+
+						isSnapshotConsistencyGroup: {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The snapshot consistency group which created this snapshot.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN of this snapshot consistency group.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for the snapshot consistency group.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for the snapshot consistency group.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for the snapshot consistency group. The name is unique across all snapshot consistency groups in the region.",
 									},
 									"resource_type": &schema.Schema{
 										Type:        schema.TypeString,
@@ -489,7 +553,14 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 			sourceVolumeRemoteRegionNameFilter := sourceVolumeRemoteRegionName.(string)
 			listSnapshotOptions.SourceVolumeRemoteRegionName = &sourceVolumeRemoteRegionNameFilter
 		}
-
+		if snapshotConsistencyGroupId, ok := d.GetOk(isSnapshotConsistencyGroupId); ok {
+			snapshotConsistencyGroupIdFilter := snapshotConsistencyGroupId.(string)
+			listSnapshotOptions.SnapshotConsistencyGroupID = &snapshotConsistencyGroupIdFilter
+		}
+		if snapshotConsistencyGroupCrn, ok := d.GetOk(isSnapshotConsistencyGroupCrn); ok {
+			snapshotConsistencyGroupCrnFilter := snapshotConsistencyGroupCrn.(string)
+			listSnapshotOptions.SnapshotConsistencyGroupCRN = &snapshotConsistencyGroupCrnFilter
+		}
 		snapshots, response, err := sess.ListSnapshots(listSnapshotOptions)
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error fetching snapshots %s\n%s", err, response)
@@ -554,6 +625,24 @@ func getSnapshots(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		l[isSnapshotCopies] = snapshotCopies
+
+		// snapshot consistency group
+		snapshotConsistencyGroupList := []map[string]interface{}{}
+		if snapshot.SnapshotConsistencyGroup != nil {
+			snapshotConsistencyGroup := map[string]interface{}{}
+			snapshotConsistencyGroup["href"] = snapshot.SnapshotConsistencyGroup.Href
+			snapshotConsistencyGroup["crn"] = snapshot.SnapshotConsistencyGroup.CRN
+			if snapshot.SnapshotConsistencyGroup.Deleted != nil {
+				snapshotConsistencyGroupDeletedMap := map[string]interface{}{}
+				snapshotConsistencyGroupDeletedMap["more_info"] = snapshot.SnapshotConsistencyGroup.Deleted.MoreInfo
+				snapshotConsistencyGroup["deleted"] = []map[string]interface{}{snapshotConsistencyGroupDeletedMap}
+			}
+			snapshotConsistencyGroup["id"] = snapshot.SnapshotConsistencyGroup.ID
+			snapshotConsistencyGroup["name"] = snapshot.SnapshotConsistencyGroup.Name
+			snapshotConsistencyGroup["resource_type"] = snapshot.SnapshotConsistencyGroup.ResourceType
+			snapshotConsistencyGroupList = append(snapshotConsistencyGroupList, snapshotConsistencyGroup)
+		}
+		l[isSnapshotConsistencyGroup] = snapshotConsistencyGroupList
 
 		if snapshot.UserTags != nil {
 			l[isSnapshotUserTags] = snapshot.UserTags

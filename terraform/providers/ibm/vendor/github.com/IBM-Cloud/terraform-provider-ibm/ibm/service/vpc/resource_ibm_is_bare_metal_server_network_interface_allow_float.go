@@ -370,10 +370,12 @@ func resourceIBMISBareMetalServerNetworkInterfaceAllowFloatRead(context context.
 		// if response returns an error
 		if err != nil || nicIntf == nil {
 			if response != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface (%s): %s\n%s", bareMetalServerId, nicID, err, response))
+				return diag.FromErr(fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface during read (%s): %s\n%s", bareMetalServerId, nicID, err, response))
 			} else {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface (%s): %s", bareMetalServerId, nicID, err))
-			}
+				d.SetId("")
+				return nil
+				// return diag.FromErr(fmt.Errorf("[ERROR] Error getting Bare Metal Server2 (%s) network interface (%s): %s", bareMetalServerId, nicID, err))
+			} // else is returning that the nic is not found anywhere
 		}
 	}
 	err = bareMetalServerNICAllowFloatGet(d, meta, sess, nicIntf, bareMetalServerId)
@@ -717,7 +719,7 @@ func bareMetalServerNetworkInterfaceAllowFloatDelete(context context.Context, d 
 		if response != nil && response.StatusCode == 404 {
 			return nil
 		}
-		return fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface(%s) : %s\n%s", bareMetalServerId, nicId, err, response)
+		return fmt.Errorf("[ERROR] Error getting Bare Metal Server (%s) network interface(%s) during delete : %s\n%s", bareMetalServerId, nicId, err, response)
 	}
 	nicType := ""
 	switch reflect.TypeOf(nicIntf).String() {
