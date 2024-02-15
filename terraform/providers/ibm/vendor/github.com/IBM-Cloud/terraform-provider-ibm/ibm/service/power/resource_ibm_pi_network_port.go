@@ -200,7 +200,7 @@ func isIBMPINetworkPortRefreshFunc(client *st.IBMPINetworkClient, id, networknam
 			return nil, "", err
 		}
 
-		if &network.PortID != nil {
+		if network.PortID != nil {
 			//if network.State == "available" {
 			log.Printf(" The port has been created with the following ip address and attached to an instance ")
 			return network, "DOWN", nil

@@ -29,6 +29,7 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	cosconfig "github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1"
 	kp "github.com/IBM/keyprotect-go-client"
+	"github.com/IBM/mqcloud-go-sdk/mqcloudv1"
 	cisalertsv1 "github.com/IBM/networking-go-sdk/alertsv1"
 	cisoriginpull "github.com/IBM/networking-go-sdk/authenticatedoriginpullapiv1"
 	cisbotanalyticsv1 "github.com/IBM/networking-go-sdk/botanalyticsv1"
@@ -299,6 +300,7 @@ type ClientSession interface {
 	CodeEngineV2() (*codeengine.CodeEngineV2, error)
 	ProjectV1() (*project.ProjectV1, error)
 	UsageReportsV4() (*usagereportsv4.UsageReportsV4, error)
+	MqcloudV1() (*mqcloudv1.MqcloudV1, error)
 }
 
 type clientSession struct {
@@ -624,6 +626,9 @@ type clientSession struct {
 	// Usage Reports options
 	usageReportsClient    *usagereportsv4.UsageReportsV4
 	usageReportsClientErr error
+
+	mqcloudClient    *mqcloudv1.MqcloudV1
+	mqcloudClientErr error
 }
 
 // Usage Reports
@@ -1203,6 +1208,16 @@ func (session clientSession) ProjectV1() (*project.ProjectV1, error) {
 	return session.projectClient, session.projectClientErr
 }
 
+// MQ on Cloud
+func (session clientSession) MqcloudV1() (*mqcloudv1.MqcloudV1, error) {
+	if session.mqcloudClientErr != nil {
+		sessionMqcloudClient := session.mqcloudClient
+		sessionMqcloudClient.EnableRetries(0, 0)
+		return session.mqcloudClient, session.mqcloudClientErr
+	}
+	return session.mqcloudClient.Clone(), nil
+}
+
 // ClientSession configures and returns a fully initialized ClientSession
 func (c *Config) ClientSession() (interface{}, error) {
 	sess, err := newSession(c)
@@ -1296,6 +1311,7 @@ func (c *Config) ClientSession() (interface{}, error) {
 		session.cdToolchainClientErr = errEmptyBluemixCredentials
 		session.codeEngineClientErr = errEmptyBluemixCredentials
 		session.projectClientErr = errEmptyBluemixCredentials
+		session.mqcloudClientErr = errEmptyBluemixCredentials
 
 		return session, nil
 	}
@@ -3243,6 +3259,34 @@ func (c *Config) ClientSession() (interface{}, error) {
 		})
 	} else {
 		session.cdTektonPipelineClientErr = fmt.Errorf("Error occurred while configuring CD Tekton Pipeline service: %q", err)
+	}
+
+	// MQ Cloud Service Configuration
+	mqCloudURL := ContructEndpoint(fmt.Sprintf("api.%s.mq2", c.Region), cloudEndpoint)
+	if c.Visibility == "private" || c.Visibility == "public-and-private" {
+		mqCloudURL = ContructEndpoint(fmt.Sprintf("api.private.%s.mq2", c.Region), cloudEndpoint)
+	}
+	if fileMap != nil && c.Visibility != "public-and-private" {
+		mqCloudURL = fileFallBack(fileMap, c.Visibility, "IBMCLOUD_MQCLOUD_CONFIG_ENDPOINT", c.Region, mqCloudURL)
+	}
+	accept_language := os.Getenv("IBMCLOUD_MQCLOUD_ACCEPT_LANGUAGE")
+	mqcloudClientOptions := &mqcloudv1.MqcloudV1Options{
+		Authenticator:  authenticator,
+		AcceptLanguage: core.StringPtr(accept_language),
+		URL:            EnvFallBack([]string{"IBMCLOUD_MQCLOUD_CONFIG_ENDPOINT"}, mqCloudURL),
+	}
+
+	// Construct the service client for MQ Cloud.
+	session.mqcloudClient, err = mqcloudv1.NewMqcloudV1(mqcloudClientOptions)
+	if err == nil {
+		// Enable retries for API calls
+		session.mqcloudClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+		// Add custom header for analytics
+		session.mqcloudClient.SetDefaultHeaders(gohttp.Header{
+			"X-Original-User-Agent": {fmt.Sprintf("terraform-provider-ibm/%s", version.Version)},
+		})
+	} else {
+		session.mqcloudClientErr = fmt.Errorf("Error occurred while configuring MQ on Cloud service: %q", err)
 	}
 
 	// Construct the service options.

@@ -85,6 +85,11 @@ func DataSourceIbmProject() *schema.Resource {
 				Computed:    true,
 				Description: "The project status value.",
 			},
+			"href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A URL.",
+			},
 			"resource_group": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -187,6 +192,11 @@ func DataSourceIbmProject() *schema.Resource {
 									},
 								},
 							},
+						},
+						"deployment_model": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The configuration type.",
 						},
 					},
 				},
@@ -356,6 +366,10 @@ func dataSourceIbmProjectRead(context context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
 
+	if err = d.Set("href", project.Href); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+	}
+
 	if err = d.Set("resource_group", project.ResourceGroup); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group: %s", err))
 	}
@@ -456,6 +470,9 @@ func dataSourceIbmProjectProjectConfigSummaryToMap(model *projectv1.ProjectConfi
 		return modelMap, err
 	}
 	modelMap["project"] = []map[string]interface{}{projectMap}
+	if model.DeploymentModel != nil {
+		modelMap["deployment_model"] = model.DeploymentModel
+	}
 	return modelMap, nil
 }
 

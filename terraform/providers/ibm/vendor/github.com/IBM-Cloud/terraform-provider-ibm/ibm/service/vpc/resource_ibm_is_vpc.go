@@ -190,6 +190,18 @@ func ResourceIBMISVPC() *schema.Resource {
 										Computed:    true,
 										Description: "The type of the DNS resolver used for the VPC.- `delegated`: DNS server addresses are provided by the DNS resolver of the VPC               specified in `dns.resolver.vpc`.- `manual`: DNS server addresses are specified in `dns.resolver.manual_servers`.- `system`: DNS server addresses are provided by the system.",
 									},
+
+									"dns_binding_id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The VPC dns binding id whose DNS resolver provides the DNS server addresses for this VPC.",
+									},
+									"dns_binding_name": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The VPC dns binding name whose DNS resolver provides the DNS server addresses for this VPC.",
+									},
 									"vpc_id": &schema.Schema{
 										Type:             schema.TypeString,
 										Optional:         true,
@@ -714,6 +726,51 @@ func vpcCreate(d *schema.ResourceData, meta interface{}, name, apm, rg string, i
 		return err
 	}
 
+	if dnsresolvertpeOk, ok := d.GetOk("dns.0.resolver.0.type"); ok {
+		if dnsresolvertpeOk.(string) == "delegated" && d.Get("dns.0.resolver.0.vpc_id").(string) != "" {
+			vpcId := d.Get("dns.0.resolver.0.vpc_id").(string)
+			createDnsBindings := &vpcv1.CreateVPCDnsResolutionBindingOptions{
+				VPCID: vpc.ID,
+				VPC: &vpcv1.VPCIdentity{
+					ID: &vpcId,
+				},
+			}
+			if bindingNameOk, ok := d.GetOk("dns.0.resolver.0.dns_binding_name"); ok {
+				bindingName := bindingNameOk.(string)
+				createDnsBindings.Name = &bindingName
+			}
+			_, response, err := sess.CreateVPCDnsResolutionBinding(createDnsBindings)
+			if err != nil {
+				log.Printf("[DEBUG] CreateVPCDnsResolutionBindingWithContext failed %s\n%s", err, response)
+				return fmt.Errorf("[ERROR] CreateVPCDnsResolutionBinding failed in vpc resource %s\n%s", err, response)
+			}
+			resolverType := "delegated"
+			dnsPatch := &vpcv1.VpcdnsPatch{
+				Resolver: &vpcv1.VpcdnsResolverPatch{
+					Type: &resolverType,
+					VPC: &vpcv1.VpcdnsResolverVPCPatch{
+						ID: &vpcId,
+					},
+				},
+			}
+			vpcPatchModel := &vpcv1.VPCPatch{}
+			vpcPatchModel.Dns = dnsPatch
+			vpcPatchModelAsPatch, err := vpcPatchModel.AsPatch()
+			if err != nil {
+				return fmt.Errorf("[ERROR] CreateVPCDnsResolutionBinding failed in vpcpatch as patch %s", err)
+			}
+			updateVpcOptions := &vpcv1.UpdateVPCOptions{
+				ID: vpc.ID,
+			}
+			updateVpcOptions.VPCPatch = vpcPatchModelAsPatch
+			_, response, err = sess.UpdateVPC(updateVpcOptions)
+			if err != nil {
+				log.Printf("[DEBUG] Update vpc with delegated failed %s\n%s", err, response)
+				return fmt.Errorf("[ERROR] Update vpc with delegated failed in vpc resource %s\n%s", err, response)
+			}
+		}
+	}
+
 	if sgAclRules, ok := d.GetOk(isVPCNoSgAclRules); ok {
 		sgAclRules := sgAclRules.(bool)
 		if sgAclRules {
@@ -919,6 +976,38 @@ func vpcGet(d *schema.ResourceData, meta interface{}, id string) error {
 		dnsMap, err := resourceIBMIsVPCVpcdnsToMap(vpc.Dns, vpcId, vpcCrn)
 		if err != nil {
 			return err
+		}
+		resolverMapArray := dnsMap["resolver"].([]map[string]interface{})
+		resolverMap := resolverMapArray[0]
+		if resolverMap["type"] != nil && resolverMap["vpc_id"] != nil {
+			resType := resolverMap["type"].(*string)
+			resVpc := resolverMap["vpc_id"].(string)
+			if *resType == "delegated" {
+				listVPCDnsResolutionBindingOptions := &vpcv1.ListVPCDnsResolutionBindingsOptions{
+					VPCID: vpc.ID,
+				}
+
+				pager, err := sess.NewVPCDnsResolutionBindingsPager(listVPCDnsResolutionBindingOptions)
+				if err != nil {
+					return fmt.Errorf("[ERROR] Error getting VPC dns bindings: %s", err)
+				}
+				var allResults []vpcv1.VpcdnsResolutionBinding
+				for pager.HasNext() {
+					nextPage, err := pager.GetNext()
+					if err != nil {
+						return fmt.Errorf("[ERROR] Error getting VPC dns bindings pager next: %s", err)
+					}
+					allResults = append(allResults, nextPage...)
+				}
+				for _, binding := range allResults {
+					if *binding.VPC.ID == resVpc {
+						resolverMap["dns_binding_id"] = binding.ID
+						resolverMap["dns_binding_name"] = binding.Name
+						resolverMapArray[0] = resolverMap
+						dnsMap["resolver"] = resolverMapArray
+					}
+				}
+			}
 		}
 		if err = d.Set(isVPCDns, []map[string]interface{}{dnsMap}); err != nil {
 			return fmt.Errorf("[ERROR] Error setting dns: %s", err)
@@ -1543,7 +1632,11 @@ func resourceIBMIsVPCMapToVpcdnsPrototype(modelMap map[string]interface{}) (*vpc
 func resourceIBMIsVPCMapToVpcdnsResolverPrototype(modelMap map[string]interface{}) (vpcv1.VpcdnsResolverPrototypeIntf, error) {
 	model := &vpcv1.VpcdnsResolverPrototype{}
 	if modelMap["type"] != nil && modelMap["type"].(string) != "" {
-		model.Type = core.StringPtr(modelMap["type"].(string))
+		if modelMap["type"].(string) == "delegated" {
+			model.Type = core.StringPtr("system")
+		} else {
+			model.Type = core.StringPtr(modelMap["type"].(string))
+		}
 	}
 	if modelMap["manual_servers"] != nil && modelMap["manual_servers"].(*schema.Set).Len() > 0 {
 		model.Type = core.StringPtr("manual")
@@ -1583,6 +1676,7 @@ func resourceIBMIsVPCVpcdnsToMap(model *vpcv1.Vpcdns, vpcId, vpcCrn string) (map
 		return modelMap, err
 	}
 	modelMap["resolver"] = []map[string]interface{}{resolverMap}
+
 	return modelMap, nil
 }
 

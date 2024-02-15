@@ -64,6 +64,30 @@ func DataSourceIbmIsShare() *schema.Resource {
 				Computed:    true,
 				Description: "The maximum input/output operation performance bandwidth per second for the file share.",
 			},
+			"latest_sync": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Information about the latest synchronization for this file share.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"completed_at": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The completed date and time of last synchronization between the replica share and its source.",
+						},
+						"data_transferred": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The data transferred (in bytes) in the last synchronization between the replica and its source.",
+						},
+						"started_at": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The start date and time of last synchronization between the replica share and its source.",
+						},
+					},
+				},
+			},
 			"latest_job": &schema.Schema{
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -410,7 +434,17 @@ func dataSourceIbmIsShareRead(context context.Context, d *schema.ResourceData, m
 	if err = d.Set("iops", share.Iops); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting iops: %s", err))
 	}
-
+	latest_syncs := []map[string]interface{}{}
+	if share.LatestSync != nil {
+		latest_sync := make(map[string]interface{})
+		latest_sync["completed_at"] = flex.DateTimeToString(share.LatestSync.CompletedAt)
+		if share.LatestSync.DataTransferred != nil {
+			latest_sync["data_transferred"] = *share.LatestSync.DataTransferred
+		}
+		latest_sync["started_at"] = flex.DateTimeToString(share.LatestSync.CompletedAt)
+		latest_syncs = append(latest_syncs, latest_sync)
+	}
+	d.Set("latest_sync", latest_syncs)
 	if share.LatestJob != nil {
 		err = d.Set("latest_job", dataSourceShareFlattenLatestJob(*share.LatestJob))
 		if err != nil {

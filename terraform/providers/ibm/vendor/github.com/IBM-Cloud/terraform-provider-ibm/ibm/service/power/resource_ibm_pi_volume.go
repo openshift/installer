@@ -51,7 +51,7 @@ func ResourceIBMPIVolume() *schema.Resource {
 			helpers.PIVolumeShareable: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Flag to indicate if the volume can be shared across multiple instances?",
+				Description: "Flag to indicate if the volume can be shared across multiple instances.",
 			},
 			helpers.PIVolumeSize: {
 				Type:        schema.TypeFloat,
@@ -62,16 +62,16 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
-				ValidateFunc:     validate.ValidateAllowedStringValues([]string{"ssd", "standard", "tier1", "tier3"}),
+				ValidateFunc:     validate.ValidateAllowedStringValues([]string{"tier0", "tier1", "tier3", "tier5k"}),
 				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "Type of Disk, required if pi_affinity_policy and pi_volume_pool not provided, otherwise ignored",
+				Description:      "Type of disk, if disk type is not provided the disk type will default to tier3",
 			},
 			helpers.PIVolumePool: {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Computed:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
-				Description:      "Volume pool where the volume will be created; if provided then pi_volume_type and pi_affinity_policy values will be ignored",
+				Description:      "Volume pool where the volume will be created; if provided then pi_affinity_policy values will be ignored",
 			},
 			PIAffinityPolicy: {
 				Type:             schema.TypeString,
@@ -183,6 +183,11 @@ func ResourceIBMPIVolume() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Indicates master volume name",
+			},
+			"io_throttle_rate": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Amount of iops assigned to the volume",
 			},
 		},
 	}
@@ -320,6 +325,7 @@ func resourceIBMPIVolumeRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	d.Set("wwn", vol.Wwn)
 	d.Set(helpers.PICloudInstanceId, cloudInstanceID)
+	d.Set("io_throttle_rate", vol.IoThrottleRate)
 
 	return nil
 }
@@ -357,12 +363,16 @@ func resourceIBMPIVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
-	if d.HasChange(helpers.PIReplicationEnabled) {
-		replicationEnabled := d.Get(helpers.PIReplicationEnabled).(bool)
-		volActionBody := models.VolumeAction{
-			ReplicationEnabled: &replicationEnabled,
+	if d.HasChanges(helpers.PIReplicationEnabled, helpers.PIVolumeType) {
+		var replicationEnabled bool
+		volActionBody := models.VolumeAction{}
+		if v, ok := d.GetOk(helpers.PIReplicationEnabled); ok {
+			replicationEnabled = v.(bool)
+			volActionBody.ReplicationEnabled = &replicationEnabled
 		}
-
+		if v, ok := d.GetOk(helpers.PIVolumeType); ok {
+			volActionBody.TargetStorageTier = flex.PtrToString(v.(string))
+		}
 		err = client.VolumeAction(volumeID, &volActionBody)
 		if err != nil {
 			return diag.FromErr(err)

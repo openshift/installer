@@ -696,7 +696,8 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	options := &vpcv1.CreateBareMetalServerOptions{}
+	createbmsoptions := &vpcv1.CreateBareMetalServerOptions{}
+	options := &vpcv1.BareMetalServerPrototype{}
 	var imageStr string
 	if image, ok := d.GetOk(isBareMetalServerImage); ok {
 		imageStr = image.(string)
@@ -705,7 +706,7 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 	// enable secure boot
 
 	if _, ok := d.GetOkExists(isBareMetalServerEnableSecureBoot); ok {
-		options.SetEnableSecureBoot(d.Get(isBareMetalServerEnableSecureBoot).(bool))
+		options.EnableSecureBoot = core.BoolPtr(d.Get(isBareMetalServerEnableSecureBoot).(bool))
 	}
 
 	// trusted_platform_module
@@ -715,7 +716,7 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		options.SetTrustedPlatformModule(trustedPlatformModuleModel)
+		options.TrustedPlatformModule = trustedPlatformModuleModel
 	}
 
 	keySet := d.Get(isBareMetalServerKeys).(*schema.Set)
@@ -1300,8 +1301,8 @@ func resourceIBMISBareMetalServerCreate(context context.Context, d *schema.Resou
 			ID: &vpc,
 		}
 	}
-
-	bms, response, err := sess.CreateBareMetalServerWithContext(context, options)
+	createbmsoptions.BareMetalServerPrototype = options
+	bms, response, err := sess.CreateBareMetalServerWithContext(context, createbmsoptions)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("[DEBUG] Create bare metal server err %s\n%s", err, response))
 	}
@@ -1360,9 +1361,11 @@ func bareMetalServerGet(context context.Context, d *schema.ResourceData, meta in
 	}
 	d.SetId(*bms.ID)
 	d.Set(isBareMetalServerBandwidth, bms.Bandwidth)
-	bmsBootTargetIntf := bms.BootTarget.(*vpcv1.BareMetalServerBootTarget)
-	bmsBootTarget := bmsBootTargetIntf.ID
-	d.Set(isBareMetalServerBootTarget, bmsBootTarget)
+	if bms.BootTarget != nil {
+		bmsBootTargetIntf := bms.BootTarget.(*vpcv1.BareMetalServerBootTarget)
+		bmsBootTarget := bmsBootTargetIntf.ID
+		d.Set(isBareMetalServerBootTarget, bmsBootTarget)
+	}
 	cpuList := make([]map[string]interface{}, 0)
 	if bms.Cpu != nil {
 		currentCPU := map[string]interface{}{}

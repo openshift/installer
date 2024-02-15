@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.70.0-7df966bf-20230419-195904
+ * IBM OpenAPI SDK Code Generator Version: 3.82.1-2082d402-20231115-195014
  */
 
 // Package clouddatabasesv5 : Operations and models for the CloudDatabasesV5 service
@@ -416,27 +416,27 @@ func (cloudDatabases *CloudDatabasesV5) CreateDatabaseUserWithContext(ctx contex
 	return
 }
 
-// ChangeUserPassword : Set specified user's password
-// Sets the password of a specified user.
-func (cloudDatabases *CloudDatabasesV5) ChangeUserPassword(changeUserPasswordOptions *ChangeUserPasswordOptions) (result *ChangeUserPasswordResponse, response *core.DetailedResponse, err error) {
-	return cloudDatabases.ChangeUserPasswordWithContext(context.Background(), changeUserPasswordOptions)
+// UpdateUser : Update a user's password or role
+// Sets the password or role of a specified user. Updating roles is only supported for Redis 6.0 or greater.
+func (cloudDatabases *CloudDatabasesV5) UpdateUser(updateUserOptions *UpdateUserOptions) (result *UpdateUserResponse, response *core.DetailedResponse, err error) {
+	return cloudDatabases.UpdateUserWithContext(context.Background(), updateUserOptions)
 }
 
-// ChangeUserPasswordWithContext is an alternate form of the ChangeUserPassword method which supports a Context parameter
-func (cloudDatabases *CloudDatabasesV5) ChangeUserPasswordWithContext(ctx context.Context, changeUserPasswordOptions *ChangeUserPasswordOptions) (result *ChangeUserPasswordResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(changeUserPasswordOptions, "changeUserPasswordOptions cannot be nil")
+// UpdateUserWithContext is an alternate form of the UpdateUser method which supports a Context parameter
+func (cloudDatabases *CloudDatabasesV5) UpdateUserWithContext(ctx context.Context, updateUserOptions *UpdateUserOptions) (result *UpdateUserResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateUserOptions, "updateUserOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(changeUserPasswordOptions, "changeUserPasswordOptions")
+	err = core.ValidateStruct(updateUserOptions, "updateUserOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"id":        *changeUserPasswordOptions.ID,
-		"user_type": *changeUserPasswordOptions.UserType,
-		"username":  *changeUserPasswordOptions.Username,
+		"id":        *updateUserOptions.ID,
+		"user_type": *updateUserOptions.UserType,
+		"username":  *updateUserOptions.Username,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -447,11 +447,11 @@ func (cloudDatabases *CloudDatabasesV5) ChangeUserPasswordWithContext(ctx contex
 		return
 	}
 
-	for headerName, headerValue := range changeUserPasswordOptions.Headers {
+	for headerName, headerValue := range updateUserOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("cloud_databases", "V5", "ChangeUserPassword")
+	sdkHeaders := common.GetSdkHeaders("cloud_databases", "V5", "UpdateUser")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
@@ -459,8 +459,8 @@ func (cloudDatabases *CloudDatabasesV5) ChangeUserPasswordWithContext(ctx contex
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if changeUserPasswordOptions.User != nil {
-		body["user"] = changeUserPasswordOptions.User
+	if updateUserOptions.User != nil {
+		body["user"] = updateUserOptions.User
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -478,7 +478,7 @@ func (cloudDatabases *CloudDatabasesV5) ChangeUserPasswordWithContext(ctx contex
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChangeUserPasswordResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalUpdateUserResponse)
 		if err != nil {
 			return
 		}
@@ -2105,22 +2105,6 @@ func (cloudDatabases *CloudDatabasesV5) DeleteAllowlistEntryWithContext(ctx cont
 	return
 }
 
-// APasswordSettingUser : APasswordSettingUser struct
-type APasswordSettingUser struct {
-	Password *string `json:"password,omitempty"`
-}
-
-// UnmarshalAPasswordSettingUser unmarshals an instance of APasswordSettingUser from the specified map of raw messages.
-func UnmarshalAPasswordSettingUser(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(APasswordSettingUser)
-	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // AddAllowlistEntryOptions : The AddAllowlistEntry options.
 type AddAllowlistEntryOptions struct {
 	// Deployment ID.
@@ -2199,7 +2183,7 @@ func UnmarshalAllowlistEntry(m map[string]json.RawMessage, result interface{}) (
 
 // AutoscalingCPUGroupCPU : AutoscalingCPUGroupCPU struct
 type AutoscalingCPUGroupCPU struct {
-	Scalers interface{} `json:"scalers,omitempty"`
+	Scalers map[string]interface{} `json:"scalers,omitempty"`
 
 	Rate *AutoscalingCPUGroupCPURate `json:"rate,omitempty"`
 }
@@ -2663,78 +2647,6 @@ func UnmarshalBackups(m map[string]json.RawMessage, result interface{}) (err err
 	return
 }
 
-// ChangeUserPasswordOptions : The ChangeUserPassword options.
-type ChangeUserPasswordOptions struct {
-	// Deployment ID.
-	ID *string `json:"id" validate:"required,ne="`
-
-	// User type.
-	UserType *string `json:"user_type" validate:"required,ne="`
-
-	// User ID.
-	Username *string `json:"username" validate:"required,ne="`
-
-	User *APasswordSettingUser `json:"user,omitempty"`
-
-	// Allows users to set headers on API requests
-	Headers map[string]string
-}
-
-// NewChangeUserPasswordOptions : Instantiate ChangeUserPasswordOptions
-func (*CloudDatabasesV5) NewChangeUserPasswordOptions(id string, userType string, username string) *ChangeUserPasswordOptions {
-	return &ChangeUserPasswordOptions{
-		ID:       core.StringPtr(id),
-		UserType: core.StringPtr(userType),
-		Username: core.StringPtr(username),
-	}
-}
-
-// SetID : Allow user to set ID
-func (_options *ChangeUserPasswordOptions) SetID(id string) *ChangeUserPasswordOptions {
-	_options.ID = core.StringPtr(id)
-	return _options
-}
-
-// SetUserType : Allow user to set UserType
-func (_options *ChangeUserPasswordOptions) SetUserType(userType string) *ChangeUserPasswordOptions {
-	_options.UserType = core.StringPtr(userType)
-	return _options
-}
-
-// SetUsername : Allow user to set Username
-func (_options *ChangeUserPasswordOptions) SetUsername(username string) *ChangeUserPasswordOptions {
-	_options.Username = core.StringPtr(username)
-	return _options
-}
-
-// SetUser : Allow user to set User
-func (_options *ChangeUserPasswordOptions) SetUser(user *APasswordSettingUser) *ChangeUserPasswordOptions {
-	_options.User = user
-	return _options
-}
-
-// SetHeaders : Allow user to set Headers
-func (options *ChangeUserPasswordOptions) SetHeaders(param map[string]string) *ChangeUserPasswordOptions {
-	options.Headers = param
-	return options
-}
-
-// ChangeUserPasswordResponse : ChangeUserPasswordResponse struct
-type ChangeUserPasswordResponse struct {
-	Task *Task `json:"task,omitempty"`
-}
-
-// UnmarshalChangeUserPasswordResponse unmarshals an instance of ChangeUserPasswordResponse from the specified map of raw messages.
-func UnmarshalChangeUserPasswordResponse(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ChangeUserPasswordResponse)
-	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // CompleteConnectionOptions : The CompleteConnection options.
 type CompleteConnectionOptions struct {
 	// Deployment ID.
@@ -2957,6 +2869,12 @@ type Configuration struct {
 
 	// The comma-separated list of SQL modes applied on this server globally.
 	SQLMode *string `json:"sql_mode,omitempty"`
+
+	// The number of seconds the server waits for activity on a noninteractive connection before closing it.
+	WaitTimeout *int64 `json:"wait_timeout,omitempty"`
+
+	// This variable limits the total number of prepared statements in the server.
+	MaxPreparedStmtCount *int64 `json:"max_prepared_stmt_count,omitempty"`
 }
 
 // Constants associated with the Configuration.LogConnections property.
@@ -3172,6 +3090,14 @@ func UnmarshalConfiguration(m map[string]json.RawMessage, result interface{}) (e
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sql_mode", &obj.SQLMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "wait_timeout", &obj.WaitTimeout)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_prepared_stmt_count", &obj.MaxPreparedStmtCount)
 	if err != nil {
 		return
 	}
@@ -3539,7 +3465,7 @@ type CreateDatabaseUserOptions struct {
 	// User type.
 	UserType *string `json:"user_type" validate:"required,ne="`
 
-	User *User `json:"user,omitempty"`
+	User UserIntf `json:"user,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3566,7 +3492,7 @@ func (_options *CreateDatabaseUserOptions) SetUserType(userType string) *CreateD
 }
 
 // SetUser : Allow user to set User
-func (_options *CreateDatabaseUserOptions) SetUser(user *User) *CreateDatabaseUserOptions {
+func (_options *CreateDatabaseUserOptions) SetUser(user UserIntf) *CreateDatabaseUserOptions {
 	_options.User = user
 	return _options
 }
@@ -5991,33 +5917,101 @@ func UnmarshalUpdateDatabaseConfigurationResponse(m map[string]json.RawMessage, 
 	return
 }
 
+// UpdateUserOptions : The UpdateUser options.
+type UpdateUserOptions struct {
+	// Deployment ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// User type.
+	UserType *string `json:"user_type" validate:"required,ne="`
+
+	// User ID.
+	Username *string `json:"username" validate:"required,ne="`
+
+	User UserUpdateIntf `json:"user,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateUserOptions : Instantiate UpdateUserOptions
+func (*CloudDatabasesV5) NewUpdateUserOptions(id string, userType string, username string) *UpdateUserOptions {
+	return &UpdateUserOptions{
+		ID:       core.StringPtr(id),
+		UserType: core.StringPtr(userType),
+		Username: core.StringPtr(username),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateUserOptions) SetID(id string) *UpdateUserOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUserType : Allow user to set UserType
+func (_options *UpdateUserOptions) SetUserType(userType string) *UpdateUserOptions {
+	_options.UserType = core.StringPtr(userType)
+	return _options
+}
+
+// SetUsername : Allow user to set Username
+func (_options *UpdateUserOptions) SetUsername(username string) *UpdateUserOptions {
+	_options.Username = core.StringPtr(username)
+	return _options
+}
+
+// SetUser : Allow user to set User
+func (_options *UpdateUserOptions) SetUser(user UserUpdateIntf) *UpdateUserOptions {
+	_options.User = user
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateUserOptions) SetHeaders(param map[string]string) *UpdateUserOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateUserResponse : UpdateUserResponse struct
+type UpdateUserResponse struct {
+	Task *Task `json:"task,omitempty"`
+}
+
+// UnmarshalUpdateUserResponse unmarshals an instance of UpdateUserResponse from the specified map of raw messages.
+func UnmarshalUpdateUserResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UpdateUserResponse)
+	err = core.UnmarshalModel(m, "task", &obj.Task, UnmarshalTask)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // User : User struct
+// Models which "extend" this model:
+// - UserDatabaseUser
+// - UserRedisDatabaseUser
+// - UserOpsManagerUser
 type User struct {
 	// Username for new user.
-	Username *string `json:"username" validate:"required"`
+	Username *string `json:"username,omitempty"`
 
-	// Password for new user.
-	Password *string `json:"password" validate:"required"`
+	// Password for new user. Password must be at least 15 characters in length and contain a letter and number.
+	Password *string `json:"password,omitempty"`
 
-	// Role for new user. Available for MongoDB Enterprise Ops Manager users ONLY.
+	// RBAC role for Redis database user types. Available for Redis 6.0 and newer. Must use Redis ACL syntax to add or
+	// remove command categories. Allowed categories are `read`, `write`, `admin` and `all`.
 	Role *string `json:"role,omitempty"`
 }
 
-// Constants associated with the User.Role property.
-// Role for new user. Available for MongoDB Enterprise Ops Manager users ONLY.
-const (
-	UserRoleGroupDataAccessAdminConst = "group_data_access_admin"
-	UserRoleGroupReadOnlyConst        = "group_read_only"
-)
+func (*User) isaUser() bool {
+	return true
+}
 
-// NewUser : Instantiate User (Generic Model Constructor)
-func (*CloudDatabasesV5) NewUser(username string, password string) (_model *User, err error) {
-	_model = &User{
-		Username: core.StringPtr(username),
-		Password: core.StringPtr(password),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+type UserIntf interface {
+	isaUser() bool
 }
 
 // UnmarshalUser unmarshals an instance of User from the specified map of raw messages.
@@ -6027,6 +6021,42 @@ func UnmarshalUser(m map[string]json.RawMessage, result interface{}) (err error)
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserUpdate : UserUpdate struct
+// Models which "extend" this model:
+// - UserUpdatePasswordSetting
+// - UserUpdateRedisRoleSetting
+type UserUpdate struct {
+	// Password for user. Password must be at least 15 characters in length and contain a letter and number.
+	Password *string `json:"password,omitempty"`
+
+	// RBAC role for redis database user types. Available for Redis 6.0 and above. Must use Redis ACL syntax to add or
+	// remove command categories. Allowed categories are `read`, `write`, `admin` and `all`.
+	Role *string `json:"role,omitempty"`
+}
+
+func (*UserUpdate) isaUserUpdate() bool {
+	return true
+}
+
+type UserUpdateIntf interface {
+	isaUserUpdate() bool
+}
+
+// UnmarshalUserUpdate unmarshals an instance of UserUpdate from the specified map of raw messages.
+func UnmarshalUserUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserUpdate)
 	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
 	if err != nil {
 		return
@@ -6149,6 +6179,12 @@ type ConfigurationMySQLConfiguration struct {
 
 	// The comma-separated list of SQL modes applied on this server globally.
 	SQLMode *string `json:"sql_mode,omitempty"`
+
+	// The number of seconds the server waits for activity on a noninteractive connection before closing it.
+	WaitTimeout *int64 `json:"wait_timeout,omitempty"`
+
+	// This variable limits the total number of prepared statements in the server.
+	MaxPreparedStmtCount *int64 `json:"max_prepared_stmt_count,omitempty"`
 }
 
 // Constants associated with the ConfigurationMySQLConfiguration.DefaultAuthenticationPlugin property.
@@ -6220,6 +6256,14 @@ func UnmarshalConfigurationMySQLConfiguration(m map[string]json.RawMessage, resu
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "sql_mode", &obj.SQLMode)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "wait_timeout", &obj.WaitTimeout)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max_prepared_stmt_count", &obj.MaxPreparedStmtCount)
 	if err != nil {
 		return
 	}
@@ -6811,6 +6855,209 @@ func UnmarshalConnectionRedisConnection(m map[string]json.RawMessage, result int
 		return
 	}
 	err = core.UnmarshalModel(m, "cli", &obj.Cli, UnmarshalConnectionCli)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserUpdatePasswordSetting : UserUpdatePasswordSetting struct
+// This model "extends" UserUpdate
+type UserUpdatePasswordSetting struct {
+	// Password for user. Password must be at least 15 characters in length and contain a letter and number.
+	Password *string `json:"password" validate:"required"`
+}
+
+// NewUserUpdatePasswordSetting : Instantiate UserUpdatePasswordSetting (Generic Model Constructor)
+func (*CloudDatabasesV5) NewUserUpdatePasswordSetting(password string) (_model *UserUpdatePasswordSetting, err error) {
+	_model = &UserUpdatePasswordSetting{
+		Password: core.StringPtr(password),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*UserUpdatePasswordSetting) isaUserUpdate() bool {
+	return true
+}
+
+// UnmarshalUserUpdatePasswordSetting unmarshals an instance of UserUpdatePasswordSetting from the specified map of raw messages.
+func UnmarshalUserUpdatePasswordSetting(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserUpdatePasswordSetting)
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserUpdateRedisRoleSetting : UserUpdateRedisRoleSetting struct
+// This model "extends" UserUpdate
+type UserUpdateRedisRoleSetting struct {
+	// RBAC role for redis database user types. Available for Redis 6.0 and above. Must use Redis ACL syntax to add or
+	// remove command categories. Allowed categories are `read`, `write`, `admin` and `all`.
+	Role *string `json:"role" validate:"required"`
+}
+
+// NewUserUpdateRedisRoleSetting : Instantiate UserUpdateRedisRoleSetting (Generic Model Constructor)
+func (*CloudDatabasesV5) NewUserUpdateRedisRoleSetting(role string) (_model *UserUpdateRedisRoleSetting, err error) {
+	_model = &UserUpdateRedisRoleSetting{
+		Role: core.StringPtr(role),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*UserUpdateRedisRoleSetting) isaUserUpdate() bool {
+	return true
+}
+
+// UnmarshalUserUpdateRedisRoleSetting unmarshals an instance of UserUpdateRedisRoleSetting from the specified map of raw messages.
+func UnmarshalUserUpdateRedisRoleSetting(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserUpdateRedisRoleSetting)
+	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserDatabaseUser : UserDatabaseUser struct
+// This model "extends" User
+type UserDatabaseUser struct {
+	// Username for new user.
+	Username *string `json:"username" validate:"required"`
+
+	// Password for new user. Password must be at least 15 characters in length and contain a letter and number.
+	Password *string `json:"password" validate:"required"`
+}
+
+// NewUserDatabaseUser : Instantiate UserDatabaseUser (Generic Model Constructor)
+func (*CloudDatabasesV5) NewUserDatabaseUser(username string, password string) (_model *UserDatabaseUser, err error) {
+	_model = &UserDatabaseUser{
+		Username: core.StringPtr(username),
+		Password: core.StringPtr(password),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*UserDatabaseUser) isaUser() bool {
+	return true
+}
+
+// UnmarshalUserDatabaseUser unmarshals an instance of UserDatabaseUser from the specified map of raw messages.
+func UnmarshalUserDatabaseUser(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserDatabaseUser)
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserOpsManagerUser : UserOpsManagerUser struct
+// This model "extends" User
+type UserOpsManagerUser struct {
+	// Username for new user.
+	Username *string `json:"username" validate:"required"`
+
+	// Password for new Ops Manager user. Password must be at least 15 characters in length and contain a letter, number
+	// and a special character.
+	Password *string `json:"password" validate:"required"`
+
+	// Role for new user. Available for MongoDB Enterprise Ops Manager users.
+	Role *string `json:"role,omitempty"`
+}
+
+// Constants associated with the UserOpsManagerUser.Role property.
+// Role for new user. Available for MongoDB Enterprise Ops Manager users.
+const (
+	UserOpsManagerUserRoleGroupDataAccessAdminConst = "group_data_access_admin"
+	UserOpsManagerUserRoleGroupReadOnlyConst        = "group_read_only"
+)
+
+// NewUserOpsManagerUser : Instantiate UserOpsManagerUser (Generic Model Constructor)
+func (*CloudDatabasesV5) NewUserOpsManagerUser(username string, password string) (_model *UserOpsManagerUser, err error) {
+	_model = &UserOpsManagerUser{
+		Username: core.StringPtr(username),
+		Password: core.StringPtr(password),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*UserOpsManagerUser) isaUser() bool {
+	return true
+}
+
+// UnmarshalUserOpsManagerUser unmarshals an instance of UserOpsManagerUser from the specified map of raw messages.
+func UnmarshalUserOpsManagerUser(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserOpsManagerUser)
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UserRedisDatabaseUser : UserRedisDatabaseUser struct
+// This model "extends" User
+type UserRedisDatabaseUser struct {
+	// Username for new user.
+	Username *string `json:"username" validate:"required"`
+
+	// Password for new user. Password must be at least 15 characters in length and contain a letter and number.
+	Password *string `json:"password" validate:"required"`
+
+	// RBAC role for Redis database user types. Available for Redis 6.0 and newer. Must use Redis ACL syntax to add or
+	// remove command categories. Allowed categories are `read`, `write`, `admin` and `all`.
+	Role *string `json:"role,omitempty"`
+}
+
+// NewUserRedisDatabaseUser : Instantiate UserRedisDatabaseUser (Generic Model Constructor)
+func (*CloudDatabasesV5) NewUserRedisDatabaseUser(username string, password string) (_model *UserRedisDatabaseUser, err error) {
+	_model = &UserRedisDatabaseUser{
+		Username: core.StringPtr(username),
+		Password: core.StringPtr(password),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*UserRedisDatabaseUser) isaUser() bool {
+	return true
+}
+
+// UnmarshalUserRedisDatabaseUser unmarshals an instance of UserRedisDatabaseUser from the specified map of raw messages.
+func UnmarshalUserRedisDatabaseUser(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(UserRedisDatabaseUser)
+	err = core.UnmarshalPrimitive(m, "username", &obj.Username)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "password", &obj.Password)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "role", &obj.Role)
 	if err != nil {
 		return
 	}

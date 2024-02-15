@@ -182,6 +182,54 @@ func DataSourceSnapshot() *schema.Resource {
 					},
 				},
 			},
+			isSnapshotConsistencyGroup: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The snapshot consistency group which created this snapshot.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN of this snapshot consistency group.",
+						},
+						"deleted": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted, and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for the snapshot consistency group.",
+						},
+						"id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for the snapshot consistency group.",
+						},
+						"name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name for the snapshot consistency group. The name is unique across all snapshot consistency groups in the region.",
+						},
+						"resource_type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The resource type.",
+						},
+					},
+				},
+			},
 			isSnapshotSourceImage: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -405,6 +453,24 @@ func snapshotGetByNameOrID(d *schema.ResourceData, meta interface{}, name, id st
 					sourceSnapshotList = append(sourceSnapshotList, sourceSnapshot)
 				}
 				d.Set(isSnapshotSourceSnapshot, sourceSnapshotList)
+
+				// snapshot consistency group
+				snapshotConsistencyGroupList := []map[string]interface{}{}
+				if snapshot.SnapshotConsistencyGroup != nil {
+					snapshotConsistencyGroup := map[string]interface{}{}
+					snapshotConsistencyGroup["href"] = snapshot.SnapshotConsistencyGroup.Href
+					snapshotConsistencyGroup["crn"] = snapshot.SnapshotConsistencyGroup.CRN
+					if snapshot.SnapshotConsistencyGroup.Deleted != nil {
+						snapshotConsistencyGroupDeletedMap := map[string]interface{}{}
+						snapshotConsistencyGroupDeletedMap["more_info"] = snapshot.SnapshotConsistencyGroup.Deleted.MoreInfo
+						snapshotConsistencyGroup["deleted"] = []map[string]interface{}{snapshotConsistencyGroupDeletedMap}
+					}
+					snapshotConsistencyGroup["id"] = snapshot.SnapshotConsistencyGroup.ID
+					snapshotConsistencyGroup["name"] = snapshot.SnapshotConsistencyGroup.Name
+					snapshotConsistencyGroup["resource_type"] = snapshot.SnapshotConsistencyGroup.ResourceType
+					snapshotConsistencyGroupList = append(snapshotConsistencyGroupList, snapshotConsistencyGroup)
+				}
+				d.Set(isSnapshotConsistencyGroup, snapshotConsistencyGroupList)
 
 				// snapshot copies
 				snapshotCopies := []map[string]interface{}{}

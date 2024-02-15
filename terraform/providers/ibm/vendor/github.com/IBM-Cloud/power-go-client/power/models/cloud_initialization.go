@@ -21,7 +21,7 @@ import (
 type CloudInitialization struct {
 
 	// Virtual Machine's Cloud Initialization Virtual Optical Device
-	// Enum: [attach]
+	// Enum: [attach detach]
 	VirtualOpticalDevice string `json:"virtualOpticalDevice,omitempty"`
 }
 
@@ -43,7 +43,7 @@ var cloudInitializationTypeVirtualOpticalDevicePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["attach"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["attach","detach"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -55,6 +55,9 @@ const (
 
 	// CloudInitializationVirtualOpticalDeviceAttach captures enum value "attach"
 	CloudInitializationVirtualOpticalDeviceAttach string = "attach"
+
+	// CloudInitializationVirtualOpticalDeviceDetach captures enum value "detach"
+	CloudInitializationVirtualOpticalDeviceDetach string = "detach"
 )
 
 // prop value enum

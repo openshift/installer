@@ -26,7 +26,6 @@ const (
 	headerNameUserAgent = "User-Agent"
 )
 
-//
 // GetSdkHeaders - returns the set of SDK-specific headers to be included in an outgoing request.
 //
 // This function is invoked by generated service methods (i.e. methods which implement the REST API operations
@@ -54,13 +53,14 @@ const (
 // as the analytics data collector uses this to gather usage data.
 //
 // Parameters:
-//   serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
-//   serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
-//   operationId - the operationId as defined in the API definition (e.g. getContext)
+//
+//	serviceName - the name of the service as defined in the API definition (e.g. "MyService1")
+//	serviceVersion - the version of the service as defined in the API definition (e.g. "V1")
+//	operationId - the operationId as defined in the API definition (e.g. getContext)
 //
 // Returns:
-//   a Map which contains the set of headers to be included in the REST API request
 //
+//	a Map which contains the set of headers to be included in the REST API request
 func GetSdkHeaders(serviceName string, serviceVersion string, operationId string) map[string]string {
 	sdkHeaders := make(map[string]string)
 
