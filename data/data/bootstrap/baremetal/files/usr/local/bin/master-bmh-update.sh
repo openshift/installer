@@ -36,7 +36,7 @@ echo Nodes are all active
 BAREMETAL_OPERATOR_IMAGE=$(image_for baremetal-operator)
 
 for node in $(curl -s "${ironic_url}/nodes" | jq -r '.nodes[] | .uuid'); do
-    name=$(curl -H "X-OpenStack-Ironic-API-Version: 1.9" -s "${ironic_url}/nodes/${node}" | jq -r .name)
+    name=$(curl -H "X-OpenStack-Ironic-API-Version: 1.9" -s "${ironic_url}/nodes/${node}" | jq -r .name | cut -d "~" -f 2)
     echo "Host $name, UUID: $node"
     # And use the baremetal operator tool to load the introspection data into
     # the BareMetalHost CRs as annotations, which BMO then picks up.
@@ -49,10 +49,13 @@ for node in $(curl -s "${ironic_url}/nodes" | jq -r '.nodes[] | .uuid'); do
      oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS" 'baremetalhost.metal3.io/paused-'
 done
 
-# This delay is needed to ensure that Terraform sees that the hosts are
-# deployed before we stop ironic. Terraform is polling every 10s.
-sleep 30
 # Shut down ironic containers so that the API VIP can fail over to the control
 # plane.
 echo "Stopping provisioning services..."
 systemctl stop ironic.service
+
+echo "Wait for control plane to fail over"
+sleep 30
+
+echo "Unpause all baremetal hosts"
+oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-"
