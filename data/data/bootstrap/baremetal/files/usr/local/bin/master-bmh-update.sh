@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-# shellcheck disable=SC1091
-. /usr/local/bin/release-image.sh
-
 export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
 
 # Wait till the baremetalhosts are populated
@@ -16,7 +13,6 @@ done
 AUTH_DIR=/opt/metal3/auth
 set +x
 ironic_url="$(printf 'http://%s:%s@localhost:6385/v1' "$(cat "${AUTH_DIR}/ironic/username")" "$(cat "${AUTH_DIR}/ironic/password")")"
-inspector_url="$(printf 'http://%s:%s@localhost:5050/v1' "$(cat "${AUTH_DIR}/ironic-inspector/username")" "$(cat "${AUTH_DIR}/ironic-inspector/password")")"
 
 # Wait for a master to appear.
 while [ "$(curl -s "${ironic_url}/nodes" | jq '.nodes[] | .uuid' | wc -l)" -lt 1 ]; do
@@ -32,22 +28,6 @@ while curl -s "${ironic_url}/nodes" | jq '.nodes[] | .provision_state' | grep -v
 done
 
 echo Nodes are all active
-
-BAREMETAL_OPERATOR_IMAGE=$(image_for baremetal-operator)
-
-for node in $(curl -s "${ironic_url}/nodes" | jq -r '.nodes[] | .uuid'); do
-    name=$(curl -H "X-OpenStack-Ironic-API-Version: 1.9" -s "${ironic_url}/nodes/${node}" | jq -r .name | cut -d "~" -f 2)
-    echo "Host $name, UUID: $node"
-    # And use the baremetal operator tool to load the introspection data into
-    # the BareMetalHost CRs as annotations, which BMO then picks up.
-    HARDWARE_DETAILS=$(podman run --quiet --net=host \
-        --rm \
-        --entrypoint /get-hardware-details \
-        "${BAREMETAL_OPERATOR_IMAGE}" \
-        "${inspector_url}" "$node" | jq '{hardware: .}')
-
-     oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS" 'baremetalhost.metal3.io/paused-'
-done
 
 # Shut down ironic containers so that the API VIP can fail over to the control
 # plane.
