@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2019 VMware, Inc. All Rights Reserved.
+Copyright (c) 2019-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,9 +17,11 @@ limitations under the License.
 package simulator
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -32,9 +34,15 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+type metadata struct {
+	sha1 []byte
+	size int64
+}
+
 type HttpNfcLease struct {
 	mo.HttpNfcLease
-	files map[string]string
+	files    map[string]string
+	metadata map[string]metadata
 }
 
 var (
@@ -62,12 +70,12 @@ func ServeNFC(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status := http.StatusOK
-	var dst io.Writer
+	var dst hash.Hash
 	var src io.ReadCloser
 
 	switch r.Method {
 	case http.MethodPut, http.MethodPost:
-		dst = ioutil.Discard
+		dst = sha1.New()
 		src = r.Body
 	case http.MethodGet:
 		f, err := os.Open(file)
@@ -82,6 +90,12 @@ func ServeNFC(w http.ResponseWriter, r *http.Request) {
 
 	n, err := io.Copy(dst, src)
 	_ = src.Close()
+	if dst != nil {
+		lease.metadata[name] = metadata{
+			sha1: dst.Sum(nil),
+			size: n,
+		}
+	}
 
 	msg := fmt.Sprintf("transferred %d bytes", n)
 	if err != nil {
@@ -92,16 +106,38 @@ func ServeNFC(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(status)
 }
 
-func NewHttpNfcLease(ctx *Context, entity types.ManagedObjectReference) *HttpNfcLease {
+func (l *HttpNfcLease) error(ctx *Context, err *types.LocalizedMethodFault) {
+	ctx.WithLock(l, func() {
+		ctx.Map.Update(l, []types.PropertyChange{
+			{Name: "state", Val: types.HttpNfcLeaseStateError},
+			{Name: "error", Val: err},
+		})
+	})
+}
+
+func (l *HttpNfcLease) ready(ctx *Context, entity types.ManagedObjectReference, urls []types.HttpNfcLeaseDeviceUrl) {
+	info := &types.HttpNfcLeaseInfo{
+		Lease:        l.Self,
+		Entity:       entity,
+		DeviceUrl:    urls,
+		LeaseTimeout: 300,
+	}
+
+	ctx.WithLock(l, func() {
+		ctx.Map.Update(l, []types.PropertyChange{
+			{Name: "state", Val: types.HttpNfcLeaseStateReady},
+			{Name: "info", Val: info},
+		})
+	})
+}
+
+func newHttpNfcLease(ctx *Context) *HttpNfcLease {
 	lease := &HttpNfcLease{
 		HttpNfcLease: mo.HttpNfcLease{
-			Info: &types.HttpNfcLeaseInfo{
-				Entity:       entity,
-				LeaseTimeout: 30000,
-			},
-			State: types.HttpNfcLeaseStateReady,
+			State: types.HttpNfcLeaseStateInitializing,
 		},
-		files: make(map[string]string),
+		files:    make(map[string]string),
+		metadata: make(map[string]metadata),
 	}
 
 	ctx.Session.Put(lease)
@@ -133,5 +169,30 @@ func (l *HttpNfcLease) HttpNfcLeaseProgress(ctx *Context, req *types.HttpNfcLeas
 
 	return &methods.HttpNfcLeaseProgressBody{
 		Res: new(types.HttpNfcLeaseProgressResponse),
+	}
+}
+
+func (l *HttpNfcLease) getDeviceKey(name string) string {
+	for _, devUrl := range l.Info.DeviceUrl {
+		if name == devUrl.TargetId {
+			return devUrl.Key
+		}
+	}
+	return "unknown"
+}
+
+func (l *HttpNfcLease) HttpNfcLeaseGetManifest(ctx *Context, req *types.HttpNfcLeaseGetManifest) soap.HasFault {
+	entries := []types.HttpNfcLeaseManifestEntry{}
+	for name, md := range l.metadata {
+		entries = append(entries, types.HttpNfcLeaseManifestEntry{
+			Key:  l.getDeviceKey(name),
+			Sha1: hex.EncodeToString(md.sha1),
+			Size: md.size,
+		})
+	}
+	return &methods.HttpNfcLeaseGetManifestBody{
+		Res: &types.HttpNfcLeaseGetManifestResponse{
+			Returnval: entries,
+		},
 	}
 }

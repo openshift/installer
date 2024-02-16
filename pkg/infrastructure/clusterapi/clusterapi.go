@@ -102,10 +102,11 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
-			InfraID:        clusterID.InfraID,
-			InstallConfig:  installConfig,
-			RhcosImage:     rhcosImage,
-			ManifestsAsset: manifestsAsset,
+			InfraID:          clusterID.InfraID,
+			InstallConfig:    installConfig,
+			RhcosImage:       rhcosImage,
+			ManifestsAsset:   manifestsAsset,
+			MachineManifests: machineManifests,
 		}
 
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {

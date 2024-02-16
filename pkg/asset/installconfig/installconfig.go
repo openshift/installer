@@ -34,6 +34,7 @@ type InstallConfig struct {
 	Azure    *icazure.Metadata    `json:"azure,omitempty"`
 	IBMCloud *icibmcloud.Metadata `json:"ibmcloud,omitempty"`
 	PowerVS  *icpowervs.Metadata  `json:"powervs,omitempty"`
+	VSphere  *icvsphere.Metadata  `json:"vsphere,omitempty"`
 }
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
@@ -151,6 +152,13 @@ func (a *InstallConfig) finish(filename string) error {
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config.BaseDomain)
+	}
+	if a.Config.VSphere != nil {
+		a.VSphere = icvsphere.NewMetadata()
+
+		for _, v := range a.Config.VSphere.VCenters {
+			_ = a.VSphere.AddCredentials(v.Server, v.Username, v.Password)
+		}
 	}
 
 	if err := validation.ValidateInstallConfig(a.Config, false).ToAggregate(); err != nil {

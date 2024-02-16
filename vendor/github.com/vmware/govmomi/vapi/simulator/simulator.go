@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2018-2022 VMware, Inc. All Rights Reserved.
+Copyright (c) 2018-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -56,6 +55,7 @@ import (
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/methods"
+	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
 	vim "github.com/vmware/govmomi/vim25/types"
 	"github.com/vmware/govmomi/vim25/xml"
@@ -88,6 +88,7 @@ type download struct {
 
 type handler struct {
 	sync.Mutex
+	sm          *simulator.SessionManager
 	ServeMux    *http.ServeMux
 	URL         url.URL
 	Category    map[string]*tags.Category
@@ -104,7 +105,7 @@ type handler struct {
 func init() {
 	simulator.RegisterEndpoint(func(s *simulator.Service, r *simulator.Registry) {
 		if r.IsVPX() {
-			patterns, h := New(s.Listen, r.OptionManager().Setting)
+			patterns, h := New(s.Listen, r)
 			for _, p := range patterns {
 				s.Handle(p, h)
 			}
@@ -113,8 +114,9 @@ func init() {
 }
 
 // New creates a vAPI simulator.
-func New(u *url.URL, settings []vim.BaseOptionValue) ([]string, http.Handler) {
+func New(u *url.URL, r *simulator.Registry) ([]string, http.Handler) {
 	s := &handler{
+		sm:          r.SessionManager(),
 		ServeMux:    http.NewServeMux(),
 		URL:         *u,
 		Category:    make(map[string]*tags.Category),
@@ -166,7 +168,6 @@ func New(u *url.URL, settings []vim.BaseOptionValue) ([]string, http.Handler) {
 		{internal.VCenterOVFLibraryItem + "/", s.libraryItemOVFID},
 		{internal.VCenterVMTXLibraryItem, s.libraryItemCreateTemplate},
 		{internal.VCenterVMTXLibraryItem + "/", s.libraryItemTemplateID},
-		{internal.VCenterVM + "/", s.vmID},
 		{internal.DebugEcho, s.debugEcho},
 		// /api/ patterns.
 		{internal.SecurityPoliciesPath, s.librarySecurityPolicies},
@@ -237,10 +238,7 @@ func (s *handler) isAuthorized(r *http.Request) bool {
 func (s *handler) hasAuthorization(r *http.Request) (string, bool) {
 	u, p, ok := r.BasicAuth()
 	if ok { // user+pass auth
-		if u == "" || p == "" {
-			return u, false
-		}
-		return u, true
+		return u, s.sm.Authenticate(s.URL, &vim.Login{UserName: u, Password: p})
 	}
 	auth := r.Header.Get("Authorization")
 	return "TODO", strings.HasPrefix(auth, "SIGN ") // token auth
@@ -267,14 +265,22 @@ func (s *handler) AttachedObjects(tag vim.VslmTagEntry) ([]vim.ManagedObjectRefe
 	}
 	var ids []vim.ManagedObjectReference
 	for id := range s.Association[t.ID] {
-		ids = append(ids, vim.ManagedObjectReference(id))
+		ids = append(
+			ids,
+			vim.ManagedObjectReference{
+				Type:  id.Type,
+				Value: id.Value,
+			})
 	}
 	return ids, nil
 }
 
 // AttachedTags is meant for internal use via simulator.Registry.tagManager
 func (s *handler) AttachedTags(ref vim.ManagedObjectReference) ([]vim.VslmTagEntry, vim.BaseMethodFault) {
-	oid := internal.AssociatedObject(ref)
+	oid := internal.AssociatedObject{
+		Type:  ref.Type,
+		Value: ref.Value,
+	}
 	var tags []vim.VslmTagEntry
 	for id, objs := range s.Association {
 		if objs[oid] {
@@ -295,7 +301,10 @@ func (s *handler) AttachTag(ref vim.ManagedObjectReference, tag vim.VslmTagEntry
 	if t == nil {
 		return new(vim.NotFound)
 	}
-	s.Association[t.ID][internal.AssociatedObject(ref)] = true
+	s.Association[t.ID][internal.AssociatedObject{
+		Type:  ref.Type,
+		Value: ref.Value,
+	}] = true
 	return nil
 }
 
@@ -305,13 +314,17 @@ func (s *handler) DetachTag(id vim.ManagedObjectReference, tag vim.VslmTagEntry)
 	if t == nil {
 		return new(vim.NotFound)
 	}
-	delete(s.Association[t.ID], internal.AssociatedObject(id))
+	delete(s.Association[t.ID], internal.AssociatedObject{
+		Type:  id.Type,
+		Value: id.Value,
+	})
 	return nil
 }
 
 // StatusOK responds with http.StatusOK and encodes val, if specified, to JSON
 // For use with "/api" endpoints.
 func StatusOK(w http.ResponseWriter, val ...interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if len(val) == 0 {
 		return
@@ -358,6 +371,60 @@ func BadRequest(w http.ResponseWriter, kind string) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+// ApiErrorAlreadyExists responds with a REST error of type "ALREADY_EXISTS".
+// For use with "/api" endpoints.
+func ApiErrorAlreadyExists(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "ALREADY_EXISTS")
+}
+
+// ApiErrorGeneral responds with a REST error of type "ERROR".
+// For use with "/api" endpoints.
+func ApiErrorGeneral(w http.ResponseWriter) {
+	apiError(w, http.StatusInternalServerError, "ERROR")
+}
+
+// ApiErrorInvalidArgument responds with a REST error of type "INVALID_ARGUMENT".
+// For use with "/api" endpoints.
+func ApiErrorInvalidArgument(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "INVALID_ARGUMENT")
+}
+
+// ApiErrorNotAllowedInCurrentState responds with a REST error of type "NOT_ALLOWED_IN_CURRENT_STATE".
+// For use with "/api" endpoints.
+func ApiErrorNotAllowedInCurrentState(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "NOT_ALLOWED_IN_CURRENT_STATE")
+}
+
+// ApiErrorNotFound responds with a REST error of type "NOT_FOUND".
+// For use with "/api" endpoints.
+func ApiErrorNotFound(w http.ResponseWriter) {
+	apiError(w, http.StatusNotFound, "NOT_FOUND")
+}
+
+// ApiErrorResourceInUse responds with a REST error of type "RESOURCE_IN_USE".
+// For use with "/api" endpoints.
+func ApiErrorResourceInUse(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "RESOURCE_IN_USE")
+}
+
+// ApiErrorUnauthorized responds with a REST error of type "UNAUTHORIZED".
+// For use with "/api" endpoints.
+func ApiErrorUnauthorized(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "UNAUTHORIZED")
+}
+
+// ApiErrorUnsupported responds with a REST error of type "UNSUPPORTED".
+// For use with "/api" endpoints.
+func ApiErrorUnsupported(w http.ResponseWriter) {
+	apiError(w, http.StatusBadRequest, "UNSUPPORTED")
+}
+
+func apiError(w http.ResponseWriter, statusCode int, errorType string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write([]byte(fmt.Sprintf(`{"error_type":"%s", "messages":[]}`, errorType)))
 }
 
 func (*handler) error(w http.ResponseWriter, err error) {
@@ -1276,8 +1343,88 @@ func (s *handler) libraryItemUpdateSessionID(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+func (s *handler) libraryItemProbe(endpoint library.TransferEndpoint) *library.ProbeResult {
+	p := &library.ProbeResult{
+		Status: "SUCCESS",
+	}
+
+	result := func() *library.ProbeResult {
+		for i, m := range p.ErrorMessages {
+			p.ErrorMessages[i].DefaultMessage = fmt.Sprintf(m.DefaultMessage, m.Args[0])
+		}
+		return p
+	}
+
+	u, err := url.Parse(endpoint.URI)
+	if err != nil {
+		p.Status = "INVALID_URL"
+		p.ErrorMessages = []rest.LocalizableMessage{{
+			Args:           []string{endpoint.URI},
+			ID:             "com.vmware.vdcs.cls-main.invalid_url_format",
+			DefaultMessage: "Invalid URL format for %s",
+		}}
+		return result()
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		p.Status = "INVALID_URL"
+		p.ErrorMessages = []rest.LocalizableMessage{{
+			Args:           []string{endpoint.URI},
+			ID:             "com.vmware.vdcs.cls-main.file_probe_unsupported_uri_scheme",
+			DefaultMessage: "The specified URI %s is not supported",
+		}}
+		return result()
+	}
+
+	res, err := http.Head(endpoint.URI)
+	if err != nil {
+		id := "com.vmware.vdcs.cls-main.http_request_error"
+		p.Status = "INVALID_URL"
+
+		if soap.IsCertificateUntrusted(err) {
+			var info object.HostCertificateInfo
+			_ = info.FromURL(u, nil)
+
+			id = "com.vmware.vdcs.cls-main.http_request_error_peer_not_authenticated"
+			p.Status = "CERTIFICATE_ERROR"
+			p.SSLThumbprint = info.ThumbprintSHA1
+		}
+
+		p.ErrorMessages = []rest.LocalizableMessage{{
+			Args:           []string{err.Error()},
+			ID:             id,
+			DefaultMessage: "HTTP request error: %s",
+		}}
+
+		return result()
+	}
+	_ = res.Body.Close()
+
+	if res.TLS != nil {
+		p.SSLThumbprint = soap.ThumbprintSHA1(res.TLS.PeerCertificates[0])
+	}
+
+	return result()
+}
+
 func (s *handler) libraryItemUpdateSessionFile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	switch r.Method {
+	case http.MethodPost:
+		switch s.action(r) {
+		case "probe":
+			var spec struct {
+				SourceEndpoint library.TransferEndpoint `json:"source_endpoint"`
+			}
+			if s.decode(r, w, &spec) {
+				res := s.libraryItemProbe(spec.SourceEndpoint)
+				OK(w, res)
+			}
+		default:
+			http.NotFound(w, r)
+		}
+		return
+	case http.MethodGet:
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -1377,10 +1524,20 @@ func (s *handler) libraryItemUpdateSessionFileID(w http.ResponseWriter, r *http.
 		}
 		OK(w, ids)
 	case "remove":
+		if up.State != "ACTIVE" {
+			s.error(w, fmt.Errorf("removeFile not allowed in state %s", up.State))
+			return
+		}
 		delete(s.Update, id)
 		OK(w)
 	case "validate":
-		// TODO
+		if up.State != "ACTIVE" {
+			BadRequest(w, "com.vmware.vapi.std.errors.not_allowed_in_current_state")
+			return
+		}
+		var res library.UpdateFileValidation
+		// TODO check missing_files, validate .ovf
+		OK(w, res)
 	}
 }
 
@@ -1735,7 +1892,7 @@ func (s *handler) libraryDeploy(ctx context.Context, c *vim25.Client, lib *libra
 	}
 
 	name := item.ovf()
-	desc, err := ioutil.ReadFile(filepath.Join(libraryPath(lib, item.ID), name))
+	desc, err := os.ReadFile(filepath.Join(libraryPath(lib, item.ID), name))
 	if err != nil {
 		return nil, err
 	}
@@ -1810,6 +1967,23 @@ func (s *handler) libraryDeploy(ctx context.Context, c *vim25.Client, lib *libra
 		return nil, errors.New(spec.Error[0].LocalizedMessage)
 	}
 
+	if config != nil {
+		if vmImportSpec, ok := spec.ImportSpec.(*types.VirtualMachineImportSpec); ok {
+			var configSpecs []types.BaseVirtualDeviceConfigSpec
+
+			// Remove devices that we don't want to carry over from the import spec. Otherwise, since we
+			// just reconfigure the VM with the provided ConfigSpec later these devices won't be removed.
+			for _, d := range vmImportSpec.ConfigSpec.DeviceChange {
+				switch d.GetVirtualDeviceConfigSpec().Device.(type) {
+				case types.BaseVirtualEthernetCard:
+				default:
+					configSpecs = append(configSpecs, d)
+				}
+			}
+			vmImportSpec.ConfigSpec.DeviceChange = configSpecs
+		}
+	}
+
 	req := types.ImportVApp{
 		This:   pool,
 		Spec:   spec.ImportSpec,
@@ -1865,7 +2039,7 @@ func (s *handler) libraryItemOVF(w http.ResponseWriter, r *http.Request) {
 				ID:               id,
 				LibraryID:        l.Library.ID,
 				Name:             req.Spec.Name,
-				Description:      req.Spec.Description,
+				Description:      &req.Spec.Description,
 				Type:             library.ItemTypeOVF,
 				CreationTime:     types.NewTime(time.Now()),
 				LastModifiedTime: types.NewTime(time.Now()),
@@ -1925,7 +2099,10 @@ func (s *handler) libraryItemOVFID(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			id := vcenter.ResourceID(info.Entity)
+			id := vcenter.ResourceID{
+				Type:  info.Entity.Type,
+				Value: info.Entity.Value,
+			}
 			d.Succeeded = true
 			d.ResourceID = &id
 			return nil
@@ -2262,17 +2439,6 @@ func (s *handler) libraryTrustedCertificatesID(w http.ResponseWriter, r *http.Re
 		delete(s.Trust, id)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
-
-func (s *handler) vmID(w http.ResponseWriter, r *http.Request) {
-	id := path.Base(r.URL.Path)
-
-	switch r.Method {
-	case http.MethodDelete:
-		s.deleteVM(&types.ManagedObjectReference{Type: "VirtualMachine", Value: id})
-	default:
-		http.NotFound(w, r)
 	}
 }
 

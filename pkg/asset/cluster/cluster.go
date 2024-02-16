@@ -54,7 +54,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
-		// PlatformCredsCheck, PlatformPermsCheck and PlatformProvisionCheck
+		// PlatformCredsCheck, PlatformPermsCheck, PlatformProvisionCheck, and VCenterContexts.
 		// perform validations & check perms required to provision infrastructure.
 		// We do not actually use them in this asset directly, hence
 		// they are put in the dependencies but not fetched in Generate.

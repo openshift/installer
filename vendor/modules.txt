@@ -419,7 +419,7 @@ github.com/daixiang0/gci/pkg/parse
 github.com/daixiang0/gci/pkg/section
 github.com/daixiang0/gci/pkg/specificity
 github.com/daixiang0/gci/pkg/utils
-# github.com/davecgh/go-spew v1.1.1
+# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
 # github.com/dimchansky/utfbom v1.1.1
@@ -438,6 +438,9 @@ github.com/diskfs/go-diskfs/partition/gpt
 github.com/diskfs/go-diskfs/partition/mbr
 github.com/diskfs/go-diskfs/partition/part
 github.com/diskfs/go-diskfs/util
+# github.com/dougm/pretty v0.0.0-20171025230240-2ee9d7453c02
+## explicit
+github.com/dougm/pretty
 # github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab
 ## explicit; go 1.11
 github.com/elliotwutingfeng/asciiset
@@ -757,6 +760,9 @@ github.com/kdomanski/iso9660
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
+# github.com/kr/text v0.2.0
+## explicit
+github.com/kr/text
 # github.com/kylelemons/godebug v1.1.0
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
@@ -8782,7 +8788,7 @@ github.com/nutanix-cloud-native/prism-go-client/v3
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
-# github.com/onsi/gomega v1.29.0
+# github.com/onsi/gomega v1.30.0
 ## explicit; go 1.18
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -8962,7 +8968,7 @@ github.com/pkg/sftp/internal/encoding/ssh/filexfer
 # github.com/pkg/xattr v0.4.9
 ## explicit; go 1.14
 github.com/pkg/xattr
-# github.com/pmezard/go-difflib v1.0.0
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v1.18.0 => github.com/prometheus/client_golang v1.17.0
@@ -9031,10 +9037,16 @@ github.com/ulikunitz/xz/lzma
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmware/govmomi v0.30.4
-## explicit; go 1.17
+# github.com/vmware/govmomi v0.34.2
+## explicit; go 1.19
 github.com/vmware/govmomi
+github.com/vmware/govmomi/cns
+github.com/vmware/govmomi/cns/methods
+github.com/vmware/govmomi/cns/types
 github.com/vmware/govmomi/find
+github.com/vmware/govmomi/govc/cli
+github.com/vmware/govmomi/govc/flags
+github.com/vmware/govmomi/govc/importx
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/internal/version
@@ -9047,6 +9059,7 @@ github.com/vmware/govmomi/pbm/methods
 github.com/vmware/govmomi/pbm/types
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
+github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/simulator
 github.com/vmware/govmomi/simulator/esx
@@ -9060,19 +9073,25 @@ github.com/vmware/govmomi/units
 github.com/vmware/govmomi/vapi
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
+github.com/vmware/govmomi/vapi/library/finder
 github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/vapi/simulator
 github.com/vmware/govmomi/vapi/tags
 github.com/vmware/govmomi/vapi/vcenter
+github.com/vmware/govmomi/vapi/vm/dataset
+github.com/vmware/govmomi/vapi/vm/internal
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
+github.com/vmware/govmomi/vim25/json
 github.com/vmware/govmomi/vim25/methods
 github.com/vmware/govmomi/vim25/mo
 github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
+github.com/vmware/govmomi/vmdk
+github.com/vmware/govmomi/vsan/vsanfs/types
 # github.com/xlab/treeprint v1.2.0
 ## explicit; go 1.13
 github.com/xlab/treeprint
@@ -9142,8 +9161,6 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
-# go.uber.org/goleak v1.3.0
-## explicit; go 1.20
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
@@ -9439,6 +9456,9 @@ google.golang.org/protobuf/types/known/wrapperspb
 # gopkg.in/djherbis/times.v1 v1.3.0
 ## explicit
 gopkg.in/djherbis/times.v1
+# gopkg.in/evanphx/json-patch.v5 v5.6.0
+## explicit
+gopkg.in/evanphx/json-patch.v5
 # gopkg.in/gcfg.v1 v1.2.3
 ## explicit
 gopkg.in/gcfg.v1
@@ -9836,6 +9856,7 @@ sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
 sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3
 sigs.k8s.io/cluster-api/errors
 sigs.k8s.io/cluster-api/exp/api/v1beta1
+sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1
 sigs.k8s.io/cluster-api/feature
 sigs.k8s.io/cluster-api/util
 sigs.k8s.io/cluster-api/util/annotations
@@ -9864,7 +9885,12 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/controller-runtime v0.16.2 => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
+# sigs.k8s.io/cluster-api-provider-vsphere v1.9.0
+## explicit; go 1.20
+sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
+# sigs.k8s.io/controller-runtime v0.16.3 => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
 ## explicit; go 1.20
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder
@@ -9934,7 +9960,7 @@ sigs.k8s.io/controller-tools/pkg/webhook
 ## explicit; go 1.18
 sigs.k8s.io/json
 sigs.k8s.io/json/internal/golang/encoding/json
-# sigs.k8s.io/kustomize/api v0.14.0
+# sigs.k8s.io/kustomize/api v0.16.0
 ## explicit; go 1.20
 sigs.k8s.io/kustomize/api/filters/annotations
 sigs.k8s.io/kustomize/api/filters/fieldspec
@@ -9955,12 +9981,14 @@ sigs.k8s.io/kustomize/api/filters/suffix
 sigs.k8s.io/kustomize/api/filters/valueadd
 sigs.k8s.io/kustomize/api/hasher
 sigs.k8s.io/kustomize/api/ifc
-sigs.k8s.io/kustomize/api/image
 sigs.k8s.io/kustomize/api/internal/accumulator
 sigs.k8s.io/kustomize/api/internal/builtins
 sigs.k8s.io/kustomize/api/internal/generators
 sigs.k8s.io/kustomize/api/internal/git
+sigs.k8s.io/kustomize/api/internal/image
+sigs.k8s.io/kustomize/api/internal/konfig/builtinpluginconsts
 sigs.k8s.io/kustomize/api/internal/kusterr
+sigs.k8s.io/kustomize/api/internal/loader
 sigs.k8s.io/kustomize/api/internal/plugins/builtinconfig
 sigs.k8s.io/kustomize/api/internal/plugins/builtinhelpers
 sigs.k8s.io/kustomize/api/internal/plugins/execplugin
@@ -9971,16 +9999,14 @@ sigs.k8s.io/kustomize/api/internal/target
 sigs.k8s.io/kustomize/api/internal/utils
 sigs.k8s.io/kustomize/api/internal/validate
 sigs.k8s.io/kustomize/api/konfig
-sigs.k8s.io/kustomize/api/konfig/builtinpluginconsts
 sigs.k8s.io/kustomize/api/krusty
 sigs.k8s.io/kustomize/api/kv
-sigs.k8s.io/kustomize/api/loader
 sigs.k8s.io/kustomize/api/provenance
 sigs.k8s.io/kustomize/api/provider
 sigs.k8s.io/kustomize/api/resmap
 sigs.k8s.io/kustomize/api/resource
 sigs.k8s.io/kustomize/api/types
-# sigs.k8s.io/kustomize/kyaml v0.14.3
+# sigs.k8s.io/kustomize/kyaml v0.16.0
 ## explicit; go 1.20
 sigs.k8s.io/kustomize/kyaml/comments
 sigs.k8s.io/kustomize/kyaml/errors
@@ -9991,7 +10017,6 @@ sigs.k8s.io/kustomize/kyaml/fn/runtime/container
 sigs.k8s.io/kustomize/kyaml/fn/runtime/exec
 sigs.k8s.io/kustomize/kyaml/fn/runtime/runtimeutil
 sigs.k8s.io/kustomize/kyaml/fn/runtime/starlark
-sigs.k8s.io/kustomize/kyaml/internal/forked/github.com/go-yaml/yaml
 sigs.k8s.io/kustomize/kyaml/internal/forked/github.com/qri-io/starlib/util
 sigs.k8s.io/kustomize/kyaml/kio
 sigs.k8s.io/kustomize/kyaml/kio/filters
@@ -10028,6 +10053,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+sigs.k8s.io/yaml/goyaml.v3
 # github.com/metal3-io/baremetal-operator => github.com/openshift/baremetal-operator v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
