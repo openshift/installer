@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/infrastructure/openstack/infraready"
+	"github.com/openshift/installer/pkg/infrastructure/openstack/postprovision"
 	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -101,4 +102,26 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	)
 
 	return preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
+}
+
+var _ clusterapi.PostProvider = Provider{}
+
+// PostProvision creates and attaches a Floating IP to the Bootstrap Machine.
+func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	var (
+		k8sClient     = in.Client
+		infraID       = in.InfraID
+		installConfig = in.InstallConfig
+	)
+
+	ospCluster := &capo.OpenStackCluster{}
+	key := client.ObjectKey{
+		Name:      infraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := k8sClient.Get(ctx, key, ospCluster); err != nil {
+		return fmt.Errorf("failed to get OSPCluster: %w", err)
+	}
+
+	return postprovision.FloatingIPs(ctx, k8sClient, ospCluster, installConfig, infraID)
 }

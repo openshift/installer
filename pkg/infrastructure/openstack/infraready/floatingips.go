@@ -45,7 +45,6 @@ func FloatingIPs(cluster *capo.OpenStackCluster, installConfig *installconfig.In
 	return nil
 }
 
-
 func createPort(client *gophercloud.ServiceClient, role, infraID, networkID, subnetID, fixedIP string) (*ports.Port, error) {
 	createOpts := ports.CreateOpts{
 		Name:        fmt.Sprintf("%s-%s-port", infraID, role),
