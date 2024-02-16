@@ -4,10 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
-	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
@@ -17,10 +13,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/openshift/installer/pkg/infrastructure/openstack/infraready"
 	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/openstack"
-	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // Provider defines the InfraProvider.
@@ -80,6 +76,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		infraID       = in.InfraID
 		installConfig = in.InstallConfig
 	)
+
 	ospCluster := &capo.OpenStackCluster{}
 	key := client.ObjectKey{
 		Name:      infraID,
@@ -89,34 +86,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get OSPCluster: %w", err)
 	}
 
-	networkClient, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
-	if err != nil {
-		return err
-	}
-
-	apiPort, err := createPort(networkClient, "api", infraID, ospCluster.Status.Network.ID, ospCluster.Status.Network.Subnets[0].ID, installConfig.Config.Platform.OpenStack.APIVIPs[0])
-	if err != nil {
-		return err
-	}
-	if installConfig.Config.OpenStack.APIFloatingIP != "" {
-		err = assignFIP(networkClient, installConfig.Config.OpenStack.APIFloatingIP, apiPort)
-		if err != nil {
-			return err
-		}
-	}
-
-	ingressPort, err := createPort(networkClient, "ingress", infraID, ospCluster.Status.Network.ID, ospCluster.Status.Network.Subnets[0].ID, installConfig.Config.Platform.OpenStack.IngressVIPs[0])
-	if err != nil {
-		return err
-	}
-	if installConfig.Config.OpenStack.IngressFloatingIP != "" {
-		err = assignFIP(networkClient, installConfig.Config.OpenStack.IngressFloatingIP, ingressPort)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return infraready.FloatingIPs(ospCluster, installConfig, infraID)
 }
 
 var _ clusterapi.IgnitionProvider = Provider{}
@@ -131,59 +101,4 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	)
 
 	return preprovision.UploadIgnitionAndBuildShim(ctx, installConfig.Config.Platform.OpenStack.Cloud, infraID, installConfig.Config.Proxy, bootstrapIgnData)
-}
-
-func createPort(client *gophercloud.ServiceClient, role, infraID, networkID, subnetID, fixedIP string) (*ports.Port, error) {
-	createOpts := ports.CreateOpts{
-		Name:        fmt.Sprintf("%s-%s-port", infraID, role),
-		NetworkID:   networkID,
-		Description: "Created By OpenShift Installer",
-		FixedIPs: []ports.IP{
-			{
-				IPAddress: fixedIP,
-				SubnetID:  subnetID,
-			}},
-	}
-
-	port, err := ports.Create(client, createOpts).Extract()
-	if err != nil {
-		return nil, err
-	}
-
-	tag := fmt.Sprintf("openshiftClusterID=%s", infraID)
-	err = attributestags.Add(client, "ports", port.ID, tag).ExtractErr()
-	if err != nil {
-		return nil, err
-	}
-	return port, err
-}
-
-func assignFIP(client *gophercloud.ServiceClient, address string, port *ports.Port) error {
-	listOpts := floatingips.ListOpts{
-		FloatingIP: address,
-	}
-	allPages, err := floatingips.List(client, listOpts).AllPages()
-	if err != nil {
-		return fmt.Errorf("failed to list floating IPs: %w", err)
-	}
-	allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
-	if err != nil {
-		return fmt.Errorf("failed to extract floating IPs: %w", err)
-	}
-
-	if len(allFIPs) != 1 {
-		return fmt.Errorf("could not find FIP: %s", address)
-	}
-
-	fip := allFIPs[0]
-
-	updateOpts := floatingips.UpdateOpts{
-		PortID: &port.ID,
-	}
-
-	_, err = floatingips.Update(client, fip.ID, updateOpts).Extract()
-	if err != nil {
-		return fmt.Errorf("failed to attach floating IP to port: %w", err)
-	}
-	return nil
 }
