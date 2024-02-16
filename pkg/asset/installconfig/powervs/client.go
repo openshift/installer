@@ -663,7 +663,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 				continue
 			}
 
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+			if resourceInstance.Type != nil && (*resourceInstance.Type == "service_instance" || *resourceInstance.Type == "composite_instance") {
 				serviceInstances = append(serviceInstances, fmt.Sprintf("%s %s", *resource.Name, *resource.GUID))
 			}
 		}
@@ -738,7 +738,7 @@ func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (stri
 				continue
 			}
 
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+			if resourceInstance.Type != nil && (*resourceInstance.Type == "service_instance" || *resourceInstance.Type == "composite_instance") {
 				if resourceInstance.GUID != nil && *resourceInstance.GUID == id {
 					if resourceInstance.Name == nil {
 						return "", nil
