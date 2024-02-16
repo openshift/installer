@@ -2,6 +2,7 @@ package joiner
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -9,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/yaml"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
@@ -20,15 +22,17 @@ import (
 // from an already existing cluster. A number of different resources
 // are inspected to extract the required configuration
 type ClusterInfo struct {
-	ClusterID    string
-	Version      string
-	ReleaseImage string
-	APIDNSName   string
-	PullSecret   string
-	Namespace    string
-	UserCaBundle string
-	Proxy        *types.Proxy
-	Architecture string
+	ClusterID                     string
+	Version                       string
+	ReleaseImage                  string
+	APIDNSName                    string
+	PullSecret                    string
+	Namespace                     string
+	UserCaBundle                  string
+	Proxy                         *types.Proxy
+	Architecture                  string
+	ImageDigestSources            []types.ImageDigestSource
+	DeprecatedImageContentSources []types.ImageContentSource
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -92,6 +96,10 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 		return err
 	}
 	err = ci.retrieveArchitecture(k8sclientset)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveImageDigestSources(k8sclientset)
 	if err != nil {
 		return err
 	}
@@ -179,6 +187,29 @@ func (ci *ClusterInfo) retrieveArchitecture(clientset *kubernetes.Clientset) err
 		return err
 	}
 	ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveImageDigestSources(clientset *kubernetes.Clientset) error {
+	clusterConfig, err := clientset.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	data, ok := clusterConfig.Data["install-config"]
+	if !ok {
+		return fmt.Errorf("cannot find install-config data")
+	}
+
+	installConfig := types.InstallConfig{}
+	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
+		return err
+	}
+	ci.ImageDigestSources = installConfig.ImageDigestSources
+	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
 
 	return nil
 }
