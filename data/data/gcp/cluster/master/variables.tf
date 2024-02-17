@@ -85,3 +85,12 @@ variable "on_host_maintenance" {
   description = "The behavior when a maintenance event occurs."
   default     = ""
 }
+
+variable "gcp_extra_tags" {
+  type        = map(string)
+  description = <<EOF
+(optional) Extra GCP tags to be applied to the created resources.
+Example: `{ "tagKeys/123" = "tagValues/456", "tagKeys/456" = "tagValues/789" }`
+EOF
+  default = {}
+}

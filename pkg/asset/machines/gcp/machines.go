@@ -195,6 +195,14 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	for _, label := range platform.UserLabels {
 		labels[label.Key] = label.Value
 	}
+	tags := make([]machineapi.ResourceManagerTag, len(platform.UserTags))
+	for i, tag := range platform.UserTags {
+		tags[i] = machineapi.ResourceManagerTag{
+			ParentID: tag.ParentID,
+			Key:      tag.Key,
+			Value:    tag.Value,
+		}
+	}
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -229,6 +237,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		ConfidentialCompute:    machineapi.ConfidentialComputePolicy(mpool.ConfidentialCompute),
 		OnHostMaintenance:      machineapi.GCPHostMaintenanceType(mpool.OnHostMaintenance),
 		Labels:                 labels,
+		ResourceManagerTags:    tags,
 	}, nil
 }
 
