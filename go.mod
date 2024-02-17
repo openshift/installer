@@ -43,6 +43,7 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
+	github.com/googleapis/gax-go/v2 v2.12.0
 	github.com/gophercloud/gophercloud v1.6.0
 	github.com/gophercloud/utils v0.0.0-20230523080330-de873b9cf00d
 	github.com/h2non/filetype v1.0.12
@@ -182,7 +183,6 @@ require (
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
