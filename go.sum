@@ -76,8 +76,8 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.2.0/
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0 h1:u/LLAOFgsMv7HmNL4Qufg58y+qElGOt5qv0z1mURkRY=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0/go.mod h1:2e8rMJtl2+2j+HXbTBwnyGpm5Nou7KhvSfxOq8JpTag=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78/go.mod h1:LmzpDX56iTiv29bbRTIsUNlaFfuhWRQBWjQdVyAevI8=
-github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
-github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
+github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25UVaW/CKtUDjefjrs0SPonmDGUVOYP0=
+github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Azure/go-autorest v14.2.0+incompatible h1:V5VMDjClD3GiElqLWO7mz2MxNAK/vTfRHdAubSIPRgs=
 github.com/Azure/go-autorest v14.2.0+incompatible/go.mod h1:r+4oMnoxhatjLLJ6zxSWATqVooLgysK6ZNox3g/xq24=
 github.com/Azure/go-autorest/autorest v0.9.0/go.mod h1:xyHB1BMZT0cuDHU7I0+g046+BFDTQ8rEZB0s4Yfa6bI=
@@ -1492,6 +1492,8 @@ sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9 h1:
 sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9/go.mod h1:N9VMyIYoaif6jVMIk9Ptf0GWRXXgZmQ7Wnmo5fUsVVA=
 sigs.k8s.io/cluster-api-provider-gcp v1.5.0 h1:vVInLvSlBJo83sdlMbk1aYKg8n6GI8NrhtJFmDo1s2Q=
 sigs.k8s.io/cluster-api-provider-gcp v1.5.0/go.mod h1:0voqKcKXrLKBh2SRkjhwGDoKrI+zScyjM2dkJW7G/No=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0 h1:8CLIu0mZ46tZfs2qbITVaQgWXJTlM8sJ6hjvJpS2mvc=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0/go.mod h1:XLdWHa2JUHZ5HfxZDblV/KZxCN7gWnrl7Uga3ndfV+Q=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0 h1:tMGgDmUr2Q4/INM0cn1jZyxPxYGe8wWrk9l+8hrwPSw=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0/go.mod h1:sovPL5JCGYBZdDiAKJNg2RTYp6SF+eLXhAqfUUf6mSY=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce h1:zQZV2UuXjQgWF4m/fZRgvA/5lm9jqWl7cfxoNMMl4yA=
