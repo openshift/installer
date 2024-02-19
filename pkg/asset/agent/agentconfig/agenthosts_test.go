@@ -12,6 +12,7 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	agentAsset "github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -80,6 +81,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "no-hosts",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getNoHostsInstallConfig(),
 				getNoHostsAgentConfig(),
 			},
@@ -88,6 +90,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "host-from-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigSingleHost(),
 			},
@@ -96,6 +99,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "host-from-install-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getNoHostsAgentConfig(),
 			},
@@ -104,6 +108,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "multi-host-from-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigMultiHost(),
 			},
@@ -114,6 +119,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "multi-host-from-install-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigMultiHost(),
 				getNoHostsAgentConfig(),
 			},
@@ -124,6 +130,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "unsupported-device-name-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigUnsupportedDeviceName(),
 			},
@@ -133,6 +140,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "unsupported-wwn-extension-install-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigUnsupportedWWNExtension(),
 				getNoHostsAgentConfig(),
 			},
@@ -142,6 +150,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "unsupported-www-vendor-extension-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigUnsupportedWWNVendorExtension(),
 			},
@@ -151,6 +160,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "node-hostname-and-role-are-not-required",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigNoHostnameOrRole(),
 				getNoHostsAgentConfig(),
 			},
@@ -159,6 +169,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "host-roles-have-incorrect-values",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidHostRole(),
 			},
@@ -168,6 +179,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "different-hosts-cannot-have-same-mac",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSameMac(),
 				getNoHostsAgentConfig(),
 			},
@@ -177,6 +189,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "invalid-mac",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidMac(),
 			},
@@ -186,6 +199,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "duplicate-mac-same-host-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidInterfaces(),
 			},
@@ -195,6 +209,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "duplicate-mac-same-host-install-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigInvalidInterfaces(),
 				getNoHostsAgentConfig(),
 			},
@@ -204,6 +219,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "invalid-rendezvous-agent-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigInvalidRendezvousIP(),
 			},
@@ -213,6 +229,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "invalid-rendezvous-install-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigInvalidRendezvousIP(),
 				getNoHostsAgentConfig(),
 			},
@@ -222,6 +239,7 @@ func TestAgentHosts_Generate(t *testing.T) {
 		{
 			name: "host-missing-interface-error",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getInstallConfigSingleHost(),
 				getAgentConfigMissingInterfaces(),
 			},
