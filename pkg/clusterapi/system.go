@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/nutanix"
+	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -191,6 +192,8 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	case ibmcloud.Name:
 		// TODO
 	case nutanix.Name:
+		// TODO
+	case openstack.Name:
 		// TODO
 	case vsphere.Name:
 		controllers = append(controllers,
