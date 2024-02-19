@@ -12,8 +12,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
-	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
+	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
@@ -35,7 +35,7 @@ func Destroy(ctx context.Context, dir string) (err error) {
 	}
 
 	if platform == openstack.Name {
-		if err := openstackasset.PreTerraform(); err != nil {
+		if err := preprovision.SetTerraformEnvironment(); err != nil {
 			return errors.Wrapf(err, "Failed to  initialize infrastructure")
 		}
 
