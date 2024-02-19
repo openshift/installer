@@ -55,6 +55,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 			},
 			NetworkSpec: capz.NetworkSpec{
+				NetworkClassSpec: capz.NetworkClassSpec{
+					PrivateDNSZoneName: fmt.Sprintf("api.%s", clusterID.InfraID),
+				},
 				Vnet: capz.VnetSpec{
 					ID: installConfig.Config.Azure.VirtualNetwork,
 					VnetClassSpec: capz.VnetClassSpec{

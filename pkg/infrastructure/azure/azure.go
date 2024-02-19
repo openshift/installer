@@ -173,6 +173,12 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
+	// Create DNS entries
+	err = createAzureDNSEntries(ctx, in)
+	if err != nil {
+		return err
+	}
+
 	installConfig := in.InstallConfig.Config
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
