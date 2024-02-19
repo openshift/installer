@@ -84,7 +84,9 @@ func IsNullValue[T any](v T) bool {
 	return false
 }
 
-// ClientOptions contains configuration settings for a client's pipeline.
+// ClientOptions contains optional settings for a client's pipeline.
+// Instances can be shared across calls to SDK client constructors when uniform configuration is desired.
+// Zero-value fields will have their specified default values applied during use.
 type ClientOptions = policy.ClientOptions
 
 // Client is a basic HTTP client.  It consists of a pipeline and tracing provider.
@@ -99,17 +101,11 @@ type Client struct {
 }
 
 // NewClient creates a new Client instance with the provided values.
-//   - clientName - the fully qualified name of the client ("module/package.Client"); this is used by the telemetry policy and tracing provider.
-//     if module and package are the same value, the "module/" prefix can be omitted.
-//   - moduleVersion - the semantic version of the containing module; used by the telemetry policy
+//   - moduleName - the fully qualified name of the module where the client is defined; used by the telemetry policy and tracing provider.
+//   - moduleVersion - the semantic version of the module; used by the telemetry policy and tracing provider.
 //   - plOpts - pipeline configuration options; can be the zero-value
 //   - options - optional client configurations; pass nil to accept the default values
-func NewClient(clientName, moduleVersion string, plOpts runtime.PipelineOptions, options *ClientOptions) (*Client, error) {
-	mod, client, err := shared.ExtractModuleName(clientName)
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(moduleName, moduleVersion string, plOpts runtime.PipelineOptions, options *ClientOptions) (*Client, error) {
 	if options == nil {
 		options = &ClientOptions{}
 	}
@@ -120,11 +116,11 @@ func NewClient(clientName, moduleVersion string, plOpts runtime.PipelineOptions,
 		}
 	}
 
-	pl := runtime.NewPipeline(mod, moduleVersion, plOpts, options)
+	pl := runtime.NewPipeline(moduleName, moduleVersion, plOpts, options)
 
-	tr := options.TracingProvider.NewTracer(client, moduleVersion)
-	if tr.Enabled() && plOpts.TracingNamespace != "" {
-		tr.SetAttributes(tracing.Attribute{Key: "az.namespace", Value: plOpts.TracingNamespace})
+	tr := options.TracingProvider.NewTracer(moduleName, moduleVersion)
+	if tr.Enabled() && plOpts.Tracing.Namespace != "" {
+		tr.SetAttributes(tracing.Attribute{Key: shared.TracingNamespaceAttrName, Value: plOpts.Tracing.Namespace})
 	}
 
 	return &Client{
@@ -132,7 +128,7 @@ func NewClient(clientName, moduleVersion string, plOpts runtime.PipelineOptions,
 		tr:        tr,
 		tp:        options.TracingProvider,
 		modVer:    moduleVersion,
-		namespace: plOpts.TracingNamespace,
+		namespace: plOpts.Tracing.Namespace,
 	}, nil
 }
 
@@ -152,7 +148,7 @@ func (c *Client) Tracer() tracing.Tracer {
 func (c *Client) WithClientName(clientName string) *Client {
 	tr := c.tp.NewTracer(clientName, c.modVer)
 	if tr.Enabled() && c.namespace != "" {
-		tr.SetAttributes(tracing.Attribute{Key: "az.namespace", Value: c.namespace})
+		tr.SetAttributes(tracing.Attribute{Key: shared.TracingNamespaceAttrName, Value: c.namespace})
 	}
 	return &Client{pl: c.pl, tr: tr, tp: c.tp, modVer: c.modVer, namespace: c.namespace}
 }
