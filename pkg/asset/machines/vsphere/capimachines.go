@@ -104,6 +104,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 			Spec: capv.VSphereMachineSpec{
 				VirtualMachineCloneSpec: capv.VirtualMachineCloneSpec{
+					CloneMode:     capv.FullClone,
 					CustomVMXKeys: customVMXKeys,
 					Network: capv.NetworkSpec{
 						Devices: capvNetworkDevices,
