@@ -9,6 +9,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/manifests"
 )
 
@@ -33,19 +35,36 @@ func (*CaBundle) Name() string {
 // the asset.
 func (*CaBundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&agent.OptionalInstallConfig{},
 	}
 }
 
 // Generate generates the Mirror Registries certificate file from install-config.
 func (i *CaBundle) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
-	if !installConfig.Supplied {
-		return nil
+	dependencies.Get(installConfig, agentWorkflow, clusterInfo)
+
+	var additionalTrustBundle string
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		if !installConfig.Supplied {
+			return nil
+		}
+		additionalTrustBundle = installConfig.Config.AdditionalTrustBundle
+
+	case workflow.AgentWorkflowTypeAddNodes:
+		additionalTrustBundle = clusterInfo.UserCaBundle
+
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
-	if installConfig.Config.AdditionalTrustBundle == "" {
+	if additionalTrustBundle == "" {
 		i.File = &asset.File{
 			Filename: CaBundleFilename,
 			Data:     []byte{},
@@ -53,7 +72,7 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	return i.parseCertificates(installConfig.Config.AdditionalTrustBundle)
+	return i.parseCertificates(additionalTrustBundle)
 }
 
 func (i *CaBundle) parseCertificates(certs string) error {
