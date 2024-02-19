@@ -274,6 +274,7 @@ func (a *OptionalInstallConfig) ClusterName() string {
 	return "agent-cluster"
 }
 
+// ClusterName returns the namespace of the cluster.
 func (a *OptionalInstallConfig) ClusterNamespace() string {
 	if a.Config != nil && a.Config.ObjectMeta.Namespace != "" {
 		return a.Config.ObjectMeta.Namespace
