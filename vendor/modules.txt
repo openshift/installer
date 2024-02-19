@@ -105,7 +105,7 @@ github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/internal/shared
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service
-# github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1
+# github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
@@ -9020,8 +9020,6 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/stoewer/go-strcase v1.3.0
-## explicit; go 1.11
 # github.com/stretchr/testify v1.8.4
 ## explicit; go 1.20
 github.com/stretchr/testify/assert
@@ -9885,6 +9883,9 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
+# sigs.k8s.io/cluster-api-provider-openstack v0.8.0
+## explicit; go 1.20
+sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7
 # sigs.k8s.io/cluster-api-provider-vsphere v1.9.0
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
