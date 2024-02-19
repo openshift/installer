@@ -146,7 +146,6 @@ func (a *ClusterImageSet) Load(f asset.FileFetcher) (bool, error) {
 }
 
 func (a *ClusterImageSet) finish(workflowType workflow.AgentWorkflowType) error {
-
 	if a.Config == nil {
 		return errors.New("missing configuration or manifest file")
 	}
@@ -169,7 +168,6 @@ func (a *ClusterImageSet) validateClusterImageSet(workflowType workflow.AgentWor
 }
 
 func (a *ClusterImageSet) validateReleaseVersion(workflowType workflow.AgentWorkflowType) field.ErrorList {
-
 	// skip release version check in case of add nodes workflow
 	if workflowType == workflow.AgentWorkflowTypeAddNodes {
 		return nil

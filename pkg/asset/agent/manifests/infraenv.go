@@ -107,7 +107,7 @@ func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, addit
 
 	// Input values (amd64, arm64) must be converted to rpmArch because infraEnv.Spec.CpuArchitecture expects x86_64 or aarch64.
 	if architecture != "" {
-		infraEnv.Spec.CpuArchitecture = arch.RpmArch(string(architecture))
+		infraEnv.Spec.CpuArchitecture = arch.RpmArch(architecture)
 	}
 	if additionalTrustBundle != "" {
 		infraEnv.Spec.AdditionalTrustBundle = additionalTrustBundle
