@@ -173,7 +173,9 @@ func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient,
 func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
 	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	var sku []azsku.ResourceSku
@@ -193,6 +195,12 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.Resour
 
 	if len(sku) != 0 {
 		return sku, nil
+	}
+
+	// Azure does not return an error in case of context deadline, so we need
+	// to check it ourselves
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
 	}
 
 	return nil, fmt.Errorf("no disks for specified subscription in region %s", region)
@@ -235,7 +243,9 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error) {
 	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before chaging this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	for page, err := client.List(ctx); page.NotDone(); err = page.NextWithContext(ctx) {
@@ -259,6 +269,13 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 			}
 		}
 	}
+
+	// Azure does not return an error in case of context deadline, so we need
+	// to check it ourselves
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+
 	return nil, nil
 }
 
