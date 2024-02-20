@@ -193,7 +193,6 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 }
 
 func (i *RegistriesConf) generateRegistriesConf(imageDigestSources []types.ImageDigestSource, deprecatedImageContentSources []types.ImageContentSource) error {
-
 	if len(deprecatedImageContentSources) != 0 && len(imageDigestSources) != 0 {
 		return fmt.Errorf("invalid install-config.yaml, cannot set imageContentSources and imageDigestSources at the same time")
 	}

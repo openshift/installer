@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	nodesAddCmd := &cobra.Command{
 		Use:   "add-nodes",
 		Short: "Generates an ISO that could be used to boot the configured nodes to let them join an existing cluster",
