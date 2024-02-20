@@ -103,14 +103,14 @@ data "openstack_networking_port_ids_v2" "ingress_ports" {
 }
 
 resource "openstack_networking_port_secgroup_associate_v2" "api_port_sg" {
-  count              = var.use_ipv6 ? 1 : 0
+  count              = (! var.openstack_user_managed_load_balancer && var.use_ipv6) ? 1 : 0
   port_id            = data.openstack_networking_port_ids_v2.api_ports.ids[0]
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   depends_on         = [data.openstack_networking_port_ids_v2.api_ports]
 }
 
 resource "openstack_networking_port_secgroup_associate_v2" "ingress_port_sg" {
-  count              = var.use_ipv6 ? 1 : 0
+  count              = (! var.openstack_user_managed_load_balancer && var.use_ipv6) ? 1 : 0
   port_id            = data.openstack_networking_port_ids_v2.ingress_ports.ids[0]
   security_group_ids = [openstack_networking_secgroup_v2.worker.id]
   depends_on         = [data.openstack_networking_port_ids_v2.ingress_ports]
