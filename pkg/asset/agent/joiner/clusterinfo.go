@@ -12,8 +12,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -33,6 +35,7 @@ type ClusterInfo struct {
 	Architecture                  string
 	ImageDigestSources            []types.ImageDigestSource
 	DeprecatedImageContentSources []types.ImageContentSource
+	PlatformType                  hiveext.PlatformType
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -99,7 +102,7 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveImageDigestSources(k8sclientset)
+	err = ci.retrieveInstallConfigData(k8sclientset)
 	if err != nil {
 		return err
 	}
@@ -191,7 +194,7 @@ func (ci *ClusterInfo) retrieveArchitecture(clientset *kubernetes.Clientset) err
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveImageDigestSources(clientset *kubernetes.Clientset) error {
+func (ci *ClusterInfo) retrieveInstallConfigData(clientset *kubernetes.Clientset) error {
 	clusterConfig, err := clientset.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -208,8 +211,10 @@ func (ci *ClusterInfo) retrieveImageDigestSources(clientset *kubernetes.Clientse
 	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
 		return err
 	}
+
 	ci.ImageDigestSources = installConfig.ImageDigestSources
 	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
+	ci.PlatformType = agent.HivePlatformType(installConfig.Platform)
 
 	return nil
 }
