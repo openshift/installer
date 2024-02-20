@@ -22,7 +22,7 @@ import (
 
 // ClusterInfo it's an asset used to retrieve config info
 // from an already existing cluster. A number of different resources
-// are inspected to extract the required configuration
+// are inspected to extract the required configuration.
 type ClusterInfo struct {
 	ClusterID                     string
 	Version                       string
