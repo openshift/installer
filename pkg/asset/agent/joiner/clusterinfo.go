@@ -36,6 +36,7 @@ type ClusterInfo struct {
 	ImageDigestSources            []types.ImageDigestSource
 	DeprecatedImageContentSources []types.ImageContentSource
 	PlatformType                  hiveext.PlatformType
+	SSHKey                        string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -215,6 +216,7 @@ func (ci *ClusterInfo) retrieveInstallConfigData(clientset *kubernetes.Clientset
 	ci.ImageDigestSources = installConfig.ImageDigestSources
 	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
 	ci.PlatformType = agent.HivePlatformType(installConfig.Platform)
+	ci.SSHKey = installConfig.SSHKey
 
 	return nil
 }
