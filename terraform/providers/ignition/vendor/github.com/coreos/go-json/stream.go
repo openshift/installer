@@ -1,4 +1,4 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,14 +10,15 @@ import (
 	"io"
 )
 
-// A Decoder reads and decodes JSON objects from an input stream.
+// A Decoder reads and decodes JSON values from an input stream.
 type Decoder struct {
-	r     io.Reader
-	buf   []byte
-	d     decodeState
-	scanp int // start of unread data in buf
-	scan  scanner
-	err   error
+	r       io.Reader
+	buf     []byte
+	d       decodeState
+	scanp   int   // start of unread data in buf
+	scanned int64 // amount of data already scanned
+	scan    scanner
+	err     error
 
 	tokenState int
 	tokenStack []int
@@ -35,6 +36,11 @@ func NewDecoder(r io.Reader) *Decoder {
 // Number instead of as a float64.
 func (dec *Decoder) UseNumber() { dec.d.useNumber = true }
 
+// DisallowUnknownFields causes the Decoder to return an error when the destination
+// is a struct and the input contains object keys which do not match any
+// non-ignored, exported fields in the destination.
+func (dec *Decoder) DisallowUnknownFields() { dec.d.disallowUnknownFields = true }
+
 // Decode reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
 //
@@ -50,7 +56,7 @@ func (dec *Decoder) Decode(v interface{}) error {
 	}
 
 	if !dec.tokenValueAllowed() {
-		return &SyntaxError{msg: "not at beginning of value"}
+		return &SyntaxError{msg: "not at beginning of value", Offset: dec.InputOffset()}
 	}
 
 	// Read whole value into buffer.
@@ -86,28 +92,34 @@ func (dec *Decoder) readValue() (int, error) {
 	scanp := dec.scanp
 	var err error
 Input:
-	for {
+	// help the compiler see that scanp is never negative, so it can remove
+	// some bounds checks below.
+	for scanp >= 0 {
+
 		// Look in the buffer for a new value.
-		for i, c := range dec.buf[scanp:] {
+		for ; scanp < len(dec.buf); scanp++ {
+			c := dec.buf[scanp]
 			dec.scan.bytes++
-			v := dec.scan.step(&dec.scan, int(c))
-			if v == scanEnd {
-				scanp += i
+			switch dec.scan.step(&dec.scan, c) {
+			case scanEnd:
+				// scanEnd is delayed one byte so we decrement
+				// the scanner bytes count by 1 to ensure that
+				// this value is correct in the next call of Decode.
+				dec.scan.bytes--
 				break Input
-			}
-			// scanEnd is delayed one byte.
-			// We might block trying to get that byte from src,
-			// so instead invent a space byte.
-			if (v == scanEndObject || v == scanEndArray) && dec.scan.step(&dec.scan, ' ') == scanEnd {
-				scanp += i + 1
-				break Input
-			}
-			if v == scanError {
+			case scanEndObject, scanEndArray:
+				// scanEnd is delayed one byte.
+				// We might block trying to get that byte from src,
+				// so instead invent a space byte.
+				if stateEndValue(&dec.scan, ' ') == scanEnd {
+					scanp++
+					break Input
+				}
+			case scanError:
 				dec.err = dec.scan.err
 				return 0, dec.scan.err
 			}
 		}
-		scanp = len(dec.buf)
 
 		// Did the last read have an error?
 		// Delayed until now to allow buffer scan.
@@ -135,6 +147,7 @@ func (dec *Decoder) refill() error {
 	// Make room to read more into the buffer.
 	// First slide down data already consumed.
 	if dec.scanp > 0 {
+		dec.scanned += int64(dec.scanp)
 		n := copy(dec.buf, dec.buf[dec.scanp:])
 		dec.buf = dec.buf[:n]
 		dec.scanp = 0
@@ -148,7 +161,7 @@ func (dec *Decoder) refill() error {
 		dec.buf = newBuf
 	}
 
-	// Read.  Delay error for next iteration (after scan).
+	// Read. Delay error for next iteration (after scan).
 	n, err := dec.r.Read(dec.buf[len(dec.buf):cap(dec.buf)])
 	dec.buf = dec.buf[0 : len(dec.buf)+n]
 
@@ -157,22 +170,27 @@ func (dec *Decoder) refill() error {
 
 func nonSpace(b []byte) bool {
 	for _, c := range b {
-		if !isSpace(rune(c)) {
+		if !isSpace(c) {
 			return true
 		}
 	}
 	return false
 }
 
-// An Encoder writes JSON objects to an output stream.
+// An Encoder writes JSON values to an output stream.
 type Encoder struct {
-	w   io.Writer
-	err error
+	w          io.Writer
+	err        error
+	escapeHTML bool
+
+	indentBuf    *bytes.Buffer
+	indentPrefix string
+	indentValue  string
 }
 
 // NewEncoder returns a new encoder that writes to w.
 func NewEncoder(w io.Writer) *Encoder {
-	return &Encoder{w: w}
+	return &Encoder{w: w, escapeHTML: true}
 }
 
 // Encode writes the JSON encoding of v to the stream,
@@ -185,7 +203,7 @@ func (enc *Encoder) Encode(v interface{}) error {
 		return enc.err
 	}
 	e := newEncodeState()
-	err := e.marshal(v)
+	err := e.marshal(v, encOpts{escapeHTML: enc.escapeHTML})
 	if err != nil {
 		return err
 	}
@@ -198,21 +216,55 @@ func (enc *Encoder) Encode(v interface{}) error {
 	// digits coming.
 	e.WriteByte('\n')
 
-	if _, err = enc.w.Write(e.Bytes()); err != nil {
+	b := e.Bytes()
+	if enc.indentPrefix != "" || enc.indentValue != "" {
+		if enc.indentBuf == nil {
+			enc.indentBuf = new(bytes.Buffer)
+		}
+		enc.indentBuf.Reset()
+		err = Indent(enc.indentBuf, b, enc.indentPrefix, enc.indentValue)
+		if err != nil {
+			return err
+		}
+		b = enc.indentBuf.Bytes()
+	}
+	if _, err = enc.w.Write(b); err != nil {
 		enc.err = err
 	}
 	encodeStatePool.Put(e)
 	return err
 }
 
-// RawMessage is a raw encoded JSON object.
+// SetIndent instructs the encoder to format each subsequent encoded
+// value as if indented by the package-level function Indent(dst, src, prefix, indent).
+// Calling SetIndent("", "") disables indentation.
+func (enc *Encoder) SetIndent(prefix, indent string) {
+	enc.indentPrefix = prefix
+	enc.indentValue = indent
+}
+
+// SetEscapeHTML specifies whether problematic HTML characters
+// should be escaped inside JSON quoted strings.
+// The default behavior is to escape &, <, and > to \u0026, \u003c, and \u003e
+// to avoid certain safety problems that can arise when embedding JSON in HTML.
+//
+// In non-HTML settings where the escaping interferes with the readability
+// of the output, SetEscapeHTML(false) disables this behavior.
+func (enc *Encoder) SetEscapeHTML(on bool) {
+	enc.escapeHTML = on
+}
+
+// RawMessage is a raw encoded JSON value.
 // It implements Marshaler and Unmarshaler and can
 // be used to delay JSON decoding or precompute a JSON encoding.
 type RawMessage []byte
 
-// MarshalJSON returns *m as the JSON encoding of m.
-func (m *RawMessage) MarshalJSON() ([]byte, error) {
-	return *m, nil
+// MarshalJSON returns m as the JSON encoding of m.
+func (m RawMessage) MarshalJSON() ([]byte, error) {
+	if m == nil {
+		return []byte("null"), nil
+	}
+	return m, nil
 }
 
 // UnmarshalJSON sets *m to a copy of data.
@@ -262,7 +314,7 @@ func (dec *Decoder) tokenPrepareForDecode() error {
 			return err
 		}
 		if c != ',' {
-			return &SyntaxError{"expected comma after array element", 0}
+			return &SyntaxError{"expected comma after array element", dec.InputOffset()}
 		}
 		dec.scanp++
 		dec.tokenState = tokenArrayValue
@@ -272,7 +324,7 @@ func (dec *Decoder) tokenPrepareForDecode() error {
 			return err
 		}
 		if c != ':' {
-			return &SyntaxError{"expected colon after object key", 0}
+			return &SyntaxError{"expected colon after object key", dec.InputOffset()}
 		}
 		dec.scanp++
 		dec.tokenState = tokenObjectValue
@@ -389,7 +441,6 @@ func (dec *Decoder) Token() (Token, error) {
 				err := dec.Decode(&x)
 				dec.tokenState = old
 				if err != nil {
-					clearOffset(err)
 					return nil, err
 				}
 				dec.tokenState = tokenObjectColon
@@ -403,17 +454,10 @@ func (dec *Decoder) Token() (Token, error) {
 			}
 			var x interface{}
 			if err := dec.Decode(&x); err != nil {
-				clearOffset(err)
 				return nil, err
 			}
 			return x, nil
 		}
-	}
-}
-
-func clearOffset(err error) {
-	if s, ok := err.(*SyntaxError); ok {
-		s.Offset = 0
 	}
 }
 
@@ -433,7 +477,7 @@ func (dec *Decoder) tokenError(c byte) (Token, error) {
 	case tokenObjectComma:
 		context = " after object key:value pair"
 	}
-	return nil, &SyntaxError{"invalid character " + quoteChar(int(c)) + " " + context, 0}
+	return nil, &SyntaxError{"invalid character " + quoteChar(c) + context, dec.InputOffset()}
 }
 
 // More reports whether there is another element in the
@@ -448,7 +492,7 @@ func (dec *Decoder) peek() (byte, error) {
 	for {
 		for i := dec.scanp; i < len(dec.buf); i++ {
 			c := dec.buf[i]
-			if isSpace(rune(c)) {
+			if isSpace(c) {
 				continue
 			}
 			dec.scanp = i
@@ -462,19 +506,9 @@ func (dec *Decoder) peek() (byte, error) {
 	}
 }
 
-/*
-TODO
-
-// EncodeToken writes the given JSON token to the stream.
-// It returns an error if the delimiters [ ] { } are not properly used.
-//
-// EncodeToken does not call Flush, because usually it is part of
-// a larger operation such as Encode, and those will call Flush when finished.
-// Callers that create an Encoder and then invoke EncodeToken directly,
-// without using Encode, need to call Flush when finished to ensure that
-// the JSON is written to the underlying writer.
-func (e *Encoder) EncodeToken(t Token) error  {
-	...
+// InputOffset returns the input stream byte offset of the current decoder position.
+// The offset gives the location of the end of the most recently returned token
+// and the beginning of the next token.
+func (dec *Decoder) InputOffset() int64 {
+	return dec.scanned + int64(dec.scanp)
 }
-
-*/

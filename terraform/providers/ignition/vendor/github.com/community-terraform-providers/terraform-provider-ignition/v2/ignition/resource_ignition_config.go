@@ -7,9 +7,24 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
-	"github.com/coreos/ignition/v2/config/v3_1/types"
+	"github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/coreos/ignition/v2/config/validate"
 )
+
+var httpHeaderReferenceResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"name": {
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Required: true,
+		},
+		"value": {
+			Type:     schema.TypeString,
+			ForceNew: true,
+			Required: true,
+		},
+	},
+}
 
 var configReferenceResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
@@ -22,6 +37,12 @@ var configReferenceResource = &schema.Resource{
 			Type:     schema.TypeString,
 			ForceNew: true,
 			Optional: true,
+		},
+		"http_headers": {
+			Type:     schema.TypeList,
+			ForceNew: true,
+			Optional: true,
+			Elem:     httpHeaderReferenceResource,
 		},
 	},
 }
@@ -75,6 +96,10 @@ func dataSourceConfig() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"kernel_arguments": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"replace": {
 				Type:     schema.TypeList,
@@ -158,6 +183,11 @@ func buildConfig(d *schema.ResourceData) (*types.Config, error) {
 		return nil, err
 	}
 
+	config.KernelArguments, err = buildKernelArguments(d)
+	if err != nil {
+		return nil, err
+	}
+
 	b, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
@@ -206,7 +236,29 @@ func buildConfigReference(raw map[string]interface{}) (*types.Resource, error) {
 		r.Verification.Hash = &hash
 	}
 
+	for _, hh := range raw["http_headers"].([]interface{}) {
+		h, err := buildConfigHTTPHeaderReference(hh.(map[string]interface{}))
+		if err != nil {
+			return r, err
+		}
+		r.HTTPHeaders = append(r.HTTPHeaders, h)
+	}
+
 	return r, nil
+}
+
+func buildConfigHTTPHeaderReference(raw map[string]interface{}) (types.HTTPHeader, error) {
+	h := types.HTTPHeader{}
+	name := raw["name"].(string)
+	if name != "" {
+		h.Name = name
+	}
+	value := raw["value"].(string)
+	if value != "" {
+		h.Value = &value
+	}
+
+	return h, nil
 }
 
 func buildStorage(d *schema.ResourceData) (types.Storage, error) {
@@ -298,6 +350,21 @@ func buildStorage(d *schema.ResourceData) (types.Storage, error) {
 
 	return storage, nil
 
+}
+func buildKernelArguments(d *schema.ResourceData) (types.KernelArguments, error) {
+	kargs := types.KernelArguments{}
+
+	k := d.Get("kernel_arguments").(string)
+	if k == "" {
+		return kargs, nil
+	}
+
+	err := json.Unmarshal([]byte(k), &kargs)
+	if err != nil {
+		return kargs, errors.Wrap(err, "No valid JSON found, make sure you're using .rendered and not .id")
+	}
+
+	return kargs, nil
 }
 
 func buildSystemd(d *schema.ResourceData) (types.Systemd, error) {

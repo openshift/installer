@@ -34,11 +34,10 @@ var (
 	ErrCompressionInvalid = errors.New("invalid compression method")
 
 	// Storage section errors
-	ErrFilePermissionsUnset      = errors.New("permissions unset, defaulting to 0644")
-	ErrDirectoryPermissionsUnset = errors.New("permissions unset, defaulting to 0755")
 	ErrFileUsedSymlink           = errors.New("file path includes link in config")
 	ErrDirectoryUsedSymlink      = errors.New("directory path includes link in config")
 	ErrLinkUsedSymlink           = errors.New("link path includes link in config")
+	ErrLinkTargetRequired        = errors.New("link target is required")
 	ErrHardLinkToDirectory       = errors.New("hard link target is a directory")
 	ErrDiskDeviceRequired        = errors.New("disk device is required")
 	ErrPartitionNumbersCollide   = errors.New("partition numbers collide")
@@ -48,13 +47,22 @@ var (
 	ErrVerificationAndNilSource  = errors.New("source must be specified if verification is specified")
 	ErrFilesystemInvalidFormat   = errors.New("invalid filesystem format")
 	ErrLabelNeedsFormat          = errors.New("filesystem must specify format if label is specified")
-	ErrFormatNilWithOthers       = errors.New("format cannot be empty when path, label, uuid, or options are specified")
+	ErrFormatNilWithOthers       = errors.New("format cannot be empty when path, label, uuid, wipeFilesystem, options, or mountOptions is specified")
 	ErrExt4LabelTooLong          = errors.New("filesystem labels cannot be longer than 16 characters when using ext4")
 	ErrBtrfsLabelTooLong         = errors.New("filesystem labels cannot be longer than 256 characters when using btrfs")
 	ErrXfsLabelTooLong           = errors.New("filesystem labels cannot be longer than 12 characters when using xfs")
 	ErrSwapLabelTooLong          = errors.New("filesystem labels cannot be longer than 15 characters when using swap")
 	ErrVfatLabelTooLong          = errors.New("filesystem labels cannot be longer than 11 characters when using vfat")
+	ErrLuksLabelTooLong          = errors.New("luks device labels cannot be longer than 47 characters")
+	ErrLuksNameContainsSlash     = errors.New("device names cannot contain slashes")
+	ErrInvalidLuksKeyFile        = errors.New("invalid key-file source")
+	ErrClevisPinRequired         = errors.New("missing required custom clevis pin")
+	ErrUnknownClevisPin          = errors.New("unsupported clevis pin")
+	ErrClevisConfigRequired      = errors.New("missing required custom clevis config")
+	ErrClevisCustomWithOthers    = errors.New("cannot use custom clevis config with tpm2, tang, or threshold")
+	ErrTangThumbprintRequired    = errors.New("thumbprint is required")
 	ErrFileIllegalMode           = errors.New("illegal file mode")
+	ErrModeSpecialBits           = errors.New("setuid/setgid/sticky bits are not supported in spec versions older than 3.4.0")
 	ErrBothIDAndNameSet          = errors.New("cannot set both id and name")
 	ErrLabelTooLong              = errors.New("partition labels may not exceed 36 characters")
 	ErrDoesntMatchGUIDRegex      = errors.New("doesn't match the form \"01234567-89AB-CDEF-EDCB-A98765432101\"")
@@ -62,8 +70,10 @@ var (
 	ErrNoPath                    = errors.New("path not specified")
 	ErrPathRelative              = errors.New("path not absolute")
 	ErrDirtyPath                 = errors.New("path is not fully simplified")
-	ErrSparesUnsupportedForLevel = errors.New("spares unsupported for arrays with a level greater than 0")
+	ErrRaidLevelRequired         = errors.New("raid level is required")
+	ErrSparesUnsupportedForLevel = errors.New("spares unsupported for linear and raid0 arrays")
 	ErrUnrecognizedRaidLevel     = errors.New("unrecognized raid level")
+	ErrRaidDevicesRequired       = errors.New("raid devices required")
 	ErrShouldNotExistWithOthers  = errors.New("shouldExist specified false with other options also specified")
 	ErrZeroesWithShouldNotExist  = errors.New("shouldExist is false for a partition and other partition(s) has start or size 0")
 	ErrNeedLabelOrNumber         = errors.New("a partition number >= 1 or a label must be specified")
@@ -90,7 +100,12 @@ var (
 	ErrEngineConfiguration             = errors.New("engine incorrectly configured")
 
 	// AWS S3 specific errors
+	ErrInvalidS3ARN             = errors.New("invalid S3 ARN format")
 	ErrInvalidS3ObjectVersionId = errors.New("invalid S3 object VersionId")
+
+	// Obsolete errors, left here for ABI compatibility
+	ErrFilePermissionsUnset      = errors.New("permissions unset, defaulting to 0644")
+	ErrDirectoryPermissionsUnset = errors.New("permissions unset, defaulting to 0755")
 )
 
 // NewNoInstallSectionError produces an error indicating the given unit, named

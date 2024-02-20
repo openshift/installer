@@ -2,13 +2,15 @@
 
 errcheck is a program for checking for unchecked errors in go programs.
 
-[![Build Status](https://travis-ci.org/kisielk/errcheck.png?branch=master)](https://travis-ci.org/kisielk/errcheck)
+![errcheck](https://github.com/kisielk/errcheck/workflows/errcheck/badge.svg)
 
 ## Install
 
-    go get -u github.com/kisielk/errcheck
+    go install github.com/kisielk/errcheck@latest
 
-errcheck requires Go 1.9 or newer and depends on the package go/packages from the golang.org/x/tools repository.
+errcheck requires Go 1.12 or newer, and depends on the package go/packages from the golang.org/x/tools repository.
+
+errcheck requires module support to be enabled, which is the default in Go 1.13 and later. If installing with Go 1.12 you will need to specify `GO111MODULE=on` if building within `$GOPATH`.
 
 ## Use
 
@@ -20,7 +22,7 @@ To check all packages beneath the current directory:
 
     errcheck ./...
 
-Or check all packages in your $GOPATH and $GOROOT:
+Or check all packages in your `$GOPATH` and `$GOROOT`:
 
     errcheck all
 
@@ -36,6 +38,18 @@ takes no arguments.
 The `-blank` flag enables checking for assignments of errors to the
 blank identifier. It takes no arguments.
 
+The `-abspath` flag prints the absolute paths to files with unchecked errors.
+
+The `-mod` flag sets the module download mode to use: `readonly` or `vendor`.
+
+### go/analysis
+
+The package provides `Analyzer` instance that can be used with
+[go/analysis](https://pkg.go.dev/golang.org/x/tools/go/analysis) API.
+
+Currently supported flags are `blank`, `assert`, `exclude`, and `excludeonly`.
+Just as the API itself, the analyzer is exprimental and may change in the
+future.
 
 ## Excluding functions
 
@@ -55,11 +69,27 @@ An example of an exclude file is:
     io/ioutil.ReadFile
     io.Copy(*bytes.Buffer)
     io.Copy(os.Stdout)
+
+    // Sometimes we don't care if a HTTP request fails.
     (*net/http.Client).Do
 
-The exclude list is combined with an internal list for functions in the Go standard library that
-have an error return type but are documented to never return an error.
+By default, the exclude list is combined with an internal list for functions in
+the Go standard library that have an error return type but are documented to never
+return an error. To disable the built-in exclude list, pass the `-excludeonly` flag.
 
+Run errcheck in `-verbose` mode to see the resulting list of added excludes.
+
+When using vendored dependencies, specify the full import path. For example:
+* Your project's import path is `example.com/yourpkg`
+* You've vendored `example.net/fmt2` as `vendor/example.net/fmt2`
+* You want to exclude `fmt2.Println` from error checking
+
+In this case, add this line to your exclude file:
+```
+example.com/yourpkg/vendor/example.net/fmt2.Println
+```
+
+Empty lines and lines starting with `//` are ignored.
 
 ### The deprecated method
 
@@ -96,13 +126,7 @@ specified for it. To disable this, specify a regex that matches nothing:
 The `-ignoretests` flag disables checking of `_test.go` files. It takes
 no arguments.
 
-## Cgo
-
-Currently errcheck is unable to check packages that import "C" due to limitations in the importer when used with versions earlier than Go 1.11.
-
-However, you can use errcheck on packages that depend on those which use cgo. In order for this to work you need to go install the cgo dependencies before running errcheck on the dependent packages.
-
-See https://github.com/kisielk/errcheck/issues/16 for more details.
+The `-ignoregenerated` flag disables checking of generated source code. It takes no arguments.
 
 ## Exit Codes
 

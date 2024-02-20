@@ -71,7 +71,7 @@ func validate(context path.ContextPath, v reflect.Value, validateFunc CustomVali
 		}
 	}
 
-	r.Merge(validateFunc(v, context.Copy()))
+	r.Merge(validateFunc(v, context))
 
 	switch v.Kind() {
 	case reflect.Struct:

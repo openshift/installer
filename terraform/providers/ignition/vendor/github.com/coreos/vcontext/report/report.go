@@ -131,7 +131,7 @@ func (r *Report) AddOn(c path.ContextPath, err error, k EntryKind) {
 	}
 	r.Entries = append(r.Entries, Entry{
 		Message: err.Error(),
-		Context: c,
+		Context: c.Copy(),
 		Kind:    k,
 	})
 }

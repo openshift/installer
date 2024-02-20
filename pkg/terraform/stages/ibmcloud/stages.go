@@ -25,7 +25,7 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		"ibmcloud",
 		"bootstrap",
-		[]providers.Provider{providers.IBM},
+		[]providers.Provider{providers.IBM, providers.Ignition},
 		stages.WithCustomBootstrapDestroy(customBootstrapDestroy),
 	),
 	stages.NewStage(
