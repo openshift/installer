@@ -165,6 +165,13 @@ var (
 	LoadBalancerTypeNLB     = LoadBalancerType("nlb")
 )
 
+// AWSSubnetMapping associates an allocation ID with a subnet for consumption by services which
+// can consume an allocation ID.
+type AWSSubnetMapping struct {
+	AllocationID string `json:"allocationID,omitempty"`
+	SubnetID     string `json:"subnetID,omitempty"`
+}
+
 // AWSLoadBalancerSpec defines the desired state of an AWS load balancer.
 type AWSLoadBalancerSpec struct {
 	// Name sets the name of the classic ELB load balancer. As per AWS, the name must be unique
@@ -196,6 +203,25 @@ type AWSLoadBalancerSpec struct {
 	// Subnets sets the subnets that should be applied to the control plane load balancer (defaults to discovered subnets for managed VPCs or an empty set for unmanaged VPCs)
 	// +optional
 	Subnets []string `json:"subnets,omitempty"`
+
+	// The IDs of the public subnets. You can specify only one subnet per Availability
+	// Zone. You must specify either subnets or subnet mappings.
+	//
+	// [Application Load Balancers] You must specify subnets from at least two Availability
+	// Zones. You cannot specify Elastic IP addresses for your subnets.
+	//
+	// [Application Load Balancers on Outposts] You must specify one Outpost subnet.
+	//
+	// [Application Load Balancers on Local Zones] You can specify subnets from
+	// one or more Local Zones.
+	//
+	// [Network Load Balancers] You can specify subnets from one or more Availability
+	// Zones. You can specify one Elastic IP address per subnet if you need static
+	// IP addresses for your internet-facing load balancer. For internal load balancers,
+	// you can specify one private IP address per subnet from the IPv4 range of
+	// the subnet. For internet-facing load balancer, you can specify one IPv6 address
+	// per subnet.
+	SubnetMappings []AWSSubnetMaping `json:"subnetMappings,omitempty"`
 
 	// HealthCheckProtocol sets the protocol type for ELB health check target
 	// default value is ELBProtocolSSL
