@@ -86,7 +86,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso", nil)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso", nil, "install")
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)

@@ -10,6 +10,8 @@ set -euo pipefail
 # The agent image will be also retrieved when its script is run
 cat <<EOF >/usr/local/share/assisted-service/agent-images.env
 SERVICE_IMAGE=$(image_for agent-installer-api-server)
+# TODO: remove when assisted-service changes to import cluster merges
+SERVICE_IMAGE=quay.io/rwsu1/assisted-service:latest
 CONTROLLER_IMAGE=$(image_for agent-installer-csr-approver)
 INSTALLER_IMAGE=$(image_for agent-installer-orchestrator)
 AGENT_DOCKER_IMAGE=$(image_for agent-installer-node-agent)

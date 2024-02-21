@@ -64,8 +64,10 @@ clear_issue "${status_issue}"
 sleep 1m
 
 # Install the host
-echo "Installing host..."
-curl -X POST ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install
+# echo "Installing host..."
+# curl -X POST ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install
+# TODO: temporary to test cluster import without initiating install
+echo "RWSU skip Installing host..."
 
 # while [[ "${cluster_status}" != "installed" ]]
 # do

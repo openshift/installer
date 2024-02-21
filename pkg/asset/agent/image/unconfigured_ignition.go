@@ -156,7 +156,7 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	enabledServices := getDefaultEnabledServices()
+	enabledServices := getDefaultEnabledServices("install")
 	if len(nmStateConfigs.StaticNetworkConfig) > 0 {
 		err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
 		if err != nil {

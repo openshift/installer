@@ -67,6 +67,7 @@ type agentTemplateData struct {
 	Proxy                     *v1beta1.Proxy
 	ConfigImageFiles          string
 	ImageTypeISO              string
+	WorkflowType              string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -124,9 +125,15 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
+	agentWorkflowType := "addnodes"
+
 	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentHostsAsset.Hosts, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
+	}
+
+	if agentWorkflowType == "addnodes" {
+		nodeZeroIP = "127.0.0.1"
 	}
 
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
@@ -171,10 +178,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 
 	imageTypeISO := "full-iso"
-	platform := agentManifests.AgentClusterInstall.Spec.PlatformType
-	if platform == hiveext.ExternalPlatformType {
-		imageTypeISO = "minimal-iso"
-	}
+	// platform := agentManifests.AgentClusterInstall.Spec.PlatformType
+	// if platform == hiveext.ExternalPlatformType {
+	// 	imageTypeISO = "minimal-iso"
+	// }
 
 	agentTemplateData := getTemplateData(
 		clusterName,
@@ -189,7 +196,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		osImage,
 		infraEnv.Spec.Proxy,
 		imageTypeISO,
-		agentConfigAsset.Config)
+		agentConfigAsset.Config,
+		agentWorkflowType)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -233,7 +241,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	enabledServices := getDefaultEnabledServices()
+	enabledServices := getDefaultEnabledServices(agentWorkflowType)
 	// Enable pre-network-manager-config.service only when there are network configs defined
 	if len(agentManifests.StaticNetworkConfigs) != 0 {
 		enabledServices = append(enabledServices, "pre-network-manager-config.service")
@@ -262,12 +270,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getDefaultEnabledServices() []string {
-	return []string{
+func getDefaultEnabledServices(workflowType string) []string {
+	enabledServices := []string{
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
 		"agent-register-infraenv.service",
-		"agent-register-cluster.service",
 		"agent.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
@@ -279,6 +286,16 @@ func getDefaultEnabledServices() []string {
 		"set-hostname.service",
 		"start-cluster-installation.service",
 	}
+
+	if workflowType == "install" {
+		enabledServices = append(enabledServices, "agent-register-cluster.service")
+	}
+
+	if workflowType == "addnodes" {
+		enabledServices = append(enabledServices, "agent-import-cluster.service")
+	}
+
+	return enabledServices
 }
 
 func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err error) {
@@ -312,7 +329,8 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
 	imageTypeISO string,
-	agentConfig *agent.Config) *agentTemplateData {
+	agentConfig *agent.Config,
+	workflowType string) *agentTemplateData {
 
 	cpAgents := 0
 	wrkAgents := 0
@@ -340,6 +358,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
+		WorkflowType:              workflowType,
 	}
 }
 
