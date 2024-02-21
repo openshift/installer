@@ -193,8 +193,6 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	case nutanix.Name:
 		// TODO
 	case vsphere.Name:
-		vcenters := installConfig.Config.VSphere.VCenters
-
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&VSphere,
@@ -207,8 +205,6 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 					"--leader-elect=false",
 				},
 				map[string]string{
-					"VSPHERE_USERNAME":                      vcenters[0].Username,
-					"VSPHERE_PASSWORD":                      vcenters[0].Password,
 					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
 					"EXP_CLUSTER_RESOURCE_SET":              "true",
 				},
