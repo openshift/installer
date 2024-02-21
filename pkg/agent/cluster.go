@@ -130,6 +130,11 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 	agentRestAPILive := czero.API.Rest.IsRestAPILive()
 
+	timeout := 30 * time.Minute
+	timer := time.Now().Add(timeout)
+	zone, _ := timer.Zone()
+	logrus.Infof("Waiting up to %v (up to %v %s) for apis to come up", timeout, timer.Format(time.Kitchen), zone)
+
 	// Both API's are not available
 	if !agentRestAPILive && !clusterKubeAPILive {
 		// Current API Status: Agent Rest API: down, Bootstrap Kube API: down
@@ -139,10 +144,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			// After allowing time for the interface to come up, check if Node0 can be accessed via ssh
 			if elapsedSinceInit > 2*time.Minute && !czero.CanSSHToNodeZero() {
 				logrus.Info("Cannot access Rendezvous Host. There may be a network configuration problem, check console for additional info")
-			} else {
-				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
 			}
-
 			time.Sleep(30 * time.Second)
 			return false, false, nil
 		}
