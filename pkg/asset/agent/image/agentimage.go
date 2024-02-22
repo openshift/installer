@@ -153,21 +153,16 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		// Defaulting the ignition image path if no info file is found
 		ignImagePath = filepath.Join(a.tmpPath, "images", "ignition.img")
 		ignStartOffset = 0
-		ignMaxLength = 0
-	}
-
-	// Verify that the compressed ignition buffer archive does not exceed the embed area (usually 256 Kb)
-	if ignMaxLength == 0 {
-		// Checking the file size if no ignition length is provided
 		fileInfo, err := os.Stat(ignImagePath)
 		if err != nil {
 			return err
 		}
+		ignMaxLength = int64(fileInfo.Size())
 
-		if len(ignitionBuff) > int(fileInfo.Size()) {
-			return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fileInfo.Size())
-		}
-	} else if int64(len(ignitionBuff)) > ignMaxLength {
+	}
+
+	// Verify that the compressed ignition buffer archive does not exceed the embed area (usually 256 Kb)
+	if int64(len(ignitionBuff)) > ignMaxLength {
 		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
 	}
 
