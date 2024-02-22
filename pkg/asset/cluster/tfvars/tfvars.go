@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	baremetalbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/baremetal"
+	gcpbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
@@ -515,6 +516,29 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		defer cancel()
+
+		bucketName := gcpbootstrap.GetBootstrapStorageName(clusterID.InfraID)
+		bucketHandle, err := gcpbootstrap.CreateBucketHandle(ctx, bucketName)
+		if err != nil {
+			return fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
+		}
+
+		bootstrapIgnURL, err := gcpbootstrap.ProvisionBootstrapStorage(ctx, installConfig, bucketHandle, clusterID.InfraID)
+		if err != nil {
+			return fmt.Errorf("failed to provision gcp bootstrap storage resources: %w", err)
+		}
+
+		if err := gcpbootstrap.FillBucket(ctx, bucketHandle, bootstrapIgn); err != nil {
+			return fmt.Errorf("failed to fill bootstrap ignition bucket: %w", err)
+		}
+
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(bootstrapIgnURL, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to create gcp ignition shim: %w", err)
+		}
+
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
 		st, err := rhcospkg.FetchCoreOSBuild(ctx)
 		if err != nil {
@@ -551,6 +575,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				InfrastructureName:  clusterID.InfraID,
 				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
 				UserTags:            tags,
+				IgnitionShim:        string(shim),
 			},
 		)
 		if err != nil {
