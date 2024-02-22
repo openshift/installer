@@ -207,7 +207,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if len(platformSpec.PublicIpv4Pool) > 0 {
 			for _, allocationId := range platformSpec.PublicIpv4Pool {
 				subnetMappings = append(subnetMappings, capa.AWSSubnetMapping{
-					AllocationID: allocationId,
+					AllocationID: string(allocationId),
 				})
 			}
 			awsCluster.Spec.ControlPlaneLoadBalancer.SubnetMappings = subnetMappings

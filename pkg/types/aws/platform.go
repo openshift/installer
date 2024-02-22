@@ -102,6 +102,12 @@ type Platform struct {
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
+
+	// PublicIpv4Pool is an optional field that can be used to tell the installation process to use
+	// Public IPv4 address that you bring to your AWS account with BYOIP.
+	// +optional
+	PublicIpv4Pool string `json:"publicIpv4Pool,omitempty"`
+
 	// PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional
 	// during bootstrap destroy.
 	// +optional

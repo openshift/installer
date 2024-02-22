@@ -260,7 +260,7 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer) (*infrav1.LoadBalancer, e
 		t = aws.String(elbv2.LoadBalancerTypeEnumGateway)
 	}
 	input := &elbv2.CreateLoadBalancerInput{
-		Name:    aws.String(spec.Name),
+		Name:    aws.String(spec.Name),		
 		Subnets: aws.StringSlice(spec.SubnetIDs),
 		Tags:    converters.MapToV2Tags(spec.Tags),
 		Scheme:  aws.String(string(spec.Scheme)),
@@ -269,6 +269,20 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer) (*infrav1.LoadBalancer, e
 	if s.scope.ControlPlaneLoadBalancer().LoadBalancerType != infrav1.LoadBalancerTypeNLB {
 		input.SecurityGroups = aws.StringSlice(spec.SecurityGroupIDs)
 	}
+
+	// subnetMappings := []*elbv2.SubnetMapping{}
+	// if len(lbSpec.SubnetMappings) >= len(spec.SubnetIDs) {
+	// 	for idx, subnetMapping := range lbSpec.SubnetMappings {
+	// 		subnetMappings = append(subnetMappings, &elbv2.SubnetMapping{
+	// 			AllocationId: &subnetMapping.AllocationID,
+	// 			SubnetId:     &spec.SubnetIDs[idx],
+	// 		})
+	// 	}
+
+	// 	input.SubnetMappings = subnetMappings
+	// } else {
+	// 	input.Subnets = aws.StringSlice(spec.SubnetIDs)
+	// }
 
 	if s.scope.VPC().IsIPv6Enabled() {
 		input.IpAddressType = aws.String("dualstack")
