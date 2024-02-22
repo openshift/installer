@@ -110,6 +110,11 @@ func DataSourceIBMPIVolume() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates master volume name",
 			},
+			"io_throttle_rate": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Amount of iops assigned to the volume",
+			},
 		},
 	}
 }
@@ -145,6 +150,7 @@ func dataSourceIBMPIVolumeRead(ctx context.Context, d *schema.ResourceData, meta
 	d.Set("primary_role", volumedata.PrimaryRole)
 	d.Set("auxiliary_volume_name", volumedata.AuxVolumeName)
 	d.Set("master_volume_name", volumedata.MasterVolumeName)
+	d.Set("io_throttle_rate", volumedata.IoThrottleRate)
 
 	return nil
 }

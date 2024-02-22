@@ -123,37 +123,3 @@ func dataSourceIBMSchematicsOutputRead(d *schema.ResourceData, meta interface{})
 func dataSourceIBMSchematicsOutputID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
-
-func dataSourceOutputValuesListFlattenOutputValues(result []schematicsv1.OutputValuesInner) (outputValues interface{}) {
-	for _, outputValuesItem := range result {
-		outputValues = dataSourceOutputValuesListOutputValuesToMap(outputValuesItem)
-	}
-
-	return outputValues
-}
-
-func dataSourceOutputValuesListOutputValuesToMap(outputValuesItem schematicsv1.OutputValuesInner) (outputValuesMap map[string]interface{}) {
-	outputValuesMap = map[string]interface{}{}
-
-	if outputValuesItem.Folder != nil {
-		outputValuesMap["folder"] = outputValuesItem.Folder
-	}
-	if outputValuesItem.ID != nil {
-		outputValuesMap["id"] = outputValuesItem.ID
-	}
-
-	m := []flex.Map{}
-
-	for _, outputValues := range outputValuesItem.OutputValues {
-		m = append(m, flex.Flatten(outputValues))
-	}
-
-	if outputValuesItem.OutputValues != nil {
-		outputValuesMap["output_values"] = m
-	}
-	if outputValuesItem.ValueType != nil {
-		outputValuesMap["value_type"] = outputValuesItem.ValueType
-	}
-
-	return outputValuesMap
-}

@@ -490,23 +490,27 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
 		// Search the project for a dns zone with the specified base domain.
+		// When the user has selected a custom DNS solution, the zones should be skipped.
 		publicZoneName := ""
-		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
-			publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get GCP public zone")
-			}
-			publicZoneName = publicZone.Name
-		}
-
 		privateZoneName := ""
-		if installConfig.Config.GCP.NetworkProjectID != "" {
-			privateZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get GCP private zone")
+
+		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
+			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get GCP public zone")
+				}
+				publicZoneName = publicZone.Name
 			}
-			if privateZone != nil {
-				privateZoneName = privateZone.Name
+
+			if installConfig.Config.GCP.NetworkProjectID != "" {
+				privateZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get GCP private zone")
+				}
+				if privateZone != nil {
+					privateZoneName = privateZone.Name
+				}
 			}
 		}
 

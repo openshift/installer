@@ -193,7 +193,23 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 	case nutanix.Name:
 		// TODO
 	case vsphere.Name:
-		// TODO
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&VSphere,
+				[]string{
+					"-v=2",
+					"--metrics-bind-addr=0",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+					"--leader-elect=false",
+				},
+				map[string]string{
+					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
+					"EXP_CLUSTER_RESOURCE_SET":              "true",
+				},
+			),
+		)
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}

@@ -303,6 +303,11 @@ func resourceIBMISReservedIPUpdate(d *schema.ResourceData, meta interface{}) err
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error updating the reserved IP %s\n%s", err, response)
 		}
+
+		_, err = isWaitForReservedIpAvailable(sess, subnetID, reservedIPID, d.Timeout(schema.TimeoutCreate), d)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error waiting for the reserved IP to be available: %s", err)
+		}
 	}
 	return resourceIBMISReservedIPRead(d, meta)
 }

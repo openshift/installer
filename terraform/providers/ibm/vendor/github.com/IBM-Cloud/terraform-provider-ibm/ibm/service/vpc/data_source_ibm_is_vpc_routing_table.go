@@ -60,6 +60,14 @@ func DataSourceIBMIBMIsVPCRoutingTable() *schema.Resource {
 				Description:   "The routing table identifier.",
 			},
 
+			"advertise_routes_to": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The ingress sources to advertise routes to. Routes in the table with `advertise` enabled will be advertised to these sources.The enumerated values for this property are expected to expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected property value was encountered.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			rtCreateAt: &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -297,6 +305,9 @@ func dataSourceIBMIBMIsVPCRoutingTableRead(context context.Context, d *schema.Re
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting route_vpc_zone_ingress: %s", err))
 	}
 
+	if err = d.Set("advertise_routes_to", routingTable.AdvertiseRoutesTo); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting value of advertise_routes_to: %s", err))
+	}
 	routes := []map[string]interface{}{}
 	if routingTable.Routes != nil {
 		for _, modelItem := range routingTable.Routes {

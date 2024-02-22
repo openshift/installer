@@ -407,7 +407,7 @@ var (
 		FeatureGateAttributes: FeatureGateAttributes{
 			Name: FeatureGateSignatureStores,
 		},
-		OwningJiraComponent: "over-the-air-updates",
+		OwningJiraComponent: "Cluster Version Operator",
 		ResponsiblePerson:   "lmohanty",
 		OwningProduct:       ocpSpecific,
 	}
@@ -430,5 +430,35 @@ var (
 		OwningJiraComponent: "MachineConfigOperator",
 		ResponsiblePerson:   "jhernand",
 		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateUpgradeStatus = FeatureGateName("UpgradeStatus")
+	upgradeStatus            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateUpgradeStatus,
+		},
+		OwningJiraComponent: "Cluster Version Operator",
+		ResponsiblePerson:   "pmuller",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateTranslateStreamCloseWebsocketRequests = FeatureGateName("TranslateStreamCloseWebsocketRequests")
+	translateStreamCloseWebsocketRequests            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateTranslateStreamCloseWebsocketRequests,
+		},
+		OwningJiraComponent: "kube-apiserver",
+		ResponsiblePerson:   "akashem",
+		OwningProduct:       kubernetes,
+	}
+
+	FeatureGateVolumeGroupSnapshot = FeatureGateName("VolumeGroupSnapshot")
+	volumeGroupSnapshot            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateVolumeGroupSnapshot,
+		},
+		OwningJiraComponent: "Storage / Kubernetes External Components",
+		ResponsiblePerson:   "fbertina",
+		OwningProduct:       kubernetes,
 	}
 )

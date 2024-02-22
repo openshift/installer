@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -240,11 +240,24 @@ func isFalse(v *bool) bool {
 	return v == nil || !*v
 }
 
+func toString(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
+}
+
 func lcFirst(s string) string {
+	if len(s) < 1 {
+		return s
+	}
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
 func ucFirst(s string) string {
+	if len(s) < 1 {
+		return s
+	}
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 

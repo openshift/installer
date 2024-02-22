@@ -9,6 +9,10 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/infrastructure"
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
+	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
+	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
+	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
@@ -41,6 +45,9 @@ import (
 func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastructure.Provider, error) {
 	switch platform {
 	case awstypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(&awscapi.Provider{}), nil
+		}
 		if fg.Enabled(configv1.FeatureGateInstallAlternateInfrastructureAWS) {
 			return awsinfra.InitializeProvider(), nil
 		}
@@ -52,6 +59,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case baremetaltypes.Name:
 		return terraform.InitializeProvider(baremetal.PlatformStages), nil
 	case gcptypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
+		}
 		return terraform.InitializeProvider(gcp.PlatformStages), nil
 	case ibmcloudtypes.Name:
 		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
@@ -66,6 +76,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case ovirttypes.Name:
 		return terraform.InitializeProvider(ovirt.PlatformStages), nil
 	case vspheretypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(vspherecapi.Provider{}), nil
+		}
 		return terraform.InitializeProvider(vsphere.PlatformStages), nil
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"

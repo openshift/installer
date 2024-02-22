@@ -40,8 +40,9 @@ func ResourceIBMIsBackupPolicy() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Default:       "volume",
+				ForceNew:      true,
 				ConflictsWith: []string{"match_resource_types"},
-				ValidateFunc:  validate.InvokeValidator("ibm_is_backup_policy", "match_resource_types"),
+				ValidateFunc:  validate.InvokeValidator("ibm_is_backup_policy", "match_resource_type"),
 				Description:   "A resource type this backup policy applies to. Resources that have both a matching type and a matching user tag will be subject to the backup policy.",
 			},
 			"match_user_tags": &schema.Schema{
@@ -50,6 +51,14 @@ func ResourceIBMIsBackupPolicy() *schema.Resource {
 				Description: "The user tags this backup policy applies to. Resources that have both a matching user tag and a matching type will be subject to the backup policy.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
+			},
+			"included_content": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Set:         schema.HashString,
+				Description: "The included content for backups created using this policy",
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_backup_policy", "included_content")},
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
@@ -183,13 +192,20 @@ func ResourceIBMIsBackupPolicyValidator() *validate.ResourceValidator {
 	)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
-			Identifier:                 "match_resource_type",
-			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Identifier:                 "included_content",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
-			Optional:                   true,
-			Regexp:                     `^[a-z][a-z0-9]*(_[a-z0-9]+)*$`,
-			MinValueLength:             1,
-			MaxValueLength:             128,
+			Required:                   true,
+			AllowedValues:              "boot_volume, data_volumes",
+		},
+	)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "match_resource_type",
+			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			AllowedValues:              "instance, volume",
 		},
 	)
 	resourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_backup_policy", Schema: validateSchema}
@@ -203,27 +219,30 @@ func resourceIBMIsBackupPolicyCreate(context context.Context, d *schema.Resource
 	}
 
 	createBackupPolicyOptions := &vpcv1.CreateBackupPolicyOptions{}
+	backupPolicyPrototype := &vpcv1.BackupPolicyPrototype{}
 
 	if matchResourceType, ok := d.GetOk("match_resource_type"); ok {
-		matchResourceTypes := matchResourceType.(string)
-		matchResourceTypesList := []string{matchResourceTypes}
-		createBackupPolicyOptions.SetMatchResourceTypes(matchResourceTypesList)
-	} else if _, ok := d.GetOk("match_resource_types"); ok {
-		createBackupPolicyOptions.SetMatchResourceTypes(flex.ExpandStringList((d.Get("match_resource_types").(*schema.Set)).List()))
+		backupPolicyPrototype.MatchResourceType = core.StringPtr(matchResourceType.(string))
+	} else if matchResourceTypes, ok := d.GetOk("match_resource_types"); ok {
+		matchResourceTypeList := flex.ExpandStringList((matchResourceTypes.(*schema.Set)).List())
+		backupPolicyPrototype.MatchResourceType = core.StringPtr(matchResourceTypeList[0])
+	}
+	if _, ok := d.GetOk("included_content"); ok {
+		backupPolicyPrototype.IncludedContent = flex.ExpandStringList((d.Get("included_content").(*schema.Set)).List())
 	}
 
 	if _, ok := d.GetOk("match_user_tags"); ok {
-		createBackupPolicyOptions.SetMatchUserTags((flex.ExpandStringList((d.Get("match_user_tags").(*schema.Set)).List())))
+		backupPolicyPrototype.MatchUserTags = flex.ExpandStringList((d.Get("match_user_tags").(*schema.Set)).List())
 	}
 	if _, ok := d.GetOk("name"); ok {
-		createBackupPolicyOptions.SetName(d.Get("name").(string))
+		backupPolicyPrototype.Name = core.StringPtr(d.Get("name").(string))
 	}
 	if resGroup, ok := d.GetOk("resource_group"); ok {
 		resourceGroupStr := resGroup.(string)
 		resourceGroup := vpcv1.ResourceGroupIdentity{
 			ID: &resourceGroupStr,
 		}
-		createBackupPolicyOptions.SetResourceGroup(&resourceGroup)
+		backupPolicyPrototype.ResourceGroup = &resourceGroup
 	}
 
 	if _, ok := d.GetOk("scope"); ok {
@@ -234,15 +253,16 @@ func resourceIBMIsBackupPolicyCreate(context context.Context, d *schema.Resource
 				bkpPolicyScopePrototype.CRN = core.StringPtr(crnStr)
 			}
 		}
-		createBackupPolicyOptions.SetScope(&bkpPolicyScopePrototype)
+		backupPolicyPrototype.Scope = &bkpPolicyScopePrototype
 	}
-
-	backupPolicy, response, err := vpcClient.CreateBackupPolicyWithContext(context, createBackupPolicyOptions)
+	createBackupPolicyOptions.SetBackupPolicyPrototype(backupPolicyPrototype)
+	backupPolicyIntf, response, err := vpcClient.CreateBackupPolicyWithContext(context, createBackupPolicyOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateBackupPolicyWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("[ERROR] CreateBackupPolicyWithContext failed %s\n%s", err, response))
 	}
 
+	backupPolicy := backupPolicyIntf.(*vpcv1.BackupPolicy)
 	d.SetId(*backupPolicy.ID)
 
 	return resourceIBMIsBackupPolicyRead(context, d, meta)
@@ -258,7 +278,7 @@ func resourceIBMIsBackupPolicyRead(context context.Context, d *schema.ResourceDa
 
 	getBackupPolicyOptions.SetID(d.Id())
 
-	backupPolicy, response, err := vpcClient.GetBackupPolicyWithContext(context, getBackupPolicyOptions)
+	backupPolicyIntf, response, err := vpcClient.GetBackupPolicyWithContext(context, getBackupPolicyOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -267,19 +287,24 @@ func resourceIBMIsBackupPolicyRead(context context.Context, d *schema.ResourceDa
 		log.Printf("[DEBUG] GetBackupPolicyWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("[ERROR] GetBackupPolicyWithContext failed %s\n%s", err, response))
 	}
+	backupPolicy := backupPolicyIntf.(*vpcv1.BackupPolicy)
 
-	if backupPolicy.MatchResourceTypes != nil {
-		if err = d.Set("match_resource_types", backupPolicy.MatchResourceTypes); err != nil {
+	if backupPolicy.MatchResourceType != nil {
+		matchResourceTypes := *backupPolicy.MatchResourceType
+		matchResourceTypesList := []string{matchResourceTypes}
+		if err = d.Set("match_resource_types", matchResourceTypesList); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_types: %s", err))
 		}
-	}
-	if backupPolicy.MatchResourceTypes != nil {
-		for _, matchResourceTypes := range backupPolicy.MatchResourceTypes {
-			if err = d.Set("match_resource_type", matchResourceTypes); err != nil {
-				return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_type: %s", err))
-			}
+		if err = d.Set("match_resource_type", backupPolicy.MatchResourceType); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_resource_type: %s", err))
 		}
 	}
+	if backupPolicy.IncludedContent != nil {
+		if err = d.Set("included_content", backupPolicy.IncludedContent); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting included_content: %s", err))
+		}
+	}
+
 	if backupPolicy.MatchUserTags != nil {
 		if err = d.Set("match_user_tags", backupPolicy.MatchUserTags); err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting match_user_tags: %s", err))
@@ -393,6 +418,10 @@ func resourceIBMIsBackupPolicyUpdate(context context.Context, d *schema.Resource
 	}
 	if d.HasChange("name") {
 		patchVals.Name = core.StringPtr(d.Get("name").(string))
+		hasChange = true
+	}
+	if d.HasChange("included_content") {
+		patchVals.IncludedContent = (flex.ExpandStringList((d.Get("included_content").(*schema.Set)).List()))
 		hasChange = true
 	}
 	updateBackupPolicyOptions.SetIfMatch(d.Get("version").(string))

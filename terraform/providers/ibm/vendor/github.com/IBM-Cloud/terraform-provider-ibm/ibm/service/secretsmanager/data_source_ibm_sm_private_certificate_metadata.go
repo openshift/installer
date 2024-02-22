@@ -176,11 +176,6 @@ func DataSourceIbmSmPrivateCertificateMetadata() *schema.Resource {
 							Computed:    true,
 							Description: "The units for the secret rotation time interval.",
 						},
-						"rotate_keys": &schema.Schema{
-							Type:        schema.TypeBool,
-							Computed:    true,
-							Description: "Determines whether Secrets Manager rotates the private key for your public certificate automatically.Default is `false`. If it is set to `true`, the service generates and stores a new private key for your rotated certificate.",
-						},
 					},
 				},
 			},
@@ -402,9 +397,6 @@ func dataSourceIbmSmPrivateCertificateMetadataRotationPolicyToMap(model secretsm
 		}
 		if model.Unit != nil {
 			modelMap["unit"] = *model.Unit
-		}
-		if model.RotateKeys != nil {
-			modelMap["rotate_keys"] = *model.RotateKeys
 		}
 		return modelMap, nil
 	} else {

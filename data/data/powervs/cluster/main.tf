@@ -170,4 +170,5 @@ module "iaas" {
   resource_group        = var.powervs_resource_group
   powervs_zone          = var.powervs_zone
   service_instance_name = var.powervs_service_instance_name
+  wait_for_workspace    = var.powervs_wait_for_workspace
 }

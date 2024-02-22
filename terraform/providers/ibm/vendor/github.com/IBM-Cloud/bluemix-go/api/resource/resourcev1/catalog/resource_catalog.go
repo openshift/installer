@@ -12,7 +12,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/utils"
 )
 
-//ErrCodeServiceDoesnotExist ...
+// ErrCodeServiceDoesnotExist ...
 const ErrCodeServicePlanDoesnotExist = "ServicePlanDoesnotExist"
 const ErrCodeServiceDoesnotExist = "ServiceDoesnotExist"
 const ErrCodeServiceDeploymentNotFound = "ServiceDeploymentNotFound"
@@ -125,7 +125,7 @@ func (r *resourceCatalog) GetServiceName(serviceID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if resp["kind"] == "runtime" || resp["kind"] == "service" || resp["kind"] == "iaas" || resp["kind"] == "platform_service" || resp["kind"] == "template" {
+	if resp["kind"] == "runtime" || resp["kind"] == "service" || resp["kind"] == "iaas" || resp["kind"] == "platform_service" || resp["kind"] == "template" || resp["kind"] == "composite" {
 		if name, ok := resp["name"].(string); ok {
 			return name, nil
 		}
@@ -351,7 +351,7 @@ func (r *resourceCatalog) GetServicePlans(service models.Service) ([]models.Serv
 
 func isService(e models.Service) bool {
 	// TODO: COS is 'iaas' kind, but considered to be a service
-	if e.Kind == "service" || e.Kind == "iaas" {
+	if e.Kind == "service" || e.Kind == "iaas" || e.Kind == "composite" {
 		return true
 	}
 	return false

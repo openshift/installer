@@ -74,10 +74,82 @@ func DataSourceIBMISImages() *schema.Resource {
 							Computed:    true,
 							Description: "The status of this image",
 						},
+						"status_reasons": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The reasons for the current status (if any).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"code": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A snake case string succinctly identifying the status reason.",
+									},
+									"message": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "An explanation of the status reason.",
+									},
+									"more_info": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about this status reason.",
+									},
+								},
+							},
+						},
 						"visibility": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Whether the image is publicly visible or private to the account",
+						},
+						"operating_system": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"architecture": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The operating system architecture",
+									},
+									"dedicated_host_only": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Images with this operating system can only be used on dedicated hosts or dedicated host groups",
+									},
+									"display_name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "A unique, display-friendly name for the operating system",
+									},
+									"family": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The software family for this operating system",
+									},
+									"href": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this operating system",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The globally unique name for this operating system",
+									},
+									"vendor": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The vendor of the operating system",
+									},
+									"version": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The major release version of this operating system",
+									},
+								},
+							},
 						},
 						"os": {
 							Type:        schema.TypeString,
@@ -88,6 +160,30 @@ func DataSourceIBMISImages() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The operating system architecture",
+						},
+						"resource_group": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The resource group for this IPsec policy.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"href": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this resource group.",
+									},
+									"id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this resource group.",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The user-defined name for this resource group.",
+									},
+								},
+							},
 						},
 						"crn": {
 							Type:        schema.TypeString,
@@ -282,6 +378,21 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 			"visibility":   *image.Visibility,
 			"os":           *image.OperatingSystem.Name,
 			"architecture": *image.OperatingSystem.Architecture,
+		}
+		if len(image.StatusReasons) > 0 {
+			l["status_reasons"] = dataSourceIBMIsImageFlattenStatusReasons(image.StatusReasons)
+		}
+		if image.ResourceGroup != nil {
+			resourceGroupList := []map[string]interface{}{}
+			resourceGroupMap := dataSourceImageResourceGroupToMap(*image.ResourceGroup)
+			resourceGroupList = append(resourceGroupList, resourceGroupMap)
+			l["resource_group"] = resourceGroupList
+		}
+		if image.OperatingSystem != nil {
+			operatingSystemList := []map[string]interface{}{}
+			operatingSystemMap := dataSourceIBMISImageOperatingSystemToMap(*image.OperatingSystem)
+			operatingSystemList = append(operatingSystemList, operatingSystemMap)
+			l["operating_system"] = operatingSystemList
 		}
 		if image.File != nil && image.File.Checksums != nil {
 			l[isImageCheckSum] = *image.File.Checksums.Sha256

@@ -117,6 +117,7 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 
 func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUpi bool) field.ErrorList {
 	var fdNames []string
+	tagUrnPattern := regexp.MustCompile(`^(urn):(vmomi):(InventoryServiceTag):([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}):([^:]+)$`)
 	allErrs := field.ErrorList{}
 	topologyFld := fldPath.Child("topology")
 	var associatedVCenter *vsphere.VCenter
@@ -169,6 +170,16 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 
 			if !strings.Contains(failureDomain.Topology.Datastore, failureDomain.Topology.Datacenter) {
 				return append(allErrs, field.Invalid(topologyFld.Child("datastore"), failureDomain.Topology.Datastore, "the datastore defined does not exist in the correct datacenter"))
+			}
+		}
+
+		if len(failureDomain.Topology.TagIDs) > 10 {
+			allErrs = append(allErrs, field.Invalid(topologyFld.Child("tagIDs"), failureDomain.Topology.TagIDs, "a maximum of 10 tags are allowed"))
+		}
+
+		for _, tagID := range failureDomain.Topology.TagIDs {
+			if tagUrnPattern.FindStringSubmatch(tagID) == nil {
+				allErrs = append(allErrs, field.Invalid(topologyFld.Child("tagIDs"), failureDomain.Topology.TagIDs, "tag ID must be in the format of urn:vmomi:InventoryServiceTag:<UUID>:GLOBAL"))
 			}
 		}
 

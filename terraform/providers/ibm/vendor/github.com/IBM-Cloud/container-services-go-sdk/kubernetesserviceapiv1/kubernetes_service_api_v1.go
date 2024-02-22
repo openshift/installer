@@ -10093,7 +10093,7 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteAssignmentWit
 }
 
 // AttachSatelliteHost : Attach a host to an IBM Cloud Satellite location
-// Create a script to run on a Red Hat Enterprise Linux 7 or RHCOS (CoreOS) host in your on-premises infrastructure. The script attaches
+// Create a script to run on a Red Hat Enterprise Linux or RHCOS (CoreOS) host in your on-premises infrastructure. The script attaches
 // the host to your IBM Cloud Satellite location. The host must have access to the public network in order for the
 // script to complete.
 func (kubernetesServiceApi *KubernetesServiceApiV1) AttachSatelliteHost(attachSatelliteHostOptions *AttachSatelliteHostOptions) (response []byte, err error) {
@@ -10141,6 +10141,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) AttachSatelliteHostWithConte
 	}
 	if attachSatelliteHostOptions.OperatingSystem != nil {
 		body["operatingSystem"] = attachSatelliteHostOptions.OperatingSystem
+	}
+	if attachSatelliteHostOptions.HostLinkAgentEndpoint != nil {
+		body["hostLinkAgentEndpoint"] = attachSatelliteHostOptions.HostLinkAgentEndpoint
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -17000,6 +17003,9 @@ type AttachSatelliteHostOptions struct {
 	// The name or ID of the Satellite location.
 	Controller *string
 
+	//Optional: Endpoint for the link agent to use with the reduced firewall attach script.
+	HostLinkAgentEndpoint *string
+
 	// Key-value pairs to label the host, such as cpu=4 to describe the host capabilities.
 	Labels map[string]string
 
@@ -17028,6 +17034,12 @@ func (options *AttachSatelliteHostOptions) SetController(controller string) *Att
 // SetLabels : Allow user to set Labels
 func (options *AttachSatelliteHostOptions) SetLabels(labels map[string]string) *AttachSatelliteHostOptions {
 	options.Labels = labels
+	return options
+}
+
+// SetHostLinkAgentEndpoint : Allow user to set host link endpoint for reduced firewall attach script
+func (options *AttachSatelliteHostOptions) SetHostLinkAgentEndpoint(hostLinkAgentEndpoint string) *AttachSatelliteHostOptions {
+	options.HostLinkAgentEndpoint = core.StringPtr(hostLinkAgentEndpoint)
 	return options
 }
 

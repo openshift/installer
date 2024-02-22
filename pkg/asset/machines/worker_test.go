@@ -38,6 +38,7 @@ metadata:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-ssh
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -64,6 +65,7 @@ metadata:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-disable-hyperthreading
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -87,6 +89,7 @@ metadata:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-disable-hyperthreading
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
@@ -104,6 +107,7 @@ metadata:
     machineconfiguration.openshift.io/role: worker
   name: 99-worker-ssh
 spec:
+  baseOSExtensionsContainerImage: ""
   config:
     ignition:
       version: 3.2.0
