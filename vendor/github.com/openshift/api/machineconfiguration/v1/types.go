@@ -517,8 +517,6 @@ const (
 	MachineConfigPoolBuildSuccess MachineConfigPoolConditionType = "BuildSuccess"
 
 	MachineConfigPoolBuildFailed MachineConfigPoolConditionType = "BuildFailed"
-
-	MachineConfigPoolBuildInterrupted MachineConfigPoolConditionType = "BuildInterrupted"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -369,16 +369,14 @@ type RouteIngressConditionType string
 const (
 	// RouteAdmitted means the route is able to service requests for the provided Host
 	RouteAdmitted RouteIngressConditionType = "Admitted"
-	// RouteUnservableInFutureVersions indicates that the route is using an unsupported
-	// configuration that may be incompatible with a future version of OpenShift.
-	RouteUnservableInFutureVersions RouteIngressConditionType = "UnservableInFutureVersions"
+	// TODO: add other route condition types
 )
 
 // RouteIngressCondition contains details for the current condition of this route on a particular
 // router.
 type RouteIngressCondition struct {
 	// Type is the type of the condition.
-	// Currently only Admitted or UnservableInFutureVersions.
+	// Currently only Admitted.
 	Type RouteIngressConditionType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=RouteIngressConditionType"`
 	// Status is the status of the condition.
 	// Can be True, False, Unknown.

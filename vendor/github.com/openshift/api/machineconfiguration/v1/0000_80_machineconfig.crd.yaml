@@ -1,95 +1,93 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: machineconfigs.machineconfiguration.openshift.io
+  labels:
+    "openshift.io/operator-managed": ""
   annotations:
     api-approved.openshift.io: https://github.com/openshift/api/pull/1453
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
-  labels:
-    openshift.io/operator-managed: ""
-  name: machineconfigs.machineconfiguration.openshift.io
 spec:
+  # group name to use for REST API: /apis/<group>/<version>
   group: machineconfiguration.openshift.io
-  names:
-    kind: MachineConfig
-    plural: machineconfigs
-    shortNames:
-    - mc
-    singular: machineconfig
+  # either Namespaced or Cluster
   scope: Cluster
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: machineconfigs
+    # singular name to be used as an alias on the CLI and for display
+    singular: machineconfig
+    # kind is normally the PascalCased singular type. Your resource manifests use this.
+    kind: MachineConfig
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+      - mc
+  # list of versions supported by this CustomResourceDefinition
   versions:
-  - additionalPrinterColumns:
-    - description: Version of the controller that generated the machineconfig. This
-        will be empty if the machineconfig is not managed by a controller.
-      jsonPath: .metadata.annotations.machineconfiguration\.openshift\.io/generated-by-controller-version
-      name: GeneratedByController
-      type: string
-    - description: Version of the Ignition Config defined in the machineconfig.
-      jsonPath: .spec.config.ignition.version
-      name: IgnitionVersion
-      type: string
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: "MachineConfig defines the configuration for a machine \n Compatibility
-          level 1: Stable within a major release for a minimum of 12 months or 3 minor
-          releases (whichever is longer)."
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: MachineConfigSpec is the spec for MachineConfig
-            properties:
-              baseOSExtensionsContainerImage:
-                description: BaseOSExtensionsContainerImage specifies the remote location
-                  that will be used to fetch the extensions container matching a new-format
-                  OS image
-                type: string
-              config:
-                description: Config is a Ignition Config object.
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              extensions:
-                description: extensions contains a list of additional features that
-                  can be enabled on host
-                items:
+    - name: v1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+      additionalPrinterColumns:
+        - jsonPath: .metadata.annotations.machineconfiguration\.openshift\.io/generated-by-controller-version
+          description: Version of the controller that generated the machineconfig. This will be empty if the machineconfig is not managed by a controller.
+          name: GeneratedByController
+          type: string
+        - jsonPath: .spec.config.ignition.version
+          description: Version of the Ignition Config defined in the machineconfig.
+          name: IgnitionVersion
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      # openAPIV3Schema has been hand modified. Do not overwrite directly with generated crd fields as we do not allow all config fields.
+      schema:
+        openAPIV3Schema:
+          description: "MachineConfig defines the configuration for a machine \n Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer)."
+          type: object
+          properties:
+            apiVersion:
+              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              type: string
+            kind:
+              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: MachineConfigSpec is the spec for MachineConfig
+              type: object
+              properties:
+                baseOSExtensionsContainerImage:
+                  description: BaseOSExtensionsContainerImage specifies the remote location that will be used to fetch the extensions container matching a new-format OS image
                   type: string
-                type: array
-                x-kubernetes-list-type: atomic
-              fips:
-                description: fips controls FIPS mode
-                type: boolean
-              kernelArguments:
-                description: kernelArguments contains a list of kernel arguments to
-                  be added
-                items:
+                config:
+                  description: Config is a Ignition Config object.
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                extensions:
+                  description: extensions contains a list of additional features that can be enabled on host
+                  type: array
+                  items:
+                    type: string
+                  x-kubernetes-list-type: atomic
+                fips:
+                  description: fips controls FIPS mode
+                  type: boolean
+                kernelArguments:
+                  description: kernelArguments contains a list of kernel arguments to be added
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+                  x-kubernetes-list-type: atomic
+                kernelType:
+                  description: kernelType contains which kernel we want to be running like default (traditional), realtime, 64k-pages (aarch64 only).
                   type: string
-                nullable: true
-                type: array
-                x-kubernetes-list-type: atomic
-              kernelType:
-                description: kernelType contains which kernel we want to be running
-                  like default (traditional), realtime, 64k-pages (aarch64 only).
-                type: string
-              osImageURL:
-                description: OSImageURL specifies the remote location that will be
-                  used to fetch the OS.
-                type: string
-            type: object
-        type: object
-    served: true
-    storage: true
+                osImageURL:
+                  description: OSImageURL specifies the remote location that will be used to fetch the OS.
+                  type: string
