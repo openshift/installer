@@ -17,6 +17,7 @@ var (
 	// name of the region.
 	Regions = map[string]string{
 		// List from: https://cloud.google.com/compute/docs/regions-zones/
+		"africa-south1":           "Johannesburg, South Africa",
 		"asia-east1":              "Changhua County, Taiwan",
 		"asia-east2":              "Hong Kong",
 		"asia-northeast1":         "Tokyo, Japan",
