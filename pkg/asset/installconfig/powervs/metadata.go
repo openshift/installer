@@ -24,7 +24,8 @@ type MetadataAPI interface {
 // do not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	BaseDomain string
+	BaseDomain      string
+	PublishStrategy types.PublishingStrategy
 
 	accountID      string
 	apiKey         string
@@ -36,8 +37,8 @@ type Metadata struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string) *Metadata {
-	return &Metadata{BaseDomain: baseDomain}
+func NewMetadata(config *types.InstallConfig) *Metadata {
+	return &Metadata{BaseDomain: config.BaseDomain, PublishStrategy: config.Publish}
 }
 
 // AccountID returns the IBM Cloud account ID associated with the authentication
@@ -105,7 +106,7 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 		m.client = client
 	}
 
-	if m.cisInstanceCRN == "" {
+	if m.PublishStrategy == types.ExternalPublishingStrategy && m.cisInstanceCRN == "" {
 		m.cisInstanceCRN, err = m.client.GetInstanceCRNByName(ctx, m.BaseDomain, types.ExternalPublishingStrategy)
 		if err != nil {
 			return "", err
@@ -135,7 +136,7 @@ func (m *Metadata) DNSInstanceCRN(ctx context.Context) (string, error) {
 		m.client = client
 	}
 
-	if m.dnsInstanceCRN == "" {
+	if m.PublishStrategy == types.InternalPublishingStrategy && m.dnsInstanceCRN == "" {
 		m.dnsInstanceCRN, err = m.client.GetInstanceCRNByName(ctx, m.BaseDomain, types.InternalPublishingStrategy)
 		if err != nil {
 			return "", err
