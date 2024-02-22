@@ -190,16 +190,6 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	// Padding 0's at the end if the ignition content has less bytes in the image file (in case of cdboot.img)
-	paddingLength := ignMaxLength - int64(len(ignitionBuff))
-	if paddingLength > 0 {
-		padding := make([]byte, paddingLength)
-		_, err = ignitionImg.Write(padding)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
