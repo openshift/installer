@@ -120,7 +120,6 @@ func resourceIbmSchematicsAgentDeployCreate(context context.Context, d *schema.R
 
 	d.SetId(fmt.Sprintf("%s/%s", *deployAgentJobOptions.AgentID, *agentDeployJob.JobID))
 	log.Printf("[INFO] Agent : %s", *deployAgentJobOptions.AgentID)
-	d.Set("status_message", *agentDeployJob.StatusMessage)
 
 	_, err = isWaitForAgentAvailable(context, schematicsClient, *deployAgentJobOptions.AgentID, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
@@ -152,10 +151,13 @@ func isWaitForAgentAvailable(context context.Context, schematicsClient *schemati
 func agentRefreshFunc(schematicsClient *schematicsv1.SchematicsV1, id string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-			AgentID:        core.StringPtr(id),
-			XFeatureAgents: core.BoolPtr(true),
-			Profile:        core.StringPtr("detailed"),
+			AgentID: core.StringPtr(id),
+			Profile: core.StringPtr("detailed"),
 		}
+		ff := map[string]string{
+			"X-Feature-Agents": "true",
+		}
+		getAgentDataOptions.Headers = ff
 
 		agent, response, err := schematicsClient.GetAgentData(getAgentDataOptions)
 		if err != nil {
@@ -180,9 +182,12 @@ func resourceIbmSchematicsAgentDeployRead(context context.Context, d *schema.Res
 	}
 
 	getAgentDataOptions := &schematicsv1.GetAgentDataOptions{
-		XFeatureAgents: core.BoolPtr(true),
-		Profile:        core.StringPtr("detailed"),
+		Profile: core.StringPtr("detailed"),
 	}
+	ff := map[string]string{
+		"X-Feature-Agents": "true",
+	}
+	getAgentDataOptions.Headers = ff
 
 	getAgentDataOptions.SetAgentID(parts[0])
 	agentData, response, err := schematicsClient.GetAgentDataWithContext(context, getAgentDataOptions)
@@ -269,7 +274,6 @@ func resourceIbmSchematicsAgentDeployUpdate(context context.Context, d *schema.R
 			return diag.FromErr(fmt.Errorf("DeployAgentJobWithContext failed %s\n%s", err, response))
 		}
 		d.SetId(fmt.Sprintf("%s/%s", *deployAgentJobOptions.AgentID, *agentDeployJob.JobID))
-		d.Set("status_message", *agentDeployJob.StatusMessage)
 
 		_, err = isWaitForAgentAvailable(context, schematicsClient, parts[0], d.Timeout(schema.TimeoutUpdate))
 		if err != nil {

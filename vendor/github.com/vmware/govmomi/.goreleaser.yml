@@ -34,13 +34,12 @@ archives:
   - id: govcbuild
     builds:
       - govc
-    name_template: "govc_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    replacements: &replacements
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      freebsd: FreeBSD
-      amd64: x86_64
+    name_template: >-
+      govc_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides: &overrides
       - goos: windows
         format: zip
@@ -52,8 +51,12 @@ archives:
   - id: vcsimbuild
     builds:
       - vcsim
-    name_template: "vcsim_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
-    replacements: *replacements
+    name_template: >-
+      vcsim_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format_overrides: *overrides
     files: *extrafiles
 
@@ -77,7 +80,7 @@ brews:
   - name: govc
     ids:
       - govcbuild
-    tap:
+    repository:
       owner: govmomi
       name: homebrew-tap
       # TODO: create token in specified tap repo, add as secret to govmomi repo and reference in release workflow
@@ -88,7 +91,7 @@ brews:
       name: Alfred the Narwhal
       email: cna-alfred@vmware.com
     folder: Formula
-    homepage: "https://github.com/vmware/govmomi/blob/master/govc/README.md"
+    homepage: "https://github.com/vmware/govmomi/blob/main/govc/README.md"
     description: "govc is a vSphere CLI built on top of govmomi."
     test: |
       system "#{bin}/govc version"
@@ -97,7 +100,7 @@ brews:
   - name: vcsim
     ids:
       - vcsimbuild
-    tap:
+    repository:
       owner: govmomi
       name: homebrew-tap
       # TODO: create token in specified tap repo, add as secret to govmomi repo and reference in release workflow
@@ -108,7 +111,7 @@ brews:
       name: Alfred the Narwhal
       email: cna-alfred@vmware.com
     folder: Formula
-    homepage: "https://github.com/vmware/govmomi/blob/master/vcsim/README.md"
+    homepage: "https://github.com/vmware/govmomi/blob/main/vcsim/README.md"
     description: "vcsim is a vSphere API simulator built on top of govmomi."
     test: |
       system "#{bin}/vcsim -h"

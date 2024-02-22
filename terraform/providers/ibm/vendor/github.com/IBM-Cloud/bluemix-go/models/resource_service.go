@@ -104,7 +104,7 @@ func (s *Service) UnmarshalJSON(data []byte) error {
 	switch s.Kind {
 	case "runtime":
 		s.Metadata = &RuntimeResourceMetadata{}
-	case "service", "iaas":
+	case "service", "iaas", "composite":
 		s.Metadata = &ServiceResourceMetadata{}
 	case "platform_service":
 		s.Metadata = &PlatformServiceResourceMetadata{}

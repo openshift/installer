@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -109,6 +110,25 @@ func DataSourceIBMIsBackupPolicyJobs() *schema.Resource {
 										Computed:    true,
 										Description: "The unique user-defined name for this backup policy plan.",
 									},
+									"remote": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the resource associated with this reference is remote and therefore may not be directly retrievable.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"href": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this region.",
+												},
+												"name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The globally unique name for this region.",
+												},
+											},
+										},
+									},
 									"resource_type": &schema.Schema{
 										Type:        schema.TypeString,
 										Computed:    true,
@@ -148,6 +168,73 @@ func DataSourceIBMIsBackupPolicyJobs() *schema.Resource {
 							Description: "The resource type.",
 						},
 						"source_volume": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The source volume this backup was created from (may be[deleted](https://cloud.ibm.com/apidocs/vpc#deleted-resources)).",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this volume.",
+									},
+									"deleted": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"more_info": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "Link to documentation about deleted resources.",
+												},
+											},
+										},
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this volume.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this volume.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique user-defined name for this volume.",
+									},
+									"remote": &schema.Schema{
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "If present, this property indicates that the resource associated with this reference is remote and therefore may not be directly retrievable.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"href": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The URL for this region.",
+												},
+												"name": &schema.Schema{
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The globally unique name for this region.",
+												},
+											},
+										},
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
+						"source_instance": &schema.Schema{
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "The source volume this backup was created from (may be[deleted](https://cloud.ibm.com/apidocs/vpc#deleted-resources)).",
@@ -408,11 +495,24 @@ func dataSourceBackupPolicyJobCollectionJobsToMap(jobsItem vpcv1.BackupPolicyJob
 	log.Println("jobsItem.Source")
 	log.Println(jobsItem.Source)
 	if jobsItem.Source != nil {
-		sourceVolumeList := []map[string]interface{}{}
-		jobSource := jobsItem.Source.(*vpcv1.BackupPolicyJobSource)
-		sourceVolumeMap := dataSourceBackupPolicyJobCollectionJobsSourceVolumeToMap(*jobSource)
-		sourceVolumeList = append(sourceVolumeList, sourceVolumeMap)
-		jobsMap["source_volume"] = sourceVolumeList
+		switch reflect.TypeOf(jobsItem.Source).String() {
+		case "*vpcv1.BackupPolicyJobSourceVolumeReference":
+			{
+				jobSource := jobsItem.Source.(*vpcv1.BackupPolicyJobSourceVolumeReference)
+				sourceVolumeList := []map[string]interface{}{}
+				sourceVolumeMap := dataSourceBackupPolicyJobCollectionJobsSourceVolumeToMap(*jobSource)
+				sourceVolumeList = append(sourceVolumeList, sourceVolumeMap)
+				jobsMap["source_volume"] = sourceVolumeList
+			}
+		case "*vpcv1.BackupPolicyJobSourceInstanceReference":
+			{
+				jobSource := jobsItem.Source.(*vpcv1.BackupPolicyJobSourceInstanceReference)
+				sourceVolumeList := []map[string]interface{}{}
+				sourceVolumeMap := dataSourceBackupPolicyJobCollectionJobsSourceInstanceToMap(*jobSource)
+				sourceVolumeList = append(sourceVolumeList, sourceVolumeMap)
+				jobsMap["source_instance"] = sourceVolumeList
+			}
+		}
 	}
 	if jobsItem.Status != nil {
 		jobsMap["status"] = jobsItem.Status
@@ -457,6 +557,13 @@ func dataSourceBackupPolicyJobCollectionJobsBackupPolicyPlanToMap(backupPolicyPl
 	if backupPolicyPlanItem.Name != nil {
 		backupPolicyPlanMap["name"] = backupPolicyPlanItem.Name
 	}
+	if backupPolicyPlanItem.Remote != nil {
+		remoteMap, err := resourceIBMIsSnapshotConsistencyGroupBackupPolicyPlanRemoteToMap(backupPolicyPlanItem.Remote)
+		if err != nil {
+			return remoteMap
+		}
+		backupPolicyPlanMap["remote"] = []map[string]interface{}{remoteMap}
+	}
 	if backupPolicyPlanItem.ResourceType != nil {
 		backupPolicyPlanMap["resource_type"] = backupPolicyPlanItem.ResourceType
 	}
@@ -474,7 +581,7 @@ func dataSourceBackupPolicyJobCollectionBackupPolicyPlanDeletedToMap(deletedItem
 	return deletedMap
 }
 
-func dataSourceBackupPolicyJobCollectionJobsSourceVolumeToMap(sourceVolumeItem vpcv1.BackupPolicyJobSource) (sourceVolumeMap map[string]interface{}) {
+func dataSourceBackupPolicyJobCollectionJobsSourceVolumeToMap(sourceVolumeItem vpcv1.BackupPolicyJobSourceVolumeReference) (sourceVolumeMap map[string]interface{}) {
 	sourceVolumeMap = map[string]interface{}{}
 
 	if sourceVolumeItem.CRN != nil {
@@ -495,11 +602,53 @@ func dataSourceBackupPolicyJobCollectionJobsSourceVolumeToMap(sourceVolumeItem v
 	if sourceVolumeItem.Name != nil {
 		sourceVolumeMap["name"] = sourceVolumeItem.Name
 	}
+	if sourceVolumeItem.Remote != nil {
+		remoteMap, err := resourceIBMIsSnapshotConsistencyGroupVolumeRemoteToMap(sourceVolumeItem.Remote)
+		if err != nil {
+			return remoteMap
+		}
+		sourceVolumeMap["remote"] = []map[string]interface{}{remoteMap}
+	}
+	if sourceVolumeItem.ResourceType != nil {
+		sourceVolumeMap["resource_type"] = sourceVolumeItem.ResourceType
+	}
+	return sourceVolumeMap
+}
 
+func dataSourceBackupPolicyJobCollectionJobsSourceInstanceToMap(sourceVolumeItem vpcv1.BackupPolicyJobSourceInstanceReference) (sourceVolumeMap map[string]interface{}) {
+	sourceVolumeMap = map[string]interface{}{}
+
+	if sourceVolumeItem.CRN != nil {
+		sourceVolumeMap["crn"] = sourceVolumeItem.CRN
+	}
+	if sourceVolumeItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourceBackupPolicyJobCollectionSourceInstanceDeletedToMap(*sourceVolumeItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		sourceVolumeMap["deleted"] = deletedList
+	}
+	if sourceVolumeItem.Href != nil {
+		sourceVolumeMap["href"] = sourceVolumeItem.Href
+	}
+	if sourceVolumeItem.ID != nil {
+		sourceVolumeMap["id"] = sourceVolumeItem.ID
+	}
+	if sourceVolumeItem.Name != nil {
+		sourceVolumeMap["name"] = sourceVolumeItem.Name
+	}
 	return sourceVolumeMap
 }
 
 func dataSourceBackupPolicyJobCollectionSourceVolumeDeletedToMap(deletedItem vpcv1.VolumeReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+func dataSourceBackupPolicyJobCollectionSourceInstanceDeletedToMap(deletedItem vpcv1.InstanceReferenceDeleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

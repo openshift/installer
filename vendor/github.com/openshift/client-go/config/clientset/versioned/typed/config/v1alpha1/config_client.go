@@ -12,12 +12,27 @@ import (
 
 type ConfigV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	BackupsGetter
+	ClusterImagePoliciesGetter
+	ImagePoliciesGetter
 	InsightsDataGathersGetter
 }
 
 // ConfigV1alpha1Client is used to interact with features provided by the config.openshift.io group.
 type ConfigV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *ConfigV1alpha1Client) Backups() BackupInterface {
+	return newBackups(c)
+}
+
+func (c *ConfigV1alpha1Client) ClusterImagePolicies() ClusterImagePolicyInterface {
+	return newClusterImagePolicies(c)
+}
+
+func (c *ConfigV1alpha1Client) ImagePolicies(namespace string) ImagePolicyInterface {
+	return newImagePolicies(c, namespace)
 }
 
 func (c *ConfigV1alpha1Client) InsightsDataGathers() InsightsDataGatherInterface {

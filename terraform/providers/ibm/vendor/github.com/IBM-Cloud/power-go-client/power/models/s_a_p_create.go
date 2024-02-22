@@ -51,13 +51,13 @@ type SAPCreate struct {
 	// The name of the SSH Key to provide to the server for authenticating
 	SSHKeyName string `json:"sshKeyName,omitempty"`
 
-	// The storage affinity data; ignored if storagePool is provided; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// The storage affinity data; ignored if storagePool is provided; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StorageAffinity *StorageAffinity `json:"storageAffinity,omitempty"`
 
-	// Storage Pool for server deployment; if provided then storageAffinity and storageType will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// Storage Pool for server deployment; if provided then storageAffinity and storageType will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StoragePool string `json:"storagePool,omitempty"`
 
-	// Storage type for server deployment; will be ignored if storagePool or storageAffinity is provided; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// Storage type for server deployment; if storageType is not provided the storage type will default to 'tier3'.
 	StorageType string `json:"storageType,omitempty"`
 
 	// System type used to host the instance. Only e880, e980, e1080 are supported

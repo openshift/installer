@@ -1,0 +1,226 @@
+// Package gcp generates Machine objects for gcp.
+package gcp
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+	capi "sigs.k8s.io/cluster-api/api/v1beta1"
+
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/types"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+)
+
+const (
+	numReplicas = 3
+)
+
+func Test_GenerateMachines(t *testing.T) {
+	cases := []struct {
+		name              string
+		installConfig     *installconfig.InstallConfig
+		expectedGCPConfig *capg.GCPMachine
+		expectedError     string
+	}{
+		{
+			name:              "base configuration",
+			installConfig:     getBaseInstallConfig(),
+			expectedGCPConfig: getBaseGCPMachine(),
+		},
+		{
+			name:              "additional labels",
+			installConfig:     getICWithLabels(),
+			expectedGCPConfig: getGCPMachineWithLabels(),
+		},
+		{
+			name:              "onhostmaintenance",
+			installConfig:     getICWithOnHostMaintenance(),
+			expectedGCPConfig: getGCPMachineWithOnHostMaintenance(),
+		},
+		{
+			name:              "confidentialcompute",
+			installConfig:     getICWithConfidentialCompute(),
+			expectedGCPConfig: getGCPMachineWithConfidentialCompute(),
+		},
+		{
+			name:              "secureboot",
+			installConfig:     getICWithSecureBoot(),
+			expectedGCPConfig: getGCPMachineWithSecureBoot(),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			installConfig := tc.installConfig
+			ic := installConfig.Config
+			pool := ic.ControlPlane
+			infraID := "012345678"
+			rhcosImage := "rhcos-415-92-202311241643-0-gcp-x86-64"
+
+			mpool := gcptypes.MachinePool{
+				InstanceType: "n2-standard-4",
+				OSDisk: gcptypes.OSDisk{
+					DiskSizeGB: 128,
+					DiskType:   "pd-ssd",
+				},
+			}
+			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
+			mpool.Set(pool.Platform.GCP)
+			pool.Platform.GCP = &mpool
+
+			gcpMachines, err := GenerateMachines(
+				installConfig,
+				infraID,
+				pool,
+				rhcosImage,
+			)
+
+			if tc.expectedError != "" {
+				assert.Equal(t, tc.expectedError, err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.NotEmpty(t, gcpMachines)
+
+				assert.Equal(t, numReplicas*2, len(gcpMachines))
+				// Check first set of GCP and CAPI machines
+				actualGCPMachine := gcpMachines[0].Object
+				actualCapiMachine := gcpMachines[1].Object
+				assert.Equal(t, tc.expectedGCPConfig, actualGCPMachine)
+				assert.Equal(t, getBaseCapiMachine(), actualCapiMachine)
+			}
+		})
+	}
+}
+
+func getBaseInstallConfig() *installconfig.InstallConfig {
+	return &installconfig.InstallConfig{
+		AssetBase: installconfig.AssetBase{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ocp-edge-cluster-0",
+					Namespace: "cluster-0",
+				},
+				BaseDomain: "testing.com",
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: ptr.To(int64(numReplicas)),
+					Platform: types.MachinePoolPlatform{},
+				},
+				Platform: types.Platform{
+					GCP: &gcptypes.Platform{
+						ProjectID: "my-project",
+						Region:    "us-east1",
+					},
+				},
+			},
+		},
+	}
+}
+
+func getICWithLabels() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.UserLabels = []gcptypes.UserLabel{{Key: "foo", Value: "bar"},
+		{Key: "id", Value: "1234"}}
+	return ic
+}
+
+func getICWithOnHostMaintenance() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{OnHostMaintenance: "Terminate"}
+	return ic
+}
+
+func getICWithConfidentialCompute() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{ConfidentialCompute: "Enabled"}
+	return ic
+}
+
+func getICWithSecureBoot() *installconfig.InstallConfig {
+	ic := getBaseInstallConfig()
+	ic.Config.Platform.GCP.DefaultMachinePlatform = &gcptypes.MachinePool{SecureBoot: "Enabled"}
+	return ic
+}
+
+func getBaseGCPMachine() *capg.GCPMachine {
+	subnet := "012345678-master-subnet"
+	image := "rhcos-415-92-202311241643-0-gcp-x86-64"
+	diskType := "pd-ssd"
+	gcpMachine := &capg.GCPMachine{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			Kind:       "GCPMachine",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "012345678-master-0",
+			Labels: map[string]string{
+				"cluster.x-k8s.io/control-plane": "",
+			},
+		},
+		Spec: capg.GCPMachineSpec{
+			InstanceType: "n2-standard-4",
+			Subnet:       &subnet,
+			Image:        &image,
+			AdditionalLabels: capg.Labels{
+				"kubernetes-io-cluster-012345678": "owned",
+			},
+			RootDeviceSize: 128,
+			RootDeviceType: ptr.To(capg.DiskType(diskType)),
+		},
+	}
+	return gcpMachine
+}
+
+func getGCPMachineWithLabels() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	gcpMachine.Spec.AdditionalLabels = capg.Labels{
+		"kubernetes-io-cluster-012345678": "owned",
+		"foo":                             "bar",
+		"id":                              "1234"}
+	return gcpMachine
+}
+
+func getGCPMachineWithOnHostMaintenance() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	var maint capg.HostMaintenancePolicy = "Terminate"
+	gcpMachine.Spec.OnHostMaintenance = &maint
+	return gcpMachine
+}
+
+func getGCPMachineWithConfidentialCompute() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	var cc capg.ConfidentialComputePolicy = "Enabled"
+	gcpMachine.Spec.ConfidentialCompute = &cc
+	return gcpMachine
+}
+
+func getGCPMachineWithSecureBoot() *capg.GCPMachine {
+	gcpMachine := getBaseGCPMachine()
+	secureBoot := capg.GCPShieldedInstanceConfig{SecureBoot: capg.SecureBootPolicy("Enabled")}
+	gcpMachine.Spec.ShieldedInstanceConfig = &secureBoot
+	return gcpMachine
+}
+
+func getBaseCapiMachine() *capi.Machine {
+	capiMachine := &capi.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "012345678-master-0",
+			Labels: map[string]string{
+				"cluster.x-k8s.io/control-plane": "",
+			},
+		},
+		Spec: capi.MachineSpec{
+			ClusterName: "012345678",
+			InfrastructureRef: v1.ObjectReference{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "GCPMachine",
+				Name:       "012345678-master-0",
+			},
+		},
+	}
+	return capiMachine
+}

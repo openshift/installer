@@ -36,7 +36,7 @@ type CreateDataVolume struct {
 	// List of volumes to base volume anti-affinity policy against; required if requesting anti-affinity and antiAffinityPVMInstances is not provided
 	AntiAffinityVolumes []string `json:"antiAffinityVolumes"`
 
-	// Type of Disk, required if affinityPolicy and volumePool not provided, otherwise ignored
+	// Type of Disk; if diskType is not provided the disk type will default to 'tier3'.
 	DiskType string `json:"diskType,omitempty"`
 
 	// Volume Name
@@ -53,7 +53,7 @@ type CreateDataVolume struct {
 	// Required: true
 	Size *float64 `json:"size"`
 
-	// Volume pool where the volume will be created; if provided then diskType and affinityPolicy values will be ignored
+	// Volume pool where the volume will be created; if provided then affinityPolicy value will be ignored
 	VolumePool string `json:"volumePool,omitempty"`
 }
 

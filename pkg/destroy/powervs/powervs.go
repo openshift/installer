@@ -751,11 +751,16 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 				return "", fmt.Errorf("failed to get instance, response is: %v", response)
 			}
 
-			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
-				if resourceInstance.GUID != nil && *resourceInstance.Name == name {
-					return *resourceInstance.GUID, nil
-				}
+			if resourceInstance.Type == nil || resourceInstance.GUID == nil {
+				continue
 			}
+			if *resourceInstance.Type != "service_instance" && *resourceInstance.Type != "composite_instance" {
+				continue
+			}
+			if *resourceInstance.Name != name {
+				continue
+			}
+			return *resourceInstance.GUID, nil
 		}
 
 		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances

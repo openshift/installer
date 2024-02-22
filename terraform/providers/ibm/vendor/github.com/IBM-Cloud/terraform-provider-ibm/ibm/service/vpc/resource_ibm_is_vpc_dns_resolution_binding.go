@@ -404,7 +404,7 @@ func resourceIBMIsVPCDnsResolutionBindingDelete(context context.Context, d *sche
 	deleteVPCDnsResolutionBindingOptions.SetVPCID(vpcId)
 	deleteVPCDnsResolutionBindingOptions.SetID(id)
 
-	response, err := sess.DeleteVPCDnsResolutionBindingWithContext(context, deleteVPCDnsResolutionBindingOptions)
+	_, response, err := sess.DeleteVPCDnsResolutionBindingWithContext(context, deleteVPCDnsResolutionBindingOptions)
 	if err != nil {
 		log.Printf("[DEBUG] DeleteVPCDnsResolutionBindingWithContext failed %s\n%s", err, response)
 		if response.StatusCode != 404 {

@@ -8,6 +8,17 @@
 //
 // For product documentation, see: https://cloud.google.com/service-usage/
 //
+// # Library status
+//
+// These client libraries are officially supported by Google. However, this
+// library is considered complete and is in maintenance mode. This means
+// that we will address critical bugs and security issues but will not add
+// any new features.
+//
+// When possible, we recommend using our newer
+// [Cloud Client Libraries for Go](https://pkg.go.dev/cloud.google.com/go)
+// that are still actively being worked and iterated on.
+//
 // # Creating a client
 //
 // Usage example:
@@ -17,28 +28,31 @@
 //	ctx := context.Background()
 //	serviceusageService, err := serviceusage.NewService(ctx)
 //
-// In this example, Google Application Default Credentials are used for authentication.
-//
-// For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
+// In this example, Google Application Default Credentials are used for
+// authentication. For information on how to create and obtain Application
+// Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
 //
 // # Other authentication options
 //
-// By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
+// By default, all available scopes (see "Constants") are used to authenticate.
+// To restrict scopes, use [google.golang.org/api/option.WithScopes]:
 //
 //	serviceusageService, err := serviceusage.NewService(ctx, option.WithScopes(serviceusage.ServiceManagementScope))
 //
-// To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
+// To use an API key for authentication (note: some APIs do not support API
+// keys), use [google.golang.org/api/option.WithAPIKey]:
 //
 //	serviceusageService, err := serviceusage.NewService(ctx, option.WithAPIKey("AIza..."))
 //
-// To use an OAuth token (e.g., a user token obtained via a three-legged OAuth flow), use option.WithTokenSource:
+// To use an OAuth token (e.g., a user token obtained via a three-legged OAuth
+// flow, use [google.golang.org/api/option.WithTokenSource]:
 //
 //	config := &oauth2.Config{...}
 //	// ...
 //	token, err := config.Exchange(ctx, ...)
 //	serviceusageService, err := serviceusage.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
 //
-// See https://godoc.org/google.golang.org/api/option/ for details on options.
+// See [google.golang.org/api/option.ClientOption] for details on options.
 package serviceusage // import "google.golang.org/api/serviceusage/v1"
 
 import (
@@ -176,7 +190,7 @@ type ServicesService struct {
 type AddEnableRulesMetadata struct {
 }
 
-// AddEnableRulesResponse: The response message of "AddEnableRules"
+// AddEnableRulesResponse: The response message of `AddEnableRules`
 // method.
 type AddEnableRulesResponse struct {
 	// AddedValues: The values added to the parent consumer policy.
@@ -1126,12 +1140,11 @@ type ConsumerPolicy struct {
 	// used for concurrency control.
 	Etag string `json:"etag,omitempty"`
 
-	// Name: Output only. The resource name of the policy. For example, We
-	// only allow consumer policy name as "default" for now:
+	// Name: Output only. The resource name of the policy. We only allow
+	// consumer policy name as `default` for now:
 	// `projects/12345/consumerPolicies/default`,
 	// `folders/12345/consumerPolicies/default`,
-	// `organizations/12345/consumerPolicies/default`. Legacy format:
-	// `projects/12345/consumerPoly`
+	// `organizations/12345/consumerPolicies/default`.
 	Name string `json:"name,omitempty"`
 
 	// UpdateTime: The last-modified time.
@@ -1259,6 +1272,10 @@ type Control struct {
 	// control plane feature (like quota and billing) will be enabled. The
 	// recommended value for most services is servicecontrol.googleapis.com
 	Environment string `json:"environment,omitempty"`
+
+	// MethodPolicies: Defines policies applying to the API methods of the
+	// service.
+	MethodPolicies []*MethodPolicy `json:"methodPolicies,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Environment") to
 	// unconditionally include in API requests. By default, fields with
@@ -1773,8 +1790,7 @@ type EnableRule struct {
 
 	// Groups: DEPRECATED: Please use field `values`. Service group should
 	// have prefix `groups/`. The names of the service groups that are
-	// enabled (Not Implemented). go/predefined-service-groups. Example:
-	// `groups/googleServices`.
+	// enabled (Not Implemented). Example: `groups/googleServices`.
 	Groups []string `json:"groups,omitempty"`
 
 	// Services: DEPRECATED: Please use field `values`. Service should have
@@ -1783,8 +1799,8 @@ type EnableRule struct {
 	Services []string `json:"services,omitempty"`
 
 	// Values: The names of the services or service groups that are enabled.
-	// Example: `services/storage.googleapis.com`, groups/googleServices`,
-	// groups/allServices`.
+	// Example: `services/storage.googleapis.com`, `groups/googleServices`,
+	// `groups/allServices`.
 	Values []string `json:"values,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "EnableType") to
@@ -2073,6 +2089,57 @@ type Field struct {
 
 func (s *Field) MarshalJSON() ([]byte, error) {
 	type NoMethod Field
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FieldPolicy: Google API Policy Annotation This message defines a
+// simple API policy annotation that can be used to annotate API request
+// and response message fields with applicable policies. One field may
+// have multiple applicable policies that must all be satisfied before a
+// request can be processed. This policy annotation is used to generate
+// the overall policy that will be used for automatic runtime policy
+// enforcement and documentation generation.
+type FieldPolicy struct {
+	// ResourcePermission: Specifies the required permission(s) for the
+	// resource referred to by the field. It requires the field contains a
+	// valid resource reference, and the request must pass the permission
+	// checks to proceed. For example, "resourcemanager.projects.get".
+	ResourcePermission string `json:"resourcePermission,omitempty"`
+
+	// ResourceType: Specifies the resource type for the resource referred
+	// to by the field.
+	ResourceType string `json:"resourceType,omitempty"`
+
+	// Selector: Selects one or more request or response message fields to
+	// apply this `FieldPolicy`. When a `FieldPolicy` is used in proto
+	// annotation, the selector must be left as empty. The service config
+	// generator will automatically fill the correct value. When a
+	// `FieldPolicy` is used in service config, the selector must be a
+	// comma-separated string with valid request or response field paths,
+	// such as "foo.bar" or "foo.bar,foo.baz".
+	Selector string `json:"selector,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ResourcePermission")
+	// to unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ResourcePermission") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FieldPolicy) MarshalJSON() ([]byte, error) {
+	type NoMethod FieldPolicy
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3350,6 +3417,43 @@ func (s *Method) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// MethodPolicy: Defines policies applying to an RPC method.
+type MethodPolicy struct {
+	// RequestPolicies: Policies that are applicable to the request message.
+	RequestPolicies []*FieldPolicy `json:"requestPolicies,omitempty"`
+
+	// Selector: Selects a method to which these policies should be
+	// enforced, for example,
+	// "google.pubsub.v1.Subscriber.CreateSubscription". Refer to selector
+	// for syntax details. NOTE: This field must not be set in the proto
+	// annotation. It will be automatically filled by the service config
+	// compiler .
+	Selector string `json:"selector,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "RequestPolicies") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "RequestPolicies") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MethodPolicy) MarshalJSON() ([]byte, error) {
+	type NoMethod MethodPolicy
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // MethodSettings: Describes the generator configuration for a method.
 type MethodSettings struct {
 	// LongRunning: Describes settings to use for long-running operations
@@ -4067,8 +4171,8 @@ type Operation struct {
 	// `operations/{unique_id}`.
 	Name string `json:"name,omitempty"`
 
-	// Response: The normal response of the operation in case of success. If
-	// the original method returns no data on success, such as `Delete`, the
+	// Response: The normal, successful response of the operation. If the
+	// original method returns no data on success, such as `Delete`, the
 	// response is `google.protobuf.Empty`. If the original method is
 	// standard `Get`/`Create`/`Update`, the response should be the
 	// resource. For other methods, the response should have the type
@@ -4587,7 +4691,7 @@ type RemoveEnableRulesMetadata struct {
 }
 
 // RemoveEnableRulesResponse: The response message of
-// "RemoveEnableRules" method.
+// `RemoveEnableRules` method.
 type RemoveEnableRulesResponse struct {
 	// Parent: The parent consumer policy. It can be
 	// `projects/12345/consumerPolicies/default`, or
@@ -4966,9 +5070,9 @@ func (s *Type) MarshalJSON() ([]byte, error) {
 type UpdateAdminQuotaPolicyMetadata struct {
 }
 
-// UpdateConsumerPolicyLROMetadata: Metadata for the
-// `UpdateConsumerPolicyLRO` method.
-type UpdateConsumerPolicyLROMetadata struct {
+// UpdateConsumerPolicyMetadata: Metadata for the `UpdateConsumerPolicy`
+// method.
+type UpdateConsumerPolicyMetadata struct {
 }
 
 // Usage: Configuration controlling usage of a service.

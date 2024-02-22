@@ -18,9 +18,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -28,6 +31,7 @@ import (
 	clientwatch "k8s.io/client-go/tools/watch"
 
 	configv1 "github.com/openshift/api/config/v1"
+	operatorv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	configinformers "github.com/openshift/client-go/config/informers/externalversions"
 	configlisters "github.com/openshift/client-go/config/listers/config/v1"
@@ -291,43 +295,10 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func asFileWriter(a asset.WritableAsset) asset.FileWriter {
-	switch v := a.(type) {
-	case asset.FileWriter:
-		return v
-	default:
-		return asset.NewDefaultFileWriter(a)
-	}
-}
-
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(directory string) error {
-		assetStore, err := assetstore.NewStore(directory)
-		if err != nil {
-			return errors.Wrap(err, "failed to create asset store")
-		}
-
-		for _, a := range targets {
-			err := assetStore.Fetch(a, targets...)
-			if err != nil {
-				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
-			}
-
-			err2 := asFileWriter(a).PersistToFile(directory)
-			if err2 != nil {
-				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
-				if err != nil {
-					logrus.Error(err2)
-					return err
-				}
-				return err2
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		fetcher := assetstore.NewAssetsFetcher(directory)
+		return fetcher.FetchAndPersist(targets)
 	}
 
 	return func(cmd *cobra.Command, args []string) {
@@ -464,7 +435,15 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		return newAPIError(err)
 	}
 
-	return waitForBootstrapConfigMap(ctx, client)
+	if err := waitForBootstrapConfigMap(ctx, client); err != nil {
+		return err
+	}
+
+	if err := waitForStableSNOBootstrap(ctx, config); err != nil {
+		return newBootstrapError(err)
+	}
+
+	return nil
 }
 
 // waitForBootstrapConfigMap watches the configmaps in the kube-system namespace
@@ -519,6 +498,64 @@ func waitForBootstrapConfigMap(ctx context.Context, client *kubernetes.Clientset
 		return newBootstrapError(err)
 	}
 	return nil
+}
+
+// When bootstrap on SNO deployments, we should not remove the bootstrap node prematurely,
+// here we make sure that the deployment is stable.
+// Given the nature of single node we just need to make sure things such as etcd are in the proper state
+// before continuing.
+func waitForStableSNOBootstrap(ctx context.Context, config *rest.Config) error {
+	timeout := 5 * time.Minute
+
+	// If we're not in a single node deployment, bail early
+	if isSNO, err := IsSingleNode(); err != nil {
+		logrus.Warningf("Can not determine if installing a Single Node cluster, continuing as normal install: %v", err)
+		return nil
+	} else if !isSNO {
+		return nil
+	}
+
+	snoBootstrapContext, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	untilTime := time.Now().Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Info("Detected Single Node deployment")
+	logrus.Infof("Waiting up to %v (until %v %s) for the bootstrap etcd member to be removed...",
+		timeout, untilTime.Format(time.Kitchen), timezone)
+
+	client, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("error creating dynamic client: %w", err)
+	}
+	gvr := schema.GroupVersionResource{
+		Group:    operatorv1.SchemeGroupVersion.Group,
+		Version:  operatorv1.SchemeGroupVersion.Version,
+		Resource: "etcds",
+	}
+	resourceClient := client.Resource(gvr)
+	// Validate the etcd operator has removed the bootstrap etcd member
+	return wait.PollUntilContextCancel(snoBootstrapContext, 1*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		etcdOperator := &operatorv1.Etcd{}
+		etcdUnstructured, err := resourceClient.Get(ctx, "cluster", metav1.GetOptions{})
+		if err != nil {
+			// There might be service disruptions in SNO, we log those here but keep trying with in the time limit
+			logrus.Debugf("Error getting ETCD Cluster resource, retrying: %v", err)
+			return false, nil
+		}
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(etcdUnstructured.Object, etcdOperator)
+		if err != nil {
+			// This error should not happen, if we do, we log the error and keep retrying until we hit the limit
+			logrus.Debugf("Error parsing etcds resource, retrying: %v", err)
+			return false, nil
+		}
+		for _, condition := range etcdOperator.Status.Conditions {
+			if condition.Type == "EtcdBootstrapMemberRemoved" {
+				return configv1.ConditionStatus(condition.Status) == configv1.ConditionTrue, nil
+			}
+		}
+		return false, nil
+	})
 }
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
@@ -871,4 +908,26 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 	}
 
 	return nil
+}
+
+// IsSingleNode determines if we are in a single node configuration based off of the install config
+// loaded from the asset store.
+func IsSingleNode() (bool, error) {
+	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+	if err != nil {
+		return false, fmt.Errorf("error loading asset store: %w", err)
+	}
+	installConfig, err := assetStore.Load(&installconfig.InstallConfig{})
+	if err != nil {
+		return false, fmt.Errorf("error loading installConfig: %w", err)
+	}
+	if installConfig == nil {
+		return false, fmt.Errorf("installConfig loaded from asset store was nil")
+	}
+
+	config := installConfig.(*installconfig.InstallConfig).Config
+	if machinePool := config.ControlPlane; machinePool != nil {
+		return *machinePool.Replicas == int64(1), nil
+	}
+	return false, nil
 }

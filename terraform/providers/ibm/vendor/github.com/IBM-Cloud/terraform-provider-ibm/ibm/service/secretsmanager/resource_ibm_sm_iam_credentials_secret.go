@@ -113,12 +113,6 @@ func ResourceIbmSmIamCredentialsSecret() *schema.Resource {
 							Description:      "The units for the secret rotation time interval.",
 							DiffSuppressFunc: rotationAttributesDiffSuppress,
 						},
-						"rotate_keys": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Computed:    true,
-							Description: "Determines whether Secrets Manager rotates the private key for your public certificate automatically.Default is `false`. If it is set to `true`, the service generates and stores a new private key for your rotated certificate.",
-						},
 					},
 				},
 			},
@@ -576,9 +570,6 @@ func resourceIbmSmIamCredentialsSecretMapToRotationPolicy(modelMap map[string]in
 	if modelMap["unit"] != nil && modelMap["unit"].(string) != "" {
 		model.Unit = core.StringPtr(modelMap["unit"].(string))
 	}
-	if modelMap["rotate_keys"] != nil {
-		model.RotateKeys = core.BoolPtr(modelMap["rotate_keys"].(bool))
-	}
 	return model, nil
 }
 
@@ -593,9 +584,6 @@ func resourceIbmSmIamCredentialsSecretRotationPolicyToMap(modelIntf secretsmanag
 	}
 	if model.Unit != nil {
 		modelMap["unit"] = model.Unit
-	}
-	if model.RotateKeys != nil {
-		modelMap["rotate_keys"] = model.RotateKeys
 	}
 	return modelMap, nil
 }

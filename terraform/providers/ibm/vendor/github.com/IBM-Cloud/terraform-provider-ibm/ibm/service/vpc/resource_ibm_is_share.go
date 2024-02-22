@@ -54,12 +54,11 @@ func ResourceIbmIsShare() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"encryption_key": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				RequiredWith: []string{"size"},
-				ForceNew:     true,
-				Computed:     true,
-				Description:  "The CRN of the key to use for encrypting this file share.If no encryption key is provided, the share will not be encrypted.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Description: "The CRN of the key to use for encrypting this file share.If no encryption key is provided, the share will not be encrypted.",
 			},
 			"initial_owner": {
 				Type:         schema.TypeList,
@@ -105,8 +104,8 @@ func ResourceIbmIsShare() *schema.Resource {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Computed:      true,
-				ExactlyOneOf:  []string{"size", "source_share"},
-				ConflictsWith: []string{"replication_cron_spec", "source_share"},
+				ExactlyOneOf:  []string{"size", "source_share", "source_share_crn"},
+				ConflictsWith: []string{"replication_cron_spec", "source_share", "source_share_crn"},
 				ValidateFunc:  validate.InvokeValidator("ibm_is_share", "size"),
 				Description:   "The size of the file share rounded up to the next gigabyte.",
 			},
@@ -511,16 +510,25 @@ func ResourceIbmIsShare() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{"replica_share", "size"},
+				Computed:      true,
+				ConflictsWith: []string{"replica_share", "size", "source_share_crn"},
 				RequiredWith:  []string{"replication_cron_spec"},
 				Description:   "The ID of the source file share for this replica file share. The specified file share must not already have a replica, and must not be a replica.",
+			},
+			"source_share_crn": &schema.Schema{
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Computed:      true,
+				ConflictsWith: []string{"replica_share", "size", "source_share"},
+				RequiredWith:  []string{"replication_cron_spec"},
+				Description:   "The CRN of the source file share for this replica file share. The specified file share must not already have a replica, and must not be a replica.",
 			},
 			"replication_cron_spec": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: suppressCronSpecDiff,
 				Computed:         true,
-				RequiredWith:     []string{"source_share"},
 				ConflictsWith:    []string{"replica_share", "size"},
 				Description:      "The cron specification for the file share replication schedule.Replication of a share can be scheduled to occur at most once per hour.",
 			},
@@ -562,6 +570,30 @@ func ResourceIbmIsShare() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The date and time that the file share was last synchronized to its replica.This property will be present when the `replication_role` is `source`.",
+			},
+			"latest_sync": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Information about the latest synchronization for this file share.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"completed_at": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The completed date and time of last synchronization between the replica share and its source.",
+						},
+						"data_transferred": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The data transferred (in bytes) in the last synchronization between the replica and its source.",
+						},
+						"started_at": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The start date and time of last synchronization between the replica share and its source.",
+						},
+					},
+				},
 			},
 			"latest_job": &schema.Schema{
 				Type:        schema.TypeList,
@@ -727,17 +759,18 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 		accessControlMode := accessControlModeIntf.(string)
 		sharePrototype.AccessControlMode = &accessControlMode
 	}
+	if encryptionKeyIntf, ok := d.GetOk("encryption_key"); ok {
+		encryptionKey := encryptionKeyIntf.(string)
+		encryptionKeyIdentity := &vpcv1.EncryptionKeyIdentity{
+			CRN: &encryptionKey,
+		}
+		sharePrototype.EncryptionKey = encryptionKeyIdentity
+	}
 	if sizeIntf, ok := d.GetOk("size"); ok {
 
 		size := int64(sizeIntf.(int))
 		sharePrototype.Size = &size
-		if encryptionKeyIntf, ok := d.GetOk("encryption_key"); ok {
-			encryptionKey := encryptionKeyIntf.(string)
-			encryptionKeyIdentity := &vpcv1.EncryptionKeyIdentity{
-				CRN: &encryptionKey,
-			}
-			sharePrototype.EncryptionKey = encryptionKeyIdentity
-		}
+
 		initial_owner := &vpcv1.ShareInitialOwner{}
 		if initialOwnerIntf, ok := d.GetOk("initial_owner"); ok {
 			initialOwnerMap := initialOwnerIntf.([]interface{})[0].(map[string]interface{})
@@ -823,7 +856,15 @@ func resourceIbmIsShareCreate(context context.Context, d *schema.ResourceData, m
 			sharePrototype.SourceShare = &vpcv1.ShareIdentity{
 				ID: &sourceShare,
 			}
+		} else {
+			sourceShareCRN := d.Get("source_share_crn").(string)
+			if sourceShareCRN != "" {
+				sharePrototype.SourceShare = &vpcv1.ShareIdentity{
+					CRN: &sourceShareCRN,
+				}
+			}
 		}
+
 		replicationCronSpec := d.Get("replication_cron_spec").(string)
 		sharePrototype.ReplicationCronSpec = &replicationCronSpec
 	}
@@ -1075,9 +1116,17 @@ func resourceIbmIsShareRead(context context.Context, d *schema.ResourceData, met
 		return diag.FromErr(fmt.Errorf("Error setting resource_type: %s", err))
 	}
 
-	// if share.LastSyncAt != nil {
-	// 	d.Set("last_sync_at", share.LastSyncAt.String())
-	// }
+	latest_syncs := []map[string]interface{}{}
+	if share.LatestSync != nil {
+		latest_sync := make(map[string]interface{})
+		latest_sync["completed_at"] = flex.DateTimeToString(share.LatestSync.CompletedAt)
+		if share.LatestSync.DataTransferred != nil {
+			latest_sync["data_transferred"] = *share.LatestSync.DataTransferred
+		}
+		latest_sync["started_at"] = flex.DateTimeToString(share.LatestSync.CompletedAt)
+		latest_syncs = append(latest_syncs, latest_sync)
+	}
+	d.Set("latest_sync", latest_syncs)
 	latest_jobs := []map[string]interface{}{}
 	if share.LatestJob != nil {
 		latest_job := make(map[string]interface{})

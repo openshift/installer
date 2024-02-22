@@ -19,6 +19,7 @@ import (
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
+	mcfgv1 "github.com/openshift/api/machineconfiguration/v1"
 	baremetalapi "github.com/openshift/cluster-api-provider-baremetal/pkg/apis"
 	baremetalprovider "github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1"
 	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
@@ -63,7 +64,6 @@ import (
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
-	mcfgv1 "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1"
 )
 
 const (

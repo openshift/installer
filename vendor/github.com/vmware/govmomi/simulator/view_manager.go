@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -154,6 +154,8 @@ func walk(root mo.Reference, f func(child types.ManagedObjectReference)) {
 		children = []types.ManagedObjectReference{e.VmFolder, e.HostFolder, e.DatastoreFolder, e.NetworkFolder}
 	case *mo.Folder:
 		children = e.ChildEntity
+	case *mo.StoragePod:
+		children = e.ChildEntity
 	case *mo.ComputeResource:
 		children = e.Host
 		children = append(children, *e.ResourcePool)
@@ -225,8 +227,8 @@ func (m *ViewManager) CreateListView(ctx *Context, req *types.CreateListView) so
 	body := new(methods.CreateListViewBody)
 	list := new(ListView)
 
-	if err := list.add(req.Obj); err != nil {
-		body.Fault_ = Fault("", err)
+	if refs := list.add(ctx, req.Obj); len(refs) != 0 {
+		body.Fault_ = Fault("", &types.ManagedObjectNotFound{Obj: refs[0]})
 		return body
 	}
 
@@ -243,19 +245,20 @@ type ListView struct {
 	mo.ListView
 }
 
-func (v *ListView) update() {
-	Map.Update(v, []types.PropertyChange{{Name: "view", Val: v.View}})
+func (v *ListView) update(ctx *Context) {
+	ctx.Map.Update(v, []types.PropertyChange{{Name: "view", Val: v.View}})
 }
 
-func (v *ListView) add(refs []types.ManagedObjectReference) *types.ManagedObjectNotFound {
+func (v *ListView) add(ctx *Context, refs []types.ManagedObjectReference) []types.ManagedObjectReference {
+	var unresolved []types.ManagedObjectReference
 	for _, ref := range refs {
-		obj := Map.Get(ref)
+		obj := ctx.Session.Get(ref)
 		if obj == nil {
-			return &types.ManagedObjectNotFound{Obj: ref}
+			unresolved = append(unresolved, ref)
 		}
 		v.View = append(v.View, ref)
 	}
-	return nil
+	return unresolved
 }
 
 func (v *ListView) DestroyView(ctx *Context, c *types.DestroyView) soap.HasFault {
@@ -263,40 +266,37 @@ func (v *ListView) DestroyView(ctx *Context, c *types.DestroyView) soap.HasFault
 	return destroyView(c.This)
 }
 
-func (v *ListView) ModifyListView(req *types.ModifyListView) soap.HasFault {
-	body := new(methods.ModifyListViewBody)
+func (v *ListView) ModifyListView(ctx *Context, req *types.ModifyListView) soap.HasFault {
+	body := &methods.ModifyListViewBody{
+		Res: new(types.ModifyListViewResponse),
+	}
+
+	body.Res.Returnval = v.add(ctx, req.Add)
 
 	for _, ref := range req.Remove {
 		RemoveReference(&v.View, ref)
+		if ctx.Map.Get(ref) == nil {
+			body.Res.Returnval = append(body.Res.Returnval, ref)
+		}
 	}
-
-	if err := v.add(req.Add); err != nil {
-		body.Fault_ = Fault("", err)
-		return body
-	}
-
-	body.Res = new(types.ModifyListViewResponse)
 
 	if len(req.Remove) != 0 || len(req.Add) != 0 {
-		v.update()
+		v.update(ctx)
 	}
 
 	return body
 }
 
-func (v *ListView) ResetListView(req *types.ResetListView) soap.HasFault {
-	body := new(methods.ResetListViewBody)
+func (v *ListView) ResetListView(ctx *Context, req *types.ResetListView) soap.HasFault {
+	body := &methods.ResetListViewBody{
+		Res: new(types.ResetListViewResponse),
+	}
 
 	v.View = nil
 
-	if err := v.add(req.Obj); err != nil {
-		body.Fault_ = Fault("", err)
-		return body
-	}
+	body.Res.Returnval = v.add(ctx, req.Obj)
 
-	body.Res = new(types.ResetListViewResponse)
-
-	v.update()
+	v.update(ctx)
 
 	return body
 }

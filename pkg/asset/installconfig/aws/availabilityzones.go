@@ -71,7 +71,7 @@ func describeAvailabilityZones(ctx context.Context, session *session.Session, re
 
 // filterZonesByType retrieves a list of zones by a given ZoneType attribute within the region.
 // ZoneType can be availability-zone, local-zone or wavelength-zone.
-func filterZonesByType(ctx context.Context, session *session.Session, region string, zoneType string) ([]string, error) {
+func filterZonesByType(ctx context.Context, session *session.Session, region, zoneType string) ([]string, error) {
 	azs, err := describeAvailabilityZones(ctx, session, region, []string{})
 	if err != nil {
 		return nil, fmt.Errorf("fetching %s: %w", zoneType, err)
@@ -83,16 +83,19 @@ func filterZonesByType(ctx context.Context, session *session.Session, region str
 		}
 	}
 
-	if len(zones) == 0 {
-		return nil, fmt.Errorf("no zones with type %s in %s", zoneType, region)
-	}
-
 	return zones, nil
 }
 
 // availabilityZones retrieves a list of zones type 'availability-zone' in the region.
 func availabilityZones(ctx context.Context, session *session.Session, region string) ([]string, error) {
-	return filterZonesByType(ctx, session, region, typesaws.AvailabilityZoneType)
+	zones, err := filterZonesByType(ctx, session, region, typesaws.AvailabilityZoneType)
+	if err != nil {
+		return nil, err
+	}
+	if len(zones) == 0 {
+		return nil, fmt.Errorf("no zones with type availability-zone in %s", region)
+	}
+	return zones, nil
 }
 
 // edgeZones retrieves a list of zones type 'local-zone' and 'wavelength-zone' in the region.
@@ -109,6 +112,10 @@ func edgeZones(ctx context.Context, session *session.Session, region string) ([]
 	edgeZones := make([]string, 0, len(localZones)+len(wavelengthZones))
 	edgeZones = append(edgeZones, localZones...)
 	edgeZones = append(edgeZones, wavelengthZones...)
+
+	if len(edgeZones) == 0 {
+		return nil, fmt.Errorf("unable to find zone types with local-zone or wavelength-zone in the region %s", region)
+	}
 
 	return edgeZones, nil
 }
