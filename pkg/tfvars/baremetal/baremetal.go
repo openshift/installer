@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
+	"strings"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	"github.com/metal3-io/baremetal-operator/pkg/hardware"
@@ -13,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/pkg/errors"
+	utilsnet "k8s.io/utils/net"
 	"sigs.k8s.io/yaml"
 )
 
@@ -46,12 +49,75 @@ func init() {
 	imageDownloader = cache.DownloadImageFile
 }
 
+func externalURLs(apiVIPs []string) (externalURLv4 string, externalURLv6 string) {
+	if len(apiVIPs) > 1 {
+		// IPv6 BMCs may not be able to reach IPv4 servers, use the right callback URL for them.
+		externalURL := fmt.Sprintf("http://%s/", net.JoinHostPort(apiVIPs[1], "80"))
+		if utilsnet.IsIPv6String(apiVIPs[1]) {
+			externalURLv6 = externalURL
+		}
+		if utilsnet.IsIPv4String(apiVIPs[1]) {
+			externalURLv4 = externalURL
+		}
+	}
+
+	return
+}
+
+// NOTE(dtantsur): this is a verbatim copy of the code from baremetal-operator
+// that was not exposed in the version we vendor in 4.12.
+func getParsedURL(address string) (parsedURL *url.URL, err error) {
+	// Start by assuming "type://host:port"
+	parsedURL, err = url.Parse(address)
+	if err != nil {
+		// We failed to parse the URL, but it may just be a host or
+		// host:port string (which the URL parser rejects because ":"
+		// is not allowed in the first segment of a
+		// path. Unfortunately there is no error class to represent
+		// that specific error, so we have to guess.
+		if strings.Contains(address, ":") {
+			// If we can parse host:port, carry on with those
+			// values. Otherwise, report the original parser error.
+			_, _, err2 := net.SplitHostPort(address)
+			if err2 != nil {
+				return nil, errors.Wrap(err, "failed to parse BMC address information")
+			}
+		}
+		parsedURL = &url.URL{
+			Scheme: "ipmi",
+			Host:   address,
+		}
+	} else {
+		// Successfully parsed the URL
+		if parsedURL.Opaque != "" {
+			parsedURL, err = url.Parse(strings.Replace(address, ":", "://", 1))
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse BMC address information")
+
+			}
+		}
+		if parsedURL.Scheme == "" {
+			if parsedURL.Hostname() == "" {
+				// If there was no scheme at all, the hostname was
+				// interpreted as a path.
+				parsedURL, err = url.Parse(strings.Join([]string{"ipmi://", address}, ""))
+				if err != nil {
+					return nil, errors.Wrap(err, "failed to parse BMC address information")
+				}
+			}
+		}
+	}
+	return parsedURL, nil
+}
+
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, hostFiles []*asset.File, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
+func TFVars(numControlPlaneReplicas int64, libvirtURI string, apiVIPs []string, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, hostFiles []*asset.File, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
 	bootstrapOSImage, err := imageDownloader(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
 	}
+
+	externalURLv4, externalURLv6 := externalURLs(apiVIPs)
 
 	var masters, rootDevices, properties, driverInfos, instanceInfos []map[string]interface{}
 	var deploySteps []string
@@ -80,8 +146,14 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 		// BMC Driver Info
 		accessDetails, err := bmc.NewAccessDetails(host.BMC.Address, host.BMC.DisableCertificateVerification)
 		if err != nil {
+			// Some valid BMC addresses
 			return nil, err
 		}
+		bmcURL, err := getParsedURL(host.BMC.Address)
+		if err != nil {
+			return nil, err
+		}
+
 		credentials := bmc.Credentials{
 			Username: host.BMC.Username,
 			Password: host.BMC.Password,
@@ -90,6 +162,12 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(imageCacheIP, "80"))
 		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/%s.initramfs", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
 		driverInfo["deploy_iso"] = fmt.Sprintf("http://%s/%s.iso", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
+		if externalURLv6 != "" && utilsnet.IsIPv6String(bmcURL.Hostname()) {
+			driverInfo["external_http_url"] = externalURLv6
+		}
+		if externalURLv4 != "" && utilsnet.IsIPv4String(bmcURL.Hostname()) {
+			driverInfo["external_http_url"] = externalURLv4
+		}
 
 		var raidConfig, bmhFirmwareConfig, biosSettings []byte
 		var bmcFirmwareConfig *bmc.FirmwareConfig
@@ -213,10 +291,11 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 			})
 	}
 
+	ironicIP := apiVIPs[0]
 	cfg := &config{
 		LibvirtURI:       libvirtURI,
-		IronicURI:        fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
-		InspectorURI:     fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
+		IronicURI:        fmt.Sprintf("http://%s/v1", net.JoinHostPort(ironicIP, "6385")),
+		InspectorURI:     fmt.Sprintf("http://%s/v1", net.JoinHostPort(ironicIP, "5050")),
 		BootstrapOSImage: bootstrapOSImage,
 		IronicUsername:   ironicUsername,
 		IronicPassword:   ironicPassword,
