@@ -1,5 +1,6 @@
 # This Dockerfile is a used by CI to publish an installer image for creating libvirt clusters
-# It builds an image containing openshift-install and nss-wrapper for remote deployments, as well as the google cloud-sdk for nested GCE environments.
+# It builds an image containing openshift-install and nss-wrapper for remote deployments, as well as the google cloud-sdk for nested GCE environments and
+# oc for getting assets from an existing cluster to spin up multi-architecture compute clusters on libvirt.
 
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers as providers
 
@@ -12,10 +13,13 @@ COPY . .
 COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
+FROM registry.ci.openshift.org/ocp/4.16:cli as cli
+
 FROM quay.io/centos/centos:stream
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/mock-nss.sh /bin/mock-nss.sh
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
+COPY --from=cli /usr/bin/oc /bin/oc
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
