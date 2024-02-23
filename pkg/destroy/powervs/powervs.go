@@ -710,6 +710,7 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 		groupID   = o.resourceGroupID
 	)
 
+	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
 	// If the user passes in a human readable group id, then we need to convert it to a UUID
 	listGroupOptions := o.managementSvc.NewListResourceGroupsOptions()
 	groups, _, err := o.managementSvc.ListResourceGroupsWithContext(ctx, listGroupOptions)
@@ -717,10 +718,12 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 		return "", fmt.Errorf("failed to list resource groups: %w", err)
 	}
 	for _, group := range groups.Resources {
+		o.Logger.Debugf("ServiceInstanceNameToGUID: group.Name = %s", *group.Name)
 		if *group.Name == groupID {
 			groupID = *group.ID
 		}
 	}
+	o.Logger.Debugf("ServiceInstanceNameToGUID: groupID = %s", groupID)
 
 	options = o.controllerSvc.NewListResourceInstancesOptions()
 	options.SetResourceGroupID(groupID)
@@ -741,6 +744,8 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 				response           *core.DetailedResponse
 			)
 
+			o.Logger.Debugf("ServiceInstanceNameToGUID: resource.Name = %s", *resource.Name)
+
 			getResourceOptions = o.controllerSvc.NewGetResourceInstanceOptions(*resource.ID)
 
 			resourceInstance, response, err = o.controllerSvc.GetResourceInstance(getResourceOptions)
@@ -751,7 +756,13 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 				return "", fmt.Errorf("failed to get instance, response is: %v", response)
 			}
 
-			if resourceInstance.Type == nil || resourceInstance.GUID == nil {
+			if resourceInstance.Type == nil {
+				o.Logger.Debugf("ServiceInstanceNameToGUID: type: nil")
+				continue
+			}
+			o.Logger.Debugf("ServiceInstanceNameToGUID: type: %v", *resourceInstance.Type)
+			if resourceInstance.GUID == nil {
+				o.Logger.Debugf("ServiceInstanceNameToGUID: GUID: nil")
 				continue
 			}
 			if *resourceInstance.Type != "service_instance" && *resourceInstance.Type != "composite_instance" {
@@ -760,6 +771,9 @@ func (o *ClusterUninstaller) ServiceInstanceNameToGUID(ctx context.Context, name
 			if *resourceInstance.Name != name {
 				continue
 			}
+
+			o.Logger.Debugf("ServiceInstanceNameToGUID: Found match!")
+
 			return *resourceInstance.GUID, nil
 		}
 
