@@ -108,7 +108,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	sigs.k8s.io/cluster-api v1.5.3
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-00010101000000-000000000000
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.3.1-0.20240223161339-bc1d3b165d13
 	sigs.k8s.io/cluster-api-provider-azure v0.0.0-00010101000000-000000000000
 	sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.8.0
