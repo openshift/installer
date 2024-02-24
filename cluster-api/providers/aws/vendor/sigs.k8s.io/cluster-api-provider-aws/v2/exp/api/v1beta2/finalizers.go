@@ -25,4 +25,7 @@ const (
 
 	// ManagedMachinePoolFinalizer allows the controller to clean up resources on delete.
 	ManagedMachinePoolFinalizer = "awsmanagedmachinepools.infrastructure.cluster.x-k8s.io"
+
+	// RosaMachinePoolFinalizer allows the controller to clean up resources on delete.
+	RosaMachinePoolFinalizer = "rosamachinepools.infrastructure.cluster.x-k8s.io"
 )

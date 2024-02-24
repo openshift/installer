@@ -248,6 +248,7 @@ var pathTreeData = `{
             "ingresses": {
               "-": null
             },
+            "kubelet_config": null,
             "limited_support_reasons": {
               "-": null
             },
@@ -272,7 +273,14 @@ var pathTreeData = `{
                 }
               }
             },
-            "product": null,
+            "product": {
+              "minimal_versions": {
+                "-": null
+              },
+              "technology_previews": {
+                "-": null
+              }
+            },
             "provision_shard": null,
             "resources": {
               "live": null
@@ -290,7 +298,8 @@ var pathTreeData = `{
               "-": {
                 "state": null
               }
-            }
+            },
+            "vpc": null
           }
         },
         "dns_domains": {
@@ -304,6 +313,7 @@ var pathTreeData = `{
         "gcp_inquiries": {
           "encryption_keys": null,
           "key_rings": null,
+          "machine_types": null,
           "regions": null,
           "vpcs": null
         },
@@ -323,7 +333,14 @@ var pathTreeData = `{
           "-": null
         },
         "products": {
-          "-": null
+          "-": {
+            "minimal_versions": {
+              "-": null
+            },
+            "technology_previews": {
+              "-": null
+            }
+          }
         },
         "provision_shards": {
           "-": null

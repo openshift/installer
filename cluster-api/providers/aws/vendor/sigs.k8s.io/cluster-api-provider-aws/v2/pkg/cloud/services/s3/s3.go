@@ -173,25 +173,50 @@ func (s *Service) Delete(m *scope.MachineScope) error {
 	bucket := s.bucketName()
 	key := s.bootstrapDataKey(m)
 
-	s.scope.Info("Deleting object", "bucket_name", bucket, "key", key)
-
-	_, err := s.S3Client.DeleteObject(&s3.DeleteObjectInput{
+	_, err := s.S3Client.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
-	if err == nil {
-		return nil
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "Forbidden":
+				// In the case that the IAM policy does not have sufficient
+				// permissions to get the object, we will attempt to delete it
+				// anyway for backwards compatibility reasons.
+				s.scope.Debug("Received 403 forbidden from S3 HeadObject call. If GetObject permission has been granted to the controller but not ListBucket, object is already deleted. Attempting deletion anyway in case GetObject permission hasn't been granted to the controller but DeleteObject has.", "bucket", bucket, "key", key)
+
+				_, err = s.S3Client.DeleteObject(&s3.DeleteObjectInput{
+					Bucket: aws.String(bucket),
+					Key:    aws.String(key),
+				})
+				if err != nil {
+					return errors.Wrap(err, "deleting S3 object")
+				}
+
+				s.scope.Debug("Delete object call succeeded despite missing GetObject permission", "bucket", bucket, "key", key)
+
+				return nil
+			case s3.ErrCodeNoSuchKey:
+				s.scope.Debug("Object already deleted", "bucket", bucket, "key", key)
+				return nil
+			case s3.ErrCodeNoSuchBucket:
+				s.scope.Debug("Bucket does not exist", "bucket", bucket)
+				return nil
+			default:
+				return errors.Wrap(aerr, "deleting S3 object")
+			}
+		}
 	}
 
-	aerr, ok := err.(awserr.Error)
-	if !ok {
+	s.scope.Info("Deleting S3 object", "bucket", bucket, "key", key)
+
+	_, err = s.S3Client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
 		return errors.Wrap(err, "deleting S3 object")
-	}
-
-	switch aerr.Code() {
-	case s3.ErrCodeNoSuchBucket:
-	default:
-		return errors.Wrap(aerr, "deleting S3 object")
 	}
 
 	return nil
@@ -200,6 +225,9 @@ func (s *Service) Delete(m *scope.MachineScope) error {
 func (s *Service) createBucketIfNotExist(bucketName string) error {
 	input := &s3.CreateBucketInput{
 		Bucket: aws.String(bucketName),
+		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
+			LocationConstraint: aws.String(s.scope.Region()),
+		},
 	}
 
 	_, err := s.S3Client.CreateBucket(input)
@@ -226,11 +254,6 @@ func (s *Service) createBucketIfNotExist(bucketName string) error {
 }
 
 func (s *Service) ensureBucketPolicy(bucketName string) error {
-	if s.scope.Bucket().PresignedURLDuration != nil {
-		// If presigned URL is enabled, we don't need to set bucket policy.
-		return nil
-	}
-
 	bucketPolicy, err := s.bucketPolicy(bucketName)
 	if err != nil {
 		return errors.Wrap(err, "generating Bucket policy")
@@ -263,7 +286,7 @@ func (s *Service) tagBucket(bucketName string) error {
 		Lifecycle:   infrav1.ResourceLifecycleOwned,
 		Name:        nil,
 		Role:        aws.String("node"),
-		Additional:  nil,
+		Additional:  s.scope.AdditionalTags(),
 	})
 
 	for key, value := range tags {
@@ -298,26 +321,45 @@ func (s *Service) bucketPolicy(bucketName string) (string, error) {
 
 	statements := []iam.StatementEntry{
 		{
-			Sid:    "control-plane",
-			Effect: iam.EffectAllow,
+			Sid:    "ForceSSLOnlyAccess",
+			Effect: iam.EffectDeny,
 			Principal: map[iam.PrincipalType]iam.PrincipalID{
-				iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, bucket.ControlPlaneIAMInstanceProfile)},
+				iam.PrincipalAWS: []string{"*"},
 			},
-			Action:   []string{"s3:GetObject"},
-			Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/control-plane/*", partition, bucketName)},
+			Action:   []string{"s3:*"},
+			Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/*", partition, bucketName)},
+			Condition: iam.Conditions{
+				"Bool": map[string]interface{}{
+					"aws:SecureTransport": false,
+				},
+			},
 		},
 	}
 
-	for _, iamInstanceProfile := range bucket.NodesIAMInstanceProfiles {
-		statements = append(statements, iam.StatementEntry{
-			Sid:    iamInstanceProfile,
-			Effect: iam.EffectAllow,
-			Principal: map[iam.PrincipalType]iam.PrincipalID{
-				iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, iamInstanceProfile)},
-			},
-			Action:   []string{"s3:GetObject"},
-			Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/node/*", partition, bucketName)},
-		})
+	if bucket.PresignedURLDuration == nil {
+		if bucket.ControlPlaneIAMInstanceProfile != "" {
+			statements = append(statements, iam.StatementEntry{
+				Sid:    "control-plane",
+				Effect: iam.EffectAllow,
+				Principal: map[iam.PrincipalType]iam.PrincipalID{
+					iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, bucket.ControlPlaneIAMInstanceProfile)},
+				},
+				Action:   []string{"s3:GetObject"},
+				Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/control-plane/*", partition, bucketName)},
+			})
+		}
+
+		for _, iamInstanceProfile := range bucket.NodesIAMInstanceProfiles {
+			statements = append(statements, iam.StatementEntry{
+				Sid:    iamInstanceProfile,
+				Effect: iam.EffectAllow,
+				Principal: map[iam.PrincipalType]iam.PrincipalID{
+					iam.PrincipalAWS: []string{fmt.Sprintf("arn:%s:iam::%s:role/%s", partition, *accountID.Account, iamInstanceProfile)},
+				},
+				Action:   []string{"s3:GetObject"},
+				Resource: []string{fmt.Sprintf("arn:%s:s3:::%s/node/*", partition, bucketName)},
+			})
+		}
 	}
 
 	policy := iam.PolicyDocument{

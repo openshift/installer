@@ -36,10 +36,11 @@ import (
 )
 
 const (
-	minAddonVersion         = "v1.18.0"
-	minKubeVersionForIPv6   = "v1.21.0"
-	minVpcCniVersionForIPv6 = "1.10.2"
-	maxClusterNameLength    = 100
+	minAddonVersion          = "v1.18.0"
+	minKubeVersionForIPv6    = "v1.21.0"
+	minVpcCniVersionForIPv6  = "1.10.2"
+	maxClusterNameLength     = 100
+	hostnameTypeResourceName = "resource-name"
 )
 
 // log is for logging in this package.
@@ -93,6 +94,7 @@ func (r *AWSManagedControlPlane) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
+	allErrs = append(allErrs, r.validatePrivateDNSHostnameTypeOnLaunch()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -126,6 +128,7 @@ func (r *AWSManagedControlPlane) ValidateUpdate(old runtime.Object) (admission.W
 	allErrs = append(allErrs, r.validateDisableVPCCNI()...)
 	allErrs = append(allErrs, r.validateKubeProxy()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+	allErrs = append(allErrs, r.validatePrivateDNSHostnameTypeOnLaunch()...)
 
 	if r.Spec.Region != oldAWSManagedControlplane.Spec.Region {
 		allErrs = append(allErrs,
@@ -386,6 +389,17 @@ func (r *AWSManagedControlPlane) validateDisableVPCCNI() field.ErrorList {
 	if len(allErrs) == 0 {
 		return nil
 	}
+	return allErrs
+}
+
+func (r *AWSManagedControlPlane) validatePrivateDNSHostnameTypeOnLaunch() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() && r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != nil && *r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch != hostnameTypeResourceName {
+		privateDNSHostnameTypeOnLaunch := field.NewPath("spec", "networkSpec", "vpc", "privateDNSHostnameTypeOnLaunch")
+		allErrs = append(allErrs, field.Invalid(privateDNSHostnameTypeOnLaunch, r.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch, fmt.Sprintf("only %s HostnameType can be used in IPv6 mode", hostnameTypeResourceName)))
+	}
+
 	return allErrs
 }
 

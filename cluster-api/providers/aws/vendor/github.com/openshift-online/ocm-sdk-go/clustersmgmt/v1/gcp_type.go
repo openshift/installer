@@ -32,6 +32,7 @@ type GCP struct {
 	privateKey              string
 	privateKeyID            string
 	projectID               string
+	security                *GcpSecurity
 	tokenURI                string
 	type_                   string
 }
@@ -225,12 +226,35 @@ func (o *GCP) GetProjectID() (value string, ok bool) {
 	return
 }
 
+// Security returns the value of the 'security' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// GCP Security Settings
+func (o *GCP) Security() *GcpSecurity {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.security
+	}
+	return nil
+}
+
+// GetSecurity returns the value of the 'security' attribute and
+// a flag indicating if the attribute has a value.
+//
+// GCP Security Settings
+func (o *GCP) GetSecurity() (value *GcpSecurity, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.security
+	}
+	return
+}
+
 // TokenURI returns the value of the 'token_URI' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // GCP token uri
 func (o *GCP) TokenURI() string {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.tokenURI
 	}
 	return ""
@@ -241,7 +265,7 @@ func (o *GCP) TokenURI() string {
 //
 // GCP token uri
 func (o *GCP) GetTokenURI() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.tokenURI
 	}
@@ -253,7 +277,7 @@ func (o *GCP) GetTokenURI() (value string, ok bool) {
 //
 // GCP the type of the service the key belongs to
 func (o *GCP) Type() string {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&1024 != 0 {
 		return o.type_
 	}
 	return ""
@@ -264,7 +288,7 @@ func (o *GCP) Type() string {
 //
 // GCP the type of the service the key belongs to
 func (o *GCP) GetType() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&1024 != 0
 	if ok {
 		value = o.type_
 	}

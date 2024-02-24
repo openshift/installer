@@ -149,16 +149,18 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 	log := logger.FromContext(ctx)
 
 	// Get the control plane instance
-	awsControlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
-	if err := r.Client.Get(ctx, req.NamespacedName, awsControlPlane); err != nil {
+	awsManagedControlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
+	if err := r.Client.Get(ctx, req.NamespacedName, awsManagedControlPlane); err != nil {
 		if apierrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{}, err
 	}
 
+	log = log.WithValues("awsManagedControlPlane", klog.KObj(awsManagedControlPlane))
+
 	// Get the cluster
-	cluster, err := util.GetOwnerCluster(ctx, r.Client, awsControlPlane.ObjectMeta)
+	cluster, err := util.GetOwnerCluster(ctx, r.Client, awsManagedControlPlane.ObjectMeta)
 	if err != nil {
 		log.Error(err, "Failed to retrieve owner Cluster from the API Server")
 		return ctrl.Result{}, err
@@ -168,7 +170,9 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		return ctrl.Result{}, nil
 	}
 
-	if capiannotations.IsPaused(cluster, awsControlPlane) {
+	log = log.WithValues("cluster", klog.KObj(cluster))
+
+	if capiannotations.IsPaused(cluster, awsManagedControlPlane) {
 		log.Info("Reconciliation is paused for this object")
 		return ctrl.Result{}, nil
 	}
@@ -176,12 +180,13 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 	managedScope, err := scope.NewManagedControlPlaneScope(scope.ManagedControlPlaneScopeParams{
 		Client:                       r.Client,
 		Cluster:                      cluster,
-		ControlPlane:                 awsControlPlane,
+		ControlPlane:                 awsManagedControlPlane,
 		ControllerName:               strings.ToLower(awsManagedControlPlaneKind),
 		EnableIAM:                    r.EnableIAM,
 		AllowAdditionalRoles:         r.AllowAdditionalRoles,
 		Endpoints:                    r.Endpoints,
 		TagUnmanagedNetworkResources: r.TagUnmanagedNetworkResources,
+		Logger:                       log,
 	})
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to create scope: %w", err)
@@ -204,6 +209,7 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 				infrav1.InternetGatewayReadyCondition,
 				infrav1.NatGatewaysReadyCondition,
 				infrav1.RouteTablesReadyCondition,
+				infrav1.VpcEndpointsReadyCondition,
 			)
 			if managedScope.Bastion().Enabled {
 				applicableConditions = append(applicableConditions, infrav1.BastionHostReadyCondition)
@@ -220,7 +226,7 @@ func (r *AWSManagedControlPlaneReconciler) Reconcile(ctx context.Context, req ct
 		}
 	}()
 
-	if !awsControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !awsManagedControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
 		// Handle deletion reconciliation loop.
 		return r.reconcileDelete(ctx, managedScope)
 	}

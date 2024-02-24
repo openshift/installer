@@ -183,6 +183,13 @@ func (s *ClusterScope) ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec {
 	return s.AWSCluster.Spec.ControlPlaneLoadBalancer
 }
 
+func (s *ClusterScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec {
+	return []*infrav1.AWSLoadBalancerSpec{
+		s.AWSCluster.Spec.ControlPlaneLoadBalancer,
+		s.AWSCluster.Spec.SecondaryControlPlaneLoadBalancer,
+	}
+}
+
 // ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing).
 func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	if s.ControlPlaneLoadBalancer() != nil && s.ControlPlaneLoadBalancer().Scheme != nil {
@@ -234,7 +241,9 @@ func (s *ClusterScope) PatchObject() error {
 		applicableConditions = append(applicableConditions,
 			infrav1.InternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
-			infrav1.RouteTablesReadyCondition)
+			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
+		)
 
 		if s.AWSCluster.Spec.Bastion.Enabled {
 			applicableConditions = append(applicableConditions, infrav1.BastionHostReadyCondition)
@@ -261,6 +270,7 @@ func (s *ClusterScope) PatchObject() error {
 			infrav1.EgressOnlyInternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
 			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
 			infrav1.ClusterSecurityGroupsReadyCondition,
 			infrav1.BastionHostReadyCondition,
 			infrav1.LoadBalancerReadyCondition,

@@ -83,6 +83,13 @@ type AWSMachinePoolSpec struct {
 	// +optional
 	DefaultCoolDown metav1.Duration `json:"defaultCoolDown,omitempty"`
 
+	// The amount of time, in seconds, until a new instance is considered to
+	// have finished initializing and resource consumption to become stable
+	// after it enters the InService state.
+	// If no value is supplied by user a default value of 300 seconds is set
+	// +optional
+	DefaultInstanceWarmup metav1.Duration `json:"defaultInstanceWarmup,omitempty"`
+
 	// RefreshPreferences describes set of preferences associated with the instance refresh request.
 	// +optional
 	RefreshPreferences *RefreshPreferences `json:"refreshPreferences,omitempty"`

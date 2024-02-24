@@ -251,6 +251,7 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 			infrav1.InternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
 			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
 			infrav1.BastionHostReadyCondition,
 			infrav1.EgressOnlyInternetGatewayReadyCondition,
 			ekscontrolplanev1.EKSControlPlaneCreatingCondition,
@@ -305,6 +306,12 @@ func (s *ManagedControlPlaneScope) Session() awsclient.ConfigProvider {
 // Bastion returns the bastion details.
 func (s *ManagedControlPlaneScope) Bastion() *infrav1.Bastion {
 	return &s.ControlPlane.Spec.Bastion
+}
+
+// Bucket returns the bucket details.
+// For ManagedControlPlane this is always nil, as we don't support S3 buckets for managed clusters.
+func (s *ManagedControlPlaneScope) Bucket() *infrav1.S3Bucket {
+	return nil
 }
 
 // TagUnmanagedNetworkResources returns if the feature flag tag unmanaged network resources is set.

@@ -17,6 +17,8 @@ limitations under the License.
 package converters
 
 import (
+	"sort"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -64,6 +66,9 @@ func MapToTags(src infrav1.Tags) []*ec2.Tag {
 		tags = append(tags, tag)
 	}
 
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
+
 	return tags
 }
 
@@ -102,6 +107,9 @@ func MapToELBTags(src infrav1.Tags) []*elb.Tag {
 		tags = append(tags, tag)
 	}
 
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
+
 	return tags
 }
 
@@ -117,6 +125,9 @@ func MapToV2Tags(src infrav1.Tags) []*elbv2.Tag {
 
 		tags = append(tags, tag)
 	}
+
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
 
 	return tags
 }
@@ -134,6 +145,9 @@ func MapToSecretsManagerTags(src infrav1.Tags) []*secretsmanager.Tag {
 		tags = append(tags, tag)
 	}
 
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
+
 	return tags
 }
 
@@ -150,6 +164,9 @@ func MapToSSMTags(src infrav1.Tags) []*ssm.Tag {
 		tags = append(tags, tag)
 	}
 
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
+
 	return tags
 }
 
@@ -165,6 +182,9 @@ func MapToIAMTags(src infrav1.Tags) []*iam.Tag {
 
 		tags = append(tags, tag)
 	}
+
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(tags, func(i, j int) bool { return *tags[i].Key < *tags[j].Key })
 
 	return tags
 }

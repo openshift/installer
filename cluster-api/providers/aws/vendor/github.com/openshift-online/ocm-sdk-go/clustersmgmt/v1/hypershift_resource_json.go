@@ -29,3 +29,11 @@ func readHypershiftGetResponse(response *HypershiftGetResponse, reader io.Reader
 	response.body, err = UnmarshalHypershiftConfig(reader)
 	return err
 }
+func writeHypershiftUpdateRequest(request *HypershiftUpdateRequest, writer io.Writer) error {
+	return MarshalHypershiftConfig(request.body, writer)
+}
+func readHypershiftUpdateResponse(response *HypershiftUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalHypershiftConfig(reader)
+	return err
+}

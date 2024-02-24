@@ -38,6 +38,7 @@ type SubnetNetworkVerification struct {
 	href    string
 	details []string
 	state   string
+	tags    map[string]string
 }
 
 // Kind returns the name of the type of the object.
@@ -139,6 +140,29 @@ func (o *SubnetNetworkVerification) GetState() (value string, ok bool) {
 	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.state
+	}
+	return
+}
+
+// Tags returns the value of the 'tags' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Tags supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) Tags() map[string]string {
+	if o != nil && o.bitmap_&32 != 0 {
+		return o.tags
+	}
+	return nil
+}
+
+// GetTags returns the value of the 'tags' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Tags supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) GetTags() (value map[string]string, ok bool) {
+	ok = o != nil && o.bitmap_&32 != 0
+	if ok {
+		value = o.tags
 	}
 	return
 }

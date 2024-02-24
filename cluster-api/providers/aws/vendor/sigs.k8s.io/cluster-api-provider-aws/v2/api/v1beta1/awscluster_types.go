@@ -87,8 +87,10 @@ type AWSClusterSpec struct {
 	// +optional
 	Bastion Bastion `json:"bastion"`
 
-	// IdentityRef is a reference to a identity to be used when reconciling this cluster
 	// +optional
+
+	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
+	// If no identity is specified, the default identity for this controller will be used.
 	IdentityRef *AWSIdentityReference `json:"identityRef,omitempty"`
 
 	// S3Bucket contains options to configure a supporting S3 bucket for this
@@ -222,6 +224,7 @@ type S3Bucket struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsclusters,scope=Namespaced,categories=cluster-api,shortName=awsc
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this AWSCluster belongs"
@@ -240,6 +243,7 @@ type AWSCluster struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSClusterList contains a list of AWSCluster.
 type AWSClusterList struct {

@@ -64,10 +64,10 @@ func (s *Service) reconcileKubeconfig(ctx context.Context, cluster *eks.Cluster)
 			cluster,
 			&clusterRef,
 		); createErr != nil {
-			return fmt.Errorf("creating kubeconfig secret: %w", err)
+			return fmt.Errorf("creating kubeconfig secret: %w", createErr)
 		}
 	} else if updateErr := s.updateCAPIKubeconfigSecret(ctx, configSecret, cluster); updateErr != nil {
-		return fmt.Errorf("updating kubeconfig secret: %w", err)
+		return fmt.Errorf("updating kubeconfig secret: %w", updateErr)
 	}
 
 	// Set initialized to true to indicate the kubconfig has been created

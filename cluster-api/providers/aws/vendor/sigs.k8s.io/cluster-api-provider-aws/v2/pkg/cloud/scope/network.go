@@ -43,6 +43,9 @@ type NetworkScope interface {
 	// Bastion returns the bastion details for the cluster.
 	Bastion() *infrav1.Bastion
 
+	// Bucket returns the cluster bucket.
+	Bucket() *infrav1.S3Bucket
+
 	// TagUnmanagedNetworkResources returns is tagging unmanaged network resources is set.
 	TagUnmanagedNetworkResources() bool
 

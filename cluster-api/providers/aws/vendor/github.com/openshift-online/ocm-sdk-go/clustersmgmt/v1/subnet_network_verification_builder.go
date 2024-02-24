@@ -26,6 +26,7 @@ type SubnetNetworkVerificationBuilder struct {
 	href    string
 	details []string
 	state   string
+	tags    map[string]string
 }
 
 // NewSubnetNetworkVerification creates a new builder of 'subnet_network_verification' objects.
@@ -73,6 +74,17 @@ func (b *SubnetNetworkVerificationBuilder) State(value string) *SubnetNetworkVer
 	return b
 }
 
+// Tags sets the value of the 'tags' attribute to the given value.
+func (b *SubnetNetworkVerificationBuilder) Tags(value map[string]string) *SubnetNetworkVerificationBuilder {
+	b.tags = value
+	if value != nil {
+		b.bitmap_ |= 32
+	} else {
+		b.bitmap_ &^= 32
+	}
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *SubnetNetworkVerificationBuilder) Copy(object *SubnetNetworkVerification) *SubnetNetworkVerificationBuilder {
 	if object == nil {
@@ -88,6 +100,14 @@ func (b *SubnetNetworkVerificationBuilder) Copy(object *SubnetNetworkVerificatio
 		b.details = nil
 	}
 	b.state = object.state
+	if len(object.tags) > 0 {
+		b.tags = map[string]string{}
+		for k, v := range object.tags {
+			b.tags[k] = v
+		}
+	} else {
+		b.tags = nil
+	}
 	return b
 }
 
@@ -102,5 +122,11 @@ func (b *SubnetNetworkVerificationBuilder) Build() (object *SubnetNetworkVerific
 		copy(object.details, b.details)
 	}
 	object.state = b.state
+	if b.tags != nil {
+		object.tags = make(map[string]string)
+		for k, v := range b.tags {
+			object.tags[k] = v
+		}
+	}
 	return
 }

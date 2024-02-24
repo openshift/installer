@@ -25,7 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/aws/aws-sdk-go/service/eks/eksiface"
 	"github.com/pkg/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
@@ -144,7 +144,7 @@ func (s *NodegroupService) reconcileASGTags(ng *eks.Nodegroup) error {
 				Key:               &kCopy,
 				PropagateAtLaunch: aws.Bool(true),
 				ResourceId:        asg.AutoScalingGroupName,
-				ResourceType:      pointer.String("auto-scaling-group"),
+				ResourceType:      ptr.To[string]("auto-scaling-group"),
 				Value:             &vCopy,
 			})
 		}
@@ -163,7 +163,7 @@ func (s *NodegroupService) reconcileASGTags(ng *eks.Nodegroup) error {
 			input.Tags = append(input.Tags, &autoscaling.Tag{
 				Key:          &kCopy,
 				ResourceId:   asg.AutoScalingGroupName,
-				ResourceType: pointer.String("auto-scaling-group"),
+				ResourceType: ptr.To[string]("auto-scaling-group"),
 			})
 		}
 		_, err = s.AutoscalingClient.DeleteTagsWithContext(context.TODO(), input)

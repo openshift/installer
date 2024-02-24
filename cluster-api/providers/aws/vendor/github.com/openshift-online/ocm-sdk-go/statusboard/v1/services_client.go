@@ -229,6 +229,7 @@ type ServicesListRequest struct {
 	mine      *bool
 	orderBy   *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -275,6 +276,12 @@ func (r *ServicesListRequest) Page(value int) *ServicesListRequest {
 	return r
 }
 
+// Search sets the value of the 'search' parameter.
+func (r *ServicesListRequest) Search(value string) *ServicesListRequest {
+	r.search = &value
+	return r
+}
+
 // Size sets the value of the 'size' parameter.
 func (r *ServicesListRequest) Size(value int) *ServicesListRequest {
 	r.size = &value
@@ -303,6 +310,9 @@ func (r *ServicesListRequest) SendContext(ctx context.Context) (result *Services
 	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
