@@ -11,7 +11,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: clusterclasses.cluster.x-k8s.io
@@ -403,7 +403,7 @@ spec:
                 type: object
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources: {}
   - additionalPrinterColumns:
@@ -837,6 +837,18 @@ spec:
                                     description: MachineDeploymentClass selects templates
                                       referenced in specific MachineDeploymentClasses
                                       in .spec.workers.machineDeployments.
+                                    properties:
+                                      names:
+                                        description: Names selects templates by class
+                                          names.
+                                        items:
+                                          type: string
+                                        type: array
+                                    type: object
+                                  machinePoolClass:
+                                    description: MachinePoolClass selects templates
+                                      referenced in specific MachinePoolClasses in
+                                      .spec.workers.machinePools.
                                     properties:
                                       names:
                                         description: Names selects templates by class
@@ -1299,7 +1311,8 @@ spec:
                                   x-kubernetes-int-or-string: true
                               type: object
                             type:
-                              description: Type of deployment. Default is RollingUpdate.
+                              description: Type of deployment. Allowed values are
+                                RollingUpdate and OnDelete. The default is RollingUpdate.
                               enum:
                               - RollingUpdate
                               - OnDelete
@@ -1424,6 +1437,227 @@ spec:
                                 MachineDeployment and the machines of the MachineDeployment.
                                 At runtime this metadata is merged with the corresponding
                                 metadata from the topology.
+                              properties:
+                                annotations:
+                                  additionalProperties:
+                                    type: string
+                                  description: 'Annotations is an unstructured key
+                                    value map stored with a resource that may be set
+                                    by external tools to store and retrieve arbitrary
+                                    metadata. They are not queryable and should be
+                                    preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
+                                  type: object
+                                labels:
+                                  additionalProperties:
+                                    type: string
+                                  description: 'Map of string keys and values that
+                                    can be used to organize and categorize (scope
+                                    and select) objects. May match selectors of replication
+                                    controllers and services. More info: http://kubernetes.io/docs/user-guide/labels'
+                                  type: object
+                              type: object
+                          required:
+                          - bootstrap
+                          - infrastructure
+                          type: object
+                      required:
+                      - class
+                      - template
+                      type: object
+                    type: array
+                  machinePools:
+                    description: MachinePools is a list of machine pool classes that
+                      can be used to create a set of worker nodes.
+                    items:
+                      description: MachinePoolClass serves as a template to define
+                        a pool of worker nodes of the cluster provisioned using `ClusterClass`.
+                      properties:
+                        class:
+                          description: Class denotes a type of machine pool present
+                            in the cluster, this name MUST be unique within a ClusterClass
+                            and can be referenced in the Cluster to create a managed
+                            MachinePool.
+                          type: string
+                        failureDomains:
+                          description: 'FailureDomains is the list of failure domains
+                            the MachinePool should be attached to. Must match a key
+                            in the FailureDomains map stored on the cluster object.
+                            NOTE: This value can be overridden while defining a Cluster.Topology
+                            using this MachinePoolClass.'
+                          items:
+                            type: string
+                          type: array
+                        minReadySeconds:
+                          description: 'Minimum number of seconds for which a newly
+                            created machine pool should be ready. Defaults to 0 (machine
+                            will be considered available as soon as it is ready) NOTE:
+                            This value can be overridden while defining a Cluster.Topology
+                            using this MachinePoolClass.'
+                          format: int32
+                          type: integer
+                        namingStrategy:
+                          description: NamingStrategy allows changing the naming pattern
+                            used when creating the MachinePool.
+                          properties:
+                            template:
+                              description: 'Template defines the template to use for
+                                generating the name of the MachinePool object. If
+                                not defined, it will fallback to `{{ .cluster.name
+                                }}-{{ .machinePool.topologyName }}-{{ .random }}`.
+                                If the templated string exceeds 63 characters, it
+                                will be trimmed to 58 characters and will get concatenated
+                                with a random suffix of length 5. The templating mechanism
+                                provides the following arguments: * `.cluster.name`:
+                                The name of the cluster object. * `.random`: A random
+                                alphanumeric string, without vowels, of length 5.
+                                * `.machinePool.topologyName`: The name of the MachinePool
+                                topology (Cluster.spec.topology.workers.machinePools[].name).'
+                              type: string
+                          type: object
+                        nodeDeletionTimeout:
+                          description: 'NodeDeletionTimeout defines how long the controller
+                            will attempt to delete the Node that the Machine hosts
+                            after the Machine Pool is marked for deletion. A duration
+                            of 0 will retry deletion indefinitely. Defaults to 10
+                            seconds. NOTE: This value can be overridden while defining
+                            a Cluster.Topology using this MachinePoolClass.'
+                          type: string
+                        nodeDrainTimeout:
+                          description: 'NodeDrainTimeout is the total amount of time
+                            that the controller will spend on draining a node. The
+                            default value is 0, meaning that the node can be drained
+                            without any time limitations. NOTE: NodeDrainTimeout is
+                            different from `kubectl drain --timeout` NOTE: This value
+                            can be overridden while defining a Cluster.Topology using
+                            this MachinePoolClass.'
+                          type: string
+                        nodeVolumeDetachTimeout:
+                          description: 'NodeVolumeDetachTimeout is the total amount
+                            of time that the controller will spend on waiting for
+                            all volumes to be detached. The default value is 0, meaning
+                            that the volumes can be detached without any time limitations.
+                            NOTE: This value can be overridden while defining a Cluster.Topology
+                            using this MachinePoolClass.'
+                          type: string
+                        template:
+                          description: Template is a local struct containing a collection
+                            of templates for creation of MachinePools objects representing
+                            a pool of worker nodes.
+                          properties:
+                            bootstrap:
+                              description: Bootstrap contains the bootstrap template
+                                reference to be used for the creation of the Machines
+                                in the MachinePool.
+                              properties:
+                                ref:
+                                  description: Ref is a required reference to a custom
+                                    resource offered by a provider.
+                                  properties:
+                                    apiVersion:
+                                      description: API version of the referent.
+                                      type: string
+                                    fieldPath:
+                                      description: 'If referring to a piece of an
+                                        object instead of an entire object, this string
+                                        should contain a valid JSON/Go field access
+                                        statement, such as desiredState.manifest.containers[2].
+                                        For example, if the object reference is to
+                                        a container within a pod, this would take
+                                        on a value like: "spec.containers{name}" (where
+                                        "name" refers to the name of the container
+                                        that triggered the event) or if no container
+                                        name is specified "spec.containers[2]" (container
+                                        with index 2 in this pod). This syntax is
+                                        chosen only to have some well-defined way
+                                        of referencing a part of an object. TODO:
+                                        this design is not final and this field is
+                                        subject to change in the future.'
+                                      type: string
+                                    kind:
+                                      description: 'Kind of the referent. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                      type: string
+                                    name:
+                                      description: 'Name of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                                      type: string
+                                    namespace:
+                                      description: 'Namespace of the referent. More
+                                        info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                                      type: string
+                                    resourceVersion:
+                                      description: 'Specific resourceVersion to which
+                                        this reference is made, if any. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                                      type: string
+                                    uid:
+                                      description: 'UID of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                                      type: string
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                              required:
+                              - ref
+                              type: object
+                            infrastructure:
+                              description: Infrastructure contains the infrastructure
+                                template reference to be used for the creation of
+                                the MachinePool.
+                              properties:
+                                ref:
+                                  description: Ref is a required reference to a custom
+                                    resource offered by a provider.
+                                  properties:
+                                    apiVersion:
+                                      description: API version of the referent.
+                                      type: string
+                                    fieldPath:
+                                      description: 'If referring to a piece of an
+                                        object instead of an entire object, this string
+                                        should contain a valid JSON/Go field access
+                                        statement, such as desiredState.manifest.containers[2].
+                                        For example, if the object reference is to
+                                        a container within a pod, this would take
+                                        on a value like: "spec.containers{name}" (where
+                                        "name" refers to the name of the container
+                                        that triggered the event) or if no container
+                                        name is specified "spec.containers[2]" (container
+                                        with index 2 in this pod). This syntax is
+                                        chosen only to have some well-defined way
+                                        of referencing a part of an object. TODO:
+                                        this design is not final and this field is
+                                        subject to change in the future.'
+                                      type: string
+                                    kind:
+                                      description: 'Kind of the referent. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                                      type: string
+                                    name:
+                                      description: 'Name of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                                      type: string
+                                    namespace:
+                                      description: 'Namespace of the referent. More
+                                        info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                                      type: string
+                                    resourceVersion:
+                                      description: 'Specific resourceVersion to which
+                                        this reference is made, if any. More info:
+                                        https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                                      type: string
+                                    uid:
+                                      description: 'UID of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                                      type: string
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                              required:
+                              - ref
+                              type: object
+                            metadata:
+                              description: Metadata is the metadata applied to the
+                                MachinePool. At runtime this metadata is merged with
+                                the corresponding metadata from the topology.
                               properties:
                                 annotations:
                                   additionalProperties:
@@ -1708,7 +1942,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: clusterresourcesetbindings.addons.cluster.x-k8s.io
@@ -1906,7 +2140,7 @@ spec:
                 type: array
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -2008,7 +2242,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: clusterresourcesets.addons.cluster.x-k8s.io
@@ -2103,6 +2337,7 @@ spec:
                       are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               resources:
                 description: Resources is a list of Secrets/ConfigMaps where each
                   contains 1 or more resources to be applied to remote clusters.
@@ -2267,6 +2502,7 @@ spec:
                       are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               resources:
                 description: Resources is a list of Secrets/ConfigMaps where each
                   contains 1 or more resources to be applied to remote clusters.
@@ -2353,7 +2589,7 @@ spec:
                 type: integer
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -2430,6 +2666,7 @@ spec:
                       are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               resources:
                 description: Resources is a list of Secrets/ConfigMaps where each
                   contains 1 or more resources to be applied to remote clusters.
@@ -2528,7 +2765,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: clusters.cluster.x-k8s.io
@@ -3199,11 +3436,16 @@ spec:
                 type: string
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
   - additionalPrinterColumns:
+    - description: ClusterClass of this Cluster, empty if the Cluster is not using
+        a ClusterClass
+      jsonPath: .spec.topology.class
+      name: ClusterClass
+      type: string
     - description: Cluster status such as Pending/Provisioning/Provisioned/Deleting/Failed
       jsonPath: .status.phase
       name: Phase
@@ -3870,7 +4112,9 @@ spec:
                                       x-kubernetes-int-or-string: true
                                   type: object
                                 type:
-                                  description: Type of deployment. Default is RollingUpdate.
+                                  description: Type of deployment. Allowed values
+                                    are RollingUpdate and OnDelete. The default is
+                                    RollingUpdate.
                                   enum:
                                   - RollingUpdate
                                   - OnDelete
@@ -3879,6 +4123,149 @@ spec:
                             variables:
                               description: Variables can be used to customize the
                                 MachineDeployment through patches.
+                              properties:
+                                overrides:
+                                  description: Overrides can be used to override Cluster
+                                    level variables.
+                                  items:
+                                    description: ClusterVariable can be used to customize
+                                      the Cluster through patches. Each ClusterVariable
+                                      is associated with a Variable definition in
+                                      the ClusterClass `status` variables.
+                                    properties:
+                                      definitionFrom:
+                                        description: 'DefinitionFrom specifies where
+                                          the definition of this Variable is from.
+                                          DefinitionFrom is `inline` when the definition
+                                          is from the ClusterClass `.spec.variables`
+                                          or the name of a patch defined in the ClusterClass
+                                          `.spec.patches` where the patch is external
+                                          and provides external variables. This field
+                                          is mandatory if the variable has `DefinitionsConflict:
+                                          true` in ClusterClass `status.variables[]`'
+                                        type: string
+                                      name:
+                                        description: Name of the variable.
+                                        type: string
+                                      value:
+                                        description: 'Value of the variable. Note:
+                                          the value will be validated against the
+                                          schema of the corresponding ClusterClassVariable
+                                          from the ClusterClass. Note: We have to
+                                          use apiextensionsv1.JSON instead of a custom
+                                          JSON type, because controller-tools has
+                                          a hard-coded schema for apiextensionsv1.JSON
+                                          which cannot be produced by another type
+                                          via controller-tools, i.e. it is not possible
+                                          to have no type field. Ref: https://github.com/kubernetes-sigs/controller-tools/blob/d0e03a142d0ecdd5491593e941ee1d6b5d91dba6/pkg/crd/known_types.go#L106-L111'
+                                        x-kubernetes-preserve-unknown-fields: true
+                                    required:
+                                    - name
+                                    - value
+                                    type: object
+                                  type: array
+                              type: object
+                          required:
+                          - class
+                          - name
+                          type: object
+                        type: array
+                      machinePools:
+                        description: MachinePools is a list of machine pools in the
+                          cluster.
+                        items:
+                          description: MachinePoolTopology specifies the different
+                            parameters for a pool of worker nodes in the topology.
+                            This pool of nodes is managed by a MachinePool object
+                            whose lifecycle is managed by the Cluster controller.
+                          properties:
+                            class:
+                              description: Class is the name of the MachinePoolClass
+                                used to create the pool of worker nodes. This should
+                                match one of the deployment classes defined in the
+                                ClusterClass object mentioned in the `Cluster.Spec.Class`
+                                field.
+                              type: string
+                            failureDomains:
+                              description: FailureDomains is the list of failure domains
+                                the machine pool will be created in. Must match a
+                                key in the FailureDomains map stored on the cluster
+                                object.
+                              items:
+                                type: string
+                              type: array
+                            metadata:
+                              description: Metadata is the metadata applied to the
+                                MachinePool. At runtime this metadata is merged with
+                                the corresponding metadata from the ClusterClass.
+                              properties:
+                                annotations:
+                                  additionalProperties:
+                                    type: string
+                                  description: 'Annotations is an unstructured key
+                                    value map stored with a resource that may be set
+                                    by external tools to store and retrieve arbitrary
+                                    metadata. They are not queryable and should be
+                                    preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations'
+                                  type: object
+                                labels:
+                                  additionalProperties:
+                                    type: string
+                                  description: 'Map of string keys and values that
+                                    can be used to organize and categorize (scope
+                                    and select) objects. May match selectors of replication
+                                    controllers and services. More info: http://kubernetes.io/docs/user-guide/labels'
+                                  type: object
+                              type: object
+                            minReadySeconds:
+                              description: Minimum number of seconds for which a newly
+                                created machine pool should be ready. Defaults to
+                                0 (machine will be considered available as soon as
+                                it is ready)
+                              format: int32
+                              type: integer
+                            name:
+                              description: Name is the unique identifier for this
+                                MachinePoolTopology. The value is used with other
+                                unique identifiers to create a MachinePool's Name
+                                (e.g. cluster's name, etc). In case the name is greater
+                                than the allowed maximum length, the values are hashed
+                                together.
+                              type: string
+                            nodeDeletionTimeout:
+                              description: NodeDeletionTimeout defines how long the
+                                controller will attempt to delete the Node that the
+                                MachinePool hosts after the MachinePool is marked
+                                for deletion. A duration of 0 will retry deletion
+                                indefinitely. Defaults to 10 seconds.
+                              type: string
+                            nodeDrainTimeout:
+                              description: 'NodeDrainTimeout is the total amount of
+                                time that the controller will spend on draining a
+                                node. The default value is 0, meaning that the node
+                                can be drained without any time limitations. NOTE:
+                                NodeDrainTimeout is different from `kubectl drain
+                                --timeout`'
+                              type: string
+                            nodeVolumeDetachTimeout:
+                              description: NodeVolumeDetachTimeout is the total amount
+                                of time that the controller will spend on waiting
+                                for all volumes to be detached. The default value
+                                is 0, meaning that the volumes can be detached without
+                                any time limitations.
+                              type: string
+                            replicas:
+                              description: Replicas is the number of nodes belonging
+                                to this pool. If the value is nil, the MachinePool
+                                is created without the number of Replicas (defaulting
+                                to 1) and it's assumed that an external entity (like
+                                cluster autoscaler) is responsible for the management
+                                of this value.
+                              format: int32
+                              type: integer
+                            variables:
+                              description: Variables can be used to customize the
+                                MachinePool through patches.
                               properties:
                                 overrides:
                                   description: Overrides can be used to override Cluster
@@ -4036,7 +4423,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: extensionconfigs.runtime.cluster.x-k8s.io
@@ -4174,6 +4561,7 @@ spec:
                       are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               settings:
                 additionalProperties:
                   type: string
@@ -4287,7 +4675,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: ipaddressclaims.ipam.cluster.x-k8s.io
@@ -4311,6 +4699,10 @@ spec:
       jsonPath: .spec.poolRef.kind
       name: Pool Kind
       type: string
+    - description: Time duration since creation of IPAdressClaim
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -4348,10 +4740,10 @@ spec:
                     description: Name is the name of resource being referenced
                     type: string
                 required:
-                - apiGroup
                 - kind
                 - name
                 type: object
+                x-kubernetes-map-type: atomic
             required:
             - poolRef
             type: object
@@ -4367,6 +4759,128 @@ spec:
                       TODO: Add other useful fields. apiVersion, kind, uid?'
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
+              conditions:
+                description: Conditions summarises the current state of the IPAddressClaim
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another. This should be when the underlying condition changed.
+                        If that is not known, then using the time when the API field
+                        changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition. This field may be empty.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition
+                        in CamelCase. The specific API may choose whether or not this
+                        field is considered a guaranteed API. This field may not be
+                        empty.
+                      type: string
+                    severity:
+                      description: Severity provides an explicit classification of
+                        Reason code, so the users or machines can immediately understand
+                        the current situation and act accordingly. The Severity field
+                        MUST be set only when Status=False.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources:
+      status: {}
+  - additionalPrinterColumns:
+    - description: Name of the pool to allocate an address from
+      jsonPath: .spec.poolRef.name
+      name: Pool Name
+      type: string
+    - description: Kind of the pool to allocate an address from
+      jsonPath: .spec.poolRef.kind
+      name: Pool Kind
+      type: string
+    - description: Time duration since creation of IPAdressClaim
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: IPAddressClaim is the Schema for the ipaddressclaim API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IPAddressClaimSpec is the desired state of an IPAddressClaim.
+            properties:
+              poolRef:
+                description: PoolRef is a reference to the pool from which an IP address
+                  should be created.
+                properties:
+                  apiGroup:
+                    description: APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in
+                      the core API group. For any other third-party types, APIGroup
+                      is required.
+                    type: string
+                  kind:
+                    description: Kind is the type of resource being referenced
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+                x-kubernetes-map-type: atomic
+            required:
+            - poolRef
+            type: object
+          status:
+            description: IPAddressClaimStatus is the observed status of a IPAddressClaim.
+            properties:
+              addressRef:
+                description: AddressRef is a reference to the address that was created
+                  for this claim.
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               conditions:
                 description: Conditions summarises the current state of the IPAddressClaim
                 items:
@@ -4423,7 +4937,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: ipaddresses.ipam.cluster.x-k8s.io
@@ -4451,6 +4965,10 @@ spec:
       jsonPath: .spec.poolRef.kind
       name: Pool Kind
       type: string
+    - description: Time duration since creation of IPAdress
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -4483,6 +5001,7 @@ spec:
                       TODO: Add other useful fields. apiVersion, kind, uid?'
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               gateway:
                 description: Gateway is the network gateway of the network the address
                   is from.
@@ -4504,10 +5023,98 @@ spec:
                     description: Name is the name of resource being referenced
                     type: string
                 required:
-                - apiGroup
                 - kind
                 - name
                 type: object
+                x-kubernetes-map-type: atomic
+              prefix:
+                description: Prefix is the prefix of the address.
+                type: integer
+            required:
+            - address
+            - claimRef
+            - poolRef
+            - prefix
+            type: object
+        type: object
+    served: true
+    storage: false
+    subresources: {}
+  - additionalPrinterColumns:
+    - description: Address
+      jsonPath: .spec.address
+      name: Address
+      type: string
+    - description: Name of the pool the address is from
+      jsonPath: .spec.poolRef.name
+      name: Pool Name
+      type: string
+    - description: Kind of the pool the address is from
+      jsonPath: .spec.poolRef.kind
+      name: Pool Kind
+      type: string
+    - description: Time duration since creation of IPAdress
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: IPAddress is the Schema for the ipaddress API.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IPAddressSpec is the desired state of an IPAddress.
+            properties:
+              address:
+                description: Address is the IP address.
+                type: string
+              claimRef:
+                description: ClaimRef is a reference to the claim this IPAddress was
+                  created for.
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              gateway:
+                description: Gateway is the network gateway of the network the address
+                  is from.
+                type: string
+              poolRef:
+                description: PoolRef is a reference to the pool that this IPAddress
+                  was created from.
+                properties:
+                  apiGroup:
+                    description: APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in
+                      the core API group. For any other third-party types, APIGroup
+                      is required.
+                    type: string
+                  kind:
+                    description: Kind is the type of resource being referenced
+                    type: string
+                  name:
+                    description: Name is the name of resource being referenced
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+                x-kubernetes-map-type: atomic
               prefix:
                 description: Prefix is the prefix of the address.
                 type: integer
@@ -4527,7 +5134,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: machinedeployments.cluster.x-k8s.io
@@ -5504,7 +6111,7 @@ spec:
                 type: integer
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       scale:
@@ -5729,7 +6336,8 @@ spec:
                         x-kubernetes-int-or-string: true
                     type: object
                   type:
-                    description: Type of deployment. Default is RollingUpdate.
+                    description: Type of deployment. Allowed values are RollingUpdate
+                      and OnDelete. The default is RollingUpdate.
                     enum:
                     - RollingUpdate
                     - OnDelete
@@ -6023,7 +6631,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: machinehealthchecks.cluster.x-k8s.io
@@ -6574,7 +7182,7 @@ spec:
                 type: array
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -6856,7 +7464,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: machinepools.cluster.x-k8s.io
@@ -7395,6 +8003,7 @@ spec:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -7804,6 +8413,7 @@ spec:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -7835,7 +8445,7 @@ spec:
                 type: integer
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       scale:
@@ -8234,6 +8844,7 @@ spec:
                       description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -8278,7 +8889,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: machines.cluster.x-k8s.io
@@ -9039,7 +9650,7 @@ spec:
                 type: string
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       status: {}
@@ -9454,7 +10065,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-system/capi-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.13.0
   labels:
     cluster.x-k8s.io/provider: cluster-api
   name: machinesets.cluster.x-k8s.io
@@ -10311,7 +10922,7 @@ spec:
                 type: string
             type: object
         type: object
-    served: true
+    served: false
     storage: false
     subresources:
       scale:
@@ -10831,6 +11442,18 @@ rules:
   - list
   - watch
 - apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
   - bootstrap.cluster.x-k8s.io
   - controlplane.cluster.x-k8s.io
   - infrastructure.cluster.x-k8s.io
@@ -10971,6 +11594,18 @@ rules:
   - machinehealthchecks/finalizers
   - machinehealthchecks/status
   verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - machinepools
+  verbs:
+  - create
+  - delete
   - get
   - list
   - patch
@@ -11177,7 +11812,8 @@ spec:
       containers:
       - args:
         - --leader-elect
-        - --metrics-bind-addr=localhost:8080
+        - --diagnostics-address=${CAPI_DIAGNOSTICS_ADDRESS:=:8443}
+        - --insecure-diagnostics=${CAPI_INSECURE_DIAGNOSTICS:=false}
         - --feature-gates=MachinePool=${EXP_MACHINE_POOL:=false},ClusterResourceSet=${EXP_CLUSTER_RESOURCE_SET:=false},ClusterTopology=${CLUSTER_TOPOLOGY:=false},RuntimeSDK=${EXP_RUNTIME_SDK:=false},MachineSetPreflightChecks=${EXP_MACHINE_SET_PREFLIGHT_CHECKS:=false}
         command:
         - /manager
@@ -11194,7 +11830,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: registry.k8s.io/cluster-api/cluster-api-controller:v1.5.2
+        image: registry.k8s.io/cluster-api/cluster-api-controller:v1.6.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -11207,6 +11843,9 @@ spec:
           protocol: TCP
         - containerPort: 9440
           name: healthz
+          protocol: TCP
+        - containerPort: 8443
+          name: metrics
           protocol: TCP
         readinessProbe:
           httpGet:
@@ -11278,6 +11917,50 @@ metadata:
     cluster.x-k8s.io/provider: cluster-api
   name: capi-mutating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capi-webhook-service
+      namespace: capi-system
+      path: /mutate-cluster-x-k8s-io-v1beta1-cluster
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.cluster.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capi-webhook-service
+      namespace: capi-system
+      path: /mutate-cluster-x-k8s-io-v1beta1-clusterclass
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.clusterclass.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusterclasses
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
@@ -11373,50 +12056,6 @@ webhooks:
     service:
       name: capi-webhook-service
       namespace: capi-system
-      path: /mutate-cluster-x-k8s-io-v1beta1-cluster
-  failurePolicy: Fail
-  matchPolicy: Equivalent
-  name: default.cluster.cluster.x-k8s.io
-  rules:
-  - apiGroups:
-    - cluster.x-k8s.io
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - clusters
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: capi-webhook-service
-      namespace: capi-system
-      path: /mutate-cluster-x-k8s-io-v1beta1-clusterclass
-  failurePolicy: Fail
-  matchPolicy: Equivalent
-  name: default.clusterclass.cluster.x-k8s.io
-  rules:
-  - apiGroups:
-    - cluster.x-k8s.io
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - clusterclasses
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: capi-webhook-service
-      namespace: capi-system
       path: /mutate-runtime-cluster-x-k8s-io-v1alpha1-extensionconfig
   failurePolicy: Fail
   matchPolicy: Equivalent
@@ -11486,6 +12125,52 @@ metadata:
     cluster.x-k8s.io/provider: cluster-api
   name: capi-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capi-webhook-service
+      namespace: capi-system
+      path: /validate-cluster-x-k8s-io-v1beta1-cluster
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.cluster.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capi-webhook-service
+      namespace: capi-system
+      path: /validate-cluster-x-k8s-io-v1beta1-clusterclass
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.clusterclass.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - clusterclasses
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
@@ -11573,52 +12258,6 @@ webhooks:
     - UPDATE
     resources:
     - machinesets
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: capi-webhook-service
-      namespace: capi-system
-      path: /validate-cluster-x-k8s-io-v1beta1-cluster
-  failurePolicy: Fail
-  matchPolicy: Equivalent
-  name: validation.cluster.cluster.x-k8s.io
-  rules:
-  - apiGroups:
-    - cluster.x-k8s.io
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    - DELETE
-    resources:
-    - clusters
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: capi-webhook-service
-      namespace: capi-system
-      path: /validate-cluster-x-k8s-io-v1beta1-clusterclass
-  failurePolicy: Fail
-  matchPolicy: Equivalent
-  name: validation.clusterclass.cluster.x-k8s.io
-  rules:
-  - apiGroups:
-    - cluster.x-k8s.io
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    - DELETE
-    resources:
-    - clusterclasses
   sideEffects: None
 - admissionReviewVersions:
   - v1
@@ -11715,7 +12354,7 @@ webhooks:
     service:
       name: capi-webhook-service
       namespace: capi-system
-      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-ipaddress
+      path: /validate-ipam-cluster-x-k8s-io-v1beta1-ipaddress
   failurePolicy: Fail
   matchPolicy: Equivalent
   name: validation.ipaddress.ipam.cluster.x-k8s.io
@@ -11723,7 +12362,7 @@ webhooks:
   - apiGroups:
     - ipam.cluster.x-k8s.io
     apiVersions:
-    - v1alpha1
+    - v1beta1
     operations:
     - CREATE
     - UPDATE
@@ -11738,7 +12377,7 @@ webhooks:
     service:
       name: capi-webhook-service
       namespace: capi-system
-      path: /validate-ipam-cluster-x-k8s-io-v1alpha1-ipaddressclaim
+      path: /validate-ipam-cluster-x-k8s-io-v1beta1-ipaddressclaim
   failurePolicy: Fail
   matchPolicy: Equivalent
   name: validation.ipaddressclaim.ipam.cluster.x-k8s.io
@@ -11746,7 +12385,7 @@ webhooks:
   - apiGroups:
     - ipam.cluster.x-k8s.io
     apiVersions:
-    - v1alpha1
+    - v1beta1
     operations:
     - CREATE
     - UPDATE

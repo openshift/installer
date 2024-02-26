@@ -19,7 +19,6 @@ import (
 	capzv1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	capgv1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3" //nolint:staticcheck
 	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4" //nolint:staticcheck
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,7 +34,6 @@ var (
 )
 
 func init() {
-	utilruntime.Must(clusterv1alpha3.AddToScheme(Scheme))
 	utilruntime.Must(clusterv1alpha4.AddToScheme(Scheme))
 	utilruntime.Must(clusterv1.AddToScheme(Scheme))
 	utilruntime.Must(capav1beta1.AddToScheme(Scheme))
