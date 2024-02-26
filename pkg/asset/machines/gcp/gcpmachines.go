@@ -4,6 +4,7 @@ package gcp
 import (
 	"fmt"
 
+	compute "google.golang.org/api/compute/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -15,6 +16,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
+
+const masterRole = "master"
 
 // GenerateMachines returns manifests and runtime objects to provision control plane nodes using CAPI.
 func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string, pool *types.MachinePool, imageName string) ([]*asset.RuntimeFile, error) {
@@ -39,7 +42,7 @@ func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string
 			Object: gcpMachine,
 		})
 
-		dataSecret := fmt.Sprintf("%s-master", infraID)
+		dataSecret := fmt.Sprintf("%s-%s", infraID, masterRole)
 		capiMachine := createCAPIMachine(gcpMachine.Name, dataSecret, infraID)
 
 		result = append(result, &asset.RuntimeFile{
@@ -97,7 +100,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 
 	masterSubnet := installConfig.Config.Platform.GCP.ControlPlaneSubnet
 	if masterSubnet == "" {
-		masterSubnet = gcptypes.DefaultSubnetName(infraID, "master")
+		masterSubnet = gcptypes.DefaultSubnetName(infraID, masterRole)
 	}
 
 	gcpMachine := &capg.GCPMachine{
@@ -132,15 +135,26 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 		shieldedInstanceConfig.SecureBoot = capg.SecureBootPolicyEnabled
 		gcpMachine.Spec.ShieldedInstanceConfig = ptr.To(shieldedInstanceConfig)
 	}
-	if mpool.ServiceAccount != "" {
-		serviceAccount := &capg.ServiceAccount{
-			Email: mpool.ServiceAccount,
-			// Set scopes to value defined at
-			// https://cloud.google.com/compute/docs/access/service-accounts#scopes_best_practice
-			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
-		}
-		gcpMachine.Spec.ServiceAccount = serviceAccount
+
+	serviceAccount := &capg.ServiceAccount{
+		// Set scopes to value defined at
+		// https://cloud.google.com/compute/docs/access/service-accounts#scopes_best_practice
+		Scopes: []string{compute.CloudPlatformScope},
 	}
+
+	projectID := installConfig.Config.Platform.GCP.ProjectID
+	serviceAccount.Email = fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", infraID, masterRole[0:1], projectID)
+	// The installer will create a service account for compute nodes with the above naming convention.
+	// The same service account will be used for control plane nodes during a vanilla installation. During a
+	// xpn installation, the installer will attempt to use an existing service account from a user supplied
+	// value in install-config.
+	// Note - the derivation of the ServiceAccount from credentials will no longer be supported.
+	if len(installConfig.Config.Platform.GCP.NetworkProjectID) > 0 {
+		if mpool.ServiceAccount != "" {
+			serviceAccount.Email = mpool.ServiceAccount
+		}
+	}
+	gcpMachine.Spec.ServiceAccount = serviceAccount
 
 	return gcpMachine
 }
