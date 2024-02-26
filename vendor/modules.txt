@@ -9874,7 +9874,7 @@ sigs.k8s.io/cluster-api/util/version
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2
 sigs.k8s.io/cluster-api-provider-aws/v2/feature
-# sigs.k8s.io/cluster-api-provider-azure v0.0.0-00010101000000-000000000000 => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
+# sigs.k8s.io/cluster-api-provider-azure v1.13.0 => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
 sigs.k8s.io/cluster-api-provider-azure/feature
