@@ -3,7 +3,6 @@ package joiner
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,11 +23,11 @@ import (
 // from an already existing cluster. A number of different resources
 // are inspected to extract the required configuration.
 type ClusterInfo struct {
-	Config          *rest.Config
 	Client          kubernetes.Interface
 	OpenshiftClient configclient.Interface
 
 	ClusterID                     string
+	ClusterName                   string
 	Version                       string
 	ReleaseImage                  string
 	APIDNSName                    string
@@ -70,10 +69,6 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	}
 
 	err := ci.initClients(addNodesConfig.Params.Kubeconfig)
-	if err != nil {
-		return err
-	}
-	err = ci.retrieveAPIDNSName()
 	if err != nil {
 		return err
 	}
@@ -123,15 +118,14 @@ func (ci *ClusterInfo) initClients(kubeconfig string) error {
 	if err != nil {
 		return err
 	}
-	ci.Config = config
 
-	openshiftClient, err := configclient.NewForConfig(ci.Config)
+	openshiftClient, err := configclient.NewForConfig(config)
 	if err != nil {
 		return err
 	}
 	ci.OpenshiftClient = openshiftClient
 
-	k8sclientset, err := kubernetes.NewForConfig(ci.Config)
+	k8sclientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return err
 	}
@@ -163,16 +157,6 @@ func (ci *ClusterInfo) retrieveProxy() error {
 		NoProxy:    proxy.Spec.NoProxy,
 	}
 
-	return nil
-}
-
-func (ci *ClusterInfo) retrieveAPIDNSName() error {
-	parsedURL, err := url.Parse(ci.Config.Host)
-	if err != nil {
-		return err
-	}
-
-	ci.APIDNSName = parsedURL.Hostname()
 	return nil
 }
 
@@ -233,6 +217,8 @@ func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
 	ci.PlatformType = agent.HivePlatformType(installConfig.Platform)
 	ci.SSHKey = installConfig.SSHKey
+	ci.ClusterName = installConfig.ObjectMeta.Name
+	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
 
 	return nil
 }

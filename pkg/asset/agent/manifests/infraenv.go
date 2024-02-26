@@ -72,7 +72,7 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		err := i.generateManifest(clusterInfo.ClusterID, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture)
+		err := i.generateManifest(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture)
 		if err != nil {
 			return err
 		}
