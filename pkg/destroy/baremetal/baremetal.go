@@ -4,10 +4,10 @@
 package baremetal
 
 import (
+	"fmt"
 	"net/url"
 
 	libvirt "github.com/digitalocean/go-libvirt"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -45,7 +45,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 
 	err = o.deleteStoragePool(virt)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to clean baremetal bootstrap storage pool")
+		return nil, fmt.Errorf("failed to clean baremetal bootstrap storage pool: %w", err)
 	}
 
 	return nil, nil

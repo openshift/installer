@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	libvirt "github.com/digitalocean/go-libvirt"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -74,7 +73,7 @@ func interfaceValidator(libvirtURI string) (func(string) error, error) {
 
 	networks, _, err := virt.ConnectListAllNetworks(1, libvirt.ConnectListNetworksActive)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not list libvirt networks")
+		return nil, fmt.Errorf("could not list libvirt networks: %w", err)
 	}
 	for _, network := range networks {
 		bridgeName, err := virt.NetworkGetBridgeName(network)
@@ -84,7 +83,7 @@ func interfaceValidator(libvirtURI string) (func(string) error, error) {
 	}
 	bridges, _, err := virt.ConnectListAllInterfaces(1, libvirt.ConnectListInterfacesActive)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not list libvirt interfaces")
+		return nil, fmt.Errorf("could not list libvirt interfaces: %w", err)
 	}
 
 	for _, bridge := range bridges {
