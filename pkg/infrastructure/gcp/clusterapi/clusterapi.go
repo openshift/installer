@@ -36,6 +36,31 @@ func (p Provider) Name() string {
 // GCP resources that are not created by CAPG (and are required for other stages of the install) are
 // created here using the gcp sdk.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	// Create ServiceAccounts which will be used for machines
+	projectID := in.InstallConfig.Config.Platform.GCP.ProjectID
+
+	// ServiceAccount for masters
+	// Only create ServiceAccount for masters if a shared VPC install is not being done
+	if len(in.InstallConfig.Config.Platform.GCP.NetworkProjectID) == 0 ||
+		in.InstallConfig.Config.ControlPlane.Platform.GCP.ServiceAccount == "" {
+		masterSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "master")
+		if err != nil {
+			return fmt.Errorf("failed to create master serviceAccount: %w", err)
+		}
+		if err = AddServiceAccountRoles(ctx, projectID, masterSA, GetMasterRoles()); err != nil {
+			return fmt.Errorf("failed to add master roles: %w", err)
+		}
+	}
+
+	// ServiceAccount for workers
+	workerSA, err := CreateServiceAccount(ctx, in.InfraID, projectID, "worker")
+	if err != nil {
+		return fmt.Errorf("failed to create worker serviceAccount: %w", err)
+	}
+	if err = AddServiceAccountRoles(ctx, projectID, workerSA, GetWorkerRoles()); err != nil {
+		return fmt.Errorf("failed to add worker roles: %w", err)
+	}
+
 	return nil
 }
 
