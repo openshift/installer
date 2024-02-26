@@ -24,6 +24,10 @@ import (
 // from an already existing cluster. A number of different resources
 // are inspected to extract the required configuration.
 type ClusterInfo struct {
+	Config          *rest.Config
+	Client          kubernetes.Interface
+	OpenshiftClient configclient.Interface
+
 	ClusterID                     string
 	Version                       string
 	ReleaseImage                  string
@@ -65,45 +69,36 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	config, err := ci.getRestConfig(addNodesConfig.Params.Kubeconfig)
+	err := ci.initClients(addNodesConfig.Params.Kubeconfig)
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveAPIDNSName(config)
+	err = ci.retrieveAPIDNSName()
 	if err != nil {
 		return err
 	}
-
-	clientset, err := configclient.NewForConfig(config)
+	err = ci.retrieveClusterData()
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveClusterData(clientset)
-	if err != nil {
-		return err
-	}
-	err = ci.retrieveProxy(clientset)
+	err = ci.retrieveProxy()
 	if err != nil {
 		return err
 	}
 
-	k8sclientset, err := kubernetes.NewForConfig(config)
+	err = ci.retrievePullSecret()
 	if err != nil {
 		return err
 	}
-	err = ci.retrievePullSecret(k8sclientset)
+	err = ci.retrieveUserTrustBundle()
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveUserTrustBundle(k8sclientset)
+	err = ci.retrieveArchitecture()
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveArchitecture(k8sclientset)
-	if err != nil {
-		return err
-	}
-	err = ci.retrieveInstallConfigData(k8sclientset)
+	err = ci.retrieveInstallConfigData()
 	if err != nil {
 		return err
 	}
@@ -113,21 +108,40 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func (ci *ClusterInfo) getRestConfig(kubeconfig string) (*rest.Config, error) {
+func (ci *ClusterInfo) initClients(kubeconfig string) error {
+	if ci.Client != nil && ci.OpenshiftClient != nil {
+		return nil
+	}
+
 	var err error
 	var config *rest.Config
-
 	if kubeconfig != "" {
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	} else {
 		config, err = rest.InClusterConfig()
 	}
+	if err != nil {
+		return err
+	}
+	ci.Config = config
 
-	return config, err
+	openshiftClient, err := configclient.NewForConfig(ci.Config)
+	if err != nil {
+		return err
+	}
+	ci.OpenshiftClient = openshiftClient
+
+	k8sclientset, err := kubernetes.NewForConfig(ci.Config)
+	if err != nil {
+		return err
+	}
+	ci.Client = k8sclientset
+
+	return err
 }
 
-func (ci *ClusterInfo) retrieveClusterData(clientset *configclient.Clientset) error {
-	cv, err := clientset.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
+func (ci *ClusterInfo) retrieveClusterData() error {
+	cv, err := ci.OpenshiftClient.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -138,8 +152,8 @@ func (ci *ClusterInfo) retrieveClusterData(clientset *configclient.Clientset) er
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveProxy(clientset *configclient.Clientset) error {
-	proxy, err := clientset.ConfigV1().Proxies().Get(context.Background(), "cluster", metav1.GetOptions{})
+func (ci *ClusterInfo) retrieveProxy() error {
+	proxy, err := ci.OpenshiftClient.ConfigV1().Proxies().Get(context.Background(), "cluster", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -152,8 +166,8 @@ func (ci *ClusterInfo) retrieveProxy(clientset *configclient.Clientset) error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveAPIDNSName(config *rest.Config) error {
-	parsedURL, err := url.Parse(config.Host)
+func (ci *ClusterInfo) retrieveAPIDNSName() error {
+	parsedURL, err := url.Parse(ci.Config.Host)
 	if err != nil {
 		return err
 	}
@@ -162,8 +176,8 @@ func (ci *ClusterInfo) retrieveAPIDNSName(config *rest.Config) error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrievePullSecret(clientset *kubernetes.Clientset) error {
-	pullSecret, err := clientset.CoreV1().Secrets("openshift-config").Get(context.Background(), "pull-secret", metav1.GetOptions{})
+func (ci *ClusterInfo) retrievePullSecret() error {
+	pullSecret, err := ci.Client.CoreV1().Secrets("openshift-config").Get(context.Background(), "pull-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -172,8 +186,8 @@ func (ci *ClusterInfo) retrievePullSecret(clientset *kubernetes.Clientset) error
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveUserTrustBundle(clientset *kubernetes.Clientset) error {
-	userCaBundle, err := clientset.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
+func (ci *ClusterInfo) retrieveUserTrustBundle() error {
+	userCaBundle, err := ci.Client.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -185,8 +199,10 @@ func (ci *ClusterInfo) retrieveUserTrustBundle(clientset *kubernetes.Clientset) 
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveArchitecture(clientset *kubernetes.Clientset) error {
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+func (ci *ClusterInfo) retrieveArchitecture() error {
+	nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
+		LabelSelector: "node-role.kubernetes.io/master",
+	})
 	if err != nil {
 		return err
 	}
@@ -195,8 +211,8 @@ func (ci *ClusterInfo) retrieveArchitecture(clientset *kubernetes.Clientset) err
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveInstallConfigData(clientset *kubernetes.Clientset) error {
-	clusterConfig, err := clientset.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
+func (ci *ClusterInfo) retrieveInstallConfigData() error {
+	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
