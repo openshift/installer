@@ -249,3 +249,11 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   from_port   = 19531
   to_port     = 19531
 }
+
+resource "aws_eip" "bootstrap" {
+  domain           = "vpc"
+  instance         = aws_instance.bootstrap.id
+  public_ipv4_pool = var.aws_public_ipv4_pool == "" ? null : var.aws_public_ipv4_pool
+
+  depends_on = [aws_instance.bootstrap]
+}

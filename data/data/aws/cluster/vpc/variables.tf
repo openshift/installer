@@ -60,3 +60,8 @@ variable "private_subnets" {
   type        = list(string)
   description = "Existing private subnets into which the cluster should be installed."
 }
+
+variable "public_ipv4_pool" {
+  type        = string
+  description = "An Public IPv4 Pool"
+}

@@ -106,6 +106,11 @@ type Platform struct {
 	// during bootstrap destroy.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
+
+	// PublicIpv4Pool is an optional field that can be used to tell the installation process to use
+	// Public IPv4 address that you bring to your AWS account with BYOIP.
+	// +optional
+	PublicIpv4Pool string `json:"publicIpv4Pool,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
