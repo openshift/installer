@@ -31,9 +31,9 @@ func TestAgentPullSecret_Generate(t *testing.T) {
 				&agent.OptionalInstallConfig{},
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.ClusterInfo{
-					ClusterID:  "ostest",
-					Namespace:  "cluster0",
-					PullSecret: "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
+					ClusterName: "ostest",
+					Namespace:   "cluster0",
+					PullSecret:  "{\n  \"auths\": {\n    \"cloud.openshift.com\": {\n      \"auth\": \"b3BlUTA=\",\n      \"email\": \"test@redhat.com\"\n    }\n  }\n}",
 				},
 			},
 			expectedConfig: &corev1.Secret{
