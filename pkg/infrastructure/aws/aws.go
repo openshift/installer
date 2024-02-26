@@ -60,7 +60,7 @@ type output struct {
 }
 
 // Provision creates cluster infrastructure using AWS SDK calls.
-func (a InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+func (a InfraProvider) Provision(_ context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	terraformVariables := &tfvarsAsset.TerraformVariables{}
 	parents.Get(terraformVariables)
 	// Unmarshall input from tf variables, so we can use it along with

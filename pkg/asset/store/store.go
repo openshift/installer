@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -72,8 +73,8 @@ func newStore(dir string) (*storeImpl, error) {
 // Fetch retrieves the state of the given asset, generating it and its
 // dependencies if necessary. When purging consumed assets, none of the
 // assets in preserved will be purged.
-func (s *storeImpl) Fetch(a asset.Asset, preserved ...asset.WritableAsset) error {
-	if err := s.fetch(a, ""); err != nil {
+func (s *storeImpl) Fetch(ctx context.Context, a asset.Asset, preserved ...asset.WritableAsset) error {
+	if err := s.fetch(ctx, a, ""); err != nil {
 		return err
 	}
 	if err := s.saveStateFile(); err != nil {
@@ -192,7 +193,7 @@ func (s *storeImpl) saveStateFile() error {
 // fetch populates the given asset, generating it and its dependencies if
 // necessary, and returns whether or not the asset had to be regenerated and
 // any errors.
-func (s *storeImpl) fetch(a asset.Asset, indent string) error {
+func (s *storeImpl) fetch(ctx context.Context, a asset.Asset, indent string) error {
 	logrus.Debugf("%sFetching %s...", indent, a.Name())
 
 	assetState, ok := s.assets[reflect.TypeOf(a)]
@@ -217,13 +218,13 @@ func (s *storeImpl) fetch(a asset.Asset, indent string) error {
 	dependencies := a.Dependencies()
 	parents := make(asset.Parents, len(dependencies))
 	for _, d := range dependencies {
-		if err := s.fetch(d, increaseIndent(indent)); err != nil {
+		if err := s.fetch(ctx, d, increaseIndent(indent)); err != nil {
 			return errors.Wrapf(err, "failed to fetch dependency of %q", a.Name())
 		}
 		parents.Add(d)
 	}
 	logrus.Debugf("%sGenerating %s...", indent, a.Name())
-	if err := a.Generate(parents); err != nil {
+	if err := asAssetGenerator(a).GenerateWithContext(ctx, parents); err != nil {
 		return errors.Wrapf(err, "failed to generate asset %q", a.Name())
 	}
 	assetState.asset = a
@@ -370,4 +371,15 @@ func (s *storeImpl) Load(a asset.Asset) (asset.Asset, error) {
 	}
 
 	return s.assets[reflect.TypeOf(a)].asset, nil
+}
+
+// asAssetGenerator determines if an asset implements the
+// Generate with context function, or if it needs an adapter.
+func asAssetGenerator(a asset.Asset) asset.AssetGenerator {
+	switch v := a.(type) {
+	case asset.AssetGenerator:
+		return v
+	default:
+		return asset.NewDefaultAssetGenerator(a)
+	}
 }

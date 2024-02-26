@@ -94,7 +94,7 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 	}
 	// add the default bootstrap key pair to the sshKeys list
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	if err := assetStore.Fetch(bootstrapSSHKeyPair); err != nil {
+	if err := assetStore.Fetch(context.TODO(), bootstrapSSHKeyPair); err != nil {
 		return "", errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
 	}
 	tmpfile, err := os.CreateTemp("", "bootstrap-ssh")
@@ -118,7 +118,7 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 
 	if ha.Bootstrap == "" && len(ha.Masters) == 0 {
 		config := &installconfig.InstallConfig{}
-		if err := assetStore.Fetch(config); err != nil {
+		if err := assetStore.Fetch(context.TODO(), config); err != nil {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 		}
 

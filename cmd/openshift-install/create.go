@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientwatch "k8s.io/client-go/tools/watch"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
@@ -127,12 +128,11 @@ var (
 			Short: "Create an OpenShift cluster",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
-			PostRun: func(_ *cobra.Command, _ []string) {
-				// Setup a context that is canceled when the user presses Ctrl+C,
-				// or SIGTERM and SIGINT are received, this allows for a clean shutdown.
-				ctx, cancel := context.WithCancel(context.TODO())
-				defer cancel()
-				logrus.RegisterExitHandler(cancel)
+			PostRun: func(cmd *cobra.Command, _ []string) {
+
+				// Get the top-level context used when setting up the
+				// command and fetching assets.
+				ctx := cmd.Context()
 
 				exitCode, err := clusterCreatePostRun(ctx)
 				if err != nil {
@@ -296,20 +296,29 @@ func newCreateCmd() *cobra.Command {
 }
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
-	runner := func(directory string) error {
+	runner := func(ctx context.Context, directory string) error {
 		fetcher := assetstore.NewAssetsFetcher(directory)
-		return fetcher.FetchAndPersist(targets)
+		return fetcher.FetchAndPersist(ctx, targets)
 	}
 
 	return func(cmd *cobra.Command, args []string) {
 		timer.StartTimer(timer.TotalTimeElapsed)
+
+		// Setup a context that is canceled when the user presses Ctrl+C,
+		// or SIGTERM and SIGINT are received, this allows for a clean shutdown.
+		ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
+		logrus.RegisterExitHandler(cancel)
+
+		// Store the context so it can be used with the
+		// PostRun function.
+		cmd.SetContext(ctx)
 
 		cleanup := command.SetupFileHook(command.RootOpts.Dir)
 		defer cleanup()
 
 		cluster.InstallDir = command.RootOpts.Dir
 
-		err := runner(command.RootOpts.Dir)
+		err := runner(ctx, command.RootOpts.Dir)
 		if err != nil {
 			if strings.Contains(err.Error(), asset.InstallConfigError) {
 				logrus.Error(err)
@@ -863,7 +872,7 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 
 	// Ensure that the install is expecting the user to provision their own DNS solution.
 	installConfig := &installconfig.InstallConfig{}
-	if err := assetStore.Fetch(installConfig); err != nil {
+	if err := assetStore.Fetch(context.TODO(), installConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
@@ -876,7 +885,7 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 	}
 
 	lbConfig := &lbconfig.Config{}
-	if err := assetStore.Fetch(lbConfig); err != nil {
+	if err := assetStore.Fetch(context.TODO(), lbConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
 	}
 
