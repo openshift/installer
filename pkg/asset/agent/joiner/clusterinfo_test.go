@@ -3,22 +3,20 @@ package joiner
 import (
 	"testing"
 
-	"github.com/openshift/assisted-service/api/hiveextension/v1beta1"
-	fakeclientconfig "github.com/openshift/client-go/config/clientset/versioned/fake"
-	"gopkg.in/yaml.v2"
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/rest"
+	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/assisted-service/api/hiveextension/v1beta1"
+	fakeclientconfig "github.com/openshift/client-go/config/clientset/versioned/fake"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClusterInfo_Generate(t *testing.T) {
@@ -26,8 +24,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 		name                string
 		workflow            workflow.AgentWorkflowType
 		objects             []runtime.Object
-		openshiftOjects     []runtime.Object
-		configHost          string
+		openshiftObjects    []runtime.Object
 		expectedClusterInfo ClusterInfo
 	}{
 		{
@@ -36,10 +33,9 @@ func TestClusterInfo_Generate(t *testing.T) {
 			expectedClusterInfo: ClusterInfo{},
 		},
 		{
-			name:       "default",
-			workflow:   workflow.AgentWorkflowTypeAddNodes,
-			configHost: "https://api.ostest.test.metalkube.org:6443",
-			openshiftOjects: []runtime.Object{
+			name:     "default",
+			workflow: workflow.AgentWorkflowTypeAddNodes,
+			openshiftObjects: []runtime.Object{
 				&configv1.ClusterVersion{
 					ObjectMeta: v1.ObjectMeta{
 						Name: "version",
@@ -110,6 +106,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 			},
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
+				ClusterName:  "ostest",
 				ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:65d9b652d0d23084bc45cb66001c22e796d43f5e9e005c2bc2702f94397d596e",
 				Version:      "4.15.0",
 				APIDNSName:   "api.ostest.test.metalkube.org",
@@ -144,13 +141,9 @@ func TestClusterInfo_Generate(t *testing.T) {
 			parents.Add(addNodesConfig)
 
 			fakeClient := fake.NewSimpleClientset(tc.objects...)
-			fakeOCClient := fakeclientconfig.NewSimpleClientset(tc.openshiftOjects...)
-			fakeConfig := &rest.Config{
-				Host: tc.configHost,
-			}
+			fakeOCClient := fakeclientconfig.NewSimpleClientset(tc.openshiftObjects...)
 
 			clusterInfo := &ClusterInfo{
-				Config:          fakeConfig,
 				Client:          fakeClient,
 				OpenshiftClient: fakeOCClient,
 			}
@@ -158,6 +151,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedClusterInfo.ClusterID, clusterInfo.ClusterID)
+			assert.Equal(t, tc.expectedClusterInfo.ClusterName, clusterInfo.ClusterName)
 			assert.Equal(t, tc.expectedClusterInfo.Version, clusterInfo.Version)
 			assert.Equal(t, tc.expectedClusterInfo.ReleaseImage, clusterInfo.ReleaseImage)
 			assert.Equal(t, tc.expectedClusterInfo.APIDNSName, clusterInfo.APIDNSName)
@@ -175,7 +169,12 @@ func TestClusterInfo_Generate(t *testing.T) {
 }
 
 func makeInstallConfig(t *testing.T) string {
+	t.Helper()
 	ic := &types.InstallConfig{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "ostest",
+		},
+		BaseDomain: "test.metalkube.org",
 		ImageDigestSources: []types.ImageDigestSource{
 			{
 				Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
@@ -193,5 +192,6 @@ func makeInstallConfig(t *testing.T) string {
 	if err != nil {
 		t.Error(err)
 	}
+
 	return string(data)
 }

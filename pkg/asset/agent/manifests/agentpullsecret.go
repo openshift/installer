@@ -64,7 +64,7 @@ func (a *AgentPullSecret) Generate(dependencies asset.Parents) error {
 		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		a.generateSecret(clusterInfo.ClusterID, clusterInfo.Namespace, clusterInfo.PullSecret)
+		a.generateSecret(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.PullSecret)
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
