@@ -11,17 +11,19 @@
   - [CLIs](#clis)
 - [Branches](#branches)
   - [Support and guarantees](#support-and-guarantees)
+  - [Removal of v1alpha3 & v1alpha4 apiVersions](#removal-of-v1alpha3--v1alpha4-apiversions)
 - [Contributing a Patch](#contributing-a-patch)
 - [Documentation changes](#documentation-changes)
 - [Releases](#releases)
 - [Proposal process (CAEP)](#proposal-process-caep)
 - [Triaging E2E test failures](#triaging-e2e-test-failures)
 - [Reviewing a Patch](#reviewing-a-patch)
-- [Reviews](#reviews)
+  - [Reviews](#reviews)
   - [Approvals](#approvals)
 - [Features and bugs](#features-and-bugs)
 - [Experiments](#experiments)
 - [Breaking Changes](#breaking-changes)
+- [Dependency Licence Management](#dependency-licence-management)
 - [API conventions](#api-conventions)
   - [Optional vs. Required](#optional-vs-required)
     - [Example](#example)
@@ -164,8 +166,10 @@ Cluster API maintains the most recent release/releases for all supported API and
 
 | Minor Release | API Version  | Supported Until                                     |
 |---------------|--------------|-----------------------------------------------------|
-| v1.4.x        | **v1beta1**  | when v1.6.0 will be released                        |
-| v1.3.x        | **v1beta1**  | when v1.5.0 will be released, tentatively July 2023 |
+| v1.6.x        | **v1beta1**  | when v1.8.0 will be released                        |
+| v1.5.x        | **v1beta1**  | when v1.7.0 will be released                        |
+| v1.4.x        | **v1beta1**  | EOL since 2023-12-05 - v1.6.0 release date          |
+| v1.3.x        | **v1beta1**  | EOL since 2023-07-25 - v1.5.0 release date          |
 | v1.2.x        | **v1beta1**  | EOL since 2023-03-28 - v1.4.0 release date          |
 | v1.1.x        | **v1beta1**  | EOL since 2022-07-18 - v1.2.0 release date (*)      |
 | v1.0.x        | **v1beta1**  | EOL since 2022-02-02 - v1.1.0 release date (*)      |
@@ -246,30 +250,7 @@ When submitting the PR remember to label it with the 📖 (:book:) icon.
 
 ## Releases
 
-- Minor versions CAN be planned and scheduled for each quarter, or sooner if necessary.
-  - Each minor version is preceded with one or more planning session.
-  - Planning consists of one or more backlog grooming meetings, roadmap amendments,
-    and CAEP proposal reviews.
-  - Cluster API uses [GitHub milestones](https://github.com/kubernetes-sigs/cluster-api/milestones) to track work
-    for minor releases. 
-  - Adding an issue to a milestone provides forward visibility on what the next release will be, so, as soon as there
-    is the intent to work on an issue for a specific target release, contributors are expected to work with maintainers to 
-    set the milestone on the issue so it will be tracked for the release (note: only major features/bug fixes specifically
-    targeting a release must be tracked; everything else will simply merge when ready without additional toil). 
-  - Before adding an issue to a release milestone, maintainers must ensure that the issue have been triaged and
-    there is an assignee who expressed the intent to complete the work before the release date.
-  - An issue being in the milestone doesn't guarantee inclusion in the release; this depends on the work being
-    completed before the release code freeze target date.
-  - Code freeze is in effect at least 72 hours (3 days) before a major/minor release.
-  - Maintainers should communicate the code freeze date at a community meeting preceding the code freeze date.
-  - Only critical bug fixes may be merged in between freeze & release.
-    - Each bug MUST be associated with an open issue and properly triaged.
-    - PRs MUST be approved by at least 2 project maintainers.
-      - First approver should `/approve` and `/hold`.
-      - Second approver should `/approve` and `/hold cancel`.
-  - [E2E Test grid](https://testgrid.k8s.io/sig-cluster-lifecycle-cluster-api#capi%20e2e%20tests) SHOULD be green before cutting a release.
-- Patch versions CAN be planned and scheduled each month for supported minor releases.
-- Dates in a release are approximations and always subject to change.
+Cluster API release process is described in [this document](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/release/release-cycle.md). 
 
 ## Proposal process (CAEP)
 
@@ -309,7 +290,7 @@ In case you want to run E2E test locally, please refer to the [Testing](https://
 
 ## Reviewing a Patch
 
-## Reviews
+### Reviews
 
 > Parts of the following content have been adapted from https://google.github.io/eng-practices/review.
 
@@ -414,6 +395,10 @@ There may, at times, need to be exceptions where breaking changes are allowed in
 discretion of the project's maintainers, and must be carefully considered before merging. An example of an allowed
 breaking change might be a fix for a behavioral bug that was released in an initial minor version (such as `v0.3.0`).
 
+## Dependency Licence Management
+
+Cluster API follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/allowed-third-party-license-policy.md). This sets limits on which
+licenses dependencies and other artifacts use. For go dependencies only dependencies listed in the `go.mod` are considered dependencies. This is in line with [how dependencies are reviewed in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md#reviewing-and-approving-dependency-changes).
 
 ## API conventions
 

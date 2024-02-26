@@ -107,15 +107,18 @@ func (r *Reconciler) reconcileTopologyReconciledCondition(s *scope.Scope, cluste
 	}
 
 	// The topology is not considered as fully reconciled if one of the following is true:
-	// * either the Control Plane or any of the MachineDeployments are still pending to pick up the new version
+	// * either the Control Plane or any of the MachineDeployments/MachinePools are still pending to pick up the new version
 	//  (generally happens when upgrading the cluster)
-	// * when there are MachineDeployments for which the upgrade has been deferred
-	// * when new MachineDeployments are pending to be created
+	// * when there are MachineDeployments/MachinePools for which the upgrade has been deferred
+	// * when new MachineDeployments/MachinePools are pending to be created
 	//  (generally happens when upgrading the cluster)
 	if s.UpgradeTracker.ControlPlane.IsPendingUpgrade ||
 		s.UpgradeTracker.MachineDeployments.IsAnyPendingCreate() ||
 		s.UpgradeTracker.MachineDeployments.IsAnyPendingUpgrade() ||
-		s.UpgradeTracker.MachineDeployments.DeferredUpgrade() {
+		s.UpgradeTracker.MachineDeployments.DeferredUpgrade() ||
+		s.UpgradeTracker.MachinePools.IsAnyPendingCreate() ||
+		s.UpgradeTracker.MachinePools.IsAnyPendingUpgrade() ||
+		s.UpgradeTracker.MachinePools.DeferredUpgrade() {
 		msgBuilder := &strings.Builder{}
 		var reason string
 
@@ -144,6 +147,23 @@ func (r *Reconciler) reconcileTopologyReconciledCondition(s *scope.Scope, cluste
 				s.Blueprint.Topology.Version,
 			)
 			reason = clusterv1.TopologyReconciledMachineDeploymentsUpgradeDeferredReason
+		case s.UpgradeTracker.MachinePools.IsAnyPendingUpgrade():
+			fmt.Fprintf(msgBuilder, "MachinePool(s) %s rollout and upgrade to version %s on hold.",
+				computeNameList(s.UpgradeTracker.MachinePools.PendingUpgradeNames()),
+				s.Blueprint.Topology.Version,
+			)
+			reason = clusterv1.TopologyReconciledMachinePoolsUpgradePendingReason
+		case s.UpgradeTracker.MachinePools.IsAnyPendingCreate():
+			fmt.Fprintf(msgBuilder, "MachinePool(s) for Topologies %s creation on hold.",
+				computeNameList(s.UpgradeTracker.MachinePools.PendingCreateTopologyNames()),
+			)
+			reason = clusterv1.TopologyReconciledMachinePoolsCreatePendingReason
+		case s.UpgradeTracker.MachinePools.DeferredUpgrade():
+			fmt.Fprintf(msgBuilder, "MachinePool(s) %s rollout and upgrade to version %s deferred.",
+				computeNameList(s.UpgradeTracker.MachinePools.DeferredUpgradeNames()),
+				s.Blueprint.Topology.Version,
+			)
+			reason = clusterv1.TopologyReconciledMachinePoolsUpgradeDeferredReason
 		}
 
 		switch {
@@ -163,6 +183,11 @@ func (r *Reconciler) reconcileTopologyReconciledCondition(s *scope.Scope, cluste
 		case len(s.UpgradeTracker.MachineDeployments.UpgradingNames()) > 0:
 			fmt.Fprintf(msgBuilder, " MachineDeployment(s) %s are upgrading",
 				computeNameList(s.UpgradeTracker.MachineDeployments.UpgradingNames()),
+			)
+
+		case len(s.UpgradeTracker.MachinePools.UpgradingNames()) > 0:
+			fmt.Fprintf(msgBuilder, " MachinePool(s) %s are upgrading",
+				computeNameList(s.UpgradeTracker.MachinePools.UpgradingNames()),
 			)
 		}
 
@@ -189,7 +214,7 @@ func (r *Reconciler) reconcileTopologyReconciledCondition(s *scope.Scope, cluste
 	return nil
 }
 
-// computeNameList computes list of names form the given list to be shown in conditions.
+// computeNameList computes list of names from the given list to be shown in conditions.
 // It shortens the list to at most 5 names and adds an ellipsis at the end if the list
 // has more than 5 elements.
 func computeNameList(list []string) any {

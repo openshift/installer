@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -255,6 +255,9 @@ func (webhook *Cluster) validateTopology(ctx context.Context, oldCluster, newClu
 		)
 	}
 
+	// metadata in topology should be valid
+	allErrs = append(allErrs, validateTopologyMetadata(newCluster.Spec.Topology, fldPath)...)
+
 	// upgrade concurrency should be a numeric value.
 	if concurrency, ok := newCluster.Annotations[clusterv1.ClusterTopologyUpgradeConcurrencyAnnotation]; ok {
 		concurrencyAnnotationField := field.NewPath("metadata", "annotations", clusterv1.ClusterTopologyUpgradeConcurrencyAnnotation)
@@ -428,7 +431,8 @@ func validateMachineHealthChecks(cluster *clusterv1.Cluster, clusterClass *clust
 	}
 
 	if cluster.Spec.Topology.Workers != nil {
-		for i, md := range cluster.Spec.Topology.Workers.MachineDeployments {
+		for i := range cluster.Spec.Topology.Workers.MachineDeployments {
+			md := cluster.Spec.Topology.Workers.MachineDeployments[i]
 			if md.MachineHealthCheck != nil {
 				fldPath := field.NewPath("spec", "topology", "workers", "machineDeployments", "machineHealthCheck").Index(i)
 
@@ -487,7 +491,7 @@ func validateCIDRBlocks(fldPath *field.Path, cidrs []string) field.ErrorList {
 	return allErrs
 }
 
-// DefaultAndValidateVariables defaults and validates variables in the Cluster and MachineDeployment topologies based
+// DefaultAndValidateVariables defaults and validates variables in the Cluster and MachineDeployment/MachinePool topologies based
 // on the definitions in the ClusterClass.
 func DefaultAndValidateVariables(cluster *clusterv1.Cluster, clusterClass *clusterv1.ClusterClass) field.ErrorList {
 	var allErrs field.ErrorList
@@ -503,8 +507,16 @@ func DefaultAndValidateVariables(cluster *clusterv1.Cluster, clusterClass *clust
 			if md.Variables == nil || len(md.Variables.Overrides) == 0 {
 				continue
 			}
-			allErrs = append(allErrs, variables.ValidateMachineDeploymentVariables(md.Variables.Overrides, clusterClass.Status.Variables,
+			allErrs = append(allErrs, variables.ValidateMachineVariables(md.Variables.Overrides, clusterClass.Status.Variables,
 				field.NewPath("spec", "topology", "workers", "machineDeployments").Index(i).Child("variables", "overrides"))...)
+		}
+		for i, mp := range cluster.Spec.Topology.Workers.MachinePools {
+			// Continue if there are no variable overrides.
+			if mp.Variables == nil || len(mp.Variables.Overrides) == 0 {
+				continue
+			}
+			allErrs = append(allErrs, variables.ValidateMachineVariables(mp.Variables.Overrides, clusterClass.Status.Variables,
+				field.NewPath("spec", "topology", "workers", "machinePools").Index(i).Child("variables", "overrides"))...)
 		}
 	}
 	return allErrs
@@ -533,12 +545,25 @@ func DefaultVariables(cluster *clusterv1.Cluster, clusterClass *clusterv1.Cluste
 			if md.Variables == nil || len(md.Variables.Overrides) == 0 {
 				continue
 			}
-			defaultedVariables, errs := variables.DefaultMachineDeploymentVariables(md.Variables.Overrides, clusterClass.Status.Variables,
+			defaultedVariables, errs := variables.DefaultMachineVariables(md.Variables.Overrides, clusterClass.Status.Variables,
 				field.NewPath("spec", "topology", "workers", "machineDeployments").Index(i).Child("variables", "overrides"))
 			if len(errs) > 0 {
 				allErrs = append(allErrs, errs...)
 			} else {
 				md.Variables.Overrides = defaultedVariables
+			}
+		}
+		for i, mp := range cluster.Spec.Topology.Workers.MachinePools {
+			// Continue if there are no variable overrides.
+			if mp.Variables == nil || len(mp.Variables.Overrides) == 0 {
+				continue
+			}
+			defaultedVariables, errs := variables.DefaultMachineVariables(mp.Variables.Overrides, clusterClass.Status.Variables,
+				field.NewPath("spec", "topology", "workers", "machinePools").Index(i).Child("variables", "overrides"))
+			if len(errs) > 0 {
+				allErrs = append(allErrs, errs...)
+			} else {
+				mp.Variables.Overrides = defaultedVariables
 			}
 		}
 	}
@@ -555,6 +580,8 @@ func ValidateClusterForClusterClass(cluster *clusterv1.Cluster, clusterClass *cl
 		return field.ErrorList{field.InternalError(field.NewPath(""), errors.New("ClusterClass can not be nil"))}
 	}
 	allErrs = append(allErrs, check.MachineDeploymentTopologiesAreValidAndDefinedInClusterClass(cluster, clusterClass)...)
+
+	allErrs = append(allErrs, check.MachinePoolTopologiesAreValidAndDefinedInClusterClass(cluster, clusterClass)...)
 
 	// Validate the MachineHealthChecks defined in the cluster topology.
 	allErrs = append(allErrs, validateMachineHealthChecks(cluster, clusterClass)...)
@@ -628,4 +655,22 @@ func clusterClassIsReconciled(clusterClass *clusterv1.ClusterClass) error {
 		return errClusterClassNotReconciled
 	}
 	return nil
+}
+
+func validateTopologyMetadata(topology *clusterv1.Topology, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+	allErrs = append(allErrs, topology.ControlPlane.Metadata.Validate(fldPath.Child("controlPlane", "metadata"))...)
+	if topology.Workers != nil {
+		for idx, md := range topology.Workers.MachineDeployments {
+			allErrs = append(allErrs, md.Metadata.Validate(
+				fldPath.Child("workers", "machineDeployments").Index(idx).Child("metadata"),
+			)...)
+		}
+		for idx, mp := range topology.Workers.MachinePools {
+			allErrs = append(allErrs, mp.Metadata.Validate(
+				fldPath.Child("workers", "machinePools").Index(idx).Child("metadata"),
+			)...)
+		}
+	}
+	return allErrs
 }

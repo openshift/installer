@@ -35,8 +35,8 @@ func ValidateClusterVariables(values []clusterv1.ClusterVariable, definitions []
 	return validateClusterVariables(values, definitions, true, fldPath)
 }
 
-// ValidateMachineDeploymentVariables validates ValidateMachineDeploymentVariables.
-func ValidateMachineDeploymentVariables(values []clusterv1.ClusterVariable, definitions []clusterv1.ClusterClassStatusVariable, fldPath *field.Path) field.ErrorList {
+// ValidateMachineVariables validates MachineDeployment and MachinePool variables.
+func ValidateMachineVariables(values []clusterv1.ClusterVariable, definitions []clusterv1.ClusterClassStatusVariable, fldPath *field.Path) field.ErrorList {
 	return validateClusterVariables(values, definitions, false, fldPath)
 }
 
@@ -139,9 +139,7 @@ func ValidateClusterVariable(value *clusterv1.ClusterVariable, definition *clust
 	}
 
 	// Create validator for schema.
-	validator, _, err := validation.NewSchemaValidator(&apiextensions.CustomResourceValidation{
-		OpenAPIV3Schema: apiExtensionsSchema,
-	})
+	validator, _, err := validation.NewSchemaValidator(apiExtensionsSchema)
 	if err != nil {
 		return field.ErrorList{field.InternalError(fldPath,
 			fmt.Errorf("failed to create schema validator for variable %q; ClusterClass should be checked: %v", value.Name, err))} // TODO: consider if to add ClusterClass name
