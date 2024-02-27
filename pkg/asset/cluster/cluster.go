@@ -61,9 +61,11 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.PlatformPermsCheck{},
 		&installconfig.PlatformProvisionCheck{},
+		new(rhcos.Image),
 		&quota.PlatformQuotaCheck{},
 		&tfvars.TerraformVariables{},
 		&password.KubeadminPassword{},
+		&manifests.Manifests{},
 		&capimanifests.Cluster{},
 		&kubeconfig.AdminClient{},
 		&bootstrap.Bootstrap{},
@@ -82,8 +84,9 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	terraformVariables := &tfvars.TerraformVariables{}
-	parents.Get(clusterID, installConfig, terraformVariables)
+	parents.Get(clusterID, installConfig, terraformVariables, rhcosImage)
 
 	if fs := installConfig.Config.FeatureSet; strings.HasSuffix(string(fs), "NoUpgrade") {
 		logrus.Warnf("FeatureSet %q is enabled. This FeatureSet does not allow upgrades and may affect the supportability of the cluster.", fs)
@@ -116,7 +119,14 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			return err
 		}
 	case typesopenstack.Name:
-		if err := openstack.PreTerraform(); err != nil {
+		var tfvarsFile *asset.File
+		for _, f := range terraformVariables.Files() {
+			if f.Filename == tfvars.TfPlatformVarsFileName {
+				tfvarsFile = f
+				break
+			}
+		}
+		if err := openstack.PreTerraform(context.TODO(), tfvarsFile, installConfig, clusterID, rhcosImage); err != nil {
 			return err
 		}
 	}

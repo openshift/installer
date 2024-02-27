@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -27,6 +28,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -120,6 +122,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = vsphere.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return fmt.Errorf("failed to generate vSphere manifests %w", err)
+		}
+	case openstacktypes.Name:
+		var err error
+		out, err = openstack.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate OpenStack manifests")
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
