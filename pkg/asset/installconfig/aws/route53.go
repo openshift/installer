@@ -148,35 +148,70 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
-func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cfg *aws.Config) error {
+func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, cfg *aws.Config, target, intTarget, phzID string) error {
 	zone, err := c.GetBaseDomain(ic.BaseDomain)
 	if err != nil {
 		return err
 	}
 
-	params := &route53.ChangeResourceRecordSetsInput{
+	svc := route53.New(c.ssn, cfg)
+
+	apiParams := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
 		},
 		HostedZoneId: zone.Id,
 	}
-	for _, prefix := range []string{"api", "api-int"} {
-		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
-			Action: aws.String("UPSERT"),
-			ResourceRecordSet: &route53.ResourceRecordSet{
-				Name: aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
-				Type: aws.String("A"),
-				AliasTarget: &route53.AliasTarget{
-					DNSName:              aws.String(target),
-					HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
-					EvaluateTargetHealth: aws.Bool(true),
-				},
+
+	apiParams.ChangeBatch.Changes = append(apiParams.ChangeBatch.Changes, &route53.Change{
+		Action: aws.String("UPSERT"),
+		ResourceRecordSet: &route53.ResourceRecordSet{
+			Name: aws.String(fmt.Sprintf("%s.%s.", "api", ic.ClusterDomain())),
+			Type: aws.String("A"),
+			AliasTarget: &route53.AliasTarget{
+				DNSName:              aws.String(target),
+				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
+				EvaluateTargetHealth: aws.Bool(false),
 			},
-		})
+		},
+	})
+
+	if _, err := svc.ChangeResourceRecordSets(apiParams); err != nil {
+		return fmt.Errorf("failed to create records for api: %w", err)
 	}
-	svc := route53.New(c.ssn, cfg)
-	if _, err := svc.ChangeResourceRecordSets(params); err != nil {
-		return fmt.Errorf("failed to create records for api/api-int: %w", err)
+
+	apiIntParams := &route53.ChangeResourceRecordSetsInput{
+		ChangeBatch: &route53.ChangeBatch{
+			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
+		},
+		HostedZoneId: aws.String(phzID),
+	}
+	apiIntParams.ChangeBatch.Changes = append(apiIntParams.ChangeBatch.Changes, &route53.Change{
+		Action: aws.String("UPSERT"),
+		ResourceRecordSet: &route53.ResourceRecordSet{
+			Name: aws.String(fmt.Sprintf("%s.%s.", "api", ic.ClusterDomain())),
+			Type: aws.String("A"),
+			AliasTarget: &route53.AliasTarget{
+				DNSName:              aws.String(intTarget),
+				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
+				EvaluateTargetHealth: aws.Bool(false),
+			},
+		},
+	})
+	apiIntParams.ChangeBatch.Changes = append(apiIntParams.ChangeBatch.Changes, &route53.Change{
+		Action: aws.String("UPSERT"),
+		ResourceRecordSet: &route53.ResourceRecordSet{
+			Name: aws.String(fmt.Sprintf("%s.%s.", "api-int", ic.ClusterDomain())),
+			Type: aws.String("A"),
+			AliasTarget: &route53.AliasTarget{
+				DNSName:              aws.String(intTarget),
+				HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
+				EvaluateTargetHealth: aws.Bool(false),
+			},
+		},
+	})
+	if _, err := svc.ChangeResourceRecordSets(apiIntParams); err != nil {
+		return fmt.Errorf("failed to create records for api-int: %w", err)
 	}
 	return nil
 }
