@@ -17,6 +17,8 @@ unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
 unconfiguredIgnCmp /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
 
 -- cluster-manifests/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
 metadata:
   name: ostest
   namespace: cluster0
