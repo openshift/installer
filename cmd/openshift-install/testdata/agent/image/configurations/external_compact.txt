@@ -44,6 +44,8 @@ metadata:
 rendezvousIP: 192.168.111.20
 
 -- expected/agent-cluster-install.yaml --
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
 metadata:
   annotations:
     agent-install.openshift.io/install-config-overrides: '{"platform":{"external":{"platformName":"some-cloud-provider"}}}'
