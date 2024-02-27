@@ -104,7 +104,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 			nmStateConfig := aiv1beta1.NMStateConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "NMStateConfig",
-					APIVersion: "agent-install.openshift.io/v1beta1",
+					APIVersion: aiv1beta1.GroupVersion.String(),
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),

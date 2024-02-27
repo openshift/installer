@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
@@ -70,8 +71,8 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 					Name: getPullSecretName(installConfig.ClusterName()),
 				},
 				ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
-					Group:   "extensions.hive.openshift.io",
-					Version: "v1beta1",
+					Group:   hiveext.Group,
+					Version: hiveext.Version,
 					Kind:    "AgentClusterInstall",
 					Name:    getAgentClusterInstallName(installConfig),
 				},
