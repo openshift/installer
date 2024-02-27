@@ -276,6 +276,7 @@ func (v APIEndpoint) String() string {
 // ANCHOR_END: APIEndpoint
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=clusters,shortName=cl,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -399,7 +400,7 @@ type ClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
+	objectTypes = append(objectTypes, &Cluster{}, &ClusterList{})
 }
 
 // FailureDomains is a slice of FailureDomains.

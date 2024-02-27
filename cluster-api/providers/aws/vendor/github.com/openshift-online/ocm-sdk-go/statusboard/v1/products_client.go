@@ -228,6 +228,7 @@ type ProductsListRequest struct {
 	fullname  *string
 	orderBy   *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -268,6 +269,12 @@ func (r *ProductsListRequest) Page(value int) *ProductsListRequest {
 	return r
 }
 
+// Search sets the value of the 'search' parameter.
+func (r *ProductsListRequest) Search(value string) *ProductsListRequest {
+	r.search = &value
+	return r
+}
+
 // Size sets the value of the 'size' parameter.
 func (r *ProductsListRequest) Size(value int) *ProductsListRequest {
 	r.size = &value
@@ -293,6 +300,9 @@ func (r *ProductsListRequest) SendContext(ctx context.Context) (result *Products
 	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)

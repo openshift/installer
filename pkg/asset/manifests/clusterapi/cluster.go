@@ -96,10 +96,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	var out *capiutils.GenerateClusterAssetsOutput
 	switch platform := installConfig.Config.Platform.Name(); platform {
 	case awstypes.Name:
-		// Move this somewhere else.
-		// if err := aws.PutIAMRoles(clusterID.InfraID, installConfig); err != nil {
-		// 	return errors.Wrap(err, "failed to create IAM roles")
-		// }
 		var err error
 		out, err = aws.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {

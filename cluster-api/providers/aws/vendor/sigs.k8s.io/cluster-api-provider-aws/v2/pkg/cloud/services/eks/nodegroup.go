@@ -34,10 +34,10 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/annotations"
 )
 
 func (s *NodegroupService) describeNodegroup() (*eks.Nodegroup, error) {
@@ -533,7 +533,7 @@ func (s *NodegroupService) reconcileNodegroup(ctx context.Context) error {
 		break
 	}
 
-	if scope.ReplicasExternallyManaged(s.scope.MachinePool) {
+	if annotations.ReplicasManagedByExternalAutoscaler(s.scope.MachinePool) {
 		// Set MachinePool replicas to the node group DesiredCapacity
 		ngDesiredCapacity := int32(aws.Int64Value(ng.ScalingConfig.DesiredSize))
 		if *s.scope.MachinePool.Spec.Replicas != ngDesiredCapacity {

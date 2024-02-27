@@ -18,7 +18,10 @@ package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	apivalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
@@ -56,6 +59,10 @@ const (
 	// ClusterTopologyUpgradeConcurrencyAnnotation can be set as top-level annotation on the Cluster object of
 	// a classy Cluster to define the maximum concurrency while upgrading MachineDeployments.
 	ClusterTopologyUpgradeConcurrencyAnnotation = "topology.cluster.x-k8s.io/upgrade-concurrency"
+
+	// ClusterTopologyMachinePoolNameLabel is the label set on the generated  MachinePool objects
+	// to track the name of the MachinePool topology it represents.
+	ClusterTopologyMachinePoolNameLabel = "topology.cluster.x-k8s.io/pool-name"
 
 	// ClusterTopologyUnsafeUpdateClassNameAnnotation can be used to disable the webhook check on
 	// update that disallows a pre-existing Cluster to be populated with Topology information and Class.
@@ -296,4 +303,17 @@ type ObjectMeta struct {
 	// More info: http://kubernetes.io/docs/user-guide/annotations
 	// +optional
 	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+// Validate validates the labels and annotations in ObjectMeta.
+func (metadata *ObjectMeta) Validate(parent *field.Path) field.ErrorList {
+	allErrs := metav1validation.ValidateLabels(
+		metadata.Labels,
+		parent.Child("labels"),
+	)
+	allErrs = append(allErrs, apivalidation.ValidateAnnotations(
+		metadata.Annotations,
+		parent.Child("annotations"),
+	)...)
+	return allErrs
 }

@@ -33,6 +33,12 @@ func readAddonInstallationsAddResponse(response *AddonInstallationsAddResponse, 
 	response.body, err = UnmarshalAddonInstallation(reader)
 	return err
 }
+func writeAddonInstallationsDeleteRequest(request *AddonInstallationsDeleteRequest, writer io.Writer) error {
+	return nil
+}
+func readAddonInstallationsDeleteResponse(response *AddonInstallationsDeleteResponse, reader io.Reader) error {
+	return nil
+}
 func writeAddonInstallationsListRequest(request *AddonInstallationsListRequest, writer io.Writer) error {
 	return nil
 }

@@ -40,8 +40,10 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	EKSClusterName string `json:"eksClusterName,omitempty"`
 
-	// IdentityRef is a reference to a identity to be used when reconciling the managed control plane.
 	// +optional
+
+	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
+	// If no identity is specified, the default identity for this controller will be used.
 	IdentityRef *infrav1.AWSIdentityReference `json:"identityRef,omitempty"`
 
 	// NetworkSpec encapsulates all things related to AWS network.
@@ -276,6 +278,7 @@ type AWSManagedControlPlaneStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsmanagedcontrolplanes,shortName=awsmcp,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this AWSManagedControl belongs"
@@ -294,6 +297,7 @@ type AWSManagedControlPlane struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSManagedControlPlaneList contains a list of Amazon EKS Managed Control Planes.
 type AWSManagedControlPlaneList struct {

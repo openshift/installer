@@ -23,7 +23,9 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 type NetworkVerification struct {
 	bitmap_           uint32
 	cloudProviderData *CloudProviderData
+	clusterId         string
 	items             []*SubnetNetworkVerification
+	platform          Platform
 	total             int
 }
 
@@ -55,12 +57,35 @@ func (o *NetworkVerification) GetCloudProviderData() (value *CloudProviderData, 
 	return
 }
 
+// ClusterId returns the value of the 'cluster_id' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Cluster ID needed to execute the network verification.
+func (o *NetworkVerification) ClusterId() string {
+	if o != nil && o.bitmap_&2 != 0 {
+		return o.clusterId
+	}
+	return ""
+}
+
+// GetClusterId returns the value of the 'cluster_id' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Cluster ID needed to execute the network verification.
+func (o *NetworkVerification) GetClusterId() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&2 != 0
+	if ok {
+		value = o.clusterId
+	}
+	return
+}
+
 // Items returns the value of the 'items' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Details about each subnet network verification.
 func (o *NetworkVerification) Items() []*SubnetNetworkVerification {
-	if o != nil && o.bitmap_&2 != 0 {
+	if o != nil && o.bitmap_&4 != 0 {
 		return o.items
 	}
 	return nil
@@ -71,9 +96,32 @@ func (o *NetworkVerification) Items() []*SubnetNetworkVerification {
 //
 // Details about each subnet network verification.
 func (o *NetworkVerification) GetItems() (value []*SubnetNetworkVerification, ok bool) {
-	ok = o != nil && o.bitmap_&2 != 0
+	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
 		value = o.items
+	}
+	return
+}
+
+// Platform returns the value of the 'platform' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Platform needed to execute the network verification.
+func (o *NetworkVerification) Platform() Platform {
+	if o != nil && o.bitmap_&8 != 0 {
+		return o.platform
+	}
+	return Platform("")
+}
+
+// GetPlatform returns the value of the 'platform' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Platform needed to execute the network verification.
+func (o *NetworkVerification) GetPlatform() (value Platform, ok bool) {
+	ok = o != nil && o.bitmap_&8 != 0
+	if ok {
+		value = o.platform
 	}
 	return
 }
@@ -83,7 +131,7 @@ func (o *NetworkVerification) GetItems() (value []*SubnetNetworkVerification, ok
 //
 // Amount of network verifier executions started.
 func (o *NetworkVerification) Total() int {
-	if o != nil && o.bitmap_&4 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.total
 	}
 	return 0
@@ -94,7 +142,7 @@ func (o *NetworkVerification) Total() int {
 //
 // Amount of network verifier executions started.
 func (o *NetworkVerification) GetTotal() (value int, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.total
 	}

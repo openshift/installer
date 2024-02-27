@@ -17,6 +17,8 @@ limitations under the License.
 package converters
 
 import (
+	"sort"
+
 	"github.com/awslabs/goformation/v4/cloudformation/tags"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -34,6 +36,9 @@ func MapToCloudFormationTags(src infrav1.Tags) []tags.Tag {
 
 		cfnTags = append(cfnTags, tag)
 	}
+
+	// Sort so that unit tests can expect a stable order
+	sort.Slice(cfnTags, func(i, j int) bool { return cfnTags[i].Key < cfnTags[j].Key })
 
 	return cfnTags
 }

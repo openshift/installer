@@ -104,7 +104,7 @@ func sessionForRegion(region string, endpoint []ServiceEndpoint) (*session.Sessi
 	return ns, sl, nil
 }
 
-func sessionForClusterWithRegion(k8sClient client.Client, clusterScoper cloud.ClusterScoper, region string, endpoint []ServiceEndpoint, log logger.Wrapper) (*session.Session, throttle.ServiceLimiters, error) {
+func sessionForClusterWithRegion(k8sClient client.Client, clusterScoper cloud.SessionMetadata, region string, endpoint []ServiceEndpoint, log logger.Wrapper) (*session.Session, throttle.ServiceLimiters, error) {
 	log = log.WithName("identity")
 	log.Trace("Creating an AWS Session")
 
@@ -186,7 +186,7 @@ func sessionForClusterWithRegion(k8sClient client.Client, clusterScoper cloud.Cl
 	return ns, sl, nil
 }
 
-func getSessionName(region string, clusterScoper cloud.ClusterScoper) string {
+func getSessionName(region string, clusterScoper cloud.SessionMetadata) string {
 	return fmt.Sprintf("%s-%s-%s", region, clusterScoper.InfraClusterName(), clusterScoper.Namespace())
 }
 
@@ -254,7 +254,7 @@ func buildProvidersForRef(
 	ctx context.Context,
 	providers []identity.AWSPrincipalTypeProvider,
 	k8sClient client.Client,
-	clusterScoper cloud.ClusterScoper,
+	clusterScoper cloud.SessionMetadata,
 	ref *infrav1.AWSIdentityReference,
 	log logger.Wrapper) ([]identity.AWSPrincipalTypeProvider, error) {
 	if ref == nil {
@@ -326,11 +326,11 @@ func buildProvidersForRef(
 	return providers, nil
 }
 
-func setPrincipalUsageAllowedCondition(clusterScoper cloud.ClusterScoper) {
+func setPrincipalUsageAllowedCondition(clusterScoper cloud.SessionMetadata) {
 	conditions.MarkTrue(clusterScoper.InfraCluster(), infrav1.PrincipalUsageAllowedCondition)
 }
 
-func setPrincipalUsageNotAllowedCondition(kind infrav1.AWSIdentityKind, identityObjectKey client.ObjectKey, clusterScoper cloud.ClusterScoper) {
+func setPrincipalUsageNotAllowedCondition(kind infrav1.AWSIdentityKind, identityObjectKey client.ObjectKey, clusterScoper cloud.SessionMetadata) {
 	errMsg := fmt.Sprintf(notPermittedError, kind, identityObjectKey.Name)
 
 	if clusterScoper.IdentityRef().Name == identityObjectKey.Name {
@@ -340,7 +340,7 @@ func setPrincipalUsageNotAllowedCondition(kind infrav1.AWSIdentityKind, identity
 	}
 }
 
-func buildAWSClusterStaticIdentity(ctx context.Context, identityObjectKey client.ObjectKey, k8sClient client.Client, clusterScoper cloud.ClusterScoper) (*identity.AWSStaticPrincipalTypeProvider, error) {
+func buildAWSClusterStaticIdentity(ctx context.Context, identityObjectKey client.ObjectKey, k8sClient client.Client, clusterScoper cloud.SessionMetadata) (*identity.AWSStaticPrincipalTypeProvider, error) {
 	staticPrincipal := &infrav1.AWSClusterStaticIdentity{}
 	err := k8sClient.Get(ctx, identityObjectKey, staticPrincipal)
 	if err != nil {
@@ -382,7 +382,7 @@ func buildAWSClusterStaticIdentity(ctx context.Context, identityObjectKey client
 	return identity.NewAWSStaticPrincipalTypeProvider(staticPrincipal, secret), nil
 }
 
-func buildAWSClusterControllerIdentity(ctx context.Context, identityObjectKey client.ObjectKey, k8sClient client.Client, clusterScoper cloud.ClusterScoper) error {
+func buildAWSClusterControllerIdentity(ctx context.Context, identityObjectKey client.ObjectKey, k8sClient client.Client, clusterScoper cloud.SessionMetadata) error {
 	controllerIdentity := &infrav1.AWSClusterControllerIdentity{}
 	controllerIdentity.Kind = string(infrav1.ControllerIdentityKind)
 
@@ -408,7 +408,7 @@ func buildAWSClusterControllerIdentity(ctx context.Context, identityObjectKey cl
 	return nil
 }
 
-func getProvidersForCluster(ctx context.Context, k8sClient client.Client, clusterScoper cloud.ClusterScoper, log logger.Wrapper) ([]identity.AWSPrincipalTypeProvider, error) {
+func getProvidersForCluster(ctx context.Context, k8sClient client.Client, clusterScoper cloud.SessionMetadata, log logger.Wrapper) ([]identity.AWSPrincipalTypeProvider, error) {
 	providers := make([]identity.AWSPrincipalTypeProvider, 0)
 	providers, err := buildProvidersForRef(ctx, providers, k8sClient, clusterScoper, clusterScoper.IdentityRef(), log)
 	if err != nil {

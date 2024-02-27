@@ -23,7 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/eks"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
@@ -31,7 +31,7 @@ import (
 )
 
 func (s *Service) reconcileSecurityGroups(cluster *eks.Cluster) error {
-	s.scope.Info("Reconciling EKS security groups", "cluster-name", pointer.StringDeref(cluster.Name, ""))
+	s.scope.Info("Reconciling EKS security groups", "cluster-name", ptr.Deref(cluster.Name, ""))
 
 	if s.scope.Network().SecurityGroups == nil {
 		s.scope.Network().SecurityGroups = make(map[infrav1.SecurityGroupRole]infrav1.SecurityGroup)

@@ -62,6 +62,16 @@ func (c *GCPInquiriesClient) KeyRings() *KeyRingsInquiryClient {
 	)
 }
 
+// MachineTypes returns the target 'GCP_region_machine_types_inquiry' resource.
+//
+// Reference to the resource that manages gcp machine types by regions.
+func (c *GCPInquiriesClient) MachineTypes() *GCPRegionMachineTypesInquiryClient {
+	return NewGCPRegionMachineTypesInquiryClient(
+		c.transport,
+		path.Join(c.path, "machine_types"),
+	)
+}
+
 // Regions returns the target 'available_regions_inquiry' resource.
 //
 // Reference to the resource that manages a collection of regions.

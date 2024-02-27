@@ -44,10 +44,19 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 	restoreControlPlaneLoadBalancerStatus(&restored.Status.Network.APIServerELB, &dst.Status.Network.APIServerELB)
 
+	if restored.Spec.SecondaryControlPlaneLoadBalancer != nil {
+		if dst.Spec.SecondaryControlPlaneLoadBalancer == nil {
+			dst.Spec.SecondaryControlPlaneLoadBalancer = &infrav2.AWSLoadBalancerSpec{}
+		}
+		restoreControlPlaneLoadBalancer(restored.Spec.SecondaryControlPlaneLoadBalancer, dst.Spec.SecondaryControlPlaneLoadBalancer)
+	}
+	restoreControlPlaneLoadBalancerStatus(&restored.Status.Network.SecondaryAPIServerELB, &dst.Status.Network.SecondaryAPIServerELB)
+
 	dst.Spec.S3Bucket = restored.Spec.S3Bucket
 	if restored.Status.Bastion != nil {
 		dst.Status.Bastion.InstanceMetadataOptions = restored.Status.Bastion.InstanceMetadataOptions
 		dst.Status.Bastion.PlacementGroupName = restored.Status.Bastion.PlacementGroupName
+		dst.Status.Bastion.PrivateDNSName = restored.Status.Bastion.PrivateDNSName
 	}
 	dst.Spec.Partition = restored.Spec.Partition
 
@@ -90,7 +99,8 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 		restoreIPAMPool(restored.Spec.NetworkSpec.VPC.IPv6.IPAMPool, dst.Spec.NetworkSpec.VPC.IPv6.IPAMPool)
 	}
 
-	dst.Spec.NetworkSpec.AdditionalControlPlaneIngressRules = restored.Spec.NetworkSpec.AdditionalControlPlaneIngressRules
+	dst.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup = restored.Spec.NetworkSpec.VPC.EmptyRoutesDefaultVPCSecurityGroup
+	dst.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch = restored.Spec.NetworkSpec.VPC.PrivateDNSHostnameTypeOnLaunch
 
 	// Restore SubnetSpec.ResourceID field, if any.
 	for _, subnet := range restored.Spec.NetworkSpec.Subnets {
@@ -115,6 +125,16 @@ func restoreControlPlaneLoadBalancerStatus(restored, dst *infrav2.LoadBalancer) 
 	dst.LoadBalancerType = restored.LoadBalancerType
 	dst.ELBAttributes = restored.ELBAttributes
 	dst.ELBListeners = restored.ELBListeners
+	dst.Name = restored.Name
+	dst.DNSName = restored.DNSName
+	dst.Scheme = restored.Scheme
+	dst.SubnetIDs = restored.SubnetIDs
+	dst.SecurityGroupIDs = restored.SecurityGroupIDs
+	dst.HealthCheck = restored.HealthCheck
+	dst.ClassicElbAttributes = restored.ClassicElbAttributes
+	dst.Tags = restored.Tags
+	dst.ClassicELBListeners = restored.ClassicELBListeners
+	dst.AvailabilityZones = restored.AvailabilityZones
 }
 
 // restoreIPAMPool manually restores the ipam pool data.
@@ -135,6 +155,10 @@ func restoreControlPlaneLoadBalancer(restored, dst *infrav2.AWSLoadBalancerSpec)
 	dst.PreserveClientIP = restored.PreserveClientIP
 	dst.IngressRules = restored.IngressRules
 	dst.AdditionalListeners = restored.AdditionalListeners
+	dst.AdditionalSecurityGroups = restored.AdditionalSecurityGroups
+	dst.Scheme = restored.Scheme
+	dst.CrossZoneLoadBalancing = restored.CrossZoneLoadBalancing
+	dst.Subnets = restored.Subnets
 }
 
 // ConvertFrom converts the v1beta1 AWSCluster receiver to a v1beta1 AWSCluster.

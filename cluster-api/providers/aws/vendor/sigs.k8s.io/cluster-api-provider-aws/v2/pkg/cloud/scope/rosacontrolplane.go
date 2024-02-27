@@ -18,27 +18,24 @@ package scope
 
 import (
 	"context"
+	"fmt"
 
-	amazoncni "github.com/aws/amazon-vpc-cni-k8s/pkg/apis/crd/v1alpha1"
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/pkg/errors"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
-
-func init() {
-	_ = amazoncni.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-	_ = rbacv1.AddToScheme(scheme)
-}
 
 type ROSAControlPlaneScopeParams struct {
 	Client         client.Client
@@ -46,6 +43,7 @@ type ROSAControlPlaneScopeParams struct {
 	Cluster        *clusterv1.Cluster
 	ControlPlane   *rosacontrolplanev1.ROSAControlPlane
 	ControllerName string
+	Endpoints      []ServiceEndpoint
 }
 
 func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlPlaneScope, error) {
@@ -61,11 +59,17 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 	}
 
 	managedScope := &ROSAControlPlaneScope{
-		Logger:       *params.Logger,
-		Client:       params.Client,
-		Cluster:      params.Cluster,
-		ControlPlane: params.ControlPlane,
-		patchHelper:  nil,
+		Logger:         *params.Logger,
+		Client:         params.Client,
+		Cluster:        params.Cluster,
+		ControlPlane:   params.ControlPlane,
+		patchHelper:    nil,
+		controllerName: params.ControllerName,
+	}
+
+	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, managedScope, *params.ControlPlane.Spec.Region, params.Endpoints, params.Logger)
+	if err != nil {
+		return nil, errors.Errorf("failed to create aws session: %v", err)
 	}
 
 	helper, err := patch.NewHelper(params.ControlPlane, params.Client)
@@ -74,6 +78,16 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 	}
 
 	managedScope.patchHelper = helper
+	managedScope.session = session
+	managedScope.serviceLimiters = serviceLimiters
+
+	stsClient := NewSTSClient(managedScope, managedScope, managedScope, managedScope.ControlPlane)
+	identity, err := stsClient.GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to identify the AWS caller: %w", err)
+	}
+	managedScope.Identity = identity
+
 	return managedScope, nil
 }
 
@@ -85,7 +99,39 @@ type ROSAControlPlaneScope struct {
 
 	Cluster      *clusterv1.Cluster
 	ControlPlane *rosacontrolplanev1.ROSAControlPlane
+
+	session         awsclient.ConfigProvider
+	serviceLimiters throttle.ServiceLimiters
+	controllerName  string
+	Identity        *sts.GetCallerIdentityOutput
 }
+
+func (s *ROSAControlPlaneScope) InfraCluster() cloud.ClusterObject {
+	return s.ControlPlane
+}
+
+func (s *ROSAControlPlaneScope) IdentityRef() *infrav1.AWSIdentityReference {
+	return s.ControlPlane.Spec.IdentityRef
+}
+
+func (s *ROSAControlPlaneScope) Session() awsclient.ConfigProvider {
+	return s.session
+}
+
+func (s *ROSAControlPlaneScope) ServiceLimiter(service string) *throttle.ServiceLimiter {
+	if sl, ok := s.serviceLimiters[service]; ok {
+		return sl
+	}
+	return nil
+}
+
+func (s *ROSAControlPlaneScope) ControllerName() string {
+	return s.controllerName
+}
+
+var _ cloud.ScopeUsage = (*ROSAControlPlaneScope)(nil)
+var _ cloud.Session = (*ROSAControlPlaneScope)(nil)
+var _ cloud.SessionMetadata = (*ROSAControlPlaneScope)(nil)
 
 // Name returns the CAPI cluster name.
 func (s *ROSAControlPlaneScope) Name() string {
@@ -93,9 +139,12 @@ func (s *ROSAControlPlaneScope) Name() string {
 }
 
 // InfraClusterName returns the AWS cluster name.
-
 func (s *ROSAControlPlaneScope) InfraClusterName() string {
 	return s.ControlPlane.Name
+}
+
+func (s *ROSAControlPlaneScope) RosaClusterName() string {
+	return s.ControlPlane.Spec.RosaClusterName
 }
 
 // Namespace returns the cluster namespace.
@@ -103,12 +152,38 @@ func (s *ROSAControlPlaneScope) Namespace() string {
 	return s.Cluster.Namespace
 }
 
+// CredentialsSecret returns the CredentialsSecret object.
+func (s *ROSAControlPlaneScope) CredentialsSecret() *corev1.Secret {
+	secretRef := s.ControlPlane.Spec.CredentialsSecretRef
+	if secretRef == nil {
+		return nil
+	}
+
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      s.ControlPlane.Spec.CredentialsSecretRef.Name,
+			Namespace: s.ControlPlane.Namespace,
+		},
+	}
+}
+
+func (s *ROSAControlPlaneScope) ClusterAdminPasswordSecret() *corev1.Secret {
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-admin-password", s.Cluster.Name),
+			Namespace: s.ControlPlane.Namespace,
+		},
+	}
+}
+
 // PatchObject persists the control plane configuration and status.
 func (s *ROSAControlPlaneScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.ControlPlane,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{}})
+		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+		}})
 }
 
 // Close closes the current scope persisting the control plane configuration and status.

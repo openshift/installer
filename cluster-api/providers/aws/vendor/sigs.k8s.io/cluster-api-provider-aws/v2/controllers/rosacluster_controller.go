@@ -35,6 +35,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
@@ -48,6 +49,7 @@ type ROSAClusterReconciler struct {
 	client.Client
 	Recorder         record.EventRecorder
 	WatchFilterValue string
+	Endpoints        []scope.ServiceEndpoint
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=rosaclusters,verbs=get;list;watch;update;patch;delete
@@ -155,25 +157,25 @@ func (r *ROSAClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 
 func (r *ROSAClusterReconciler) rosaControlPlaneToManagedCluster(log *logger.Logger) handler.MapFunc {
 	return func(ctx context.Context, o client.Object) []ctrl.Request {
-		ROSAControlPlane, ok := o.(*rosacontrolplanev1.ROSAControlPlane)
+		rosaControlPlane, ok := o.(*rosacontrolplanev1.ROSAControlPlane)
 		if !ok {
-			log.Error(errors.Errorf("expected an ROSAControlPlane, got %T instead", o), "failed to map ROSAControlPlane")
+			log.Error(errors.Errorf("expected a ROSAControlPlane, got %T instead", o), "failed to map ROSAControlPlane")
 			return nil
 		}
 
-		log := log.WithValues("objectMapper", "awsmcpTomc", "ROSAcontrolplane", klog.KRef(ROSAControlPlane.Namespace, ROSAControlPlane.Name))
+		log := log.WithValues("objectMapper", "rosacpTorosac", "ROSAcontrolplane", klog.KRef(rosaControlPlane.Namespace, rosaControlPlane.Name))
 
-		if !ROSAControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !rosaControlPlane.ObjectMeta.DeletionTimestamp.IsZero() {
 			log.Info("ROSAControlPlane has a deletion timestamp, skipping mapping")
 			return nil
 		}
 
-		if ROSAControlPlane.Spec.ControlPlaneEndpoint.IsZero() {
+		if rosaControlPlane.Spec.ControlPlaneEndpoint.IsZero() {
 			log.Debug("ROSAControlPlane has no control plane endpoint, skipping mapping")
 			return nil
 		}
 
-		cluster, err := util.GetOwnerCluster(ctx, r.Client, ROSAControlPlane.ObjectMeta)
+		cluster, err := util.GetOwnerCluster(ctx, r.Client, rosaControlPlane.ObjectMeta)
 		if err != nil {
 			log.Error(err, "failed to get owning cluster")
 			return nil
@@ -183,8 +185,8 @@ func (r *ROSAClusterReconciler) rosaControlPlaneToManagedCluster(log *logger.Log
 			return nil
 		}
 
-		managedClusterRef := cluster.Spec.InfrastructureRef
-		if managedClusterRef == nil || managedClusterRef.Kind != "ROSACluster" {
+		rosaClusterRef := cluster.Spec.InfrastructureRef
+		if rosaClusterRef == nil || rosaClusterRef.Kind != "ROSACluster" {
 			log.Info("InfrastructureRef is nil or not ROSACluster, skipping mapping")
 			return nil
 		}
@@ -192,8 +194,8 @@ func (r *ROSAClusterReconciler) rosaControlPlaneToManagedCluster(log *logger.Log
 		return []ctrl.Request{
 			{
 				NamespacedName: types.NamespacedName{
-					Name:      managedClusterRef.Name,
-					Namespace: managedClusterRef.Namespace,
+					Name:      rosaClusterRef.Name,
+					Namespace: rosaClusterRef.Namespace,
 				},
 			},
 		}

@@ -232,6 +232,7 @@ type StatusUpdatesListRequest struct {
 	limitScope    *time.Time
 	page          *int
 	productIds    *string
+	search        *string
 	size          *int
 }
 
@@ -290,6 +291,12 @@ func (r *StatusUpdatesListRequest) ProductIds(value string) *StatusUpdatesListRe
 	return r
 }
 
+// Search sets the value of the 'search' parameter.
+func (r *StatusUpdatesListRequest) Search(value string) *StatusUpdatesListRequest {
+	r.search = &value
+	return r
+}
+
 // Size sets the value of the 'size' parameter.
 func (r *StatusUpdatesListRequest) Size(value int) *StatusUpdatesListRequest {
 	r.size = &value
@@ -324,6 +331,9 @@ func (r *StatusUpdatesListRequest) SendContext(ctx context.Context) (result *Sta
 	}
 	if r.productIds != nil {
 		helpers.AddValue(&query, "product_ids", *r.productIds)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)

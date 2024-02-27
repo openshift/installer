@@ -73,6 +73,12 @@ func (s *Service) ReconcileNetwork() (err error) {
 		return err
 	}
 
+	// VPC Endpoints.
+	if err := s.reconcileVPCEndpoints(); err != nil {
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, infrav1.VpcEndpointsReconciliationFailedReason, infrautilconditions.ErrorConditionAfterInit(s.scope.ClusterObj()), err.Error())
+		return err
+	}
+
 	s.scope.Debug("Reconcile network completed successfully")
 	return nil
 }
@@ -98,6 +104,18 @@ func (s *Service) DeleteNetwork() (err error) {
 	}
 
 	vpc.DeepCopyInto(s.scope.VPC())
+
+	// VPC Endpoints.
+	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+	if err := s.scope.PatchObject(); err != nil {
+		return err
+	}
+
+	if err := s.deleteVPCEndpoints(); err != nil {
+		conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
+		return err
+	}
+	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcEndpointsReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
 
 	// Routing tables.
 	conditions.MarkFalse(s.scope.InfraCluster(), infrav1.RouteTablesReadyCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")

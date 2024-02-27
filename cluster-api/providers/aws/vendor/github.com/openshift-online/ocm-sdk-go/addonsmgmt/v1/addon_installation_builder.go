@@ -36,6 +36,7 @@ type AddonInstallationBuilder struct {
 	creationTimestamp time.Time
 	csvName           string
 	deletedTimestamp  time.Time
+	desiredVersion    string
 	operatorVersion   string
 	parameters        *AddonInstallationParametersBuilder
 	state             AddonInstallationState
@@ -134,10 +135,17 @@ func (b *AddonInstallationBuilder) DeletedTimestamp(value time.Time) *AddonInsta
 	return b
 }
 
+// DesiredVersion sets the value of the 'desired_version' attribute to the given value.
+func (b *AddonInstallationBuilder) DesiredVersion(value string) *AddonInstallationBuilder {
+	b.desiredVersion = value
+	b.bitmap_ |= 512
+	return b
+}
+
 // OperatorVersion sets the value of the 'operator_version' attribute to the given value.
 func (b *AddonInstallationBuilder) OperatorVersion(value string) *AddonInstallationBuilder {
 	b.operatorVersion = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
@@ -147,9 +155,9 @@ func (b *AddonInstallationBuilder) OperatorVersion(value string) *AddonInstallat
 func (b *AddonInstallationBuilder) Parameters(value *AddonInstallationParametersBuilder) *AddonInstallationBuilder {
 	b.parameters = value
 	if value != nil {
-		b.bitmap_ |= 1024
+		b.bitmap_ |= 2048
 	} else {
-		b.bitmap_ &^= 1024
+		b.bitmap_ &^= 2048
 	}
 	return b
 }
@@ -159,14 +167,14 @@ func (b *AddonInstallationBuilder) Parameters(value *AddonInstallationParameters
 // representation of addon installation state
 func (b *AddonInstallationBuilder) State(value AddonInstallationState) *AddonInstallationBuilder {
 	b.state = value
-	b.bitmap_ |= 2048
+	b.bitmap_ |= 4096
 	return b
 }
 
 // StateDescription sets the value of the 'state_description' attribute to the given value.
 func (b *AddonInstallationBuilder) StateDescription(value string) *AddonInstallationBuilder {
 	b.stateDescription = value
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
@@ -176,9 +184,9 @@ func (b *AddonInstallationBuilder) StateDescription(value string) *AddonInstalla
 func (b *AddonInstallationBuilder) Subscription(value *ObjectReferenceBuilder) *AddonInstallationBuilder {
 	b.subscription = value
 	if value != nil {
-		b.bitmap_ |= 8192
+		b.bitmap_ |= 16384
 	} else {
-		b.bitmap_ &^= 8192
+		b.bitmap_ &^= 16384
 	}
 	return b
 }
@@ -186,7 +194,7 @@ func (b *AddonInstallationBuilder) Subscription(value *ObjectReferenceBuilder) *
 // UpdatedTimestamp sets the value of the 'updated_timestamp' attribute to the given value.
 func (b *AddonInstallationBuilder) UpdatedTimestamp(value time.Time) *AddonInstallationBuilder {
 	b.updatedTimestamp = value
-	b.bitmap_ |= 16384
+	b.bitmap_ |= 32768
 	return b
 }
 
@@ -216,6 +224,7 @@ func (b *AddonInstallationBuilder) Copy(object *AddonInstallation) *AddonInstall
 	b.creationTimestamp = object.creationTimestamp
 	b.csvName = object.csvName
 	b.deletedTimestamp = object.deletedTimestamp
+	b.desiredVersion = object.desiredVersion
 	b.operatorVersion = object.operatorVersion
 	if object.parameters != nil {
 		b.parameters = NewAddonInstallationParameters().Copy(object.parameters)
@@ -260,6 +269,7 @@ func (b *AddonInstallationBuilder) Build() (object *AddonInstallation, err error
 	object.creationTimestamp = b.creationTimestamp
 	object.csvName = b.csvName
 	object.deletedTimestamp = b.deletedTimestamp
+	object.desiredVersion = b.desiredVersion
 	object.operatorVersion = b.operatorVersion
 	if b.parameters != nil {
 		object.parameters, err = b.parameters.Build()

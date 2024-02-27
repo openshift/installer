@@ -162,12 +162,12 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return reconcile.Result{}, nil
 	}
 
+	log = log.WithValues("cluster", klog.KObj(cluster))
+
 	if capiannotations.IsPaused(cluster, awsCluster) {
 		log.Info("AWSCluster or linked Cluster is marked as paused. Won't reconcile")
 		return reconcile.Result{}, nil
 	}
-
-	log = log.WithValues("cluster", klog.KObj(cluster))
 
 	// Create the scope.
 	clusterScope, err := scope.NewClusterScope(scope.ClusterScopeParams{
@@ -200,6 +200,11 @@ func (r *AWSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope *scope.ClusterScope) error {
+	if !controllerutil.ContainsFinalizer(clusterScope.AWSCluster, infrav1.ClusterFinalizer) {
+		clusterScope.Info("No finalizer on AWSCluster, skipping deletion reconciliation")
+		return nil
+	}
+
 	clusterScope.Info("Reconciling AWSCluster delete")
 
 	ec2svc := r.getEC2Service(clusterScope)
@@ -261,6 +266,45 @@ func (r *AWSClusterReconciler) reconcileDelete(ctx context.Context, clusterScope
 	return nil
 }
 
+func (r *AWSClusterReconciler) reconcileLoadBalancer(clusterScope *scope.ClusterScope, awsCluster *infrav1.AWSCluster) (*time.Duration, error) {
+	retryAfterDuration := 15 * time.Second
+	if clusterScope.AWSCluster.Spec.ControlPlaneLoadBalancer.LoadBalancerType == infrav1.LoadBalancerTypeDisabled {
+		clusterScope.Debug("load balancer reconciliation shifted to external provider, checking external endpoint")
+
+		return r.checkForExternalControlPlaneLoadBalancer(clusterScope, awsCluster), nil
+	}
+
+	elbService := r.getELBService(clusterScope)
+
+	if err := elbService.ReconcileLoadbalancers(); err != nil {
+		clusterScope.Error(err, "failed to reconcile load balancer")
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.LoadBalancerFailedReason, infrautilconditions.ErrorConditionAfterInit(clusterScope.ClusterObj()), err.Error())
+		return nil, err
+	}
+
+	if awsCluster.Status.Network.APIServerELB.DNSName == "" {
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameReason, clusterv1.ConditionSeverityInfo, "")
+		clusterScope.Info("Waiting on API server ELB DNS name")
+		return &retryAfterDuration, nil
+	}
+
+	clusterScope.Debug("Looking up IP address for DNS", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
+	if _, err := net.LookupIP(awsCluster.Status.Network.APIServerELB.DNSName); err != nil {
+		clusterScope.Error(err, "failed to get IP address for dns name", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameResolveReason, clusterv1.ConditionSeverityInfo, "")
+		clusterScope.Info("Waiting on API server ELB DNS name to resolve")
+		return &retryAfterDuration, nil
+	}
+	conditions.MarkTrue(awsCluster, infrav1.LoadBalancerReadyCondition)
+
+	awsCluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{
+		Host: awsCluster.Status.Network.APIServerELB.DNSName,
+		Port: clusterScope.APIServerPort(),
+	}
+
+	return nil, nil
+}
+
 func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope) (reconcile.Result, error) {
 	clusterScope.Info("Reconciling AWSCluster")
 
@@ -275,7 +319,6 @@ func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope)
 	}
 
 	ec2Service := r.getEC2Service(clusterScope)
-	elbService := r.getELBService(clusterScope)
 	networkSvc := r.getNetworkService(*clusterScope)
 	sgService := r.getSecurityGroupService(*clusterScope)
 	s3Service := s3.NewService(clusterScope)
@@ -305,35 +348,15 @@ func (r *AWSClusterReconciler) reconcileNormal(clusterScope *scope.ClusterScope)
 		}
 	}
 
-	if err := elbService.ReconcileLoadbalancers(); err != nil {
-		clusterScope.Error(err, "failed to reconcile load balancer")
-		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.LoadBalancerFailedReason, infrautilconditions.ErrorConditionAfterInit(clusterScope.ClusterObj()), err.Error())
+	if requeueAfter, err := r.reconcileLoadBalancer(clusterScope, awsCluster); err != nil {
 		return reconcile.Result{}, err
+	} else if requeueAfter != nil {
+		return reconcile.Result{RequeueAfter: *requeueAfter}, err
 	}
 
 	if err := s3Service.ReconcileBucket(); err != nil {
 		conditions.MarkFalse(awsCluster, infrav1.S3BucketReadyCondition, infrav1.S3BucketFailedReason, clusterv1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, errors.Wrapf(err, "failed to reconcile S3 Bucket for AWSCluster %s/%s", awsCluster.Namespace, awsCluster.Name)
-	}
-
-	if awsCluster.Status.Network.APIServerELB.DNSName == "" {
-		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameReason, clusterv1.ConditionSeverityInfo, "")
-		clusterScope.Info("Waiting on API server ELB DNS name")
-		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
-	}
-
-	clusterScope.Debug("looking up IP address for DNS", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
-	if _, err := net.LookupIP(awsCluster.Status.Network.APIServerELB.DNSName); err != nil {
-		clusterScope.Error(err, "failed to get IP address for dns name", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
-		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForDNSNameResolveReason, clusterv1.ConditionSeverityInfo, "")
-		clusterScope.Info("Waiting on API server ELB DNS name to resolve")
-		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
-	}
-	conditions.MarkTrue(awsCluster, infrav1.LoadBalancerReadyCondition)
-
-	awsCluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{
-		Host: awsCluster.Status.Network.APIServerELB.DNSName,
-		Port: clusterScope.APIServerPort(),
 	}
 
 	for _, subnet := range clusterScope.Subnets().FilterPrivate() {
@@ -440,5 +463,31 @@ func (r *AWSClusterReconciler) requeueAWSClusterForUnpausedCluster(_ context.Con
 				NamespacedName: client.ObjectKey{Namespace: c.Namespace, Name: c.Spec.InfrastructureRef.Name},
 			},
 		}
+	}
+}
+
+func (r *AWSClusterReconciler) checkForExternalControlPlaneLoadBalancer(clusterScope *scope.ClusterScope, awsCluster *infrav1.AWSCluster) *time.Duration {
+	requeueAfterPeriod := 15 * time.Second
+
+	switch {
+	case len(awsCluster.Spec.ControlPlaneEndpoint.Host) == 0 && awsCluster.Spec.ControlPlaneEndpoint.Port == 0:
+		clusterScope.Info("AWSCluster control plane endpoint is still non-populated")
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForExternalControlPlaneEndpointReason, clusterv1.ConditionSeverityInfo, "")
+
+		return &requeueAfterPeriod
+	case len(awsCluster.Spec.ControlPlaneEndpoint.Host) == 0:
+		clusterScope.Info("AWSCluster control plane endpoint host is still non-populated")
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForExternalControlPlaneEndpointReason, clusterv1.ConditionSeverityInfo, "")
+
+		return &requeueAfterPeriod
+	case awsCluster.Spec.ControlPlaneEndpoint.Port == 0:
+		clusterScope.Info("AWSCluster control plane endpoint port is still non-populated")
+		conditions.MarkFalse(awsCluster, infrav1.LoadBalancerReadyCondition, infrav1.WaitForExternalControlPlaneEndpointReason, clusterv1.ConditionSeverityInfo, "")
+
+		return &requeueAfterPeriod
+	default:
+		conditions.MarkTrue(awsCluster, infrav1.LoadBalancerReadyCondition)
+
+		return nil
 	}
 }

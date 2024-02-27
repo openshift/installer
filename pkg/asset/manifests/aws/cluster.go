@@ -113,15 +113,22 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 							FromPort:    30000,
 							ToPort:      32767,
 						},
+						{
+							Description: "Machine Config Server (MCS)",
+							Protocol:    capa.SecurityGroupProtocolTCP,
+							FromPort:    22623,
+							ToPort:      22623,
+						},
 					},
 				},
 				AdditionalControlPlaneIngressRules: []capa.IngressRule{
 					{
-						Description:              "MCS traffic from cluster network",
-						Protocol:                 capa.SecurityGroupProtocolTCP,
-						FromPort:                 22623,
-						ToPort:                   22623,
-						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						Description: "MCS traffic from cluster network",
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    22623,
+						ToPort:      22623,
+						//SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						CidrBlocks: []string{"10.0.0.0/16"}, //TODO(padillon): figure out security group rules
 					},
 					{
 						Description:              "controller-manager",
@@ -144,6 +151,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						ToPort:      22,
 						CidrBlocks:  []string{"0.0.0.0/0"},
 					},
+					{
+						Description: "public api", //TESTING
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    6443,
+						ToPort:      6443,
+						CidrBlocks:  []string{"0.0.0.0/0"},
+					},
 				},
 			},
 			S3Bucket: &capa.S3Bucket{
@@ -151,16 +165,48 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				Name:             ptr.To(clusterID.InfraID + "-int"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
+				Scheme:           &capa.ELBSchemeInternal,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
 						Protocol: capa.ELBProtocolTCP,
 					},
 				},
+				IngressRules: []capa.IngressRule{
+					{
+						Description: "MCS traffic from cluster network",
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    22623,
+						ToPort:      22623,
+						//SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+						CidrBlocks: []string{"10.0.0.0/16"}, //TODO(padillon): figure out security group rules
+					},
+					{
+						Description: "public api", //TESTING. This doesn't really belong on the internal LB...
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    6443,
+						ToPort:      6443,
+						CidrBlocks:  []string{"0.0.0.0/0"},
+					},
+				},
 			},
+			SecondaryControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				LoadBalancerType: capa.LoadBalancerTypeNLB,
+				Scheme:           &capa.ELBSchemeInternetFacing,
+				// IngressRules: []capa.IngressRule{ //THIS doesn't seem to update LB security group
+				// 	{
+				// 		Description: "public api", //TESTING
+				// 		Protocol:    capa.SecurityGroupProtocolTCP,
+				// 		FromPort:    6443,
+				// 		ToPort:      6443,
+				// 		CidrBlocks:  []string{"0.0.0.0/0"},
+				// 	},
+				// },
+			},
+			AdditionalTags: capa.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned"},
 		},
 	}
 

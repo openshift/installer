@@ -166,3 +166,10 @@ func (ec2Filters) IgnoreLocalZones() *ec2.Filter {
 		Values: aws.StringSlice([]string{"opt-in-not-required"}),
 	}
 }
+
+func (ec2Filters) SecurityGroupName(name string) *ec2.Filter {
+	return &ec2.Filter{
+		Name:   aws.String("group-name"),
+		Values: aws.StringSlice([]string{name}),
+	}
+}

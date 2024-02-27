@@ -123,6 +123,7 @@ type FargateProfileStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsfargateprofiles,scope=Namespaced,categories=cluster-api,shortName=awsfp
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="AWSFargateProfile ready status"
@@ -149,6 +150,7 @@ func (r *AWSFargateProfile) SetConditions(conditions clusterv1.Conditions) {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSFargateProfileList contains a list of FargateProfiles.
 type AWSFargateProfileList struct {

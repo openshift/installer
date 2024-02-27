@@ -114,7 +114,16 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		stream.WriteString(object.projectID)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&256 != 0 && object.security != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("security")
+		writeGcpSecurity(object.security, stream)
+		count++
+	}
+	present_ = object.bitmap_&512 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -123,7 +132,7 @@ func writeGCP(object *GCP, stream *jsoniter.Stream) {
 		stream.WriteString(object.tokenURI)
 		count++
 	}
-	present_ = object.bitmap_&512 != 0
+	present_ = object.bitmap_&1024 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -187,14 +196,18 @@ func readGCP(iterator *jsoniter.Iterator) *GCP {
 			value := iterator.ReadString()
 			object.projectID = value
 			object.bitmap_ |= 128
+		case "security":
+			value := readGcpSecurity(iterator)
+			object.security = value
+			object.bitmap_ |= 256
 		case "token_uri":
 			value := iterator.ReadString()
 			object.tokenURI = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 512
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = value
-			object.bitmap_ |= 512
+			object.bitmap_ |= 1024
 		default:
 			iterator.ReadAny()
 		}

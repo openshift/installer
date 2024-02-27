@@ -60,6 +60,14 @@ func (c *AddonInstallationsClient) Add() *AddonInstallationsAddRequest {
 	}
 }
 
+// Delete creates a request for the 'delete' method.
+func (c *AddonInstallationsClient) Delete() *AddonInstallationsDeleteRequest {
+	return &AddonInstallationsDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+	}
+}
+
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of addon installations for a cluster.
@@ -227,6 +235,113 @@ func (r *AddonInstallationsAddResponse) GetBody() (value *AddonInstallation, ok 
 		value = r.body
 	}
 	return
+}
+
+// AddonInstallationsDeleteRequest is the request for the 'delete' method.
+type AddonInstallationsDeleteRequest struct {
+	transport http.RoundTripper
+	path      string
+	query     url.Values
+	header    http.Header
+}
+
+// Parameter adds a query parameter.
+func (r *AddonInstallationsDeleteRequest) Parameter(name string, value interface{}) *AddonInstallationsDeleteRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *AddonInstallationsDeleteRequest) Header(name string, value interface{}) *AddonInstallationsDeleteRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Impersonate wraps requests on behalf of another user.
+// Note: Services that do not support this feature may silently ignore this call.
+func (r *AddonInstallationsDeleteRequest) Impersonate(user string) *AddonInstallationsDeleteRequest {
+	helpers.AddImpersonationHeader(&r.header, user)
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *AddonInstallationsDeleteRequest) Send() (result *AddonInstallationsDeleteResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *AddonInstallationsDeleteRequest) SendContext(ctx context.Context) (result *AddonInstallationsDeleteResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.CopyHeader(r.header)
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "DELETE",
+		URL:    uri,
+		Header: header,
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &AddonInstallationsDeleteResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	reader := bufio.NewReader(response.Body)
+	_, err = reader.Peek(1)
+	if err == io.EOF {
+		err = nil
+		return
+	}
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalErrorStatus(reader, result.status)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	return
+}
+
+// AddonInstallationsDeleteResponse is the response for the 'delete' method.
+type AddonInstallationsDeleteResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+}
+
+// Status returns the response status code.
+func (r *AddonInstallationsDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *AddonInstallationsDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *AddonInstallationsDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
 }
 
 // AddonInstallationsListRequest is the request for the 'list' method.

@@ -205,3 +205,16 @@ func IsIgnorableSecurityGroupError(err error) error {
 	}
 	return nil
 }
+
+// IsPermissionNotFoundError returns whether the error is InvalidPermission.NotFound.
+func IsPermissionNotFoundError(err error) bool {
+	if code, ok := Code(err); ok {
+		switch code {
+		case PermissionNotFound:
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}

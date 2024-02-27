@@ -33,6 +33,7 @@ type LogEntryBuilder struct {
 	createdAt      time.Time
 	createdBy      string
 	description    string
+	docReferences  []string
 	eventStreamID  string
 	logType        LogType
 	serviceName    string
@@ -109,17 +110,25 @@ func (b *LogEntryBuilder) Description(value string) *LogEntryBuilder {
 	return b
 }
 
+// DocReferences sets the value of the 'doc_references' attribute to the given values.
+func (b *LogEntryBuilder) DocReferences(values ...string) *LogEntryBuilder {
+	b.docReferences = make([]string, len(values))
+	copy(b.docReferences, values)
+	b.bitmap_ |= 256
+	return b
+}
+
 // EventStreamID sets the value of the 'event_stream_ID' attribute to the given value.
 func (b *LogEntryBuilder) EventStreamID(value string) *LogEntryBuilder {
 	b.eventStreamID = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
 // InternalOnly sets the value of the 'internal_only' attribute to the given value.
 func (b *LogEntryBuilder) InternalOnly(value bool) *LogEntryBuilder {
 	b.internalOnly = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
@@ -128,49 +137,49 @@ func (b *LogEntryBuilder) InternalOnly(value bool) *LogEntryBuilder {
 // Representation of the log type field used in cluster log type model.
 func (b *LogEntryBuilder) LogType(value LogType) *LogEntryBuilder {
 	b.logType = value
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
 // ServiceName sets the value of the 'service_name' attribute to the given value.
 func (b *LogEntryBuilder) ServiceName(value string) *LogEntryBuilder {
 	b.serviceName = value
-	b.bitmap_ |= 2048
+	b.bitmap_ |= 4096
 	return b
 }
 
 // Severity sets the value of the 'severity' attribute to the given value.
 func (b *LogEntryBuilder) Severity(value Severity) *LogEntryBuilder {
 	b.severity = value
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
 // SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 func (b *LogEntryBuilder) SubscriptionID(value string) *LogEntryBuilder {
 	b.subscriptionID = value
-	b.bitmap_ |= 8192
+	b.bitmap_ |= 16384
 	return b
 }
 
 // Summary sets the value of the 'summary' attribute to the given value.
 func (b *LogEntryBuilder) Summary(value string) *LogEntryBuilder {
 	b.summary = value
-	b.bitmap_ |= 16384
+	b.bitmap_ |= 32768
 	return b
 }
 
 // Timestamp sets the value of the 'timestamp' attribute to the given value.
 func (b *LogEntryBuilder) Timestamp(value time.Time) *LogEntryBuilder {
 	b.timestamp = value
-	b.bitmap_ |= 32768
+	b.bitmap_ |= 65536
 	return b
 }
 
 // Username sets the value of the 'username' attribute to the given value.
 func (b *LogEntryBuilder) Username(value string) *LogEntryBuilder {
 	b.username = value
-	b.bitmap_ |= 65536
+	b.bitmap_ |= 131072
 	return b
 }
 
@@ -187,6 +196,12 @@ func (b *LogEntryBuilder) Copy(object *LogEntry) *LogEntryBuilder {
 	b.createdAt = object.createdAt
 	b.createdBy = object.createdBy
 	b.description = object.description
+	if object.docReferences != nil {
+		b.docReferences = make([]string, len(object.docReferences))
+		copy(b.docReferences, object.docReferences)
+	} else {
+		b.docReferences = nil
+	}
 	b.eventStreamID = object.eventStreamID
 	b.internalOnly = object.internalOnly
 	b.logType = object.logType
@@ -210,6 +225,10 @@ func (b *LogEntryBuilder) Build() (object *LogEntry, err error) {
 	object.createdAt = b.createdAt
 	object.createdBy = b.createdBy
 	object.description = b.description
+	if b.docReferences != nil {
+		object.docReferences = make([]string, len(b.docReferences))
+		copy(object.docReferences, b.docReferences)
+	}
 	object.eventStreamID = b.eventStreamID
 	object.internalOnly = b.internalOnly
 	object.logType = b.logType

@@ -407,6 +407,7 @@ func autoConvert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in *v1be
 	out.AdditionalSecurityGroups = *(*[]apiv1beta2.AWSResourceReference)(unsafe.Pointer(&in.AdditionalSecurityGroups))
 	out.SpotMarketOptions = (*apiv1beta2.SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
 	// WARNING: in.InstanceMetadataOptions requires manual conversion: does not exist in peer-type
+	// WARNING: in.PrivateDNSName requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -546,6 +547,7 @@ func autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *v1
 	out.MixedInstancesPolicy = (*MixedInstancesPolicy)(unsafe.Pointer(in.MixedInstancesPolicy))
 	out.ProviderIDList = *(*[]string)(unsafe.Pointer(&in.ProviderIDList))
 	out.DefaultCoolDown = in.DefaultCoolDown
+	// WARNING: in.DefaultInstanceWarmup requires manual conversion: does not exist in peer-type
 	if in.RefreshPreferences != nil {
 		in, out := &in.RefreshPreferences, &out.RefreshPreferences
 		*out = new(RefreshPreferences)
@@ -795,6 +797,7 @@ func autoConvert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in *v1beta
 	out.PlacementGroup = in.PlacementGroup
 	out.Subnets = *(*[]string)(unsafe.Pointer(&in.Subnets))
 	out.DefaultCoolDown = in.DefaultCoolDown
+	// WARNING: in.DefaultInstanceWarmup requires manual conversion: does not exist in peer-type
 	out.CapacityRebalance = in.CapacityRebalance
 	out.MixedInstancesPolicy = (*MixedInstancesPolicy)(unsafe.Pointer(in.MixedInstancesPolicy))
 	out.Status = ASGStatus(in.Status)

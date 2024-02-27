@@ -22,6 +22,7 @@ import (
 )
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=clusterclasses,shortName=cc,scope=Namespaced,categories=cluster-api
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of ClusterClass"
@@ -133,5 +134,5 @@ type ClusterClassList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&ClusterClass{}, &ClusterClassList{})
+	objectTypes = append(objectTypes, &ClusterClass{}, &ClusterClassList{})
 }

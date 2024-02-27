@@ -17,12 +17,24 @@ limitations under the License.
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 type RosaControlPlaneSpec struct { //nolint: maligned
+	// Cluster name must be valid DNS-1035 label, so it must consist of lower case alphanumeric
+	// characters or '-', start with an alphabetic character, end with an alphanumeric character
+	// and have a max length of 15 characters.
+	//
+	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="rosaClusterName is immutable"
+	// +kubebuilder:validation:MaxLength:=15
+	// +kubebuilder:validation:Pattern:=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	RosaClusterName string `json:"rosaClusterName"`
+
 	// The Subnet IDs to use when installing the cluster.
 	// SubnetIDs should come in pairs; two per availability zone, one private and one public.
 	Subnets []string `json:"subnets"`
@@ -37,8 +49,8 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// The AWS Region the cluster lives in.
 	Region *string `json:"region"`
 
-	// Openshift version, for example "openshift-v4.12.15".
-	Version *string `json:"version"`
+	// Openshift version, for example "4.14.5".
+	Version string `json:"version"`
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
@@ -51,10 +63,22 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	OIDCID *string `json:"oidcID"`
 
 	// TODO: these are to satisfy ocm sdk. Explore how to drop them.
-	AccountID        *string `json:"accountID"`
-	CreatorARN       *string `json:"creatorARN"`
 	InstallerRoleARN *string `json:"installerRoleARN"`
 	SupportRoleARN   *string `json:"supportRoleARN"`
+	WorkerRoleARN    *string `json:"workerRoleARN"`
+
+	// CredentialsSecretRef references a secret with necessary credentials to connect to the OCM API.
+	// The secret should contain the following data keys:
+	// - ocmToken: eyJhbGciOiJIUzI1NiIsI....
+	// - ocmApiUrl: Optional, defaults to 'https://api.openshift.com'
+	// +optional
+	CredentialsSecretRef *corev1.LocalObjectReference `json:"credentialsSecretRef,omitempty"`
+
+	// +optional
+
+	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
+	// If no identity is specified, the default identity for this controller will be used.
+	IdentityRef *infrav1.AWSIdentityReference `json:"identityRef,omitempty"`
 }
 
 // AWSRolesRef contains references to various AWS IAM roles required for operators to make calls against the AWS API.
@@ -444,16 +468,29 @@ type RosaControlPlaneStatus struct {
 	// uploaded kubernetes config-map.
 	// +optional
 	Initialized bool `json:"initialized"`
-	// Ready denotes that the AWSManagedControlPlane API Server is ready to
-	// receive requests and that the VPC infra is ready.
+	// Ready denotes that the ROSAControlPlane API Server is ready to receive requests.
 	// +kubebuilder:default=false
 	Ready bool `json:"ready"`
-	// ErrorMessage indicates that there is a terminal problem reconciling the
-	// state, and will be set to a descriptive error message.
+	// FailureMessage will be set in the event that there is a terminal problem
+	// reconciling the state and will be set to a descriptive error message.
+	//
+	// This field should not be set for transitive errors that a controller
+	// faces that are expected to be fixed automatically over
+	// time (like service outages), but instead indicate that something is
+	// fundamentally wrong with the spec or the configuration of
+	// the controller, and that manual intervention is required.
+	//
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Conditions specifies the cpnditions for the managed control plane
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+
+	// ID is the cluster ID given by ROSA.
+	ID *string `json:"id,omitempty"`
+	// ConsoleURL is the url for the openshift console.
+	ConsoleURL string `json:"consoleURL,omitempty"`
+	// OIDCEndpointURL is the endpoint url for the managed OIDC porvider.
+	OIDCEndpointURL string `json:"oidcEndpointURL,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -462,6 +499,7 @@ type RosaControlPlaneStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this RosaControl belongs"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Control plane infrastructure is ready for worker nodes"
+// +k8s:defaulter-gen=true
 
 type ROSAControlPlane struct {
 	metav1.TypeMeta   `json:",inline"`

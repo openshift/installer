@@ -323,24 +323,24 @@ func (s *ManagedMachinePoolScope) Namespace() string {
 	return s.ManagedMachinePool.Namespace
 }
 
-func (s *ManagedMachinePoolScope) GetRawBootstrapData() ([]byte, error) {
+func (s *ManagedMachinePoolScope) GetRawBootstrapData() ([]byte, *types.NamespacedName, error) {
 	if s.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
-		return nil, errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
+		return nil, nil, errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
 	}
 
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{Namespace: s.Namespace(), Name: *s.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName}
 
 	if err := s.Client.Get(context.TODO(), key, secret); err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve bootstrap data secret for AWSManagedMachinePool %s/%s", s.Namespace(), s.Name())
+		return nil, nil, errors.Wrapf(err, "failed to retrieve bootstrap data secret for AWSManagedMachinePool %s/%s", s.Namespace(), s.Name())
 	}
 
 	value, ok := secret.Data["value"]
 	if !ok {
-		return nil, errors.New("error retrieving bootstrap data: secret value key is missing")
+		return nil, nil, errors.New("error retrieving bootstrap data: secret value key is missing")
 	}
 
-	return value, nil
+	return value, &key, nil
 }
 
 func (s *ManagedMachinePoolScope) GetObjectMeta() *metav1.ObjectMeta {

@@ -88,6 +88,14 @@ const (
 )
 
 const (
+	// VpcEndpointsReadyCondition reports successful reconciliation of vpc endpoints.
+	// Only applicable to managed clusters.
+	VpcEndpointsReadyCondition clusterv1.ConditionType = "VpcEndpointsReadyCondition"
+	// VpcEndpointsReconciliationFailedReason used when any errors occur during reconciliation of vpc endpoints.
+	VpcEndpointsReconciliationFailedReason = "VpcEndpointsReconciliationFailed"
+)
+
+const (
 	// SecondaryCidrsReadyCondition reports successful reconciliation of secondary CIDR blocks.
 	// Only applicable to managed clusters.
 	SecondaryCidrsReadyCondition clusterv1.ConditionType = "SecondaryCidrsReady"
@@ -117,6 +125,9 @@ const (
 	LoadBalancerReadyCondition clusterv1.ConditionType = "LoadBalancerReady"
 	// WaitForDNSNameReason used while waiting for a DNS name for the API server to be populated.
 	WaitForDNSNameReason = "WaitForDNSName"
+	// WaitForExternalControlPlaneEndpointReason is available when the AWS Cluster is waiting for an externally managed
+	// Load Balancer, such as an external Control Plane provider.
+	WaitForExternalControlPlaneEndpointReason = "WaitForExternalControlPlaneEndpoint"
 	// WaitForDNSNameResolveReason used while waiting for DNS name to resolve.
 	WaitForDNSNameResolveReason = "WaitForDNSNameResolve"
 	// LoadBalancerFailedReason used when an error occurs during load balancer reconciliation.

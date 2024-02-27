@@ -234,6 +234,7 @@ type Bootstrap struct {
 // ANCHOR_END: Bootstrap
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=machines,shortName=ma,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -277,5 +278,5 @@ type MachineList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Machine{}, &MachineList{})
+	objectTypes = append(objectTypes, &Machine{}, &MachineList{})
 }

@@ -64,6 +64,11 @@ func (s *Service) ReconcileSecurityGroups() error {
 
 	var err error
 
+	err = s.revokeIngressAndEgressRulesFromVPCDefaultSecurityGroup()
+	if err != nil {
+		return err
+	}
+
 	// Security group overrides are mapped by Role rather than their security group name
 	// They are copied into the main 'sgs' list by their group name later
 	var securityGroupOverrides map[infrav1.SecurityGroupRole]*ec2.SecurityGroup
@@ -363,6 +368,55 @@ func (s *Service) describeSecurityGroupsByName() (map[string]infrav1.SecurityGro
 	return res, nil
 }
 
+// revokeIngressAndEgressRulesFromVPCDefaultSecurityGroup revokes ingress and egress rules from the VPC default security group.
+// The VPC default security group is created by AWS and cannot be deleted.
+// But we can revoke all ingress and egress rules from it to make it more secure. This security group is not used by CAPA.
+func (s *Service) revokeIngressAndEgressRulesFromVPCDefaultSecurityGroup() error {
+	if !s.scope.VPC().EmptyRoutesDefaultVPCSecurityGroup {
+		return nil
+	}
+
+	securityGroups, err := s.EC2Client.DescribeSecurityGroupsWithContext(context.TODO(), &ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			filter.EC2.VPC(s.scope.VPC().ID),
+			filter.EC2.SecurityGroupName("default"),
+		},
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to find default security group in vpc %q", s.scope.VPC().ID)
+	}
+	defaultSecurityGroupID := *securityGroups.SecurityGroups[0].GroupId
+	s.scope.Debug("Removing ingress and egress rules from default security group in VPC", "defaultSecurityGroupID", defaultSecurityGroupID, "vpc-id", s.scope.VPC().ID)
+
+	ingressRules := infrav1.IngressRules{
+		{
+			Protocol:               infrav1.SecurityGroupProtocolAll,
+			FromPort:               -1,
+			ToPort:                 -1,
+			SourceSecurityGroupIDs: []string{defaultSecurityGroupID},
+		},
+	}
+	err = s.revokeSecurityGroupIngressRules(defaultSecurityGroupID, ingressRules)
+	if err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
+		return errors.Wrapf(err, "failed to revoke ingress rules from vpc default security group %q in VPC %q", defaultSecurityGroupID, s.scope.VPC().ID)
+	}
+
+	egressRules := infrav1.IngressRules{
+		{
+			Protocol:   infrav1.SecurityGroupProtocolAll,
+			FromPort:   -1,
+			ToPort:     -1,
+			CidrBlocks: []string{services.AnyIPv4CidrBlock},
+		},
+	}
+	err = s.revokeSecurityGroupEgressRules(defaultSecurityGroupID, egressRules)
+	if err != nil && !awserrors.IsPermissionNotFoundError(errors.Cause(err)) {
+		return errors.Wrapf(err, "failed to revoke egress rules from vpc default security group %q in VPC %q", defaultSecurityGroupID, s.scope.VPC().ID)
+	}
+
+	return nil
+}
+
 func makeInfraSecurityGroup(ec2sg *ec2.SecurityGroup) infrav1.SecurityGroup {
 	return infrav1.SecurityGroup{
 		ID:   *ec2sg.GroupId,
@@ -423,6 +477,22 @@ func (s *Service) revokeSecurityGroupIngressRules(id string, rules infrav1.Ingre
 	}
 
 	record.Eventf(s.scope.InfraCluster(), "SuccessfulRevokeSecurityGroupIngressRules", "Revoked security group ingress rules %v for SecurityGroup %q", rules, id)
+	return nil
+}
+
+func (s *Service) revokeSecurityGroupEgressRules(id string, rules infrav1.IngressRules) error {
+	input := &ec2.RevokeSecurityGroupEgressInput{GroupId: aws.String(id)}
+	for i := range rules {
+		rule := rules[i]
+		input.IpPermissions = append(input.IpPermissions, ingressRuleToSDKType(s.scope, &rule))
+	}
+
+	if _, err := s.EC2Client.RevokeSecurityGroupEgressWithContext(context.TODO(), input); err != nil {
+		record.Warnf(s.scope.InfraCluster(), "FailedRevokeSecurityGroupEgressRules", "Failed to revoke security group egress rules %v for SecurityGroup %q: %v", rules, id, err)
+		return errors.Wrapf(err, "failed to revoke security group %q egress rules: %v", id, rules)
+	}
+
+	record.Eventf(s.scope.InfraCluster(), "SuccessfulRevokeSecurityGroupEgressRules", "Revoked security group egress rules %v for SecurityGroup %q", rules, id)
 	return nil
 }
 

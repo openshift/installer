@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
@@ -57,6 +58,22 @@ func (c *ProductClient) Get() *ProductGetRequest {
 		transport: c.transport,
 		path:      c.path,
 	}
+}
+
+// MinimalVersions returns the target 'product_minimal_versions' resource.
+func (c *ProductClient) MinimalVersions() *ProductMinimalVersionsClient {
+	return NewProductMinimalVersionsClient(
+		c.transport,
+		path.Join(c.path, "minimal_versions"),
+	)
+}
+
+// TechnologyPreviews returns the target 'product_technology_previews' resource.
+func (c *ProductClient) TechnologyPreviews() *ProductTechnologyPreviewsClient {
+	return NewProductTechnologyPreviewsClient(
+		c.transport,
+		path.Join(c.path, "technology_previews"),
+	)
 }
 
 // ProductPollRequest is the request for the Poll method.

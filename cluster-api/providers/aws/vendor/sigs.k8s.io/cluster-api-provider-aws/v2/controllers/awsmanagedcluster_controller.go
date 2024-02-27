@@ -125,6 +125,7 @@ func (r *AWSManagedClusterReconciler) SetupWithManager(ctx context.Context, mgr 
 		WithOptions(options).
 		For(awsManagedCluster).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log.GetLogger())).
 		Build(r)
 
 	if err != nil {

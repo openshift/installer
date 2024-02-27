@@ -20,14 +20,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
+	"net"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
-	sdk "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -39,14 +46,17 @@ import (
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/rosa"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util"
 	capiannotations "sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/cluster-api/util/predicates"
+	"sigs.k8s.io/cluster-api/util/secret"
 )
 
 const (
-	ocmAPIUrl              = "https://api.stage.openshift.com"
 	rosaCreatorArnProperty = "rosa_creator_arn"
 
 	rosaControlPlaneKind = "ROSAControlPlane"
@@ -58,6 +68,7 @@ type ROSAControlPlaneReconciler struct {
 	client.Client
 	WatchFilterValue string
 	WaitInfraPeriod  time.Duration
+	Endpoints        []scope.ServiceEndpoint
 }
 
 // SetupWithManager is used to setup the controller.
@@ -99,6 +110,8 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters;clusters/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinedeployments,verbs=get;list;watch
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinepools,verbs=get;list;watch
+// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes,verbs=get;list;watch;update;patch;delete
+// +kubebuilder:rbac:groups=controlplane.cluster.x-k8s.io,resources=rosacontrolplanes/status,verbs=get;update;patch
 
 // Reconcile will reconcile RosaControlPlane Resources.
 func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, reterr error) {
@@ -124,6 +137,8 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
+	log = log.WithValues("cluster", klog.KObj(cluster))
+
 	if capiannotations.IsPaused(cluster, rosaControlPlane) {
 		log.Info("Reconciliation is paused for this object")
 		return ctrl.Result{}, nil
@@ -134,6 +149,8 @@ func (r *ROSAControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		Cluster:        cluster,
 		ControlPlane:   rosaControlPlane,
 		ControllerName: strings.ToLower(rosaControlPlaneKind),
+		Endpoints:      r.Endpoints,
+		Logger:         log,
 	})
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create scope: %w", err)
@@ -168,9 +185,80 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		}
 	}
 
+	rosaClient, err := rosa.NewRosaClient(ctx, rosaScope)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to create a rosa client: %w", err)
+	}
+	defer rosaClient.Close()
+
+	failureMessage, err := validateControlPlaneSpec(rosaClient, rosaScope)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to validate ROSAControlPlane.spec: %w", err)
+	}
+	if failureMessage != nil {
+		rosaScope.ControlPlane.Status.FailureMessage = failureMessage
+		// dont' requeue because input is invalid and manual intervention is needed.
+		return ctrl.Result{}, nil
+	} else {
+		rosaScope.ControlPlane.Status.FailureMessage = nil
+	}
+
+	cluster, err := rosaClient.GetCluster()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if clusterID := cluster.ID(); clusterID != "" {
+		rosaScope.ControlPlane.Status.ID = &clusterID
+		rosaScope.ControlPlane.Status.ConsoleURL = cluster.Console().URL()
+		rosaScope.ControlPlane.Status.OIDCEndpointURL = cluster.AWS().STS().OIDCEndpointURL()
+		rosaScope.ControlPlane.Status.Ready = false
+
+		switch cluster.Status().State() {
+		case cmv1.ClusterStateReady:
+			conditions.MarkTrue(rosaScope.ControlPlane, rosacontrolplanev1.ROSAControlPlaneReadyCondition)
+			rosaScope.ControlPlane.Status.Ready = true
+
+			apiEndpoint, err := buildAPIEndpoint(cluster)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			rosaScope.ControlPlane.Spec.ControlPlaneEndpoint = *apiEndpoint
+
+			if err := r.reconcileKubeconfig(ctx, rosaScope, rosaClient, cluster); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to reconcile kubeconfig: %w", err)
+			}
+			if err := r.reconcileClusterVersion(rosaScope, rosaClient, cluster); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		case cmv1.ClusterStateError:
+			errorMessage := cluster.Status().ProvisionErrorMessage()
+			rosaScope.ControlPlane.Status.FailureMessage = &errorMessage
+
+			conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+				string(cluster.Status().State()),
+				clusterv1.ConditionSeverityError,
+				cluster.Status().ProvisionErrorCode())
+			// Cluster is in an unrecoverable state, returning nil error so that the request doesn't get requeued.
+			return ctrl.Result{}, nil
+		}
+
+		conditions.MarkFalse(rosaScope.ControlPlane,
+			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+			string(cluster.Status().State()),
+			clusterv1.ConditionSeverityInfo,
+			cluster.Status().Description())
+
+		rosaScope.Info("waiting for cluster to become ready", "state", cluster.Status().State())
+		// Requeue so that status.ready is set to true when the cluster is fully created.
+		return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+	}
+
 	// Create the cluster:
 	clusterBuilder := cmv1.NewCluster().
-		Name(rosaScope.ControlPlane.Name).
+		Name(rosaScope.RosaClusterName()).
 		MultiAZ(true).
 		Product(
 			cmv1.NewProduct().
@@ -185,7 +273,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		DisableUserWorkloadMonitoring(true).
 		Version(
 			cmv1.NewVersion().
-				ID(*rosaScope.ControlPlane.Spec.Version).
+				ID(rosa.VersionID(rosaScope.ControlPlane.Spec.Version)).
 				ChannelGroup("stable"),
 		).
 		ExpirationTimestamp(time.Now().Add(1 * time.Hour)).
@@ -255,17 +343,16 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 	stsBuilder = stsBuilder.OperatorIAMRoles(roles...)
 
 	instanceIAMRolesBuilder := cmv1.NewInstanceIAMRoles()
-	instanceIAMRolesBuilder.MasterRoleARN("TODO")
-	instanceIAMRolesBuilder.WorkerRoleARN("TODO")
+	instanceIAMRolesBuilder.WorkerRoleARN(*rosaScope.ControlPlane.Spec.WorkerRoleARN)
 	stsBuilder = stsBuilder.InstanceIAMRoles(instanceIAMRolesBuilder)
 	stsBuilder.OidcConfig(cmv1.NewOidcConfig().ID(*rosaScope.ControlPlane.Spec.OIDCID))
-
 	stsBuilder.AutoMode(true)
 
 	awsBuilder := cmv1.NewAWS().
-		AccountID(*rosaScope.ControlPlane.Spec.AccountID)
-	awsBuilder = awsBuilder.SubnetIDs(rosaScope.ControlPlane.Spec.Subnets...)
-	awsBuilder = awsBuilder.STS(stsBuilder)
+		AccountID(*rosaScope.Identity.Account).
+		BillingAccountID(*rosaScope.Identity.Account).
+		SubnetIDs(rosaScope.ControlPlane.Spec.Subnets...).
+		STS(stsBuilder)
 	clusterBuilder = clusterBuilder.AWS(awsBuilder)
 
 	clusterNodesBuilder := cmv1.NewClusterNodes()
@@ -273,7 +360,7 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 	clusterBuilder = clusterBuilder.Nodes(clusterNodesBuilder)
 
 	clusterProperties := map[string]string{}
-	clusterProperties[rosaCreatorArnProperty] = *rosaScope.ControlPlane.Spec.CreatorARN
+	clusterProperties[rosaCreatorArnProperty] = *rosaScope.Identity.Arn
 
 	clusterBuilder = clusterBuilder.Properties(clusterProperties)
 	clusterSpec, err := clusterBuilder.Build()
@@ -281,100 +368,215 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		return ctrl.Result{}, fmt.Errorf("failed to create description of cluster: %v", err)
 	}
 
-	// Create a logger that has the debug level enabled:
-	ocmLogger, err := sdk.NewGoLoggerBuilder().
-		Debug(true).
-		Build()
+	newCluster, err := rosaClient.CreateCluster(clusterSpec)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to build logger: %w", err)
+		return ctrl.Result{}, fmt.Errorf("failed to create ROSA cluster: %w", err)
 	}
 
-	// Create the connection, and remember to close it:
-	token := os.Getenv("OCM_TOKEN")
-	connection, err := sdk.NewConnectionBuilder().
-		Logger(ocmLogger).
-		Tokens(token).
-		URL(ocmAPIUrl).
-		Build()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to build connection: %w", err)
-	}
-	defer func() {
-		if err := connection.Close(); err != nil {
-			reterr = errors.Join(reterr, err)
-		}
-	}()
-
-	log := logger.FromContext(ctx)
-	cluster, err := connection.ClustersMgmt().V1().Clusters().
-		Add().
-		// Parameter("dryRun", *config.DryRun).
-		Body(clusterSpec).
-		Send()
-	if err != nil {
-		log.Info("error", "error", err)
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-	}
-
-	clusterObject := cluster.Body()
-	log.Info("result", "body", clusterObject)
+	rosaScope.Info("cluster created", "state", newCluster.Status().State())
+	clusterID := newCluster.ID()
+	rosaScope.ControlPlane.Status.ID = &clusterID
 
 	return ctrl.Result{}, nil
 }
 
-func (r *ROSAControlPlaneReconciler) reconcileDelete(_ context.Context, rosaScope *scope.ROSAControlPlaneScope) (res ctrl.Result, reterr error) {
-	// log := logger.FromContext(ctx)
-
+func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (res ctrl.Result, reterr error) {
 	rosaScope.Info("Reconciling ROSAControlPlane delete")
 
-	// Create a logger that has the debug level enabled:
-	ocmLogger, err := sdk.NewGoLoggerBuilder().
-		Debug(true).
-		Build()
+	rosaClient, err := rosa.NewRosaClient(ctx, rosaScope)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to build logger: %w", err)
+		return ctrl.Result{}, fmt.Errorf("failed to create a rosa client: %w", err)
 	}
+	defer rosaClient.Close()
 
-	// Create the connection, and remember to close it:
-	// TODO: token should be read from a secret: https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/4460
-	token := os.Getenv("OCM_TOKEN")
-	connection, err := sdk.NewConnectionBuilder().
-		Logger(ocmLogger).
-		Tokens(token).
-		URL(ocmAPIUrl).
-		Build()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to build connection: %w", err)
-	}
-	defer func() {
-		if err := connection.Close(); err != nil {
-			reterr = errors.Join(reterr, err)
-		}
-	}()
-
-	cluster, err := r.getOcmCluster(rosaScope, connection)
+	cluster, err := rosaClient.GetCluster()
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	response, err := connection.ClustersMgmt().V1().Clusters().
-		Cluster(cluster.ID()).
-		Delete().
-		Send()
-	if err != nil {
-		msg := response.Error().Reason()
-		if msg == "" {
-			msg = err.Error()
+	if cluster == nil {
+		// cluster is fully deleted, remove finalizer.
+		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
+		return ctrl.Result{}, nil
+	}
+
+	if cluster.Status().State() != cmv1.ClusterStateUninstalling {
+		if err := rosaClient.DeleteCluster(cluster.ID()); err != nil {
+			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, fmt.Errorf(msg)
 	}
 
-	controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
-	if err := rosaScope.PatchObject(); err != nil {
-		return ctrl.Result{}, err
+	rosaScope.ControlPlane.Status.Ready = false
+	rosaScope.Info("waiting for cluster to be deleted")
+	// Requeue to remove the finalizer when the cluster is fully deleted.
+	return ctrl.Result{RequeueAfter: time.Second * 60}, nil
+}
+
+func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, rosaClient *rosa.RosaClient, cluster *cmv1.Cluster) error {
+	version := rosaScope.ControlPlane.Spec.Version
+	if version == rosa.RawVersionID(cluster.Version()) {
+		conditions.MarkFalse(rosaScope.ControlPlane, rosacontrolplanev1.ROSAControlPlaneUpgradingCondition, "upgraded", clusterv1.ConditionSeverityInfo, "")
+		return nil
 	}
 
-	return ctrl.Result{}, nil
+	scheduledUpgrade, err := rosaClient.CheckExistingScheduledUpgrade(cluster)
+	if err != nil {
+		return fmt.Errorf("failed to get existing scheduled upgrades: %w", err)
+	}
+
+	if scheduledUpgrade == nil {
+		scheduledUpgrade, err = rosaClient.ScheduleControlPlaneUpgrade(cluster, version, time.Now())
+		if err != nil {
+			return fmt.Errorf("failed to schedule control plane upgrade to version %s: %w", version, err)
+		}
+	}
+
+	condition := &clusterv1.Condition{
+		Type:    rosacontrolplanev1.ROSAControlPlaneUpgradingCondition,
+		Status:  corev1.ConditionTrue,
+		Reason:  string(scheduledUpgrade.State().Value()),
+		Message: fmt.Sprintf("Upgrading to version %s", scheduledUpgrade.Version()),
+	}
+	conditions.Set(rosaScope.ControlPlane, condition)
+
+	// if cluster is already upgrading to another version we need to wait until the current upgrade is finished, return an error to requeue and try later.
+	if scheduledUpgrade.Version() != version {
+		return fmt.Errorf("there is already a %s upgrade to version %s", scheduledUpgrade.State().Value(), scheduledUpgrade.Version())
+	}
+
+	return nil
+}
+
+func (r *ROSAControlPlaneReconciler) reconcileKubeconfig(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope, rosaClient *rosa.RosaClient, cluster *cmv1.Cluster) error {
+	rosaScope.Debug("Reconciling ROSA kubeconfig for cluster", "cluster-name", rosaScope.RosaClusterName())
+
+	clusterRef := client.ObjectKeyFromObject(rosaScope.Cluster)
+	kubeconfigSecret, err := secret.GetFromNamespacedName(ctx, r.Client, clusterRef, secret.Kubeconfig)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get kubeconfig secret: %w", err)
+		}
+	}
+
+	// generate a new password for the cluster admin user, or retrieve an existing one.
+	password, err := r.reconcileClusterAdminPassword(ctx, rosaScope)
+	if err != nil {
+		return fmt.Errorf("failed to reconcile cluster admin password secret: %w", err)
+	}
+
+	clusterName := rosaScope.RosaClusterName()
+	userName := fmt.Sprintf("%s-capi-admin", clusterName)
+	apiServerURL := cluster.API().URL()
+
+	// create new user with admin privileges in the ROSA cluster if 'userName' doesn't already exist.
+	err = rosaClient.CreateAdminUserIfNotExist(cluster.ID(), userName, password)
+	if err != nil {
+		return err
+	}
+
+	clientConfig := &restclient.Config{
+		Host:     apiServerURL,
+		Username: userName,
+	}
+	// request an acccess token using the credentials of the cluster admin user created earlier.
+	// this token is used in the kubeconfig to authenticate with the API server.
+	token, err := rosa.RequestToken(ctx, apiServerURL, userName, password, clientConfig)
+	if err != nil {
+		return fmt.Errorf("failed to request token: %w", err)
+	}
+
+	// create the kubeconfig spec.
+	contextName := fmt.Sprintf("%s@%s", userName, clusterName)
+	cfg := &api.Config{
+		APIVersion: api.SchemeGroupVersion.Version,
+		Clusters: map[string]*api.Cluster{
+			clusterName: {
+				Server: apiServerURL,
+			},
+		},
+		Contexts: map[string]*api.Context{
+			contextName: {
+				Cluster:  clusterName,
+				AuthInfo: userName,
+			},
+		},
+		CurrentContext: contextName,
+		AuthInfos: map[string]*api.AuthInfo{
+			userName: {
+				Token: token.AccessToken,
+			},
+		},
+	}
+	out, err := clientcmd.Write(*cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize config to yaml: %w", err)
+	}
+
+	if kubeconfigSecret != nil {
+		// update existing kubeconfig secret.
+		kubeconfigSecret.Data[secret.KubeconfigDataName] = out
+		if err := r.Client.Update(ctx, kubeconfigSecret); err != nil {
+			return fmt.Errorf("failed to update kubeconfig secret: %w", err)
+		}
+	} else {
+		// create new kubeconfig secret.
+		controllerOwnerRef := *metav1.NewControllerRef(rosaScope.ControlPlane, rosacontrolplanev1.GroupVersion.WithKind("ROSAControlPlane"))
+		kubeconfigSecret = kubeconfig.GenerateSecretWithOwner(clusterRef, out, controllerOwnerRef)
+		if err := r.Client.Create(ctx, kubeconfigSecret); err != nil {
+			return fmt.Errorf("failed to create kubeconfig secret: %w", err)
+		}
+	}
+
+	rosaScope.ControlPlane.Status.Initialized = true
+	return nil
+}
+
+// reconcileClusterAdminPassword generates and store the password of the cluster admin user in a secret which is used to request a token for kubeconfig auth.
+// Since it is not possible to retrieve a user's password through the ocm API once created,
+// we have to store the password in a secret as it is needed later to refresh the token.
+func (r *ROSAControlPlaneReconciler) reconcileClusterAdminPassword(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (string, error) {
+	passwordSecret := rosaScope.ClusterAdminPasswordSecret()
+	err := r.Client.Get(ctx, client.ObjectKeyFromObject(passwordSecret), passwordSecret)
+	if err == nil {
+		password := string(passwordSecret.Data["value"])
+		return password, nil
+	} else if !apierrors.IsNotFound(err) {
+		return "", fmt.Errorf("failed to get cluster admin password secret: %w", err)
+	}
+	// Generate a new password and create the secret
+	password, err := rosa.GenerateRandomPassword()
+	if err != nil {
+		return "", err
+	}
+
+	controllerOwnerRef := *metav1.NewControllerRef(rosaScope.ControlPlane, rosacontrolplanev1.GroupVersion.WithKind("ROSAControlPlane"))
+	passwordSecret.Data = map[string][]byte{
+		"value": []byte(password),
+	}
+	passwordSecret.OwnerReferences = []metav1.OwnerReference{
+		controllerOwnerRef,
+	}
+	if err := r.Client.Create(ctx, passwordSecret); err != nil {
+		return "", err
+	}
+
+	return password, nil
+}
+
+func validateControlPlaneSpec(rosaClient *rosa.RosaClient, rosaScope *scope.ROSAControlPlaneScope) (*string, error) {
+	version := rosaScope.ControlPlane.Spec.Version
+	isSupported, err := rosaClient.IsVersionSupported(version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify if version is supported: %w", err)
+	}
+
+	if !isSupported {
+		message := fmt.Sprintf("version %s is not supported", version)
+		return &message, nil
+	}
+
+	// TODO: add more input validations
+	return nil, nil
 }
 
 func (r *ROSAControlPlaneReconciler) rosaClusterToROSAControlPlane(log *logger.Logger) handler.MapFunc {
@@ -417,39 +619,23 @@ func (r *ROSAControlPlaneReconciler) rosaClusterToROSAControlPlane(log *logger.L
 	}
 }
 
-func (r *ROSAControlPlaneReconciler) getOcmCluster(rosaScope *scope.ROSAControlPlaneScope, ocmConnection *sdk.Connection) (*cmv1.Cluster, error) {
-	clusterKey := rosaScope.ControlPlane.Name
-	query := fmt.Sprintf("%s AND (id = '%s' OR name = '%s' OR external_id = '%s')",
-		getClusterFilter(rosaScope),
-		clusterKey, clusterKey, clusterKey,
-	)
-	response, err := ocmConnection.ClustersMgmt().V1().Clusters().List().
-		Search(query).
-		Page(1).
-		Size(1).
-		Send()
+func buildAPIEndpoint(cluster *cmv1.Cluster) (*clusterv1.APIEndpoint, error) {
+	parsedURL, err := url.ParseRequestURI(cluster.API().URL())
+	if err != nil {
+		return nil, err
+	}
+	host, portStr, err := net.SplitHostPort(parsedURL.Host)
 	if err != nil {
 		return nil, err
 	}
 
-	switch response.Total() {
-	case 0:
-		return nil, fmt.Errorf("there is no cluster with identifier or name '%s'", clusterKey)
-	case 1:
-		return response.Items().Slice()[0], nil
-	default:
-		return nil, fmt.Errorf("there are %d clusters with identifier or name '%s'", response.Total(), clusterKey)
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, err
 	}
-}
 
-// Generate a query that filters clusters running on the current AWS session account.
-func getClusterFilter(rosaScope *scope.ROSAControlPlaneScope) string {
-	filter := "product.id = 'rosa'"
-	if rosaScope.ControlPlane.Spec.CreatorARN != nil {
-		filter = fmt.Sprintf("%s AND (properties.%s = '%s')",
-			filter,
-			rosaCreatorArnProperty,
-			*rosaScope.ControlPlane.Spec.CreatorARN)
-	}
-	return filter
+	return &clusterv1.APIEndpoint{
+		Host: host,
+		Port: int32(port), // #nosec G109
+	}, nil
 }

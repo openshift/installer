@@ -183,6 +183,7 @@ type AWSMachinePoolInstanceStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=awsmachinepools,scope=Namespaced,categories=cluster-api,shortName=awsmp
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Machine ready status"
@@ -201,6 +202,7 @@ type AWSMachinePool struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSMachinePoolList contains a list of AWSMachinePool.
 type AWSMachinePoolList struct {

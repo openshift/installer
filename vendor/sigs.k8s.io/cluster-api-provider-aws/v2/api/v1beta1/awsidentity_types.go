@@ -70,6 +70,7 @@ type AWSRoleSpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsclusterstaticidentities,scope=Cluster,categories=cluster-api,shortName=awssi
 
 // AWSClusterStaticIdentity is the Schema for the awsclusterstaticidentities API
@@ -83,6 +84,7 @@ type AWSClusterStaticIdentity struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSClusterStaticIdentityList contains a list of AWSClusterStaticIdentity.
 type AWSClusterStaticIdentityList struct {
@@ -103,6 +105,7 @@ type AWSClusterStaticIdentitySpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsclusterroleidentities,scope=Cluster,categories=cluster-api,shortName=awsri
 
 // AWSClusterRoleIdentity is the Schema for the awsclusterroleidentities API
@@ -116,6 +119,7 @@ type AWSClusterRoleIdentity struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSClusterRoleIdentityList contains a list of AWSClusterRoleIdentity.
 type AWSClusterRoleIdentityList struct {
@@ -146,6 +150,7 @@ type AWSClusterRoleIdentitySpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsclustercontrolleridentities,scope=Cluster,categories=cluster-api,shortName=awsci
 
 // AWSClusterControllerIdentity is the Schema for the awsclustercontrolleridentities API
@@ -159,6 +164,7 @@ type AWSClusterControllerIdentity struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // AWSClusterControllerIdentityList contains a list of AWSClusterControllerIdentity.
 type AWSClusterControllerIdentityList struct {

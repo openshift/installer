@@ -43,6 +43,17 @@ var (
 	SecretBackendSecretsManager = SecretBackend("secrets-manager")
 )
 
+// IgnitionStorageTypeOption defines the different storage types for Ignition.
+type IgnitionStorageTypeOption string
+
+const (
+	// IgnitionStorageTypeOptionClusterObjectStore means the chosen Ignition storage type is ClusterObjectStore.
+	IgnitionStorageTypeOptionClusterObjectStore = IgnitionStorageTypeOption("ClusterObjectStore")
+
+	// IgnitionStorageTypeOptionUnencryptedUserData means the chosen Ignition storage type is UnencryptedUserData.
+	IgnitionStorageTypeOptionUnencryptedUserData = IgnitionStorageTypeOption("UnencryptedUserData")
+)
+
 // AWSMachineSpec defines the desired state of an Amazon EC2 instance.
 type AWSMachineSpec struct {
 	// ProviderID is the unique identifier as specified by the cloud provider.
@@ -114,6 +125,11 @@ type AWSMachineSpec struct {
 	// +optional
 	Subnet *AWSResourceReference `json:"subnet,omitempty"`
 
+	// SecurityGroupOverrides is an optional set of security groups to use for the node.
+	// This is optional - if not provided security groups from the cluster will be used.
+	// +optional
+	SecurityGroupOverrides map[SecurityGroupRole]string `json:"securityGroupOverrides,omitempty"`
+
 	// SSHKeyName is the name of the ssh key to attach to the instance. Valid values are empty string (do not use SSH keys), a valid SSH key name, or omitted (use the default SSH key name)
 	// +optional
 	SSHKeyName *string `json:"sshKeyName,omitempty"`
@@ -160,6 +176,10 @@ type AWSMachineSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum:=default;dedicated;host
 	Tenancy string `json:"tenancy,omitempty"`
+
+	// PrivateDNSName is the options for the instance hostname.
+	// +optional
+	PrivateDNSName *PrivateDNSName `json:"privateDnsName,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -197,6 +217,26 @@ type Ignition struct {
 	// +kubebuilder:default="2.3"
 	// +kubebuilder:validation:Enum="2.3";"3.0";"3.1";"3.2";"3.3";"3.4"
 	Version string `json:"version,omitempty"`
+
+	// StorageType defines how to store the boostrap user data for Ignition.
+	// This can be used to instruct Ignition from where to fetch the user data to bootstrap an instance.
+	//
+	// When omitted, the storage option will default to ClusterObjectStore.
+	//
+	// When set to "ClusterObjectStore", if the capability is available and a Cluster ObjectStore configuration
+	// is correctly provided in the Cluster object (under .spec.s3Bucket),
+	// an object store will be used to store bootstrap user data.
+	//
+	// When set to "UnencryptedUserData", EC2 Instance User Data will be used to store the machine bootstrap user data, unencrypted.
+	// This option is considered less secure than others as user data may contain sensitive informations (keys, certificates, etc.)
+	// and users with ec2:DescribeInstances permission or users running pods
+	// that can access the ec2 metadata service have access to this sensitive information.
+	// So this is only to be used at ones own risk, and only when other more secure options are not viable.
+	//
+	// +optional
+	// +kubebuilder:default="ClusterObjectStore"
+	// +kubebuilder:validation:Enum:="ClusterObjectStore";"UnencryptedUserData"
+	StorageType IgnitionStorageTypeOption `json:"storageType,omitempty"`
 }
 
 // AWSMachineStatus defines the observed state of AWSMachine.

@@ -114,8 +114,12 @@ func (s *Service) reconcileNatGateways() error {
 		}
 		ngws, err := s.createNatGateways(subnetIDs)
 
+		subnets := s.scope.Subnets()
+		defer func() {
+			s.scope.SetSubnets(subnets)
+		}()
 		for _, ng := range ngws {
-			subnet := s.scope.Subnets().FindByID(*ng.SubnetId)
+			subnet := subnets.FindByID(*ng.SubnetId)
 			subnet.NatGatewayID = ng.NatGatewayId
 		}
 

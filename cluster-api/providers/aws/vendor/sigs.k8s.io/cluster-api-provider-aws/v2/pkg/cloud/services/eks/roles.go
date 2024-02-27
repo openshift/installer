@@ -105,7 +105,7 @@ func (s *Service) reconcileControlPlaneIAMRole() error {
 	}
 
 	if s.IsUnmanaged(role, s.scope.Name()) {
-		s.scope.Debug("Skipping, EKS control plane role policy assignment as role is unamanged")
+		s.scope.Debug("Skipping, EKS control plane role policy assignment as role is unmanaged")
 		return nil
 	}
 
@@ -156,7 +156,7 @@ func (s *Service) deleteControlPlaneIAMRole() error {
 	}
 
 	if s.IsUnmanaged(role, s.scope.Name()) {
-		s.Debug("Skipping, EKS control plane iam role deletion as role is unamanged")
+		s.Debug("Skipping, EKS control plane iam role deletion as role is unmanaged")
 		return nil
 	}
 
@@ -213,7 +213,7 @@ func (s *NodegroupService) reconcileNodegroupIAMRole() error {
 	}
 
 	if s.IsUnmanaged(role, s.scope.ClusterName()) {
-		s.scope.Debug("Skipping, EKS nodegroup role policy assignment as role is unamanged")
+		s.scope.Debug("Skipping, EKS nodegroup role policy assignment as role is unmanaged")
 		return nil
 	}
 
@@ -278,7 +278,7 @@ func (s *NodegroupService) deleteNodegroupIAMRole() (reterr error) {
 	}
 
 	if s.IsUnmanaged(role, s.scope.ClusterName()) {
-		s.Debug("Skipping, EKS Nodegroup iam role deletion as role is unamanged")
+		s.Debug("Skipping, EKS Nodegroup iam role deletion as role is unmanaged")
 		return nil
 	}
 

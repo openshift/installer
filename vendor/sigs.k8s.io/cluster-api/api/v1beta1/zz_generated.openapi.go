@@ -75,6 +75,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineHealthCheckStatus":                 schema_sigsk8sio_cluster_api_api_v1beta1_MachineHealthCheckStatus(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineHealthCheckTopology":               schema_sigsk8sio_cluster_api_api_v1beta1_MachineHealthCheckTopology(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineList":                              schema_sigsk8sio_cluster_api_api_v1beta1_MachineList(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClass":                         schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClass(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassNamingStrategy":           schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClassNamingStrategy(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassTemplate":                 schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClassTemplate(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolTopology":                      schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolTopology(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolVariables":                     schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolVariables(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineRollingUpdateDeployment":           schema_sigsk8sio_cluster_api_api_v1beta1_MachineRollingUpdateDeployment(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineSet":                               schema_sigsk8sio_cluster_api_api_v1beta1_MachineSet(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.MachineSetList":                           schema_sigsk8sio_cluster_api_api_v1beta1_MachineSetList(ref),
@@ -89,12 +94,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelector":                            schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelector(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatch":                       schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatch(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachineDeploymentClass": schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatchMachineDeploymentClass(ref),
+		"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachinePoolClass":       schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatchMachinePoolClass(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.Topology":                                 schema_sigsk8sio_cluster_api_api_v1beta1_Topology(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.UnhealthyCondition":                       schema_sigsk8sio_cluster_api_api_v1beta1_UnhealthyCondition(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.VariableSchema":                           schema_sigsk8sio_cluster_api_api_v1beta1_VariableSchema(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.WorkersClass":                             schema_sigsk8sio_cluster_api_api_v1beta1_WorkersClass(ref),
 		"sigs.k8s.io/cluster-api/api/v1beta1.WorkersTopology":                          schema_sigsk8sio_cluster_api_api_v1beta1_WorkersTopology(ref),
-		"sigs.k8s.io/cluster-api/api/v1beta1.machineDeploymentDefaulter":               schema_sigsk8sio_cluster_api_api_v1beta1_machineDeploymentDefaulter(ref),
 	}
 }
 
@@ -1919,7 +1924,7 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_MachineDeploymentStrategy(ref comm
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of deployment. Default is RollingUpdate.",
+							Description: "Type of deployment. Allowed values are RollingUpdate and OnDelete. The default is RollingUpdate.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -2467,6 +2472,261 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_MachineList(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "sigs.k8s.io/cluster-api/api/v1beta1.Machine"},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClass(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MachinePoolClass serves as a template to define a pool of worker nodes of the cluster provisioned using `ClusterClass`.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"class": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Class denotes a type of machine pool present in the cluster, this name MUST be unique within a ClusterClass and can be referenced in the Cluster to create a managed MachinePool.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template is a local struct containing a collection of templates for creation of MachinePools objects representing a pool of worker nodes.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassTemplate"),
+						},
+					},
+					"failureDomains": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FailureDomains is the list of failure domains the MachinePool should be attached to. Must match a key in the FailureDomains map stored on the cluster object. NOTE: This value can be overridden while defining a Cluster.Topology using this MachinePoolClass.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"namingStrategy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NamingStrategy allows changing the naming pattern used when creating the MachinePool.",
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassNamingStrategy"),
+						},
+					},
+					"nodeDrainTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeDrainTimeout is the total amount of time that the controller will spend on draining a node. The default value is 0, meaning that the node can be drained without any time limitations. NOTE: NodeDrainTimeout is different from `kubectl drain --timeout` NOTE: This value can be overridden while defining a Cluster.Topology using this MachinePoolClass.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"nodeVolumeDetachTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeVolumeDetachTimeout is the total amount of time that the controller will spend on waiting for all volumes to be detached. The default value is 0, meaning that the volumes can be detached without any time limitations. NOTE: This value can be overridden while defining a Cluster.Topology using this MachinePoolClass.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"nodeDeletionTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeDeletionTimeout defines how long the controller will attempt to delete the Node that the Machine hosts after the Machine Pool is marked for deletion. A duration of 0 will retry deletion indefinitely. Defaults to 10 seconds. NOTE: This value can be overridden while defining a Cluster.Topology using this MachinePoolClass.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"minReadySeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Minimum number of seconds for which a newly created machine pool should be ready. Defaults to 0 (machine will be considered available as soon as it is ready) NOTE: This value can be overridden while defining a Cluster.Topology using this MachinePoolClass.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
+				Required: []string{"class", "template"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Duration", "sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassNamingStrategy", "sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClassTemplate"},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClassNamingStrategy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MachinePoolClassNamingStrategy defines the naming strategy for machine pool objects.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template defines the template to use for generating the name of the MachinePool object. If not defined, it will fallback to `{{ .cluster.name }}-{{ .machinePool.topologyName }}-{{ .random }}`. If the templated string exceeds 63 characters, it will be trimmed to 58 characters and will get concatenated with a random suffix of length 5. The templating mechanism provides the following arguments: * `.cluster.name`: The name of the cluster object. * `.random`: A random alphanumeric string, without vowels, of length 5. * `.machinePool.topologyName`: The name of the MachinePool topology (Cluster.spec.topology.workers.machinePools[].name).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolClassTemplate(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MachinePoolClassTemplate defines how a MachinePool generated from a MachinePoolClass should look like.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Metadata is the metadata applied to the MachinePool. At runtime this metadata is merged with the corresponding metadata from the topology.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.ObjectMeta"),
+						},
+					},
+					"bootstrap": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Bootstrap contains the bootstrap template reference to be used for the creation of the Machines in the MachinePool.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.LocalObjectTemplate"),
+						},
+					},
+					"infrastructure": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Infrastructure contains the infrastructure template reference to be used for the creation of the MachinePool.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.LocalObjectTemplate"),
+						},
+					},
+				},
+				Required: []string{"bootstrap", "infrastructure"},
+			},
+		},
+		Dependencies: []string{
+			"sigs.k8s.io/cluster-api/api/v1beta1.LocalObjectTemplate", "sigs.k8s.io/cluster-api/api/v1beta1.ObjectMeta"},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolTopology(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MachinePoolTopology specifies the different parameters for a pool of worker nodes in the topology. This pool of nodes is managed by a MachinePool object whose lifecycle is managed by the Cluster controller.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Metadata is the metadata applied to the MachinePool. At runtime this metadata is merged with the corresponding metadata from the ClusterClass.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.ObjectMeta"),
+						},
+					},
+					"class": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Class is the name of the MachinePoolClass used to create the pool of worker nodes. This should match one of the deployment classes defined in the ClusterClass object mentioned in the `Cluster.Spec.Class` field.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the unique identifier for this MachinePoolTopology. The value is used with other unique identifiers to create a MachinePool's Name (e.g. cluster's name, etc). In case the name is greater than the allowed maximum length, the values are hashed together.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"failureDomains": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FailureDomains is the list of failure domains the machine pool will be created in. Must match a key in the FailureDomains map stored on the cluster object.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"nodeDrainTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeDrainTimeout is the total amount of time that the controller will spend on draining a node. The default value is 0, meaning that the node can be drained without any time limitations. NOTE: NodeDrainTimeout is different from `kubectl drain --timeout`",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"nodeVolumeDetachTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeVolumeDetachTimeout is the total amount of time that the controller will spend on waiting for all volumes to be detached. The default value is 0, meaning that the volumes can be detached without any time limitations.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"nodeDeletionTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "NodeDeletionTimeout defines how long the controller will attempt to delete the Node that the MachinePool hosts after the MachinePool is marked for deletion. A duration of 0 will retry deletion indefinitely. Defaults to 10 seconds.",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Duration"),
+						},
+					},
+					"minReadySeconds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Minimum number of seconds for which a newly created machine pool should be ready. Defaults to 0 (machine will be considered available as soon as it is ready)",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"replicas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Replicas is the number of nodes belonging to this pool. If the value is nil, the MachinePool is created without the number of Replicas (defaulting to 1) and it's assumed that an external entity (like cluster autoscaler) is responsible for the management of this value.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"variables": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Variables can be used to customize the MachinePool through patches.",
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolVariables"),
+						},
+					},
+				},
+				Required: []string{"class", "name"},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Duration", "sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolVariables", "sigs.k8s.io/cluster-api/api/v1beta1.ObjectMeta"},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_MachinePoolVariables(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MachinePoolVariables can be used to provide variables for a specific MachinePool.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"overrides": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Overrides can be used to override Cluster level variables.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("sigs.k8s.io/cluster-api/api/v1beta1.ClusterVariable"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"sigs.k8s.io/cluster-api/api/v1beta1.ClusterVariable"},
 	}
 }
 
@@ -3140,11 +3400,17 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatch(ref common.Refe
 							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachineDeploymentClass"),
 						},
 					},
+					"machinePoolClass": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MachinePoolClass selects templates referenced in specific MachinePoolClasses in .spec.workers.machinePools.",
+							Ref:         ref("sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachinePoolClass"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachineDeploymentClass"},
+			"sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachineDeploymentClass", "sigs.k8s.io/cluster-api/api/v1beta1.PatchSelectorMatchMachinePoolClass"},
 	}
 }
 
@@ -3153,6 +3419,34 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatchMachineDeploymen
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "PatchSelectorMatchMachineDeploymentClass selects templates referenced in specific MachineDeploymentClasses in .spec.workers.machineDeployments.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"names": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Names selects templates by class names.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_sigsk8sio_cluster_api_api_v1beta1_PatchSelectorMatchMachinePoolClass(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "PatchSelectorMatchMachinePoolClass selects templates referenced in specific MachinePoolClasses in .spec.workers.machinePools.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"names": {
@@ -3321,11 +3615,25 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_WorkersClass(ref common.ReferenceC
 							},
 						},
 					},
+					"machinePools": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MachinePools is a list of machine pool classes that can be used to create a set of worker nodes.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClass"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"sigs.k8s.io/cluster-api/api/v1beta1.MachineDeploymentClass"},
+			"sigs.k8s.io/cluster-api/api/v1beta1.MachineDeploymentClass", "sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolClass"},
 	}
 }
 
@@ -3350,31 +3658,24 @@ func schema_sigsk8sio_cluster_api_api_v1beta1_WorkersTopology(ref common.Referen
 							},
 						},
 					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"sigs.k8s.io/cluster-api/api/v1beta1.MachineDeploymentTopology"},
-	}
-}
-
-func schema_sigsk8sio_cluster_api_api_v1beta1_machineDeploymentDefaulter(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "machineDeploymentDefaulter implements a defaulting webhook for MachineDeployment.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"decoder": {
+					"machinePools": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("sigs.k8s.io/controller-runtime/pkg/webhook/admission.Decoder"),
+							Description: "MachinePools is a list of machine pools in the cluster.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolTopology"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"decoder"},
 			},
 		},
 		Dependencies: []string{
-			"sigs.k8s.io/controller-runtime/pkg/webhook/admission.Decoder"},
+			"sigs.k8s.io/cluster-api/api/v1beta1.MachineDeploymentTopology", "sigs.k8s.io/cluster-api/api/v1beta1.MachinePoolTopology"},
 	}
 }

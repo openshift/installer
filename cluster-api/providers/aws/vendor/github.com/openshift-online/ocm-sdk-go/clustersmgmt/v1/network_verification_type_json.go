@@ -51,7 +51,16 @@ func writeNetworkVerification(object *NetworkVerification, stream *jsoniter.Stre
 		writeCloudProviderData(object.cloudProviderData, stream)
 		count++
 	}
-	present_ = object.bitmap_&2 != 0 && object.items != nil
+	present_ = object.bitmap_&2 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("cluster_id")
+		stream.WriteString(object.clusterId)
+		count++
+	}
+	present_ = object.bitmap_&4 != 0 && object.items != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -60,7 +69,16 @@ func writeNetworkVerification(object *NetworkVerification, stream *jsoniter.Stre
 		writeSubnetNetworkVerificationList(object.items, stream)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0
+	present_ = object.bitmap_&8 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("platform")
+		stream.WriteString(string(object.platform))
+		count++
+	}
+	present_ = object.bitmap_&16 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,14 +114,23 @@ func readNetworkVerification(iterator *jsoniter.Iterator) *NetworkVerification {
 			value := readCloudProviderData(iterator)
 			object.cloudProviderData = value
 			object.bitmap_ |= 1
+		case "cluster_id":
+			value := iterator.ReadString()
+			object.clusterId = value
+			object.bitmap_ |= 2
 		case "items":
 			value := readSubnetNetworkVerificationList(iterator)
 			object.items = value
-			object.bitmap_ |= 2
+			object.bitmap_ |= 4
+		case "platform":
+			text := iterator.ReadString()
+			value := Platform(text)
+			object.platform = value
+			object.bitmap_ |= 8
 		case "total":
 			value := iterator.ReadInt()
 			object.total = value
-			object.bitmap_ |= 4
+			object.bitmap_ |= 16
 		default:
 			iterator.ReadAny()
 		}
