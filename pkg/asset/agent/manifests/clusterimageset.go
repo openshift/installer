@@ -82,6 +82,10 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 
 func (a *ClusterImageSet) generateManifest(version, releaseImage, clusterNamespace string) error {
 	clusterImageSet := &hivev1.ClusterImageSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterImageSet",
+			APIVersion: hivev1.SchemeGroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("openshift-%s", version),
 			Namespace: clusterNamespace,

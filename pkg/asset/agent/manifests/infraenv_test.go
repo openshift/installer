@@ -49,6 +49,10 @@ func TestInfraEnv_Generate(t *testing.T) {
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getValidOptionalInstallConfig().ClusterName(),
 					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
@@ -77,6 +81,10 @@ func TestInfraEnv_Generate(t *testing.T) {
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
@@ -106,6 +114,10 @@ func TestInfraEnv_Generate(t *testing.T) {
 				getValidAgentConfigWithAdditionalNTPSources(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
@@ -136,6 +148,10 @@ func TestInfraEnv_Generate(t *testing.T) {
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
 					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
@@ -173,6 +189,10 @@ func TestInfraEnv_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "InfraEnv",
+					APIVersion: "agent-install.openshift.io/v1beta1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "agent-cluster",
 					Namespace: "agent-ns",

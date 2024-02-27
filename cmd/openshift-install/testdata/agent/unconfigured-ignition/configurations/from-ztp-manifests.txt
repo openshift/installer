@@ -43,6 +43,8 @@ stringData:
     }
 
 -- cluster-manifests/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   name: cluster0-image-set
   namespace: cluster0
@@ -50,6 +52,8 @@ spec:
   releaseImage: $RELEASE_IMAGE
 
 -- expected/cluster-image-set.yaml --
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
 metadata:
   name: cluster0-image-set
   namespace: cluster0
@@ -57,6 +61,8 @@ spec:
   releaseImage: $RELEASE_IMAGE
 
 -- expected/infraenv.yaml --
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
 metadata:
   creationTimestamp: null
   name: ostest

@@ -41,6 +41,10 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ClusterImageSet",
+					APIVersion: "hive.openshift.io/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "openshift-was not built correctly",
 				},
@@ -70,6 +74,10 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ClusterImageSet",
+					APIVersion: "hive.openshift.io/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-was not built correctly",
 					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
@@ -92,6 +100,10 @@ func TestClusterImageSet_Generate(t *testing.T) {
 				&releaseimage.Image{},
 			},
 			expectedConfig: &hivev1.ClusterImageSet{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ClusterImageSet",
+					APIVersion: "hive.openshift.io/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-4.16.0",
 					Namespace: "agent-cluster",

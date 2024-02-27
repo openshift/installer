@@ -44,7 +44,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 			expectedConfig: &hivev1.ClusterDeployment{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ClusterDeployment",
-					APIVersion: "v1",
+					APIVersion: "hive.openshift.io/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),

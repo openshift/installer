@@ -57,7 +57,7 @@ func (cd *ClusterDeployment) Generate(dependencies asset.Parents) error {
 		clusterDeployment := &hivev1.ClusterDeployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "ClusterDeployment",
-				APIVersion: "v1",
+				APIVersion: hivev1.SchemeGroupVersion.String(),
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getClusterDeploymentName(installConfig),
