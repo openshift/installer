@@ -143,6 +143,10 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 				Method: "install_coreos",
 			}
 
+			newHost.ObjectMeta.Labels = map[string]string{
+				"installer.openshift.io/role": "master",
+			}
+
 			// Link the new host to the currently available machine
 			machine := machines[numMasters]
 			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
