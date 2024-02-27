@@ -183,21 +183,28 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						//SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
 						CidrBlocks: []string{"10.0.0.0/16"}, //TODO(padillon): figure out security group rules
 					},
-				},
-			},
-			SecondaryControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
-				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
-				IngressRules: []capa.IngressRule{
 					{
-						Description: "public api", //TESTING
+						Description: "public api", //TESTING. This doesn't really belong on the internal LB...
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    6443,
 						ToPort:      6443,
 						CidrBlocks:  []string{"0.0.0.0/0"},
 					},
 				},
+			},
+			SecondaryControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				LoadBalancerType: capa.LoadBalancerTypeNLB,
+				Scheme:           &capa.ELBSchemeInternetFacing,
+				// IngressRules: []capa.IngressRule{ //THIS doesn't seem to update LB security group
+				// 	{
+				// 		Description: "public api", //TESTING
+				// 		Protocol:    capa.SecurityGroupProtocolTCP,
+				// 		FromPort:    6443,
+				// 		ToPort:      6443,
+				// 		CidrBlocks:  []string{"0.0.0.0/0"},
+				// 	},
+				// },
 			},
 			AdditionalTags: capa.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned"},
 		},
