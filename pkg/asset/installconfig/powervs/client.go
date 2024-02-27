@@ -95,7 +95,7 @@ type DNSRecordResponse struct {
 func NewClient() (*Client, error) {
 	bxCli, err := NewBxClient(false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("NewBxClient failed: %w", err)
 	}
 
 	client := &Client{
@@ -172,7 +172,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 			ZoneIdentifier: core.StringPtr(zoneID),
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("dnsrecordsv1.NewDnsRecordsV1 failed: %w", err)
 		}
 
 		// Get CIS DNS records by name
@@ -191,7 +191,7 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("resourcerecordsv1.NewResourceRecordsV1 failed: %w", err)
 		}
 
 		dnsCRN, err := crn.Parse(crnstr)
@@ -291,7 +291,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 			listZonesResponse, _, err := zonesService.ListZones(options)
 
 			if listZonesResponse == nil {
-				return nil, err
+				return nil, fmt.Errorf("zonesService.ListZones failed: %w", err)
 			}
 
 			for _, zone := range listZonesResponse.Result {
@@ -318,7 +318,7 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 			listZonesResponse, _, err := dnsZonesService.ListDnszones(options)
 
 			if listZonesResponse == nil {
-				return nil, err
+				return nil, fmt.Errorf("dnsZonesService.NewListDnszonesOptions failed: %w", err)
 			}
 
 			for _, zone := range listZonesResponse.Dnszones {
@@ -346,7 +346,7 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 	listPermittedNetworksOptions := c.dnsServicesAPI.NewListPermittedNetworksOptions(dnsID, dnsZone)
 	permittedNetworks, _, err := c.dnsServicesAPI.ListPermittedNetworksWithContext(ctx, listPermittedNetworksOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.dnsServicesAPI.ListPermittedNetworksWithContext failed: %w", err)
 	}
 
 	networks := []string{}
@@ -376,7 +376,7 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
 		if err != nil {
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
-				return nil, err
+				return nil, fmt.Errorf("c.vpcAPI.ListVpcsWithContext failed: %w", err)
 			}
 		} else {
 			for _, vpc := range vpcs.Vpcs {
@@ -407,13 +407,13 @@ func (c *Client) GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vp
 
 	err = c.SetVPCServiceURLForRegion(ctx, vpcCRN.Region)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.SetVPCServiceURLForRegion failed: %w", err)
 	}
 
 	listPublicGatewaysOptions := c.vpcAPI.NewListPublicGatewaysOptions()
 	publicGatewayCollection, detailedResponse, err := c.vpcAPI.ListPublicGatewaysWithContext(ctx, listPublicGatewaysOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.vpcAPI.ListPublicGatewaysWithContext failed: %w", err)
 	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
 		return nil, errors.New("failed to find publicGateways")
 	}
@@ -433,13 +433,13 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 
 	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.SetVPCServiceURLForRegion failed: %w", err)
 	}
 
 	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
 	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.vpcAPI.ListSubnetsWithContext failed: %w", err)
 	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
 		return nil, errors.New("failed to find VPC Subnet")
 	}
@@ -550,14 +550,14 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 		Authenticator: authenticator,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iamidentityv1.NewIamIdentityV1 failed: %w", err)
 	}
 
 	options := iamIdentityService.NewGetAPIKeysDetailsOptions()
 	options.SetIamAPIKey(c.APIKey)
 	details, _, err := iamIdentityService.GetAPIKeysDetailsWithContext(ctx, options)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("iamIdentityService.GetAPIKeysDetailsWithContext failed: %w", err)
 	}
 	// NOTE: details.Apikey
 	// https://cloud.ibm.com/apidocs/iam-identity-token-api?code=go#get-api-keys-details
@@ -586,7 +586,7 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 
 	vpcs, _, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.vpcAPI.ListVpcs failed: %w", err)
 	}
 
 	return vpcs.Vpcs, nil
@@ -598,7 +598,7 @@ func (c *Client) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.Res
 
 	resourceGroups, _, err := c.managementAPI.ListResourceGroups(listResourceGroupsOptions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("c.managementAPI.ListResourceGroups failed: %w", err)
 	}
 
 	return resourceGroups, err

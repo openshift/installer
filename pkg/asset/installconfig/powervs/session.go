@@ -75,7 +75,7 @@ func authenticateAPIKey(sess *bxsession.Session) error {
 		},
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("authentication.NewIAMAuthRepository failed: %w", err)
 	}
 	return tokenRefresher.AuthenticateAPIKey(config.BluemixAPIKey)
 }
@@ -125,7 +125,7 @@ func NewBxClient(survey bool) (*BxClient, error) {
 		BluemixAPIKey: sv.APIKey,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("bxsession.New failed: %w", err)
 	}
 	if bxSess == nil {
 		return nil, errors.New("failed to create bxsession.New in NewBxClient")
@@ -135,12 +135,12 @@ func NewBxClient(survey bool) (*BxClient, error) {
 
 	err = authenticateAPIKey(bxSess)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("authenticateAPIKey failed: %w", err)
 	}
 
 	c.User, err = fetchUserDetails(bxSess)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetchUserDetails failed: %w", err)
 	}
 
 	c.Session.Config.Region = powervs.Regions[sv.Region].VPCRegion
@@ -238,7 +238,7 @@ func (c *BxClient) NewPISession() error {
 	var err error
 	c.PISession, err = ibmpisession.NewIBMPISession(options)
 	if err != nil {
-		return err
+		return fmt.Errorf("ibmpisession.NewIBMPISession failed: %w", err)
 	}
 
 	return nil
@@ -266,12 +266,12 @@ func getSessionStoreFromAuthFile(pss *SessionStore) error {
 
 	content, err := os.ReadFile(authFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.ReadFile failed: %w", err)
 	}
 
 	err = json.Unmarshal(content, pss)
 	if err != nil {
-		return err
+		return fmt.Errorf("json.Unmarshal failed: %w", err)
 	}
 
 	return nil
@@ -428,12 +428,12 @@ func saveSessionStoreToAuthFile(pss *SessionStore) error {
 
 	jsonVars, err := json.Marshal(*pss)
 	if err != nil {
-		return err
+		return fmt.Errorf("json.Marshal failed: %w", err)
 	}
 
 	err = os.MkdirAll(filepath.Dir(authFilePath), 0700)
 	if err != nil {
-		return err
+		return fmt.Errorf("os.MkdirAll failed: %w", err)
 	}
 
 	return os.WriteFile(authFilePath, jsonVars, 0o600)
