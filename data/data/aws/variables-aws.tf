@@ -227,3 +227,15 @@ a Public Route Table and the default route entry pointing to the carrier gateway
 Example: `{ "us-east-1-nyc-1a"=local-zone, "us-east-1-wl1-nyc-wlz-1"=wavelength-zone }`
 EOF
 }
+
+variable "aws_public_ipv4_pool" {
+  type = string
+
+  description = <<EOF
+(optional) Indicates the installation process to use Public IPv4 address
+that you bring to your AWS account with BYOIP to create resources which consumes
+Elastic IPs when the publish strategy is External.
+EOF
+
+  default = ""
+}

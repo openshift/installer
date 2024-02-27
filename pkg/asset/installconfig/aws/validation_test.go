@@ -807,6 +807,17 @@ func TestValidate(t *testing.T) {
 		publicSubnets:  validPublicSubnets(),
 		proxy:          "http://proxy.com",
 		expectErr:      `^\Qplatform.aws.serviceEndpoints[0].url: Invalid value: "http://test": Head "http://test": dial tcp: lookup test\E.*: no such host$`,
+	}, {
+		name: "invalid public ipv4 pool private installation",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Publish = types.InternalPublishingStrategy
+			c.Platform.AWS.PublicIpv4Pool = "ipv4pool-ec2-123"
+			c.Platform.AWS.Subnets = []string{}
+			return c
+		}(),
+		availZones: validAvailZones(),
+		expectErr:  `^platform.aws.publicIpv4PoolId: Invalid value: "ipv4pool-ec2-123": publish strategy Internal can't be used with custom Public IPv4 Pools$`,
 	}}
 
 	for _, test := range tests {

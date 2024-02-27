@@ -95,6 +95,8 @@ resource "aws_eip" "nat_eip" {
   count = var.public_subnets == null ? length(var.availability_zones) : 0
   vpc   = true
 
+  public_ipv4_pool = var.public_ipv4_pool == "" ? null : var.public_ipv4_pool
+
   tags = merge(
     {
       "Name" = "${var.cluster_id}-eip-${var.availability_zones[count.index]}"

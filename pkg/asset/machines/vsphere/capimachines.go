@@ -88,6 +88,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 
 		customVMXKeys := map[string]string{
 			"guestinfo.hostname": machine.Name,
+			"guestinfo.domain":   strings.TrimSuffix(config.ClusterDomain(), "."),
+			"stealclock.enable":  "TRUE",
 		}
 
 		vsphereMachine := &capv.VSphereMachine{
@@ -104,6 +106,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 			Spec: capv.VSphereMachineSpec{
 				VirtualMachineCloneSpec: capv.VirtualMachineCloneSpec{
+					CloneMode:     capv.FullClone,
 					CustomVMXKeys: customVMXKeys,
 					Network: capv.NetworkSpec{
 						Devices: capvNetworkDevices,
