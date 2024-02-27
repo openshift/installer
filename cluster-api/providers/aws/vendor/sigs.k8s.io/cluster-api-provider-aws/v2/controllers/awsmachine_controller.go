@@ -1231,6 +1231,10 @@ func (r *AWSMachineReconciler) ensureInstanceMetadataOptions(ec2svc services.EC2
 func (r *AWSMachineReconciler) getControlPlane(ctx context.Context, log *logger.Logger, cluster *clusterv1.Cluster) (*unstructured.Unstructured, error) {
 	var ns string
 
+	if cluster.Spec.ControlPlaneRef == nil {
+		return &unstructured.Unstructured{}, nil
+	}
+
 	if ns = cluster.Spec.ControlPlaneRef.Namespace; ns == "" {
 		ns = cluster.Namespace
 	}
