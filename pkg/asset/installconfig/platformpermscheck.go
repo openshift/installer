@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
-	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -120,14 +119,7 @@ func (a *PlatformPermsCheck) Generate(dependencies asset.Parents) error {
 	case ibmcloud.Name:
 		// TODO: IBM[#90]: platformpermscheck
 	case powervs.Name:
-		bxCli, err := powervsconfig.NewBxClient(false)
-		if err != nil {
-			return err
-		}
-		err = bxCli.ValidateAccountPermissions()
-		if err != nil {
-			return err
-		}
+		// Nothing needs to be done here
 	case azure.Name, baremetal.Name, libvirt.Name, external.Name, none.Name, openstack.Name, ovirt.Name, vsphere.Name, nutanix.Name:
 		// no permissions to check
 	default:
