@@ -24,7 +24,7 @@ Environment="IRONIC_EXTERNAL_URL_V6=${IRONIC_EXTERNAL_URL_V6}"
 
 [Service]
 EnvironmentFile=/etc/metal3.env
-Restart=on-failure
+Restart=always
 RestartSec=10
 
 [Install]
