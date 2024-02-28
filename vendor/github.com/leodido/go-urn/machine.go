@@ -61,9 +61,11 @@ func (m *machine) Parse(input []byte) (*URN, error) {
 	m.err = nil
 	m.tolower = []int{}
 	output := &URN{}
+
 	{
 		m.cs = start
 	}
+
 	{
 		if (m.p) == (m.pe) {
 			goto _testEof
@@ -1672,6 +1674,7 @@ func (m *machine) Parse(input []byte) (*URN, error) {
 				{
 					goto st46
 				}
+
 			}
 		}
 

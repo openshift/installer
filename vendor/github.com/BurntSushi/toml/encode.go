@@ -136,8 +136,7 @@ func NewEncoder(w io.Writer) *Encoder {
 // document.
 func (enc *Encoder) Encode(v interface{}) error {
 	rv := eindirect(reflect.ValueOf(v))
-	err := enc.safeEncode(Key([]string{}), rv)
-	if err != nil {
+	if err := enc.safeEncode(Key([]string{}), rv); err != nil {
 		return err
 	}
 	return enc.w.Flush()
@@ -458,16 +457,6 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value, inline bool) {
 
 			frv := eindirect(rv.Field(i))
 
-			if is32Bit {
-				// Copy so it works correct on 32bit archs; not clear why this
-				// is needed. See #314, and https://www.reddit.com/r/golang/comments/pnx8v4
-				// This also works fine on 64bit, but 32bit archs are somewhat
-				// rare and this is a wee bit faster.
-				copyStart := make([]int, len(start))
-				copy(copyStart, start)
-				start = copyStart
-			}
-
 			// Treat anonymous struct fields with tag names as though they are
 			// not anonymous, like encoding/json does.
 			//
@@ -482,7 +471,17 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value, inline bool) {
 			if typeIsTable(tomlTypeOfGo(frv)) {
 				fieldsSub = append(fieldsSub, append(start, f.Index...))
 			} else {
-				fieldsDirect = append(fieldsDirect, append(start, f.Index...))
+				// Copy so it works correct on 32bit archs; not clear why this
+				// is needed. See #314, and https://www.reddit.com/r/golang/comments/pnx8v4
+				// This also works fine on 64bit, but 32bit archs are somewhat
+				// rare and this is a wee bit faster.
+				if is32Bit {
+					copyStart := make([]int, len(start))
+					copy(copyStart, start)
+					fieldsDirect = append(fieldsDirect, append(copyStart, f.Index...))
+				} else {
+					fieldsDirect = append(fieldsDirect, append(start, f.Index...))
+				}
 			}
 		}
 	}
@@ -491,27 +490,24 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value, inline bool) {
 	writeFields := func(fields [][]int) {
 		for _, fieldIndex := range fields {
 			fieldType := rt.FieldByIndex(fieldIndex)
-			fieldVal := rv.FieldByIndex(fieldIndex)
-
-			opts := getOptions(fieldType.Tag)
-			if opts.skip {
-				continue
-			}
-			if opts.omitempty && isEmpty(fieldVal) {
-				continue
-			}
-
-			fieldVal = eindirect(fieldVal)
+			fieldVal := eindirect(rv.FieldByIndex(fieldIndex))
 
 			if isNil(fieldVal) { /// Don't write anything for nil fields.
 				continue
 			}
 
+			opts := getOptions(fieldType.Tag)
+			if opts.skip {
+				continue
+			}
 			keyName := fieldType.Name
 			if opts.name != "" {
 				keyName = opts.name
 			}
 
+			if opts.omitempty && enc.isEmpty(fieldVal) {
+				continue
+			}
 			if opts.omitzero && isZero(fieldVal) {
 				continue
 			}
@@ -653,7 +649,7 @@ func isZero(rv reflect.Value) bool {
 	return false
 }
 
-func isEmpty(rv reflect.Value) bool {
+func (enc *Encoder) isEmpty(rv reflect.Value) bool {
 	switch rv.Kind() {
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.String:
 		return rv.Len() == 0
@@ -668,15 +664,13 @@ func isEmpty(rv reflect.Value) bool {
 		//   type b struct{ s []string }
 		//   s := a{field: b{s: []string{"AAA"}}}
 		for i := 0; i < rv.NumField(); i++ {
-			if !isEmpty(rv.Field(i)) {
+			if !enc.isEmpty(rv.Field(i)) {
 				return false
 			}
 		}
 		return true
 	case reflect.Bool:
 		return !rv.Bool()
-	case reflect.Ptr:
-		return rv.IsNil()
 	}
 	return false
 }
@@ -699,11 +693,8 @@ func (enc *Encoder) newline() {
 //	v      v   v  v    vv
 //	key = {k = 1, k2 = 2}
 func (enc *Encoder) writeKeyValue(key Key, val reflect.Value, inline bool) {
-	/// Marshaler used on top-level document; call eElement() to just call
-	/// Marshal{TOML,Text}.
 	if len(key) == 0 {
-		enc.eElement(val)
-		return
+		encPanic(errNoKey)
 	}
 	enc.wf("%s%s = ", enc.indentStr(key), key.maybeQuoted(len(key)-1))
 	enc.eElement(val)

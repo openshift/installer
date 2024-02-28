@@ -106,7 +106,7 @@ func (k Key) maybeQuoted(i int) string {
 		return `""`
 	}
 	for _, c := range k[i] {
-		if !isBareKeyChar(c, false) {
+		if !isBareKeyChar(c) {
 			return `"` + dblQuotedReplacer.Replace(k[i]) + `"`
 		}
 	}
