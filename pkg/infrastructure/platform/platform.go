@@ -13,6 +13,7 @@ import (
 	azureinfra "github.com/openshift/installer/pkg/infrastructure/azure"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
+	ibmcloudcapi "github.com/openshift/installer/pkg/infrastructure/ibmcloud/clusterapi"
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
@@ -70,6 +71,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return terraform.InitializeProvider(gcp.PlatformStages), nil
 	case ibmcloudtypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
+		}
 		return terraform.InitializeProvider(ibmcloud.PlatformStages), nil
 	case libvirttypes.Name:
 		return terraform.InitializeProvider(libvirt.PlatformStages), nil
