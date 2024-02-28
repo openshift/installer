@@ -26,13 +26,13 @@ import (
 
 // Service interfaces with the OpenStack Neutron LBaaS v2 API.
 type Service struct {
-	scope              scope.Scope
+	scope              *scope.WithLogger
 	loadbalancerClient clients.LbClient
 	networkingService  *networking.Service
 }
 
 // NewService returns an instance of the loadbalancer service.
-func NewService(scope scope.Scope) (*Service, error) {
+func NewService(scope *scope.WithLogger) (*Service, error) {
 	loadbalancerClient, err := scope.NewLbClient()
 	if err != nil {
 		return nil, err

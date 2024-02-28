@@ -96,7 +96,8 @@ type networkClient struct {
 // NewNetworkClient returns an instance of the networking service.
 func NewNetworkClient(providerClient *gophercloud.ProviderClient, providerClientOpts *clientconfig.ClientOpts) (NetworkClient, error) {
 	serviceClient, err := openstack.NewNetworkV2(providerClient, gophercloud.EndpointOpts{
-		Region: providerClientOpts.RegionName,
+		Region:       providerClientOpts.RegionName,
+		Availability: clientconfig.GetEndpointType(providerClientOpts.EndpointType),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create networking service providerClient: %v", err)

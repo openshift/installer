@@ -30,16 +30,15 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
-	"sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/services/networking"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/hash"
 )
 
@@ -49,288 +48,45 @@ const (
 	timeoutInstanceDelete       = 5 * time.Minute
 )
 
-// normalizePortTarget ensures that the port has a network ID.
-func (s *Service) normalizePortTarget(port *infrav1.PortOpts, openStackCluster *infrav1.OpenStackCluster, portIdx int) error {
-	// Treat no Network and empty Network the same
-	noNetwork := port.Network == nil || (*port.Network == infrav1.NetworkFilter{})
-
-	// No network or subnets defined: use cluster defaults
-	if noNetwork && len(port.FixedIPs) == 0 {
-		port.Network = &infrav1.NetworkFilter{
-			ID: openStackCluster.Status.Network.ID,
-		}
-		for _, subnet := range openStackCluster.Status.Network.Subnets {
-			port.FixedIPs = append(port.FixedIPs, infrav1.FixedIP{
-				Subnet: &infrav1.SubnetFilter{
-					ID: subnet.ID,
-				},
-			})
-		}
-
-		return nil
-	}
-
-	// No network, but fixed IPs are defined(we handled the no fixed
-	// IPs case above): try to infer network from a subnet
-	if noNetwork {
-		s.scope.Logger().V(4).Info("No network defined for port, attempting to infer from subnet", "port", portIdx)
-
-		// Look for a unique subnet defined in FixedIPs.  If we find one
-		// we can use it to infer the network ID. We don't need to worry
-		// here about the case where different FixedIPs have different
-		// networks because that will cause an error later when we try
-		// to create the port.
-		networkID, err := func() (string, error) {
-			networkingService, err := s.getNetworkingService()
-			if err != nil {
-				return "", err
-			}
-
-			for i, fixedIP := range port.FixedIPs {
-				if fixedIP.Subnet == nil {
-					continue
-				}
-
-				subnet, err := networkingService.GetSubnetByFilter(fixedIP.Subnet)
-				if err != nil {
-					// Multiple matches might be ok later when we restrict matches to a single network
-					if errors.Is(err, networking.ErrMultipleMatches) {
-						s.scope.Logger().V(4).Info("Couldn't infer network from subnet", "subnetIndex", i, "err", err)
-						continue
-					}
-
-					return "", err
-				}
-
-				// Cache the subnet ID in the FixedIP
-				fixedIP.Subnet.ID = subnet.ID
-				return subnet.NetworkID, nil
-			}
-
-			// TODO: This is a spec error: it should set the machine to failed
-			return "", fmt.Errorf("port %d has no network and unable to infer from fixed IPs", portIdx)
-		}()
-		if err != nil {
-			return err
-		}
-
-		port.Network = &infrav1.NetworkFilter{
-			ID: networkID,
-		}
-
-		return nil
-	}
-
-	// Nothing to do if network ID is already set
-	if port.Network.ID != "" {
-		return nil
-	}
-
-	// Network is defined by Filter
-	networkingService, err := s.getNetworkingService()
-	if err != nil {
-		return err
-	}
-
-	netIDs, err := networkingService.GetNetworkIDsByFilter(port.Network.ToListOpt())
-	if err != nil {
-		return err
-	}
-
-	// TODO: These are spec errors: they should set the machine to failed
-	if len(netIDs) > 1 {
-		return fmt.Errorf("network filter for port %d returns more than one result", portIdx)
-	} else if len(netIDs) == 0 {
-		return fmt.Errorf("network filter for port %d returns no networks", portIdx)
-	}
-
-	port.Network.ID = netIDs[0]
-
-	return nil
+func (s *Service) CreateInstance(eventObject runtime.Object, instanceSpec *InstanceSpec, portIDs []string) (*InstanceStatus, error) {
+	return s.createInstanceImpl(eventObject, instanceSpec, retryIntervalInstanceStatus, portIDs)
 }
 
-// normalizePorts ensures that a user-specified PortOpts has all required fields set. Specifically it:
-// - sets the Trunk field to the instance spec default if not specified
-// - sets the Network ID field if not specified.
-func (s *Service) normalizePorts(ports []infrav1.PortOpts, openStackCluster *infrav1.OpenStackCluster, instanceSpec *InstanceSpec) ([]infrav1.PortOpts, error) {
-	normalizedPorts := make([]infrav1.PortOpts, 0, len(ports))
-	for i := range ports {
-		// Deep copy the port to avoid mutating the original
-		port := ports[i].DeepCopy()
-
-		// No Trunk field specified for the port, inherit the machine default
-		if port.Trunk == nil {
-			port.Trunk = &instanceSpec.Trunk
-		}
-
-		if err := s.normalizePortTarget(port, openStackCluster, i); err != nil {
-			return nil, err
-		}
-
-		normalizedPorts = append(normalizedPorts, *port)
-	}
-	return normalizedPorts, nil
-}
-
-// constructPorts builds an array of ports from the instance spec.
-// If no ports are in the spec, returns a single port for a network connection to the default cluster network.
-func (s *Service) constructPorts(openStackCluster *infrav1.OpenStackCluster, instanceSpec *InstanceSpec) ([]infrav1.PortOpts, error) {
-	// Ensure user-specified ports have all required fields
-	ports, err := s.normalizePorts(instanceSpec.Ports, openStackCluster, instanceSpec)
-	if err != nil {
-		return nil, err
-	}
-
-	// no networks or ports found in the spec, so create a port on the cluster network
-	if len(ports) == 0 {
-		port := infrav1.PortOpts{
-			Network: &infrav1.NetworkFilter{
-				ID: openStackCluster.Status.Network.ID,
-			},
-			Trunk: &instanceSpec.Trunk,
-		}
-		for _, subnet := range openStackCluster.Status.Network.Subnets {
-			port.FixedIPs = append(port.FixedIPs, infrav1.FixedIP{
-				Subnet: &infrav1.SubnetFilter{
-					ID: subnet.ID,
-				},
-			})
-		}
-		ports = []infrav1.PortOpts{port}
-	}
-
-	// trunk support is required if any port has trunk enabled
-	portUsesTrunk := func() bool {
-		for _, port := range ports {
-			if port.Trunk != nil && *port.Trunk {
-				return true
-			}
-		}
-		return false
-	}
-	if portUsesTrunk() {
-		trunkSupported, err := s.isTrunkExtSupported()
-		if err != nil {
-			return nil, err
-		}
-		if !trunkSupported {
-			return nil, fmt.Errorf("there is no trunk support. please ensure that the trunk extension is enabled in your OpenStack deployment")
-		}
-	}
-
-	return ports, nil
-}
-
-func (s *Service) CreateInstance(eventObject runtime.Object, openStackCluster *infrav1.OpenStackCluster, instanceSpec *InstanceSpec, clusterName string, isBastion bool) (*InstanceStatus, error) {
-	return s.createInstanceImpl(eventObject, openStackCluster, instanceSpec, clusterName, isBastion, retryIntervalInstanceStatus)
-}
-
-func (s *Service) getAndValidateFlavor(flavorName string, isBastion bool) (*flavors.Flavor, error) {
+func (s *Service) getAndValidateFlavor(flavorName string) (*flavors.Flavor, error) {
 	f, err := s.getComputeClient().GetFlavorFromName(flavorName)
 	if err != nil {
 		return nil, fmt.Errorf("error getting flavor from flavor name %s: %v", flavorName, err)
-	}
-	if !isBastion && f.VCPUs <= 1 {
-		return nil, fmt.Errorf("kubeadm requires a minimum of 2 vCPUs, pick a flavor with at least 2 vCPUs")
 	}
 
 	return f, nil
 }
 
-func (s *Service) createInstanceImpl(eventObject runtime.Object, openStackCluster *infrav1.OpenStackCluster, instanceSpec *InstanceSpec, clusterName string, isBastion bool, retryInterval time.Duration) (*InstanceStatus, error) {
+func (s *Service) createInstanceImpl(eventObject runtime.Object, instanceSpec *InstanceSpec, retryInterval time.Duration, portIDs []string) (*InstanceStatus, error) {
 	var server *clients.ServerExt
 	portList := []servers.Network{}
 
-	imageID, err := s.getImageID(instanceSpec.ImageUUID, instanceSpec.Image)
-	if err != nil {
-		return nil, fmt.Errorf("error getting image ID: %v", err)
-	}
-
-	flavor, err := s.getAndValidateFlavor(instanceSpec.Flavor, isBastion)
+	flavor, err := s.getAndValidateFlavor(instanceSpec.Flavor)
 	if err != nil {
 		return nil, err
 	}
 
-	// Ensure we delete the ports we created if we haven't created the server.
-	defer func() {
-		if server != nil {
-			return
-		}
-
-		if err := s.deletePorts(eventObject, portList); err != nil {
-			s.scope.Logger().V(4).Error(err, "Failed to clean up ports after failure")
-		}
-	}()
-
-	ports, err := s.constructPorts(openStackCluster, instanceSpec)
-	if err != nil {
-		return nil, err
+	if len(portIDs) == 0 {
+		return nil, fmt.Errorf("portIDs cannot be empty")
 	}
 
-	networkingService, err := s.getNetworkingService()
-	if err != nil {
-		return nil, err
-	}
-
-	securityGroups, err := networkingService.GetSecurityGroups(instanceSpec.SecurityGroups)
-	if err != nil {
-		return nil, fmt.Errorf("error getting security groups: %v", err)
-	}
-
-	for i := range ports {
-		portOpts := &ports[i]
-		iTags := []string{}
-		if len(instanceSpec.Tags) > 0 {
-			iTags = instanceSpec.Tags
-		}
-		portName := networking.GetPortName(instanceSpec.Name, portOpts, i)
-		port, err := networkingService.GetOrCreatePort(eventObject, clusterName, portName, portOpts, securityGroups, iTags)
-		if err != nil {
-			return nil, err
-		}
-
+	for _, portID := range portIDs {
 		portList = append(portList, servers.Network{
-			Port: port.ID,
+			Port: portID,
 		})
-	}
-
-	volume, err := s.getOrCreateRootVolume(eventObject, instanceSpec, imageID)
-	if err != nil {
-		return nil, fmt.Errorf("error in get or create root volume: %w", err)
 	}
 
 	instanceCreateTimeout := getTimeout("CLUSTER_API_OPENSTACK_INSTANCE_CREATE_TIMEOUT", timeoutInstanceCreate)
 	instanceCreateTimeout *= time.Minute
 
-	// Wait for volume to become available
-	if volume != nil {
-		err = wait.PollUntilContextTimeout(context.TODO(), retryIntervalInstanceStatus, instanceCreateTimeout, true, func(_ context.Context) (bool, error) {
-			createdVolume, err := s.getVolumeClient().GetVolume(volume.ID)
-			if err != nil {
-				if capoerrors.IsRetryable(err) {
-					return false, nil
-				}
-				return false, err
-			}
-
-			switch createdVolume.Status {
-			case "available":
-				return true, nil
-			case "error":
-				return false, fmt.Errorf("volume %s is in error state", volume.ID)
-			default:
-				return false, nil
-			}
-		})
-		if err != nil {
-			return nil, fmt.Errorf("volume %s did not become available: %w", volume.ID, err)
-		}
-	}
-
 	// Don't set ImageRef on the server if we're booting from volume
 	var serverImageRef string
-	if volume == nil {
-		serverImageRef = imageID
+	if !hasRootVolume(instanceSpec) {
+		serverImageRef = instanceSpec.ImageID
 	}
 
 	var serverCreateOpts servers.CreateOptsBuilder = servers.CreateOpts{
@@ -345,7 +101,16 @@ func (s *Service) createInstanceImpl(eventObject runtime.Object, openStackCluste
 		ConfigDrive:      &instanceSpec.ConfigDrive,
 	}
 
-	serverCreateOpts = applyRootVolume(serverCreateOpts, volume)
+	blockDevices, err := s.getBlockDevices(eventObject, instanceSpec, instanceSpec.ImageID, instanceCreateTimeout, retryInterval)
+	if err != nil {
+		return nil, err
+	}
+	if len(blockDevices) > 0 {
+		serverCreateOpts = bootfromvolume.CreateOptsExt{
+			CreateOptsBuilder: serverCreateOpts,
+			BlockDevice:       blockDevices,
+		}
+	}
 
 	serverCreateOpts = applyServerGroupID(serverCreateOpts, instanceSpec.ServerGroupID)
 
@@ -357,35 +122,16 @@ func (s *Service) createInstanceImpl(eventObject runtime.Object, openStackCluste
 		return nil, fmt.Errorf("error creating Openstack instance: %v", err)
 	}
 
-	var createdInstance *InstanceStatus
-	err = wait.PollUntilContextTimeout(context.TODO(), retryInterval, instanceCreateTimeout, true, func(_ context.Context) (bool, error) {
-		createdInstance, err = s.GetInstanceStatus(server.ID)
-		if err != nil {
-			if capoerrors.IsRetryable(err) {
-				return false, nil
-			}
-			return false, err
-		}
-		if createdInstance.State() == infrav1.InstanceStateError {
-			return false, fmt.Errorf("error creating OpenStack instance %s, status changed to error", createdInstance.ID())
-		}
-		return createdInstance.State() == infrav1.InstanceStateActive, nil
-	})
-	if err != nil {
-		record.Warnf(eventObject, "FailedCreateServer", "Failed to create server %s: %v", createdInstance.Name(), err)
-		return nil, err
-	}
-
-	record.Eventf(eventObject, "SuccessfulCreateServer", "Created server %s with id %s", createdInstance.Name(), createdInstance.ID())
-	return createdInstance, nil
+	record.Eventf(eventObject, "SuccessfulCreateServer", "Created server %s with id %s", server.Name, server.ID)
+	return &InstanceStatus{server, s.scope.Logger()}, nil
 }
 
-func rootVolumeName(instanceName string) string {
-	return fmt.Sprintf("%s-root", instanceName)
+func volumeName(instanceName string, nameSuffix string) string {
+	return fmt.Sprintf("%s-%s", instanceName, nameSuffix)
 }
 
-func hasRootVolume(rootVolume *infrav1.RootVolume) bool {
-	return rootVolume != nil && rootVolume.Size > 0
+func hasRootVolume(instanceSpec *InstanceSpec) bool {
+	return instanceSpec.RootVolume != nil && instanceSpec.RootVolume.SizeGiB > 0
 }
 
 func (s *Service) getVolumeByName(name string) (*volumes.Volume, error) {
@@ -407,68 +153,184 @@ func (s *Service) getVolumeByName(name string) (*volumes.Volume, error) {
 	return &volumeList[0], nil
 }
 
-func (s *Service) getOrCreateRootVolume(eventObject runtime.Object, instanceSpec *InstanceSpec, imageID string) (*volumes.Volume, error) {
-	rootVolume := instanceSpec.RootVolume
-	if !hasRootVolume(rootVolume) {
-		return nil, nil
-	}
-
-	name := rootVolumeName(instanceSpec.Name)
-	size := rootVolume.Size
-
-	volume, err := s.getVolumeByName(name)
+// getOrCreateVolume gets or creates a volume with the given options. It returns the volume that already exists or the
+// newly created one. It returns an error if the volume creation failed or if the expected volume size is different from
+// the one that already exists.
+func (s *Service) getOrCreateVolume(eventObject runtime.Object, opts volumes.CreateOpts) (*volumes.Volume, error) {
+	existingVolume, err := s.getVolumeByName(opts.Name)
 	if err != nil {
 		return nil, err
 	}
-	if volume != nil {
-		if volume.Size != size {
-			return nil, fmt.Errorf("exected to find volume %s with size %d; found size %d", name, size, volume.Size)
+	if existingVolume != nil {
+		// TODO(emilien): Improve the checks here, there is an ongoing discussion in the community about how to do this
+		// which would involve adding metadata to the volume.
+		if existingVolume.Size != opts.Size {
+			return nil, fmt.Errorf("expected to find volume %s with size %d; found size %d", opts.Name, opts.Size, existingVolume.Size)
 		}
 
-		s.scope.Logger().V(3).Info("Using existing root volume", "name", name)
-		return volume, nil
+		s.scope.Logger().V(3).Info("Using existing volume", "name", opts.Name, "id", existingVolume.ID)
+		return existingVolume, nil
 	}
 
-	availabilityZone := instanceSpec.FailureDomain
-	if rootVolume.AvailabilityZone != "" {
-		availabilityZone = rootVolume.AvailabilityZone
+	createdVolume, err := s.getVolumeClient().CreateVolume(opts)
+	if err != nil {
+		record.Eventf(eventObject, "FailedCreateVolume", "Failed to create volume; name=%s size=%d err=%v", opts.Name, opts.Size, err)
+		return nil, err
 	}
+	record.Eventf(eventObject, "SuccessfulCreateVolume", "Created volume; id=%s", createdVolume.ID)
+	return createdVolume, err
+}
+
+func (s *Service) waitForVolume(volumeID string, timeout time.Duration, retryInterval time.Duration) error {
+	return wait.PollUntilContextTimeout(context.TODO(), retryInterval, timeout, true, func(_ context.Context) (bool, error) {
+		volume, err := s.getVolumeClient().GetVolume(volumeID)
+		if err != nil {
+			if capoerrors.IsRetryable(err) {
+				return false, nil
+			}
+			return false, err
+		}
+
+		switch volume.Status {
+		case "available":
+			return true, nil
+		case "error":
+			return false, fmt.Errorf("volume %s is in error state", volumeID)
+		default:
+			return false, nil
+		}
+	})
+}
+
+// getOrCreateVolumeBuilder gets or creates a volume with the given options. It returns the volume that already exists or the newly created one.
+// It returns an error if the volume creation failed or if the expected volume is different from the one that already exists.
+func (s *Service) getOrCreateVolumeBuilder(eventObject runtime.Object, instanceSpec *InstanceSpec, blockDeviceSpec *infrav1.AdditionalBlockDevice, imageID string, description string) (*volumes.Volume, error) {
+	availabilityZone, volType := resolveVolumeOpts(instanceSpec, blockDeviceSpec.Storage.Volume)
 
 	createOpts := volumes.CreateOpts{
-		Size:             rootVolume.Size,
-		Description:      fmt.Sprintf("Root volume for %s", instanceSpec.Name),
-		Name:             rootVolumeName(instanceSpec.Name),
+		Name:             volumeName(instanceSpec.Name, blockDeviceSpec.Name),
+		Description:      description,
+		Size:             blockDeviceSpec.SizeGiB,
 		ImageID:          imageID,
 		Multiattach:      false,
 		AvailabilityZone: availabilityZone,
-		VolumeType:       rootVolume.VolumeType,
+		VolumeType:       volType,
 	}
-	volume, err = s.getVolumeClient().CreateVolume(createOpts)
-	if err != nil {
-		record.Eventf(eventObject, "FailedCreateVolume", "Failed to create root volume; size=%d imageID=%s err=%v", size, imageID, err)
-		return nil, err
-	}
-	record.Eventf(eventObject, "SuccessfulCreateVolume", "Created root volume; id=%s", volume.ID)
-	return volume, err
+
+	return s.getOrCreateVolume(eventObject, createOpts)
 }
 
-// applyRootVolume sets a root volume if the root volume Size is not 0.
-func applyRootVolume(opts servers.CreateOptsBuilder, volume *volumes.Volume) servers.CreateOptsBuilder {
-	if volume == nil {
-		return opts
+func resolveVolumeOpts(instanceSpec *InstanceSpec, volumeOpts *infrav1.BlockDeviceVolume) (az, volType string) {
+	if volumeOpts == nil {
+		return
 	}
 
-	block := bootfromvolume.BlockDevice{
-		SourceType:          bootfromvolume.SourceVolume,
-		BootIndex:           0,
-		UUID:                volume.ID,
-		DeleteOnTermination: true,
-		DestinationType:     bootfromvolume.DestinationVolume,
+	volType = volumeOpts.Type
+
+	volumeAZ := volumeOpts.AvailabilityZone
+	if volumeAZ == nil {
+		return
 	}
-	return bootfromvolume.CreateOptsExt{
-		CreateOptsBuilder: opts,
-		BlockDevice:       []bootfromvolume.BlockDevice{block},
+
+	switch volumeAZ.From {
+	case "", infrav1.VolumeAZFromName:
+		// volumeAZ.Name is nil case should have been caught by validation
+		if volumeAZ.Name != nil {
+			az = string(*volumeAZ.Name)
+		}
+	case infrav1.VolumeAZFromMachine:
+		az = instanceSpec.FailureDomain
 	}
+	return
+}
+
+// getBlockDevices returns a list of block devices that were created and attached to the instance. It returns an error
+// if the root volume or any of the additional block devices could not be created.
+func (s *Service) getBlockDevices(eventObject runtime.Object, instanceSpec *InstanceSpec, imageID string, timeout time.Duration, retryInterval time.Duration) ([]bootfromvolume.BlockDevice, error) {
+	blockDevices := []bootfromvolume.BlockDevice{}
+
+	if hasRootVolume(instanceSpec) {
+		rootVolumeToBlockDevice := infrav1.AdditionalBlockDevice{
+			Name:    "root",
+			SizeGiB: instanceSpec.RootVolume.SizeGiB,
+			Storage: infrav1.BlockDeviceStorage{
+				Type:   infrav1.VolumeBlockDevice,
+				Volume: &instanceSpec.RootVolume.BlockDeviceVolume,
+			},
+		}
+		rootVolume, err := s.getOrCreateVolumeBuilder(eventObject, instanceSpec, &rootVolumeToBlockDevice, imageID, fmt.Sprintf("Root volume for %s", instanceSpec.Name))
+		if err != nil {
+			return nil, err
+		}
+		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
+			SourceType:          bootfromvolume.SourceVolume,
+			DestinationType:     bootfromvolume.DestinationVolume,
+			UUID:                rootVolume.ID,
+			BootIndex:           0,
+			DeleteOnTermination: true,
+		})
+	} else {
+		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
+			SourceType:          bootfromvolume.SourceImage,
+			DestinationType:     bootfromvolume.DestinationLocal,
+			UUID:                imageID,
+			BootIndex:           0,
+			DeleteOnTermination: true,
+		})
+	}
+
+	for i := range instanceSpec.AdditionalBlockDevices {
+		blockDeviceSpec := instanceSpec.AdditionalBlockDevices[i]
+
+		var bdUUID string
+		var localDiskSizeGiB int
+		var sourceType bootfromvolume.SourceType
+		var destinationType bootfromvolume.DestinationType
+
+		// There is also a validation in the openstackmachine webhook.
+		if blockDeviceSpec.Name == "root" {
+			return nil, fmt.Errorf("block device name 'root' is reserved")
+		}
+
+		if blockDeviceSpec.Storage.Type == infrav1.VolumeBlockDevice {
+			blockDevice, err := s.getOrCreateVolumeBuilder(eventObject, instanceSpec, &blockDeviceSpec, "", fmt.Sprintf("Additional block device for %s", instanceSpec.Name))
+			if err != nil {
+				return nil, err
+			}
+			bdUUID = blockDevice.ID
+			sourceType = bootfromvolume.SourceVolume
+			destinationType = bootfromvolume.DestinationVolume
+		} else if blockDeviceSpec.Storage.Type == infrav1.LocalBlockDevice {
+			sourceType = bootfromvolume.SourceBlank
+			destinationType = bootfromvolume.DestinationLocal
+			localDiskSizeGiB = blockDeviceSpec.SizeGiB
+		} else {
+			return nil, fmt.Errorf("invalid block device type %s", blockDeviceSpec.Storage.Type)
+		}
+
+		blockDevices = append(blockDevices, bootfromvolume.BlockDevice{
+			SourceType:          sourceType,
+			DestinationType:     destinationType,
+			UUID:                bdUUID,
+			BootIndex:           -1,
+			DeleteOnTermination: true,
+			VolumeSize:          localDiskSizeGiB,
+			Tag:                 blockDeviceSpec.Name,
+		})
+	}
+
+	// Wait for any volumes in the block devices to become available
+	if len(blockDevices) > 0 {
+		for _, bd := range blockDevices {
+			if bd.SourceType == bootfromvolume.SourceVolume {
+				if err := s.waitForVolume(bd.UUID, timeout, retryInterval); err != nil {
+					return nil, fmt.Errorf("volume %s did not become available: %w", bd.UUID, err)
+				}
+			}
+		}
+	}
+
+	return blockDevices, nil
 }
 
 // applyServerGroupID adds a scheduler hint to the CreateOptsBuilder, if the
@@ -485,38 +347,32 @@ func applyServerGroupID(opts servers.CreateOptsBuilder, serverGroupID string) se
 	return opts
 }
 
-// Helper function for getting image id from name.
-func (s *Service) getImageIDFromName(imageName string) (string, error) {
-	var opts images.ListOpts
+// Helper function for getting image ID from name, ID, or tags.
+func (s *Service) GetImageID(image infrav1.ImageParam) (string, error) {
+	if image.ID != nil {
+		return *image.ID, nil
+	}
 
-	opts.Name = imageName
+	if image.Filter == nil {
+		// Should have been caught by validation
+		return "", errors.New("image id and filter are both nil")
+	}
 
-	allImages, err := s.getImageClient().ListImages(opts)
+	listOpts := filterconvert.ImageFilterToListOpts(image.Filter)
+	allImages, err := s.getImageClient().ListImages(listOpts)
 	if err != nil {
 		return "", err
 	}
 
 	switch len(allImages) {
 	case 0:
-		return "", fmt.Errorf("no image with the Name %s could be found", imageName)
+		return "", fmt.Errorf("no images were found with the given image filter: %v", image)
 	case 1:
 		return allImages[0].ID, nil
 	default:
 		// this should never happen
-		return "", fmt.Errorf("too many images with the name, %s, were found", imageName)
+		return "", fmt.Errorf("too many images were found with the given image filter: %v", image)
 	}
-}
-
-// Helper function for getting image ID from name or ID.
-func (s *Service) getImageID(imageUUID, imageName string) (string, error) {
-	if imageUUID != "" {
-		// we return imageUUID without check
-		return imageUUID, nil
-	} else if imageName != "" {
-		return s.getImageIDFromName(imageName)
-	}
-
-	return "", nil
 }
 
 // GetManagementPort returns the port which is used for management and external
@@ -542,134 +398,9 @@ func (s *Service) GetManagementPort(openStackCluster *infrav1.OpenStackCluster, 
 	return &allPorts[0], nil
 }
 
-func (s *Service) DeleteInstance(openStackCluster *infrav1.OpenStackCluster, eventObject runtime.Object, instanceStatus *InstanceStatus, instanceSpec *InstanceSpec) error {
-	if instanceStatus == nil {
-		/*
-			We create a boot-from-volume instance in 2 steps:
-			1. Create the volume
-			2. Create the instance with the created root volume and set DeleteOnTermination
+func (s *Service) DeleteInstance(eventObject runtime.Object, instanceStatus *InstanceStatus) error {
+	instance := instanceStatus.InstanceIdentifier()
 
-			This introduces a new failure mode which has implications for safely deleting instances: we
-			might create the volume, but the instance create fails. This would leave us with a dangling
-			volume with no instance.
-
-			To handle this safely, we ensure that we never remove a machine finalizer until all resources
-			associated with the instance, including a root volume, have been deleted. To achieve this:
-			* We always call DeleteInstance when reconciling a delete, regardless of
-			  whether the instance exists or not.
-			* If the instance was already deleted we check that the volume is also gone.
-
-			Note that we don't need to separately delete the root volume when deleting the instance because
-			DeleteOnTermination will ensure it is deleted in that case.
-		*/
-		if hasRootVolume(instanceSpec.RootVolume) {
-			name := rootVolumeName(instanceSpec.Name)
-			volume, err := s.getVolumeByName(name)
-			if err != nil {
-				return err
-			}
-			if volume == nil {
-				return nil
-			}
-
-			s.scope.Logger().V(2).Info("Deleting dangling root volume", "name", volume.Name, "ID", volume.ID)
-			return s.getVolumeClient().DeleteVolume(volume.ID, volumes.DeleteOpts{})
-		}
-
-		return nil
-	}
-
-	instanceInterfaces, err := s.getComputeClient().ListAttachedInterfaces(instanceStatus.ID())
-	if err != nil {
-		return err
-	}
-
-	trunkSupported, err := s.isTrunkExtSupported()
-	if err != nil {
-		return fmt.Errorf("obtaining network extensions: %v", err)
-	}
-
-	networkingService, err := s.getNetworkingService()
-	if err != nil {
-		return err
-	}
-
-	// get and delete trunks
-	for _, port := range instanceInterfaces {
-		if err = s.deleteAttachInterface(eventObject, instanceStatus.InstanceIdentifier(), port.PortID); err != nil {
-			return err
-		}
-
-		if trunkSupported {
-			if err = networkingService.DeleteTrunk(eventObject, port.PortID); err != nil {
-				return err
-			}
-		}
-		if err = networkingService.DeletePort(eventObject, port.PortID); err != nil {
-			return err
-		}
-	}
-
-	// delete port of error instance
-	if instanceStatus.State() == infrav1.InstanceStateError {
-		portOpts, err := s.constructPorts(openStackCluster, instanceSpec)
-		if err != nil {
-			return err
-		}
-
-		if err := networkingService.GarbageCollectErrorInstancesPort(eventObject, instanceSpec.Name, portOpts); err != nil {
-			return err
-		}
-	}
-
-	return s.deleteInstance(eventObject, instanceStatus.InstanceIdentifier())
-}
-
-func (s *Service) deletePorts(eventObject runtime.Object, nets []servers.Network) error {
-	trunkSupported, err := s.isTrunkExtSupported()
-	if err != nil {
-		return err
-	}
-
-	for _, n := range nets {
-		networkingService, err := s.getNetworkingService()
-		if err != nil {
-			return err
-		}
-
-		if trunkSupported {
-			if err = networkingService.DeleteTrunk(eventObject, n.Port); err != nil {
-				return err
-			}
-		}
-		if err := networkingService.DeletePort(eventObject, n.Port); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *Service) deleteAttachInterface(eventObject runtime.Object, instance *InstanceIdentifier, portID string) error {
-	err := s.getComputeClient().DeleteAttachedInterface(instance.ID, portID)
-	if err != nil {
-		if capoerrors.IsNotFound(err) {
-			record.Eventf(eventObject, "SuccessfulDeleteAttachInterface", "Attach interface did not exist: instance %s, port %s", instance.ID, portID)
-			return nil
-		}
-		if capoerrors.IsConflict(err) {
-			// we don't want to block deletion because of Conflict
-			// due to instance must be paused/active/shutoff in order to detach interface
-			return nil
-		}
-		record.Warnf(eventObject, "FailedDeleteAttachInterface", "Failed to delete attach interface: instance %s, port %s: %v", instance.ID, portID, err)
-		return err
-	}
-
-	record.Eventf(eventObject, "SuccessfulDeleteAttachInterface", "Deleted attach interface: instance %s, port %s", instance.ID, portID)
-	return nil
-}
-
-func (s *Service) deleteInstance(eventObject runtime.Object, instance *InstanceIdentifier) error {
 	err := s.getComputeClient().DeleteServer(instance.ID)
 	if err != nil {
 		if capoerrors.IsNotFound(err) {
@@ -697,6 +428,61 @@ func (s *Service) deleteInstance(eventObject runtime.Object, instance *InstanceI
 
 	record.Eventf(eventObject, "SuccessfulDeleteServer", "Deleted server %s with id %s", instance.Name, instance.ID)
 	return nil
+}
+
+// DeleteVolumes deletes any cinder volumes which were created for the instance.
+// Note that this need only be called when the server was not successfully
+// created. If the server was created the volume will have been added with
+// DeleteOnTermination=true, and will be automatically cleaned up with the
+// server.
+// We don't pass InstanceSpec here because we only require instance name,
+// rootVolume, and additionalBlockDevices, and resolving the whole InstanceSpec
+// introduces unnecessary failure modes.
+func (s *Service) DeleteVolumes(instanceName string, rootVolume *infrav1.RootVolume, additionalBlockDevices []infrav1.AdditionalBlockDevice) error {
+	/*
+		Attaching volumes to an instance is a two-step process:
+
+		  1. Create the volume
+		  2. Create the instance with the created volumes in RootVolume and AdditionalBlockDevices fields with DeleteOnTermination=true
+
+		This has a possible failure mode where creating the volume succeeds but creating the instance
+		fails. In this case, we want to make sure that the dangling volumes are cleaned up.
+
+		To handle this safely, we ensure that we never remove a machine finalizer until all resources
+		associated with the instance, including volumes, have been deleted. To achieve this:
+
+		  * We always call DeleteInstance when reconciling a delete, even if the instance does not exist
+		  * If the instance was already deleted we check that the volumes are also gone
+
+		Note that we don't need to separately delete the volumes when deleting the instance because
+		DeleteOnTermination will ensure it is deleted in that case.
+	*/
+
+	if rootVolume != nil && rootVolume.SizeGiB > 0 {
+		if err := s.deleteVolume(instanceName, "root"); err != nil {
+			return err
+		}
+	}
+	for _, volumeSpec := range additionalBlockDevices {
+		if err := s.deleteVolume(instanceName, volumeSpec.Name); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) deleteVolume(instanceName string, nameSuffix string) error {
+	volumeName := volumeName(instanceName, nameSuffix)
+	volume, err := s.getVolumeByName(volumeName)
+	if err != nil {
+		return err
+	}
+	if volume == nil {
+		return nil
+	}
+
+	s.scope.Logger().V(2).Info("Deleting dangling volume", "name", volume.Name, "ID", volume.ID)
+	return s.getVolumeClient().DeleteVolume(volume.ID, volumes.DeleteOpts{})
 }
 
 func (s *Service) GetInstanceStatus(resourceID string) (instance *InstanceStatus, err error) {
@@ -752,23 +538,6 @@ func getTimeout(name string, timeout int) time.Duration {
 		}
 	}
 	return time.Duration(timeout)
-}
-
-// isTrunkExtSupported verifies trunk setup on the OpenStack deployment.
-func (s *Service) isTrunkExtSupported() (trunknSupported bool, err error) {
-	networkingService, err := s.getNetworkingService()
-	if err != nil {
-		return false, err
-	}
-
-	trunkSupport, err := networkingService.GetTrunkSupport()
-	if err != nil {
-		return false, fmt.Errorf("there was an issue verifying whether trunk support is available, Please try again later: %v", err)
-	}
-	if !trunkSupport {
-		return false, nil
-	}
-	return true, nil
 }
 
 func HashInstanceSpec(computeInstance *InstanceSpec) (string, error) {

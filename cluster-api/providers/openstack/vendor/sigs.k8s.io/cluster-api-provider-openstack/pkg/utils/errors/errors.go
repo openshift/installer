@@ -33,6 +33,10 @@ func IsRetryable(err error) bool {
 }
 
 func IsNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+
 	// Gophercloud is not consistent in how it returns 404 errors. Sometimes
 	// it returns a pointer to the error, sometimes it returns the error
 	// directly.
