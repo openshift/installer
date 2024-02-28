@@ -8819,7 +8819,7 @@ github.com/openshift/api/machineconfiguration/v1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
-# github.com/openshift/assisted-image-service v0.0.0-20230829160050-0b98ec74397b
+# github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
 ## explicit; go 1.17
 github.com/openshift/assisted-image-service/pkg/isoeditor
 github.com/openshift/assisted-image-service/pkg/overlay
