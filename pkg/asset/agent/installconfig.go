@@ -82,6 +82,10 @@ func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.Insta
 	numMasters, numWorkers := GetReplicaCount(installConfig)
 	logrus.Infof(fmt.Sprintf("Configuration has %d master replicas and %d worker replicas", numMasters, numWorkers))
 
+	if err := a.validateControlPlaneConfiguration(installConfig); err != nil {
+		allErrs = append(allErrs, err...)
+	}
+
 	if err := a.validateSNOConfiguration(installConfig); err != nil {
 		allErrs = append(allErrs, err...)
 	}
@@ -134,6 +138,19 @@ func (a *OptionalInstallConfig) validateSupportedArchs(installConfig *types.Inst
 		}
 	}
 
+	return allErrs
+}
+
+func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig *types.InstallConfig) field.ErrorList {
+	var allErrs field.ErrorList
+	var fieldPath *field.Path
+
+	if installConfig.ControlPlane != nil {
+		if *installConfig.ControlPlane.Replicas != 1 && *installConfig.ControlPlane.Replicas != 3 {
+			fieldPath = field.NewPath("ControlPlane", "Replicas")
+			allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.ControlPlane.Replicas, fmt.Sprintf("ControlPlane.Replicas can only be set to 3 or 1. Found %v", *installConfig.ControlPlane.Replicas)))
+		}
+	}
 	return allErrs
 }
 

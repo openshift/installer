@@ -127,6 +127,30 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
 		},
 		{
+			name: "incorrect compute.replicas set",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: "invalid install-config configuration: ControlPlane.Replicas: Invalid value: 2: ControlPlane.Replicas can only be set to 3 or 1. Found 2",
+		},
+		{
 			name: "invalid networkType for SNO cluster",
 			data: `
 apiVersion: v1
