@@ -88,6 +88,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	subnets := []capg.SubnetSpec{master, worker}
+	// Subnets should never be auto created, even in shared VPC installs
+	autoCreateSubnets := false
 
 	labels := map[string]string{}
 	labels[fmt.Sprintf("kubernetes-io-cluster-%s", clusterID.InfraID)] = "owned"
@@ -107,8 +109,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Network: capg.NetworkSpec{
 				// TODO: Need a network project for installs where the network resources will exist in another
 				// project such as shared vpc installs
-				Name:    ptr.To(networkName),
-				Subnets: subnets,
+				Name:                  ptr.To(networkName),
+				Subnets:               subnets,
+				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),
