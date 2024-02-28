@@ -19,7 +19,7 @@ package v1alpha7
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/errors"
 )
@@ -84,10 +84,17 @@ type OpenStackMachineSpec struct {
 	// The volume metadata to boot from
 	RootVolume *RootVolume `json:"rootVolume,omitempty"`
 
+	// AdditionalBlockDevices is a list of specifications for additional block devices to attach to the server instance
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	AdditionalBlockDevices []AdditionalBlockDevice `json:"additionalBlockDevices,omitempty"`
+
 	// The server group to assign the machine to
 	ServerGroupID string `json:"serverGroupID,omitempty"`
 
-	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	// IdentityRef is a reference to a identity to be used when reconciling this cluster.
+	// If not specified, the identity ref of the cluster will be used instead.
 	// +optional
 	IdentityRef *OpenStackIdentityReference `json:"identityRef,omitempty"`
 }
@@ -129,8 +136,9 @@ type OpenStackMachineStatus struct {
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
+// +genclient
+// +genclient:Namespaced
 // +kubebuilder:object:root=true
-// +kubebuilder:storageversion
 // +kubebuilder:resource:path=openstackmachines,scope=Namespaced,categories=cluster-api,shortName=osm
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this OpenStackMachine belongs"
@@ -171,7 +179,7 @@ func (r *OpenStackMachine) SetConditions(conditions clusterv1.Conditions) {
 // SetFailure sets the OpenStackMachine status failure reason and failure message.
 func (r *OpenStackMachine) SetFailure(failureReason errors.MachineStatusError, failureMessage error) {
 	r.Status.FailureReason = &failureReason
-	r.Status.FailureMessage = pointer.String(failureMessage.Error())
+	r.Status.FailureMessage = ptr.To(failureMessage.Error())
 }
 
 func init() {

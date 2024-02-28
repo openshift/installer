@@ -64,7 +64,8 @@ type lbClient struct {
 // NewLbClient returns a new loadbalancer client.
 func NewLbClient(providerClient *gophercloud.ProviderClient, providerClientOpts *clientconfig.ClientOpts) (LbClient, error) {
 	loadbalancerClient, err := openstack.NewLoadBalancerV2(providerClient, gophercloud.EndpointOpts{
-		Region: providerClientOpts.RegionName,
+		Region:       providerClientOpts.RegionName,
+		Availability: clientconfig.GetEndpointType(providerClientOpts.EndpointType),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create load balancer service client: %v", err)

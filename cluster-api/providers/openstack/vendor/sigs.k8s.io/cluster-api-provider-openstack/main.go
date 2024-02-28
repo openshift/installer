@@ -17,11 +17,13 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -34,27 +36,48 @@ import (
 	_ "k8s.io/component-base/logs/json/register"
 	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	cache "sigs.k8s.io/controller-runtime/pkg/cache"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	infrav1alpha1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha1"
 	infrav1alpha5 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha5"
 	infrav1alpha6 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha6"
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	infrav1alpha7 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/controllers"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/scope"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/webhooks"
 	"sigs.k8s.io/cluster-api-provider-openstack/version"
 )
 
+// Constants for TLS versions.
+const (
+	TLSVersion12 = "TLS12"
+	TLSVersion13 = "TLS13"
+)
+
+type TLSOptions struct {
+	TLSMaxVersion   string
+	TLSMinVersion   string
+	TLSCipherSuites string
+}
+
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme               = runtime.NewScheme()
+	setupLog             = ctrl.Log.WithName("setup")
+	tlsOptions           = TLSOptions{}
+	tlsSupportedVersions = []string{TLSVersion12, TLSVersion13}
 
 	// flags.
-	metricsBindAddr             string
+	diagnosticsOptions          = flags.DiagnosticsOptions{}
 	enableLeaderElection        bool
 	leaderElectionLeaseDuration time.Duration
 	leaderElectionRenewDeadline time.Duration
@@ -65,21 +88,27 @@ var (
 	openStackClusterConcurrency int
 	openStackMachineConcurrency int
 	syncPeriod                  time.Duration
+	restConfigQPS               float32
+	restConfigBurst             int
 	webhookPort                 int
 	webhookCertDir              string
 	healthAddr                  string
 	lbProvider                  string
 	caCertsPath                 string
 	showVersion                 bool
+	scopeCacheMaxSize           int
 	logOptions                  = logs.NewOptions()
 )
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
+	_ = ipamv1.AddToScheme(scheme)
 	_ = infrav1.AddToScheme(scheme)
 	_ = infrav1alpha5.AddToScheme(scheme)
 	_ = infrav1alpha6.AddToScheme(scheme)
+	_ = infrav1alpha7.AddToScheme(scheme)
+	_ = infrav1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 
 	metrics.RegisterAPIPrometheusMetrics()
@@ -90,8 +119,7 @@ func InitFlags(fs *pflag.FlagSet) {
 	logs.AddFlags(fs, logs.SkipLoggingConfigurationFlags())
 	logsv1.AddFlags(logOptions, fs)
 
-	fs.StringVar(&metricsBindAddr, "metrics-bind-addr", "localhost:8080",
-		"The address the metric endpoint binds to.")
+	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
 
 	fs.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
@@ -123,6 +151,12 @@ func InitFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&syncPeriod, "sync-period", 10*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 
+	fs.Float32Var(&restConfigQPS, "kube-api-qps", 20,
+		"Maximum queries per second from the controller client to the Kubernetes API server. Defaults to 20")
+
+	fs.IntVar(&restConfigBurst, "kube-api-burst", 30,
+		"Maximum number of queries that should be allowed in one burst from the controller client to the Kubernetes API server. Defaults to 30")
+
 	fs.IntVar(&webhookPort, "webhook-port", 9443,
 		"Webhook Server port")
 
@@ -137,8 +171,32 @@ func InitFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&caCertsPath, "ca-certs", "", "The path to a PEM-encoded CA Certificate file to supply as default for each request.")
 
+	fs.IntVar(&scopeCacheMaxSize, "scope-cache-max-size", 10, "The maximum credentials count the operator should keep in cache. Setting this value to 0 means no cache.")
+
 	fs.BoolVar(&showVersion, "version", false, "Show current version and exit.")
+
+	fs.StringVar(&tlsOptions.TLSMinVersion, "tls-min-version", TLSVersion12,
+		"The minimum TLS version in use by the webhook server.\n"+
+			fmt.Sprintf("Possible values are %s.", strings.Join(tlsSupportedVersions, ", ")),
+	)
+
+	fs.StringVar(&tlsOptions.TLSMaxVersion, "tls-max-version", TLSVersion13,
+		"The maximum TLS version in use by the webhook server.\n"+
+			fmt.Sprintf("Possible values are %s.", strings.Join(tlsSupportedVersions, ", ")),
+	)
+
+	tlsCipherPreferredValues := cliflag.PreferredTLSCipherNames()
+	tlsCipherInsecureValues := cliflag.InsecureTLSCipherNames()
+	fs.StringVar(&tlsOptions.TLSCipherSuites, "tls-cipher-suites", "",
+		"Comma-separated list of cipher suites for the webhook server. "+
+			"If omitted, the default Go cipher suites will be used. \n"+
+			"Preferred values: "+strings.Join(tlsCipherPreferredValues, ", ")+". \n"+
+			"Insecure values: "+strings.Join(tlsCipherInsecureValues, ", ")+".")
 }
+
+// Add RBAC for the authorized diagnostics endpoint.
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 
 func main() {
 	InitFlags(pflag.CommandLine)
@@ -166,10 +224,18 @@ func main() {
 		}()
 	}
 
+	tlsOptionOverrides, err := GetTLSOptionOverrideFuncs(tlsOptions)
+	if err != nil {
+		setupLog.Error(err, "unable to add TLS settings to the webhook server")
+		os.Exit(1)
+	}
+
 	cfg, err := config.GetConfigWithContext(os.Getenv("KUBECONTEXT"))
 	if err != nil {
 		setupLog.Error(err, "unable to get kubeconfig")
 	}
+	cfg.QPS = restConfigQPS
+	cfg.Burst = restConfigBurst
 
 	var caCerts []byte
 	if caCertsPath != "" {
@@ -180,22 +246,42 @@ func main() {
 		}
 	}
 
+	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+
+	var watchNamespaces map[string]cache.Config
+	if watchNamespace != "" {
+		watchNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
+	}
+
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsBindAddr,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "controller-leader-election-capo",
-		LeaseDuration:      &leaderElectionLeaseDuration,
-		RenewDeadline:      &leaderElectionRenewDeadline,
-		RetryPeriod:        &leaderElectionRetryPeriod,
-		Namespace:          watchNamespace,
-		SyncPeriod:         &syncPeriod,
-		ClientDisableCacheFor: []client.Object{
-			&corev1.ConfigMap{},
-			&corev1.Secret{},
+		Scheme:           scheme,
+		Metrics:          diagnosticsOpts,
+		LeaderElection:   enableLeaderElection,
+		LeaderElectionID: "controller-leader-election-capo",
+		LeaseDuration:    &leaderElectionLeaseDuration,
+		RenewDeadline:    &leaderElectionRenewDeadline,
+		RetryPeriod:      &leaderElectionRetryPeriod,
+		Cache: cache.Options{
+			DefaultNamespaces: watchNamespaces,
+			SyncPeriod:        &syncPeriod,
 		},
-		Port:                   webhookPort,
-		CertDir:                webhookCertDir,
+		Client: client.Options{
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&corev1.ConfigMap{},
+					&corev1.Secret{},
+				},
+			},
+		},
+		WebhookServer: webhook.NewServer(
+			webhook.Options{
+				Port:    webhookPort,
+				CertDir: webhookCertDir,
+				TLSOpts: tlsOptionOverrides,
+			},
+		),
 		HealthProbeBindAddress: healthAddr,
 	})
 	if err != nil {
@@ -209,10 +295,11 @@ func main() {
 	// Initialize event recorder.
 	record.InitFromRecorder(mgr.GetEventRecorderFor("openstack-controller"))
 
-	setupChecks(mgr)
-	setupReconcilers(ctx, mgr, caCerts)
-	setupWebhooks(mgr)
+	scopeFactory := scope.NewFactory(scopeCacheMaxSize)
 
+	setupChecks(mgr)
+	setupReconcilers(ctx, mgr, caCerts, scopeFactory)
+	setupWebhooks(mgr)
 	// +kubebuilder:scaffold:builder
 	setupLog.Info("starting manager", "version", version.Get().String())
 	if err := mgr.Start(ctx); err != nil {
@@ -233,12 +320,12 @@ func setupChecks(mgr ctrl.Manager) {
 	}
 }
 
-func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte) {
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte, scopeFactory scope.Factory) {
 	if err := (&controllers.OpenStackClusterReconciler{
 		Client:           mgr.GetClient(),
 		Recorder:         mgr.GetEventRecorderFor("openstackcluster-controller"),
 		WatchFilterValue: watchFilterValue,
-		ScopeFactory:     scope.ScopeFactory,
+		ScopeFactory:     scopeFactory,
 		CaCertificates:   caCerts,
 	}).SetupWithManager(ctx, mgr, concurrency(openStackClusterConcurrency)); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackCluster")
@@ -248,45 +335,94 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager, caCerts []byte) {
 		Client:           mgr.GetClient(),
 		Recorder:         mgr.GetEventRecorderFor("openstackmachine-controller"),
 		WatchFilterValue: watchFilterValue,
-		ScopeFactory:     scope.ScopeFactory,
+		ScopeFactory:     scopeFactory,
 		CaCertificates:   caCerts,
 	}).SetupWithManager(ctx, mgr, concurrency(openStackMachineConcurrency)); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OpenStackMachine")
 		os.Exit(1)
 	}
+	if err := (&controllers.OpenStackFloatingIPPoolReconciler{
+		Client:         mgr.GetClient(),
+		Recorder:       mgr.GetEventRecorderFor("floatingippool-controller"),
+		ScopeFactory:   scopeFactory,
+		Scheme:         mgr.GetScheme(),
+		CaCertificates: caCerts,
+	}).SetupWithManager(ctx, mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "FloatingIPPool")
+		os.Exit(1)
+	}
 }
 
 func setupWebhooks(mgr ctrl.Manager) {
-	if err := (&infrav1.OpenStackMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackMachineTemplate")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackMachineTemplateList{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackMachineTemplateList")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackCluster{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackCluster")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackClusterTemplate")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackMachine{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackMachine")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackMachineList{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackMachineList")
-		os.Exit(1)
-	}
-	if err := (&infrav1.OpenStackClusterList{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OpenStackClusterList")
+	errs := webhooks.RegisterAllWithManager(mgr)
+	if len(errs) > 0 {
+		for i := range errs {
+			setupLog.Error(errs[i], "unable to register webhook")
+		}
 		os.Exit(1)
 	}
 }
 
 func concurrency(c int) controller.Options {
 	return controller.Options{MaxConcurrentReconciles: c}
+}
+
+// GetTLSOptionOverrideFuncs returns a list of TLS configuration overrides to be used
+// by the webhook server.
+func GetTLSOptionOverrideFuncs(options TLSOptions) ([]func(*tls.Config), error) {
+	var tlsOptions []func(config *tls.Config)
+
+	// To make a static analyzer happy, this block ensures there is no code
+	// path that sets a TLS version outside the acceptable values, even in
+	// case of unexpected user input.
+	var tlsMinVersion, tlsMaxVersion uint16
+	for version, option := range map[*uint16]string{&tlsMinVersion: options.TLSMinVersion, &tlsMaxVersion: options.TLSMaxVersion} {
+		switch option {
+		case TLSVersion12:
+			*version = tls.VersionTLS12
+		case TLSVersion13:
+			*version = tls.VersionTLS13
+		default:
+			return nil, fmt.Errorf("unexpected TLS version %q (must be one of: %s)", option, strings.Join(tlsSupportedVersions, ", "))
+		}
+	}
+
+	if tlsMaxVersion != 0 && tlsMinVersion > tlsMaxVersion {
+		return nil, fmt.Errorf("TLS version flag min version (%s) is greater than max version (%s)",
+			options.TLSMinVersion, options.TLSMaxVersion)
+	}
+
+	tlsOptions = append(tlsOptions, func(cfg *tls.Config) {
+		cfg.MinVersion = tlsMinVersion
+		cfg.MaxVersion = tlsMaxVersion
+	})
+
+	// Cipher suites should not be set if empty.
+	if tlsMinVersion >= tls.VersionTLS13 &&
+		options.TLSCipherSuites != "" {
+		setupLog.Info("warning: Cipher suites should not be set for TLS version 1.3. Ignoring ciphers")
+		options.TLSCipherSuites = ""
+	}
+
+	if options.TLSCipherSuites != "" {
+		tlsCipherSuites := strings.Split(options.TLSCipherSuites, ",")
+		suites, err := cliflag.TLSCipherSuites(tlsCipherSuites)
+		if err != nil {
+			return nil, err
+		}
+
+		insecureCipherValues := cliflag.InsecureTLSCipherNames()
+		for _, cipher := range tlsCipherSuites {
+			for _, insecureCipherName := range insecureCipherValues {
+				if insecureCipherName == cipher {
+					setupLog.Info(fmt.Sprintf("warning: use of insecure cipher '%s' detected.", cipher))
+				}
+			}
+		}
+		tlsOptions = append(tlsOptions, func(cfg *tls.Config) {
+			cfg.CipherSuites = suites
+		})
+	}
+
+	return tlsOptions, nil
 }

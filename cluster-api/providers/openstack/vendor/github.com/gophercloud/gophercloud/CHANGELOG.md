@@ -1,3 +1,76 @@
+## v1.7.0 (2023-09-22)
+
+New features and improvements:
+
+* [GH-2782](https://github.com/gophercloud/gophercloud/pull/2782) [v1] (manual clean backport) Add tag field to compute block_device_v2
+
+CI changes:
+
+* [GH-2760](https://github.com/gophercloud/gophercloud/pull/2760) [v1 backports] semver auto labels
+* [GH-2775](https://github.com/gophercloud/gophercloud/pull/2775) [v1] Fix typos in comments
+* [GH-2783](https://github.com/gophercloud/gophercloud/pull/2783) [v1] (clean manual backport) ci/functional: fix ubuntu version & add antelope
+* [GH-2785](https://github.com/gophercloud/gophercloud/pull/2785) [v1] Acceptance: Handle numerical version names in version comparison helpers
+* [GH-2787](https://github.com/gophercloud/gophercloud/pull/2787) backport-v1: fixes to semver label
+* [GH-2788](https://github.com/gophercloud/gophercloud/pull/2788) [v1] Make acceptance tests internal
+
+
+## v1.6.0 (2023-08-30)
+
+New features and improvements:
+
+* [GH-2712](https://github.com/gophercloud/gophercloud/pull/2712) [v1] README: minor change to test backport workflow
+* [GH-2713](https://github.com/gophercloud/gophercloud/pull/2713) [v1] tests: run MultiAttach with a capable Cinder Type
+* [GH-2714](https://github.com/gophercloud/gophercloud/pull/2714) [v1] Add CRUD support for encryption in volume v3 types
+* [GH-2715](https://github.com/gophercloud/gophercloud/pull/2715) [v1] Add projectID to fwaas_v2 policy CreateOpts and ListOpts
+* [GH-2716](https://github.com/gophercloud/gophercloud/pull/2716) [v1] Add projectID to fwaas_v2 CreateOpts
+* [GH-2717](https://github.com/gophercloud/gophercloud/pull/2717) [v1] [manila]: add reset and force delete actions to a snapshot
+* [GH-2718](https://github.com/gophercloud/gophercloud/pull/2718) [v1] [cinder]: add reset and force delete actions to volumes and snapshots
+* [GH-2721](https://github.com/gophercloud/gophercloud/pull/2721) [v1] orchestration: Explicit error in optionsmap creation
+* [GH-2723](https://github.com/gophercloud/gophercloud/pull/2723) [v1] Add conductor API to Baremetal V1
+* [GH-2729](https://github.com/gophercloud/gophercloud/pull/2729) [v1] networking/v2/ports: allow list filter by security group
+
+CI changes:
+
+* [GH-2675](https://github.com/gophercloud/gophercloud/pull/2675) [v1][CI] Drop periodic jobs from stable branch
+* [GH-2683](https://github.com/gophercloud/gophercloud/pull/2683) [v1] CI tweaks
+
+
+## v1.5.0 (2023-06-21)
+
+New features and improvements:
+
+* [GH-2634](https://github.com/gophercloud/gophercloud/pull/2634) baremetal: update inspection inventory with recent additions
+* [GH-2635](https://github.com/gophercloud/gophercloud/pull/2635) [manila]: Add Share Replicas support
+* [GH-2637](https://github.com/gophercloud/gophercloud/pull/2637) [FWaaS_v2]: Add FWaaS_V2 workflow and enable tests
+* [GH-2639](https://github.com/gophercloud/gophercloud/pull/2639) Implement errors.Unwrap() on unexpected status code errors
+* [GH-2648](https://github.com/gophercloud/gophercloud/pull/2648) [manila]: implement share transfer API
+
+
+## v1.4.0 (2023-05-25)
+
+New features and improvements:
+
+* [GH-2465](https://github.com/gophercloud/gophercloud/pull/2465) keystone: add v3 limits update operation
+* [GH-2596](https://github.com/gophercloud/gophercloud/pull/2596) keystone: add v3 limits get operation
+* [GH-2618](https://github.com/gophercloud/gophercloud/pull/2618) keystone: add v3 limits delete operation
+* [GH-2616](https://github.com/gophercloud/gophercloud/pull/2616) Add CRUD support for register limit APIs
+* [GH-2610](https://github.com/gophercloud/gophercloud/pull/2610) Add PUT/HEAD/DELETE for identity/v3/OS-INHERIT
+* [GH-2597](https://github.com/gophercloud/gophercloud/pull/2597) Add validation and optimise objects.BulkDelete
+* [GH-2602](https://github.com/gophercloud/gophercloud/pull/2602) [swift v1]: introduce a TempURLKey argument for objects.CreateTempURLOpts struct
+* [GH-2623](https://github.com/gophercloud/gophercloud/pull/2623) Add the ability to remove ingress/egress policies from fwaas_v2 groups
+* [GH-2625](https://github.com/gophercloud/gophercloud/pull/2625) neutron: Support trunk_details extension
+
+CI changes:
+
+* [GH-2608](https://github.com/gophercloud/gophercloud/pull/2608) Drop train and ussuri jobs
+* [GH-2589](https://github.com/gophercloud/gophercloud/pull/2589) Bump EmilienM/devstack-action from 0.10 to 0.11
+* [GH-2604](https://github.com/gophercloud/gophercloud/pull/2604) Bump mheap/github-action-required-labels from 3 to 4
+* [GH-2620](https://github.com/gophercloud/gophercloud/pull/2620) Pin goimport dep to a version that works with go 1.14
+* [GH-2619](https://github.com/gophercloud/gophercloud/pull/2619) Fix version comparison for acceptance tests
+* [GH-2627](https://github.com/gophercloud/gophercloud/pull/2627) Limits: Fix ToDo to create registered limit and use it
+* [GH-2629](https://github.com/gophercloud/gophercloud/pull/2629) [manila]: Add share from snapshot restore functional test
+
+
 ## v1.3.0 (2023-03-28)
 
 * [GH-2464](https://github.com/gophercloud/gophercloud/pull/2464) keystone: add v3 limits create operation
