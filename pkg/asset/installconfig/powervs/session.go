@@ -13,7 +13,6 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/bluemix-go"
-	"github.com/IBM-Cloud/bluemix-go/api/account/accountv2"
 	"github.com/IBM-Cloud/bluemix-go/authentication"
 	"github.com/IBM-Cloud/bluemix-go/http"
 	"github.com/IBM-Cloud/bluemix-go/rest"
@@ -40,7 +39,6 @@ type BxClient struct {
 	Zone                 string
 	PISession            *ibmpisession.IBMPISession
 	User                 *User
-	AccountAPIV2         accountv2.Accounts
 	PowerVSResourceGroup string
 }
 
@@ -145,12 +143,6 @@ func NewBxClient(survey bool) (*BxClient, error) {
 		return nil, err
 	}
 
-	accClient, err := accountv2.New(bxSess)
-	if err != nil {
-		return nil, err
-	}
-
-	c.AccountAPIV2 = accClient.Accounts()
 	c.Session.Config.Region = powervs.Regions[sv.Region].VPCRegion
 
 	return c, nil
@@ -225,28 +217,6 @@ func getSessionVars(survey bool) (SessionVars, error) {
 	}
 
 	return sv, nil
-}
-
-// GetAccountType func return the type of account TRAIL/PAID
-func (c *BxClient) GetAccountType() (string, error) {
-	myAccount, err := c.AccountAPIV2.Get((*c.User).Account)
-	if err != nil {
-		return "", err
-	}
-
-	return myAccount.Type, nil
-}
-
-// ValidateAccountPermissions Checks permission for provisioning Power VS resources
-func (c *BxClient) ValidateAccountPermissions() error {
-	accType, err := c.GetAccountType()
-	if err != nil {
-		return err
-	}
-	if accType == "TRIAL" {
-		return fmt.Errorf("account type must be of Pay-As-You-Go/Subscription type for provision Power VS resources")
-	}
-	return nil
 }
 
 // NewPISession updates pisession details, return error on fail.
