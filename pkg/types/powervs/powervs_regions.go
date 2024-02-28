@@ -25,7 +25,7 @@ var Regions = map[string]Region{
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
 		COSRegion:   "us-south",
-		Zones:       []string{"dal10"},
+		Zones:       []string{"dal10", "dal12"},
 		SysTypes:    []string{"s922", "e980"},
 	},
 	"eu-de": {
