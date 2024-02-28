@@ -64,6 +64,9 @@ func GenerateBootstrapMachines(name string, installConfig *installconfig.Install
 	// Identify this as a bootstrap machine
 	bootstrapGCPMachine.Labels["install.openshift.io/bootstrap"] = ""
 
+	bootstrapMachineIsPublic := installConfig.Config.Publish == types.ExternalPublishingStrategy
+	bootstrapGCPMachine.Spec.PublicIP = ptr.To(bootstrapMachineIsPublic)
+
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapGCPMachine.Name)},
 		Object: bootstrapGCPMachine,
