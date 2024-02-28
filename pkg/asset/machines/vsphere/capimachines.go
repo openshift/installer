@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/utils"
 )
 
 const (
@@ -69,8 +70,9 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 
 	capvMachines := make([]*capv.VSphereMachine, 0, len(machines))
 	result := make([]*asset.RuntimeFile, 0, len(machines))
+	staticIP := false
 
-	for _, machine := range machines {
+	for mIndex, machine := range machines {
 		providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1.VSphereMachineProviderSpec)
 		if !ok {
 			return nil, errors.New("unable to convert ProviderSpec to VSphereMachineProviderSpec")
@@ -79,22 +81,33 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 		vcenterContext := metadata.VCenterContexts[providerSpec.Workspace.Server]
 		resourcePool := providerSpec.Workspace.ResourcePool
 
+		customVMXKeys := map[string]string{
+			"guestinfo.hostname": machine.Name,
+			"guestinfo.domain":   strings.TrimSuffix(config.ClusterDomain(), "."),
+			"stealclock.enable":  "TRUE",
+		}
+
 		capvNetworkDevices := []capv.NetworkDeviceSpec{}
 		for _, networkDevice := range providerSpec.Network.Devices {
 			networkName, err := getNetworkInventoryPath(vcenterContext, networkDevice.NetworkName, providerSpec)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get network inventory path: %w", err)
 			}
-			capvNetworkDevices = append(capvNetworkDevices, capv.NetworkDeviceSpec{
+			deviceSpec := capv.NetworkDeviceSpec{
 				NetworkName: networkName,
 				DHCP4:       true,
-			})
-		}
+			}
 
-		customVMXKeys := map[string]string{
-			"guestinfo.hostname": machine.Name,
-			"guestinfo.domain":   strings.TrimSuffix(config.ClusterDomain(), "."),
-			"stealclock.enable":  "TRUE",
+			// Static IP configured.  Add kargs.
+			if len(networkDevice.AddressesFromPools) > 0 {
+				staticIP = true
+				kargs, err := utils.ConstructNetworkKargsFromMachine(data.IPClaims, data.IPAddresses, &machines[mIndex], networkDevice)
+				if err != nil {
+					return nil, fmt.Errorf("unable to get static ip config for machine %v: %w", machine.Name, err)
+				}
+				customVMXKeys["guestinfo.afterburn.initrd.network-kargs"] = kargs
+			}
+			capvNetworkDevices = append(capvNetworkDevices, deviceSpec)
 		}
 
 		vsphereMachine := &capv.VSphereMachine{
@@ -165,6 +178,15 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 	// as part of provisioning control plane nodes, we need to create a bootstrap node as well
 	if role == masterRole {
 		customVMXKeys := map[string]string{}
+
+		// If we detected static IP for masters, lets apply to bootstrap as well.
+		if staticIP {
+			kargs, err := utils.ConstructKargsForBootstrap(config)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get static ip config for bootstrap: %w", err)
+			}
+			customVMXKeys["guestinfo.afterburn.initrd.network-kargs"] = kargs
+		}
 
 		bootstrapSpec := capvMachines[0].Spec
 		bootstrapSpec.CustomVMXKeys = customVMXKeys

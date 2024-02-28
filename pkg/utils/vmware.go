@@ -9,48 +9,27 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 )
 
-func getIPAddressForClaim(claim v1alpha1.IPAddressClaim, addresses []v1alpha1.IPAddress) (*v1alpha1.IPAddress, error) {
-	for _, address := range addresses {
-		if address.Name == claim.Status.AddressRef.Name {
-			return &address, nil
-		}
-	}
-	return nil, fmt.Errorf("unable to find address for claim %s", claim.Name)
-}
-
 // ConstructNetworkKargsFromMachine does something.
-func ConstructNetworkKargsFromMachine(claims []v1alpha1.IPAddressClaim, addresses []v1alpha1.IPAddress, machine *machinev1beta1.Machine) (string, error) {
-	var addressList []string
-	var gatewayList []string
-	var nameserverList []string
-
-	for _, claim := range claims {
-		for _, ownerReference := range claim.OwnerReferences {
-			if ownerReference.Name != machine.Name {
-				continue
-			}
-			address, err := getIPAddressForClaim(claim, addresses)
-			if err != nil {
-				return "", fmt.Errorf("unable to get address for claim %s: %w", claim.Name, err)
-			}
-
-			addressList = append(addressList, fmt.Sprintf("%s/%d", address.Spec.Address, address.Spec.Prefix))
-			gatewayList = append(gatewayList, address.Spec.Gateway)
-			for _, networkDevices := range machine.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec).Network.Devices {
-				if networkDevices.Nameservers == nil {
-					continue
-				}
-				nameserverList = append(nameserverList, networkDevices.Nameservers...)
+func ConstructNetworkKargsFromMachine(claims []ipamv1.IPAddressClaim, addresses []ipamv1.IPAddress, machine *machinev1beta1.Machine, network machinev1beta1.NetworkDeviceSpec) (string, error) {
+	var ipAddresses []string
+	var gateways []string
+	for idx := range network.AddressesFromPools {
+		for _, address := range addresses {
+			logrus.Debugf("Checking IPAdress %v.  Does it match? %v", address.Name, fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx))
+			if address.Name == fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx) {
+				ipAddresses = append(ipAddresses, fmt.Sprintf("%v/%v", address.Spec.Address, address.Spec.Prefix))
+				gateways = append(gateways, address.Spec.Gateway)
+				break
 			}
 		}
 	}
-	return ConstructKargsFromNetworkConfig(addressList, nameserverList, gatewayList)
+	return ConstructKargsFromNetworkConfig(ipAddresses, network.Nameservers, gateways)
 }
 
 func getSubnetMask(prefix netip.Prefix) (string, error) {
