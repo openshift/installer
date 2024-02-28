@@ -185,7 +185,8 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 		if err != nil {
 			return err
 		}
-		ci.ControlPlanePortNetwork, err = ci.getNetwork(controlPlanePort.Network.Name, controlPlanePort.Network.ID)
+
+		ci.ControlPlanePortNetwork, err = ci.getNetwork(controlPlanePort)
 		if err != nil {
 			return err
 		}
@@ -317,10 +318,18 @@ func (ci *CloudInfo) getNetworkByName(networkName string) (*networks.Network, er
 	return network, nil
 }
 
-func (ci *CloudInfo) getNetwork(networkName, networkID string) (*networks.Network, error) {
-	opts := networks.ListOpts{
-		ID:   networkID,
-		Name: networkName,
+func (ci *CloudInfo) getNetwork(controlPlanePort *openstack.PortTarget) (*networks.Network, error) {
+	networkName := controlPlanePort.Network.Name
+	networkID := controlPlanePort.Network.ID
+	if networkName == "" && networkID == "" {
+		return nil, nil
+	}
+	opts := networks.ListOpts{}
+	if networkID != "" {
+		opts.ID = controlPlanePort.Network.ID
+	}
+	if networkName != "" {
+		opts.Name = controlPlanePort.Network.Name
 	}
 	allPages, err := networks.List(ci.clients.networkClient, opts).AllPages()
 	if err != nil {
