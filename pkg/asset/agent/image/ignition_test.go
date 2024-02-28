@@ -21,8 +21,10 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
@@ -86,7 +88,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso")
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso")
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -587,6 +589,9 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	assert.NoError(t, err)
 
 	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+		&joiner.ClusterInfo{},
+		&joiner.AddNodesConfig{},
 		&manifests.AgentManifests{
 			InfraEnv: &aiv1beta1.InfraEnv{
 				Spec: aiv1beta1.InfraEnvSpec{
