@@ -16,6 +16,12 @@ limitations under the License.
 
 package mock
 
+import (
+	// Runtime dependency of mockgen, required when using vendoring so go mod knows
+	// to pull it in.
+	_ "github.com/golang/mock/mockgen/model"
+)
+
 //go:generate mockgen -package mock -destination=compute.go sigs.k8s.io/cluster-api-provider-openstack/pkg/clients ComputeClient
 //go:generate /usr/bin/env bash -c "cat ../../../hack/boilerplate/boilerplate.generatego.txt compute.go > _compute.go && mv _compute.go compute.go"
 

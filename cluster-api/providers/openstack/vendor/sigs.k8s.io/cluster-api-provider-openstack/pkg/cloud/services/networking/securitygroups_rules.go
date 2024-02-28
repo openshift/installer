@@ -16,11 +16,7 @@ limitations under the License.
 
 package networking
 
-import (
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
-)
-
-var defaultRules = []infrav1.SecurityGroupRule{
+var defaultRules = []resolvedSecurityGroupRuleSpec{
 	{
 		Direction:      "egress",
 		Description:    "Full open",
@@ -42,8 +38,8 @@ var defaultRules = []infrav1.SecurityGroupRule{
 }
 
 // Permit traffic for etcd, kubelet.
-func getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "Etcd",
 			Direction:     "ingress",
@@ -76,47 +72,9 @@ func getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID string) []infra
 	}
 }
 
-// Permit traffic for calico.
-func getSGControlPlaneCalico(remoteGroupIDSelf, secWorkerGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
-		{
-			Description:   "BGP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			PortRangeMin:  179,
-			PortRangeMax:  179,
-			Protocol:      "tcp",
-			RemoteGroupID: remoteGroupIDSelf,
-		},
-		{
-			Description:   "BGP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			PortRangeMin:  179,
-			PortRangeMax:  179,
-			Protocol:      "tcp",
-			RemoteGroupID: secWorkerGroupID,
-		},
-		{
-			Description:   "IP-in-IP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			Protocol:      "4",
-			RemoteGroupID: remoteGroupIDSelf,
-		},
-		{
-			Description:   "IP-in-IP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			Protocol:      "4",
-			RemoteGroupID: secWorkerGroupID,
-		},
-	}
-}
-
 // Permit traffic for kubelet.
-func getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			// This is needed to support metrics-server deployments
 			Description:   "Kubelet API",
@@ -139,47 +97,9 @@ func getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID string) []infra
 	}
 }
 
-// Permit traffic for calico.
-func getSGWorkerCalico(remoteGroupIDSelf, secControlPlaneGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
-		{
-			Description:   "BGP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			PortRangeMin:  179,
-			PortRangeMax:  179,
-			Protocol:      "tcp",
-			RemoteGroupID: remoteGroupIDSelf,
-		},
-		{
-			Description:   "BGP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			PortRangeMin:  179,
-			PortRangeMax:  179,
-			Protocol:      "tcp",
-			RemoteGroupID: secControlPlaneGroupID,
-		},
-		{
-			Description:   "IP-in-IP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			Protocol:      "4",
-			RemoteGroupID: remoteGroupIDSelf,
-		},
-		{
-			Description:   "IP-in-IP (calico)",
-			Direction:     "ingress",
-			EtherType:     "IPv4",
-			Protocol:      "4",
-			RemoteGroupID: secControlPlaneGroupID,
-		},
-	}
-}
-
 // Permit traffic for ssh control plane.
-func GetSGControlPlaneSSH(secBastionGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGControlPlaneSSH(secBastionGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "SSH",
 			Direction:     "ingress",
@@ -193,8 +113,8 @@ func GetSGControlPlaneSSH(secBastionGroupID string) []infrav1.SecurityGroupRule 
 }
 
 // Permit traffic for ssh worker.
-func GetSGWorkerSSH(secBastionGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGWorkerSSH(secBastionGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "SSH",
 			Direction:     "ingress",
@@ -208,8 +128,8 @@ func GetSGWorkerSSH(secBastionGroupID string) []infrav1.SecurityGroupRule {
 }
 
 // Allow all traffic, including from outside the cluster, to access the API.
-func GetSGControlPlaneHTTPS() []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGControlPlaneHTTPS() []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:  "Kubernetes API",
 			Direction:    "ingress",
@@ -222,8 +142,8 @@ func GetSGControlPlaneHTTPS() []infrav1.SecurityGroupRule {
 }
 
 // Allow all traffic, including from outside the cluster, to access node port services.
-func GetSGWorkerNodePort() []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGWorkerNodePort() []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:  "Node Port Services",
 			Direction:    "ingress",
@@ -244,8 +164,8 @@ func GetSGWorkerNodePort() []infrav1.SecurityGroupRule {
 }
 
 // Permit all ingress from the cluster security groups.
-func GetSGControlPlaneAllowAll(remoteGroupIDSelf, secWorkerGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGControlPlaneAllowAll(remoteGroupIDSelf, secWorkerGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "In-cluster Ingress",
 			Direction:     "ingress",
@@ -268,8 +188,8 @@ func GetSGControlPlaneAllowAll(remoteGroupIDSelf, secWorkerGroupID string) []inf
 }
 
 // Permit all ingress from the cluster security groups.
-func GetSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []infrav1.SecurityGroupRule {
-	return []infrav1.SecurityGroupRule{
+func getSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
+	return []resolvedSecurityGroupRuleSpec{
 		{
 			Description:   "In-cluster Ingress",
 			Direction:     "ingress",
@@ -292,43 +212,33 @@ func GetSGWorkerAllowAll(remoteGroupIDSelf, secControlPlaneGroupID string) []inf
 }
 
 // Permit ports that defined in openStackCluster.Spec.APIServerLoadBalancer.AdditionalPorts.
-func GetSGControlPlaneAdditionalPorts(ports []int) []infrav1.SecurityGroupRule {
-	controlPlaneRules := []infrav1.SecurityGroupRule{}
+func getSGControlPlaneAdditionalPorts(ports []int) []resolvedSecurityGroupRuleSpec {
+	controlPlaneRules := []resolvedSecurityGroupRuleSpec{}
 
-	r := []infrav1.SecurityGroupRule{
+	r := []resolvedSecurityGroupRuleSpec{
 		{
 			Description: "Additional ports",
 			Direction:   "ingress",
 			EtherType:   "IPv4",
 			Protocol:    "tcp",
 		},
-		{
-			Description: "Additional ports",
-			Direction:   "ingress",
-			EtherType:   "IPv4",
-			Protocol:    "udp",
-		},
 	}
-	for _, p := range ports {
-		r[0].PortRangeMin = p
-		r[0].PortRangeMax = p
-		r[1].PortRangeMin = p
-		r[1].PortRangeMax = p
+	for i, p := range ports {
+		r[i].PortRangeMin = p
+		r[i].PortRangeMax = p
 		controlPlaneRules = append(controlPlaneRules, r...)
 	}
 	return controlPlaneRules
 }
 
-func GetSGControlPlaneGeneral(remoteGroupIDSelf, secWorkerGroupID string) []infrav1.SecurityGroupRule {
-	controlPlaneRules := []infrav1.SecurityGroupRule{}
+func getSGControlPlaneGeneral(remoteGroupIDSelf, secWorkerGroupID string) []resolvedSecurityGroupRuleSpec {
+	controlPlaneRules := []resolvedSecurityGroupRuleSpec{}
 	controlPlaneRules = append(controlPlaneRules, getSGControlPlaneCommon(remoteGroupIDSelf, secWorkerGroupID)...)
-	controlPlaneRules = append(controlPlaneRules, getSGControlPlaneCalico(remoteGroupIDSelf, secWorkerGroupID)...)
 	return controlPlaneRules
 }
 
-func GetSGWorkerGeneral(remoteGroupIDSelf, secControlPlaneGroupID string) []infrav1.SecurityGroupRule {
-	workerRules := []infrav1.SecurityGroupRule{}
+func getSGWorkerGeneral(remoteGroupIDSelf, secControlPlaneGroupID string) []resolvedSecurityGroupRuleSpec {
+	workerRules := []resolvedSecurityGroupRuleSpec{}
 	workerRules = append(workerRules, getSGWorkerCommon(remoteGroupIDSelf, secControlPlaneGroupID)...)
-	workerRules = append(workerRules, getSGWorkerCalico(remoteGroupIDSelf, secControlPlaneGroupID)...)
 	return workerRules
 }

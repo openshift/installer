@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Kubernetes Authors.
+Copyright 2023 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	attachinterfaces "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/attachinterfaces"
 	availabilityzones "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/availabilityzones"
+	servergroups "github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
 	flavors "github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	servers "github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	clients "sigs.k8s.io/cluster-api-provider-openstack/pkg/clients"
@@ -155,6 +156,21 @@ func (m *MockComputeClient) ListAvailabilityZones() ([]availabilityzones.Availab
 func (mr *MockComputeClientMockRecorder) ListAvailabilityZones() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAvailabilityZones", reflect.TypeOf((*MockComputeClient)(nil).ListAvailabilityZones))
+}
+
+// ListServerGroups mocks base method.
+func (m *MockComputeClient) ListServerGroups() ([]servergroups.ServerGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServerGroups")
+	ret0, _ := ret[0].([]servergroups.ServerGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServerGroups indicates an expected call of ListServerGroups.
+func (mr *MockComputeClientMockRecorder) ListServerGroups() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServerGroups", reflect.TypeOf((*MockComputeClient)(nil).ListServerGroups))
 }
 
 // ListServers mocks base method.
