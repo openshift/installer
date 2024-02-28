@@ -80,8 +80,7 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 	installConfig := &agent.OptionalInstallConfig{}
 	dependencies.Get(agentHosts, installConfig, agentWorkflow, clusterInfo)
 
-	// Temporary skip in case of add nodes workflow. Main input for this
-	// asset will be retrieved from the nodes-config.yaml asset
+	// Not required for the add nodes workflow.
 	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
 		return nil
 	}
