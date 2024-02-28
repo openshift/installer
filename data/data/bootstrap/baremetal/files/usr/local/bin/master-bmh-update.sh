@@ -24,10 +24,10 @@ done
 # Shut down ironic containers so that the API VIP can fail over to the control
 # plane.
 echo "Stopping provisioning services..."
-systemctl stop ironic.service
-
-echo "Wait for control plane to fail over"
-sleep 30
+systemctl --no-block stop ironic.service
+while systemctl is-active metal3-baremetal-operator.service; do
+    sleep 10
+done
 
 echo "Unpause all baremetal hosts"
 oc annotate --overwrite -n openshift-machine-api baremetalhosts --all "baremetalhost.metal3.io/paused-"
