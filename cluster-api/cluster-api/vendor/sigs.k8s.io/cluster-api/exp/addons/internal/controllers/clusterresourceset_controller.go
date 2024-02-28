@@ -166,7 +166,9 @@ func (r *ClusterResourceSetReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	// Requeue if ErrClusterLocked was returned for one of the clusters.
 	if errClusterLockedOccurred {
-		return ctrl.Result{Requeue: true}, nil
+		// Requeue after a minute to not end up in exponential delayed requeue which
+		// could take up to 16m40s.
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -196,7 +198,12 @@ func (r *ClusterResourceSetReconciler) reconcileDelete(ctx context.Context, clus
 			return err
 		}
 
-		clusterResourceSetBinding.DeleteBinding(crs)
+		clusterResourceSetBinding.RemoveBinding(crs)
+		clusterResourceSetBinding.OwnerReferences = util.RemoveOwnerRef(clusterResourceSetBinding.GetOwnerReferences(), metav1.OwnerReference{
+			APIVersion: crs.APIVersion,
+			Kind:       crs.Kind,
+			Name:       crs.Name,
+		})
 
 		// If CRS list is empty in the binding, delete the binding else
 		// attempt to Patch the ClusterResourceSetBinding object after delete reconciliation if there is at least 1 binding left.

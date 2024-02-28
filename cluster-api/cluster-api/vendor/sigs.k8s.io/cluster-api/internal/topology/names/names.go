@@ -76,6 +76,16 @@ func MachineDeploymentNameGenerator(templateString, clusterName, topologyName st
 		})
 }
 
+// MachinePoolNameGenerator returns a generator for creating a machinepool name.
+func MachinePoolNameGenerator(templateString, clusterName, topologyName string) NameGenerator {
+	return newTemplateGenerator(templateString, clusterName,
+		map[string]interface{}{
+			"machinePool": map[string]interface{}{
+				"topologyName": topologyName,
+			},
+		})
+}
+
 // templateGenerator parses the template string as text/template and executes it using
 // the passed data to generate a name.
 type templateGenerator struct {

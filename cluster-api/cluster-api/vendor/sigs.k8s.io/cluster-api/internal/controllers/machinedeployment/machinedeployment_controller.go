@@ -164,7 +164,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 
 	err = r.reconcile(ctx, cluster, deployment)
 	if err != nil {
-		log.Error(err, "Failed to reconcile MachineDeployment")
 		r.recorder.Eventf(deployment, corev1.EventTypeWarning, "ReconcileError", "%v", err)
 	}
 	return ctrl.Result{}, err
@@ -362,8 +361,8 @@ func (r *Reconciler) getMachineDeploymentsForMachineSet(ctx context.Context, ms 
 	}
 
 	deployments := make([]*clusterv1.MachineDeployment, 0, len(dList.Items))
-	for idx, d := range dList.Items {
-		selector, err := metav1.LabelSelectorAsSelector(&d.Spec.Selector)
+	for idx := range dList.Items {
+		selector, err := metav1.LabelSelectorAsSelector(&dList.Items[idx].Spec.Selector)
 		if err != nil {
 			continue
 		}

@@ -270,6 +270,7 @@ func (md *MachineDeploymentStatus) GetTypedPhase() MachineDeploymentPhase {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=machinedeployments,shortName=md,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -305,7 +306,7 @@ type MachineDeploymentList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&MachineDeployment{}, &MachineDeploymentList{})
+	objectTypes = append(objectTypes, &MachineDeployment{}, &MachineDeploymentList{})
 }
 
 // GetConditions returns the set of conditions for the machinedeployment.

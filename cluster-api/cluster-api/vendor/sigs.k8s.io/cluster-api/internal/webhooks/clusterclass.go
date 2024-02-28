@@ -79,6 +79,12 @@ func (webhook *ClusterClass) Default(_ context.Context, obj runtime.Object) erro
 		defaultNamespace(in.Spec.Workers.MachineDeployments[i].Template.Bootstrap.Ref, in.Namespace)
 		defaultNamespace(in.Spec.Workers.MachineDeployments[i].Template.Infrastructure.Ref, in.Namespace)
 	}
+
+	for i := range in.Spec.Workers.MachinePools {
+		defaultNamespace(in.Spec.Workers.MachinePools[i].Template.Bootstrap.Ref, in.Namespace)
+		defaultNamespace(in.Spec.Workers.MachinePools[i].Template.Infrastructure.Ref, in.Namespace)
+	}
+
 	return nil
 }
 
@@ -147,6 +153,9 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 	// Ensure all MachineDeployment classes are unique.
 	allErrs = append(allErrs, check.MachineDeploymentClassesAreUnique(newClusterClass)...)
 
+	// Ensure all MachinePool classes are unique.
+	allErrs = append(allErrs, check.MachinePoolClassesAreUnique(newClusterClass)...)
+
 	// Ensure MachineHealthChecks are valid.
 	allErrs = append(allErrs, validateMachineHealthCheckClasses(newClusterClass)...)
 
@@ -160,6 +169,9 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 
 	// Validate patches.
 	allErrs = append(allErrs, validatePatches(newClusterClass)...)
+
+	// Validate metadata
+	allErrs = append(allErrs, validateClusterClassMetadata(newClusterClass)...)
 
 	// If this is an update run additional validation.
 	if oldClusterClass != nil {
@@ -177,6 +189,10 @@ func (webhook *ClusterClass) validate(ctx context.Context, oldClusterClass, newC
 		// Ensure no MachineDeploymentClass currently in use has been removed from the ClusterClass.
 		allErrs = append(allErrs,
 			webhook.validateRemovedMachineDeploymentClassesAreNotUsed(clusters, oldClusterClass, newClusterClass)...)
+
+		// Ensure no MachinePoolClass currently in use has been removed from the ClusterClass.
+		allErrs = append(allErrs,
+			webhook.validateRemovedMachinePoolClassesAreNotUsed(clusters, oldClusterClass, newClusterClass)...)
 
 		// Ensure no MachineHealthCheck currently in use has been removed from the ClusterClass.
 		allErrs = append(allErrs,
@@ -258,7 +274,7 @@ func validateUpdatesToMachineHealthCheckClasses(clusters []clusterv1.Cluster, ol
 func (webhook *ClusterClass) validateRemovedMachineDeploymentClassesAreNotUsed(clusters []clusterv1.Cluster, oldClusterClass, newClusterClass *clusterv1.ClusterClass) field.ErrorList {
 	var allErrs field.ErrorList
 
-	removedClasses := webhook.removedMachineClasses(oldClusterClass, newClusterClass)
+	removedClasses := webhook.removedMachineDeploymentClasses(oldClusterClass, newClusterClass)
 	// If no classes have been removed return early as no further checks are needed.
 	if len(removedClasses) == 0 {
 		return nil
@@ -279,22 +295,67 @@ func (webhook *ClusterClass) validateRemovedMachineDeploymentClassesAreNotUsed(c
 	return allErrs
 }
 
-func (webhook *ClusterClass) removedMachineClasses(oldClusterClass, newClusterClass *clusterv1.ClusterClass) sets.Set[string] {
+func (webhook *ClusterClass) validateRemovedMachinePoolClassesAreNotUsed(clusters []clusterv1.Cluster, oldClusterClass, newClusterClass *clusterv1.ClusterClass) field.ErrorList {
+	var allErrs field.ErrorList
+
+	removedClasses := webhook.removedMachinePoolClasses(oldClusterClass, newClusterClass)
+	// If no classes have been removed return early as no further checks are needed.
+	if len(removedClasses) == 0 {
+		return nil
+	}
+	// Error if any Cluster using the ClusterClass uses a MachinePoolClass that has been removed.
+	for _, c := range clusters {
+		for _, machinePoolTopology := range c.Spec.Topology.Workers.MachinePools {
+			if removedClasses.Has(machinePoolTopology.Class) {
+				// TODO(killianmuldoon): Improve error printing here so large scale changes don't flood the error log e.g. deduplication, only example usages given.
+				// TODO: consider if we get the index of the MachinePoolClass being deleted
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "workers", "machinePools"),
+					fmt.Sprintf("MachinePoolClass %q cannot be deleted because it is used by Cluster %q",
+						machinePoolTopology.Class, c.Name),
+				))
+			}
+		}
+	}
+	return allErrs
+}
+
+func (webhook *ClusterClass) removedMachineDeploymentClasses(oldClusterClass, newClusterClass *clusterv1.ClusterClass) sets.Set[string] {
 	removedClasses := sets.Set[string]{}
 
-	classes := webhook.classNamesFromWorkerClass(newClusterClass.Spec.Workers)
+	mdClasses := webhook.classNamesFromMDWorkerClass(newClusterClass.Spec.Workers)
 	for _, oldClass := range oldClusterClass.Spec.Workers.MachineDeployments {
-		if !classes.Has(oldClass.Class) {
+		if !mdClasses.Has(oldClass.Class) {
 			removedClasses.Insert(oldClass.Class)
 		}
 	}
 	return removedClasses
 }
 
-// classNamesFromWorkerClass returns the set of MachineDeployment class names.
-func (webhook *ClusterClass) classNamesFromWorkerClass(w clusterv1.WorkersClass) sets.Set[string] {
+func (webhook *ClusterClass) removedMachinePoolClasses(oldClusterClass, newClusterClass *clusterv1.ClusterClass) sets.Set[string] {
+	removedClasses := sets.Set[string]{}
+
+	mpClasses := webhook.classNamesFromMPWorkerClass(newClusterClass.Spec.Workers)
+	for _, oldClass := range oldClusterClass.Spec.Workers.MachinePools {
+		if !mpClasses.Has(oldClass.Class) {
+			removedClasses.Insert(oldClass.Class)
+		}
+	}
+	return removedClasses
+}
+
+// classNamesFromMDWorkerClass returns the set of MachineDeployment class names.
+func (webhook *ClusterClass) classNamesFromMDWorkerClass(w clusterv1.WorkersClass) sets.Set[string] {
 	classes := sets.Set[string]{}
 	for _, class := range w.MachineDeployments {
+		classes.Insert(class.Class)
+	}
+	return classes
+}
+
+// classNamesFromMPWorkerClass returns the set of MachinePool class names.
+func (webhook *ClusterClass) classNamesFromMPWorkerClass(w clusterv1.WorkersClass) sets.Set[string] {
+	classes := sets.Set[string]{}
+	for _, class := range w.MachinePools {
 		classes.Insert(class.Class)
 	}
 	return classes
@@ -394,6 +455,26 @@ func validateNamingStrategies(clusterClass *clusterv1.ClusterClass) field.ErrorL
 		}
 	}
 
+	for i, mp := range clusterClass.Spec.Workers.MachinePools {
+		if mp.NamingStrategy == nil || mp.NamingStrategy.Template == nil {
+			continue
+		}
+		name, err := names.MachinePoolNameGenerator(*mp.NamingStrategy.Template, "cluster", "mptopology").GenerateName()
+		templateFldPath := field.NewPath("spec", "workers", "machinePools").Index(i).Child("namingStrategy", "template")
+		if err != nil {
+			allErrs = append(allErrs,
+				field.Invalid(
+					templateFldPath,
+					*mp.NamingStrategy.Template,
+					fmt.Sprintf("invalid MachinePool name template: %v", err),
+				))
+		} else {
+			for _, err := range validation.IsDNS1123Subdomain(name) {
+				allErrs = append(allErrs, field.Invalid(templateFldPath, *mp.NamingStrategy.Template, err))
+			}
+		}
+	}
+
 	return allErrs
 }
 
@@ -411,5 +492,17 @@ func validateMachineHealthCheckClass(fldPath *field.Path, namepace string, m *cl
 			RemediationTemplate: m.RemediationTemplate,
 		}}
 
-	return mhc.ValidateCommonFields(fldPath)
+	return (&MachineHealthCheck{}).validateCommonFields(&mhc, fldPath)
+}
+
+func validateClusterClassMetadata(clusterClass *clusterv1.ClusterClass) field.ErrorList {
+	var allErrs field.ErrorList
+	allErrs = append(allErrs, clusterClass.Spec.ControlPlane.Metadata.Validate(field.NewPath("spec", "controlPlane", "metadata"))...)
+	for idx, m := range clusterClass.Spec.Workers.MachineDeployments {
+		allErrs = append(allErrs, m.Template.Metadata.Validate(field.NewPath("spec", "workers", "machineDeployments").Index(idx).Child("template", "metadata"))...)
+	}
+	for idx, m := range clusterClass.Spec.Workers.MachinePools {
+		allErrs = append(allErrs, m.Template.Metadata.Validate(field.NewPath("spec", "workers", "machinePools").Index(idx).Child("template", "metadata"))...)
+	}
+	return allErrs
 }

@@ -20,6 +20,7 @@ aliases:
   # non-admin folks who have write-access and can approve any PRs in the repo
   cluster-api-maintainers:
   - CecileRobertMichon
+  - chrischdi
   - enxebre
   - fabriziopandini
   - killianmuldoon
@@ -40,7 +41,6 @@ aliases:
 
   cluster-api-topology-maintainers:
   cluster-api-topology-reviewers:
-  - chrischdi
 
   # -----------------------------------------------------------
   # OWNER_ALIASES for bootstrap/kubeadm
@@ -83,7 +83,6 @@ aliases:
 
   cluster-api-test-maintainers:
   cluster-api-test-reviewers:
-  - chrischdi
   - elmiko
 
   # -----------------------------------------------------------
@@ -92,7 +91,6 @@ aliases:
 
   cluster-api-test-framework-maintainers:
   cluster-api-test-framework-reviewers:
-  - chrischdi
   - elmiko
 
   # -----------------------------------------------------------
@@ -101,7 +99,6 @@ aliases:
 
   cluster-api-provider-docker-maintainers:
   cluster-api-provider-docker-reviewers:
-  - chrischdi
   - elmiko
 
   # -----------------------------------------------------------
@@ -119,3 +116,29 @@ aliases:
   - oscr
   cluster-api-docs-reviewers:
   - elmiko
+
+  # -----------------------------------------------------------
+  # OWNER_ALIASES for v1.6 release-team
+  # -----------------------------------------------------------
+
+  cluster-api-release-lead:
+  - furkatgofurov7
+  
+  cluster-api-release-team:
+  # members added in commented lines have a pending membership
+  # and will be added back once it is acquired.
+  - adilGhaffarDev
+  - cahillsf
+  - chiukapoor
+  - furkatgofurov7 # release lead
+  - g-gaston # release comms manager
+  - hackeramitkumar
+  # - kranurag7
+  - mjlshen
+  - nawazkh # release ci manager
+  - nprokopic
+  - Prajyot-Parab
+  # - razashahid107
+  # - Sunnatillo
+  - vincepri
+  - willie-yao
