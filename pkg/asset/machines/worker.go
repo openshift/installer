@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -90,6 +91,8 @@ const (
 var (
 	workerMachineSetFileNamePattern = fmt.Sprintf(workerMachineSetFileName, "*")
 	workerMachineFileNamePattern    = fmt.Sprintf(workerMachineFileName, "*")
+	workerIPClaimFileNamePattern    = fmt.Sprintf(ipClaimFileName, "*worker*")
+	workerIPAddressFileNamePattern  = fmt.Sprintf(ipAddressFileName, "*worker*")
 
 	_ asset.WritableAsset = (*Worker)(nil)
 )
@@ -239,6 +242,8 @@ type Worker struct {
 	MachineConfigFiles []*asset.File
 	MachineSetFiles    []*asset.File
 	MachineFiles       []*asset.File
+	IPClaimFiles       []*asset.File
+	IPAddrFiles        []*asset.File
 }
 
 // Name returns a human friendly name for the Worker Asset.
@@ -277,6 +282,8 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	machines := []machinev1beta1.Machine{}
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
+	var ipClaims []ipamv1.IPAddressClaim
+	var ipAddrs []ipamv1.IPAddress
 	var err error
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {
@@ -604,10 +611,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				logrus.Debug("Generating worker machines with static IPs.")
 				templateName := clusterID.InfraID + "-rhcos"
 
-				machines, _, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+				data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
 				if err != nil {
 					return errors.Wrap(err, "failed to create worker machine objects")
 				}
+
+				machines = data.Machines
+				ipClaims = data.IPClaims
+				ipAddrs = data.IPAddresses
+
 				logrus.Debugf("Generated %v worker machines.", len(machines))
 
 				for _, ms := range sets {
@@ -693,6 +705,31 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	w.IPClaimFiles = make([]*asset.File, len(ipClaims))
+	for i, claim := range ipClaims {
+		data, err := yaml.Marshal(claim)
+		if err != nil {
+			return errors.Wrapf(err, "marshal ip claim %v", claim.Name)
+		}
+
+		w.IPClaimFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(ipClaimFileName, claim.Name)),
+			Data:     data,
+		}
+	}
+
+	w.IPAddrFiles = make([]*asset.File, len(ipAddrs))
+	for i, address := range ipAddrs {
+		data, err := yaml.Marshal(address)
+		if err != nil {
+			return errors.Wrapf(err, "marshal ip claim %v", address.Name)
+		}
+
+		w.IPAddrFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(ipAddressFileName, address.Name)),
+			Data:     data,
+		}
+	}
 	w.MachineFiles = make([]*asset.File, len(machines))
 	for i, machineDef := range machines {
 		data, err := yaml.Marshal(machineDef)
@@ -718,6 +755,8 @@ func (w *Worker) Files() []*asset.File {
 	files = append(files, w.MachineConfigFiles...)
 	files = append(files, w.MachineSetFiles...)
 	files = append(files, w.MachineFiles...)
+	files = append(files, w.IPClaimFiles...)
+	files = append(files, w.IPAddrFiles...)
 	return files
 }
 
@@ -749,6 +788,18 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	w.MachineFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerIPClaimFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.IPClaimFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerIPAddressFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.IPAddrFiles = fileList
 
 	return true, nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1alpha1"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -169,6 +169,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 		}
 	}
 
+	// Generate control plane kargs using info from machine network config
 	// Current logic assumes only 1 network defined per machine
 	for index, machine := range sources.ControlPlaneMachines {
 		logrus.Infof("Generating kargs for control plane %v.", machine.Name)
