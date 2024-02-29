@@ -38,7 +38,7 @@ baseDomain: test-domain
 platform:
   aws:
     region: us-east-1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none", "external"`,
@@ -84,7 +84,7 @@ platform:
         bootMACAddress: 52:54:01:bb:bb:b1
       - name: host3
         bootMACAddress: 52:54:01:cc:cc:c1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
@@ -105,7 +105,7 @@ platform:
     password: testpassword
     datacenter: testDatacenter
     defaultDatastore: testDatastore
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
@@ -139,7 +139,7 @@ platform:
         folder: "/testDatacenter/vm/testFolder"
         networks:
         - testNetwork
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
@@ -186,7 +186,7 @@ platform:
         folder: "/testDatacenter2/vm/testFolder"
         networks:
         - testNetwork2
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [platform.vsphere.failureDomains.server: Invalid value: "diff1.vcenter.com": server does not exist in vcenters, platform.vsphere.failureDomains.server: Invalid value: "diff2.vcenter.com": server does not exist in vcenters]`,
@@ -205,7 +205,7 @@ platform:
     ingressVips:
       - 192.168.122.11
     vCenter: test.vcenter.com
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [Platform.VSphere.username: Required value: All credential fields are required if any one is specified, Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
@@ -226,7 +226,7 @@ platform:
     vcenters:
     - server: test.vcenter.com
       user: testuser
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [Platform.VSphere.password: Required value: All credential fields are required if any one is specified, Platform.VSphere.datacenter: Required value: All credential fields are required if any one is specified, Platform.VSphere.failureDomains.topology.folder: Required value: must specify a folder for agent-based installs]`,
@@ -242,7 +242,7 @@ platform:
   vsphere:
     apiVips:
       - 192.168.122.10
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
@@ -264,7 +264,7 @@ controlPlane:
   replicas: 1
 platform:
   none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
@@ -293,7 +293,7 @@ controlPlane:
 platform:
   aws:
     region: us-east-1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
@@ -332,7 +332,7 @@ platform:
       bootMACAddress: 52:54:01:bb:bb:b1
     - name: host3
       bootMACAddress: 52:54:01:cc:cc:c1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"ppc64le\" only supports platform \"none\".",
@@ -371,7 +371,7 @@ platform:
       bootMACAddress: 52:54:01:bb:bb:b1
     - name: host3
       bootMACAddress: 52:54:01:cc:cc:c1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: Platform: Invalid value: \"baremetal\": CPU architecture \"s390x\" only supports platform \"none\".",
@@ -400,7 +400,7 @@ controlPlane:
 platform:
   external:
    platformName: some-cloud-provider
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -445,7 +445,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						CloudControllerManager: "",
 					},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
@@ -459,7 +459,7 @@ baseDomain: test-domain
 platform:
   external:
     platformName: oci
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: Platform.External.CloudControllerManager: Invalid value: "": When using external oci platform, Platform.External.CloudControllerManager must be set to External`,
@@ -487,7 +487,7 @@ controlPlane:
   replicas: 1
 platform:
   none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -527,7 +527,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					},
 				},
 				Platform:   types.Platform{None: &none.Platform{}},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
@@ -554,7 +554,7 @@ controlPlane:
   replicas: 3
 platform:
   none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -594,7 +594,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					},
 				},
 				Platform:   types.Platform{None: &none.Platform{}},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
@@ -656,7 +656,7 @@ platform:
         bootMACAddress: 52:54:01:dd:dd:d1
       - name: host5
         bootMACAddress: 52:54:01:ee:ee:e1
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -755,7 +755,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						BootstrapExternalStaticGateway: "gateway",
 					},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
@@ -799,7 +799,7 @@ platform:
     apiVIP: 192.168.122.10
     ingressVIPs: 
       - 192.168.122.11
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -873,7 +873,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						}},
 					},
 				},
-				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				PullSecret: `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
 				Publish:    types.ExternalPublishingStrategy,
 			},
 		},
@@ -908,7 +908,7 @@ platform:
       - 192.168.122.11
     apiVIPs:
       - 192.168.122.10
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: platform.baremetal.provisioningNetwork: Unsupported value: \"UNMANAGED\": supported values: \"Disabled\", \"Managed\", \"Unmanaged\"",
@@ -968,7 +968,7 @@ platform:
           username: "admin"
           password: "password"
           address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [Platform.BareMetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, Platform.BareMetal.hosts[2].BMC.Address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
