@@ -21,6 +21,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+const (
+	masterRole = "master"
+)
+
 // ProviderSpecFromRawExtension unmarshals the JSON-encoded spec.
 func ProviderSpecFromRawExtension(rawExtension *runtime.RawExtension) (*machinev1.VSphereMachineProviderSpec, error) {
 	if rawExtension == nil {
@@ -57,10 +61,11 @@ func getNetworkInventoryPath(vcenterContext vsphere.VCenterContext, networkName 
 
 // GenerateMachines returns a list of capi machines.
 func GenerateMachines(ctx context.Context, clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role string, metadata *vsphere.Metadata) ([]*asset.RuntimeFile, error) {
-	machines, _, err := Machines(clusterID, config, pool, osImage, role, "")
+	data, err := Machines(clusterID, config, pool, osImage, role, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve machines: %w", err)
 	}
+	machines := data.Machines
 
 	capvMachines := make([]*capv.VSphereMachine, 0, len(machines))
 	result := make([]*asset.RuntimeFile, 0, len(machines))
@@ -157,8 +162,8 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 		})
 	}
 
-	// as part of provisioning conrtol plane nodes, we need to create a bootstrap node as well
-	if role == "master" {
+	// as part of provisioning control plane nodes, we need to create a bootstrap node as well
+	if role == masterRole {
 		customVMXKeys := map[string]string{}
 
 		bootstrapSpec := capvMachines[0].Spec

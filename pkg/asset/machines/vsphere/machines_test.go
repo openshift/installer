@@ -413,7 +413,7 @@ func TestConfigMasters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, cpms, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
+			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
@@ -422,7 +422,7 @@ func TestConfigMasters(t *testing.T) {
 					matchCountByIndex = append(matchCountByIndex, 0)
 				}
 
-				for _, machine := range machines {
+				for _, machine := range data.Machines {
 					// check if expected workspaces are returned
 					machineWorkspace := machine.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec).Workspace
 					for idx, workspace := range tc.workspaces {
@@ -440,9 +440,9 @@ func TestConfigMasters(t *testing.T) {
 					}
 				}
 
-				if cpms != nil {
+				if data.ControlPlaneMachineSet != nil {
 					// Make sure FDs equal same quantity as config
-					fds := cpms.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains
+					fds := data.ControlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains
 					if len(fds.VSphere) != len(tc.workspaces) {
 						t.Errorf("machine workspace count %d does not equal number of failure domains [count: %d] in CPMS", len(tc.workspaces), len(fds.VSphere))
 					}
@@ -492,16 +492,26 @@ func TestHostsToMachines(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
-			machines, _, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
+			data, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
 			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			// Check machine counts
-			if len(machines) != tc.machineCount {
-				t.Errorf("machine count (%v) did not match expected (%v).", len(machines), tc.machineCount)
+			if len(data.Machines) != tc.machineCount {
+				t.Errorf("machine count (%v) did not match expected (%v).", len(data.Machines), tc.machineCount)
+			}
+
+			// Check Claim counts
+			if len(data.IPClaims) != tc.machineCount {
+				t.Errorf("ip address claim count (%v) did not match expected (%v).", len(data.IPClaims), tc.machineCount)
+			}
+
+			// Check ip address counts
+			if len(data.IPAddresses) != tc.machineCount {
+				t.Errorf("ip address count (%v) did not match expected (%v).", len(data.IPAddresses), tc.machineCount)
 			}
 
 			// Verify static IP was set on all machines
-			for _, machine := range machines {
+			for index, machine := range data.Machines {
 				provider, success := machine.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec)
 				if !success {
 					t.Errorf("Unable to convert vshere machine provider spec.")
@@ -509,8 +519,8 @@ func TestHostsToMachines(t *testing.T) {
 
 				if len(provider.Network.Devices) == 1 {
 					// Check IP
-					if provider.Network.Devices[0].IPAddrs == nil || provider.Network.Devices[0].IPAddrs[0] == "" {
-						t.Errorf("Static ip is not set: %v", machine)
+					if provider.Network.Devices[0].AddressesFromPools == nil {
+						t.Errorf("AddressesFromPools is not set: %v", machine)
 					}
 
 					// Check nameserver
@@ -518,7 +528,7 @@ func TestHostsToMachines(t *testing.T) {
 						t.Errorf("Nameserver is not set: %v", machine)
 					}
 
-					gateway := provider.Network.Devices[0].Gateway
+					gateway := data.IPAddresses[index].Spec.Gateway
 					ip, err := netip.ParseAddr(gateway)
 					if err != nil {
 						t.Error(err)

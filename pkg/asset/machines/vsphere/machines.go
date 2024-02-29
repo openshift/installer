@@ -4,12 +4,15 @@ package vsphere
 import (
 	"fmt"
 	"path"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -18,17 +21,25 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// MachineData contains all result output from the Machines() function.
+type MachineData struct {
+	Machines               []machineapi.Machine
+	ControlPlaneMachineSet *machinev1.ControlPlaneMachineSet
+	IPClaims               []ipamv1.IPAddressClaim
+	IPAddresses            []ipamv1.IPAddress
+}
+
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) (*MachineData, error) {
+	data := &MachineData{}
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {
-		return nil, nil, fmt.Errorf("non vsphere configuration: %q", configPlatform)
+		return data, fmt.Errorf("non vsphere configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != vsphere.Name {
-		return nil, nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
+		return data, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
 	}
 
 	var failureDomain vsphere.FailureDomain
-	var machines []machineapi.Machine
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
 	replicas := int32(1)
@@ -37,7 +48,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 	zones, err := getDefinedZonesFromTopology(platform)
 	if err != nil {
-		return machines, nil, err
+		return data, err
 	}
 
 	if pool.Replicas != nil {
@@ -73,7 +84,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		logrus.Debugf("Desired zone: %v", desiredZone)
 
 		if _, exists := zones[desiredZone]; !exists {
-			return nil, nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
+			return data, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
 		}
 
 		failureDomain = zones[desiredZone]
@@ -97,15 +108,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "unable to find vCenter in failure domains")
+			return data, errors.Wrap(err, "unable to find vCenter in failure domains")
 		}
 		provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImageForZone, userDataSecret)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to create provider")
+			return data, errors.Wrap(err, "failed to create provider")
 		}
-
-		// Apply static IP if configured
-		applyNetworkConfig(host, provider)
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -124,7 +132,16 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-		machines = append(machines, machine)
+
+		// Apply static IP if configured
+		claim, address, err := applyNetworkConfig(host, provider, machine)
+		if err != nil {
+			return data, err
+		} else if claim != nil && address != nil {
+			data.IPClaims = append(data.IPClaims, claim...)
+			data.IPAddresses = append(data.IPAddresses, address...)
+		}
+		data.Machines = append(data.Machines, machine)
 
 		vsphereMachineProvider = provider.DeepCopy()
 	}
@@ -153,7 +170,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 	}
 
-	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+	data.ControlPlaneMachineSet = &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
 			Kind:       "ControlPlaneMachineSet",
@@ -199,21 +216,100 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		},
 	}
 
-	return machines, controlPlaneMachineSet, nil
+	return data, nil
 }
 
 // applyNetworkConfig this function will apply the static ip configuration to the networkDevice
 // field in the provider spec.  The function will use the desired zone to determine which config
 // to apply and then remove that host config from the hosts array.
-func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec) {
+func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec, machine machineapi.Machine) ([]ipamv1.IPAddressClaim, []ipamv1.IPAddress, error) {
+	var ipClaims []ipamv1.IPAddressClaim
+	var ipAddrs []ipamv1.IPAddress
 	if host != nil {
 		networkDevice := host.NetworkDevice
 		if networkDevice != nil {
-			provider.Network.Devices[0].IPAddrs = networkDevice.IPAddrs
-			provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
-			provider.Network.Devices[0].Gateway = networkDevice.Gateway
+			for idx, address := range networkDevice.IPAddrs {
+				provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
+				provider.Network.Devices[0].AddressesFromPools = append(provider.Network.Devices[0].AddressesFromPools, machineapi.AddressesFromPool{
+					Group:    "installer.openshift.io",
+					Name:     fmt.Sprintf("default-%d", idx),
+					Resource: "IPPool",
+				},
+				)
+
+				// Generate the capi networking objects
+				slashIndex := strings.Index(address, "/")
+				ipAddress := address[0:slashIndex]
+				prefix, err := strconv.Atoi(address[slashIndex+1:])
+				if err != nil {
+					return nil, nil, errors.Wrap(err, "unable to determine address prefix")
+				}
+				ipClaim, ipAddr := generateCapiNetwork(machine.Name, ipAddress, networkDevice.Gateway, prefix, 0, idx)
+				ipClaims = append(ipClaims, *ipClaim)
+				ipAddrs = append(ipAddrs, *ipAddr)
+			}
 		}
 	}
+
+	return ipClaims, ipAddrs, nil
+}
+
+// generateCapiNetwork this function will create IPAddressClaim and IPAddress for the specified information.
+func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceIndex, ipIndex int) (*ipamv1.IPAddressClaim, *ipamv1.IPAddress) {
+	// Generate PoolRef
+	apigroup := "installer.openshift.io"
+	poolRef := corev1.TypedLocalObjectReference{
+		APIGroup: &apigroup,
+		Kind:     "IPPool",
+		Name:     fmt.Sprintf("default-%d", ipIndex),
+	}
+
+	// Generate IPAddressClaim
+	ipclaim := &ipamv1.IPAddressClaim{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "ipam.cluster.x-k8s.io/v1beta1",
+			Kind:       "IPAddressClaim",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{
+				machineapi.IPClaimProtectionFinalizer,
+			},
+			Name:      fmt.Sprintf("%s-claim-%d-%d", machineName, deviceIndex, ipIndex),
+			Namespace: "openshift-machine-api",
+		},
+		Spec: ipamv1.IPAddressClaimSpec{
+			PoolRef: poolRef,
+		},
+	}
+
+	// Populate IPAddress info
+	ipaddr := &ipamv1.IPAddress{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "ipam.cluster.x-k8s.io/v1beta1",
+			Kind:       "IPAddress",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-claim-%d-%d", machineName, deviceIndex, ipIndex),
+			Namespace: "openshift-machine-api",
+		},
+		Spec: ipamv1.IPAddressSpec{
+			Address: ipAddress,
+			ClaimRef: corev1.LocalObjectReference{
+				Name: ipclaim.Name,
+			},
+			Gateway: gateway,
+			PoolRef: poolRef,
+			Prefix:  prefix,
+		},
+	}
+
+	ipclaim.Status = ipamv1.IPAddressClaimStatus{
+		AddressRef: corev1.LocalObjectReference{
+			Name: ipaddr.Name,
+		},
+	}
+
+	return ipclaim, ipaddr
 }
 
 func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.FailureDomain, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {

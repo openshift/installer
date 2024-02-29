@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -70,6 +71,8 @@ type Master struct {
 	MachineConfigFiles     []*asset.File
 	MachineFiles           []*asset.File
 	ControlPlaneMachineSet *asset.File
+	IPClaimFiles           []*asset.File
+	IPAddrFiles            []*asset.File
 
 	// SecretFiles is used by the baremetal platform to register the
 	// credential information for communicating with management
@@ -109,8 +112,14 @@ const (
 	// user-data secret.
 	masterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
 
-	// masterUserDataFileName is the filename used for the control plane machine sets.
+	// controlPlaneMachineSetFileName is the filename used for the control plane machine sets.
 	controlPlaneMachineSetFileName = "99_openshift-machine-api_master-control-plane-machine-set.yaml"
+
+	// ipClaimFileName is the filename used for the ip claims list.
+	ipClaimFileName = "99_openshift-machine-api_claim-%s.yaml"
+
+	// ipAddressFileName is the filename used for the ip addresses list.
+	ipAddressFileName = "99_openshift-machine-api_address-%s.yaml"
 )
 
 var (
@@ -118,6 +127,8 @@ var (
 	networkConfigSecretFileNamePattern = fmt.Sprintf(networkConfigSecretFileName, "*")
 	hostFileNamePattern                = fmt.Sprintf(hostFileName, "*")
 	masterMachineFileNamePattern       = fmt.Sprintf(masterMachineFileName, "*")
+	masterIPClaimFileNamePattern       = fmt.Sprintf(ipClaimFileName, "*master*")
+	masterIPAddressFileNamePattern     = fmt.Sprintf(ipAddressFileName, "*master*")
 
 	_ asset.WritableAsset = (*Master)(nil)
 )
@@ -158,6 +169,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	pool := *ic.ControlPlane
 	var err error
 	machines := []machinev1beta1.Machine{}
+	var ipClaims []ipamv1.IPAddressClaim
+	var ipAddrs []ipamv1.IPAddress
 	var controlPlaneMachineSet *machinev1.ControlPlaneMachineSet
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -439,10 +452,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		pool.Platform.VSphere = &mpool
 		templateName := clusterID.InfraID + "-rhcos"
 
-		machines, controlPlaneMachineSet, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
+		data, err := vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+		machines = data.Machines
+		controlPlaneMachineSet = data.ControlPlaneMachineSet
+		ipClaims = data.IPClaims
+		ipAddrs = data.IPAddresses
 
 		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
 			controlPlaneMachineSet = nil
@@ -563,6 +580,33 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		}
 	}
+
+	m.IPClaimFiles = make([]*asset.File, len(ipClaims))
+	for i, claim := range ipClaims {
+		data, err := yaml.Marshal(claim)
+		if err != nil {
+			return errors.Wrapf(err, "unable to marshal ip claim %v", claim.Name)
+		}
+
+		m.IPClaimFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(ipClaimFileName, claim.Name)),
+			Data:     data,
+		}
+	}
+
+	m.IPAddrFiles = make([]*asset.File, len(ipAddrs))
+	for i, address := range ipAddrs {
+		data, err := yaml.Marshal(address)
+		if err != nil {
+			return errors.Wrapf(err, "unable to marshal ip claim %v", address.Name)
+		}
+
+		m.IPAddrFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(ipAddressFileName, address.Name)),
+			Data:     data,
+		}
+	}
+
 	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(machines))))
 	for i, machine := range machines {
 		data, err := yaml.Marshal(machine)
@@ -598,6 +642,8 @@ func (m *Master) Files() []*asset.File {
 	if m.ControlPlaneMachineSet != nil {
 		files = append(files, m.ControlPlaneMachineSet)
 	}
+	files = append(files, m.IPClaimFiles...)
+	files = append(files, m.IPAddrFiles...)
 	return files
 }
 
@@ -653,6 +699,20 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	m.ControlPlaneMachineSet = file
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, masterIPClaimFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	logrus.Infof("Loaded %v ip claims.", len(fileList))
+	m.IPClaimFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, masterIPAddressFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	logrus.Infof("Loaded %v ip addresses.", len(fileList))
+	m.IPAddrFiles = fileList
 
 	return true, nil
 }
@@ -735,6 +795,8 @@ func IsMachineManifest(file *asset.File) bool {
 		{Pattern: hostFileNamePattern, Type: "host"},
 		{Pattern: masterMachineFileNamePattern, Type: "master machine"},
 		{Pattern: workerMachineSetFileNamePattern, Type: "worker machineset"},
+		{Pattern: masterIPAddressFileNamePattern, Type: "master ip address"},
+		{Pattern: masterIPClaimFileNamePattern, Type: "master ip address claim"},
 	} {
 		if matched, err := filepath.Match(pattern.Pattern, filename); err != nil {
 			panic(fmt.Sprintf("bad format for %s file name pattern", pattern.Type))
@@ -743,6 +805,23 @@ func IsMachineManifest(file *asset.File) bool {
 		}
 	}
 	return false
+}
+
+// IPAddresses returns IPAddress manifest structures.
+func (m *Master) IPAddresses() ([]ipamv1.IPAddress, error) {
+	ipAddresses := []ipamv1.IPAddress{}
+	for i, file := range m.IPAddrFiles {
+		logrus.Debugf("Attempting to load address %v.", file.Filename)
+		address := &ipamv1.IPAddress{}
+		err := yaml.Unmarshal(file.Data, &address)
+		if err != nil {
+			return ipAddresses, errors.Wrapf(err, "unable to unmarshal ip address %d", i)
+		}
+
+		ipAddresses = append(ipAddresses, *address)
+	}
+
+	return ipAddresses, nil
 }
 
 func createSecretAssetFiles(resources []corev1.Secret, fileName string) ([]*asset.File, error) {
