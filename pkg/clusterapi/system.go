@@ -463,7 +463,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 	}
 
 	// Run the controller and store its state.
-	logrus.Infof("Running process: %s with args %v and env %v", ct.Name, ct.Args, env)
+	logrus.Infof("Running process: %s with args %v", ct.Name, ct.Args)
 	if err := pr.Start(ctx, os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("failed to start controller %q: %w", ct.Name, err)
 	}
