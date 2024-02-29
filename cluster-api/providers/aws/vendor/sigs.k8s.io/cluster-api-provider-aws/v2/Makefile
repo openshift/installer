@@ -20,8 +20,8 @@ include $(ROOT_DIR_RELATIVE)/common.mk
 # https://suva.sh/posts/well-documented-makefiles
 
 # Go
-GO_VERSION ?=1.20.6
-GO_CONTAINER_IMAGE ?= public.ecr.aws/docker/library/golang:$(GO_VERSION)
+GO_VERSION ?=1.21.5
+GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # Directories.
 ARTIFACTS ?= $(REPO_ROOT)/_artifacts
@@ -30,7 +30,7 @@ TOOLS_DIR_DEPS := $(TOOLS_DIR)/go.sum $(TOOLS_DIR)/go.mod $(TOOLS_DIR)/Makefile
 TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
 
 
-API_DIRS := cmd/clusterawsadm/api api exp/api controlplane/eks/api bootstrap/eks/api iam/api
+API_DIRS := cmd/clusterawsadm/api api exp/api controlplane/eks/api bootstrap/eks/api iam/api controlplane/rosa/api
 API_FILES := $(foreach dir, $(API_DIRS), $(call rwildcard,../../$(dir),*.go))
 
 BIN_DIR := bin
@@ -76,7 +76,7 @@ DOCKER_BUILDKIT=1
 export ACK_GINKGO_DEPRECATIONS := 1.16.4
 
 # Set --output-base for conversion-gen if we are not within GOPATH
-ifneq ($(abspath $(REPO_ROOT)),$(shell go env GOPATH)/src/sigs.k8s.io/cluster-api-provider-aws)
+ifneq ($(abspath $(REPO_ROOT)),$(abspath $(shell go env GOPATH)/src/sigs.k8s.io/cluster-api-provider-aws))
 	GEN_OUTPUT_BASE := --output-base=$(REPO_ROOT)
 else
 	export GOPATH := $(shell go env GOPATH)
@@ -142,7 +142,7 @@ E2E_SKIP_EKS_UPGRADE ?= "false"
 EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
 # set up `setup-envtest` to install kubebuilder dependency
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.24.2
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.3
 SETUP_ENVTEST_VER := v0.0.0-20230131074648-f5014c077fc3
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
@@ -190,6 +190,7 @@ defaulters: $(DEFAULTER_GEN) ## Generate all Go types
 	$(DEFAULTER_GEN) \
 		--input-dirs=./api/v1beta2 \
 		--input-dirs=./$(EXP_DIR)/api/v1beta2 \
+		--input-dirs=./controlplane/rosa/api/v1beta2 \
 		--input-dirs=./cmd/clusterawsadm/api/bootstrap/v1beta1 \
 		--input-dirs=./cmd/clusterawsadm/api/bootstrap/v1alpha1 \
 		--extra-peer-dirs=sigs.k8s.io/cluster-api/api/v1beta1 \
@@ -219,6 +220,7 @@ generate-go-apis: ## Alias for .build/generate-go-apis
 
 .build/generate-go-apis: .build $(API_FILES) $(CONTROLLER_GEN) $(DEFAULTER_GEN) $(CONVERSION_GEN) ## Generate all Go api files
 	$(CONTROLLER_GEN) \
+		paths=./ \
 		paths=./api/... \
 		paths=./$(EXP_DIR)/api/... \
 		paths=./bootstrap/eks/api/... \
@@ -229,6 +231,7 @@ generate-go-apis: ## Alias for .build/generate-go-apis
 		paths=./$(EXP_DIR)/controllers/... \
 		paths=./bootstrap/eks/controllers/... \
 		paths=./controlplane/eks/controllers/... \
+		paths=./controlplane/rosa/controllers/... \
 		output:crd:dir=config/crd/bases \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt \
 		crd:crdVersions=v1 \
@@ -588,7 +591,7 @@ release-manifests: ## Release manifest files
 
 .PHONY: release-changelog
 release-changelog: $(RELEASE_NOTES) check-release-tag check-previous-release-tag check-github-token $(RELEASE_DIR)
-	$(RELEASE_NOTES) --debug --org $(GH_ORG_NAME) --repo $(GH_REPO_NAME) --start-sha $(shell git rev-list -n 1 ${PREVIOUS_VERSION}) --end-sha $(shell git rev-list -n 1 ${RELEASE_TAG}) --output $(RELEASE_DIR)/CHANGELOG.md --go-template go-template:$(REPO_ROOT)/hack/changelog.tpl --dependencies=true
+	$(RELEASE_NOTES) --debug --org $(GH_ORG_NAME) --repo $(GH_REPO_NAME) --start-sha $(shell git rev-list -n 1 ${PREVIOUS_VERSION}) --end-sha $(shell git rev-list -n 1 ${RELEASE_TAG}) --output $(RELEASE_DIR)/CHANGELOG.md --go-template go-template:$(REPO_ROOT)/hack/changelog.tpl --dependencies=false
 
 .PHONY: promote-images
 promote-images: $(KPROMO) $(YQ)
@@ -604,18 +607,17 @@ release-binaries: ## Builds the binaries to publish with a release
 	RELEASE_BINARY=./cmd/clusterawsadm GOOS=windows GOARCH=arm64 EXT=.exe $(MAKE) release-binary
 
 .PHONY: release-binary
-release-binary: $(RELEASE_DIR) versions.mk build-toolchain ## Release binary
+release-binary: $(RELEASE_DIR) versions.mk ## Release binary
 	docker run \
 		--rm \
 		-e CGO_ENABLED=0 \
 		-e GOOS=$(GOOS) \
 		-e GOARCH=$(GOARCH) \
-		--mount=source=gocache,target=/go/pkg/mod \
-		--mount=source=gocache,target=/root/.cache/go-build \
+		-e GOCACHE=/tmp/ \
+		--user $$(id -u):$$(id -g) \
 		-v "$$(pwd):/workspace$(DOCKER_VOL_OPTS)" \
 		-w /workspace \
-		$(TOOLCHAIN_IMAGE) \
-		git config --global --add safe.directory /workspace; \
+		$(GO_CONTAINER_IMAGE) \
 		go build -ldflags '$(LDFLAGS) -extldflags "-static"' \
 		-o $(RELEASE_DIR)/$(notdir $(RELEASE_BINARY))-$(GOOS)-$(GOARCH)$(EXT) $(RELEASE_BINARY)
 

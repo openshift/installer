@@ -108,6 +108,13 @@ func (r *AWSMachinePool) validateAdditionalSecurityGroups() field.ErrorList {
 	}
 	return allErrs
 }
+func (r *AWSMachinePool) validateSpotInstances() field.ErrorList {
+	var allErrs field.ErrorList
+	if r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil && r.Spec.MixedInstancesPolicy != nil {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.spotMarketOptions"), "either spec.awsLaunchTemplate.spotMarketOptions or spec.mixedInstancesPolicy should be used"))
+	}
+	return allErrs
+}
 
 // ValidateCreate will do any extra validation when creating a AWSMachinePool.
 func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
@@ -120,6 +127,7 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateSubnets()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
+	allErrs = append(allErrs, r.validateSpotInstances()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -140,6 +148,7 @@ func (r *AWSMachinePool) ValidateUpdate(old runtime.Object) (admission.Warnings,
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateSubnets()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
+	allErrs = append(allErrs, r.validateSpotInstances()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -162,5 +171,10 @@ func (r *AWSMachinePool) Default() {
 	if int(r.Spec.DefaultCoolDown.Duration.Seconds()) == 0 {
 		log.Info("DefaultCoolDown is zero, setting 300 seconds as default")
 		r.Spec.DefaultCoolDown.Duration = 300 * time.Second
+	}
+
+	if int(r.Spec.DefaultInstanceWarmup.Duration.Seconds()) == 0 {
+		log.Info("DefaultInstanceWarmup is zero, setting 300 seconds as default")
+		r.Spec.DefaultInstanceWarmup.Duration = 300 * time.Second
 	}
 }

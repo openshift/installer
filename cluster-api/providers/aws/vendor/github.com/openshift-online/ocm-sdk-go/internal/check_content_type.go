@@ -38,6 +38,9 @@ var wsRegex = regexp.MustCompile(`\s+`)
 func CheckContentType(response *http.Response) error {
 	var err error
 	var mediaType string
+	if response.StatusCode == http.StatusNoContent {
+		return nil
+	}
 	contentType := response.Header.Get("Content-Type")
 	if contentType != "" {
 		mediaType, _, err = mime.ParseMediaType(contentType)

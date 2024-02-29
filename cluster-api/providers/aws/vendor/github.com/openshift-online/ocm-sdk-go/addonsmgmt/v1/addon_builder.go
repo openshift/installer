@@ -38,7 +38,7 @@ type AddonBuilder struct {
 	name                 string
 	namespaces           []*AddonNamespaceBuilder
 	operatorName         string
-	parameters           []*AddonParameterBuilder
+	parameters           *AddonParametersBuilder
 	requirements         []*AddonRequirementBuilder
 	resourceCost         float64
 	resourceName         string
@@ -212,11 +212,16 @@ func (b *AddonBuilder) OperatorName(value string) *AddonBuilder {
 	return b
 }
 
-// Parameters sets the value of the 'parameters' attribute to the given values.
-func (b *AddonBuilder) Parameters(values ...*AddonParameterBuilder) *AddonBuilder {
-	b.parameters = make([]*AddonParameterBuilder, len(values))
-	copy(b.parameters, values)
-	b.bitmap_ |= 524288
+// Parameters sets the value of the 'parameters' attribute to the given value.
+//
+// Representation of AddonParameters
+func (b *AddonBuilder) Parameters(value *AddonParametersBuilder) *AddonBuilder {
+	b.parameters = value
+	if value != nil {
+		b.bitmap_ |= 524288
+	} else {
+		b.bitmap_ &^= 524288
+	}
 	return b
 }
 
@@ -327,10 +332,7 @@ func (b *AddonBuilder) Copy(object *Addon) *AddonBuilder {
 	}
 	b.operatorName = object.operatorName
 	if object.parameters != nil {
-		b.parameters = make([]*AddonParameterBuilder, len(object.parameters))
-		for i, v := range object.parameters {
-			b.parameters[i] = NewAddonParameter().Copy(v)
-		}
+		b.parameters = NewAddonParameters().Copy(object.parameters)
 	} else {
 		b.parameters = nil
 	}
@@ -415,12 +417,9 @@ func (b *AddonBuilder) Build() (object *Addon, err error) {
 	}
 	object.operatorName = b.operatorName
 	if b.parameters != nil {
-		object.parameters = make([]*AddonParameter, len(b.parameters))
-		for i, v := range b.parameters {
-			object.parameters[i], err = v.Build()
-			if err != nil {
-				return
-			}
+		object.parameters, err = b.parameters.Build()
+		if err != nil {
+			return
 		}
 	}
 	if b.requirements != nil {

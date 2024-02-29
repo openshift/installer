@@ -275,6 +275,14 @@ func (c *ClusterClient) Ingresses() *IngressesClient {
 	)
 }
 
+// KubeletConfig returns the target 'kubelet_config' resource.
+func (c *ClusterClient) KubeletConfig() *KubeletConfigClient {
+	return NewKubeletConfigClient(
+		c.transport,
+		path.Join(c.path, "kubelet_config"),
+	)
+}
+
 // LimitedSupportReasons returns the target 'limited_support_reasons' resource.
 //
 // Reference to cluster limited support reasons.
@@ -322,16 +330,6 @@ func (c *ClusterClient) NodePools() *NodePoolsClient {
 	return NewNodePoolsClient(
 		c.transport,
 		path.Join(c.path, "node_pools"),
-	)
-}
-
-// Product returns the target 'product' resource.
-//
-// Reference to the resource that manages the product type of the cluster
-func (c *ClusterClient) Product() *ProductClient {
-	return NewProductClient(
-		c.transport,
-		path.Join(c.path, "product"),
 	)
 }
 
@@ -390,6 +388,16 @@ func (c *ClusterClient) UpgradePolicies() *UpgradePoliciesClient {
 	return NewUpgradePoliciesClient(
 		c.transport,
 		path.Join(c.path, "upgrade_policies"),
+	)
+}
+
+// Vpc returns the target 'vpc' resource.
+//
+// Reference to the resource that manages the vpc resource.
+func (c *ClusterClient) Vpc() *VpcClient {
+	return NewVpcClient(
+		c.transport,
+		path.Join(c.path, "vpc"),
 	)
 }
 
@@ -516,6 +524,7 @@ type ClusterDeleteRequest struct {
 	path        string
 	query       url.Values
 	header      http.Header
+	bestEffort  *bool
 	deprovision *bool
 	dryRun      *bool
 }
@@ -536,6 +545,14 @@ func (r *ClusterDeleteRequest) Header(name string, value interface{}) *ClusterDe
 // Note: Services that do not support this feature may silently ignore this call.
 func (r *ClusterDeleteRequest) Impersonate(user string) *ClusterDeleteRequest {
 	helpers.AddImpersonationHeader(&r.header, user)
+	return r
+}
+
+// BestEffort sets the value of the 'best_effort' parameter.
+//
+// BestEffort flag is used to check if the cluster deletion should be best-effort mode or not.
+func (r *ClusterDeleteRequest) BestEffort(value bool) *ClusterDeleteRequest {
+	r.bestEffort = &value
 	return r
 }
 
@@ -567,6 +584,9 @@ func (r *ClusterDeleteRequest) Send() (result *ClusterDeleteResponse, err error)
 // SendContext sends this request, waits for the response, and returns it.
 func (r *ClusterDeleteRequest) SendContext(ctx context.Context) (result *ClusterDeleteResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.bestEffort != nil {
+		helpers.AddValue(&query, "best_effort", *r.bestEffort)
+	}
 	if r.deprovision != nil {
 		helpers.AddValue(&query, "deprovision", *r.deprovision)
 	}

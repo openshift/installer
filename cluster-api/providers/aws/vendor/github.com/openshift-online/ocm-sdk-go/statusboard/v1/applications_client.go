@@ -225,9 +225,9 @@ type ApplicationsListRequest struct {
 	path      string
 	query     url.Values
 	header    http.Header
-	fullname  *string
 	orderBy   *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -250,12 +250,6 @@ func (r *ApplicationsListRequest) Impersonate(user string) *ApplicationsListRequ
 	return r
 }
 
-// Fullname sets the value of the 'fullname' parameter.
-func (r *ApplicationsListRequest) Fullname(value string) *ApplicationsListRequest {
-	r.fullname = &value
-	return r
-}
-
 // OrderBy sets the value of the 'order_by' parameter.
 func (r *ApplicationsListRequest) OrderBy(value string) *ApplicationsListRequest {
 	r.orderBy = &value
@@ -265,6 +259,12 @@ func (r *ApplicationsListRequest) OrderBy(value string) *ApplicationsListRequest
 // Page sets the value of the 'page' parameter.
 func (r *ApplicationsListRequest) Page(value int) *ApplicationsListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+func (r *ApplicationsListRequest) Search(value string) *ApplicationsListRequest {
+	r.search = &value
 	return r
 }
 
@@ -285,14 +285,14 @@ func (r *ApplicationsListRequest) Send() (result *ApplicationsListResponse, err 
 // SendContext sends this request, waits for the response, and returns it.
 func (r *ApplicationsListRequest) SendContext(ctx context.Context) (result *ApplicationsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
-	if r.fullname != nil {
-		helpers.AddValue(&query, "fullname", *r.fullname)
-	}
 	if r.orderBy != nil {
 		helpers.AddValue(&query, "order_by", *r.orderBy)
 	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)

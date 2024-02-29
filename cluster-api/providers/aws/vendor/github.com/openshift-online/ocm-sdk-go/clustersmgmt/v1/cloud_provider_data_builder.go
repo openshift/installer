@@ -32,6 +32,7 @@ type CloudProviderDataBuilder struct {
 	region            *CloudRegionBuilder
 	subnets           []string
 	version           *VersionBuilder
+	vpcIds            []string
 }
 
 // NewCloudProviderData creates a new builder of 'cloud_provider_data' objects.
@@ -126,6 +127,14 @@ func (b *CloudProviderDataBuilder) Version(value *VersionBuilder) *CloudProvider
 	return b
 }
 
+// VpcIds sets the value of the 'vpc_ids' attribute to the given values.
+func (b *CloudProviderDataBuilder) VpcIds(values ...string) *CloudProviderDataBuilder {
+	b.vpcIds = make([]string, len(values))
+	copy(b.vpcIds, values)
+	b.bitmap_ |= 256
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *CloudProviderDataBuilder) Copy(object *CloudProviderData) *CloudProviderDataBuilder {
 	if object == nil {
@@ -165,6 +174,12 @@ func (b *CloudProviderDataBuilder) Copy(object *CloudProviderData) *CloudProvide
 		b.version = NewVersion().Copy(object.version)
 	} else {
 		b.version = nil
+	}
+	if object.vpcIds != nil {
+		b.vpcIds = make([]string, len(object.vpcIds))
+		copy(b.vpcIds, object.vpcIds)
+	} else {
+		b.vpcIds = nil
 	}
 	return b
 }
@@ -206,6 +221,10 @@ func (b *CloudProviderDataBuilder) Build() (object *CloudProviderData, err error
 		if err != nil {
 			return
 		}
+	}
+	if b.vpcIds != nil {
+		object.vpcIds = make([]string, len(b.vpcIds))
+		copy(object.vpcIds, b.vpcIds)
 	}
 	return
 }

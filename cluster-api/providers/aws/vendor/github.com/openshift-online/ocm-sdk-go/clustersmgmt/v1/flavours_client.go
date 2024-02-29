@@ -21,7 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -50,16 +49,6 @@ func NewFlavoursClient(transport http.RoundTripper, path string) *FlavoursClient
 	}
 }
 
-// Add creates a request for the 'add' method.
-//
-// Adds a new cluster flavour.
-func (c *FlavoursClient) Add() *FlavoursAddRequest {
-	return &FlavoursAddRequest{
-		transport: c.transport,
-		path:      c.path,
-	}
-}
-
 // List creates a request for the 'list' method.
 func (c *FlavoursClient) List() *FlavoursListRequest {
 	return &FlavoursListRequest{
@@ -76,155 +65,6 @@ func (c *FlavoursClient) Flavour(id string) *FlavourClient {
 		c.transport,
 		path.Join(c.path, id),
 	)
-}
-
-// FlavoursAddRequest is the request for the 'add' method.
-type FlavoursAddRequest struct {
-	transport http.RoundTripper
-	path      string
-	query     url.Values
-	header    http.Header
-	body      *Flavour
-}
-
-// Parameter adds a query parameter.
-func (r *FlavoursAddRequest) Parameter(name string, value interface{}) *FlavoursAddRequest {
-	helpers.AddValue(&r.query, name, value)
-	return r
-}
-
-// Header adds a request header.
-func (r *FlavoursAddRequest) Header(name string, value interface{}) *FlavoursAddRequest {
-	helpers.AddHeader(&r.header, name, value)
-	return r
-}
-
-// Impersonate wraps requests on behalf of another user.
-// Note: Services that do not support this feature may silently ignore this call.
-func (r *FlavoursAddRequest) Impersonate(user string) *FlavoursAddRequest {
-	helpers.AddImpersonationHeader(&r.header, user)
-	return r
-}
-
-// Body sets the value of the 'body' parameter.
-//
-// Details of the cluster flavour.
-func (r *FlavoursAddRequest) Body(value *Flavour) *FlavoursAddRequest {
-	r.body = value
-	return r
-}
-
-// Send sends this request, waits for the response, and returns it.
-//
-// This is a potentially lengthy operation, as it requires network communication.
-// Consider using a context and the SendContext method.
-func (r *FlavoursAddRequest) Send() (result *FlavoursAddResponse, err error) {
-	return r.SendContext(context.Background())
-}
-
-// SendContext sends this request, waits for the response, and returns it.
-func (r *FlavoursAddRequest) SendContext(ctx context.Context) (result *FlavoursAddResponse, err error) {
-	query := helpers.CopyQuery(r.query)
-	header := helpers.CopyHeader(r.header)
-	buffer := &bytes.Buffer{}
-	err = writeFlavoursAddRequest(r, buffer)
-	if err != nil {
-		return
-	}
-	uri := &url.URL{
-		Path:     r.path,
-		RawQuery: query.Encode(),
-	}
-	request := &http.Request{
-		Method: "POST",
-		URL:    uri,
-		Header: header,
-		Body:   io.NopCloser(buffer),
-	}
-	if ctx != nil {
-		request = request.WithContext(ctx)
-	}
-	response, err := r.transport.RoundTrip(request)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	result = &FlavoursAddResponse{}
-	result.status = response.StatusCode
-	result.header = response.Header
-	reader := bufio.NewReader(response.Body)
-	_, err = reader.Peek(1)
-	if err == io.EOF {
-		err = nil
-		return
-	}
-	if result.status >= 400 {
-		result.err, err = errors.UnmarshalErrorStatus(reader, result.status)
-		if err != nil {
-			return
-		}
-		err = result.err
-		return
-	}
-	err = readFlavoursAddResponse(result, reader)
-	if err != nil {
-		return
-	}
-	return
-}
-
-// FlavoursAddResponse is the response for the 'add' method.
-type FlavoursAddResponse struct {
-	status int
-	header http.Header
-	err    *errors.Error
-	body   *Flavour
-}
-
-// Status returns the response status code.
-func (r *FlavoursAddResponse) Status() int {
-	if r == nil {
-		return 0
-	}
-	return r.status
-}
-
-// Header returns header of the response.
-func (r *FlavoursAddResponse) Header() http.Header {
-	if r == nil {
-		return nil
-	}
-	return r.header
-}
-
-// Error returns the response error.
-func (r *FlavoursAddResponse) Error() *errors.Error {
-	if r == nil {
-		return nil
-	}
-	return r.err
-}
-
-// Body returns the value of the 'body' parameter.
-//
-// Details of the cluster flavour.
-func (r *FlavoursAddResponse) Body() *Flavour {
-	if r == nil {
-		return nil
-	}
-	return r.body
-}
-
-// GetBody returns the value of the 'body' parameter and
-// a flag indicating if the parameter has a value.
-//
-// Details of the cluster flavour.
-func (r *FlavoursAddResponse) GetBody() (value *Flavour, ok bool) {
-	ok = r != nil && r.body != nil
-	if ok {
-		value = r.body
-	}
-	return
 }
 
 // FlavoursListRequest is the request for the 'list' method.

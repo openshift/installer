@@ -22,6 +22,7 @@ import (
 
 	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -183,6 +184,13 @@ func (s *ClusterScope) ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec {
 	return s.AWSCluster.Spec.ControlPlaneLoadBalancer
 }
 
+func (s *ClusterScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec {
+	return []*infrav1.AWSLoadBalancerSpec{
+		s.AWSCluster.Spec.ControlPlaneLoadBalancer,
+		s.AWSCluster.Spec.SecondaryControlPlaneLoadBalancer,
+	}
+}
+
 // ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing).
 func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	if s.ControlPlaneLoadBalancer() != nil && s.ControlPlaneLoadBalancer().Scheme != nil {
@@ -234,7 +242,9 @@ func (s *ClusterScope) PatchObject() error {
 		applicableConditions = append(applicableConditions,
 			infrav1.InternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
-			infrav1.RouteTablesReadyCondition)
+			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
+		)
 
 		if s.AWSCluster.Spec.Bastion.Enabled {
 			applicableConditions = append(applicableConditions, infrav1.BastionHostReadyCondition)
@@ -261,6 +271,7 @@ func (s *ClusterScope) PatchObject() error {
 			infrav1.EgressOnlyInternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
 			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
 			infrav1.ClusterSecurityGroupsReadyCondition,
 			infrav1.BastionHostReadyCondition,
 			infrav1.LoadBalancerReadyCondition,
@@ -384,4 +395,10 @@ func (s *ClusterScope) Partition() string {
 // AdditionalControlPlaneIngressRules returns the additional ingress rules for control plane security group.
 func (s *ClusterScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRule {
 	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().AdditionalControlPlaneIngressRules
+}
+
+// UnstructuredControlPlane returns the unstructured object for the control plane, if any.
+// When the reference is not set, it returns an empty object.
+func (s *ClusterScope) UnstructuredControlPlane() (*unstructured.Unstructured, error) {
+	return getUnstructuredControlPlane(context.TODO(), s.client, s.Cluster)
 }

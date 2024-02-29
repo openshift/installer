@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -41,21 +41,6 @@ import (
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
-)
-
-const (
-	// ReplicasManagedByAnnotation is an annotation that indicates external (non-Cluster API) management of infra scaling.
-	// The practical effect of this is that the capi "replica" count is derived from the number of observed infra machines,
-	// instead of being a source of truth for eventual consistency.
-	//
-	// N.B. this is to be replaced by a direct reference to CAPI once https://github.com/kubernetes-sigs/cluster-api/pull/7107 is meged.
-	ReplicasManagedByAnnotation = "cluster.x-k8s.io/replicas-managed-by"
-
-	// ExternalAutoscalerReplicasManagedByAnnotationValue is used with the "cluster.x-k8s.io/replicas-managed-by" annotation
-	// to indicate an external autoscaler enforces replica count.
-	//
-	// N.B. this is to be replaced by a direct reference to CAPI once https://github.com/kubernetes-sigs/cluster-api/pull/7107 is meged.
-	ExternalAutoscalerReplicasManagedByAnnotationValue = "external-autoscaler"
 )
 
 // MachinePoolScope defines a scope defined around a machine and its cluster.
@@ -146,36 +131,32 @@ func (m *MachinePoolScope) Namespace() string {
 	return m.AWSMachinePool.Namespace
 }
 
-// GetRawBootstrapData returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName.
-// todo(rudoi): stolen from MachinePool - any way to reuse?
-func (m *MachinePoolScope) GetRawBootstrapData() ([]byte, error) {
-	data, _, err := m.getBootstrapData()
+// GetRawBootstrapData returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName,
+// including the secret's namespaced name.
+func (m *MachinePoolScope) GetRawBootstrapData() ([]byte, *types.NamespacedName, error) {
+	data, _, bootstrapDataSecretKey, err := m.getBootstrapData()
 
-	return data, err
+	return data, bootstrapDataSecretKey, err
 }
 
-func (m *MachinePoolScope) GetRawBootstrapDataWithFormat() ([]byte, string, error) {
-	return m.getBootstrapData()
-}
-
-func (m *MachinePoolScope) getBootstrapData() ([]byte, string, error) {
+func (m *MachinePoolScope) getBootstrapData() ([]byte, string, *types.NamespacedName, error) {
 	if m.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
-		return nil, "", errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
+		return nil, "", nil, errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
 	}
 
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{Namespace: m.Namespace(), Name: *m.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName}
 
 	if err := m.Client.Get(context.TODO(), key, secret); err != nil {
-		return nil, "", errors.Wrapf(err, "failed to retrieve bootstrap data secret for AWSMachine %s/%s", m.Namespace(), m.Name())
+		return nil, "", nil, errors.Wrapf(err, "failed to retrieve bootstrap data secret %s for AWSMachinePool %s/%s", key.Name, m.Namespace(), m.Name())
 	}
 
 	value, ok := secret.Data["value"]
 	if !ok {
-		return nil, "", errors.New("error retrieving bootstrap data: secret value key is missing")
+		return nil, "", nil, errors.New("error retrieving bootstrap data: secret value key is missing")
 	}
 
-	return value, string(secret.Data["format"]), nil
+	return value, string(secret.Data["format"]), &key, nil
 }
 
 // AdditionalTags merges AdditionalTags from the scope's AWSCluster and AWSMachinePool. If the same key is present in both,
@@ -225,7 +206,7 @@ func (m *MachinePoolScope) SetAnnotation(key, value string) {
 
 // SetFailureMessage sets the AWSMachine status failure message.
 func (m *MachinePoolScope) SetFailureMessage(v error) {
-	m.AWSMachinePool.Status.FailureMessage = pointer.String(v.Error())
+	m.AWSMachinePool.Status.FailureMessage = ptr.To[string](v.Error())
 }
 
 // SetFailureReason sets the AWSMachine status failure reason.
@@ -403,9 +384,4 @@ func (m *MachinePoolScope) LaunchTemplateName() string {
 
 func (m *MachinePoolScope) GetRuntimeObject() runtime.Object {
 	return m.AWSMachinePool
-}
-
-func ReplicasExternallyManaged(mp *expclusterv1.MachinePool) bool {
-	val, ok := mp.Annotations[ReplicasManagedByAnnotation]
-	return ok && val == ExternalAutoscalerReplicasManagedByAnnotationValue
 }

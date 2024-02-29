@@ -30,6 +30,7 @@ type AddOnVersionBuilder struct {
 	availableUpgrades        []string
 	channel                  string
 	config                   *AddOnConfigBuilder
+	packageImage             string
 	parameters               *AddOnParameterListBuilder
 	pullSecretName           string
 	requirements             []*AddOnRequirementBuilder
@@ -112,17 +113,24 @@ func (b *AddOnVersionBuilder) Enabled(value bool) *AddOnVersionBuilder {
 	return b
 }
 
+// PackageImage sets the value of the 'package_image' attribute to the given value.
+func (b *AddOnVersionBuilder) PackageImage(value string) *AddOnVersionBuilder {
+	b.packageImage = value
+	b.bitmap_ |= 256
+	return b
+}
+
 // Parameters sets the value of the 'parameters' attribute to the given values.
 func (b *AddOnVersionBuilder) Parameters(value *AddOnParameterListBuilder) *AddOnVersionBuilder {
 	b.parameters = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
 // PullSecretName sets the value of the 'pull_secret_name' attribute to the given value.
 func (b *AddOnVersionBuilder) PullSecretName(value string) *AddOnVersionBuilder {
 	b.pullSecretName = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
@@ -130,14 +138,14 @@ func (b *AddOnVersionBuilder) PullSecretName(value string) *AddOnVersionBuilder 
 func (b *AddOnVersionBuilder) Requirements(values ...*AddOnRequirementBuilder) *AddOnVersionBuilder {
 	b.requirements = make([]*AddOnRequirementBuilder, len(values))
 	copy(b.requirements, values)
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
 // SourceImage sets the value of the 'source_image' attribute to the given value.
 func (b *AddOnVersionBuilder) SourceImage(value string) *AddOnVersionBuilder {
 	b.sourceImage = value
-	b.bitmap_ |= 2048
+	b.bitmap_ |= 4096
 	return b
 }
 
@@ -145,7 +153,7 @@ func (b *AddOnVersionBuilder) SourceImage(value string) *AddOnVersionBuilder {
 func (b *AddOnVersionBuilder) SubOperators(values ...*AddOnSubOperatorBuilder) *AddOnVersionBuilder {
 	b.subOperators = make([]*AddOnSubOperatorBuilder, len(values))
 	copy(b.subOperators, values)
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
@@ -178,6 +186,7 @@ func (b *AddOnVersionBuilder) Copy(object *AddOnVersion) *AddOnVersionBuilder {
 		b.config = nil
 	}
 	b.enabled = object.enabled
+	b.packageImage = object.packageImage
 	if object.parameters != nil {
 		b.parameters = NewAddOnParameterList().Copy(object.parameters)
 	} else {
@@ -231,6 +240,7 @@ func (b *AddOnVersionBuilder) Build() (object *AddOnVersion, err error) {
 		}
 	}
 	object.enabled = b.enabled
+	object.packageImage = b.packageImage
 	if b.parameters != nil {
 		object.parameters, err = b.parameters.Build()
 		if err != nil {

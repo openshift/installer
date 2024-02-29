@@ -23,7 +23,9 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 type NetworkVerificationBuilder struct {
 	bitmap_           uint32
 	cloudProviderData *CloudProviderDataBuilder
+	clusterId         string
 	items             []*SubnetNetworkVerificationBuilder
+	platform          Platform
 	total             int
 }
 
@@ -50,18 +52,34 @@ func (b *NetworkVerificationBuilder) CloudProviderData(value *CloudProviderDataB
 	return b
 }
 
+// ClusterId sets the value of the 'cluster_id' attribute to the given value.
+func (b *NetworkVerificationBuilder) ClusterId(value string) *NetworkVerificationBuilder {
+	b.clusterId = value
+	b.bitmap_ |= 2
+	return b
+}
+
 // Items sets the value of the 'items' attribute to the given values.
 func (b *NetworkVerificationBuilder) Items(values ...*SubnetNetworkVerificationBuilder) *NetworkVerificationBuilder {
 	b.items = make([]*SubnetNetworkVerificationBuilder, len(values))
 	copy(b.items, values)
-	b.bitmap_ |= 2
+	b.bitmap_ |= 4
+	return b
+}
+
+// Platform sets the value of the 'platform' attribute to the given value.
+//
+// Representation of an platform type field.
+func (b *NetworkVerificationBuilder) Platform(value Platform) *NetworkVerificationBuilder {
+	b.platform = value
+	b.bitmap_ |= 8
 	return b
 }
 
 // Total sets the value of the 'total' attribute to the given value.
 func (b *NetworkVerificationBuilder) Total(value int) *NetworkVerificationBuilder {
 	b.total = value
-	b.bitmap_ |= 4
+	b.bitmap_ |= 16
 	return b
 }
 
@@ -76,6 +94,7 @@ func (b *NetworkVerificationBuilder) Copy(object *NetworkVerification) *NetworkV
 	} else {
 		b.cloudProviderData = nil
 	}
+	b.clusterId = object.clusterId
 	if object.items != nil {
 		b.items = make([]*SubnetNetworkVerificationBuilder, len(object.items))
 		for i, v := range object.items {
@@ -84,6 +103,7 @@ func (b *NetworkVerificationBuilder) Copy(object *NetworkVerification) *NetworkV
 	} else {
 		b.items = nil
 	}
+	b.platform = object.platform
 	b.total = object.total
 	return b
 }
@@ -98,6 +118,7 @@ func (b *NetworkVerificationBuilder) Build() (object *NetworkVerification, err e
 			return
 		}
 	}
+	object.clusterId = b.clusterId
 	if b.items != nil {
 		object.items = make([]*SubnetNetworkVerification, len(b.items))
 		for i, v := range b.items {
@@ -107,6 +128,7 @@ func (b *NetworkVerificationBuilder) Build() (object *NetworkVerification, err e
 			}
 		}
 	}
+	object.platform = b.platform
 	object.total = b.total
 	return
 }

@@ -172,13 +172,13 @@ func (c *Client) Labels() *LabelsClient {
 	)
 }
 
-// Notify returns the target 'notify' resource.
+// NotifyDetails returns the target 'notify_details' resource.
 //
-// Reference to the resource that manages the notifications.
-func (c *Client) Notify() *NotifyClient {
-	return NewNotifyClient(
+// Reference to the resource that manages the notifications details.
+func (c *Client) NotifyDetails() *NotifyDetailsClient {
+	return NewNotifyDetailsClient(
 		c.transport,
-		path.Join(c.path, "notify"),
+		path.Join(c.path, "notify_details"),
 	)
 }
 

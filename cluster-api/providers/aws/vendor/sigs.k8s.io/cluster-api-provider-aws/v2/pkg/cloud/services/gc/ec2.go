@@ -37,7 +37,7 @@ func (s *Service) deleteSecurityGroups(ctx context.Context, resources []*AWSReso
 
 		groupID := strings.ReplaceAll(resource.ARN.Resource, "security-group/", "")
 		if err := s.deleteSecurityGroup(ctx, groupID); err != nil {
-			return fmt.Errorf("deleting security group %s: %w", groupID, err)
+			return fmt.Errorf("deleting security group %q with ID %s: %w", resource.ARN, groupID, err)
 		}
 	}
 	s.scope.Debug("Finished processing resources for security group deletion")

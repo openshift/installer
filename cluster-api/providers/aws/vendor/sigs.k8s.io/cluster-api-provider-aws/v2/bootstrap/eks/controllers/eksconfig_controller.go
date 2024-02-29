@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -261,14 +261,14 @@ func (r *EKSConfigReconciler) joinWorker(ctx context.Context, cluster *clusterv1
 	// If not, we also check if the cluster is ipv6 based.
 	if config.Spec.ServiceIPV6Cidr != nil && *config.Spec.ServiceIPV6Cidr != "" {
 		nodeInput.ServiceIPV6Cidr = config.Spec.ServiceIPV6Cidr
-		nodeInput.IPFamily = pointer.String("ipv6")
+		nodeInput.IPFamily = ptr.To[string]("ipv6")
 	}
 
 	// we don't want to override any manually set configuration options.
 	if config.Spec.ServiceIPV6Cidr == nil && controlPlane.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
 		log.Info("Adding ipv6 data to userdata....")
-		nodeInput.ServiceIPV6Cidr = pointer.String(controlPlane.Spec.NetworkSpec.VPC.IPv6.CidrBlock)
-		nodeInput.IPFamily = pointer.String("ipv6")
+		nodeInput.ServiceIPV6Cidr = ptr.To[string](controlPlane.Spec.NetworkSpec.VPC.IPv6.CidrBlock)
+		nodeInput.IPFamily = ptr.To[string]("ipv6")
 	}
 
 	// generate userdata
@@ -355,7 +355,7 @@ func (r *EKSConfigReconciler) storeBootstrapData(ctx context.Context, cluster *c
 		}
 	}
 
-	config.Status.DataSecretName = pointer.String(secret.Name)
+	config.Status.DataSecretName = ptr.To[string](secret.Name)
 	config.Status.Ready = true
 	conditions.MarkTrue(config, eksbootstrapv1.DataSecretAvailableCondition)
 	return nil
@@ -443,7 +443,7 @@ func (r *EKSConfigReconciler) createBootstrapSecret(ctx context.Context, cluster
 					Kind:       "EKSConfig",
 					Name:       config.Name,
 					UID:        config.UID,
-					Controller: pointer.Bool(true),
+					Controller: ptr.To[bool](true),
 				},
 			},
 		},

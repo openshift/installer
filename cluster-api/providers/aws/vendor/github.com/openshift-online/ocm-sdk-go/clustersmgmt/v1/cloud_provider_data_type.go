@@ -32,6 +32,7 @@ type CloudProviderData struct {
 	region            *CloudRegion
 	subnets           []string
 	version           *Version
+	vpcIds            []string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -219,6 +220,29 @@ func (o *CloudProviderData) GetVersion() (value *Version, ok bool) {
 	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.version
+	}
+	return
+}
+
+// VpcIds returns the value of the 'vpc_ids' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// VPC ids
+func (o *CloudProviderData) VpcIds() []string {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.vpcIds
+	}
+	return nil
+}
+
+// GetVpcIds returns the value of the 'vpc_ids' attribute and
+// a flag indicating if the attribute has a value.
+//
+// VPC ids
+func (o *CloudProviderData) GetVpcIds() (value []string, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.vpcIds
 	}
 	return
 }

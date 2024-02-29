@@ -370,13 +370,14 @@ func (s *ClientSelector) createTransport(ctx context.Context,
 		// We also need to ignore TLS configuration when dialing, and explicitly set the
 		// network and socket when using Unix sockets:
 		if address.Network == UnixNetwork {
-			transport.DialTLS = func(_, _ string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(UnixNetwork, address.Socket)
+			transport.DialTLSContext = func(ctx context.Context, _, _ string, cfg *tls.Config) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, UnixNetwork, address.Socket)
 			}
 		} else {
-			transport.DialTLS = func(network, addr string, cfg *tls.Config) (net.Conn,
-				error) {
-				return net.Dial(network, addr)
+			transport.DialTLSContext = func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, network, addr)
 			}
 		}
 

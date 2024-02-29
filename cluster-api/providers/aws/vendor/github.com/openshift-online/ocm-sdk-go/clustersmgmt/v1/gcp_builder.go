@@ -32,6 +32,7 @@ type GCPBuilder struct {
 	privateKey              string
 	privateKeyID            string
 	projectID               string
+	security                *GcpSecurityBuilder
 	tokenURI                string
 	type_                   string
 }
@@ -102,17 +103,30 @@ func (b *GCPBuilder) ProjectID(value string) *GCPBuilder {
 	return b
 }
 
+// Security sets the value of the 'security' attribute to the given value.
+//
+// Google cloud platform security settings of a cluster.
+func (b *GCPBuilder) Security(value *GcpSecurityBuilder) *GCPBuilder {
+	b.security = value
+	if value != nil {
+		b.bitmap_ |= 256
+	} else {
+		b.bitmap_ &^= 256
+	}
+	return b
+}
+
 // TokenURI sets the value of the 'token_URI' attribute to the given value.
 func (b *GCPBuilder) TokenURI(value string) *GCPBuilder {
 	b.tokenURI = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
 // Type sets the value of the 'type' attribute to the given value.
 func (b *GCPBuilder) Type(value string) *GCPBuilder {
 	b.type_ = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
@@ -130,6 +144,11 @@ func (b *GCPBuilder) Copy(object *GCP) *GCPBuilder {
 	b.privateKey = object.privateKey
 	b.privateKeyID = object.privateKeyID
 	b.projectID = object.projectID
+	if object.security != nil {
+		b.security = NewGcpSecurity().Copy(object.security)
+	} else {
+		b.security = nil
+	}
 	b.tokenURI = object.tokenURI
 	b.type_ = object.type_
 	return b
@@ -147,6 +166,12 @@ func (b *GCPBuilder) Build() (object *GCP, err error) {
 	object.privateKey = b.privateKey
 	object.privateKeyID = b.privateKeyID
 	object.projectID = b.projectID
+	if b.security != nil {
+		object.security, err = b.security.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.tokenURI = b.tokenURI
 	object.type_ = b.type_
 	return

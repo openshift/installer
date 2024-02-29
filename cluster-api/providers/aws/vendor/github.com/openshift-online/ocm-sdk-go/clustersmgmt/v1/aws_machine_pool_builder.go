@@ -27,7 +27,9 @@ type AWSMachinePoolBuilder struct {
 	id                         string
 	href                       string
 	additionalSecurityGroupIds []string
+	availabilityZoneTypes      map[string]string
 	spotMarketOptions          *AWSSpotMarketOptionsBuilder
+	subnetOutposts             map[string]string
 }
 
 // NewAWSMachinePool creates a new builder of 'AWS_machine_pool' objects.
@@ -68,15 +70,37 @@ func (b *AWSMachinePoolBuilder) AdditionalSecurityGroupIds(values ...string) *AW
 	return b
 }
 
+// AvailabilityZoneTypes sets the value of the 'availability_zone_types' attribute to the given value.
+func (b *AWSMachinePoolBuilder) AvailabilityZoneTypes(value map[string]string) *AWSMachinePoolBuilder {
+	b.availabilityZoneTypes = value
+	if value != nil {
+		b.bitmap_ |= 16
+	} else {
+		b.bitmap_ &^= 16
+	}
+	return b
+}
+
 // SpotMarketOptions sets the value of the 'spot_market_options' attribute to the given value.
 //
 // Spot market options for AWS machine pool.
 func (b *AWSMachinePoolBuilder) SpotMarketOptions(value *AWSSpotMarketOptionsBuilder) *AWSMachinePoolBuilder {
 	b.spotMarketOptions = value
 	if value != nil {
-		b.bitmap_ |= 16
+		b.bitmap_ |= 32
 	} else {
-		b.bitmap_ &^= 16
+		b.bitmap_ &^= 32
+	}
+	return b
+}
+
+// SubnetOutposts sets the value of the 'subnet_outposts' attribute to the given value.
+func (b *AWSMachinePoolBuilder) SubnetOutposts(value map[string]string) *AWSMachinePoolBuilder {
+	b.subnetOutposts = value
+	if value != nil {
+		b.bitmap_ |= 64
+	} else {
+		b.bitmap_ &^= 64
 	}
 	return b
 }
@@ -95,10 +119,26 @@ func (b *AWSMachinePoolBuilder) Copy(object *AWSMachinePool) *AWSMachinePoolBuil
 	} else {
 		b.additionalSecurityGroupIds = nil
 	}
+	if len(object.availabilityZoneTypes) > 0 {
+		b.availabilityZoneTypes = map[string]string{}
+		for k, v := range object.availabilityZoneTypes {
+			b.availabilityZoneTypes[k] = v
+		}
+	} else {
+		b.availabilityZoneTypes = nil
+	}
 	if object.spotMarketOptions != nil {
 		b.spotMarketOptions = NewAWSSpotMarketOptions().Copy(object.spotMarketOptions)
 	} else {
 		b.spotMarketOptions = nil
+	}
+	if len(object.subnetOutposts) > 0 {
+		b.subnetOutposts = map[string]string{}
+		for k, v := range object.subnetOutposts {
+			b.subnetOutposts[k] = v
+		}
+	} else {
+		b.subnetOutposts = nil
 	}
 	return b
 }
@@ -113,10 +153,22 @@ func (b *AWSMachinePoolBuilder) Build() (object *AWSMachinePool, err error) {
 		object.additionalSecurityGroupIds = make([]string, len(b.additionalSecurityGroupIds))
 		copy(object.additionalSecurityGroupIds, b.additionalSecurityGroupIds)
 	}
+	if b.availabilityZoneTypes != nil {
+		object.availabilityZoneTypes = make(map[string]string)
+		for k, v := range b.availabilityZoneTypes {
+			object.availabilityZoneTypes[k] = v
+		}
+	}
 	if b.spotMarketOptions != nil {
 		object.spotMarketOptions, err = b.spotMarketOptions.Build()
 		if err != nil {
 			return
+		}
+	}
+	if b.subnetOutposts != nil {
+		object.subnetOutposts = make(map[string]string)
+		for k, v := range b.subnetOutposts {
+			object.subnetOutposts[k] = v
 		}
 	}
 	return

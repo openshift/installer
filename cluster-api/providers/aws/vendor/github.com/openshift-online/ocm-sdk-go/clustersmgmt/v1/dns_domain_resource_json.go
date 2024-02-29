@@ -35,11 +35,3 @@ func readDNSDomainGetResponse(response *DNSDomainGetResponse, reader io.Reader) 
 	response.body, err = UnmarshalDNSDomain(reader)
 	return err
 }
-func writeDNSDomainUpdateRequest(request *DNSDomainUpdateRequest, writer io.Writer) error {
-	return MarshalDNSDomain(request.body, writer)
-}
-func readDNSDomainUpdateResponse(response *DNSDomainUpdateResponse, reader io.Reader) error {
-	var err error
-	response.body, err = UnmarshalDNSDomain(reader)
-	return err
-}

@@ -18,6 +18,7 @@ package scope
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -36,7 +37,7 @@ type LaunchTemplateScope interface {
 	SetLaunchTemplateIDStatus(id string)
 	GetLaunchTemplateLatestVersionStatus() string
 	SetLaunchTemplateLatestVersionStatus(version string)
-	GetRawBootstrapData() ([]byte, error)
+	GetRawBootstrapData() ([]byte, *types.NamespacedName, error)
 
 	IsEKSManaged() bool
 	AdditionalTags() infrav1.Tags

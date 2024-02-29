@@ -25,14 +25,6 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
-func writeFlavoursAddRequest(request *FlavoursAddRequest, writer io.Writer) error {
-	return MarshalFlavour(request.body, writer)
-}
-func readFlavoursAddResponse(response *FlavoursAddResponse, reader io.Reader) error {
-	var err error
-	response.body, err = UnmarshalFlavour(reader)
-	return err
-}
 func writeFlavoursListRequest(request *FlavoursListRequest, writer io.Writer) error {
 	return nil
 }

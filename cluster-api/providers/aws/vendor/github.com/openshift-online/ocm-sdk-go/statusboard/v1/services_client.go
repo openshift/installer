@@ -225,10 +225,10 @@ type ServicesListRequest struct {
 	path      string
 	query     url.Values
 	header    http.Header
-	fullname  *string
 	mine      *bool
 	orderBy   *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -251,12 +251,6 @@ func (r *ServicesListRequest) Impersonate(user string) *ServicesListRequest {
 	return r
 }
 
-// Fullname sets the value of the 'fullname' parameter.
-func (r *ServicesListRequest) Fullname(value string) *ServicesListRequest {
-	r.fullname = &value
-	return r
-}
-
 // Mine sets the value of the 'mine' parameter.
 func (r *ServicesListRequest) Mine(value bool) *ServicesListRequest {
 	r.mine = &value
@@ -272,6 +266,12 @@ func (r *ServicesListRequest) OrderBy(value string) *ServicesListRequest {
 // Page sets the value of the 'page' parameter.
 func (r *ServicesListRequest) Page(value int) *ServicesListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+func (r *ServicesListRequest) Search(value string) *ServicesListRequest {
+	r.search = &value
 	return r
 }
 
@@ -292,9 +292,6 @@ func (r *ServicesListRequest) Send() (result *ServicesListResponse, err error) {
 // SendContext sends this request, waits for the response, and returns it.
 func (r *ServicesListRequest) SendContext(ctx context.Context) (result *ServicesListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
-	if r.fullname != nil {
-		helpers.AddValue(&query, "fullname", *r.fullname)
-	}
 	if r.mine != nil {
 		helpers.AddValue(&query, "mine", *r.mine)
 	}
@@ -303,6 +300,9 @@ func (r *ServicesListRequest) SendContext(ctx context.Context) (result *Services
 	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)

@@ -167,7 +167,7 @@ func (s *Service) reconcileSubnets() error {
 		} else if unmanagedVPC {
 			// If there is no existing subnet and we have an umanaged vpc report an error
 			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %d, cidr %q", sub.GetResourceID(), sub.CidrBlock)
-			return errors.New(fmt.Errorf("usign unmanaged vpc and subnet %s (cidr %s) specified but it doesn't exist in vpc %s", sub.GetResourceID(), sub.CidrBlock, s.scope.VPC().ID).Error())
+			return errors.New(fmt.Errorf("using unmanaged vpc and subnet %s (cidr %s) specified but it doesn't exist in vpc %s", sub.GetResourceID(), sub.CidrBlock, s.scope.VPC().ID).Error())
 		}
 	}
 
@@ -486,6 +486,22 @@ func (s *Service) createSubnet(sn *infrav1.SubnetSpec) (*infrav1.SubnetSpec, err
 		}, awserrors.SubnetNotFound); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedModifySubnetAttributes", "Failed modifying managed Subnet %q attributes: %v", *out.Subnet.SubnetId, err)
 			return nil, errors.Wrapf(err, "failed to set subnet %q attribute assign ipv4 address on creation", *out.Subnet.SubnetId)
+		}
+		record.Eventf(s.scope.InfraCluster(), "SuccessfulModifySubnetAttributes", "Modified managed Subnet %q attributes", *out.Subnet.SubnetId)
+	}
+
+	if s.scope.VPC().PrivateDNSHostnameTypeOnLaunch != nil {
+		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+			if _, err := s.EC2Client.ModifySubnetAttributeWithContext(context.TODO(), &ec2.ModifySubnetAttributeInput{
+				SubnetId:                       out.Subnet.SubnetId,
+				PrivateDnsHostnameTypeOnLaunch: s.scope.VPC().PrivateDNSHostnameTypeOnLaunch,
+			}); err != nil {
+				return false, err
+			}
+			return true, nil
+		}, awserrors.SubnetNotFound); err != nil {
+			record.Warnf(s.scope.InfraCluster(), "FailedModifySubnetAttributes", "Failed modifying managed Subnet %q attributes: %v", *out.Subnet.SubnetId, err)
+			return nil, errors.Wrapf(err, "failed to set subnet %q attribute private DNS Hostname type on launch", *out.Subnet.SubnetId)
 		}
 		record.Eventf(s.scope.InfraCluster(), "SuccessfulModifySubnetAttributes", "Modified managed Subnet %q attributes", *out.Subnet.SubnetId)
 	}

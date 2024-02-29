@@ -42,6 +42,17 @@ func Get(obj metav1.Object, name string) (value string, found bool) {
 	return
 }
 
+// Delete will delete the supplied annotation.
+func Delete(obj metav1.Object, name string) {
+	annotations := obj.GetAnnotations()
+	if len(annotations) == 0 {
+		return
+	}
+
+	delete(annotations, name)
+	obj.SetAnnotations(annotations)
+}
+
 // Has returns true if the supplied object has the supplied annotation.
 func Has(obj metav1.Object, name string) bool {
 	annotations := obj.GetAnnotations()
