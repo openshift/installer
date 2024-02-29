@@ -10,7 +10,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -28,47 +27,37 @@ func (p Provider) Name() string {
 	return vsphere.Name
 }
 
-func initializeFoldersAndTemplates(ctx context.Context, rhcosImage *rhcos.Image, installConfig *installconfig.InstallConfig, session *session.Session, clusterID, server, tagID string) error {
+func initializeFoldersAndTemplates(ctx context.Context, cachedImage string, failureDomain vsphere.FailureDomain, session *session.Session, diskType vsphere.DiskType, clusterID, tagID string) error {
 	finder := session.Finder
 
-	platform := installConfig.Config.VSphere
-	failureDomains := platform.FailureDomains
+	dc, err := finder.Datacenter(ctx, failureDomain.Topology.Datacenter)
+	if err != nil {
+		return err
+	}
+	dcFolders, err := dc.Folders(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get datacenter folder: %w", err)
+	}
 
-	for _, failureDomain := range failureDomains {
-		dc, err := finder.Datacenter(ctx, failureDomain.Topology.Datacenter)
-		if err != nil {
-			return err
-		}
-		dcFolders, err := dc.Folders(ctx)
-		if err != nil {
-			return fmt.Errorf("unable to get datacenter folder: %w", err)
-		}
+	folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
 
-		folderPath := path.Join(dcFolders.VmFolder.InventoryPath, clusterID)
+	// we must set the Folder to the infraId somewhere, we will need to remove that.
+	// if we are overwriting folderPath it needs to have a slash (path)
+	folder := failureDomain.Topology.Folder
+	if strings.Contains(folder, "/") {
+		folderPath = folder
+	}
 
-		// we must set the Folder to the infraId somewhere, we will need to remove that.
-		// if we are overwriting folderPath it needs to have a slash (path)
-		folder := failureDomain.Topology.Folder
-		if strings.Contains(folder, "/") {
-			folderPath = folder
-		}
+	folderMo, err := createFolder(ctx, folderPath, session)
+	if err != nil {
+		return fmt.Errorf("unable to create folder: %w", err)
+	}
 
-		folderMo, err := createFolder(ctx, folderPath, session)
-		if err != nil {
-			return fmt.Errorf("unable to create folder: %w", err)
-		}
-
-		cachedImage, err := cache.DownloadImageFile(string(*rhcosImage), cache.InstallerApplicationName)
-		if err != nil {
-			return fmt.Errorf("failed to use cached vsphere image: %w", err)
-		}
-
-		// if the template is empty, the ova must be imported
-		if len(failureDomain.Topology.Template) == 0 {
-			if err = importRhcosOva(ctx, session, folderMo,
-				cachedImage, clusterID, tagID, string(platform.DiskType), failureDomain); err != nil {
-				return fmt.Errorf("failed to import ova: %w", err)
-			}
+	// if the template is empty, the ova must be imported
+	if len(failureDomain.Topology.Template) == 0 {
+		if err = importRhcosOva(ctx, session, folderMo,
+			cachedImage, clusterID, tagID, string(diskType), failureDomain); err != nil {
+			return fmt.Errorf("failed to import ova: %w", err)
 		}
 	}
 	return nil
@@ -76,9 +65,20 @@ func initializeFoldersAndTemplates(ctx context.Context, rhcosImage *rhcos.Image,
 
 // PreProvision creates the vCenter objects required prior to running capv.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
+	/*
+	 * one locally cached image
+	 * one tag and tag category per vcenter
+	 * one folder per datacenter
+	 * one template per region/zone aka failuredomain
+	 */
 	installConfig := in.InstallConfig
 	clusterID := &installconfig.ClusterID{InfraID: in.InfraID}
 	var tagID string
+
+	cachedImage, err := cache.DownloadImageFile(string(*in.RhcosImage), cache.InstallerApplicationName)
+	if err != nil {
+		return fmt.Errorf("failed to use cached vsphere image: %w", err)
+	}
 
 	for _, vcenter := range installConfig.Config.VSphere.VCenters {
 		server := vcenter.Server
@@ -105,7 +105,8 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			if failureDomain.Server != server {
 				continue
 			}
-			if err = initializeFoldersAndTemplates(ctx, in.RhcosImage, installConfig, vctrSession, clusterID.InfraID, server, tagID); err != nil {
+
+			if err = initializeFoldersAndTemplates(ctx, cachedImage, failureDomain, vctrSession, installConfig.Config.VSphere.DiskType, clusterID.InfraID, tagID); err != nil {
 				return fmt.Errorf("unable to initialize folders and templates: %w", err)
 			}
 		}

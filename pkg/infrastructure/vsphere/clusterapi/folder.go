@@ -11,16 +11,21 @@ import (
 )
 
 func createFolder(ctx context.Context, fullpath string, session *session.Session) (*object.Folder, error) {
+	var notFoundError *find.NotFoundError
+
 	dir := path.Dir(fullpath)
 	base := path.Base(fullpath)
 	finder := session.Finder
 
 	folder, err := finder.Folder(ctx, fullpath)
+	if err != nil && !errors.As(err, &notFoundError) {
+		return nil, err
+	}
 
+	// if folder is nil the fullpath does not exist
 	if folder == nil {
 		folder, err = finder.Folder(ctx, dir)
 
-		var notFoundError *find.NotFoundError
 		if errors.As(err, &notFoundError) {
 			folder, err = createFolder(ctx, dir, session)
 			if err != nil {
