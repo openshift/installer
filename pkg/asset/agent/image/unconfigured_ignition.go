@@ -112,8 +112,7 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	if infraEnv.Spec.CpuArchitecture != "" {
 		archName = infraEnv.Spec.CpuArchitecture
 	}
-
-	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, archName)
+	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, archName, []string{archName})
 	if err != nil {
 		return err
 	}
