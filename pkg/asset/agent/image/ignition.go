@@ -38,6 +38,7 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
+const addNodesEnvPath = "/etc/assisted/add-nodes.env"
 const rendezvousHostEnvPath = "/etc/assisted/rendezvous-host.env"
 const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
@@ -73,6 +74,7 @@ type agentTemplateData struct {
 	ImageTypeISO              string
 	PublicKeyPEM              string
 	PrivateKeyPEM             string
+	WorkflowType              workflow.AgentWorkflowType
 }
 
 // Name returns the human-friendly name of the asset.
@@ -140,6 +142,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	imageTypeISO := "full-iso"
 	numMasters := 0
 	numWorkers := 0
+	enabledServices := getDefaultEnabledServices()
+	openshiftVersion := ""
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
@@ -158,6 +162,13 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
+		// Service
+		enabledServices = append(enabledServices, "agent-register-cluster.service", "start-cluster-installation.service")
+		//Version
+		openshiftVersion, err = version.Version()
+		if err != nil {
+			return err
+		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		// In the add-nodes workflow, every node will act independently from the others.
@@ -167,6 +178,13 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		// Fetch the required number of master and worker nodes.
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
+		// Service
+		enabledServices = append(enabledServices, "agent-import-cluster.service", "agent-add-node.service")
+		// Generate add-nodes.env file
+		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
+		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
+		// Version
+		openshiftVersion = clusterInfo.Version
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -190,7 +208,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if releaseArch == "multi" {
 		releaseArchs = []string{arch.RpmArch(types.ArchitectureARM64), arch.RpmArch(types.ArchitectureAMD64), arch.RpmArch(types.ArchitecturePPC64LE), arch.RpmArch(types.ArchitectureS390X)}
 	}
-	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, releaseArch, releaseArchs)
+	releaseImageList, err := releaseImageListWithVersion(agentManifests.ClusterImageSet.Spec.ReleaseImage, releaseArch, releaseArchs, openshiftVersion)
 	if err != nil {
 		return err
 	}
@@ -206,7 +224,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfo(archName)
+	osImage, err := getOSImagesInfoWithVersion(archName, openshiftVersion)
 	if err != nil {
 		return err
 	}
@@ -227,7 +245,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		imageTypeISO,
 		keyPairAsset.PrivateKey,
 		keyPairAsset.PublicKey,
-	)
+		agentWorkflow.Workflow)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -265,7 +283,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	enabledServices := getDefaultEnabledServices()
 	// Enable pre-network-manager-config.service only when there are network configs defined
 	if len(agentManifests.StaticNetworkConfigs) != 0 {
 		enabledServices = append(enabledServices, "pre-network-manager-config.service")
@@ -299,7 +316,6 @@ func getDefaultEnabledServices() []string {
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
 		"agent-register-infraenv.service",
-		"agent-register-cluster.service",
 		"agent.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
@@ -309,7 +325,6 @@ func getDefaultEnabledServices() []string {
 		"selinux.service",
 		"install-status.service",
 		"set-hostname.service",
-		"start-cluster-installation.service",
 	}
 }
 
@@ -343,7 +358,9 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
-	imageTypeISO, privateKey, publicKey string) *agentTemplateData {
+	imageTypeISO,
+	privateKey, publicKey string,
+	workflow workflow.AgentWorkflowType) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -361,6 +378,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		ImageTypeISO:              imageTypeISO,
 		PrivateKeyPEM:             privateKey,
 		PublicKeyPEM:              publicKey,
+		WorkflowType:              workflow,
 	}
 }
 
@@ -380,6 +398,13 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
 `, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String())
+}
+
+func getAddNodesEnv(clusterInfo joiner.ClusterInfo) string {
+	return fmt.Sprintf(`CLUSTER_ID=%s
+CLUSTER_NAME=%s
+CLUSTER_API_VIP_DNS_NAME=%s
+`, clusterInfo.ClusterID, clusterInfo.ClusterName, clusterInfo.APIDNSName)
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {
@@ -526,6 +551,14 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 }
 
 func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
+	openshiftVersion, err := version.Version()
+	if err != nil {
+		return nil, err
+	}
+	return getOSImagesInfoWithVersion(cpuArch, openshiftVersion)
+}
+
+func getOSImagesInfoWithVersion(cpuArch string, openshiftVersion string) (*models.OsImage, error) {
 	st, err := rhcos.FetchCoreOSBuild(context.Background())
 	if err != nil {
 		return nil, err
@@ -533,11 +566,6 @@ func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
 
 	osImage := &models.OsImage{
 		CPUArchitecture: &cpuArch,
-	}
-
-	openshiftVersion, err := version.Version()
-	if err != nil {
-		return nil, err
 	}
 	osImage.OpenshiftVersion = &openshiftVersion
 
