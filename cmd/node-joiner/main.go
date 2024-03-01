@@ -19,7 +19,11 @@ func main() {
 		Use:   "add-nodes",
 		Short: "Generates an ISO that could be used to boot the configured nodes to let them join an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nodejoiner.NewAddNodesCommand(wd)
+			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			if err != nil {
+				return err
+			}
+			return nodejoiner.NewAddNodesCommand(wd, kubeConfig)
 		},
 	}
 
@@ -34,6 +38,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use: "node-joiner",
 	}
+	rootCmd.PersistentFlags().String("kubeconfig", "", "Path to the kubeconfig file.")
 
 	rootCmd.AddCommand(nodesAddCmd)
 	rootCmd.AddCommand(nodesMonitorCmd)
