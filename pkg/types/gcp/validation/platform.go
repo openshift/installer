@@ -74,24 +74,13 @@ var (
 
 	// userLabelKeyPrefixRegex is for verifying that the label key does not contain restricted prefixes.
 	userLabelKeyPrefixRegex = regexp.MustCompile(`^(?i)(kubernetes\-io|openshift\-io)`)
-
-	// userTagKeyRegex is for verifying that the tag key contains only allowed characters.
-	userTagKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$`)
-
-	// userTagValueRegex is for verifying that the tag value contains only allowed characters.
-	userTagValueRegex = regexp.MustCompile(`^[a-zA-Z0-9]([0-9A-Za-z_.@%=+:,*#&()\[\]{}\-\s]{0,61}[a-zA-Z0-9])?$`)
-
-	// userTagParentIDRegex is for verifying that the tag parentID contains only allowed characters.
-	userTagParentIDRegex = regexp.MustCompile(`(^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)`)
 )
 
-// maxUserLabelLimit is the maximum userLabels that can be configured as defined in openshift/api.
-// https://github.com/openshift/api/commit/ae73a19d05c35068af16c9aeff375d0b7c936a8a#diff-07b264a49084976b670fb699badaca1795027d6ea732a99226a5388104f6174fR592-R602
-const maxUserLabelLimit = 32
-
-// maxUserTagLimit is the maximum userTags that can be configured as defined in openshift/api.
-// https://github.com/openshift/api/commit/ae73a19d05c35068af16c9aeff375d0b7c936a8a#diff-07b264a49084976b670fb699badaca1795027d6ea732a99226a5388104f6174fR604-R613
-const maxUserTagLimit = 50
+const (
+	// maxUserLabelLimit is the maximum userLabels that can be configured as defined in openshift/api.
+	// https://github.com/openshift/api/commit/ae73a19d05c35068af16c9aeff375d0b7c936a8a#diff-07b264a49084976b670fb699badaca1795027d6ea732a99226a5388104f6174fR592-R602
+	maxUserLabelLimit = 32
+)
 
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
@@ -127,9 +116,6 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 
 	// check if configured userLabels are valid.
 	allErrs = append(allErrs, validateUserLabels(p.UserLabels, fldPath.Child("userLabels"))...)
-
-	// check if configured userTags are valid.
-	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
 	return allErrs
 }
@@ -170,49 +156,6 @@ func validateLabel(key, value string) error {
 	}
 	if userLabelKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("label key contains restricted prefix. Label key cannot have `kubernetes-io`, `openshift-io` prefixes")
-	}
-	return nil
-}
-
-// validateUserTags verifies if configured number of UserTags is not more than
-// allowed limit and the tag keys and values are valid.
-func validateUserTags(tags []gcp.UserTag, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if len(tags) == 0 {
-		return allErrs
-	}
-
-	if len(tags) > maxUserTagLimit {
-		allErrs = append(allErrs, field.TooMany(fldPath, len(tags), maxUserTagLimit))
-	}
-
-	for _, tag := range tags {
-		if err := validateTag(tag.ParentID, tag.Key, tag.Value); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Key(tag.Key), tag.Value, err.Error()))
-		}
-	}
-
-	return allErrs
-}
-
-// validateTag checks the following to ensure that the tag configured is acceptable. Though
-// the criteria is for tag resources to pre-exist, tags will be validated to catch the
-// error much earlier.
-//   - The key and value contain only allowed characters.
-//   - The key and value is not empty and can have at most 63 characters.
-//   - The ParentID can be either OrganizationID or ProjectID.
-//   - OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
-//   - ProjectID must be 6 to 30 characters in length, can only contain lowercase letters, numbers,
-//     and hyphens, and must start with a letter, and cannot end with a hyphen.
-func validateTag(parentID, key, value string) error {
-	if !userTagParentIDRegex.MatchString(parentID) {
-		return fmt.Errorf("tag parentID is invalid or contains invalid characters. ParentID can have a maximum of 32 characters and cannot be empty. ParentID can be either OrganizationID or ProjectID. OrganizationID must consist of decimal numbers, and cannot have leading zeroes and ProjectID must be 6 to 30 characters in length, can only contain lowercase letters, numbers, and hyphens, and must start with a letter, and cannot end with a hyphen")
-	}
-	if !userTagKeyRegex.MatchString(key) {
-		return fmt.Errorf("tag key is invalid or contains invalid characters. Tag key can have a maximum of 63 characters and cannot be empty. Tag key must begin and end with an alphanumeric character, and must contain only uppercase, lowercase alphanumeric characters, and the following special characters `._-`")
-	}
-	if !userTagValueRegex.MatchString(value) {
-		return fmt.Errorf("tag value is invalid or contains invalid characters. Tag value can have a maximum of 63 characters and cannot be empty. Tag value must begin and end with an alphanumeric character, and must contain only uppercase, lowercase alphanumeric characters, and the following special characters `_-.@%%=+:,*#&(){}[]` and spaces")
 	}
 	return nil
 }

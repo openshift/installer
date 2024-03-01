@@ -18,6 +18,18 @@ resource "google_storage_bucket" "ignition" {
   labels                      = var.gcp_extra_labels
 }
 
+resource "google_tags_location_tag_binding" "user_tag_binding_bucket" {
+  for_each = var.gcp_extra_tags
+
+  parent = format("//storage.googleapis.com/projects/_/buckets/%s",
+    google_storage_bucket.ignition.name,
+  )
+  tag_value = each.value
+  location  = var.gcp_region
+
+  depends_on = [google_storage_bucket.ignition]
+}
+
 resource "google_storage_bucket_object" "ignition" {
   bucket  = google_storage_bucket.ignition.name
   name    = "bootstrap.ign"
@@ -88,10 +100,11 @@ resource "google_compute_instance" "bootstrap" {
 
   boot_disk {
     initialize_params {
-      type   = var.gcp_master_root_volume_type
-      size   = var.gcp_master_root_volume_size
-      image  = var.compute_image
-      labels = var.gcp_extra_labels
+      type                  = var.gcp_master_root_volume_type
+      size                  = var.gcp_master_root_volume_size
+      image                 = var.compute_image
+      labels                = var.gcp_extra_labels
+      resource_manager_tags = var.gcp_extra_tags
     }
     kms_key_self_link = var.gcp_root_volume_kms_key_link
   }
@@ -137,6 +150,10 @@ resource "google_compute_instance" "bootstrap" {
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]
 
   labels = var.gcp_extra_labels
+
+  params {
+    resource_manager_tags = var.gcp_extra_tags
+  }
 
   lifecycle {
     # In GCP TF apply is run a second time to remove bootstrap node from LB.

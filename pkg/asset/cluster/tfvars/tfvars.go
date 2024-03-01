@@ -530,6 +530,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 		}
 
+		tags, err := gcpconfig.GetUserTags(ctx,
+			gcpconfig.NewTagManager(client),
+			installConfig.Config.Platform.GCP.ProjectID,
+			installConfig.Config.Platform.GCP.UserTags)
+		if err != nil {
+			return fmt.Errorf("failed to fetch user-defined tags: %w", err)
+		}
+
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
 				Auth:                auth,
@@ -542,6 +550,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublishStrategy:     installConfig.Config.Publish,
 				InfrastructureName:  clusterID.InfraID,
 				UserProvisionedDNS:  installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled,
+				UserTags:            tags,
 			},
 		)
 		if err != nil {

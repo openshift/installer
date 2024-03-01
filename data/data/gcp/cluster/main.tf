@@ -35,6 +35,7 @@ module "master" {
   confidential_compute = var.gcp_master_confidential_compute
   on_host_maintenance  = var.gcp_master_on_host_maintenance
   gcp_extra_labels     = var.gcp_extra_labels
+  gcp_extra_tags       = var.gcp_extra_tags
 
   tags = var.gcp_control_plane_tags
 }
@@ -82,4 +83,3 @@ module "dns" {
   project_id         = var.gcp_project_id
   gcp_extra_labels   = var.gcp_extra_labels
 }
-

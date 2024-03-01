@@ -66,6 +66,10 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 
+	if err := validateUserTags(client, ic.Platform.GCP.ProjectID, ic.Platform.GCP.UserTags); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("platform").Child("gcp").Child("userTags"), ic.Platform.GCP.UserTags, err.Error()))
+	}
+
 	return allErrs.ToAggregate()
 }
 
@@ -632,4 +636,10 @@ func checkArchitecture(imageArch string, icArch types.Architecture, role string)
 		return fmt.Sprintf("image architecture %s does not match %s node architecture %s", imageArch, role, icArch)
 	}
 	return ""
+}
+
+// validateUserTags check for existence and accessibility of user-defined tags and persists
+// validated tags in-memory.
+func validateUserTags(client API, projectID string, userTags []gcp.UserTag) error {
+	return validateAndPersistUserTags(context.Background(), NewTagManager(client), projectID, userTags)
 }

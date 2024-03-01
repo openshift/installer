@@ -47,10 +47,11 @@ resource "google_compute_instance" "master" {
 
   boot_disk {
     initialize_params {
-      type   = var.root_volume_type
-      size   = var.root_volume_size
-      image  = var.image
-      labels = var.gcp_extra_labels
+      type                  = var.root_volume_type
+      size                  = var.root_volume_size
+      image                 = var.image
+      labels                = var.gcp_extra_labels
+      resource_manager_tags = var.gcp_extra_tags
     }
     kms_key_self_link = var.root_volume_kms_key_link
   }
@@ -95,6 +96,10 @@ resource "google_compute_instance" "master" {
   service_account {
     email  = var.service_account != "" ? var.service_account : google_service_account.master-node-sa[0].email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+
+  params {
+    resource_manager_tags = var.gcp_extra_tags
   }
 
   lifecycle {
