@@ -27,6 +27,16 @@ const (
 	DefaultAPIServerPort = 6443
 	// DefaultAPIServerPortString defines the API server port as a string for convenience.
 	DefaultAPIServerPortString = "6443"
+	// DefaultAPIHealthCheckPath the API server health check path.
+	DefaultAPIServerHealthCheckPath = "/readyz"
+	// DefaultAPIServerHealthCheckIntervalSec the API server health check interval in seconds.
+	DefaultAPIServerHealthCheckIntervalSec = 10
+	// DefaultAPIServerHealthCheckTimeoutSec the API server health check timeout in seconds.
+	DefaultAPIServerHealthCheckTimeoutSec = 5
+	// DefaultAPIServerHealthThresholdCount the API server health check threshold count.
+	DefaultAPIServerHealthThresholdCount = 5
+	// DefaultAPIServerUnhealthThresholdCount the API server unhealthy check threshold count.
+	DefaultAPIServerUnhealthThresholdCount = 3
 )
 
 // NetworkStatus encapsulates AWS networking resources.
@@ -94,12 +104,55 @@ var (
 
 // TargetGroupHealthCheck defines health check settings for the target group.
 type TargetGroupHealthCheck struct {
-	Protocol        *string `json:"protocol,omitempty"`
-	Path            *string `json:"path,omitempty"`
-	Port            *string `json:"port,omitempty"`
-	IntervalSeconds *int64  `json:"intervalSeconds,omitempty"`
-	TimeoutSeconds  *int64  `json:"timeoutSeconds,omitempty"`
-	ThresholdCount  *int64  `json:"thresholdCount,omitempty"`
+	// The protocol to use to health check connect with the target.
+	// Defaults to TCP.
+	// +kubebuilder:default=TCP
+	// +optional
+	Protocol *string `json:"protocol,omitempty"`
+
+	// The destination for health checks on the targets when using the protocol HTTP or HTTPS.
+	// Defaults to /readyz.
+	// +kubebuilder:default="/readyz"
+	// +optional
+	Path *string `json:"path,omitempty"`
+
+	// The port the load balancer uses when performing health checks on targets.
+	// Defaults to 6443.
+	// +kubebuilder:default=6443
+	// +optional
+	Port *string `json:"port,omitempty"`
+
+	// The approximate amount of time, in seconds, between health checks of an individual
+	// target.
+	// Defaults to 10.
+	// +kubebuilder:default=10
+	// +kubebuilder:validation:Minimum=10
+	// +optional
+	IntervalSeconds *int64 `json:"intervalSeconds,omitempty"`
+
+	// The amount of time, in seconds, during which no response from a target means
+	// a failed health check.
+	// Defaults to 5.
+	// +kubebuilder:default=5
+	// +kubebuilder:validation:Minimum=5
+	// +optional
+	TimeoutSeconds *int64 `json:"timeoutSeconds,omitempty"`
+
+	// The number of consecutive health check successes required before considering
+	// a target healthy.
+	// Defaults to 5.
+	// +kubebuilder:default=5
+	// +kubebuilder:validation:Minimum=2
+	// +optional
+	ThresholdCount *int64 `json:"thresholdCount,omitempty"`
+
+	// The number of consecutive health check failures required before considering
+	// a target unhealthy.
+	// Defaults to 3.
+	// +kubebuilder:default=3
+	// +kubebuilder:validation:Minimum=2
+	// +optional
+	UnhealthyThresholdCount *int64 `json:"unhealthyThresholdCount,omitempty"`
 }
 
 // TargetGroupAttribute defines attribute key values for V2 Load Balancer Attributes.

@@ -205,6 +205,13 @@ func (s *ClusterScope) ControlPlaneLoadBalancerName() *string {
 	return nil
 }
 
+func (s *ClusterScope) ControlPlaneLoadBalancerHealthCheckProtocol() string {
+	if s.AWSCluster.Spec.ControlPlaneLoadBalancer != nil && s.AWSCluster.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil {
+		return s.AWSCluster.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol.String()
+	}
+	return string(infrav1.ELBProtocolTCP)
+}
+
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
 	return s.AWSCluster.Spec.ControlPlaneEndpoint
 }

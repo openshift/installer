@@ -94,12 +94,13 @@ var (
 
 // TargetGroupHealthCheck defines health check settings for the target group.
 type TargetGroupHealthCheck struct {
-	Protocol        *string `json:"protocol,omitempty"`
-	Path            *string `json:"path,omitempty"`
-	Port            *string `json:"port,omitempty"`
-	IntervalSeconds *int64  `json:"intervalSeconds,omitempty"`
-	TimeoutSeconds  *int64  `json:"timeoutSeconds,omitempty"`
-	ThresholdCount  *int64  `json:"thresholdCount,omitempty"`
+	Protocol                *string `json:"protocol,omitempty"`
+	Path                    *string `json:"path,omitempty"`
+	Port                    *string `json:"port,omitempty"`
+	IntervalSeconds         *int64  `json:"intervalSeconds,omitempty"`
+	TimeoutSeconds          *int64  `json:"timeoutSeconds,omitempty"`
+	ThresholdCount          *int64  `json:"thresholdCount,omitempty"`
+	UnhealthyThresholdCount *int64  `json:"unhealthyThresholdCount,omitempty"`
 }
 
 // TargetGroupAttribute defines attribute key values for V2 Load Balancer Attributes.

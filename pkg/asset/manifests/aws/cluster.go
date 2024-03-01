@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -165,13 +166,30 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+				// Primary == internal LB
 				Name:             ptr.To(clusterID.InfraID + "-int"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
 				Scheme:           &capa.ELBSchemeInternal,
+				HealthCheck: &capa.TargetGroupHealthCheck{
+					Protocol:                ptr.To("HTTPS"),
+					Path:                    ptr.To("/readyz"),
+					IntervalSeconds:         ptr.To(int64(10)),
+					TimeoutSeconds:          ptr.To(int64(10)),
+					ThresholdCount:          ptr.To(int64(2)),
+					UnhealthyThresholdCount: ptr.To(int64(2)),
+				},
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
 						Protocol: capa.ELBProtocolTCP,
+						HealthCheck: &capa.TargetGroupHealthCheck{
+							Protocol:                ptr.To("HTTPS"),
+							Path:                    ptr.To("/healthz"),
+							IntervalSeconds:         ptr.To(int64(10)),
+							TimeoutSeconds:          ptr.To(int64(10)),
+							ThresholdCount:          ptr.To(int64(2)),
+							UnhealthyThresholdCount: ptr.To(int64(2)),
+						},
 					},
 				},
 				IngressRules: []capa.IngressRule{
@@ -191,14 +209,46 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						CidrBlocks:  []string{"0.0.0.0/0"},
 					},
 				},
+
+				// // Primary == external LB
+				// Name:             ptr.To(clusterID.InfraID + "-ext"),
+				// LoadBalancerType: capa.LoadBalancerTypeNLB,
+				// Scheme:           &capa.ELBSchemeInternetFacing,
 			},
 			SecondaryControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
+				// Secondary == external LB
 				Name:             ptr.To(clusterID.InfraID + "-ext"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
 				Scheme:           &capa.ELBSchemeInternetFacing,
-				// IngressRules: []capa.IngressRule{ //THIS doesn't seem to update LB security group
+				HealthCheck: &capa.TargetGroupHealthCheck{
+					Protocol:                ptr.To("HTTPS"),
+					Path:                    ptr.To("/readyz"),
+					IntervalSeconds:         ptr.To(int64(10)),
+					TimeoutSeconds:          ptr.To(int64(10)),
+					ThresholdCount:          ptr.To(int64(2)),
+					UnhealthyThresholdCount: ptr.To(int64(2)),
+				},
+				// // Secondary == internal LB
+				// Name:             ptr.To(clusterID.InfraID + "-int"),
+				// LoadBalancerType: capa.LoadBalancerTypeNLB,
+				// Scheme:           &capa.ELBSchemeInternal,
+				// AdditionalListeners: []capa.AdditionalListenerSpec{
 				// 	{
-				// 		Description: "public api", //TESTING
+				// 		Port:     22623,
+				// 		Protocol: capa.ELBProtocolTCP,
+				// 	},
+				// },
+				// IngressRules: []capa.IngressRule{
+				// 	{
+				// 		Description: "MCS traffic from cluster network",
+				// 		Protocol:    capa.SecurityGroupProtocolTCP,
+				// 		FromPort:    22623,
+				// 		ToPort:      22623,
+				// 		//SourceSecurityGroupRoles: []capa.SecurityGroupRole{"node", "controlplane"},
+				// 		CidrBlocks: []string{"10.0.0.0/16"}, //TODO(padillon): figure out security group rules
+				// 	},
+				// 	{
+				// 		Description: "public api", //TESTING. This doesn't really belong on the internal LB...
 				// 		Protocol:    capa.SecurityGroupProtocolTCP,
 				// 		FromPort:    6443,
 				// 		ToPort:      6443,
@@ -209,6 +259,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			AdditionalTags: capa.Tags{fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned"},
 		},
 	}
+
+	spew.Printf("awsCluster - %v\n", awsCluster)
+	spew.Printf("ControlPlaneLoadBalancer - %v\n", awsCluster.Spec.ControlPlaneLoadBalancer)
 
 	// If the install config has subnets, use them.
 	if len(installConfig.AWS.Subnets) > 0 {

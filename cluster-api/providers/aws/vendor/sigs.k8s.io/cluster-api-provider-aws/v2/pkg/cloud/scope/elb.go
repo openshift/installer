@@ -48,6 +48,10 @@ type ELBScope interface {
 	// ControlPlaneLoadBalancerName returns the Classic ELB name
 	ControlPlaneLoadBalancerName() *string
 
+	// ControlPlaneLoadBalancerHealthCheckProtocol returns the API health check protocol for
+	// the primary load balancer
+	ControlPlaneLoadBalancerHealthCheckProtocol() string
+
 	// ControlPlaneEndpoint returns AWSCluster control plane endpoint
 	ControlPlaneEndpoint() clusterv1.APIEndpoint
 

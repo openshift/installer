@@ -172,6 +172,31 @@ func (s *Service) getAPIServerLBSpec(elbName string, lbSpec *infrav1.AWSLoadBala
 		scheme = *lbSpec.Scheme
 	}
 
+	// The default API health check is TCP, allowing customization to HTTP or HTTPS when HealthCheckProtocol is set.
+	apiHealthCheckProtocol := infrav1.ELBProtocolTCP.String()
+	if lbSpec != nil && lbSpec.HealthCheckProtocol != nil {
+		s.scope.Trace("Found API health check protocol override in the Load Balancer spec, applying it to the API Target Group", "api-server-elb", lbSpec.HealthCheck)
+		apiHealthCheckProtocol = lbSpec.HealthCheckProtocol.String()
+	}
+	apiHealthCheck := &infrav1.TargetGroupHealthCheck{
+		Protocol:                aws.String(apiHealthCheckProtocol),
+		Port:                    aws.String(infrav1.DefaultAPIServerPortString),
+		Path:                    nil,
+		IntervalSeconds:         aws.Int64(infrav1.DefaultAPIServerHealthCheckIntervalSec),
+		TimeoutSeconds:          aws.Int64(infrav1.DefaultAPIServerHealthCheckTimeoutSec),
+		ThresholdCount:          aws.Int64(infrav1.DefaultAPIServerHealthThresholdCount),
+		UnhealthyThresholdCount: aws.Int64(infrav1.DefaultAPIServerUnhealthThresholdCount),
+	}
+	if apiHealthCheckProtocol == infrav1.ELBProtocolHTTP.String() || apiHealthCheckProtocol == infrav1.ELBProtocolHTTPS.String() {
+		apiHealthCheck.Path = aws.String(infrav1.DefaultAPIServerHealthCheckPath)
+	}
+	if lbSpec != nil && lbSpec.HealthCheck != nil {
+		s.scope.Trace("Found API health check override in the Load Balancer spec, applying it to the API Target Group", "api-server-elb", lbSpec.HealthCheck)
+		apiHealthCheck = lbSpec.HealthCheck
+	}
+	fmt.Printf("\n apiHealthCheckProtocol: %v\n", apiHealthCheckProtocol)
+	fmt.Printf("\n apiHealthCheck: %v\n", apiHealthCheck)
+
 	res := &infrav1.LoadBalancer{
 		Name:          elbName,
 		Scheme:        scheme,
@@ -181,14 +206,11 @@ func (s *Service) getAPIServerLBSpec(elbName string, lbSpec *infrav1.AWSLoadBala
 				Protocol: infrav1.ELBProtocolTCP,
 				Port:     infrav1.DefaultAPIServerPort,
 				TargetGroup: infrav1.TargetGroupSpec{
-					Name:     fmt.Sprintf("apiserver-target-%d", time.Now().Unix()),
-					Port:     infrav1.DefaultAPIServerPort,
-					Protocol: infrav1.ELBProtocolTCP,
-					VpcID:    s.scope.VPC().ID,
-					HealthCheck: &infrav1.TargetGroupHealthCheck{
-						Protocol: aws.String(string(infrav1.ELBProtocolTCP)),
-						Port:     aws.String(infrav1.DefaultAPIServerPortString),
-					},
+					Name:        fmt.Sprintf("apiserver-target-%d", time.Now().Unix()),
+					Port:        infrav1.DefaultAPIServerPort,
+					Protocol:    infrav1.ELBProtocolTCP,
+					VpcID:       s.scope.VPC().ID,
+					HealthCheck: apiHealthCheck,
 				},
 			},
 		},
@@ -196,19 +218,24 @@ func (s *Service) getAPIServerLBSpec(elbName string, lbSpec *infrav1.AWSLoadBala
 	}
 
 	if lbSpec != nil {
-		for _, additionalListeners := range lbSpec.AdditionalListeners {
+		for _, listener := range lbSpec.AdditionalListeners {
+			lnHealthCheck := &infrav1.TargetGroupHealthCheck{
+				Protocol: aws.String(string(listener.Protocol)),
+				Port:     aws.String(strconv.FormatInt(listener.Port, 10)),
+			}
+			if listener.HealthCheck != nil {
+				s.scope.Trace("Found health check override in the additional listener spec, applying it to the Target Group", listener.HealthCheck)
+				lnHealthCheck = listener.HealthCheck
+			}
 			res.ELBListeners = append(res.ELBListeners, infrav1.Listener{
-				Protocol: additionalListeners.Protocol,
-				Port:     additionalListeners.Port,
+				Protocol: listener.Protocol,
+				Port:     listener.Port,
 				TargetGroup: infrav1.TargetGroupSpec{
-					Name:     fmt.Sprintf("additional-listener-%d", time.Now().Unix()),
-					Port:     additionalListeners.Port,
-					Protocol: additionalListeners.Protocol,
-					VpcID:    s.scope.VPC().ID,
-					HealthCheck: &infrav1.TargetGroupHealthCheck{
-						Protocol: aws.String(string(additionalListeners.Protocol)),
-						Port:     aws.String(strconv.FormatInt(additionalListeners.Port, 10)),
-					},
+					Name:        fmt.Sprintf("additional-listener-%d", time.Now().Unix()),
+					Port:        listener.Port,
+					Protocol:    listener.Protocol,
+					VpcID:       s.scope.VPC().ID,
+					HealthCheck: lnHealthCheck,
 				},
 			})
 		}
@@ -250,7 +277,7 @@ func (s *Service) getAPIServerLBSpec(elbName string, lbSpec *infrav1.AWSLoadBala
 		// The load balancer APIs require us to only attach one subnet for each AZ.
 		subnets := s.scope.Subnets().FilterPrivate()
 
-		if s.scope.ControlPlaneLoadBalancerScheme() == infrav1.ELBSchemeInternetFacing {
+		if (lbSpec != nil && lbSpec.Scheme != nil) && *lbSpec.Scheme == infrav1.ELBSchemeInternetFacing {
 			subnets = s.scope.Subnets().FilterPublic()
 		}
 
@@ -321,6 +348,21 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBa
 			targetGroupInput.HealthCheckEnabled = aws.Bool(true)
 			targetGroupInput.HealthCheckProtocol = ln.TargetGroup.HealthCheck.Protocol
 			targetGroupInput.HealthCheckPort = ln.TargetGroup.HealthCheck.Port
+			if ln.TargetGroup.HealthCheck.Path != nil {
+				targetGroupInput.HealthCheckPath = ln.TargetGroup.HealthCheck.Path
+			}
+			if ln.TargetGroup.HealthCheck.IntervalSeconds != nil {
+				targetGroupInput.HealthCheckIntervalSeconds = ln.TargetGroup.HealthCheck.IntervalSeconds
+			}
+			if ln.TargetGroup.HealthCheck.TimeoutSeconds != nil {
+				targetGroupInput.HealthCheckTimeoutSeconds = ln.TargetGroup.HealthCheck.TimeoutSeconds
+			}
+			if ln.TargetGroup.HealthCheck.ThresholdCount != nil {
+				targetGroupInput.HealthyThresholdCount = ln.TargetGroup.HealthCheck.ThresholdCount
+			}
+			if ln.TargetGroup.HealthCheck.UnhealthyThresholdCount != nil {
+				targetGroupInput.HealthyThresholdCount = ln.TargetGroup.HealthCheck.UnhealthyThresholdCount
+			}
 		}
 		s.scope.Debug("creating target group", "group", targetGroupInput, "listener", ln)
 		group, err := s.ELBV2Client.CreateTargetGroup(targetGroupInput)

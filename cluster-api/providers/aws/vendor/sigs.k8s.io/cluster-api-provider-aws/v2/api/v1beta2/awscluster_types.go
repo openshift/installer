@@ -214,6 +214,10 @@ type AWSLoadBalancerSpec struct {
 	// +optional
 	HealthCheckProtocol *ELBProtocol `json:"healthCheckProtocol,omitempty"`
 
+	// HealthCheck sets custom health check configuration to the API target group.
+	// +optional
+	HealthCheck *TargetGroupHealthCheck `json:"healthCheck,omitempty"`
+
 	// AdditionalSecurityGroups sets the security groups used by the load balancer. Expected to be security group IDs
 	// This is optional - if not provided new security groups will be created for the load balancer
 	// +optional
@@ -256,6 +260,10 @@ type AdditionalListenerSpec struct {
 	// +kubebuilder:validation:Enum=TCP
 	// +kubebuilder:default=TCP
 	Protocol ELBProtocol `json:"protocol,omitempty"`
+	// HealthCheck sets custom health check configuration to the API target group.
+	// default value is ELBProtocolSSL
+	// +optional
+	HealthCheck *TargetGroupHealthCheck `json:"healthCheck,omitempty"`
 }
 
 // AWSClusterStatus defines the observed state of AWSCluster.
