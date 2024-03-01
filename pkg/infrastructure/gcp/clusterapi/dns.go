@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/option"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
@@ -116,8 +117,12 @@ func createRecordSets(ctx context.Context, ic *installconfig.InstallConfig, clus
 
 // createDNSRecords will get the list of records to be created and execute their creation through the gcp dns api.
 func createDNSRecords(ctx context.Context, ic *installconfig.InstallConfig, clusterID, apiIP, apiIntIP string) error {
+	ssn, err := gcpic.GetSession(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
-	dnsService, err := dns.NewService(ctx)
+	dnsService, err := dns.NewService(ctx, option.WithCredentials(ssn.Credentials))
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}
@@ -144,7 +149,11 @@ func createDNSRecords(ctx context.Context, ic *installconfig.InstallConfig, clus
 // private managed zone should only be created when one is not specified in the install config.
 func createPrivateManagedZone(ctx context.Context, ic *installconfig.InstallConfig, clusterID, network string) error {
 	// TODO: use the opts for the service to restrict scopes see google.golang.org/api/option.WithScopes
-	dnsService, err := dns.NewService(ctx)
+	ssn, err := gcpic.GetSession(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+	dnsService, err := dns.NewService(ctx, option.WithCredentials(ssn.Credentials))
 	if err != nil {
 		return fmt.Errorf("failed to create the gcp dns service: %w", err)
 	}
