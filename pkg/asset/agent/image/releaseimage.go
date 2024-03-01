@@ -20,21 +20,16 @@ func isDigest(pullspec string) bool {
 	return regexp.MustCompile(`.*sha256:[a-fA-F0-9]{64}$`).MatchString(pullspec)
 }
 
-func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
+func releaseImageFromPullSpec(pullSpec, arch, version string) (releaseImage, error) {
 
 	// When the pullspec it's a digest let's use the current version
 	// stored in the installer
 	if isDigest(pullSpec) {
-		versionString, err := version.Version()
-		if err != nil {
-			return releaseImage{}, err
-		}
-
 		return releaseImage{
-			ReleaseVersion: versionString,
+			ReleaseVersion: version,
 			Arch:           arch,
 			PullSpec:       pullSpec,
-			Tag:            versionString,
+			Tag:            version,
 		}, nil
 	}
 
@@ -61,7 +56,24 @@ func releaseImageFromPullSpec(pullSpec, arch string) (releaseImage, error) {
 
 func releaseImageList(pullSpec, arch string) (string, error) {
 
-	relImage, err := releaseImageFromPullSpec(pullSpec, arch)
+	versionString, err := version.Version()
+	if err != nil {
+		return "", err
+	}
+
+	relImage, err := releaseImageFromPullSpec(pullSpec, arch, versionString)
+	if err != nil {
+		return "", err
+	}
+
+	imageList := []interface{}{relImage}
+	text, err := json.Marshal(imageList)
+	return string(text), err
+}
+
+func releaseImageListWithVersion(pullSpec, arch, openshiftVersion string) (string, error) {
+
+	relImage, err := releaseImageFromPullSpec(pullSpec, arch, openshiftVersion)
 	if err != nil {
 		return "", err
 	}
