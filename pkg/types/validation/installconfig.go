@@ -379,7 +379,7 @@ func validateNetworking(n *types.Networking, singleNodeOpenShift bool, fldPath *
 	}
 
 	if n.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is deprecated, please use OVNKubernetes"))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("networkType"), n.NetworkType, "networkType OpenShiftSDN is not supported, please use OVNKubernetes"))
 	}
 
 	if len(n.MachineNetwork) > 0 {
