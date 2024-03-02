@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure"
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
 	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
+	azureinfra "github.com/openshift/installer/pkg/infrastructure/azure"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
@@ -55,6 +56,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 		}
 		return terraform.InitializeProvider(aws.PlatformStages), nil
 	case azuretypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(&azureinfra.Provider{}), nil
+		}
 		return terraform.InitializeProvider(azure.PlatformStages), nil
 	case azuretypes.StackTerraformName:
 		return terraform.InitializeProvider(azure.StackPlatformStages), nil

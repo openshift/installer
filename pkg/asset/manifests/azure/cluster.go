@@ -1,6 +1,8 @@
 package azure
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +42,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capz.AzureClusterSpec{
-			ResourceGroup: clusterID.InfraID,
+			ResourceGroup: fmt.Sprintf("%s-rg", clusterID.InfraID),
 			AzureClusterClassSpec: capz.AzureClusterClassSpec{
 				SubscriptionID:   session.Credentials.SubscriptionID,
 				Location:         installConfig.Config.Azure.Region,
