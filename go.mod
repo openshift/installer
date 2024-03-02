@@ -60,7 +60,7 @@ require (
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.30.0
 	github.com/openshift/api v0.0.0-20240207185517-ae973131190e
-	github.com/openshift/assisted-image-service v0.0.0-20230829160050-0b98ec74397b
+	github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
