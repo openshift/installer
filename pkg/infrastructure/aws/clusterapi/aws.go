@@ -17,8 +17,9 @@ type Provider struct{}
 // Name gives the name of the provider, AWS.
 func (*Provider) Name() string { return awstypes.Name }
 
+// PreProvision creates the IAM roles used by all nodes in the cluster.
 func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
-	if err := putIAMRoles(ctx, in.InfraID, in.InstallConfig); err != nil {
+	if err := createIAMRoles(ctx, in.InfraID, in.InstallConfig); err != nil {
 		return fmt.Errorf("failed to create IAM roles: %w", err)
 	}
 	return nil
