@@ -60,6 +60,14 @@ type AWSClusterSpec struct {
 	// +optional
 	ControlPlaneLoadBalancer *AWSLoadBalancerSpec `json:"controlPlaneLoadBalancer,omitempty"`
 
+	// SecondaryControlPlaneLoadBalancer is an additional load balancer that can be used for the control plane.
+	//
+	// An example use case is to have a separate internal load balancer for internal traffic,
+	// and a separate external load balancer for external traffic.
+	//
+	// +optional
+	SecondaryControlPlaneLoadBalancer *AWSLoadBalancerSpec `json:"secondaryControlPlaneLoadBalancer,omitempty"`
+
 	// ImageLookupFormat is the AMI naming format to look up machine images when
 	// a machine does not specify an AMI. When set, this will be used for all
 	// cluster machines unless a machine specifies a different ImageLookupOrg.
@@ -91,8 +99,10 @@ type AWSClusterSpec struct {
 	// +optional
 	Bastion Bastion `json:"bastion"`
 
-	// IdentityRef is a reference to a identity to be used when reconciling this cluster
 	// +optional
+
+	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
+	// If no identity is specified, the default identity for this controller will be used.
 	IdentityRef *AWSIdentityReference `json:"identityRef,omitempty"`
 
 	// S3Bucket contains options to configure a supporting S3 bucket for this
@@ -159,10 +169,11 @@ type Bastion struct {
 type LoadBalancerType string
 
 var (
-	LoadBalancerTypeClassic = LoadBalancerType("classic")
-	LoadBalancerTypeELB     = LoadBalancerType("elb")
-	LoadBalancerTypeALB     = LoadBalancerType("alb")
-	LoadBalancerTypeNLB     = LoadBalancerType("nlb")
+	LoadBalancerTypeClassic  = LoadBalancerType("classic")
+	LoadBalancerTypeELB      = LoadBalancerType("elb")
+	LoadBalancerTypeALB      = LoadBalancerType("alb")
+	LoadBalancerTypeNLB      = LoadBalancerType("nlb")
+	LoadBalancerTypeDisabled = LoadBalancerType("disabled")
 )
 
 // AWSLoadBalancerSpec defines the desired state of an AWS load balancer.
@@ -221,7 +232,7 @@ type AWSLoadBalancerSpec struct {
 
 	// LoadBalancerType sets the type for a load balancer. The default type is classic.
 	// +kubebuilder:default=classic
-	// +kubebuilder:validation:Enum:=classic;elb;alb;nlb
+	// +kubebuilder:validation:Enum:=classic;elb;alb;nlb;disabled
 	LoadBalancerType LoadBalancerType `json:"loadBalancerType,omitempty"`
 
 	// DisableHostsRewrite disabled the hair pinning issue solution that adds the NLB's address as 127.0.0.1 to the hosts
