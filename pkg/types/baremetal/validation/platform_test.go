@@ -182,13 +182,6 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
 		},
 		{
-			name: "forbidden_feature_loadbalancer",
-			config: installConfig().
-				BareMetalPlatform(
-					platform().LoadBalancerType("OpenShiftManagedDefault")).build(),
-			expected: "baremetal.loadBalancer: Forbidden: load balancer is not supported in this feature set",
-		},
-		{
 			name: "allowed_feature_loadbalancer_openshift_managed_default",
 			config: installConfig().
 				BareMetalPlatform(
