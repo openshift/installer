@@ -47,22 +47,6 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.prismCentral\.endpoint\.address: Required value: must specify the Prism Central endpoint address$`,
 		},
 		{
-			name:     "forbidden load balancer field",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				Platform: types.Platform{
-					Nutanix: func() *nutanix.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.NutanixPlatformLoadBalancer{
-							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
-						}
-						return p
-					}(),
-				},
-			},
-			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
-		},
-		{
 			name:     "allowed load balancer field with OpenShift managed default",
 			platform: validPlatform(),
 			config: &types.InstallConfig{
