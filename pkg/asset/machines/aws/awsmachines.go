@@ -3,7 +3,6 @@ package aws
 
 import (
 	"fmt"
-	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,21 +129,21 @@ func CapaTagsFromUserTags(clusterID string, usertags map[string]string) (capa.Ta
 	tags := capa.Tags{}
 	tags[fmt.Sprintf("kubernetes.io/cluster/%s", clusterID)] = "owned"
 
-	forbiddenTags := sets.NewString()
+	forbiddenTags := sets.New[string]()
 	for key := range tags {
 		forbiddenTags.Insert(key)
 	}
 
-	userTagKeys := make([]string, 0, len(usertags))
+	userTagKeys := sets.New[string]()
 	for key := range usertags {
-		userTagKeys = append(userTagKeys, key)
+		userTagKeys.Insert(key)
 	}
-	sort.Strings(userTagKeys)
 
-	for _, k := range userTagKeys {
-		if forbiddenTags.Has(k) {
-			return nil, fmt.Errorf("user tags may not clobber %s", k)
-		}
+	if clobberedTags := userTagKeys.Intersection(forbiddenTags); clobberedTags.Len() > 0 {
+		return nil, fmt.Errorf("user tag keys %v are not allowed", sets.List(clobberedTags))
+	}
+
+	for _, k := range sets.List(userTagKeys) {
 		tags[k] = usertags[k]
 	}
 	return tags, nil
