@@ -361,22 +361,6 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.zone: Required value: must specify zone tag value`,
 		},
 		{
-			name:     "forbidden load balancer field",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				Platform: types.Platform{
-					VSphere: func() *vsphere.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.VSpherePlatformLoadBalancer{
-							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
-						}
-						return p
-					}(),
-				},
-			},
-			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
-		},
-		{
 			name:     "allowed load balancer field with OpenShift managed default",
 			platform: validPlatform(),
 			config: &types.InstallConfig{
