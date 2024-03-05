@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/govc/importx"
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
@@ -23,7 +24,7 @@ import (
 
 func importRhcosOva(ctx context.Context, session *session.Session, folder *object.Folder, cachedImage, clusterID, tagID, diskProvisioningType string, failureDomain vsphere.FailureDomain) error {
 	name := fmt.Sprintf("%s-rhcos-%s-%s", clusterID, failureDomain.Region, failureDomain.Zone)
-
+	logrus.Infof("Importing OVA %v into failure domain %v.", name, failureDomain.Name)
 	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: cachedImage}}
 
 	ovfDescriptor, err := archive.ReadOvf("*.ovf")
