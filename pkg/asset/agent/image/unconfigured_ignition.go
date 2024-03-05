@@ -7,11 +7,11 @@ import (
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -122,7 +122,7 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	registryCABundle := &mirror.CaBundle{}
 	dependencies.Get(registriesConfig, registryCABundle)
 
-	infraEnvID := uuid.New().String()
+	infraEnvID := common.InfraEnvID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
 	openshiftVersion, err := version.Version()

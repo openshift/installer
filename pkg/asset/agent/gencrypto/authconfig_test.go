@@ -23,6 +23,7 @@ func TestAuthConfig_Generate(t *testing.T) {
 
 			assert.Contains(t, authConfigAsset.PrivateKey, "BEGIN EC PRIVATE KEY")
 			assert.Contains(t, authConfigAsset.PublicKey, "BEGIN EC PUBLIC KEY")
+			assert.NotEmpty(t, authConfigAsset.Token)
 		})
 	}
 }

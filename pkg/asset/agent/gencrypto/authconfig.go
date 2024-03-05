@@ -8,13 +8,24 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
+	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/common"
 )
 
-// AuthConfig is an asset that generates ECDSA public and private keys.
+// AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, PrivateKey string
+	PublicKey, PrivateKey, Token string
 }
+
+// LocalJWTKeyType suggests the key type to be used for the token.
+type LocalJWTKeyType string
+
+const (
+	// InfraEnvKey is used to generate token using infra env id.
+	InfraEnvKey LocalJWTKeyType = "infra_env_id"
+)
 
 var _ asset.WritableAsset = (*AuthConfig)(nil)
 
@@ -31,6 +42,12 @@ func (a *AuthConfig) Generate(dependencies asset.Parents) error {
 	}
 	a.PublicKey = PublicKey
 	a.PrivateKey = PrivateKey
+
+	token, err := localJWTForKey(common.InfraEnvID, a.PrivateKey)
+	if err != nil {
+		return err
+	}
+	a.Token = token
 
 	return nil
 }
@@ -53,7 +70,7 @@ func (a *AuthConfig) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-// Reused from assisted-service.
+// Referenced from assisted-service.
 // https://github.com/openshift/assisted-service/blob/d3c0122452c74ad208055b8b6ee412812431a83f/internal/gencrypto/keys.go#L13-L54
 func keyPairPEM() (string, string, error) {
 	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -96,4 +113,24 @@ func keyPairPEM() (string, string, error) {
 	}
 
 	return pubKeyPEM.String(), privKeyPEM.String(), nil
+}
+
+// Referenced from assisted-service.
+// https://github.com/openshift/assisted-service/blob/d3c0122452c74ad208055b8b6ee412812431a83f/internal/gencrypto/token.go#L33-L50
+func localJWTForKey(id string, privateKkeyPem string) (string, error) {
+	priv, err := jwt.ParseECPrivateKeyFromPEM([]byte(privateKkeyPem))
+	if err != nil {
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		string(InfraEnvKey): id,
+	})
+
+	tokenString, err := token.SignedString(priv)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
