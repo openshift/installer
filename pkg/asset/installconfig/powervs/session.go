@@ -11,9 +11,8 @@ import (
 	"strings"
 	"time"
 
-	survey "github.com/AlecAivazis/survey/v2"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/bluemix-go"
-	"github.com/IBM-Cloud/bluemix-go/api/account/accountv2"
 	"github.com/IBM-Cloud/bluemix-go/authentication"
 	"github.com/IBM-Cloud/bluemix-go/http"
 	"github.com/IBM-Cloud/bluemix-go/rest"
@@ -38,10 +37,9 @@ var (
 // BxClient is struct which provides bluemix session details
 type BxClient struct {
 	*bxsession.Session
-	APIKey       string
-	PISession    *ibmpisession.IBMPISession
-	User         *User
-	AccountAPIV2 accountv2.Accounts
+	APIKey    string
+	PISession *ibmpisession.IBMPISession
+	User      *User
 }
 
 // User is struct with user details
@@ -152,39 +150,12 @@ func NewBxClient() (*BxClient, error) {
 		return nil, err
 	}
 
-	accClient, err := accountv2.New(bxSess)
-	if err != nil {
-		return nil, err
-	}
-
-	c.AccountAPIV2 = accClient.Accounts()
 	c.Session.Config.Region = powervs.Regions[pisv.Region].VPCRegion
+
 	return c, nil
 }
 
-// GetAccountType func return the type of account TRAIL/PAID
-func (c *BxClient) GetAccountType() (string, error) {
-	myAccount, err := c.AccountAPIV2.Get((*c.User).Account)
-	if err != nil {
-		return "", err
-	}
-
-	return myAccount.Type, nil
-}
-
-// ValidateAccountPermissions Checks permission for provisioning Power VS resources
-func (c *BxClient) ValidateAccountPermissions() error {
-	accType, err := c.GetAccountType()
-	if err != nil {
-		return err
-	}
-	if accType == "TRIAL" {
-		return fmt.Errorf("account type must be of Pay-As-You-Go/Subscription type for provision Power VS resources")
-	}
-	return nil
-}
-
-// ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
+// ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance.
 func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string, machineNetworks []types.MachineNetworkEntry) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
