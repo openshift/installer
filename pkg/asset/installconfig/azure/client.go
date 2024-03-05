@@ -180,7 +180,14 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.Resour
 
 	var sku []azsku.ResourceSku
 
-	for skuPage, err := client.List(ctx); skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+	// This has to be initialized outside the `for` because we need access to
+	// `err`. If initialized in the loop and the API call fails right away,
+	// `page.NotDone()` will return `false` and we'll never check for the error
+	skuPage, err := client.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
@@ -195,12 +202,6 @@ func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.Resour
 
 	if len(sku) != 0 {
 		return sku, nil
-	}
-
-	// Azure does not return an error in case of context deadline, so we need
-	// to check it ourselves
-	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
 	}
 
 	return nil, fmt.Errorf("no disks for specified subscription in region %s", region)
@@ -228,7 +229,11 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 	defer cancel()
 
 	var res []string
-	for resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil); resPage.NotDone(); err = resPage.NextWithContext(ctx) {
+	resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list resources: %w", err)
+	}
+	for ; resPage.NotDone(); err = resPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching resource pages: %w", err)
 		}
@@ -248,7 +253,14 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	for page, err := client.List(ctx); page.NotDone(); err = page.NextWithContext(ctx) {
+	// This has to be initialized outside the `for` because we need access to
+	// `err`. If initialized in the loop and the API call fails right away,
+	// `page.NotDone()` will return `false` and we'll never check for the error
+	page, err := client.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; page.NotDone(); err = page.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
@@ -268,12 +280,6 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 				}
 			}
 		}
-	}
-
-	// Azure does not return an error in case of context deadline, so we need
-	// to check it ourselves
-	if err := ctx.Err(); err != nil {
-		return nil, fmt.Errorf("failed to list SKUs: %w", err)
 	}
 
 	return nil, nil
@@ -392,7 +398,11 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
-	for res, err := client.List(ctx, filter, "false"); res.NotDone(); err = res.NextWithContext(ctx) {
+	res, err := client.List(ctx, filter, "false")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; res.NotDone(); err = res.NextWithContext(ctx) {
 		if err != nil {
 			return nil, err
 		}
