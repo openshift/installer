@@ -41,6 +41,7 @@ require (
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-openapi/errors v0.22.0
+	github.com/go-openapi/runtime v0.26.2
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/swag v0.23.0
 	github.com/go-playground/validator/v10 v10.19.0

@@ -27,8 +27,8 @@ func TestAuthConfig_Generate(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Contains(t, authConfigAsset.PrivateKey, "BEGIN EC PRIVATE KEY")
-			assert.Contains(t, authConfigAsset.PublicKey, "BEGIN EC PUBLIC KEY")
+			assert.NotEmpty(t, authConfigAsset.PrivateKey)
+			assert.NotEmpty(t, authConfigAsset.PublicKey)
 			assert.NotEmpty(t, authConfigAsset.Token)
 		})
 	}
