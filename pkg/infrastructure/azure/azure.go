@@ -43,6 +43,7 @@ type Provider struct {
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
+var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
@@ -69,6 +70,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 	for k, v := range userTags {
 		tags[k] = ptr.To(v)
 	}
+	p.Tags = tags
 
 	// Create resource group
 	resourcesClientFactory, err := armresources.NewClientFactory(
@@ -98,9 +100,7 @@ func (p *Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionI
 		return fmt.Errorf("error creating resource group %s: %w", resourceGroupName, err)
 	}
 	logrus.Debugf("ResourceGroup.ID=%s", *resourceGroup.ID)
-
 	p.ResourceGroupName = resourceGroupName
-	p.Tags = tags
 
 	return nil
 }
@@ -116,9 +116,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
-	resourceGroupName := p.ResourceGroupName
-	tags := p.Tags
 
+	resourceGroupName := p.ResourceGroupName
 	storageAccountName := fmt.Sprintf("cluster%s", randomString(5))
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
@@ -153,6 +152,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	imageLength := headResponse.ContentLength
 	if imageLength%512 != 0 {
 		return fmt.Errorf("image length is not alisnged on a 512 byte boundary")
+	}
+
+	userTags := platform.UserTags
+	tags := make(map[string]*string, len(userTags)+1)
+	tags[fmt.Sprintf("kubernetes.io_cluster.%s", in.InfraID)] = ptr.To("owned")
+	for k, v := range userTags {
+		tags[k] = ptr.To(v)
 	}
 
 	tokenCredential := session.TokenCreds
@@ -469,4 +475,52 @@ func randomString(length int) string {
 	}
 
 	return string(s)
+}
+
+// Ignition provisions the Azure container that holds the bootstrap ignition
+// file.
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
+	session, err := in.InstallConfig.Azure.Session()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session: %w", err)
+	}
+
+	bootstrapIgnData := in.BootstrapIgnData
+	subscriptionID := session.Credentials.SubscriptionID
+	cloudConfiguration := session.CloudConfig
+
+	ignitionContainerName := "ignition"
+	blobName := "bootstrap.ign"
+	blobURL := fmt.Sprintf("%s/%s/%s", p.StorageURL, ignitionContainerName, blobName)
+
+	// Create ignition blob storage container
+	createBlobContainerOutput, err := CreateBlobContainer(ctx, &CreateBlobContainerInput{
+		ContainerName:        ignitionContainerName,
+		SubscriptionID:       subscriptionID,
+		ResourceGroupName:    p.ResourceGroupName,
+		StorageAccountName:   p.StorageAccountName,
+		StorageClientFactory: p.StorageClientFactory,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	blobIgnitionContainer := createBlobContainerOutput.BlobContainer
+	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
+
+	_, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
+		StorageURL:         p.StorageURL,
+		BlobURL:            blobURL,
+		StorageAccountName: p.StorageAccountName,
+		StorageAccountKeys: p.StorageAccountKeys,
+		CloudConfiguration: cloudConfiguration,
+		BootstrapIgnData:   bootstrapIgnData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// XXX access it as SAS
+
+	return []byte{}, nil
 }
