@@ -230,12 +230,12 @@ func doUploadPagesFromURL(ctx context.Context, pageBlobClient *pageblob.Client, 
 	// Azure only allows 4MB chunks, See
 	// https://docs.microsoft.com/rest/api/storageservices/put-page-from-url
 	pageSize := int64(1024 * 1024 * 4)
-	leftOverBytes := int64(imageLength % pageSize)
+	leftOverBytes := imageLength % pageSize
 	offset := int64(0)
 	pages := int64(0)
 
 	if imageLength > pageSize {
-		pages = int64(imageLength / pageSize)
+		pages = imageLength / pageSize
 		if imageLength%pageSize > 0 {
 			pages++
 		}
@@ -254,10 +254,9 @@ func doUploadPagesFromURL(ctx context.Context, pageBlobClient *pageblob.Client, 
 		threadGroups++
 	}
 
-	//var mutex sync.Mutex
 	var wg sync.WaitGroup
 	var threadError error
-	var res error = nil
+	var res error
 
 	pagesLeft := pages
 	for threadGroup := int64(0); threadGroup < threadGroups; threadGroup++ {
@@ -275,7 +274,6 @@ func doUploadPagesFromURL(ctx context.Context, pageBlobClient *pageblob.Client, 
 			if offset+pageSize >= imageLength && leftOverBytes > 0 {
 				pageSize = leftOverBytes
 				leftOverBytes = 0
-
 			} else if offset > imageLength {
 				break
 			}
