@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/aws
 
 go 1.21
 
-require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.0
+require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.1-0.20240306201835-baf8d59ff495
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
@@ -49,6 +49,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/cel-go v0.16.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
@@ -73,8 +74,8 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/openshift-online/ocm-common v0.0.0-20240129111424-ff8c6c11d909 // indirect
-	github.com/openshift-online/ocm-sdk-go v0.1.403 // indirect
-	github.com/openshift/rosa v1.2.35-rc1.0.20240221134836-0beb882e5836 // indirect
+	github.com/openshift-online/ocm-sdk-go v0.1.404 // indirect
+	github.com/openshift/rosa v1.2.35-rc1.0.20240229115423-42874686e22d // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
