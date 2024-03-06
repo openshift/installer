@@ -164,9 +164,9 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		// Fetch the required number of master and worker nodes.
 		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
 		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
-		// Service
+		// Enable specific install services
 		enabledServices = append(enabledServices, "agent-register-cluster.service", "start-cluster-installation.service")
-		//Version
+		// Version is retrieved from the embedded data
 		openshiftVersion, err = version.Version()
 		if err != nil {
 			return err
@@ -181,12 +181,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		// Fetch the required number of master and worker nodes.
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
-		// Service
+		// Enable add-nodes specific services
 		enabledServices = append(enabledServices, "agent-import-cluster.service", "agent-add-node.service")
 		// Generate add-nodes.env file
 		addNodesEnvFile := ignition.FileFromString(addNodesEnvPath, "root", 0644, getAddNodesEnv(*clusterInfo))
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
-		// Version
+		// Version matches the source cluster one
 		openshiftVersion = clusterInfo.Version
 		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
 			return clusterInfo.OSImage, nil

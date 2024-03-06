@@ -21,7 +21,6 @@ func isDigest(pullspec string) bool {
 }
 
 func releaseImageFromPullSpec(pullSpec, arch, version string) (releaseImage, error) {
-
 	// When the pullspec it's a digest let's use the current version
 	// stored in the installer
 	if isDigest(pullSpec) {
@@ -55,7 +54,6 @@ func releaseImageFromPullSpec(pullSpec, arch, version string) (releaseImage, err
 }
 
 func releaseImageList(pullSpec, arch string) (string, error) {
-
 	versionString, err := version.Version()
 	if err != nil {
 		return "", err
@@ -72,7 +70,6 @@ func releaseImageList(pullSpec, arch string) (string, error) {
 }
 
 func releaseImageListWithVersion(pullSpec, arch, openshiftVersion string) (string, error) {
-
 	relImage, err := releaseImageFromPullSpec(pullSpec, arch, openshiftVersion)
 	if err != nil {
 		return "", err
