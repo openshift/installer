@@ -595,6 +595,7 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 // ListResourceGroups returns a list of resource groups.
 func (c *Client) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error) {
 	listResourceGroupsOptions := c.managementAPI.NewListResourceGroupsOptions()
+	listResourceGroupsOptions.AccountID = &c.BXCli.User.Account
 
 	resourceGroups, _, err := c.managementAPI.ListResourceGroups(listResourceGroupsOptions)
 	if err != nil {
@@ -624,6 +625,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 
 	// If the user passes in a human readable group id, then we need to convert it to a UUID
 	listGroupOptions := c.managementAPI.NewListResourceGroupsOptions()
+	listGroupOptions.AccountID = &c.BXCli.User.Account
 	groups, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, listGroupOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list resource groups: %w", err)
@@ -699,6 +701,7 @@ func (c *Client) ServiceInstanceGUIDToName(ctx context.Context, id string) (stri
 
 	// If the user passes in a human readable group id, then we need to convert it to a UUID
 	listGroupOptions := c.managementAPI.NewListResourceGroupsOptions()
+	listGroupOptions.AccountID = &c.BXCli.User.Account
 	groups, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, listGroupOptions)
 	if err != nil {
 		return "", fmt.Errorf("failed to list resource groups: %w", err)
