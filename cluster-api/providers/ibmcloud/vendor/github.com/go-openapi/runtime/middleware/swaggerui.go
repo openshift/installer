@@ -16,6 +16,8 @@ type SwaggerUIOpts struct {
 	Path string
 	// SpecURL the url to find the spec for
 	SpecURL string
+	// OAuthCallbackURL the url called after OAuth2 login
+	OAuthCallbackURL string
 
 	// The three components needed to embed swagger-ui
 	SwaggerURL       string
@@ -35,10 +37,13 @@ func (r *SwaggerUIOpts) EnsureDefaults() {
 		r.BasePath = "/"
 	}
 	if r.Path == "" {
-		r.Path = "docs"
+		r.Path = defaultDocsPath
 	}
 	if r.SpecURL == "" {
-		r.SpecURL = "/swagger.json"
+		r.SpecURL = defaultDocsURL
+	}
+	if r.OAuthCallbackURL == "" {
+		r.OAuthCallbackURL = path.Join(r.BasePath, r.Path, "oauth2-callback")
 	}
 	if r.SwaggerURL == "" {
 		r.SwaggerURL = swaggerLatest
@@ -56,7 +61,7 @@ func (r *SwaggerUIOpts) EnsureDefaults() {
 		r.Favicon32 = swaggerFavicon32Latest
 	}
 	if r.Title == "" {
-		r.Title = "API documentation"
+		r.Title = defaultDocsTitle
 	}
 }
 
@@ -73,7 +78,7 @@ func SwaggerUI(opts SwaggerUIOpts, next http.Handler) http.Handler {
 	b := buf.Bytes()
 
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == pth {
+		if path.Join(r.URL.Path) == pth {
 			rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 			rw.WriteHeader(http.StatusOK)
 
@@ -149,7 +154,8 @@ const (
         plugins: [
           SwaggerUIBundle.plugins.DownloadUrl
         ],
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+		oauth2RedirectUrl: '{{ .OAuthCallbackURL }}'
       })
       // End Swagger UI call region
 

@@ -41,6 +41,18 @@ func (o *PcloudCloudinstancesDeleteReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesDeleteForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudCloudinstancesDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 410:
 		result := NewPcloudCloudinstancesDeleteGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -249,6 +261,142 @@ func (o *PcloudCloudinstancesDeleteUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudinstancesDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesDeleteForbidden creates a PcloudCloudinstancesDeleteForbidden with default headers values
+func NewPcloudCloudinstancesDeleteForbidden() *PcloudCloudinstancesDeleteForbidden {
+	return &PcloudCloudinstancesDeleteForbidden{}
+}
+
+/*
+PcloudCloudinstancesDeleteForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesDeleteForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances delete forbidden response has a 2xx status code
+func (o *PcloudCloudinstancesDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances delete forbidden response has a 3xx status code
+func (o *PcloudCloudinstancesDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances delete forbidden response has a 4xx status code
+func (o *PcloudCloudinstancesDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances delete forbidden response has a 5xx status code
+func (o *PcloudCloudinstancesDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances delete forbidden response a status code equal to that given
+func (o *PcloudCloudinstancesDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances delete forbidden response
+func (o *PcloudCloudinstancesDeleteForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudinstancesDeleteForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesDeleteNotFound creates a PcloudCloudinstancesDeleteNotFound with default headers values
+func NewPcloudCloudinstancesDeleteNotFound() *PcloudCloudinstancesDeleteNotFound {
+	return &PcloudCloudinstancesDeleteNotFound{}
+}
+
+/*
+PcloudCloudinstancesDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesDeleteNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances delete not found response has a 2xx status code
+func (o *PcloudCloudinstancesDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances delete not found response has a 3xx status code
+func (o *PcloudCloudinstancesDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances delete not found response has a 4xx status code
+func (o *PcloudCloudinstancesDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances delete not found response has a 5xx status code
+func (o *PcloudCloudinstancesDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances delete not found response a status code equal to that given
+func (o *PcloudCloudinstancesDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances delete not found response
+func (o *PcloudCloudinstancesDeleteNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudCloudinstancesDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

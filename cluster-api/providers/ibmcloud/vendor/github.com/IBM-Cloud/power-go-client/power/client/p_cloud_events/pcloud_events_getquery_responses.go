@@ -47,6 +47,12 @@ func (o *PcloudEventsGetqueryReader) ReadResponse(response runtime.ClientRespons
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudEventsGetqueryNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudEventsGetqueryInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -319,6 +325,74 @@ func (o *PcloudEventsGetqueryForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudEventsGetqueryForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudEventsGetqueryNotFound creates a PcloudEventsGetqueryNotFound with default headers values
+func NewPcloudEventsGetqueryNotFound() *PcloudEventsGetqueryNotFound {
+	return &PcloudEventsGetqueryNotFound{}
+}
+
+/*
+PcloudEventsGetqueryNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudEventsGetqueryNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud events getquery not found response has a 2xx status code
+func (o *PcloudEventsGetqueryNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud events getquery not found response has a 3xx status code
+func (o *PcloudEventsGetqueryNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud events getquery not found response has a 4xx status code
+func (o *PcloudEventsGetqueryNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud events getquery not found response has a 5xx status code
+func (o *PcloudEventsGetqueryNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud events getquery not found response a status code equal to that given
+func (o *PcloudEventsGetqueryNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud events getquery not found response
+func (o *PcloudEventsGetqueryNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudEventsGetqueryNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudEventsGetqueryNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/events][%d] pcloudEventsGetqueryNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudEventsGetqueryNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudEventsGetqueryNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

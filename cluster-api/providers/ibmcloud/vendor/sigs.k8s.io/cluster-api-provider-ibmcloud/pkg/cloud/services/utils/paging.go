@@ -25,7 +25,7 @@ import (
 func getStartToken(nextURLS string) (string, error) {
 	nextURL, err := url.Parse(nextURLS)
 	if err != nil || nextURL == nil {
-		return "", fmt.Errorf("could not parse next url for getting next resources %w", err)
+		return "", fmt.Errorf("could not parse next url for getting next resources: %w", err)
 	}
 
 	start := nextURL.Query().Get("start")

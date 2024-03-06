@@ -47,6 +47,12 @@ func (o *PcloudV2PvminstancesGetallReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudV2PvminstancesGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 408:
 		result := NewPcloudV2PvminstancesGetallRequestTimeout()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -325,6 +331,74 @@ func (o *PcloudV2PvminstancesGetallForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2PvminstancesGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2PvminstancesGetallNotFound creates a PcloudV2PvminstancesGetallNotFound with default headers values
+func NewPcloudV2PvminstancesGetallNotFound() *PcloudV2PvminstancesGetallNotFound {
+	return &PcloudV2PvminstancesGetallNotFound{}
+}
+
+/*
+PcloudV2PvminstancesGetallNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudV2PvminstancesGetallNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 pvminstances getall not found response has a 2xx status code
+func (o *PcloudV2PvminstancesGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 pvminstances getall not found response has a 3xx status code
+func (o *PcloudV2PvminstancesGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 pvminstances getall not found response has a 4xx status code
+func (o *PcloudV2PvminstancesGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 pvminstances getall not found response has a 5xx status code
+func (o *PcloudV2PvminstancesGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 pvminstances getall not found response a status code equal to that given
+func (o *PcloudV2PvminstancesGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud v2 pvminstances getall not found response
+func (o *PcloudV2PvminstancesGetallNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudV2PvminstancesGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudV2PvminstancesGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances][%d] pcloudV2PvminstancesGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2PvminstancesGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

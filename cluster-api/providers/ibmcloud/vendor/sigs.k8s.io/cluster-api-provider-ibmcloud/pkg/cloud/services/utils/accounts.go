@@ -44,7 +44,7 @@ func GetAccount(auth core.Authenticator) (string, error) {
 	if strings.HasPrefix(bearerToken, "Bearer") {
 		bearerToken = bearerToken[7:]
 	}
-	token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(bearerToken, func(_ *jwt.Token) (interface{}, error) {
 		return "", nil
 	})
 	if err != nil && !strings.Contains(err.Error(), "key is of invalid type") {

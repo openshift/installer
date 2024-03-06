@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/go-openapi/errors"
-	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -48,7 +47,7 @@ func (t *typeValidator) schemaInfoForType(data interface{}) (string, string) {
 		return stringType, stringFormatDateTime
 	case strfmt.Duration, *strfmt.Duration:
 		return stringType, stringFormatDuration
-	case runtime.File, *runtime.File:
+	case swag.File, *swag.File:
 		return fileType, ""
 	case strfmt.Email, *strfmt.Email:
 		return stringType, stringFormatEmail
@@ -91,7 +90,7 @@ func (t *typeValidator) schemaInfoForType(data interface{}) (string, string) {
 	default:
 		val := reflect.ValueOf(data)
 		tpe := val.Type()
-		switch tpe.Kind() {
+		switch tpe.Kind() { //nolint:exhaustive
 		case reflect.Bool:
 			return booleanType, ""
 		case reflect.String:

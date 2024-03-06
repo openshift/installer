@@ -3,7 +3,6 @@ package instance
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/helpers"
@@ -28,7 +27,7 @@ func NewIBMPIVpnPolicyClient(ctx context.Context, sess *ibmpisession.IBMPISessio
 // IKE Policies
 // Get an IKE Policy
 func (f *IBMPIVpnPolicyClient) GetIKEPolicy(id string) (*models.IKEPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesGetParams().
@@ -36,7 +35,7 @@ func (f *IBMPIVpnPolicyClient) GetIKEPolicy(id string) (*models.IKEPolicy, error
 		WithCloudInstanceID(f.cloudInstanceID).WithIkePolicyID(id)
 	resp, err := f.session.Power.PCloudvpnPolicies.PcloudIkepoliciesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVPNPolicyOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVPNPolicyOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get ike policy for policy id %s", id)
@@ -46,7 +45,7 @@ func (f *IBMPIVpnPolicyClient) GetIKEPolicy(id string) (*models.IKEPolicy, error
 
 // Create an IKE Policy
 func (f *IBMPIVpnPolicyClient) CreateIKEPolicy(body *models.IKEPolicyCreate) (*models.IKEPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesPostParams().
@@ -54,7 +53,7 @@ func (f *IBMPIVpnPolicyClient) CreateIKEPolicy(body *models.IKEPolicyCreate) (*m
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, err := f.session.Power.PCloudvpnPolicies.PcloudIkepoliciesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateVPNPolicyOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVPNPolicyOperationFailed, f.cloudInstanceID, err))
 	}
 	if postok != nil && postok.Payload != nil {
 		return postok.Payload, nil
@@ -64,7 +63,7 @@ func (f *IBMPIVpnPolicyClient) CreateIKEPolicy(body *models.IKEPolicyCreate) (*m
 
 // Update an IKE Policy
 func (f *IBMPIVpnPolicyClient) UpdateIKEPolicy(id string, body *models.IKEPolicyUpdate) (*models.IKEPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesPutParams().
@@ -73,7 +72,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIKEPolicy(id string, body *models.IKEPolicy
 		WithBody(body)
 	putok, err := f.session.Power.PCloudvpnPolicies.PcloudIkepoliciesPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.UpdateVPNPolicyOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.UpdateVPNPolicyOperationFailed, id, err))
 	}
 	if putok != nil && putok.Payload != nil {
 		return putok.Payload, nil
@@ -83,7 +82,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIKEPolicy(id string, body *models.IKEPolicy
 
 // Get All IKE Policies
 func (f *IBMPIVpnPolicyClient) GetAllIKEPolicies() (*models.IKEPolicies, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesGetallParams().
@@ -91,7 +90,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIKEPolicies() (*models.IKEPolicies, error) 
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudvpnPolicies.PcloudIkepoliciesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all ike policies: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get all ike policies: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get all ike policies")
@@ -101,7 +100,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIKEPolicies() (*models.IKEPolicies, error) 
 
 // Delete an IKE Policy
 func (f *IBMPIVpnPolicyClient) DeleteIKEPolicy(id string) error {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIkepoliciesDeleteParams().
@@ -117,7 +116,7 @@ func (f *IBMPIVpnPolicyClient) DeleteIKEPolicy(id string) error {
 // IPSec Policies
 // Get an IPSec Policy
 func (f *IBMPIVpnPolicyClient) GetIPSecPolicy(id string) (*models.IPSecPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesGetParams().
@@ -125,7 +124,7 @@ func (f *IBMPIVpnPolicyClient) GetIPSecPolicy(id string) (*models.IPSecPolicy, e
 		WithCloudInstanceID(f.cloudInstanceID).WithIpsecPolicyID(id)
 	resp, err := f.session.Power.PCloudvpnPolicies.PcloudIpsecpoliciesGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVPNPolicyOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVPNPolicyOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get ipsec policy for policy id %s", id)
@@ -135,7 +134,7 @@ func (f *IBMPIVpnPolicyClient) GetIPSecPolicy(id string) (*models.IPSecPolicy, e
 
 // Create an IPSec Policy
 func (f *IBMPIVpnPolicyClient) CreateIPSecPolicy(body *models.IPSecPolicyCreate) (*models.IPSecPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesPostParams().
@@ -143,7 +142,7 @@ func (f *IBMPIVpnPolicyClient) CreateIPSecPolicy(body *models.IPSecPolicyCreate)
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, err := f.session.Power.PCloudvpnPolicies.PcloudIpsecpoliciesPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateVPNPolicyOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVPNPolicyOperationFailed, f.cloudInstanceID, err))
 	}
 	if postok != nil && postok.Payload != nil {
 		return postok.Payload, nil
@@ -153,7 +152,7 @@ func (f *IBMPIVpnPolicyClient) CreateIPSecPolicy(body *models.IPSecPolicyCreate)
 
 // Update an IPSec Policy
 func (f *IBMPIVpnPolicyClient) UpdateIPSecPolicy(id string, body *models.IPSecPolicyUpdate) (*models.IPSecPolicy, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesPutParams().
@@ -162,7 +161,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIPSecPolicy(id string, body *models.IPSecPo
 		WithBody(body)
 	putok, err := f.session.Power.PCloudvpnPolicies.PcloudIpsecpoliciesPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.UpdateVPNPolicyOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.UpdateVPNPolicyOperationFailed, id, err))
 	}
 	if putok != nil && putok.Payload != nil {
 		return putok.Payload, nil
@@ -172,7 +171,7 @@ func (f *IBMPIVpnPolicyClient) UpdateIPSecPolicy(id string, body *models.IPSecPo
 
 // Get All IPSec Policies
 func (f *IBMPIVpnPolicyClient) GetAllIPSecPolicies() (*models.IPSecPolicies, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesGetallParams().
@@ -180,7 +179,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIPSecPolicies() (*models.IPSecPolicies, err
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudvpnPolicies.PcloudIpsecpoliciesGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all ipsec policies: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to get all ipsec policies: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to get all ipsec policies")
@@ -190,7 +189,7 @@ func (f *IBMPIVpnPolicyClient) GetAllIPSecPolicies() (*models.IPSecPolicies, err
 
 // Delete an IPSec Policy
 func (f *IBMPIVpnPolicyClient) DeleteIPSecPolicy(id string) error {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_policies.NewPcloudIpsecpoliciesDeleteParams().

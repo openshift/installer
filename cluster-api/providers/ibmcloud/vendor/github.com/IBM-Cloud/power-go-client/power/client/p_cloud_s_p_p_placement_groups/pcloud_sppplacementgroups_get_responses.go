@@ -41,6 +41,12 @@ func (o *PcloudSppplacementgroupsGetReader) ReadResponse(response runtime.Client
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudSppplacementgroupsGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudSppplacementgroupsGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -251,6 +257,74 @@ func (o *PcloudSppplacementgroupsGetUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudSppplacementgroupsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSppplacementgroupsGetForbidden creates a PcloudSppplacementgroupsGetForbidden with default headers values
+func NewPcloudSppplacementgroupsGetForbidden() *PcloudSppplacementgroupsGetForbidden {
+	return &PcloudSppplacementgroupsGetForbidden{}
+}
+
+/*
+PcloudSppplacementgroupsGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudSppplacementgroupsGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sppplacementgroups get forbidden response has a 2xx status code
+func (o *PcloudSppplacementgroupsGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sppplacementgroups get forbidden response has a 3xx status code
+func (o *PcloudSppplacementgroupsGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sppplacementgroups get forbidden response has a 4xx status code
+func (o *PcloudSppplacementgroupsGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sppplacementgroups get forbidden response has a 5xx status code
+func (o *PcloudSppplacementgroupsGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sppplacementgroups get forbidden response a status code equal to that given
+func (o *PcloudSppplacementgroupsGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud sppplacementgroups get forbidden response
+func (o *PcloudSppplacementgroupsGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudSppplacementgroupsGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups/{spp_placement_group_id}][%d] pcloudSppplacementgroupsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSppplacementgroupsGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/spp-placement-groups/{spp_placement_group_id}][%d] pcloudSppplacementgroupsGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSppplacementgroupsGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSppplacementgroupsGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

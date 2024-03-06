@@ -29,8 +29,20 @@ func (o *PcloudPvminstancesNetworksGetReader) ReadResponse(response runtime.Clie
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudPvminstancesNetworksGetBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudPvminstancesNetworksGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesNetworksGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -120,6 +132,74 @@ func (o *PcloudPvminstancesNetworksGetOK) readResponse(response runtime.ClientRe
 	return nil
 }
 
+// NewPcloudPvminstancesNetworksGetBadRequest creates a PcloudPvminstancesNetworksGetBadRequest with default headers values
+func NewPcloudPvminstancesNetworksGetBadRequest() *PcloudPvminstancesNetworksGetBadRequest {
+	return &PcloudPvminstancesNetworksGetBadRequest{}
+}
+
+/*
+PcloudPvminstancesNetworksGetBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudPvminstancesNetworksGetBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances networks get bad request response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get bad request response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get bad request response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get bad request response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks get bad request response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud pvminstances networks get bad request response
+func (o *PcloudPvminstancesNetworksGetBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudPvminstancesNetworksGetBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesNetworksGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudPvminstancesNetworksGetUnauthorized creates a PcloudPvminstancesNetworksGetUnauthorized with default headers values
 func NewPcloudPvminstancesNetworksGetUnauthorized() *PcloudPvminstancesNetworksGetUnauthorized {
 	return &PcloudPvminstancesNetworksGetUnauthorized{}
@@ -177,6 +257,74 @@ func (o *PcloudPvminstancesNetworksGetUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudPvminstancesNetworksGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesNetworksGetForbidden creates a PcloudPvminstancesNetworksGetForbidden with default headers values
+func NewPcloudPvminstancesNetworksGetForbidden() *PcloudPvminstancesNetworksGetForbidden {
+	return &PcloudPvminstancesNetworksGetForbidden{}
+}
+
+/*
+PcloudPvminstancesNetworksGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesNetworksGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances networks get forbidden response has a 2xx status code
+func (o *PcloudPvminstancesNetworksGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks get forbidden response has a 3xx status code
+func (o *PcloudPvminstancesNetworksGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks get forbidden response has a 4xx status code
+func (o *PcloudPvminstancesNetworksGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks get forbidden response has a 5xx status code
+func (o *PcloudPvminstancesNetworksGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks get forbidden response a status code equal to that given
+func (o *PcloudPvminstancesNetworksGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances networks get forbidden response
+func (o *PcloudPvminstancesNetworksGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesNetworksGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks/{network_id}][%d] pcloudPvminstancesNetworksGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesNetworksGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

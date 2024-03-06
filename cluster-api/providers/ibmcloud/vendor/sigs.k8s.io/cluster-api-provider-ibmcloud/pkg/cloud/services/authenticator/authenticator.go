@@ -48,3 +48,31 @@ func GetAuthenticator() (core.Authenticator, error) {
 	}
 	return auth, nil
 }
+
+// GetProperties returns a map containing configuration properties for the specified service that are retrieved from external configuration sources.
+func GetProperties() (map[string]string, error) {
+	properties, err := core.GetServiceProperties(serviceIBMCloud)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching service properties")
+	}
+	return properties, nil
+}
+
+// GetIAMAuthenticator will get the IAM authenticator for ibmcloud.
+func GetIAMAuthenticator() (*core.IamAuthenticator, error) {
+	props, err := GetProperties()
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching service properties: %w", err)
+	}
+
+	apiKey := props["APIKEY"]
+	if apiKey == "" {
+		fmt.Printf("ibmcloud api key is not provided, set %s environmental variable", "IBMCLOUD_API_KEY")
+	}
+
+	auth := &core.IamAuthenticator{
+		ApiKey: apiKey,
+	}
+
+	return auth, nil
+}

@@ -126,6 +126,9 @@ type PVMInstanceReference struct {
 	// Required: true
 	Status *string `json:"status"`
 
+	// The storage connection type
+	StorageConnection string `json:"storageConnection,omitempty"`
+
 	// Storage Pool where server is deployed
 	StoragePool string `json:"storagePool,omitempty"`
 

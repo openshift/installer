@@ -29,6 +29,12 @@ func (o *PcloudV2VolumescloneCancelPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudV2VolumescloneCancelPostBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudV2VolumescloneCancelPostUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -117,6 +123,74 @@ func (o *PcloudV2VolumescloneCancelPostAccepted) GetPayload() *models.VolumesClo
 func (o *PcloudV2VolumescloneCancelPostAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.VolumesClone)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2VolumescloneCancelPostBadRequest creates a PcloudV2VolumescloneCancelPostBadRequest with default headers values
+func NewPcloudV2VolumescloneCancelPostBadRequest() *PcloudV2VolumescloneCancelPostBadRequest {
+	return &PcloudV2VolumescloneCancelPostBadRequest{}
+}
+
+/*
+PcloudV2VolumescloneCancelPostBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudV2VolumescloneCancelPostBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 volumesclone cancel post bad request response has a 2xx status code
+func (o *PcloudV2VolumescloneCancelPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone cancel post bad request response has a 3xx status code
+func (o *PcloudV2VolumescloneCancelPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone cancel post bad request response has a 4xx status code
+func (o *PcloudV2VolumescloneCancelPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone cancel post bad request response has a 5xx status code
+func (o *PcloudV2VolumescloneCancelPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone cancel post bad request response a status code equal to that given
+func (o *PcloudV2VolumescloneCancelPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud v2 volumesclone cancel post bad request response
+func (o *PcloudV2VolumescloneCancelPostBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudV2VolumescloneCancelPostBadRequest) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/cancel][%d] pcloudV2VolumescloneCancelPostBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneCancelPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone/{volumes_clone_id}/cancel][%d] pcloudV2VolumescloneCancelPostBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneCancelPostBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2VolumescloneCancelPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {

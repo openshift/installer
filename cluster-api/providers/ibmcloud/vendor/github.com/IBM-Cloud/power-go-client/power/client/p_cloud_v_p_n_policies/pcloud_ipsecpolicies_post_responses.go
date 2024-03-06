@@ -47,6 +47,12 @@ func (o *PcloudIpsecpoliciesPostReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudIpsecpoliciesPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudIpsecpoliciesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -331,6 +337,74 @@ func (o *PcloudIpsecpoliciesPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudIpsecpoliciesPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudIpsecpoliciesPostNotFound creates a PcloudIpsecpoliciesPostNotFound with default headers values
+func NewPcloudIpsecpoliciesPostNotFound() *PcloudIpsecpoliciesPostNotFound {
+	return &PcloudIpsecpoliciesPostNotFound{}
+}
+
+/*
+PcloudIpsecpoliciesPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudIpsecpoliciesPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud ipsecpolicies post not found response has a 2xx status code
+func (o *PcloudIpsecpoliciesPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies post not found response has a 3xx status code
+func (o *PcloudIpsecpoliciesPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies post not found response has a 4xx status code
+func (o *PcloudIpsecpoliciesPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies post not found response has a 5xx status code
+func (o *PcloudIpsecpoliciesPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies post not found response a status code equal to that given
+func (o *PcloudIpsecpoliciesPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud ipsecpolicies post not found response
+func (o *PcloudIpsecpoliciesPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudIpsecpoliciesPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudIpsecpoliciesPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies][%d] pcloudIpsecpoliciesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudIpsecpoliciesPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudIpsecpoliciesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

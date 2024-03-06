@@ -3,7 +3,6 @@ package instance
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_shared_processor_pools"
@@ -27,15 +26,12 @@ func NewIBMPISharedProcessorPoolClient(ctx context.Context, sess *ibmpisession.I
 
 // Get a PI Shared Processor Pool
 func (f *IBMPISharedProcessorPoolClient) Get(id string) (*models.SharedProcessorPoolDetail, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsGetParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithSharedProcessorPoolID(id)
 	resp, err := f.session.Power.PCloudSharedProcessorPools.PcloudSharedprocessorpoolsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetSharedProcessorPoolOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetSharedProcessorPoolOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Shared Processor Pool %s", id)
@@ -45,15 +41,12 @@ func (f *IBMPISharedProcessorPoolClient) Get(id string) (*models.SharedProcessor
 
 // Get All Shared Processor Pools
 func (f *IBMPISharedProcessorPoolClient) GetAll() (*models.SharedProcessorPools, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudSharedProcessorPools.PcloudSharedprocessorpoolsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get All Shared Processor Pools: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get All Shared Processor Pools: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Shared Processor Pools")
@@ -63,15 +56,12 @@ func (f *IBMPISharedProcessorPoolClient) GetAll() (*models.SharedProcessorPools,
 
 // Create a Shared Processor Pool
 func (f *IBMPISharedProcessorPoolClient) Create(body *models.SharedProcessorPoolCreate) (*models.SharedProcessorPool, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, err := f.session.Power.PCloudSharedProcessorPools.PcloudSharedprocessorpoolsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateSharedProcessorPoolOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateSharedProcessorPoolOperationFailed, f.cloudInstanceID, err))
 	}
 	if postok == nil || postok.Payload == nil {
 		return nil, fmt.Errorf("failed to Create a Shared Processor Pool")
@@ -81,9 +71,6 @@ func (f *IBMPISharedProcessorPoolClient) Create(body *models.SharedProcessorPool
 
 // Delete a Shared Processor Pool
 func (f *IBMPISharedProcessorPoolClient) Delete(id string) error {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
-		return fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsDeleteParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIDeleteTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithSharedProcessorPoolID(id)
@@ -96,15 +83,12 @@ func (f *IBMPISharedProcessorPoolClient) Delete(id string) error {
 
 // Update a PI Shared Processor Pool
 func (f *IBMPISharedProcessorPoolClient) Update(id string, body *models.SharedProcessorPoolUpdate) (*models.SharedProcessorPool, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
-		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
-	}
 	params := p_cloud_shared_processor_pools.NewPcloudSharedprocessorpoolsPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIUpdateTimeOut).
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body).WithSharedProcessorPoolID(id)
 	resp, err := f.session.Power.PCloudSharedProcessorPools.PcloudSharedprocessorpoolsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.UpdateSharedProcessorPoolOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.UpdateSharedProcessorPoolOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Update Shared Processor Pool %s", id)

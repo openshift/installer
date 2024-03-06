@@ -18,10 +18,10 @@ package scope
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -39,6 +39,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
 )
+
+const subnetSuffix = "-subnet"
 
 // ClusterScopeParams defines the input parameters used to create a new ClusterScope.
 type ClusterScopeParams struct {
@@ -77,7 +79,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 	helper, err := patch.NewHelper(params.IBMVPCCluster, params.Client)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to init patch helper")
+		return nil, fmt.Errorf("failed to init patch helper: %w", err)
 	}
 
 	// Fetch the service endpoint.
@@ -85,7 +87,7 @@ func NewClusterScope(params ClusterScopeParams) (*ClusterScope, error) {
 
 	vpcClient, err := vpc.NewService(svcEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create IBM VPC session")
+		return nil, fmt.Errorf("failed to create IBM VPC session: %w", err)
 	}
 
 	if params.Logger.V(DEBUGLEVEL).Enabled() {
@@ -131,6 +133,10 @@ func (s *ClusterScope) CreateVPC() (*vpcv1.VPC, error) {
 
 // DeleteVPC deletes IBM VPC associated with a VPC id.
 func (s *ClusterScope) DeleteVPC() error {
+	if s.IBMVPCCluster.Status.VPC.ID == "" {
+		return nil
+	}
+
 	deleteVpcOptions := &vpcv1.DeleteVPCOptions{}
 	deleteVpcOptions.SetID(s.IBMVPCCluster.Status.VPC.ID)
 	_, err := s.IBMVPCClient.DeleteVPC(deleteVpcOptions)
@@ -198,90 +204,9 @@ func (s *ClusterScope) updateDefaultSG(sgID string) error {
 	return err
 }
 
-// ReserveFIP creates a Floating IP in a provided resource group and zone.
-func (s *ClusterScope) ReserveFIP() (*vpcv1.FloatingIP, error) {
-	fipName := s.IBMVPCCluster.Name + "-control-plane"
-	fipReply, err := s.ensureFIPUnique(fipName)
-	if err != nil {
-		return nil, err
-	} else if fipReply != nil {
-		// TODO need a reasonable wrapped error
-		return fipReply, nil
-	}
-	options := &vpcv1.CreateFloatingIPOptions{}
-
-	options.SetFloatingIPPrototype(&vpcv1.FloatingIPPrototype{
-		Name: &fipName,
-		ResourceGroup: &vpcv1.ResourceGroupIdentity{
-			ID: &s.IBMVPCCluster.Spec.ResourceGroup,
-		},
-		Zone: &vpcv1.ZoneIdentity{
-			Name: &s.IBMVPCCluster.Spec.Zone,
-		},
-	})
-
-	floatingIP, _, err := s.IBMVPCClient.CreateFloatingIP(options)
-	if err != nil {
-		record.Warnf(s.IBMVPCCluster, "FailedCreateFloatingIP", "Failed floatingIP creation - %v", err)
-	}
-	return floatingIP, err
-}
-
-func (s *ClusterScope) ensureFIPUnique(fipName string) (*vpcv1.FloatingIP, error) {
-	var floatingIP *vpcv1.FloatingIP
-	f := func(start string) (bool, string, error) {
-		// check for existing floatingIPs
-		listFloatingIpsOptions := &vpcv1.ListFloatingIpsOptions{}
-		if start != "" {
-			listFloatingIpsOptions.Start = &start
-		}
-
-		floatingIPsList, _, err := s.IBMVPCClient.ListFloatingIps(listFloatingIpsOptions)
-		if err != nil {
-			return false, "", err
-		}
-
-		if floatingIPsList == nil {
-			return false, "", fmt.Errorf("floatingIP list returned is nil")
-		}
-
-		for i, fp := range floatingIPsList.FloatingIps {
-			if (*fp.Name) == fipName {
-				floatingIP = &floatingIPsList.FloatingIps[i]
-				return true, "", nil
-			}
-		}
-
-		if floatingIPsList.Next != nil && *floatingIPsList.Next.Href != "" {
-			return false, *floatingIPsList.Next.Href, nil
-		}
-		return true, "", nil
-	}
-
-	if err := utils.PagingHelper(f); err != nil {
-		return nil, err
-	}
-
-	return floatingIP, nil
-}
-
-// DeleteFloatingIP deletes a Floating IP associated with floating ip id.
-func (s *ClusterScope) DeleteFloatingIP() error {
-	if fipID := *s.IBMVPCCluster.Status.VPCEndpoint.FIPID; fipID != "" {
-		deleteFIPOption := &vpcv1.DeleteFloatingIPOptions{}
-		deleteFIPOption.SetID(fipID)
-		_, err := s.IBMVPCClient.DeleteFloatingIP(deleteFIPOption)
-		if err != nil {
-			record.Warnf(s.IBMVPCCluster, "FailedDeleteFloatingIP", "Failed floatingIP deletion - %v", err)
-		}
-		return err
-	}
-	return nil
-}
-
 // CreateSubnet creates a subnet within provided vpc and zone.
 func (s *ClusterScope) CreateSubnet() (*vpcv1.Subnet, error) {
-	subnetName := s.IBMVPCCluster.Name + "-subnet"
+	subnetName := s.IBMVPCCluster.Name + subnetSuffix
 	subnetReply, err := s.ensureSubnetUnique(subnetName)
 	if err != nil {
 		return nil, err
@@ -295,7 +220,7 @@ func (s *ClusterScope) CreateSubnet() (*vpcv1.Subnet, error) {
 	if err != nil {
 		return nil, err
 	}
-	subnetName = s.IBMVPCCluster.Name + "-subnet"
+	subnetName = s.IBMVPCCluster.Name + subnetSuffix
 	options.SetSubnetPrototype(&vpcv1.SubnetPrototype{
 		Ipv4CIDRBlock: &cidrBlock,
 		Name:          &subnetName,
@@ -410,6 +335,10 @@ func (s *ClusterScope) ensureSubnetUnique(subnetName string) (*vpcv1.Subnet, err
 
 // DeleteSubnet deletes a subnet associated with subnet id.
 func (s *ClusterScope) DeleteSubnet() error {
+	if s.IBMVPCCluster.Status.Subnet.ID == nil {
+		return nil
+	}
+
 	subnetID := *s.IBMVPCCluster.Status.Subnet.ID
 
 	// Lists the subnet available and compare before deleting to avoid any failure(404) later
@@ -463,7 +392,7 @@ func (s *ClusterScope) DeleteSubnet() error {
 		// Unset the public gateway for subnet first
 		err = s.detachPublicGateway(subnetID, *pgw.ID)
 		if err != nil {
-			return errors.Wrap(err, "Error when detaching publicgateway for subnet "+subnetID)
+			return fmt.Errorf("error when detaching publicgateway for subnet %s: %w", subnetID, err)
 		}
 	}
 
@@ -473,7 +402,7 @@ func (s *ClusterScope) DeleteSubnet() error {
 	_, err = s.IBMVPCClient.DeleteSubnet(deleteSubnetOption)
 	if err != nil {
 		record.Warnf(s.IBMVPCCluster, "FailedDeleteSubnet", "Failed subnet deletion - %v", err)
-		return errors.Wrap(err, "Error when deleting subnet ")
+		return fmt.Errorf("error when deleting subnet: %w", err)
 	}
 	return err
 }
@@ -516,7 +445,7 @@ func (s *ClusterScope) detachPublicGateway(subnetID string, pgwID string) error 
 	_, err := s.IBMVPCClient.UnsetSubnetPublicGateway(unsetPGWOption)
 	if err != nil {
 		record.Warnf(s.IBMVPCCluster, "FailedDetachPublicGateway", "Failed publicgateway detachment - %v", err)
-		return errors.Wrap(err, "Error when unsetting publicgateway for subnet "+subnetID)
+		return fmt.Errorf("error when unsetting publicgateway for subnet %s: %w", subnetID, err)
 	}
 
 	// Delete the public gateway
@@ -525,7 +454,7 @@ func (s *ClusterScope) detachPublicGateway(subnetID string, pgwID string) error 
 	_, err = s.IBMVPCClient.DeletePublicGateway(deletePGWOption)
 	if err != nil {
 		record.Warnf(s.IBMVPCCluster, "FailedDeletePublicGateway", "Failed publicgateway deletion - %v", err)
-		return errors.Wrap(err, "Error when deleting publicgateway for subnet "+subnetID)
+		return fmt.Errorf("error when deleting publicgateway for subnet %s: %w", subnetID, err)
 	}
 	return err
 }
@@ -582,6 +511,53 @@ func (s *ClusterScope) CreateLoadBalancer() (*vpcv1.LoadBalancer, error) {
 	}
 
 	record.Eventf(s.IBMVPCCluster, "SuccessfulCreateLoadBalancer", "Created loadBalancer %q", *loadBalancer.Name)
+	return loadBalancer, nil
+}
+
+// GetLoadBalancerByHostname retrieves a IBM VPC load balancer with specified hostname.
+func (s *ClusterScope) GetLoadBalancerByHostname(loadBalancerHostname string) (*vpcv1.LoadBalancer, error) {
+	loadBalancer, err := s.getLoadBalancerByHostname(loadBalancerHostname)
+	if err != nil {
+		return nil, err
+	}
+	return loadBalancer, nil
+}
+
+func (s *ClusterScope) getLoadBalancerByHostname(loadBalancerHostname string) (*vpcv1.LoadBalancer, error) {
+	var loadBalancer *vpcv1.LoadBalancer
+	f := func(start string) (bool, string, error) {
+		// check for existing loadBalancers
+		listLoadBalancersOptions := &vpcv1.ListLoadBalancersOptions{}
+		if start != "" {
+			listLoadBalancersOptions.Start = &start
+		}
+
+		loadBalancersList, _, err := s.IBMVPCClient.ListLoadBalancers(listLoadBalancersOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if loadBalancersList == nil {
+			return false, "", fmt.Errorf("loadBalancer list returned is nil")
+		}
+
+		for i, lb := range loadBalancersList.LoadBalancers {
+			if (*lb.Hostname) == loadBalancerHostname {
+				loadBalancer = &loadBalancersList.LoadBalancers[i]
+				return true, "", nil
+			}
+		}
+
+		if loadBalancersList.Next != nil && *loadBalancersList.Next.Href != "" {
+			return false, *loadBalancersList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
 	return loadBalancer, nil
 }
 
@@ -703,7 +679,25 @@ func (s *ClusterScope) SetLoadBalancerID(id *string) {
 
 // GetLoadBalancerID will get the id for the load balancer.
 func (s *ClusterScope) GetLoadBalancerID() string {
+	if s.IBMVPCCluster.Status.VPCEndpoint.LBID == nil {
+		return ""
+	}
+
 	return *s.IBMVPCCluster.Status.VPCEndpoint.LBID
+}
+
+// SetLoadBalancerAddress will set the address for the load balancer.
+func (s *ClusterScope) SetLoadBalancerAddress(address *string) {
+	s.IBMVPCCluster.Status.VPCEndpoint.Address = address
+}
+
+// GetLoadBalancerAddress will get the address for the load balancer.
+func (s *ClusterScope) GetLoadBalancerAddress() string {
+	if s.IBMVPCCluster.Status.VPCEndpoint.Address == nil {
+		return ""
+	}
+
+	return *s.IBMVPCCluster.Status.VPCEndpoint.Address
 }
 
 // PatchObject persists the cluster configuration and status.
@@ -721,5 +715,5 @@ func (s *ClusterScope) APIServerPort() int32 {
 	if s.Cluster.Spec.ClusterNetwork != nil && s.Cluster.Spec.ClusterNetwork.APIServerPort != nil {
 		return *s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
-	return 6443
+	return infrav1beta2.DefaultAPIServerPort
 }

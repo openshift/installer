@@ -3,7 +3,6 @@ package instance
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/helpers"
@@ -26,7 +25,7 @@ func NewIBMPIDisasterRecoveryLocationClient(ctx context.Context, sess *ibmpisess
 
 // Get the disaster recovery site details for the current location
 func (f *IBMPIDisasterRecoveryLocationClient) Get() (*models.DisasterRecoveryLocation, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_disaster_recovery.NewPcloudLocationsDisasterrecoveryGetParams().
@@ -34,7 +33,7 @@ func (f *IBMPIDisasterRecoveryLocationClient) Get() (*models.DisasterRecoveryLoc
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudDisasterRecovery.PcloudLocationsDisasterrecoveryGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetDisasterRecoveryLocationOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetDisasterRecoveryLocationOperationFailed, f.cloudInstanceID, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to perform the Get Disaster Recovery Location for the cloud instance %s", f.cloudInstanceID)
@@ -44,14 +43,14 @@ func (f *IBMPIDisasterRecoveryLocationClient) Get() (*models.DisasterRecoveryLoc
 
 // Get all disaster recovery locations supported by Power Virtual Server
 func (f *IBMPIDisasterRecoveryLocationClient) GetAll() (*models.DisasterRecoveryLocations, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_disaster_recovery.NewPcloudLocationsDisasterrecoveryGetallParams().
 		WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut)
 	resp, err := f.session.Power.PCloudDisasterRecovery.PcloudLocationsDisasterrecoveryGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetAllDisasterRecoveryLocationOperationFailed, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetAllDisasterRecoveryLocationOperationFailed, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get All Disaster Recovery Location of Power Virtual Server")

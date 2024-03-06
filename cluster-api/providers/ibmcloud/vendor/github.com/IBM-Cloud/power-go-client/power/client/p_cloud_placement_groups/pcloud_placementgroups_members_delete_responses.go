@@ -35,6 +35,12 @@ func (o *PcloudPlacementgroupsMembersDeleteReader) ReadResponse(response runtime
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudPlacementgroupsMembersDeleteUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudPlacementgroupsMembersDeleteForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -195,6 +201,74 @@ func (o *PcloudPlacementgroupsMembersDeleteBadRequest) GetPayload() *models.Erro
 }
 
 func (o *PcloudPlacementgroupsMembersDeleteBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPlacementgroupsMembersDeleteUnauthorized creates a PcloudPlacementgroupsMembersDeleteUnauthorized with default headers values
+func NewPcloudPlacementgroupsMembersDeleteUnauthorized() *PcloudPlacementgroupsMembersDeleteUnauthorized {
+	return &PcloudPlacementgroupsMembersDeleteUnauthorized{}
+}
+
+/*
+PcloudPlacementgroupsMembersDeleteUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudPlacementgroupsMembersDeleteUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud placementgroups members delete unauthorized response has a 2xx status code
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud placementgroups members delete unauthorized response has a 3xx status code
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud placementgroups members delete unauthorized response has a 4xx status code
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud placementgroups members delete unauthorized response has a 5xx status code
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud placementgroups members delete unauthorized response a status code equal to that given
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud placementgroups members delete unauthorized response
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersDeleteUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPlacementgroupsMembersDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

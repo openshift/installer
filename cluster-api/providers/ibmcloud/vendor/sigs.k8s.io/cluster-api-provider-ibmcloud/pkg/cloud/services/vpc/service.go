@@ -17,10 +17,13 @@ limitations under the License.
 package vpc
 
 import (
+	"fmt"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
+	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
 )
 
 // Service holds the VPC Service specific information.
@@ -61,21 +64,6 @@ func (s *Service) DeleteVPC(options *vpcv1.DeleteVPCOptions) (*core.DetailedResp
 // ListVpcs returns list of VPCs in a region.
 func (s *Service) ListVpcs(options *vpcv1.ListVpcsOptions) (*vpcv1.VPCCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListVpcs(options)
-}
-
-// CreateFloatingIP reserves a floating IP.
-func (s *Service) CreateFloatingIP(options *vpcv1.CreateFloatingIPOptions) (*vpcv1.FloatingIP, *core.DetailedResponse, error) {
-	return s.vpcService.CreateFloatingIP(options)
-}
-
-// DeleteFloatingIP releases a floating IP.
-func (s *Service) DeleteFloatingIP(options *vpcv1.DeleteFloatingIPOptions) (*core.DetailedResponse, error) {
-	return s.vpcService.DeleteFloatingIP(options)
-}
-
-// ListFloatingIps returns list of the floating IPs in a region.
-func (s *Service) ListFloatingIps(options *vpcv1.ListFloatingIpsOptions) (*vpcv1.FloatingIPCollection, *core.DetailedResponse, error) {
-	return s.vpcService.ListFloatingIps(options)
 }
 
 // CreateSubnet creates a subnet.
@@ -128,11 +116,6 @@ func (s *Service) CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRule
 	return s.vpcService.CreateSecurityGroupRule(options)
 }
 
-// AddInstanceNetworkInterfaceFloatingIP associates a floating IP with a network interface.
-func (s *Service) AddInstanceNetworkInterfaceFloatingIP(options *vpcv1.AddInstanceNetworkInterfaceFloatingIPOptions) (*vpcv1.FloatingIP, *core.DetailedResponse, error) {
-	return s.vpcService.AddInstanceNetworkInterfaceFloatingIP(options)
-}
-
 // CreateLoadBalancer creates a new load balancer.
 func (s *Service) CreateLoadBalancer(options *vpcv1.CreateLoadBalancerOptions) (*vpcv1.LoadBalancer, *core.DetailedResponse, error) {
 	return s.vpcService.CreateLoadBalancer(options)
@@ -176,6 +159,182 @@ func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection
 // ListImages returns list of images in a region.
 func (s *Service) ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListImages(options)
+}
+
+// GetInstanceProfile returns instance profile.
+func (s *Service) GetInstanceProfile(options *vpcv1.GetInstanceProfileOptions) (*vpcv1.InstanceProfile, *core.DetailedResponse, error) {
+	return s.vpcService.GetInstanceProfile(options)
+}
+
+// GetVPC returns VPC details.
+func (s *Service) GetVPC(options *vpcv1.GetVPCOptions) (*vpcv1.VPC, *core.DetailedResponse, error) {
+	return s.vpcService.GetVPC(options)
+}
+
+// GetVPCByName returns VPC with given name. If not found, returns nil.
+func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
+	var vpc *vpcv1.VPC
+	f := func(start string) (bool, string, error) {
+		// check for existing vpcs
+		listVpcsOptions := &vpcv1.ListVpcsOptions{}
+		if start != "" {
+			listVpcsOptions.Start = &start
+		}
+
+		vpcsList, _, err := s.ListVpcs(listVpcsOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if vpcsList == nil {
+			return false, "", fmt.Errorf("vpc list returned is nil")
+		}
+
+		for i, v := range vpcsList.Vpcs {
+			if (*v.Name) == vpcName {
+				vpc = &vpcsList.Vpcs[i]
+				return true, "", nil
+			}
+		}
+
+		if vpcsList.Next != nil && *vpcsList.Next.Href != "" {
+			return false, *vpcsList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return vpc, nil
+}
+
+// GetSubnet return subnet.
+func (s *Service) GetSubnet(options *vpcv1.GetSubnetOptions) (*vpcv1.Subnet, *core.DetailedResponse, error) {
+	return s.vpcService.GetSubnet(options)
+}
+
+// GetVPCSubnetByName returns subnet with given name. If not found, returns nil.
+func (s *Service) GetVPCSubnetByName(subnetName string) (*vpcv1.Subnet, error) {
+	var subnet *vpcv1.Subnet
+	f := func(start string) (bool, string, error) {
+		// check for existing subnets
+		listSubnetsOptions := &vpcv1.ListSubnetsOptions{}
+		if start != "" {
+			listSubnetsOptions.Start = &start
+		}
+
+		subnetsList, _, err := s.ListSubnets(listSubnetsOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if subnetsList == nil {
+			return false, "", fmt.Errorf("subnet list returned is nil")
+		}
+
+		for i, s := range subnetsList.Subnets {
+			if (*s.Name) == subnetName {
+				subnet = &subnetsList.Subnets[i]
+				return true, "", nil
+			}
+		}
+
+		if subnetsList.Next != nil && *subnetsList.Next.Href != "" {
+			return false, *subnetsList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return subnet, nil
+}
+
+// GetLoadBalancerByName returns loadBalancer with given name. If not found, returns nil.
+func (s *Service) GetLoadBalancerByName(loadBalancerName string) (*vpcv1.LoadBalancer, error) {
+	var loadBalancer *vpcv1.LoadBalancer
+	f := func(start string) (bool, string, error) {
+		// check for existing loadBalancers
+		listLoadBalancersOptions := &vpcv1.ListLoadBalancersOptions{}
+		if start != "" {
+			listLoadBalancersOptions.Start = &start
+		}
+
+		loadBalancersList, _, err := s.ListLoadBalancers(listLoadBalancersOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if loadBalancersList == nil {
+			return false, "", fmt.Errorf("loadBalancer list returned is nil")
+		}
+
+		for i, lb := range loadBalancersList.LoadBalancers {
+			if (*lb.Name) == loadBalancerName {
+				loadBalancer = &loadBalancersList.LoadBalancers[i]
+				return true, "", nil
+			}
+		}
+
+		if loadBalancersList.Next != nil && *loadBalancersList.Next.Href != "" {
+			return false, *loadBalancersList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return loadBalancer, nil
+}
+
+// GetSubnetAddrPrefix returns subnets address prefix.
+func (s *Service) GetSubnetAddrPrefix(vpcID, zone string) (string, error) {
+	var addrPrefix *vpcv1.AddressPrefix
+	f := func(start string) (bool, string, error) {
+		// check for existing vpcAddressPrefixes
+		listVPCAddressPrefixesOptions := &vpcv1.ListVPCAddressPrefixesOptions{
+			VPCID: &vpcID,
+		}
+		if start != "" {
+			listVPCAddressPrefixesOptions.Start = &start
+		}
+
+		vpcAddressPrefixesList, _, err := s.ListVPCAddressPrefixes(listVPCAddressPrefixesOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if vpcAddressPrefixesList == nil {
+			return false, "", fmt.Errorf("vpcAddressPrefix list returned is nil")
+		}
+
+		for i, addressPrefix := range vpcAddressPrefixesList.AddressPrefixes {
+			if (*addressPrefix.Zone.Name) == zone {
+				addrPrefix = &vpcAddressPrefixesList.AddressPrefixes[i]
+				return true, "", nil
+			}
+		}
+
+		if vpcAddressPrefixesList.Next != nil && *vpcAddressPrefixesList.Next.Href != "" {
+			return false, *vpcAddressPrefixesList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return "", err
+	}
+
+	if addrPrefix != nil {
+		return *addrPrefix.CIDR, nil
+	}
+	return "", fmt.Errorf("not found a valid CIDR for VPC %s in zone %s", vpcID, zone)
 }
 
 // NewService returns a new VPC Service.

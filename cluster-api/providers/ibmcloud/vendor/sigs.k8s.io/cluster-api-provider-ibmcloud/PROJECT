@@ -49,4 +49,7 @@ resources:
 - group: infrastructure
   kind: IBMPowerVSClusterTemplate
   version: v1beta2
+- group: infrastructure
+  kind: IBMVPCClusterTemplate
+  version: v1beta2
 version: "2"

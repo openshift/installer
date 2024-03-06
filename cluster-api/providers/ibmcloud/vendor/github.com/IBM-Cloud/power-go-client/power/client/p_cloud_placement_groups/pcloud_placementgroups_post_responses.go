@@ -35,8 +35,20 @@ func (o *PcloudPlacementgroupsPostReader) ReadResponse(response runtime.ClientRe
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudPlacementgroupsPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudPlacementgroupsPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudPlacementgroupsPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -200,6 +212,74 @@ func (o *PcloudPlacementgroupsPostBadRequest) readResponse(response runtime.Clie
 	return nil
 }
 
+// NewPcloudPlacementgroupsPostUnauthorized creates a PcloudPlacementgroupsPostUnauthorized with default headers values
+func NewPcloudPlacementgroupsPostUnauthorized() *PcloudPlacementgroupsPostUnauthorized {
+	return &PcloudPlacementgroupsPostUnauthorized{}
+}
+
+/*
+PcloudPlacementgroupsPostUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudPlacementgroupsPostUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud placementgroups post unauthorized response has a 2xx status code
+func (o *PcloudPlacementgroupsPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud placementgroups post unauthorized response has a 3xx status code
+func (o *PcloudPlacementgroupsPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud placementgroups post unauthorized response has a 4xx status code
+func (o *PcloudPlacementgroupsPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud placementgroups post unauthorized response has a 5xx status code
+func (o *PcloudPlacementgroupsPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud placementgroups post unauthorized response a status code equal to that given
+func (o *PcloudPlacementgroupsPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud placementgroups post unauthorized response
+func (o *PcloudPlacementgroupsPostUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudPlacementgroupsPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPlacementgroupsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudPlacementgroupsPostForbidden creates a PcloudPlacementgroupsPostForbidden with default headers values
 func NewPcloudPlacementgroupsPostForbidden() *PcloudPlacementgroupsPostForbidden {
 	return &PcloudPlacementgroupsPostForbidden{}
@@ -257,6 +337,74 @@ func (o *PcloudPlacementgroupsPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudPlacementgroupsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPlacementgroupsPostNotFound creates a PcloudPlacementgroupsPostNotFound with default headers values
+func NewPcloudPlacementgroupsPostNotFound() *PcloudPlacementgroupsPostNotFound {
+	return &PcloudPlacementgroupsPostNotFound{}
+}
+
+/*
+PcloudPlacementgroupsPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPlacementgroupsPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud placementgroups post not found response has a 2xx status code
+func (o *PcloudPlacementgroupsPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud placementgroups post not found response has a 3xx status code
+func (o *PcloudPlacementgroupsPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud placementgroups post not found response has a 4xx status code
+func (o *PcloudPlacementgroupsPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud placementgroups post not found response has a 5xx status code
+func (o *PcloudPlacementgroupsPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud placementgroups post not found response a status code equal to that given
+func (o *PcloudPlacementgroupsPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud placementgroups post not found response
+func (o *PcloudPlacementgroupsPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudPlacementgroupsPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups][%d] pcloudPlacementgroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPlacementgroupsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -35,6 +35,18 @@ func (o *ServiceBrokerOpenstacksOpenstackGetReader) ReadResponse(response runtim
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceBrokerOpenstacksOpenstackGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceBrokerOpenstacksOpenstackGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewServiceBrokerOpenstacksOpenstackGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -177,6 +189,142 @@ func (o *ServiceBrokerOpenstacksOpenstackGetBadRequest) GetPayload() *models.Err
 }
 
 func (o *ServiceBrokerOpenstacksOpenstackGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerOpenstacksOpenstackGetUnauthorized creates a ServiceBrokerOpenstacksOpenstackGetUnauthorized with default headers values
+func NewServiceBrokerOpenstacksOpenstackGetUnauthorized() *ServiceBrokerOpenstacksOpenstackGetUnauthorized {
+	return &ServiceBrokerOpenstacksOpenstackGetUnauthorized{}
+}
+
+/*
+ServiceBrokerOpenstacksOpenstackGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceBrokerOpenstacksOpenstackGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker openstacks openstack get unauthorized response has a 2xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks openstack get unauthorized response has a 3xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks openstack get unauthorized response has a 4xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks openstack get unauthorized response has a 5xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks openstack get unauthorized response a status code equal to that given
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service broker openstacks openstack get unauthorized response
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}][%d] serviceBrokerOpenstacksOpenstackGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}][%d] serviceBrokerOpenstacksOpenstackGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerOpenstacksOpenstackGetForbidden creates a ServiceBrokerOpenstacksOpenstackGetForbidden with default headers values
+func NewServiceBrokerOpenstacksOpenstackGetForbidden() *ServiceBrokerOpenstacksOpenstackGetForbidden {
+	return &ServiceBrokerOpenstacksOpenstackGetForbidden{}
+}
+
+/*
+ServiceBrokerOpenstacksOpenstackGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceBrokerOpenstacksOpenstackGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker openstacks openstack get forbidden response has a 2xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker openstacks openstack get forbidden response has a 3xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker openstacks openstack get forbidden response has a 4xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker openstacks openstack get forbidden response has a 5xx status code
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker openstacks openstack get forbidden response a status code equal to that given
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service broker openstacks openstack get forbidden response
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}][%d] serviceBrokerOpenstacksOpenstackGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) String() string {
+	return fmt.Sprintf("[GET /broker/v1/openstacks/{openstack_id}][%d] serviceBrokerOpenstacksOpenstackGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerOpenstacksOpenstackGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
