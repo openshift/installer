@@ -180,7 +180,7 @@ func (r *AWSMachineTemplateWebhook) ValidateCreate(_ context.Context, raw runtim
 	var allErrs field.ErrorList
 	obj, ok := raw.(*AWSMachineTemplate)
 	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineTemplate but got a %T", raw))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a AWSMachineTemplate but got a %T", raw))
 	}
 
 	spec := obj.Spec.Template.Spec

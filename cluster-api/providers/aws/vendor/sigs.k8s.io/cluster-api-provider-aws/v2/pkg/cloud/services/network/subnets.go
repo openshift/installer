@@ -146,12 +146,12 @@ func (s *Service) reconcileSubnets() error {
 				if !unmanagedVPC {
 					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging managed Subnet %q: %v", existingSubnet.GetResourceID(), err)
 					return errors.Wrapf(err, "failed to ensure tags on subnet %q", existingSubnet.GetResourceID())
-				} else {
-					// We may not have a permission to tag unmanaged subnets.
-					// When tagging unmanaged subnet fails, record an event and proceed.
-					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging unmanaged Subnet %q: %v", existingSubnet.GetResourceID(), err)
-					break
 				}
+
+				// We may not have a permission to tag unmanaged subnets.
+				// When tagging unmanaged subnet fails, record an event and proceed.
+				record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging unmanaged Subnet %q: %v", existingSubnet.GetResourceID(), err)
+				break
 			}
 
 			// TODO(vincepri): check if subnet needs to be updated.
@@ -590,10 +590,10 @@ func (s *Service) getSubnetTagParams(unmanagedVPC bool, id string, public bool, 
 			Role:        aws.String(role),
 			Additional:  additionalTags,
 		}
-	} else {
-		return infrav1.BuildParams{
-			ResourceID: id,
-			Additional: additionalTags,
-		}
+	}
+
+	return infrav1.BuildParams{
+		ResourceID: id,
+		Additional: additionalTags,
 	}
 }

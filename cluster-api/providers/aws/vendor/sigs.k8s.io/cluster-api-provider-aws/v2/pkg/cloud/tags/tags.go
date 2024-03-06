@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package tags provides a way to tag cloud resources.
 package tags
 
 import (

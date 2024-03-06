@@ -210,6 +210,7 @@ type CloudInit struct {
 }
 
 // Ignition defines options related to the bootstrapping systems where Ignition is used.
+// For more information on Ignition configuration, see https://coreos.github.io/butane/specs/
 type Ignition struct {
 	// Version defines which version of Ignition will be used to generate bootstrap data.
 	//
@@ -237,6 +238,66 @@ type Ignition struct {
 	// +kubebuilder:default="ClusterObjectStore"
 	// +kubebuilder:validation:Enum:="ClusterObjectStore";"UnencryptedUserData"
 	StorageType IgnitionStorageTypeOption `json:"storageType,omitempty"`
+
+	// Proxy defines proxy settings for Ignition.
+	// Only valid for Ignition versions 3.1 and above.
+	// +optional
+	Proxy *IgnitionProxy `json:"proxy,omitempty"`
+
+	// TLS defines TLS settings for Ignition.
+	// Only valid for Ignition versions 3.1 and above.
+	// +optional
+	TLS *IgnitionTLS `json:"tls,omitempty"`
+}
+
+// IgnitionCASource defines the source of the certificate authority to use for Ignition.
+// +kubebuilder:validation:MaxLength:=65536
+type IgnitionCASource string
+
+// IgnitionTLS defines TLS settings for Ignition.
+type IgnitionTLS struct {
+	// CASources defines the list of certificate authorities to use for Ignition.
+	// The value is the certificate bundle (in PEM format). The bundle can contain multiple concatenated certificates.
+	// Supported schemes are http, https, tftp, s3, arn, gs, and `data` (RFC 2397) URL scheme.
+	//
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	CASources []IgnitionCASource `json:"certificateAuthorities,omitempty"`
+}
+
+// IgnitionNoProxy defines the list of domains to not proxy for Ignition.
+// +kubebuilder:validation:MaxLength:=2048
+type IgnitionNoProxy string
+
+// IgnitionProxy defines proxy settings for Ignition.
+type IgnitionProxy struct {
+	// HTTPProxy is the HTTP proxy to use for Ignition.
+	// A single URL that specifies the proxy server to use for HTTP and HTTPS requests,
+	// unless overridden by the HTTPSProxy or NoProxy options.
+	// +optional
+	HTTPProxy *string `json:"httpProxy,omitempty"`
+
+	// HTTPSProxy is the HTTPS proxy to use for Ignition.
+	// A single URL that specifies the proxy server to use for HTTPS requests,
+	// unless overridden by the NoProxy option.
+	// +optional
+	HTTPSProxy *string `json:"httpsProxy,omitempty"`
+
+	// NoProxy is the list of domains to not proxy for Ignition.
+	// Specifies a list of strings to hosts that should be excluded from proxying.
+	//
+	// Each value is represented by:
+	// - An IP address prefix (1.2.3.4)
+	// - An IP address prefix in CIDR notation (1.2.3.4/8)
+	// - A domain name
+	//   - A domain name matches that name and all subdomains
+	//   - A domain name with a leading . matches subdomains only
+	// - A special DNS label (*), indicates that no proxying should be done
+	//
+	// An IP address prefix and domain name can also include a literal port number (1.2.3.4:80).
+	// +optional
+	// +kubebuilder:validation:MaxItems=64
+	NoProxy []IgnitionNoProxy `json:"noProxy,omitempty"`
 }
 
 // AWSMachineStatus defines the observed state of AWSMachine.

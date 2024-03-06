@@ -275,11 +275,11 @@ func makeVpcConfig(subnets infrav1.Subnets, endpointAccess ekscontrolplanev1.End
 		return nil, awserrors.NewFailedDependency("subnets in at least 2 different az's are required")
 	}
 
-	subnetIds := make([]*string, 0)
+	subnetIDs := make([]*string, 0)
 	for i := range subnets {
 		subnet := subnets[i]
 		subnetID := subnet.GetResourceID()
-		subnetIds = append(subnetIds, &subnetID)
+		subnetIDs = append(subnetIDs, &subnetID)
 	}
 
 	cidrs := make([]*string, 0)
@@ -295,7 +295,7 @@ func makeVpcConfig(subnets infrav1.Subnets, endpointAccess ekscontrolplanev1.End
 	vpcConfig := &eks.VpcConfigRequest{
 		EndpointPublicAccess:  endpointAccess.Public,
 		EndpointPrivateAccess: endpointAccess.Private,
-		SubnetIds:             subnetIds,
+		SubnetIds:             subnetIDs,
 	}
 
 	if len(cidrs) > 0 {

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package eks provides a service to reconcile EKS control plane and nodegroups.
 package eks
 
 import (

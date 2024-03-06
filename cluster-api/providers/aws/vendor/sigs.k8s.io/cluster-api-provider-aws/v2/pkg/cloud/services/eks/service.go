@@ -52,6 +52,7 @@ type Service struct {
 	STSClient stsiface.STSAPI
 }
 
+// ServiceOpts defines the functional arguments for the service.
 type ServiceOpts func(s *Service)
 
 // WithIAMClient creates an access spec with a custom http client.

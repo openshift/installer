@@ -30,9 +30,17 @@ import (
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ROSAControlPlane{}, func(obj interface{}) { SetObjectDefaults_ROSAControlPlane(obj.(*ROSAControlPlane)) })
+	scheme.AddTypeDefaultingFunc(&ROSAControlPlaneList{}, func(obj interface{}) { SetObjectDefaults_ROSAControlPlaneList(obj.(*ROSAControlPlaneList)) })
 	return nil
 }
 
 func SetObjectDefaults_ROSAControlPlane(in *ROSAControlPlane) {
 	SetDefaults_RosaControlPlaneSpec(&in.Spec)
+}
+
+func SetObjectDefaults_ROSAControlPlaneList(in *ROSAControlPlaneList) {
+	for i := range in.Items {
+		a := &in.Items[i]
+		SetObjectDefaults_ROSAControlPlane(a)
+	}
 }

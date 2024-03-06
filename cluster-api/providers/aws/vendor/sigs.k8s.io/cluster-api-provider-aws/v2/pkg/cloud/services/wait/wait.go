@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package wait provides a set of utilities for polling and waiting.
 package wait
 
 import (

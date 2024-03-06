@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package cloud contains interfaces for working with AWS resources.
 package cloud
 
 import (

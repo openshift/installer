@@ -184,6 +184,7 @@ func (s *ClusterScope) ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec {
 	return s.AWSCluster.Spec.ControlPlaneLoadBalancer
 }
 
+// ControlPlaneLoadBalancers returns load balancers configured for the control plane.
 func (s *ClusterScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec {
 	return []*infrav1.AWSLoadBalancerSpec{
 		s.AWSCluster.Spec.ControlPlaneLoadBalancer,
@@ -192,6 +193,7 @@ func (s *ClusterScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpe
 }
 
 // ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing).
+// Deprecated: This method is going to be removed in a future release. Use LoadBalancer.Scheme.
 func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	if s.ControlPlaneLoadBalancer() != nil && s.ControlPlaneLoadBalancer().Scheme != nil {
 		return *s.ControlPlaneLoadBalancer().Scheme
@@ -199,6 +201,7 @@ func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	return infrav1.ELBSchemeInternetFacing
 }
 
+// ControlPlaneLoadBalancerName returns the name of the control plane load balancer.
 func (s *ClusterScope) ControlPlaneLoadBalancerName() *string {
 	if s.AWSCluster.Spec.ControlPlaneLoadBalancer != nil {
 		return s.AWSCluster.Spec.ControlPlaneLoadBalancer.Name
@@ -206,10 +209,12 @@ func (s *ClusterScope) ControlPlaneLoadBalancerName() *string {
 	return nil
 }
 
+// ControlPlaneEndpoint returns the cluster control plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
 	return s.AWSCluster.Spec.ControlPlaneEndpoint
 }
 
+// Bucket returns the cluster bucket configuration.
 func (s *ClusterScope) Bucket() *infrav1.S3Bucket {
 	return s.AWSCluster.Spec.S3Bucket
 }

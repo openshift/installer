@@ -22,13 +22,14 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
+// ROSAClusterSpec defines the desired state of ROSACluster.
 type ROSAClusterSpec struct {
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
 	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
 }
 
-// ROSAClusterStatus defines the observed state of ROSACluster
+// ROSAClusterStatus defines the observed state of ROSACluster.
 type ROSAClusterStatus struct {
 	// Ready is when the ROSAControlPlane has a API server URL.
 	// +optional
@@ -47,6 +48,7 @@ type ROSAClusterStatus struct {
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Control plane infrastructure is ready for worker nodes"
 // +kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=".spec.controlPlaneEndpoint.host",description="API Endpoint",priority=1
 
+// ROSACluster is the Schema for the ROSAClusters API.
 type ROSACluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

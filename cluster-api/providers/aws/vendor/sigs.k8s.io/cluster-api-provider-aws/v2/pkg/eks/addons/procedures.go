@@ -43,7 +43,7 @@ type DeleteAddonProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *DeleteAddonProcedure) Do(ctx context.Context) error {
+func (p *DeleteAddonProcedure) Do(_ context.Context) error {
 	input := &eks.DeleteAddonInput{
 		AddonName:   aws.String(p.name),
 		ClusterName: aws.String(p.plan.clusterName),
@@ -68,7 +68,7 @@ type UpdateAddonProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *UpdateAddonProcedure) Do(ctx context.Context) error {
+func (p *UpdateAddonProcedure) Do(_ context.Context) error {
 	desired := p.plan.getDesired(p.name)
 
 	if desired == nil {
@@ -103,7 +103,7 @@ type UpdateAddonTagsProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *UpdateAddonTagsProcedure) Do(ctx context.Context) error {
+func (p *UpdateAddonTagsProcedure) Do(_ context.Context) error {
 	desired := p.plan.getDesired(p.name)
 	installed := p.plan.getInstalled(p.name)
 
@@ -138,7 +138,7 @@ type CreateAddonProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *CreateAddonProcedure) Do(ctx context.Context) error {
+func (p *CreateAddonProcedure) Do(_ context.Context) error {
 	desired := p.plan.getDesired(p.name)
 	if desired == nil {
 		return fmt.Errorf("getting desired addon %s: %w", p.name, ErrAddonNotFound)
@@ -181,7 +181,7 @@ type WaitAddonActiveProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *WaitAddonActiveProcedure) Do(ctx context.Context) error {
+func (p *WaitAddonActiveProcedure) Do(_ context.Context) error {
 	input := &eks.DescribeAddonInput{
 		AddonName:   aws.String(p.name),
 		ClusterName: aws.String(p.plan.clusterName),
@@ -222,7 +222,7 @@ type WaitAddonDeleteProcedure struct {
 }
 
 // Do implements the logic for the procedure.
-func (p *WaitAddonDeleteProcedure) Do(ctx context.Context) error {
+func (p *WaitAddonDeleteProcedure) Do(_ context.Context) error {
 	input := &eks.DescribeAddonInput{
 		AddonName:   aws.String(p.name),
 		ClusterName: aws.String(p.plan.clusterName),

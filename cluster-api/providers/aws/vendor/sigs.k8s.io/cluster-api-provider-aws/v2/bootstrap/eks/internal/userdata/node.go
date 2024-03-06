@@ -68,6 +68,7 @@ type NodeInput struct {
 	NTP                      *eksbootstrapv1.NTP
 }
 
+// DockerConfigJSONEscaped returns the DockerConfigJSON escaped for use in cloud-init.
 func (ni *NodeInput) DockerConfigJSONEscaped() string {
 	if ni.DockerConfigJSON == nil || len(*ni.DockerConfigJSON) == 0 {
 		return "''"
@@ -76,6 +77,7 @@ func (ni *NodeInput) DockerConfigJSONEscaped() string {
 	return shellescape.Quote(*ni.DockerConfigJSON)
 }
 
+// BootstrapCommand returns the bootstrap command to be used on a node instance.
 func (ni *NodeInput) BootstrapCommand() string {
 	if ni.BootstrapCommandOverride != nil && *ni.BootstrapCommandOverride != "" {
 		return *ni.BootstrapCommandOverride

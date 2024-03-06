@@ -51,11 +51,13 @@ type LaunchTemplateScope interface {
 	logger.Wrapper
 }
 
+// ResourceServiceToUpdate is a struct that contains the resource ID and the resource service to update.
 type ResourceServiceToUpdate struct {
 	ResourceID      *string
 	ResourceService ResourceService
 }
 
+// ResourceService defines the interface for resources.
 type ResourceService interface {
 	UpdateResourceTags(resourceID *string, create, remove map[string]string) error
 }

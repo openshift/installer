@@ -313,11 +313,7 @@ func buildProvidersForRef(
 			}
 		}
 
-		if sourceProvider != nil {
-			provider = identity.NewAWSRolePrincipalTypeProvider(roleIdentity, &sourceProvider, log)
-		} else {
-			provider = identity.NewAWSRolePrincipalTypeProvider(roleIdentity, nil, log)
-		}
+		provider = identity.NewAWSRolePrincipalTypeProvider(roleIdentity, sourceProvider, log)
 		providers = append(providers, provider)
 	default:
 		return providers, errors.Errorf("No such provider known: '%s'", ref.Kind)

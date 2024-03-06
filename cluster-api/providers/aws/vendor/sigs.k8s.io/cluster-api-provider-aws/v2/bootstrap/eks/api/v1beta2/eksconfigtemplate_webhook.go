@@ -42,7 +42,7 @@ func (r *EKSConfigTemplate) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate will do any extra validation when updating a EKSConfigTemplate.
-func (r *EKSConfigTemplate) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *EKSConfigTemplate) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 

@@ -19,13 +19,16 @@ package scope
 import (
 	"context"
 
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
@@ -42,6 +45,8 @@ type RosaMachinePoolScopeParams struct {
 	RosaMachinePool *expinfrav1.ROSAMachinePool
 	MachinePool     *expclusterv1.MachinePool
 	ControllerName  string
+
+	Endpoints []ServiceEndpoint
 }
 
 // NewRosaMachinePoolScope creates a new Scope from the supplied parameters.
@@ -70,7 +75,7 @@ func NewRosaMachinePoolScope(params RosaMachinePoolScopeParams) (*RosaMachinePoo
 		return nil, errors.Wrap(err, "failed to init MachinePool patch helper")
 	}
 
-	return &RosaMachinePoolScope{
+	scope := &RosaMachinePoolScope{
 		Logger:                     *params.Logger,
 		Client:                     params.Client,
 		patchHelper:                ammpHelper,
@@ -81,8 +86,21 @@ func NewRosaMachinePoolScope(params RosaMachinePoolScopeParams) (*RosaMachinePoo
 		RosaMachinePool: params.RosaMachinePool,
 		MachinePool:     params.MachinePool,
 		controllerName:  params.ControllerName,
-	}, nil
+	}
+
+	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, scope, params.ControlPlane.Spec.Region, params.Endpoints, params.Logger)
+	if err != nil {
+		return nil, errors.Errorf("failed to create aws session: %v", err)
+	}
+
+	scope.session = session
+	scope.serviceLimiters = serviceLimiters
+
+	return scope, nil
 }
+
+var _ cloud.Session = &RosaMachinePoolScope{}
+var _ cloud.SessionMetadata = &RosaMachinePoolScope{}
 
 // RosaMachinePoolScope defines the basic context for an actuator to operate upon.
 type RosaMachinePoolScope struct {
@@ -95,6 +113,9 @@ type RosaMachinePoolScope struct {
 	ControlPlane    *rosacontrolplanev1.ROSAControlPlane
 	RosaMachinePool *expinfrav1.ROSAMachinePool
 	MachinePool     *expclusterv1.MachinePool
+
+	session         awsclient.ConfigProvider
+	serviceLimiters throttle.ServiceLimiters
 
 	controllerName string
 }
@@ -135,8 +156,37 @@ func (s *RosaMachinePoolScope) ControllerName() string {
 	return s.controllerName
 }
 
+// GetSetter returns the condition setter for the RosaMachinePool.
 func (s *RosaMachinePoolScope) GetSetter() conditions.Setter {
 	return s.RosaMachinePool
+}
+
+// ServiceLimiter implements cloud.Session.
+func (s *RosaMachinePoolScope) ServiceLimiter(service string) *throttle.ServiceLimiter {
+	if sl, ok := s.serviceLimiters[service]; ok {
+		return sl
+	}
+	return nil
+}
+
+// Session implements cloud.Session.
+func (s *RosaMachinePoolScope) Session() awsclient.ConfigProvider {
+	return s.session
+}
+
+// IdentityRef implements cloud.SessionMetadata.
+func (s *RosaMachinePoolScope) IdentityRef() *v1beta2.AWSIdentityReference {
+	return s.ControlPlane.Spec.IdentityRef
+}
+
+// InfraClusterName implements cloud.SessionMetadata.
+func (s *RosaMachinePoolScope) InfraClusterName() string {
+	return s.ControlPlane.Name
+}
+
+// Namespace implements cloud.SessionMetadata.
+func (s *RosaMachinePoolScope) Namespace() string {
+	return s.Cluster.Namespace
 }
 
 // RosaMchinePoolReadyFalse marks the ready condition false using warning if error isn't

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package main contains the main entrypoint for the AWS provider components.
 package main
 
 import (
@@ -252,6 +253,16 @@ func main() {
 			Endpoints:        awsServiceEndpoints,
 		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: awsClusterConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "ROSAMachinePool")
+			os.Exit(1)
+		}
+
+		if err := (&rosacontrolplanev1.ROSAControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "ROSAControlPlane")
+			os.Exit(1)
+		}
+
+		if err := (&expinfrav1.ROSAMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "ROSAMachinePool")
 			os.Exit(1)
 		}
 	}

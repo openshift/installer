@@ -80,6 +80,7 @@ const (
 	ExternalResourceGCTasksAnnotation = "aws.cluster.x-k8s.io/external-resource-tasks-gc"
 )
 
+// GCTask defines a task to be executed by the garbage collector.
 type GCTask string
 
 var (
@@ -313,6 +314,7 @@ type InstanceMetadataOptions struct {
 	InstanceMetadataTags InstanceMetadataState `json:"instanceMetadataTags,omitempty"`
 }
 
+// SetDefaults sets the default values for the InstanceMetadataOptions.
 func (obj *InstanceMetadataOptions) SetDefaults() {
 	if obj.HTTPEndpoint == "" {
 		obj.HTTPEndpoint = InstanceMetadataEndpointStateEnabled

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package gc provides a way to perform gc operations against a tenant/workload/child cluster.
 package gc
 
 import (

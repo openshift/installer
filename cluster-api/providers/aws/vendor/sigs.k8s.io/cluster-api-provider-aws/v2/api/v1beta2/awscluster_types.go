@@ -166,13 +166,19 @@ type Bastion struct {
 	AMI string `json:"ami,omitempty"`
 }
 
+// LoadBalancerType defines the type of load balancer to use.
 type LoadBalancerType string
 
 var (
-	LoadBalancerTypeClassic  = LoadBalancerType("classic")
-	LoadBalancerTypeELB      = LoadBalancerType("elb")
-	LoadBalancerTypeALB      = LoadBalancerType("alb")
-	LoadBalancerTypeNLB      = LoadBalancerType("nlb")
+	// LoadBalancerTypeClassic is the classic ELB type.
+	LoadBalancerTypeClassic = LoadBalancerType("classic")
+	// LoadBalancerTypeELB is the ELB type.
+	LoadBalancerTypeELB = LoadBalancerType("elb")
+	// LoadBalancerTypeALB is the ALB type.
+	LoadBalancerTypeALB = LoadBalancerType("alb")
+	// LoadBalancerTypeNLB is the NLB type.
+	LoadBalancerTypeNLB = LoadBalancerType("nlb")
+	// LoadBalancerTypeDisabled disables the load balancer.
 	LoadBalancerTypeDisabled = LoadBalancerType("disabled")
 )
 
@@ -268,6 +274,7 @@ type AWSClusterStatus struct {
 	Conditions     clusterv1.Conditions     `json:"conditions,omitempty"`
 }
 
+// S3Bucket defines a supporting S3 bucket for the cluster, currently can be optionally used for Ignition.
 type S3Bucket struct {
 	// ControlPlaneIAMInstanceProfile is a name of the IAMInstanceProfile, which will be allowed
 	// to read control-plane node bootstrap data from S3 Bucket.

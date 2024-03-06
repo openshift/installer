@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package converters provides conversion functions for AWS SDK types to CAPA types.
 package converters
 
 import (
@@ -146,6 +147,7 @@ func TaintEffectFromSDK(effect string) (expinfrav1.TaintEffect, error) {
 	}
 }
 
+// ConvertSDKToIdentityProvider is used to convert an AWS SDK OIDCIdentityProviderConfig to a CAPA OidcIdentityProviderConfig.
 func ConvertSDKToIdentityProvider(in *ekscontrolplanev1.OIDCIdentityProviderConfig) *identityprovider.OidcIdentityProviderConfig {
 	if in != nil {
 		if in.RequiredClaims == nil {

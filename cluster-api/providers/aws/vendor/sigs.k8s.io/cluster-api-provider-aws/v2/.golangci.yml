@@ -1,79 +1,126 @@
 linters:
-  enable-all: true
-  disable:
-    - bidichk
-    - contextcheck
-    - cyclop
-    - dupl
-    - durationcheck
-    - errname
-    - errorlint
-    - exhaustive
-    - exhaustivestruct
-    - exhaustruct
-    - forcetypeassert
-    - forbidigo
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - godox
-    - goerr113
-    - gofumpt
-    - golint
-    - gomnd
-    - gomoddirectives
-    - gomodguard
-    - interfacer
-    - ireturn
-    - lll
-    - makezero
-    - maligned
-    - musttag
-    - nestif
-    - nilnil
-    - nlreturn
-    - nonamedreturns
-    - nosnakecase
-    - paralleltest
-    - promlinter
-    - scopelint
-    - sqlclosecheck
-    - tagliatelle
-    - tenv
-    - testpackage
-    - tparallel
-    - varnamelen
-    - wastedassign
-    - wrapcheck
-    - wsl
-    - deadcode
-    - ifshort
-    - structcheck
-    - varcheck
-    - interfacebloat
+  disable-all: true
+  enable:
+  - asasalint
+  - asciicheck
+  - bidichk
+  - bodyclose
+  - containedctx
+  - dogsled
+  - dupword
+  - durationcheck
+  - errcheck
+  - errchkjson
+  - exportloopref
+  - gci
+  - ginkgolinter
+  - goconst
+  - gocritic
+  - godot
+  - gofmt
+  - goimports
+  - goprintffuncname
+  - gosec
+  - gosimple
+  - govet
+  - importas
+  - ineffassign
+  - loggercheck
+  - misspell
+  - nakedret
+  - nilerr
+  - noctx
+  - nolintlint
+  - nosprintfhostport
+  - prealloc
+  - predeclared
+  - revive
+  - rowserrcheck
+  - staticcheck
+  - stylecheck
+  - thelper
+  - typecheck
+  - unconvert
+  - unparam
+  - unused
+  - usestdlibvars
+  - whitespace
 
 linters-settings:
-  # Restrict revive to exported.
-  revive:
-    # see https://github.com/mgechev/revive#available-rules for details.
-    ignore-generated-header: true
-    severity: warning
-    rules:
-      - name: exported
-        severity: warning
   gci:
     sections:
       - standard
       - default
       - prefix(sigs.k8s.io/cluster-api)
   ginkgolinter:
-    # Suppress the wrong length assertion warning.
-    suppress-len-assertion: true
-    # Suppress the wrong nil assertion warning.
-    suppress-nil-assertion: false
-    # Suppress the wrong error assertion warning.
-    suppress-err-assertion: true
+    forbid-focus-container: true
+    suppress-len-assertion: true # Suppress the wrong length assertion warning.
+    suppress-nil-assertion: false # Suppress the wrong nil assertion warning.
+    suppress-err-assertion: true # Suppress the wrong error assertion warning.
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - performance
+    disabled-checks:
+      - appendAssign
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - evalOrder
+      - ifElseChain
+      - octalLiteral
+      - regexpSimplify
+      - sloppyReassign
+      - truncateCmp
+      - typeDefFirst
+      - unnamedResult
+      - unnecessaryDefer
+      - whyNoLint
+      - wrapperFunc
+      - rangeValCopy
+      - hugeParam
+      - filepathJoin
+      - emptyStringTest
+  godot:
+    #   declarations - for top level declaration comments (default);
+    #   toplevel     - for top level comments;
+    #   all          - for all comments.
+    scope: toplevel
+    exclude:
+      - '^ \+.*'
+      - '^ ANCHOR.*'
+  revive:
+    rules:
+      # The following rules are recommended https://github.com/mgechev/revive#recommended-configuration
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+      - name: redefines-builtin-id
+      #
+      # Rules in addition to the recommended configuration above.
+      #
+      - name: bool-literal-in-expr
+      - name: constant-logical-expr
+  goconst:
+    ignore-tests: true
   gosec:
     excludes:
       - G307 # Deferring unsafe method "Close" on type "\*os.File"
@@ -159,6 +206,10 @@ linters-settings:
         alias: apimachinerytypes
       - pkg: "sigs.k8s.io/cluster-api/exp/api/v1beta1"
         alias: expclusterv1
+  nolintlint:
+    allow-unused: false
+    allow-leading-space: false
+    require-specific: true
   staticcheck:
     go: "1.21"
   stylecheck:
@@ -178,7 +229,6 @@ issues:
   # List of regexps of issue texts to exclude, empty list by default.
   exclude:
     - (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
-    - "exported: exported (const|function|method|type|var) (.+) should have comment or be unexported"
     - "exported: (func|type) name will be used as (.+) by other packages, and that stutters; consider calling this (.+)"
     - (G104|G107|G404|G505|ST1000)
     - "G108: Profiling endpoint is automatically exposed on /debug/pprof"
@@ -188,6 +238,13 @@ issues:
     - "net/http.Get must not be called"
   exclude-rules:
     # Exclude revive's exported for certain packages and code, e.g. tests and fake.
+    - linters:
+      - revive
+      text: "exported: exported method .*\\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported"
+    - linters:
+      - errcheck
+      text: Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*print(f|ln)?|os\.(Un)?Setenv). is not checked
+    # Exclude some packages or code to require comments, for example test code, or fake clients.
     - linters:
       - revive
       text: exported (method|function|type|const) (.+) should have comment or be unexported
@@ -229,6 +286,11 @@ issues:
       - revive
       text: "var-naming: don't use underscores in Go names; func (.+) should be (.+)"
       path: .*/defaults.go
+    # These directives allow the mock and gc packages to be imported with an underscore everywhere.
+    - linters:
+      - revive
+      text: "var-naming: don't use an underscore in package name"
+      path: .*/.*(mock|gc_).*/.+\.go
     # Disable unparam "always receives" which might not be really
     # useful when building libraries.
     - linters:

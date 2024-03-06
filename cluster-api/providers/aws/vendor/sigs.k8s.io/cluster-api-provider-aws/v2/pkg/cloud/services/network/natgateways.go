@@ -298,7 +298,7 @@ func (s *Service) deleteNatGateway(id string) error {
 		}
 
 		if out == nil || len(out.NatGateways) == 0 {
-			return false, errors.New(fmt.Sprintf("no NAT gateway returned for id %q", id))
+			return false, fmt.Errorf("no NAT gateway returned for id %q", id)
 		}
 
 		ng := out.NatGateways[0]

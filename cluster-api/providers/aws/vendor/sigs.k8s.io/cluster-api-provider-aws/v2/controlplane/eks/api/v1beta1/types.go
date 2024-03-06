@@ -218,8 +218,8 @@ const (
 	SecurityGroupCluster = infrav1.SecurityGroupRole("cluster")
 )
 
+// OIDCIdentityProviderConfig defines the configuration for an OIDC identity provider.
 type OIDCIdentityProviderConfig struct {
-
 	// This is also known as audience. The ID for the client application that makes
 	// authentication requests to the OpenID identity provider.
 	// +kubebuilder:validation:Required
