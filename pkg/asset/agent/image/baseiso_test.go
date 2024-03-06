@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
-	"path"
 	"testing"
 
 	"github.com/coreos/stream-metadata-go/stream"
@@ -18,22 +17,13 @@ import (
 	"github.com/openshift/assisted-service/api/v1beta1"
 	v1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
-func setupEmbeddedResources(t *testing.T) {
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
-}
-
 func TestBaseIso_Generate(t *testing.T) {
-	setupEmbeddedResources(t)
 	ocReleaseImage := "416.94.202402130130-0"
 	ocBaseIsoFilename := "openshift-4.16"
 
@@ -92,7 +82,7 @@ func TestBaseIso_Generate(t *testing.T) {
 				},
 				&mirror.RegistriesConf{},
 			},
-			getIsoError:             &exec.Error{"", exec.ErrNotFound},
+			getIsoError:             &exec.Error{},
 			expectedBaseIsoFilename: ocReleaseImage,
 		},
 	}
@@ -105,27 +95,27 @@ func TestBaseIso_Generate(t *testing.T) {
 			svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Answer with a fixed size randomly filled buffer
 				buffer := make([]byte, 1024)
-				rand.Read(buffer)
-				w.Write(buffer)
+				_, err := rand.Read(buffer)
+				assert.NoError(t, err)
+				_, err = w.Write(buffer)
+				assert.NoError(t, err)
 			}))
 			defer svr.Close()
 			// Creates a tmp folder to store the .cache downloaded images.
 			tmpPath, err := os.MkdirTemp("", "agent-baseiso-test")
 			assert.NoError(t, err)
 			previousXdgCacheHomeValue := os.Getenv("XDG_CACHE_HOME")
-			os.Setenv("XDG_CACHE_HOME", tmpPath)
+			t.Setenv("XDG_CACHE_HOME", tmpPath)
 			// Set the image override if defined
 			previousOpenshiftInstallOsImageOverrideValue := os.Getenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE")
 			if tc.envVarOsImageOverrideValue != "" {
 				newOsImageOverride := fmt.Sprintf("%s/%s", svr.URL, tc.envVarOsImageOverrideValue)
-				os.Setenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE", newOsImageOverride)
+				t.Setenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE", newOsImageOverride)
 			}
 			// Cleanup on exit.
 			defer func() {
-				err := os.Setenv("XDG_CACHE_HOME", previousXdgCacheHomeValue)
-				assert.NoError(t, err)
-				err = os.Setenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE", previousOpenshiftInstallOsImageOverrideValue)
-				assert.NoError(t, err)
+				t.Setenv("XDG_CACHE_HOME", previousXdgCacheHomeValue)
+				t.Setenv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE", previousOpenshiftInstallOsImageOverrideValue)
 				err = os.RemoveAll(tmpPath)
 				assert.NoError(t, err)
 			}()
@@ -144,7 +134,7 @@ func TestBaseIso_Generate(t *testing.T) {
 									"metal": {
 										Release: ocReleaseImage,
 										Formats: map[string]stream.ImageFormat{
-											"iso": stream.ImageFormat{
+											"iso": {
 												Disk: &stream.Artifact{
 													Location: fmt.Sprintf("%s/%s", svr.URL, ocReleaseImage),
 												},
@@ -188,20 +178,4 @@ func (m *mockRelease) GetBaseIsoVersion(architecture string) (string, error) {
 
 func (m *mockRelease) ExtractFile(image string, filename string, architecture string) ([]string, error) {
 	return []string{}, nil
-}
-
-func TestInfraBaseIso_GenerateOld(t *testing.T) {
-
-	parents := asset.Parents{}
-	manifests := &manifests.AgentManifests{}
-	installConfig := &agent.OptionalInstallConfig{}
-	parents.Add(manifests, installConfig)
-
-	asset := &BaseIso{}
-	err := asset.Generate(parents)
-	assert.NoError(t, err)
-
-	assert.NotEmpty(t, asset.Files())
-	baseIso := asset.Files()[0]
-	assert.Equal(t, baseIso.Filename, "some-openshift-release.iso")
 }
