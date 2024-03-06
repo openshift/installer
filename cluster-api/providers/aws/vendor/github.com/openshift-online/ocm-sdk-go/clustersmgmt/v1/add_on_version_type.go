@@ -42,6 +42,7 @@ type AddOnVersion struct {
 	availableUpgrades        []string
 	channel                  string
 	config                   *AddOnConfig
+	packageImage             string
 	parameters               *AddOnParameterList
 	pullSecretName           string
 	requirements             []*AddOnRequirement
@@ -222,12 +223,35 @@ func (o *AddOnVersion) GetEnabled() (value bool, ok bool) {
 	return
 }
 
+// PackageImage returns the value of the 'package_image' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The package image for this addon version
+func (o *AddOnVersion) PackageImage() string {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.packageImage
+	}
+	return ""
+}
+
+// GetPackageImage returns the value of the 'package_image' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The package image for this addon version
+func (o *AddOnVersion) GetPackageImage() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.packageImage
+	}
+	return
+}
+
 // Parameters returns the value of the 'parameters' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // List of parameters for this add-on version.
 func (o *AddOnVersion) Parameters() *AddOnParameterList {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.parameters
 	}
 	return nil
@@ -238,7 +262,7 @@ func (o *AddOnVersion) Parameters() *AddOnParameterList {
 //
 // List of parameters for this add-on version.
 func (o *AddOnVersion) GetParameters() (value *AddOnParameterList, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.parameters
 	}
@@ -250,7 +274,7 @@ func (o *AddOnVersion) GetParameters() (value *AddOnParameterList, ok bool) {
 //
 // The pull secret name used for this addon version.
 func (o *AddOnVersion) PullSecretName() string {
-	if o != nil && o.bitmap_&512 != 0 {
+	if o != nil && o.bitmap_&1024 != 0 {
 		return o.pullSecretName
 	}
 	return ""
@@ -261,7 +285,7 @@ func (o *AddOnVersion) PullSecretName() string {
 //
 // The pull secret name used for this addon version.
 func (o *AddOnVersion) GetPullSecretName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&512 != 0
+	ok = o != nil && o.bitmap_&1024 != 0
 	if ok {
 		value = o.pullSecretName
 	}
@@ -273,7 +297,7 @@ func (o *AddOnVersion) GetPullSecretName() (value string, ok bool) {
 //
 // List of requirements for this add-on version.
 func (o *AddOnVersion) Requirements() []*AddOnRequirement {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.requirements
 	}
 	return nil
@@ -284,7 +308,7 @@ func (o *AddOnVersion) Requirements() []*AddOnRequirement {
 //
 // List of requirements for this add-on version.
 func (o *AddOnVersion) GetRequirements() (value []*AddOnRequirement, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.requirements
 	}
@@ -296,7 +320,7 @@ func (o *AddOnVersion) GetRequirements() (value []*AddOnRequirement, ok bool) {
 //
 // The catalog source image for this add-on version.
 func (o *AddOnVersion) SourceImage() string {
-	if o != nil && o.bitmap_&2048 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.sourceImage
 	}
 	return ""
@@ -307,7 +331,7 @@ func (o *AddOnVersion) SourceImage() string {
 //
 // The catalog source image for this add-on version.
 func (o *AddOnVersion) GetSourceImage() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&2048 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.sourceImage
 	}
@@ -319,7 +343,7 @@ func (o *AddOnVersion) GetSourceImage() (value string, ok bool) {
 //
 // List of sub operators for this add-on version.
 func (o *AddOnVersion) SubOperators() []*AddOnSubOperator {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.subOperators
 	}
 	return nil
@@ -330,7 +354,7 @@ func (o *AddOnVersion) SubOperators() []*AddOnSubOperator {
 //
 // List of sub operators for this add-on version.
 func (o *AddOnVersion) GetSubOperators() (value []*AddOnSubOperator, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.subOperators
 	}

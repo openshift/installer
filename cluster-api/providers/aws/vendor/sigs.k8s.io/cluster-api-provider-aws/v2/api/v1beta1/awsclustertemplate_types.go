@@ -28,6 +28,7 @@ type AWSClusterTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=awsclustertemplates,scope=Namespaced,categories=cluster-api,shortName=awsct
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of AWSClusterTemplate"
 

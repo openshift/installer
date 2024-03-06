@@ -134,11 +134,20 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("hosted_control_plane_default")
+		stream.WriteBool(object.hostedControlPlaneDefault)
+		count++
+	}
+	present_ = object.bitmap_&2048 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("hosted_control_plane_enabled")
 		stream.WriteBool(object.hostedControlPlaneEnabled)
 		count++
 	}
-	present_ = object.bitmap_&2048 != 0 && object.imageOverrides != nil
+	present_ = object.bitmap_&4096 != 0 && object.imageOverrides != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -147,7 +156,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		writeImageOverrides(object.imageOverrides, stream)
 		count++
 	}
-	present_ = object.bitmap_&4096 != 0
+	present_ = object.bitmap_&8192 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -156,7 +165,7 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(object.rawID)
 		count++
 	}
-	present_ = object.bitmap_&8192 != 0
+	present_ = object.bitmap_&16384 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -231,22 +240,26 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 			}
 			object.endOfLifeTimestamp = value
 			object.bitmap_ |= 512
+		case "hosted_control_plane_default":
+			value := iterator.ReadBool()
+			object.hostedControlPlaneDefault = value
+			object.bitmap_ |= 1024
 		case "hosted_control_plane_enabled":
 			value := iterator.ReadBool()
 			object.hostedControlPlaneEnabled = value
-			object.bitmap_ |= 1024
+			object.bitmap_ |= 2048
 		case "image_overrides":
 			value := readImageOverrides(iterator)
 			object.imageOverrides = value
-			object.bitmap_ |= 2048
+			object.bitmap_ |= 4096
 		case "raw_id":
 			value := iterator.ReadString()
 			object.rawID = value
-			object.bitmap_ |= 4096
+			object.bitmap_ |= 8192
 		case "release_image":
 			value := iterator.ReadString()
 			object.releaseImage = value
-			object.bitmap_ |= 8192
+			object.bitmap_ |= 16384
 		default:
 			iterator.ReadAny()
 		}

@@ -70,9 +70,8 @@ func (s *Service) deleteTargetGroups(ctx context.Context, resources []*AWSResour
 			continue
 		}
 
-		name := strings.ReplaceAll(resource.ARN.Resource, "targetgroup/", "")
 		if err := s.deleteTargetGroup(ctx, resource.ARN.String()); err != nil {
-			return fmt.Errorf("deleting target group %s: %w", name, err)
+			return fmt.Errorf("deleting target group %q: %w", resource.ARN, err)
 		}
 	}
 	s.scope.Debug("Finished processing resources for target group deletion")

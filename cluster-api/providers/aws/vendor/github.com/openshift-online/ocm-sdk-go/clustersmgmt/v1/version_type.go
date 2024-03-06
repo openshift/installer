@@ -52,6 +52,7 @@ type Version struct {
 	rosaEnabled               bool
 	default_                  bool
 	enabled                   bool
+	hostedControlPlaneDefault bool
 	hostedControlPlaneEnabled bool
 }
 
@@ -281,12 +282,37 @@ func (o *Version) GetEndOfLifeTimestamp() (value time.Time, ok bool) {
 	return
 }
 
+// HostedControlPlaneDefault returns the value of the 'hosted_control_plane_default' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// HostedControlPlaneDefault is a flag that indicates if this should be selected as the default version when a
+// HCP cluster is created without specifying explicitly the version.
+func (o *Version) HostedControlPlaneDefault() bool {
+	if o != nil && o.bitmap_&1024 != 0 {
+		return o.hostedControlPlaneDefault
+	}
+	return false
+}
+
+// GetHostedControlPlaneDefault returns the value of the 'hosted_control_plane_default' attribute and
+// a flag indicating if the attribute has a value.
+//
+// HostedControlPlaneDefault is a flag that indicates if this should be selected as the default version when a
+// HCP cluster is created without specifying explicitly the version.
+func (o *Version) GetHostedControlPlaneDefault() (value bool, ok bool) {
+	ok = o != nil && o.bitmap_&1024 != 0
+	if ok {
+		value = o.hostedControlPlaneDefault
+	}
+	return
+}
+
 // HostedControlPlaneEnabled returns the value of the 'hosted_control_plane_enabled' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // HostedControlPlaneEnabled indicates whether this version can be used to create HCP clusters.
 func (o *Version) HostedControlPlaneEnabled() bool {
-	if o != nil && o.bitmap_&1024 != 0 {
+	if o != nil && o.bitmap_&2048 != 0 {
 		return o.hostedControlPlaneEnabled
 	}
 	return false
@@ -297,7 +323,7 @@ func (o *Version) HostedControlPlaneEnabled() bool {
 //
 // HostedControlPlaneEnabled indicates whether this version can be used to create HCP clusters.
 func (o *Version) GetHostedControlPlaneEnabled() (value bool, ok bool) {
-	ok = o != nil && o.bitmap_&1024 != 0
+	ok = o != nil && o.bitmap_&2048 != 0
 	if ok {
 		value = o.hostedControlPlaneEnabled
 	}
@@ -309,7 +335,7 @@ func (o *Version) GetHostedControlPlaneEnabled() (value bool, ok bool) {
 //
 // ImageOverrides contains the lists of images per cloud provider.
 func (o *Version) ImageOverrides() *ImageOverrides {
-	if o != nil && o.bitmap_&2048 != 0 {
+	if o != nil && o.bitmap_&4096 != 0 {
 		return o.imageOverrides
 	}
 	return nil
@@ -320,7 +346,7 @@ func (o *Version) ImageOverrides() *ImageOverrides {
 //
 // ImageOverrides contains the lists of images per cloud provider.
 func (o *Version) GetImageOverrides() (value *ImageOverrides, ok bool) {
-	ok = o != nil && o.bitmap_&2048 != 0
+	ok = o != nil && o.bitmap_&4096 != 0
 	if ok {
 		value = o.imageOverrides
 	}
@@ -332,7 +358,7 @@ func (o *Version) GetImageOverrides() (value *ImageOverrides, ok bool) {
 //
 // RawID is the id of the version - without channel group and prefix.
 func (o *Version) RawID() string {
-	if o != nil && o.bitmap_&4096 != 0 {
+	if o != nil && o.bitmap_&8192 != 0 {
 		return o.rawID
 	}
 	return ""
@@ -343,7 +369,7 @@ func (o *Version) RawID() string {
 //
 // RawID is the id of the version - without channel group and prefix.
 func (o *Version) GetRawID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&4096 != 0
+	ok = o != nil && o.bitmap_&8192 != 0
 	if ok {
 		value = o.rawID
 	}
@@ -355,7 +381,7 @@ func (o *Version) GetRawID() (value string, ok bool) {
 //
 // ReleaseImage contains the URI of Openshift release image.
 func (o *Version) ReleaseImage() string {
-	if o != nil && o.bitmap_&8192 != 0 {
+	if o != nil && o.bitmap_&16384 != 0 {
 		return o.releaseImage
 	}
 	return ""
@@ -366,7 +392,7 @@ func (o *Version) ReleaseImage() string {
 //
 // ReleaseImage contains the URI of Openshift release image.
 func (o *Version) GetReleaseImage() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&8192 != 0
+	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.releaseImage
 	}

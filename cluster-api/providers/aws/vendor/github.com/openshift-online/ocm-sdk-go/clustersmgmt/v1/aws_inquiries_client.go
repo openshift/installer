@@ -44,7 +44,7 @@ func NewAWSInquiriesClient(transport http.RoundTripper, path string) *AWSInquiri
 
 // STSAccountRoles returns the target 'AWSSTS_account_roles_inquiry' resource.
 //
-// Reference to the resource that manages aws sts roles
+// Reference to the resource that manages aws sts roles.
 func (c *AWSInquiriesClient) STSAccountRoles() *AWSSTSAccountRolesInquiryClient {
 	return NewAWSSTSAccountRolesInquiryClient(
 		c.transport,
@@ -89,6 +89,16 @@ func (c *AWSInquiriesClient) Regions() *AvailableRegionsInquiryClient {
 	return NewAvailableRegionsInquiryClient(
 		c.transport,
 		path.Join(c.path, "regions"),
+	)
+}
+
+// ValidateCredentials returns the target 'aws_validate_credentials' resource.
+//
+// Reference to the resource that manages creds validation.
+func (c *AWSInquiriesClient) ValidateCredentials() *AwsValidateCredentialsClient {
+	return NewAwsValidateCredentialsClient(
+		c.transport,
+		path.Join(c.path, "validate_credentials"),
 	)
 }
 

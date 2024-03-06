@@ -26,7 +26,7 @@ require (
 	github.com/IBM/vpc-go-sdk v0.42.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.44.315
+	github.com/aws/aws-sdk-go v1.45.26
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
@@ -110,7 +110,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	sigs.k8s.io/cluster-api v1.6.2
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-00010101000000-000000000000
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.0
 	sigs.k8s.io/cluster-api-provider-azure v1.13.0
 	sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.8.0
@@ -297,7 +297,7 @@ replace (
 // sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f // Indirect dependency through MAO from cluster API providers
 )
 
-replace sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305
+replace sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.0
 
 replace sigs.k8s.io/cluster-api-provider-azure => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
 

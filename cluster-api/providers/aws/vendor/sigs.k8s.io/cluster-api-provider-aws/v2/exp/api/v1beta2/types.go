@@ -120,6 +120,10 @@ type AWSLaunchTemplate struct {
 	// InstanceMetadataOptions defines the behavior for applying metadata to instances.
 	// +optional
 	InstanceMetadataOptions *infrav1.InstanceMetadataOptions `json:"instanceMetadataOptions,omitempty"`
+
+	// PrivateDNSName is the options for the instance hostname.
+	// +optional
+	PrivateDNSName *infrav1.PrivateDNSName `json:"privateDnsName,omitempty"`
 }
 
 // Overrides are used to override the instance type specified by the launch template with multiple
@@ -195,16 +199,17 @@ type Tags map[string]string
 // AutoScalingGroup describes an AWS autoscaling group.
 type AutoScalingGroup struct {
 	// The tags associated with the instance.
-	ID                string          `json:"id,omitempty"`
-	Tags              infrav1.Tags    `json:"tags,omitempty"`
-	Name              string          `json:"name,omitempty"`
-	DesiredCapacity   *int32          `json:"desiredCapacity,omitempty"`
-	MaxSize           int32           `json:"maxSize,omitempty"`
-	MinSize           int32           `json:"minSize,omitempty"`
-	PlacementGroup    string          `json:"placementGroup,omitempty"`
-	Subnets           []string        `json:"subnets,omitempty"`
-	DefaultCoolDown   metav1.Duration `json:"defaultCoolDown,omitempty"`
-	CapacityRebalance bool            `json:"capacityRebalance,omitempty"`
+	ID                    string          `json:"id,omitempty"`
+	Tags                  infrav1.Tags    `json:"tags,omitempty"`
+	Name                  string          `json:"name,omitempty"`
+	DesiredCapacity       *int32          `json:"desiredCapacity,omitempty"`
+	MaxSize               int32           `json:"maxSize,omitempty"`
+	MinSize               int32           `json:"minSize,omitempty"`
+	PlacementGroup        string          `json:"placementGroup,omitempty"`
+	Subnets               []string        `json:"subnets,omitempty"`
+	DefaultCoolDown       metav1.Duration `json:"defaultCoolDown,omitempty"`
+	DefaultInstanceWarmup metav1.Duration `json:"defaultInstanceWarmup,omitempty"`
+	CapacityRebalance     bool            `json:"capacityRebalance,omitempty"`
 
 	MixedInstancesPolicy      *MixedInstancesPolicy `json:"mixedInstancesPolicy,omitempty"`
 	Status                    ASGStatus

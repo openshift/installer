@@ -26,7 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
@@ -45,7 +45,6 @@ func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.
 
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
-			filter.EC2.VPC(s.scope.VPC().ID),
 			filter.EC2.ClusterOwned(s.scope.Name()),
 			filter.EC2.Name(scope.Name()),
 			filter.EC2.InstanceStates(ec2.InstanceStateNamePending, ec2.InstanceStateNameRunning),
@@ -182,9 +181,8 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 	}
 	input.SubnetID = subnetID
 
-	if !scope.IsExternallyManaged() && !scope.IsEKSManaged() && s.scope.Network().APIServerELB.DNSName == "" {
+	if !scope.IsControlPlaneExternallyManaged() && !scope.IsExternallyManaged() && !scope.IsEKSManaged() && s.scope.Network().APIServerELB.DNSName == "" {
 		record.Eventf(s.scope.InfraCluster(), "FailedCreateInstance", "Failed to run controlplane, APIServer ELB not available")
-
 		return nil, awserrors.NewFailedDependency("failed to run controlplane, APIServer ELB not available")
 	}
 
@@ -195,7 +193,7 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 		}
 	}
 
-	input.UserData = pointer.String(base64.StdEncoding.EncodeToString(userData))
+	input.UserData = ptr.To[string](base64.StdEncoding.EncodeToString(userData))
 
 	// Set security groups.
 	ids, err := s.GetCoreSecurityGroups(scope)
@@ -238,6 +236,8 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PlacementGroupName = scope.AWSMachine.Spec.PlacementGroupName
 
+	input.PrivateDNSName = scope.AWSMachine.Spec.PrivateDNSName
+
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -250,6 +250,10 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 		return nil, err
 	}
 
+	// Set the providerID and instanceID as soon as we create an instance so that we keep it in case of errors afterward
+	scope.SetProviderID(out.ID, out.AvailabilityZone)
+	scope.SetInstanceID(out.ID)
+
 	if len(input.NetworkInterfaces) > 0 {
 		for _, id := range input.NetworkInterfaces {
 			s.scope.Debug("Attaching security groups to provided network interface", "groups", input.SecurityGroupIDs, "interface", id)
@@ -261,7 +265,7 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	s.scope.Debug("Adding tags on each network interface from resource", "resource-id", out.ID)
 
-	// Fetching the network interfaces attached to the specific instanace
+	// Fetching the network interfaces attached to the specific instance
 	networkInterfaces, err := s.getInstanceENIs(out.ID)
 	if err != nil {
 		return nil, err
@@ -269,7 +273,7 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	s.scope.Debug("Fetched the network interfaces")
 
-	// Once all the network interfaces attached to the specific instanace are found, the similar tags of instance are created for network interfaces too
+	// Once all the network interfaces attached to the specific instance are found, the similar tags of instance are created for network interfaces too
 	if len(networkInterfaces) > 0 {
 		s.scope.Debug("Attempting to create tags from resource", "resource-id", out.ID)
 		for _, networkInterface := range networkInterfaces {
@@ -301,9 +305,6 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 	case scope.AWSMachine.Spec.Subnet != nil && (scope.AWSMachine.Spec.Subnet.ID != nil || scope.AWSMachine.Spec.Subnet.Filters != nil):
 		criteria := []*ec2.Filter{
 			filter.EC2.SubnetStates(ec2.SubnetStatePending, ec2.SubnetStateAvailable),
-		}
-		if !scope.IsExternallyManaged() {
-			criteria = append(criteria, filter.EC2.VPC(s.scope.VPC().ID))
 		}
 		if scope.AWSMachine.Spec.Subnet.ID != nil {
 			criteria = append(criteria, &ec2.Filter{Name: aws.String("subnet-id"), Values: aws.StringSlice([]string{*scope.AWSMachine.Spec.Subnet.ID})})
@@ -339,6 +340,11 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			}
 			filtered = append(filtered, subnet)
 		}
+		// prefer a subnet in the cluster VPC if multiple match
+		clusterVPC := s.scope.VPC().ID
+		sort.SliceStable(filtered, func(i, j int) bool {
+			return strings.Compare(*filtered[i].VpcId, clusterVPC) > strings.Compare(*filtered[j].VpcId, clusterVPC)
+		})
 		if len(filtered) == 0 {
 			errMessage = fmt.Sprintf("failed to run machine %q, found %d subnets matching criteria but post-filtering failed.",
 				scope.Name(), len(subnets)) + errMessage
@@ -434,10 +440,15 @@ func (s *Service) GetCoreSecurityGroups(scope *scope.MachineScope) ([]string, er
 	}
 	ids := make([]string, 0, len(sgRoles))
 	for _, sg := range sgRoles {
-		if _, ok := s.scope.SecurityGroups()[sg]; !ok {
-			return nil, awserrors.NewFailedDependency(fmt.Sprintf("%s security group not available", sg))
+		if _, ok := scope.AWSMachine.Spec.SecurityGroupOverrides[sg]; ok {
+			ids = append(ids, scope.AWSMachine.Spec.SecurityGroupOverrides[sg])
+			continue
 		}
-		ids = append(ids, s.scope.SecurityGroups()[sg].ID)
+		if _, ok := s.scope.SecurityGroups()[sg]; ok {
+			ids = append(ids, s.scope.SecurityGroups()[sg].ID)
+			continue
+		}
+		return nil, awserrors.NewFailedDependency(fmt.Sprintf("%s security group not available", sg))
 	}
 	return ids, nil
 }
@@ -591,6 +602,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	input.InstanceMarketOptions = getInstanceMarketOptionsRequest(i.SpotMarketOptions)
 	input.MetadataOptions = getInstanceMetadataOptionsRequest(i.InstanceMetadataOptions)
+	input.PrivateDnsNameOptions = getPrivateDNSNameOptionsRequest(i.PrivateDNSName)
 
 	if i.Tenancy != "" {
 		input.Placement = &ec2.Placement{
@@ -861,6 +873,14 @@ func (s *Service) SDKToInstance(v *ec2.Instance) (*infrav1.Instance, error) {
 		i.InstanceMetadataOptions = metadataOptions
 	}
 
+	if v.PrivateDnsNameOptions != nil {
+		i.PrivateDNSName = &infrav1.PrivateDNSName{
+			EnableResourceNameDNSAAAARecord: v.PrivateDnsNameOptions.EnableResourceNameDnsAAAARecord,
+			EnableResourceNameDNSARecord:    v.PrivateDnsNameOptions.EnableResourceNameDnsARecord,
+			HostnameType:                    v.PrivateDnsNameOptions.HostnameType,
+		}
+	}
+
 	return i, nil
 }
 
@@ -1048,4 +1068,16 @@ func getInstanceMetadataOptionsRequest(metadataOptions *infrav1.InstanceMetadata
 	}
 
 	return request
+}
+
+func getPrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *ec2.PrivateDnsNameOptionsRequest {
+	if privateDNSName == nil {
+		return nil
+	}
+
+	return &ec2.PrivateDnsNameOptionsRequest{
+		EnableResourceNameDnsAAAARecord: privateDNSName.EnableResourceNameDNSAAAARecord,
+		EnableResourceNameDnsARecord:    privateDNSName.EnableResourceNameDNSARecord,
+		HostnameType:                    privateDNSName.HostnameType,
+	}
 }

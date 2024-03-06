@@ -27,6 +27,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -251,6 +252,7 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 			infrav1.InternetGatewayReadyCondition,
 			infrav1.NatGatewaysReadyCondition,
 			infrav1.RouteTablesReadyCondition,
+			infrav1.VpcEndpointsReadyCondition,
 			infrav1.BastionHostReadyCondition,
 			infrav1.EgressOnlyInternetGatewayReadyCondition,
 			ekscontrolplanev1.EKSControlPlaneCreatingCondition,
@@ -305,6 +307,12 @@ func (s *ManagedControlPlaneScope) Session() awsclient.ConfigProvider {
 // Bastion returns the bastion details.
 func (s *ManagedControlPlaneScope) Bastion() *infrav1.Bastion {
 	return &s.ControlPlane.Spec.Bastion
+}
+
+// Bucket returns the bucket details.
+// For ManagedControlPlane this is always nil, as we don't support S3 buckets for managed clusters.
+func (s *ManagedControlPlaneScope) Bucket() *infrav1.S3Bucket {
+	return nil
 }
 
 // TagUnmanagedNetworkResources returns if the feature flag tag unmanaged network resources is set.
@@ -432,4 +440,10 @@ func (s *ManagedControlPlaneScope) Partition() string {
 // AdditionalControlPlaneIngressRules returns the additional ingress rules for the control plane security group.
 func (s *ManagedControlPlaneScope) AdditionalControlPlaneIngressRules() []infrav1.IngressRule {
 	return nil
+}
+
+// UnstructuredControlPlane returns the unstructured object for the control plane, if any.
+// When the reference is not set, it returns an empty object.
+func (s *ManagedControlPlaneScope) UnstructuredControlPlane() (*unstructured.Unstructured, error) {
+	return getUnstructuredControlPlane(context.TODO(), s.Client, s.Cluster)
 }

@@ -19,7 +19,7 @@ package cmp
 import (
 	"sort"
 
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 type ByPtrValue []*string
@@ -42,7 +42,7 @@ func Equals(slice1, slice2 []*string) bool {
 
 	if len(slice1) == len(slice2) {
 		for i, v := range slice1 {
-			if !pointer.StringEqual(v, slice2[i]) {
+			if !ptr.Equal(v, slice2[i]) {
 				return false
 			}
 		}

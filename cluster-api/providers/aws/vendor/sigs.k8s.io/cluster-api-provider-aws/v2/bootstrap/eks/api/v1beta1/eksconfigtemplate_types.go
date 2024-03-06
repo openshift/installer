@@ -31,6 +31,7 @@ type EKSConfigTemplateResource struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=eksconfigtemplates,scope=Namespaced,categories=cluster-api,shortName=eksct
 
 // EKSConfigTemplate is the Amazon EKS Bootstrap Configuration Template API.
@@ -42,6 +43,7 @@ type EKSConfigTemplate struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // EKSConfigTemplateList contains a list of Amazon EKS Bootstrap Configuration Templates.
 type EKSConfigTemplateList struct {

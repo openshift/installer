@@ -33,11 +33,13 @@ const SubnetNetworkVerificationNilKind = "SubnetNetworkVerificationNil"
 
 // SubnetNetworkVerification represents the values of the 'subnet_network_verification' type.
 type SubnetNetworkVerification struct {
-	bitmap_ uint32
-	id      string
-	href    string
-	details []string
-	state   string
+	bitmap_  uint32
+	id       string
+	href     string
+	details  []string
+	platform Platform
+	state    string
+	tags     map[string]string
 }
 
 // Kind returns the name of the type of the object.
@@ -120,12 +122,35 @@ func (o *SubnetNetworkVerification) GetDetails() (value []string, ok bool) {
 	return
 }
 
+// Platform returns the value of the 'platform' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Platform supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) Platform() Platform {
+	if o != nil && o.bitmap_&16 != 0 {
+		return o.platform
+	}
+	return Platform("")
+}
+
+// GetPlatform returns the value of the 'platform' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Platform supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) GetPlatform() (value Platform, ok bool) {
+	ok = o != nil && o.bitmap_&16 != 0
+	if ok {
+		value = o.platform
+	}
+	return
+}
+
 // State returns the value of the 'state' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // State of the subnet network verification.
 func (o *SubnetNetworkVerification) State() string {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.state
 	}
 	return ""
@@ -136,9 +161,32 @@ func (o *SubnetNetworkVerification) State() string {
 //
 // State of the subnet network verification.
 func (o *SubnetNetworkVerification) GetState() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.state
+	}
+	return
+}
+
+// Tags returns the value of the 'tags' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Tags supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) Tags() map[string]string {
+	if o != nil && o.bitmap_&64 != 0 {
+		return o.tags
+	}
+	return nil
+}
+
+// GetTags returns the value of the 'tags' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Tags supplied to the network verifier for this subnet.
+func (o *SubnetNetworkVerification) GetTags() (value map[string]string, ok bool) {
+	ok = o != nil && o.bitmap_&64 != 0
+	if ok {
+		value = o.tags
 	}
 	return
 }

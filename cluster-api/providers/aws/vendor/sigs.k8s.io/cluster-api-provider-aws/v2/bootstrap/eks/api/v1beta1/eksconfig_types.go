@@ -88,6 +88,7 @@ type EKSConfigStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:resource:path=eksconfigs,scope=Namespaced,categories=cluster-api,shortName=eksc
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Bootstrap configuration is ready"
@@ -113,6 +114,7 @@ func (r *EKSConfig) SetConditions(conditions clusterv1.Conditions) {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 
 // EKSConfigList contains a list of EKSConfig.
 type EKSConfigList struct {

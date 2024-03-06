@@ -207,6 +207,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 
 	ekssvc := eks.NewNodegroupService(machinePoolScope)
 	ec2svc := r.getEC2Service(ec2Scope)
+	reconSvc := r.getReconcileService(ec2Scope)
 
 	if machinePoolScope.ManagedMachinePool.Spec.AWSLaunchTemplate != nil {
 		canUpdateLaunchTemplate := func() (bool, error) {
@@ -215,7 +216,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 		runPostLaunchTemplateUpdateOperation := func() error {
 			return nil
 		}
-		if err := ec2svc.ReconcileLaunchTemplate(machinePoolScope, canUpdateLaunchTemplate, runPostLaunchTemplateUpdateOperation); err != nil {
+		if err := reconSvc.ReconcileLaunchTemplate(machinePoolScope, ec2svc, canUpdateLaunchTemplate, runPostLaunchTemplateUpdateOperation); err != nil {
 			r.Recorder.Eventf(machinePoolScope.ManagedMachinePool, corev1.EventTypeWarning, "FailedLaunchTemplateReconcile", "Failed to reconcile launch template: %v", err)
 			machinePoolScope.Error(err, "failed to reconcile launch template")
 			conditions.MarkFalse(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "")
@@ -227,7 +228,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 			ResourceID:      &launchTemplateID,
 			ResourceService: ec2svc,
 		}}
-		if err := ec2svc.ReconcileTags(machinePoolScope, resourceServiceToUpdate); err != nil {
+		if err := reconSvc.ReconcileTags(machinePoolScope, resourceServiceToUpdate); err != nil {
 			return errors.Wrap(err, "error updating tags")
 		}
 
@@ -258,7 +259,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileDelete(
 
 	if machinePoolScope.ManagedMachinePool.Spec.AWSLaunchTemplate != nil {
 		launchTemplateID := machinePoolScope.ManagedMachinePool.Status.LaunchTemplateID
-		launchTemplate, _, err := ec2Svc.GetLaunchTemplate(machinePoolScope.LaunchTemplateName())
+		launchTemplate, _, _, err := ec2Svc.GetLaunchTemplate(machinePoolScope.LaunchTemplateName())
 		if err != nil {
 			return err
 		}
@@ -345,5 +346,9 @@ func managedControlPlaneToManagedMachinePoolMapFunc(c client.Client, gvk schema.
 }
 
 func (r *AWSManagedMachinePoolReconciler) getEC2Service(scope scope.EC2Scope) services.EC2Interface {
+	return ec2.NewService(scope)
+}
+
+func (r *AWSManagedMachinePoolReconciler) getReconcileService(scope scope.EC2Scope) services.MachinePoolReconcileInterface {
 	return ec2.NewService(scope)
 }

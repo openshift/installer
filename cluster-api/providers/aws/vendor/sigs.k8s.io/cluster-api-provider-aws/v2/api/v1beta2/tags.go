@@ -190,6 +190,11 @@ const (
 
 	// MachineNameTagKey is the key for machine name.
 	MachineNameTagKey = "MachineName"
+
+	// LaunchTemplateBootstrapDataSecret is the tag we use to store the `<namespace>/<name>`
+	// of the bootstrap secret that was used to create the user data for the latest launch
+	// template version.
+	LaunchTemplateBootstrapDataSecret = NameAWSProviderPrefix + "bootstrap-data-secret"
 )
 
 // ClusterTagKey generates the key for resources associated with a cluster.

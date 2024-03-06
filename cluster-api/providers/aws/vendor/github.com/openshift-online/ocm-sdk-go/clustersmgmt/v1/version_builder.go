@@ -40,6 +40,7 @@ type VersionBuilder struct {
 	rosaEnabled               bool
 	default_                  bool
 	enabled                   bool
+	hostedControlPlaneDefault bool
 	hostedControlPlaneEnabled bool
 }
 
@@ -123,10 +124,17 @@ func (b *VersionBuilder) EndOfLifeTimestamp(value time.Time) *VersionBuilder {
 	return b
 }
 
+// HostedControlPlaneDefault sets the value of the 'hosted_control_plane_default' attribute to the given value.
+func (b *VersionBuilder) HostedControlPlaneDefault(value bool) *VersionBuilder {
+	b.hostedControlPlaneDefault = value
+	b.bitmap_ |= 1024
+	return b
+}
+
 // HostedControlPlaneEnabled sets the value of the 'hosted_control_plane_enabled' attribute to the given value.
 func (b *VersionBuilder) HostedControlPlaneEnabled(value bool) *VersionBuilder {
 	b.hostedControlPlaneEnabled = value
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
@@ -136,9 +144,9 @@ func (b *VersionBuilder) HostedControlPlaneEnabled(value bool) *VersionBuilder {
 func (b *VersionBuilder) ImageOverrides(value *ImageOverridesBuilder) *VersionBuilder {
 	b.imageOverrides = value
 	if value != nil {
-		b.bitmap_ |= 2048
+		b.bitmap_ |= 4096
 	} else {
-		b.bitmap_ &^= 2048
+		b.bitmap_ &^= 4096
 	}
 	return b
 }
@@ -146,14 +154,14 @@ func (b *VersionBuilder) ImageOverrides(value *ImageOverridesBuilder) *VersionBu
 // RawID sets the value of the 'raw_ID' attribute to the given value.
 func (b *VersionBuilder) RawID(value string) *VersionBuilder {
 	b.rawID = value
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
 // ReleaseImage sets the value of the 'release_image' attribute to the given value.
 func (b *VersionBuilder) ReleaseImage(value string) *VersionBuilder {
 	b.releaseImage = value
-	b.bitmap_ |= 8192
+	b.bitmap_ |= 16384
 	return b
 }
 
@@ -177,6 +185,7 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	b.default_ = object.default_
 	b.enabled = object.enabled
 	b.endOfLifeTimestamp = object.endOfLifeTimestamp
+	b.hostedControlPlaneDefault = object.hostedControlPlaneDefault
 	b.hostedControlPlaneEnabled = object.hostedControlPlaneEnabled
 	if object.imageOverrides != nil {
 		b.imageOverrides = NewImageOverrides().Copy(object.imageOverrides)
@@ -204,6 +213,7 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	object.default_ = b.default_
 	object.enabled = b.enabled
 	object.endOfLifeTimestamp = b.endOfLifeTimestamp
+	object.hostedControlPlaneDefault = b.hostedControlPlaneDefault
 	object.hostedControlPlaneEnabled = b.hostedControlPlaneEnabled
 	if b.imageOverrides != nil {
 		object.imageOverrides, err = b.imageOverrides.Build()

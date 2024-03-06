@@ -25,14 +25,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/noderefutil"
 	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -79,10 +78,9 @@ func NewMachineScope(params MachineScopeParams) (*MachineScope, error) {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
 	return &MachineScope{
-		Logger:      *params.Logger,
-		client:      params.Client,
-		patchHelper: helper,
-
+		Logger:       *params.Logger,
+		client:       params.Client,
+		patchHelper:  helper,
 		Cluster:      params.Cluster,
 		Machine:      params.Machine,
 		InfraCluster: params.InfraCluster,
@@ -127,14 +125,11 @@ func (m *MachineScope) Role() string {
 
 // GetInstanceID returns the AWSMachine instance id by parsing Spec.ProviderID.
 func (m *MachineScope) GetInstanceID() *string {
-	//nolint:staticcheck
-	// Usage of noderefutil pkg would be removed in a future release.
-	parsed, err := noderefutil.NewProviderID(m.GetProviderID())
+	parsed, err := NewProviderID(m.GetProviderID())
 	if err != nil {
 		return nil
 	}
-	//nolint:staticcheck
-	return pointer.String(parsed.ID())
+	return ptr.To[string](parsed.ID())
 }
 
 // GetProviderID returns the AWSMachine providerID from the spec.
@@ -148,12 +143,12 @@ func (m *MachineScope) GetProviderID() string {
 // SetProviderID sets the AWSMachine providerID in spec.
 func (m *MachineScope) SetProviderID(instanceID, availabilityZone string) {
 	providerID := fmt.Sprintf("aws:///%s/%s", availabilityZone, instanceID)
-	m.AWSMachine.Spec.ProviderID = pointer.String(providerID)
+	m.AWSMachine.Spec.ProviderID = ptr.To[string](providerID)
 }
 
 // SetInstanceID sets the AWSMachine instanceID in spec.
 func (m *MachineScope) SetInstanceID(instanceID string) {
-	m.AWSMachine.Spec.InstanceID = pointer.String(instanceID)
+	m.AWSMachine.Spec.InstanceID = ptr.To[string](instanceID)
 }
 
 // GetInstanceState returns the AWSMachine instance state from the status.
@@ -178,7 +173,7 @@ func (m *MachineScope) SetNotReady() {
 
 // SetFailureMessage sets the AWSMachine status failure message.
 func (m *MachineScope) SetFailureMessage(v error) {
-	m.AWSMachine.Status.FailureMessage = pointer.String(v.Error())
+	m.AWSMachine.Status.FailureMessage = ptr.To[string](v.Error())
 }
 
 // SetFailureReason sets the AWSMachine status failure reason.
@@ -360,14 +355,37 @@ func (m *MachineScope) InstanceIsInKnownState() bool {
 	return state != nil && infrav1.InstanceKnownStates.Has(string(*state))
 }
 
-// AWSMachineIsDeleted checks if the machine was deleted.
+// AWSMachineIsDeleted checks if the AWS machine was deleted.
 func (m *MachineScope) AWSMachineIsDeleted() bool {
 	return !m.AWSMachine.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+// MachineIsDeleted checks if the machine was deleted.
+func (m *MachineScope) MachineIsDeleted() bool {
+	return !m.Machine.ObjectMeta.DeletionTimestamp.IsZero()
 }
 
 // IsEKSManaged checks if the machine is EKS managed.
 func (m *MachineScope) IsEKSManaged() bool {
 	return m.InfraCluster.InfraCluster().GetObjectKind().GroupVersionKind().Kind == ekscontrolplanev1.AWSManagedControlPlaneKind
+}
+
+// IsControlPlaneExternallyManaged checks if the control plane is externally managed.
+//
+// This is determined by the kind of the control plane object (EKS for example),
+// or if the control plane referenced object is reporting as externally managed.
+func (m *MachineScope) IsControlPlaneExternallyManaged() bool {
+	if m.IsEKSManaged() {
+		return true
+	}
+
+	// Check if the control plane is externally managed.
+	u, err := m.InfraCluster.UnstructuredControlPlane()
+	if err != nil {
+		m.Error(err, "failed to get unstructured control plane")
+		return false
+	}
+	return util.IsExternalManagedControlPlane(u)
 }
 
 // IsExternallyManaged checks if the machine is externally managed.

@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -278,7 +278,7 @@ func (r *AWSManagedMachinePool) Default() {
 
 	if r.Spec.UpdateConfig == nil {
 		r.Spec.UpdateConfig = &UpdateConfig{
-			MaxUnavailable: pointer.Int(1),
+			MaxUnavailable: ptr.To[int](1),
 		}
 	}
 }

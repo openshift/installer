@@ -91,16 +91,6 @@ func (c *SubscriptionClient) Labels() *GenericLabelsClient {
 	)
 }
 
-// Notify returns the target 'subscription_notify' resource.
-//
-// Notify a user related to the subscription via email
-func (c *SubscriptionClient) Notify() *SubscriptionNotifyClient {
-	return NewSubscriptionNotifyClient(
-		c.transport,
-		path.Join(c.path, "notify"),
-	)
-}
-
 // ReservedResources returns the target 'subscription_reserved_resources' resource.
 //
 // Reference to the resource that manages the collection of resources reserved by the

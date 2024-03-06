@@ -112,6 +112,15 @@ func writeCloudProviderData(object *CloudProviderData, stream *jsoniter.Stream) 
 		}
 		stream.WriteObjectField("version")
 		writeVersion(object.version, stream)
+		count++
+	}
+	present_ = object.bitmap_&256 != 0 && object.vpcIds != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("vpc_ids")
+		writeStringList(object.vpcIds, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -169,6 +178,10 @@ func readCloudProviderData(iterator *jsoniter.Iterator) *CloudProviderData {
 			value := readVersion(iterator)
 			object.version = value
 			object.bitmap_ |= 128
+		case "vpc_ids":
+			value := readStringList(iterator)
+			object.vpcIds = value
+			object.bitmap_ |= 256
 		default:
 			iterator.ReadAny()
 		}

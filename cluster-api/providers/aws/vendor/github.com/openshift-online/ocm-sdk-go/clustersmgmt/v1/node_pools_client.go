@@ -235,7 +235,9 @@ type NodePoolsListRequest struct {
 	path      string
 	query     url.Values
 	header    http.Header
+	order     *string
 	page      *int
+	search    *string
 	size      *int
 }
 
@@ -258,11 +260,51 @@ func (r *NodePoolsListRequest) Impersonate(user string) *NodePoolsListRequest {
 	return r
 }
 
+// Order sets the value of the 'order' parameter.
+//
+// Order criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _order by_ clause of
+// a SQL statement, but using the names of the attributes of the node pools instead of
+// the names of the columns of a table. For example, in order to sort the node pools
+// descending by identifier the value should be:
+//
+// ```sql
+// id desc
+// ```
+//
+// If the parameter isn't provided, or if the value is empty, then the order of the
+// results is undefined.
+func (r *NodePoolsListRequest) Order(value string) *NodePoolsListRequest {
+	r.order = &value
+	return r
+}
+
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
 func (r *NodePoolsListRequest) Page(value int) *NodePoolsListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+//
+// Search criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _where_ clause of a
+// SQL statement, but using the names of the attributes of the node pools instead of
+// the names of the columns of a table. For example, in order to retrieve all the
+// node pools with replicas of two the following is required:
+//
+// ```sql
+// replicas = 2
+// ```
+//
+// If the parameter isn't provided, or if the value is empty, then all the
+// node pools that the user has permission to see will be returned.
+func (r *NodePoolsListRequest) Search(value string) *NodePoolsListRequest {
+	r.search = &value
 	return r
 }
 
@@ -285,8 +327,14 @@ func (r *NodePoolsListRequest) Send() (result *NodePoolsListResponse, err error)
 // SendContext sends this request, waits for the response, and returns it.
 func (r *NodePoolsListRequest) SendContext(ctx context.Context) (result *NodePoolsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.order != nil {
+		helpers.AddValue(&query, "order", *r.order)
+	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)

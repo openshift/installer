@@ -33,6 +33,9 @@ import (
 //
 // This operation is potentially lengthy, as it may require network communication. Consider using a
 // context and the TokensContext method.
+// The returned access and refresh tokens are empty strings if the
+// connection does not use authentication. In that case no error is
+// returned either
 func (c *Connection) Tokens(expiresIn ...time.Duration) (access, refresh string, err error) {
 	if len(expiresIn) == 1 {
 		access, refresh, err = c.TokensContext(context.Background(), expiresIn[0])
@@ -48,8 +51,13 @@ func (c *Connection) Tokens(expiresIn ...time.Duration) (access, refresh string,
 // expired, this method will do it and will return an error if it fails.
 //
 // If new tokens are needed the request will be retried with an exponential backoff.
+// The returned access and refresh tokens are empty strings if the
+// connection does not use authentication. In that case no error is
+// returned either
 func (c *Connection) TokensContext(ctx context.Context, expiresIn ...time.Duration) (access,
 	refresh string, err error) {
-	access, refresh, err = c.authnWrapper.Tokens(ctx, expiresIn...)
+	if c.authnWrapper != nil {
+		access, refresh, err = c.authnWrapper.Tokens(ctx, expiresIn...)
+	}
 	return
 }

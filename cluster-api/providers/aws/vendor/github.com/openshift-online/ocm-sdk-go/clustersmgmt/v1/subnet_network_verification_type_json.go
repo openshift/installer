@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"sort"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -79,8 +80,46 @@ func writeSubnetNetworkVerification(object *SubnetNetworkVerification, stream *j
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("platform")
+		stream.WriteString(string(object.platform))
+		count++
+	}
+	present_ = object.bitmap_&32 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("state")
 		stream.WriteString(object.state)
+		count++
+	}
+	present_ = object.bitmap_&64 != 0 && object.tags != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("tags")
+		if object.tags != nil {
+			stream.WriteObjectStart()
+			keys := make([]string, len(object.tags))
+			i := 0
+			for key := range object.tags {
+				keys[i] = key
+				i++
+			}
+			sort.Strings(keys)
+			for i, key := range keys {
+				if i > 0 {
+					stream.WriteMore()
+				}
+				item := object.tags[key]
+				stream.WriteObjectField(key)
+				stream.WriteString(item)
+			}
+			stream.WriteObjectEnd()
+		} else {
+			stream.WriteNil()
+		}
 	}
 	stream.WriteObjectEnd()
 }
@@ -121,10 +160,27 @@ func readSubnetNetworkVerification(iterator *jsoniter.Iterator) *SubnetNetworkVe
 			value := readStringList(iterator)
 			object.details = value
 			object.bitmap_ |= 8
+		case "platform":
+			text := iterator.ReadString()
+			value := Platform(text)
+			object.platform = value
+			object.bitmap_ |= 16
 		case "state":
 			value := iterator.ReadString()
 			object.state = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 32
+		case "tags":
+			value := map[string]string{}
+			for {
+				key := iterator.ReadObject()
+				if key == "" {
+					break
+				}
+				item := iterator.ReadString()
+				value[key] = item
+			}
+			object.tags = value
+			object.bitmap_ |= 64
 		default:
 			iterator.ReadAny()
 		}

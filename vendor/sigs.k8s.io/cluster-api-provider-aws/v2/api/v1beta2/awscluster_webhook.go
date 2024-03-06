@@ -58,7 +58,7 @@ func (r *AWSCluster) ValidateCreate() (admission.Warnings, error) {
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.Spec.S3Bucket.Validate()...)
 	allErrs = append(allErrs, r.validateNetwork()...)
-	allErrs = append(allErrs, r.validateControlPlaneLB()...)
+	allErrs = append(allErrs, r.validateControlPlaneLBs()...)
 
 	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
@@ -85,51 +85,18 @@ func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, err
 		)
 	}
 
-	newLoadBalancer := &AWSLoadBalancerSpec{}
-	existingLoadBalancer := &AWSLoadBalancerSpec{}
-
-	if r.Spec.ControlPlaneLoadBalancer != nil {
-		newLoadBalancer = r.Spec.ControlPlaneLoadBalancer.DeepCopy()
+	// Validate the control plane load balancers.
+	lbs := map[*AWSLoadBalancerSpec]*AWSLoadBalancerSpec{
+		oldC.Spec.ControlPlaneLoadBalancer:          r.Spec.ControlPlaneLoadBalancer,
+		oldC.Spec.SecondaryControlPlaneLoadBalancer: r.Spec.SecondaryControlPlaneLoadBalancer,
 	}
 
-	if oldC.Spec.ControlPlaneLoadBalancer != nil {
-		existingLoadBalancer = oldC.Spec.ControlPlaneLoadBalancer.DeepCopy()
-	}
-	if oldC.Spec.ControlPlaneLoadBalancer == nil {
-		// If old scheme was nil, the only value accepted here is the default value: internet-facing
-		if newLoadBalancer.Scheme != nil && newLoadBalancer.Scheme.String() != ELBSchemeInternetFacing.String() {
-			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
-					r.Spec.ControlPlaneLoadBalancer.Scheme, "field is immutable, default value was set to internet-facing"),
-			)
+	for oldLB, newLB := range lbs {
+		if oldLB == nil && newLB == nil {
+			continue
 		}
-	} else {
-		// If old scheme was not nil, the new scheme should be the same.
-		if !cmp.Equal(existingLoadBalancer.Scheme, newLoadBalancer.Scheme) {
-			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
-					r.Spec.ControlPlaneLoadBalancer.Scheme, "field is immutable"),
-			)
-		}
-		// The name must be defined when the AWSCluster is created. If it is not defined,
-		// then the controller generates a default name at runtime, but does not store it,
-		// so the name remains nil. In either case, the name cannot be changed.
-		if !cmp.Equal(existingLoadBalancer.Name, newLoadBalancer.Name) {
-			allErrs = append(allErrs,
-				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"),
-					r.Spec.ControlPlaneLoadBalancer.Name, "field is immutable"),
-			)
-		}
-	}
 
-	// Block the update for Protocol :
-	// - if it was not set in old spec but added in new spec
-	// - if it was set in old spec but changed in new spec
-	if !cmp.Equal(newLoadBalancer.HealthCheckProtocol, existingLoadBalancer.HealthCheckProtocol) {
-		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"),
-				newLoadBalancer.HealthCheckProtocol, "field is immutable once set"),
-		)
+		allErrs = append(allErrs, r.validateControlPlaneLoadBalancerUpdate(oldLB, newLB)...)
 	}
 
 	if !cmp.Equal(oldC.Spec.ControlPlaneEndpoint, clusterv1.APIEndpoint{}) &&
@@ -172,6 +139,59 @@ func (r *AWSCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, err
 	allErrs = append(allErrs, r.Spec.S3Bucket.Validate()...)
 
 	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
+}
+
+func (r *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *AWSLoadBalancerSpec) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if oldlb == nil {
+		// If old scheme was nil, the only value accepted here is the default value: internet-facing
+		if newlb.Scheme != nil && newlb.Scheme.String() != ELBSchemeInternetFacing.String() {
+			allErrs = append(allErrs,
+				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
+					newlb.Scheme, "field is immutable, default value was set to internet-facing"),
+			)
+		}
+	} else {
+		// A disabled Load Balancer has many implications that must be treated as immutable/
+		// this is mostly used by externally managed Control Plane, and there's no need to support type changes.
+		// More info: https://kubernetes.slack.com/archives/CD6U2V71N/p1708983246100859?thread_ts=1708973478.410979&cid=CD6U2V71N
+		if (oldlb.LoadBalancerType == LoadBalancerTypeDisabled && newlb.LoadBalancerType != LoadBalancerTypeDisabled) ||
+			(newlb.LoadBalancerType == LoadBalancerTypeDisabled && oldlb.LoadBalancerType != LoadBalancerTypeDisabled) {
+			allErrs = append(allErrs,
+				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "type"),
+					newlb.Scheme, "field is immutable when created of disabled type"),
+			)
+		}
+		// If old scheme was not nil, the new scheme should be the same.
+		if !cmp.Equal(oldlb.Scheme, newlb.Scheme) {
+			allErrs = append(allErrs,
+				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "scheme"),
+					newlb.Scheme, "field is immutable"),
+			)
+		}
+		// The name must be defined when the AWSCluster is created. If it is not defined,
+		// then the controller generates a default name at runtime, but does not store it,
+		// so the name remains nil. In either case, the name cannot be changed.
+		if !cmp.Equal(oldlb.Name, newlb.Name) {
+			allErrs = append(allErrs,
+				field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"),
+					newlb.Name, "field is immutable"),
+			)
+		}
+	}
+
+	// Block the update for Protocol :
+	// - if it was not set in old spec but added in new spec
+	// - if it was set in old spec but changed in new spec
+	if !cmp.Equal(newlb.HealthCheckProtocol, oldlb.HealthCheckProtocol) {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"),
+				newlb.HealthCheckProtocol, "field is immutable once set"),
+		)
+	}
+
+	return allErrs
 }
 
 // Default satisfies the defaulting webhook interface.
@@ -243,20 +263,86 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("additionalControlPlaneIngressRules"), r.Spec.NetworkSpec.AdditionalControlPlaneIngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
 		}
 	}
+
 	return allErrs
 }
 
-func (r *AWSCluster) validateControlPlaneLB() field.ErrorList {
+func (r *AWSCluster) validateControlPlaneLBs() field.ErrorList {
 	var allErrs field.ErrorList
 
-	if r.Spec.ControlPlaneLoadBalancer == nil {
-		return allErrs
+	// If the secondary is defined, check that the name is not empty and different from the primary.
+	// Also, ensure that the secondary load balancer is an NLB
+	if r.Spec.SecondaryControlPlaneLoadBalancer != nil {
+		if r.Spec.SecondaryControlPlaneLoadBalancer.Name == nil || *r.Spec.SecondaryControlPlaneLoadBalancer.Name == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "name"), r.Spec.SecondaryControlPlaneLoadBalancer.Name, "secondary controlPlaneLoadBalancer.name cannot be empty"))
+		}
+
+		if r.Spec.SecondaryControlPlaneLoadBalancer.Name == r.Spec.ControlPlaneLoadBalancer.Name {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "name"), r.Spec.SecondaryControlPlaneLoadBalancer.Name, "field must be different from controlPlaneLoadBalancer.name"))
+		}
+
+		if r.Spec.SecondaryControlPlaneLoadBalancer.Scheme.Equals(r.Spec.ControlPlaneLoadBalancer.Scheme) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "scheme"), r.Spec.SecondaryControlPlaneLoadBalancer.Scheme, "control plane load balancers must have different schemes"))
+		}
+
+		if r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType != LoadBalancerTypeNLB {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "loadBalancerType"), r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType, "secondary control plane load balancer must be a Network Load Balancer"))
+		}
 	}
 
 	// Additional listeners are only supported for NLBs.
-	if len(r.Spec.ControlPlaneLoadBalancer.AdditionalListeners) > 0 {
-		if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType != LoadBalancerTypeNLB {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalListeners"), r.Spec.ControlPlaneLoadBalancer.AdditionalListeners, "additional listeners are only supported for NLB load balancers"))
+	// Validate the control plane load balancers.
+	loadBalancers := []*AWSLoadBalancerSpec{
+		r.Spec.ControlPlaneLoadBalancer,
+		r.Spec.SecondaryControlPlaneLoadBalancer,
+	}
+	for _, cp := range loadBalancers {
+		if cp == nil {
+			continue
+		}
+
+		for _, rule := range cp.IngressRules {
+			if (rule.CidrBlocks != nil || rule.IPv6CidrBlocks != nil) && (rule.SourceSecurityGroupIDs != nil || rule.SourceSecurityGroupRoles != nil) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "CIDR blocks and security group IDs or security group roles cannot be used together"))
+			}
+		}
+	}
+
+	if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeDisabled {
+		if r.Spec.ControlPlaneLoadBalancer.Name != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"), r.Spec.ControlPlaneLoadBalancer.Name, "cannot configure a name if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "crossZoneLoadBalancing"), r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing, "cross-zone load balancing cannot be set if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if len(r.Spec.ControlPlaneLoadBalancer.Subnets) > 0 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "subnets"), r.Spec.ControlPlaneLoadBalancer.Subnets, "subnets cannot be set if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"), r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol, "healthcheck protocol cannot be set if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if len(r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups) > 0 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalSecurityGroups"), r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups, "additional Security Groups cannot be set if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if len(r.Spec.ControlPlaneLoadBalancer.AdditionalListeners) > 0 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalListeners"), r.Spec.ControlPlaneLoadBalancer.AdditionalListeners, "cannot set additional listeners if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if len(r.Spec.ControlPlaneLoadBalancer.IngressRules) > 0 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "ingress rules cannot be set if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if r.Spec.ControlPlaneLoadBalancer.PreserveClientIP {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "preserveClientIP"), r.Spec.ControlPlaneLoadBalancer.PreserveClientIP, "cannot preserve client IP if the LoadBalancer reconciliation is disabled"))
+		}
+
+		if r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "disableHostsRewrite"), r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite, "cannot disable hosts rewrite if the LoadBalancer reconciliation is disabled"))
 		}
 	}
 
