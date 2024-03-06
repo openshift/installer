@@ -34,9 +34,12 @@ var (
 	authTokenPublicDataKey   = "authTokenPublicKey"
 )
 
+// AuthType holds the authenticator type for agent based installer.
+const AuthType = "agent-installer-local"
+
 // AuthConfig is an asset that generates ECDSA public/private keys, JWT token.
 type AuthConfig struct {
-	PublicKey, AgentAuthToken string
+	PublicKey, AgentAuthToken, AuthType string
 }
 
 var _ asset.Asset = (*AuthConfig)(nil)
@@ -65,6 +68,7 @@ func (a *AuthConfig) Generate(_ context.Context, dependencies asset.Parents) err
 	infraEnvID := &common.InfraEnvID{}
 	agentWorkflow := &workflow.AgentWorkflow{}
 	dependencies.Get(infraEnvID, agentWorkflow)
+	a.AuthType = AuthType
 
 	publicKey, privateKey, err := keyPairPEM()
 	if err != nil {

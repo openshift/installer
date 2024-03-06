@@ -76,6 +76,7 @@ type agentTemplateData struct {
 	ImageTypeISO              string
 	PublicKeyPEM              string
 	Token                     string
+	AuthType                  string
 	CaBundleMount             string
 }
 
@@ -115,9 +116,9 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
-	keyPairAsset := &gencrypto.AuthConfig{}
+	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, clusterInfo, addNodesConfig, infraEnvAsset)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -247,23 +248,23 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 	a.CPUArch = *osImage.CPUArchitecture
 
 	caBundleMount := defineCABundleMount(registriesConfig, registryCABundle)
-
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
-		len(registriesConfig.MirrorConfig) > 0,
 		publicContainerRegistries,
-		numMasters, numWorkers,
-		infraEnvID,
-		osImage,
-		infraEnv.Spec.Proxy,
 		imageTypeISO,
-		keyPairAsset.PublicKey,
-		keyPairAsset.AgentAuthToken,
-		caBundleMount)
+		infraEnvID,
+		authConfig.PublicKey,
+		authConfig.AuthType,
+		authConfig.AgentAuthToken,
+		caBundleMount,
+		len(registriesConfig.MirrorConfig) > 0,
+		numMasters, numWorkers,
+		osImage,
+		infraEnv.Spec.Proxy)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -272,7 +273,7 @@ func (a *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, keyPairAsset.AgentAuthToken, agentWorkflow.Workflow))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, authConfig.AgentAuthToken, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -372,13 +373,12 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 	return nil
 }
 
-func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
-	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
+func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
+	imageTypeISO, infraEnvID, publicKey, authType, token, caBundleMount string,
+	haveMirrorConfig bool,
 	numMasters, numWorkers int,
-	infraEnvID string,
 	osImage *models.OsImage,
-	proxy *v1beta1.Proxy,
-	imageTypeISO, publicKey, token, caBundleMount string) *agentTemplateData {
+	proxy *v1beta1.Proxy) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -395,6 +395,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
 		PublicKeyPEM:              publicKey,
+		AuthType:                  authType,
 		Token:                     token,
 		CaBundleMount:             caBundleMount,
 	}
