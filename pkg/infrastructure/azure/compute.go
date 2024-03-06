@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// CreateImageGalleryInput contains the input paramters for creating a image
+// CreateImageGalleryInput contains the input parameters for creating a image
 // gallery.
 type CreateImageGalleryInput struct {
 	SubscriptionID     string
@@ -34,7 +34,7 @@ type CreateImageGalleryOutput struct {
 	Gallery              *armcompute.Gallery
 }
 
-// CreateImageGallery creates a image gallery
+// CreateImageGallery creates a image gallery.
 func CreateImageGallery(ctx context.Context, in *CreateImageGalleryInput) (*CreateImageGalleryOutput, error) {
 	logrus.Debugf("Creating image gallery: %s", in.GalleryName)
 	computeClientFactory, err := armcompute.NewClientFactory(
@@ -81,7 +81,7 @@ func CreateImageGallery(ctx context.Context, in *CreateImageGalleryInput) (*Crea
 	}, nil
 }
 
-// CreateGalleryImageInput contains the input paramters for creating a gallery
+// CreateGalleryImageInput contains the input parameters for creating a gallery
 // image.
 type CreateGalleryImageInput struct {
 	ResourceGroupName    string
@@ -106,7 +106,7 @@ type CreateGalleryImageOutput struct {
 	GalleryImage *armcompute.GalleryImage
 }
 
-// CreateGalleryImage creates a gallery image
+// CreateGalleryImage creates a gallery image.
 func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*CreateGalleryImageOutput, error) {
 	logrus.Debugf("Creating gallery image: %s", in.GalleryImageName)
 
@@ -147,10 +147,9 @@ func CreateGalleryImage(ctx context.Context, in *CreateGalleryImageInput) (*Crea
 	return &CreateGalleryImageOutput{
 		GalleryImage: to.Ptr(galleryImage),
 	}, nil
-
 }
 
-// CreateGalleryImageVersionInput contains the input paramters for creating a
+// CreateGalleryImageVersionInput contains the input parameters for creating a
 // gallery image version.
 type CreateGalleryImageVersionInput struct {
 	ResourceGroupName       string
@@ -171,7 +170,7 @@ type CreateGalleryImageVersionOutput struct {
 	GalleryImageVersion *armcompute.GalleryImageVersion
 }
 
-// CreateGalleryImageVersion creates a gallery image version
+// CreateGalleryImageVersion creates a gallery image version.
 func CreateGalleryImageVersion(ctx context.Context, in *CreateGalleryImageVersionInput) (*CreateGalleryImageVersionOutput, error) {
 	logrus.Debugf("Creating gallery image version: %s", in.GalleryImageVersionName)
 	galleryImageVersionsClient := in.ComputeClientFactory.NewGalleryImageVersionsClient()

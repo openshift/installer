@@ -45,7 +45,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
 
-	image := &capz.Image{}
+	var image *capz.Image
 	osImage := mpool.OSImage
 	galleryName := strings.ReplaceAll(clusterID, "-", "_")
 
