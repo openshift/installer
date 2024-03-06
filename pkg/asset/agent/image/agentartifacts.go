@@ -92,7 +92,7 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 func (a *AgentArtifacts) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
 	release := NewRelease(
 		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
-		releaseImage, pullSecret, mirrorConfig)
+		releaseImage, pullSecret, mirrorConfig, nil)
 
 	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.*"}
 	files := []string{}
