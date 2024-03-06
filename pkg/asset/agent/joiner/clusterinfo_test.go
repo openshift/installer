@@ -1,8 +1,10 @@
 package joiner
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +105,15 @@ func TestClusterInfo_Generate(t *testing.T) {
 						"install-config": makeInstallConfig(t),
 					},
 				},
+				&corev1.ConfigMap{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "coreos-bootimages",
+						Namespace: "openshift-machine-config-operator",
+					},
+					Data: map[string]string{
+						"stream": makeCoreOsBootImages(t, buildStreamData()),
+					},
+				},
 			},
 			expectedClusterInfo: ClusterInfo{
 				ClusterID:    "1b5ba46b-7e56-47b1-a326-a9eebddfb38c",
@@ -127,8 +138,10 @@ func TestClusterInfo_Generate(t *testing.T) {
 						},
 					},
 				},
-				PlatformType: v1beta1.BareMetalPlatformType,
-				SSHKey:       "my-ssh-key",
+				PlatformType:    v1beta1.BareMetalPlatformType,
+				SSHKey:          "my-ssh-key",
+				OSImage:         buildStreamData(),
+				OSImageLocation: "http://my-coreosimage-url/416.94.202402130130-0",
 			},
 		},
 	}
@@ -164,8 +177,41 @@ func TestClusterInfo_Generate(t *testing.T) {
 			assert.Equal(t, tc.expectedClusterInfo.DeprecatedImageContentSources, clusterInfo.DeprecatedImageContentSources)
 			assert.Equal(t, tc.expectedClusterInfo.PlatformType, clusterInfo.PlatformType)
 			assert.Equal(t, tc.expectedClusterInfo.SSHKey, clusterInfo.SSHKey)
+			assert.Equal(t, tc.expectedClusterInfo.OSImageLocation, clusterInfo.OSImageLocation)
+			assert.Equal(t, tc.expectedClusterInfo.OSImage, clusterInfo.OSImage)
 		})
 	}
+}
+
+func buildStreamData() *stream.Stream {
+	return &stream.Stream{
+		Architectures: map[string]stream.Arch{
+			"x86_64": {
+				Artifacts: map[string]stream.PlatformArtifacts{
+					"metal": {
+						Release: "416.94.202402130130-0",
+						Formats: map[string]stream.ImageFormat{
+							"iso": {
+								Disk: &stream.Artifact{
+									Location: "http://my-coreosimage-url/416.94.202402130130-0",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func makeCoreOsBootImages(t *testing.T, st *stream.Stream) string {
+	t.Helper()
+	data, err := json.Marshal(st)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return string(data)
 }
 
 func makeInstallConfig(t *testing.T) string {
