@@ -3,11 +3,14 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
@@ -41,7 +44,41 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 // added to a bucket. A signed url is generated to point to the bucket and the ignition data will be
 // updated to point to the url. This is also allows for bootstrap data to be edited after its initial creation.
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]byte, error) {
-	return nil, nil
+	// Create the bucket and presigned url. The url is generated using a known/expected name so that the
+	// url can be retrieved from the api by this name.
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*2)
+	defer cancel()
+
+	bucketName := gcp.GetBootstrapStorageName(in.InfraID)
+	bucketHandle, err := gcp.CreateBucketHandle(ctx, bucketName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
+	}
+
+	url, err := gcp.ProvisionBootstrapStorage(ctx, in.InstallConfig, bucketHandle, in.InfraID)
+	if err != nil {
+		return nil, fmt.Errorf("ignition failed to provision storage: %w", err)
+	}
+	editedIgnitionBytes, err := EditIgnition(ctx, in)
+	if err != nil {
+		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
+	}
+
+	ignitionBytes := in.BootstrapIgnData
+	if editedIgnitionBytes != nil {
+		ignitionBytes = editedIgnitionBytes
+	}
+
+	if err := gcp.FillBucket(ctx, bucketHandle, string(ignitionBytes)); err != nil {
+		return nil, fmt.Errorf("ignition failed to fill bucket: %w", err)
+	}
+
+	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
+	}
+
+	return ignShim, nil
 }
 
 // InfraReady is called once cluster.Status.InfrastructureReady

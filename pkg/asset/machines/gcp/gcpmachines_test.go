@@ -2,6 +2,7 @@
 package gcp
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -206,6 +207,8 @@ func getGCPMachineWithSecureBoot() *capg.GCPMachine {
 }
 
 func getBaseCapiMachine() *capi.Machine {
+	dataSecret := fmt.Sprintf("%s-master", "012345678")
+
 	capiMachine := &capi.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "012345678-master-0",
@@ -215,6 +218,9 @@ func getBaseCapiMachine() *capi.Machine {
 		},
 		Spec: capi.MachineSpec{
 			ClusterName: "012345678",
+			Bootstrap: capi.Bootstrap{
+				DataSecretName: ptr.To(dataSecret),
+			},
 			InfrastructureRef: v1.ObjectReference{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				Kind:       "GCPMachine",

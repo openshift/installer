@@ -156,10 +156,9 @@ func createCAPIMachine(name string, dataSecret string, infraID string) *capi.Mac
 		},
 		Spec: capi.MachineSpec{
 			ClusterName: infraID,
-			// Leave empty until ignition support is added
-			// Bootstrap: capi.Bootstrap{
-			//	DataSecretName: ptr.To(dataSecret),
-			// },
+			Bootstrap: capi.Bootstrap{
+				DataSecretName: ptr.To(dataSecret),
+			},
 			InfrastructureRef: v1.ObjectReference{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				Kind:       "GCPMachine",
