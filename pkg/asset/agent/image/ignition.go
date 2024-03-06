@@ -12,6 +12,7 @@ import (
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -30,7 +31,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/version"
@@ -138,6 +138,14 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	numWorkers := 0
 	enabledServices := getDefaultEnabledServices()
 	openshiftVersion := ""
+	var err error
+	var streamGetter CoreOSBuildFetcher
+
+	// Default to x86_64
+	archName := arch.RpmArch(types.ArchitectureAMD64)
+	if infraEnv.Spec.CpuArchitecture != "" {
+		archName = infraEnv.Spec.CpuArchitecture
+	}
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
@@ -163,6 +171,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		streamGetter = DefaultCoreOSStreamGetter
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		// In the add-nodes workflow, every node will act independently from the others.
@@ -179,15 +188,12 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		config.Storage.Files = append(config.Storage.Files, addNodesEnvFile)
 		// Version
 		openshiftVersion = clusterInfo.Version
+		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
+			return clusterInfo.OSImage, nil
+		}
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
-	}
-
-	// Default to x86_64
-	archName := arch.RpmArch(types.ArchitectureAMD64)
-	if infraEnv.Spec.CpuArchitecture != "" {
-		archName = infraEnv.Spec.CpuArchitecture
 	}
 
 	releaseImageList, err := releaseImageListWithVersion(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName, openshiftVersion)
@@ -206,7 +212,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfoWithVersion(archName, openshiftVersion)
+	osImage, err := getOSImagesInfo(archName, openshiftVersion, streamGetter)
 	if err != nil {
 		return err
 	}
@@ -527,16 +533,8 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	return nil
 }
 
-func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {
-	openshiftVersion, err := version.Version()
-	if err != nil {
-		return nil, err
-	}
-	return getOSImagesInfoWithVersion(cpuArch, openshiftVersion)
-}
-
-func getOSImagesInfoWithVersion(cpuArch string, openshiftVersion string) (*models.OsImage, error) {
-	st, err := rhcos.FetchCoreOSBuild(context.Background())
+func getOSImagesInfo(cpuArch string, openshiftVersion string, streamGetter CoreOSBuildFetcher) (*models.OsImage, error) {
+	st, err := streamGetter(context.Background())
 	if err != nil {
 		return nil, err
 	}
