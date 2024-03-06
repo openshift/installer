@@ -3,7 +3,6 @@ package azure
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -13,20 +12,24 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
 	"k8s.io/utils/ptr"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
 )
 
 // Provider implements Azure CAPI installation.
 type Provider struct {
-	clusterapi.InfraProvider
 	ResourceGroupName    string
 	StorageAccountName   string
 	StorageURL           string
@@ -34,10 +37,12 @@ type Provider struct {
 	StorageClientFactory *armstorage.ClientFactory
 	StorageAccountKeys   []armstorage.AccountKey
 	Tags                 map[string]*string
+	lbBackendAddressPool *armnetwork.BackendAddressPool
 }
 
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
+var _ clusterapi.PostProvider = (*Provider)(nil)
 
 // Name returns the name of the provider.
 func (p *Provider) Name() string {
@@ -158,7 +163,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
 	armmsiClientFactory, err := armmsi.NewClientFactory(subscriptionID, tokenCredential, nil)
 	if err != nil {
-		log.Fatalf("failed to create armmsi client: %v", err)
+		return fmt.Errorf("failed to create armmsi client: %w", err)
 	}
 	userAssignedIdentity, err := armmsiClientFactory.NewUserAssignedIdentitiesClient().CreateOrUpdate(
 		ctx,
@@ -171,7 +176,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("failed to create user assigned identity %s: %v", userAssignedIdentityName, err)
+		return fmt.Errorf("failed to create user assigned identity %s: %w", userAssignedIdentityName, err)
 	}
 	principalID := *userAssignedIdentity.Properties.PrincipalID
 
@@ -316,6 +321,46 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return err
 	}
 
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, nil)
+	if err != nil {
+		return fmt.Errorf("error creating network client factory: %w", err)
+	}
+
+	lbClient := networkClientFactory.NewLoadBalancersClient()
+
+	lbInput := &lbInput{
+		infraID:        in.InfraID,
+		region:         in.InstallConfig.Config.Azure.Region,
+		resourceGroup:  resourceGroupName,
+		subscriptionID: session.Credentials.SubscriptionID,
+		lbClient:       lbClient,
+		pipClient:      networkClientFactory.NewPublicIPAddressesClient(),
+	}
+
+	intLoadBalancer, err := updateInternalLoadBalancer(ctx, lbInput)
+	if err != nil {
+		return fmt.Errorf("failed to update internal load balancer: %w", err)
+	}
+	logrus.Debugf("updated internal load balancer: %s", *intLoadBalancer.ID)
+
+	var lbBap *armnetwork.BackendAddressPool
+	var extLBFQDN string
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		publicIP, err := createPublicIP(ctx, lbInput)
+		if err != nil {
+			return fmt.Errorf("failed to create public ip: %w", err)
+		}
+		logrus.Debugf("created public ip: %s", *publicIP.ID)
+
+		loadBalancer, err := createExternalLoadBalancer(ctx, publicIP, lbInput)
+		if err != nil {
+			return fmt.Errorf("failed to create load balancer: %w", err)
+		}
+		logrus.Debugf("created load balancer: %s", *loadBalancer.ID)
+		lbBap = loadBalancer.Properties.BackendAddressPools[0]
+		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
+	}
+
 	// Save context for other hooks
 	p.ResourceGroupName = resourceGroupName
 	p.StorageAccountName = storageAccountName
@@ -323,8 +368,94 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccount = storageAccount
 	p.StorageClientFactory = storageClientFactory
 	p.StorageAccountKeys = storageAccountKeys
+	p.lbBackendAddressPool = lbBap
 
-	return createDNSEntries(ctx, in)
+	if err := createDNSEntries(ctx, in, extLBFQDN); err != nil {
+		return fmt.Errorf("error creating DNS records: %w", err)
+	}
+
+	return nil
+}
+
+// PostProvision provisions an external Load Balancer (when appropriate), and adds configuration
+// for the MCS to the CAPI-provisioned internal LB.
+func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	ssn, err := in.InstallConfig.Azure.Session()
+	if err != nil {
+		return fmt.Errorf("error retrieving Azure session: %w", err)
+	}
+	subscriptionID := ssn.Credentials.SubscriptionID
+
+	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
+		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, nil)
+		if err != nil {
+			return fmt.Errorf("error creating vm client: %w", err)
+		}
+		nicClient, err := armnetwork.NewInterfacesClient(ssn.Credentials.SubscriptionID, ssn.TokenCreds, nil)
+		if err != nil {
+			return fmt.Errorf("error creating nic client: %w", err)
+		}
+
+		vmIDs, err := getControlPlaneIDs(in.Client, in.InstallConfig.Config.ControlPlane.Replicas, in.InfraID)
+		if err != nil {
+			return fmt.Errorf("failed to get control plane VM IDs: %w", err)
+		}
+
+		vmInput := &vmInput{
+			infraID:       in.InfraID,
+			resourceGroup: p.ResourceGroupName,
+			vmClient:      vmClient,
+			nicClient:     nicClient,
+			ids:           vmIDs,
+			bap:           p.lbBackendAddressPool,
+		}
+
+		if err = associateVMToBackendPool(ctx, *vmInput); err != nil {
+			return fmt.Errorf("failed to associate control plane VMs with external load balancer: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func getControlPlaneIDs(cl client.Client, replicas *int64, infraID string) ([]string, error) {
+	res := []string{}
+	total := int64(1)
+	if replicas != nil {
+		total = *replicas
+	}
+	for i := int64(0); i < total; i++ {
+		machineName := fmt.Sprintf("%s-master-%d", infraID, i)
+		key := client.ObjectKey{
+			Name:      machineName,
+			Namespace: capiutils.Namespace,
+		}
+		azureMachine := &capz.AzureMachine{}
+		if err := cl.Get(context.Background(), key, azureMachine); err != nil {
+			return nil, fmt.Errorf("failed to get AzureMachine: %w", err)
+		}
+		if vmID := azureMachine.Spec.ProviderID; vmID != nil && len(*vmID) != 0 {
+			res = append(res, *azureMachine.Spec.ProviderID)
+		} else {
+			return nil, fmt.Errorf("%s .Spec.ProviderID is empty", machineName)
+		}
+	}
+
+	bootstrapName := capiutils.GenerateBoostrapMachineName(infraID)
+	key := client.ObjectKey{
+		Name:      bootstrapName,
+		Namespace: capiutils.Namespace,
+	}
+	azureMachine := &capz.AzureMachine{}
+	if err := cl.Get(context.Background(), key, azureMachine); err != nil {
+		return nil, fmt.Errorf("failed to get AzureMachine: %w", err)
+	}
+	if vmID := azureMachine.Spec.ProviderID; vmID != nil && len(*vmID) != 0 {
+		res = append(res, *azureMachine.Spec.ProviderID)
+	} else {
+		return nil, fmt.Errorf("%s .Spec.ProviderID is empty", bootstrapName)
+	}
+	return res, nil
 }
 
 func randomString(length int) string {

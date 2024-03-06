@@ -37,7 +37,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string) error {
 	private := in.InstallConfig.Config.Publish == types.InternalPublishingStrategy
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
@@ -107,8 +107,7 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput) error 
 		// if useIPv6 {
 		// 	cnameRecordName = apiExternalNameV6
 		// }
-		// TODO: Populate with public LB FQDN. Placeholder text as value.
-		publicRecords := createRecordSet(cnameRecordName, azureTags, ttl, cname, "", in.InstallConfig.Config.ClusterDomain())
+		publicRecords := createRecordSet(cnameRecordName, azureTags, ttl, cname, "", extLBFQDN)
 		_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, publicRecords.Name, publicRecords.RecordType, publicRecords.RecordSet, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create public record set: %w", err)
