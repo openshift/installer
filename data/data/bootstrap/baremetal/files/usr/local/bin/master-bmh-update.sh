@@ -15,7 +15,7 @@ while [ "$(oc get bmh -n openshift-machine-api -o name | wc -l)" -lt 1  ]; do
     sleep 20
 done
 
-while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=master -o json | jq '.items[].status.provisioning.state' | grep -v provisioned -c)" -gt 0  ]; do
+while [ "$(oc get bmh -n openshift-machine-api -l installer.openshift.io/role=control-plane -o json | jq '.items[].status.provisioning.state' | grep -v provisioned -c)" -gt 0  ]; do
     echo "Waiting for masters to become provisioned"
     oc get bmh -A
     sleep 20
