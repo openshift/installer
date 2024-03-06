@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package logger
+// Package logger provides a convenient interface to use to log.
 package logger
 
 import (
@@ -69,35 +69,42 @@ func FromContext(ctx context.Context) *Logger {
 
 var _ Wrapper = &Logger{}
 
+// Info logs a message at the info level.
 func (c *Logger) Info(msg string, keysAndValues ...any) {
 	c.callStackHelper()
 	c.logger.Info(msg, keysAndValues...)
 }
 
+// Debug logs a message at the debug level.
 func (c *Logger) Debug(msg string, keysAndValues ...any) {
 	c.callStackHelper()
 	c.logger.V(logLevelDebug).Info(msg, keysAndValues...)
 }
 
+// Warn logs a message at the warn level.
 func (c *Logger) Warn(msg string, keysAndValues ...any) {
 	c.callStackHelper()
 	c.logger.V(logLevelWarn).Info(msg, keysAndValues...)
 }
 
+// Trace logs a message at the trace level.
 func (c *Logger) Trace(msg string, keysAndValues ...any) {
 	c.callStackHelper()
 	c.logger.V(logLevelTrace).Info(msg, keysAndValues...)
 }
 
+// Error logs a message at the error level.
 func (c *Logger) Error(err error, msg string, keysAndValues ...any) {
 	c.callStackHelper()
 	c.logger.Error(err, msg, keysAndValues...)
 }
 
+// GetLogger returns the underlying logr.Logger.
 func (c *Logger) GetLogger() logr.Logger {
 	return c.logger
 }
 
+// WithValues adds some key-value pairs of context to a logger.
 func (c *Logger) WithValues(keysAndValues ...any) *Logger {
 	return &Logger{
 		callStackHelper: c.callStackHelper,
@@ -105,6 +112,7 @@ func (c *Logger) WithValues(keysAndValues ...any) *Logger {
 	}
 }
 
+// WithName adds a new element to the logger's name.
 func (c *Logger) WithName(name string) *Logger {
 	return &Logger{
 		callStackHelper: c.callStackHelper,

@@ -49,6 +49,18 @@ func writeExternalAuthConfig(object *ExternalAuthConfig, stream *jsoniter.Stream
 		}
 		stream.WriteObjectField("enabled")
 		stream.WriteBool(object.enabled)
+		count++
+	}
+	present_ = object.bitmap_&2 != 0 && object.externalAuths != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("external_auths")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeExternalAuthList(object.externalAuths.items, stream)
+		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,6 +90,27 @@ func readExternalAuthConfig(iterator *jsoniter.Iterator) *ExternalAuthConfig {
 			value := iterator.ReadBool()
 			object.enabled = value
 			object.bitmap_ |= 1
+		case "external_auths":
+			value := &ExternalAuthList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == ExternalAuthListLinkKind
+				case "href":
+					value.href = iterator.ReadString()
+				case "items":
+					value.items = readExternalAuthList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.externalAuths = value
+			object.bitmap_ |= 2
 		default:
 			iterator.ReadAny()
 		}

@@ -22,6 +22,15 @@ const (
 	// ROSAControlPlaneReadyCondition condition reports on the successful reconciliation of ROSAControlPlane.
 	ROSAControlPlaneReadyCondition clusterv1.ConditionType = "ROSAControlPlaneReady"
 
+	// ROSAControlPlaneValidCondition condition reports whether ROSAControlPlane configuration is valid.
+	ROSAControlPlaneValidCondition clusterv1.ConditionType = "ROSAControlPlaneValid"
+
 	// ROSAControlPlaneUpgradingCondition condition reports whether ROSAControlPlane is upgrading or not.
 	ROSAControlPlaneUpgradingCondition clusterv1.ConditionType = "ROSAControlPlaneUpgrading"
+
+	// ROSAControlPlaneReconciliationFailedReason used to report failures while reconciling ROSAControlPlane.
+	ROSAControlPlaneReconciliationFailedReason = "ReconciliationFailed"
+
+	// ROSAControlPlaneInvalidConfigurationReason used to report invalid user input.
+	ROSAControlPlaneInvalidConfigurationReason = "InvalidConfiguration"
 )

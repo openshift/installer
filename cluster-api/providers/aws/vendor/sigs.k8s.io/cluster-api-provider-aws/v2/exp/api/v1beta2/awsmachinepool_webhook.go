@@ -141,7 +141,7 @@ func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate will do any extra validation when updating a AWSMachinePool.
-func (r *AWSMachinePool) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *AWSMachinePool) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, r.validateDefaultCoolDown()...)

@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// package v1beta2 contains API Schema definitions for the Amazon EKS Bootstrap v1beta2 API group
+// Package v1beta2 contains API Schema definitions for the Amazon EKS Bootstrap v1beta2 API group
 // +kubebuilder:object:generate=true
 // +groupName=bootstrap.cluster.x-k8s.io
-
 package v1beta2
 
 import (

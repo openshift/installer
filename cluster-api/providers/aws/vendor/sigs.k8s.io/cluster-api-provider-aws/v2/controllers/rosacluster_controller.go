@@ -109,7 +109,6 @@ func (r *ROSAClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Set the values from the managed control plane
 	rosaCluster.Status.Ready = true
 	rosaCluster.Spec.ControlPlaneEndpoint = controlPlane.Spec.ControlPlaneEndpoint
-	// rosaCluster.Status.FailureDomains = controlPlane.Status.FailureDomains
 
 	if err := patchHelper.Patch(ctx, rosaCluster); err != nil {
 		return reconcile.Result{}, fmt.Errorf("failed to patch ROSACluster: %w", err)

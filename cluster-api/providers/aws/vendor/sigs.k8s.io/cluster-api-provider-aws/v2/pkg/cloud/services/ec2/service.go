@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package ec2 provides a way to interact with the AWS EC2 API.
 package ec2
 
 import (

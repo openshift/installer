@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/cluster-api/util/patch"
 )
 
+// ROSAControlPlaneScopeParams defines the input parameters used to create a new ROSAControlPlaneScope.
 type ROSAControlPlaneScopeParams struct {
 	Client         client.Client
 	Logger         *logger.Logger
@@ -46,6 +47,7 @@ type ROSAControlPlaneScopeParams struct {
 	Endpoints      []ServiceEndpoint
 }
 
+// NewROSAControlPlaneScope creates a new ROSAControlPlaneScope from the supplied parameters.
 func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlPlaneScope, error) {
 	if params.Cluster == nil {
 		return nil, errors.New("failed to generate new scope from nil Cluster")
@@ -67,7 +69,7 @@ func NewROSAControlPlaneScope(params ROSAControlPlaneScopeParams) (*ROSAControlP
 		controllerName: params.ControllerName,
 	}
 
-	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, managedScope, *params.ControlPlane.Spec.Region, params.Endpoints, params.Logger)
+	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, managedScope, params.ControlPlane.Spec.Region, params.Endpoints, params.Logger)
 	if err != nil {
 		return nil, errors.Errorf("failed to create aws session: %v", err)
 	}
@@ -106,18 +108,22 @@ type ROSAControlPlaneScope struct {
 	Identity        *sts.GetCallerIdentityOutput
 }
 
+// InfraCluster returns the AWSManagedControlPlane object.
 func (s *ROSAControlPlaneScope) InfraCluster() cloud.ClusterObject {
 	return s.ControlPlane
 }
 
+// IdentityRef returns the AWSIdentityReference object.
 func (s *ROSAControlPlaneScope) IdentityRef() *infrav1.AWSIdentityReference {
 	return s.ControlPlane.Spec.IdentityRef
 }
 
+// Session returns the AWS SDK session. Used for creating clients.
 func (s *ROSAControlPlaneScope) Session() awsclient.ConfigProvider {
 	return s.session
 }
 
+// ServiceLimiter returns the AWS SDK session. Used for creating clients.
 func (s *ROSAControlPlaneScope) ServiceLimiter(service string) *throttle.ServiceLimiter {
 	if sl, ok := s.serviceLimiters[service]; ok {
 		return sl
@@ -125,6 +131,7 @@ func (s *ROSAControlPlaneScope) ServiceLimiter(service string) *throttle.Service
 	return nil
 }
 
+// ControllerName returns the name of the controller.
 func (s *ROSAControlPlaneScope) ControllerName() string {
 	return s.controllerName
 }
@@ -143,6 +150,7 @@ func (s *ROSAControlPlaneScope) InfraClusterName() string {
 	return s.ControlPlane.Name
 }
 
+// RosaClusterName returns the ROSA cluster name.
 func (s *ROSAControlPlaneScope) RosaClusterName() string {
 	return s.ControlPlane.Spec.RosaClusterName
 }
@@ -167,6 +175,7 @@ func (s *ROSAControlPlaneScope) CredentialsSecret() *corev1.Secret {
 	}
 }
 
+// ClusterAdminPasswordSecret returns the corev1.Secret object for the cluster admin password.
 func (s *ROSAControlPlaneScope) ClusterAdminPasswordSecret() *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -183,6 +192,8 @@ func (s *ROSAControlPlaneScope) PatchObject() error {
 		s.ControlPlane,
 		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
 			rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+			rosacontrolplanev1.ROSAControlPlaneValidCondition,
+			rosacontrolplanev1.ROSAControlPlaneUpgradingCondition,
 		}})
 }
 

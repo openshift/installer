@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package identity provides the AWSPrincipalTypeProvider interface and its implementations.
 package identity
 
 import (
@@ -79,7 +80,7 @@ func GetAssumeRoleCredentials(roleIdentityProvider *AWSRolePrincipalTypeProvider
 }
 
 // NewAWSRolePrincipalTypeProvider will create a new AWSRolePrincipalTypeProvider from an AWSClusterRoleIdentity.
-func NewAWSRolePrincipalTypeProvider(identity *infrav1.AWSClusterRoleIdentity, sourceProvider *AWSPrincipalTypeProvider, log logger.Wrapper) *AWSRolePrincipalTypeProvider {
+func NewAWSRolePrincipalTypeProvider(identity *infrav1.AWSClusterRoleIdentity, sourceProvider AWSPrincipalTypeProvider, log logger.Wrapper) *AWSRolePrincipalTypeProvider {
 	return &AWSRolePrincipalTypeProvider{
 		credentials:    nil,
 		stsClient:      nil,
@@ -129,7 +130,7 @@ func (p *AWSStaticPrincipalTypeProvider) IsExpired() bool {
 type AWSRolePrincipalTypeProvider struct {
 	Principal      *infrav1.AWSClusterRoleIdentity
 	credentials    *credentials.Credentials
-	sourceProvider *AWSPrincipalTypeProvider
+	sourceProvider AWSPrincipalTypeProvider
 	log            logger.Wrapper
 	stsClient      stsiface.STSAPI
 }
@@ -155,7 +156,7 @@ func (p *AWSRolePrincipalTypeProvider) Retrieve() (credentials.Value, error) {
 	if p.credentials == nil || p.IsExpired() {
 		awsConfig := aws.NewConfig()
 		if p.sourceProvider != nil {
-			sourceCreds, err := (*p.sourceProvider).Retrieve()
+			sourceCreds, err := p.sourceProvider.Retrieve()
 			if err != nil {
 				return credentials.Value{}, err
 			}

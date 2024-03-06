@@ -231,6 +231,7 @@ type OIDCProviderStatus struct {
 	TrustPolicy string `json:"trustPolicy,omitempty"`
 }
 
+// IdentityProviderStatus holds the status for associated identity provider.
 type IdentityProviderStatus struct {
 	// ARN holds the ARN of associated identity provider
 	ARN string `json:"arn,omitempty"`

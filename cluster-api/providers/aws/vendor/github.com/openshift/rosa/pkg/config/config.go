@@ -35,15 +35,15 @@ import (
 
 // Config is the type used to store the configuration of the client.
 type Config struct {
-	AccessToken  string   `json:"access_token,omitempty"`
-	ClientID     string   `json:"client_id,omitempty"`
-	ClientSecret string   `json:"client_secret,omitempty"`
-	Insecure     bool     `json:"insecure,omitempty"`
-	RefreshToken string   `json:"refresh_token,omitempty"`
-	Scopes       []string `json:"scopes,omitempty"`
-	TokenURL     string   `json:"token_url,omitempty"`
-	URL          string   `json:"url,omitempty"`
-	FedRAMP      bool     `json:"fedramp,omitempty"`
+	AccessToken  string   `json:"access_token,omitempty" doc:"Bearer access token."`
+	ClientID     string   `json:"client_id,omitempty" doc:"OpenID client identifier."`
+	ClientSecret string   `json:"client_secret,omitempty" doc:"OpenID client secret."`
+	Insecure     bool     `json:"insecure,omitempty" doc:"Enables insecure communication with the server."`
+	RefreshToken string   `json:"refresh_token,omitempty" doc:"Offline or refresh token."`
+	Scopes       []string `json:"scopes,omitempty" doc:"OpenID scope."`
+	TokenURL     string   `json:"token_url,omitempty" doc:"OpenID token URL."`
+	URL          string   `json:"url,omitempty" doc:"URL of the API gateway."`
+	FedRAMP      bool     `json:"fedramp,omitempty" doc:"Indicates FedRAMP."`
 }
 
 // Load loads the configuration from the configuration file. If the configuration file doesn't exist

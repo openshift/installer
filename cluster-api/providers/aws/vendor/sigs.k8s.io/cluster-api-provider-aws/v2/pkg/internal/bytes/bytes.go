@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package bytes provides utilities for working with byte arrays.
 package bytes
 
 import (

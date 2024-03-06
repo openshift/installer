@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package tristate provides a helper for working with bool pointers.
 package tristate
 
 // withDefault evaluates a pointer to a bool with a default value.

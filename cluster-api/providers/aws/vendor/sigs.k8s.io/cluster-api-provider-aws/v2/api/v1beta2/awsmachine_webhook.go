@@ -17,10 +17,17 @@ limitations under the License.
 package v1beta2
 
 import (
+	"encoding/base64"
+	"fmt"
+	"net"
+	"net/url"
+	"strings"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -171,15 +178,130 @@ func (r *AWSMachine) ignitionEnabled() bool {
 
 func (r *AWSMachine) validateIgnitionAndCloudInit() field.ErrorList {
 	var allErrs field.ErrorList
+	if !r.ignitionEnabled() {
+		return allErrs
+	}
 
 	// Feature gate is not enabled but ignition is enabled then send a forbidden error.
-	if !feature.Gates.Enabled(feature.BootstrapFormatIgnition) && r.ignitionEnabled() {
+	if !feature.Gates.Enabled(feature.BootstrapFormatIgnition) {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ignition"),
 			"can be set only if the BootstrapFormatIgnition feature gate is enabled"))
 	}
 
-	if r.ignitionEnabled() && r.cloudInitConfigured() {
+	// If ignition is enabled, cloudInit should not be configured.
+	if r.cloudInitConfigured() {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "cloudInit"), "cannot be set if spec.ignition is set"))
+	}
+
+	// Proxy and TLS are only valid for Ignition versions >= 3.1.
+	if r.Spec.Ignition.Version == "2.3" || r.Spec.Ignition.Version == "3.0" {
+		if r.Spec.Ignition.Proxy != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ignition", "proxy"), "cannot be set if spec.ignition.version is 2.3 or 3.0"))
+		}
+		if r.Spec.Ignition.TLS != nil {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ignition", "tls"), "cannot be set if spec.ignition.version is 2.3 or 3.0"))
+		}
+	}
+
+	allErrs = append(allErrs, r.validateIgnitionProxy()...)
+	allErrs = append(allErrs, r.validateIgnitionTLS()...)
+
+	return allErrs
+}
+
+func (r *AWSMachine) validateIgnitionProxy() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.Ignition.Proxy == nil {
+		return allErrs
+	}
+
+	// Validate HTTPProxy.
+	if r.Spec.Ignition.Proxy.HTTPProxy != nil {
+		// Parse the url to check if it is valid.
+		_, err := url.Parse(*r.Spec.Ignition.Proxy.HTTPProxy)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "proxy", "httpProxy"), *r.Spec.Ignition.Proxy.HTTPProxy, "invalid URL"))
+		}
+	}
+
+	// Validate HTTPSProxy.
+	if r.Spec.Ignition.Proxy.HTTPSProxy != nil {
+		// Parse the url to check if it is valid.
+		_, err := url.Parse(*r.Spec.Ignition.Proxy.HTTPSProxy)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "proxy", "httpsProxy"), *r.Spec.Ignition.Proxy.HTTPSProxy, "invalid URL"))
+		}
+	}
+
+	// Validate NoProxy.
+	for _, noProxy := range r.Spec.Ignition.Proxy.NoProxy {
+		noProxy := string(noProxy)
+		// Validate here that the value `noProxy` is:
+		// - A domain name
+		//   - A domain name matches that name and all subdomains
+		//   - A domain name with a leading . matches subdomains only
+
+		// A special DNS label (*).
+		if noProxy == "*" {
+			continue
+		}
+		// An IP address prefix (1.2.3.4).
+		if ip := net.ParseIP(noProxy); ip != nil {
+			continue
+		}
+		// An IP address prefix in CIDR notation (1.2.3.4/8).
+		if _, _, err := net.ParseCIDR(noProxy); err == nil {
+			continue
+		}
+		// An IP or domain name with a port.
+		if _, _, err := net.SplitHostPort(noProxy); err == nil {
+			continue
+		}
+		// A domain name.
+		if noProxy[0] == '.' {
+			// If it starts with a dot, it should be a domain name.
+			noProxy = noProxy[1:]
+		}
+		// Validate that the value matches DNS 1123.
+		if errs := validation.IsDNS1123Subdomain(noProxy); len(errs) > 0 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "proxy", "noProxy"), noProxy, fmt.Sprintf("invalid noProxy value, please refer to the field documentation: %s", strings.Join(errs, "; "))))
+		}
+	}
+
+	return allErrs
+}
+
+func (r *AWSMachine) validateIgnitionTLS() field.ErrorList {
+	var allErrs field.ErrorList
+
+	if r.Spec.Ignition.TLS == nil {
+		return allErrs
+	}
+
+	for _, source := range r.Spec.Ignition.TLS.CASources {
+		// Validate that source is RFC 2397 data URL.
+		u, err := url.Parse(string(source))
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "tls", "caSources"), source, "invalid URL"))
+		}
+
+		switch u.Scheme {
+		case "http", "https", "tftp", "s3", "arn", "gs":
+			// Valid schemes.
+		case "data":
+			// Validate that the data URL is base64 encoded.
+			i := strings.Index(u.Opaque, ",")
+			if i < 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "tls", "caSources"), source, "invalid data URL"))
+			}
+			// Validate that the data URL is base64 encoded.
+			if _, err := base64.StdEncoding.DecodeString(u.Opaque[i+1:]); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "tls", "caSources"), source, "invalid base64 encoding for data url"))
+			}
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "ignition", "tls", "caSources"), source, "unsupported URL scheme"))
+		}
 	}
 
 	return allErrs

@@ -503,7 +503,7 @@ func (r *AWSMachineReconciler) reconcileNormal(_ context.Context, machineScope *
 		// Avoid a flickering condition between InstanceProvisionStarted and InstanceProvisionFailed if there's a persistent failure with createInstance
 		if conditions.GetReason(machineScope.AWSMachine, infrav1.InstanceReadyCondition) != infrav1.InstanceProvisionFailedReason {
 			conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionStartedReason, clusterv1.ConditionSeverityInfo, "")
-			if patchErr := machineScope.PatchObject(); err != nil {
+			if patchErr := machineScope.PatchObject(); patchErr != nil {
 				machineScope.Error(patchErr, "failed to patch conditions")
 				return ctrl.Result{}, patchErr
 			}
@@ -807,6 +807,25 @@ func (r *AWSMachineReconciler) generateIgnitionWithRemoteStorage(scope *scope.Ma
 			},
 		}
 
+		if scope.AWSMachine.Spec.Ignition.Proxy != nil {
+			ignData.Ignition.Proxy = ignV3Types.Proxy{
+				HTTPProxy:  scope.AWSMachine.Spec.Ignition.Proxy.HTTPProxy,
+				HTTPSProxy: scope.AWSMachine.Spec.Ignition.Proxy.HTTPSProxy,
+			}
+			for _, noProxy := range scope.AWSMachine.Spec.Ignition.Proxy.NoProxy {
+				ignData.Ignition.Proxy.NoProxy = append(ignData.Ignition.Proxy.NoProxy, ignV3Types.NoProxyItem(noProxy))
+			}
+		}
+
+		if scope.AWSMachine.Spec.Ignition.TLS != nil {
+			for _, cert := range scope.AWSMachine.Spec.Ignition.TLS.CASources {
+				ignData.Ignition.Security.TLS.CertificateAuthorities = append(
+					ignData.Ignition.Security.TLS.CertificateAuthorities,
+					ignV3Types.Resource{Source: aws.String(string(cert))},
+				)
+			}
+		}
+
 		return json.Marshal(ignData)
 	default:
 		return nil, errors.Errorf("unsupported ignition version %q", ignVersion)
@@ -912,17 +931,10 @@ func (r *AWSMachineReconciler) reconcileLBAttachment(machineScope *scope.Machine
 
 func (r *AWSMachineReconciler) registerInstanceToLBs(machineScope *scope.MachineScope, elbsvc services.ELBInterface, i *infrav1.Instance, lb *infrav1.AWSLoadBalancerSpec) error {
 	switch lb.LoadBalancerType {
-	case infrav1.LoadBalancerTypeClassic:
-		fallthrough
-	case "":
+	case infrav1.LoadBalancerTypeClassic, "":
 		machineScope.Debug("registering to classic load balancer")
 		return r.registerInstanceToClassicLB(machineScope, elbsvc, i)
-
-	case infrav1.LoadBalancerTypeELB:
-		fallthrough
-	case infrav1.LoadBalancerTypeALB:
-		fallthrough
-	case infrav1.LoadBalancerTypeNLB:
+	case infrav1.LoadBalancerTypeELB, infrav1.LoadBalancerTypeALB, infrav1.LoadBalancerTypeNLB:
 		machineScope.Debug("registering to v2 load balancer")
 		return r.registerInstanceToV2LB(machineScope, elbsvc, i, lb)
 	}

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package scope provides a global scope for CAPA controllers.
 package scope
 
 import (

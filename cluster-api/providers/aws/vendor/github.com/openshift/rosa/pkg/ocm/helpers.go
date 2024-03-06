@@ -81,6 +81,11 @@ var clusterNameRE = regexp.MustCompile(`^[a-z]([-a-z0-9]{0,13}[a-z0-9])?$`)
 
 var badUsernameRE = regexp.MustCompile(`^(~|\.?\.|.*[:\/%].*)$`)
 
+// math.MaxInt64 needs to be bound by int64() as that can otherwise overflow
+// if the helpers are compiled for non-64bit architectures (e.g. armv7l)
+// as per https://github.com/golang/go/issues/23086.
+var maxInt = int64(math.MaxInt64)
+
 func IsValidClusterKey(clusterKey string) bool {
 	return clusterKeyRE.MatchString(clusterKey)
 }
@@ -952,8 +957,8 @@ func ParseDiskSizeToGigibyte(size string) (int, error) {
 		return 0, nil
 	}
 
-	// resource.ParseQuantity() will not error when a value exceeds the max int64
-	if qty.Value() == math.MaxInt64 {
+	// resource.ParseQuantity() will not error when a value exceeds the max int64.
+	if qty.Value() == maxInt {
 		return 0, fmt.Errorf("invalid disk size: '%s'. maximum size exceeded", size)
 	}
 
@@ -966,7 +971,7 @@ func ParseDiskSizeToGigibyte(size string) (int, error) {
 		// If the conversion hit the maximum value of a 64 bit integer, it means the user passed a very
 		// large value which is ok, we can still proceed and the backend will return an error since
 		// the size is too large
-		if diskSizeInt != math.MaxInt64 {
+		if int64(diskSizeInt) != maxInt {
 			return 0, fmt.Errorf("missing unit suffix: '%s'. %s", diskSize, suffixErrorString)
 		}
 	}
