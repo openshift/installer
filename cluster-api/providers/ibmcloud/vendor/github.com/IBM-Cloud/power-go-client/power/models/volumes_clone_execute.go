@@ -35,6 +35,9 @@ type VolumesCloneExecute struct {
 	//
 	RollbackPrepare bool `json:"rollbackPrepare,omitempty"`
 
+	// Cloned volume will be non replication enabled if it is set to false. By default, the replication property of the source volume will be used to determine the replication property of the cloned target volume.
+	TargetReplicationEnabled *bool `json:"targetReplicationEnabled,omitempty"`
+
 	// Target storage tier for the cloned volumes. Use to clone a set of volumes from one storage tier
 	// to a different storage tier. Cloned volumes must remain in the same storage pool as
 	// the source volumes.

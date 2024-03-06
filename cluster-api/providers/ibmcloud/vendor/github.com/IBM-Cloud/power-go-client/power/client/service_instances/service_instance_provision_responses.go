@@ -47,6 +47,24 @@ func (o *ServiceInstanceProvisionReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewServiceInstanceProvisionUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceInstanceProvisionForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceInstanceProvisionNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewServiceInstanceProvisionConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -325,6 +343,210 @@ func (o *ServiceInstanceProvisionBadRequest) GetPayload() *models.Error {
 }
 
 func (o *ServiceInstanceProvisionBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceProvisionUnauthorized creates a ServiceInstanceProvisionUnauthorized with default headers values
+func NewServiceInstanceProvisionUnauthorized() *ServiceInstanceProvisionUnauthorized {
+	return &ServiceInstanceProvisionUnauthorized{}
+}
+
+/*
+ServiceInstanceProvisionUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type ServiceInstanceProvisionUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance provision unauthorized response has a 2xx status code
+func (o *ServiceInstanceProvisionUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision unauthorized response has a 3xx status code
+func (o *ServiceInstanceProvisionUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision unauthorized response has a 4xx status code
+func (o *ServiceInstanceProvisionUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision unauthorized response has a 5xx status code
+func (o *ServiceInstanceProvisionUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision unauthorized response a status code equal to that given
+func (o *ServiceInstanceProvisionUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the service instance provision unauthorized response
+func (o *ServiceInstanceProvisionUnauthorized) Code() int {
+	return 401
+}
+
+func (o *ServiceInstanceProvisionUnauthorized) Error() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceProvisionUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceProvisionForbidden creates a ServiceInstanceProvisionForbidden with default headers values
+func NewServiceInstanceProvisionForbidden() *ServiceInstanceProvisionForbidden {
+	return &ServiceInstanceProvisionForbidden{}
+}
+
+/*
+ServiceInstanceProvisionForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceInstanceProvisionForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance provision forbidden response has a 2xx status code
+func (o *ServiceInstanceProvisionForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision forbidden response has a 3xx status code
+func (o *ServiceInstanceProvisionForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision forbidden response has a 4xx status code
+func (o *ServiceInstanceProvisionForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision forbidden response has a 5xx status code
+func (o *ServiceInstanceProvisionForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision forbidden response a status code equal to that given
+func (o *ServiceInstanceProvisionForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service instance provision forbidden response
+func (o *ServiceInstanceProvisionForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceInstanceProvisionForbidden) Error() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionForbidden) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceProvisionForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceInstanceProvisionNotFound creates a ServiceInstanceProvisionNotFound with default headers values
+func NewServiceInstanceProvisionNotFound() *ServiceInstanceProvisionNotFound {
+	return &ServiceInstanceProvisionNotFound{}
+}
+
+/*
+ServiceInstanceProvisionNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceInstanceProvisionNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service instance provision not found response has a 2xx status code
+func (o *ServiceInstanceProvisionNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service instance provision not found response has a 3xx status code
+func (o *ServiceInstanceProvisionNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service instance provision not found response has a 4xx status code
+func (o *ServiceInstanceProvisionNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service instance provision not found response has a 5xx status code
+func (o *ServiceInstanceProvisionNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service instance provision not found response a status code equal to that given
+func (o *ServiceInstanceProvisionNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service instance provision not found response
+func (o *ServiceInstanceProvisionNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceInstanceProvisionNotFound) Error() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionNotFound) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}][%d] serviceInstanceProvisionNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceInstanceProvisionNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceInstanceProvisionNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

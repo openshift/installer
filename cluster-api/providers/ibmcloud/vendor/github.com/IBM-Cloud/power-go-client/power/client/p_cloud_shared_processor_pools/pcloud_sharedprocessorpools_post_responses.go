@@ -47,6 +47,12 @@ func (o *PcloudSharedprocessorpoolsPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudSharedprocessorpoolsPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudSharedprocessorpoolsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -331,6 +337,74 @@ func (o *PcloudSharedprocessorpoolsPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudSharedprocessorpoolsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSharedprocessorpoolsPostNotFound creates a PcloudSharedprocessorpoolsPostNotFound with default headers values
+func NewPcloudSharedprocessorpoolsPostNotFound() *PcloudSharedprocessorpoolsPostNotFound {
+	return &PcloudSharedprocessorpoolsPostNotFound{}
+}
+
+/*
+PcloudSharedprocessorpoolsPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudSharedprocessorpoolsPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sharedprocessorpools post not found response has a 2xx status code
+func (o *PcloudSharedprocessorpoolsPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sharedprocessorpools post not found response has a 3xx status code
+func (o *PcloudSharedprocessorpoolsPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sharedprocessorpools post not found response has a 4xx status code
+func (o *PcloudSharedprocessorpoolsPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sharedprocessorpools post not found response has a 5xx status code
+func (o *PcloudSharedprocessorpoolsPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sharedprocessorpools post not found response a status code equal to that given
+func (o *PcloudSharedprocessorpoolsPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud sharedprocessorpools post not found response
+func (o *PcloudSharedprocessorpoolsPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudSharedprocessorpoolsPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools][%d] pcloudSharedprocessorpoolsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudSharedprocessorpoolsPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/shared-processor-pools][%d] pcloudSharedprocessorpoolsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudSharedprocessorpoolsPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSharedprocessorpoolsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

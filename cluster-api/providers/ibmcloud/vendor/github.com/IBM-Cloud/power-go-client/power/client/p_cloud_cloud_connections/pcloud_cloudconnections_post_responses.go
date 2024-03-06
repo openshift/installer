@@ -53,6 +53,12 @@ func (o *PcloudCloudconnectionsPostReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudconnectionsPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudconnectionsPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -429,6 +435,74 @@ func (o *PcloudCloudconnectionsPostUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudconnectionsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsPostForbidden creates a PcloudCloudconnectionsPostForbidden with default headers values
+func NewPcloudCloudconnectionsPostForbidden() *PcloudCloudconnectionsPostForbidden {
+	return &PcloudCloudconnectionsPostForbidden{}
+}
+
+/*
+PcloudCloudconnectionsPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudconnectionsPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections post forbidden response has a 2xx status code
+func (o *PcloudCloudconnectionsPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections post forbidden response has a 3xx status code
+func (o *PcloudCloudconnectionsPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections post forbidden response has a 4xx status code
+func (o *PcloudCloudconnectionsPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections post forbidden response has a 5xx status code
+func (o *PcloudCloudconnectionsPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections post forbidden response a status code equal to that given
+func (o *PcloudCloudconnectionsPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudconnections post forbidden response
+func (o *PcloudCloudconnectionsPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudconnectionsPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections][%d] pcloudCloudconnectionsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

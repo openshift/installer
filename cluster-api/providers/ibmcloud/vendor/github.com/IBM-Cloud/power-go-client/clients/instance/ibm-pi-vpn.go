@@ -3,7 +3,6 @@ package instance
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/helpers"
@@ -27,7 +26,7 @@ func NewIBMPIVpnConnectionClient(ctx context.Context, sess *ibmpisession.IBMPISe
 
 // Get a VPN Connection
 func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsGetParams().
@@ -35,7 +34,7 @@ func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error)
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetVPNConnectionOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetVPNConnectionOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get VPN Connection %s", id)
@@ -45,7 +44,7 @@ func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error)
 
 // Create a VPN Connection
 func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*models.VPNConnectionCreateResponse, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPostParams().
@@ -53,7 +52,7 @@ func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*mo
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postaccepted, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateVPNConnectionOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateVPNConnectionOperationFailed, f.cloudInstanceID, err))
 	}
 	if postaccepted != nil && postaccepted.Payload != nil {
 		return postaccepted.Payload, nil
@@ -63,7 +62,7 @@ func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*mo
 
 // Update a VPN Connection
 func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionUpdate) (*models.VPNConnection, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPutParams().
@@ -72,7 +71,7 @@ func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionU
 		WithBody(body)
 	putok, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.UpdateVPNConnectionOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.UpdateVPNConnectionOperationFailed, id, err))
 	}
 	if putok != nil && putok.Payload != nil {
 		return putok.Payload, nil
@@ -82,7 +81,7 @@ func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionU
 
 // Get All VPN Connections
 func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsGetallParams().
@@ -90,7 +89,7 @@ func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all VPN Connections: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all VPN Connections: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all VPN Connections")
@@ -100,7 +99,7 @@ func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
 
 // Delete a VPN Connection
 func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsDeleteParams().
@@ -108,7 +107,7 @@ func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, erro
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
 	delaccepted, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.DeleteVPNConnectionOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.DeleteVPNConnectionOperationFailed, id, err))
 	}
 	if delaccepted != nil && delaccepted.Payload != nil {
 		return delaccepted.Payload, nil
@@ -118,7 +117,7 @@ func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, erro
 
 // Get a VPN Connection's Network
 func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsNetworksGetParams().
@@ -126,7 +125,7 @@ func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, er
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get Networks for VPN Connection %s: %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get Networks for VPN Connection %s: %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Networks for VPN Connection %s", id)
@@ -136,7 +135,7 @@ func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, er
 
 // Attach a Network to a VPN Connection
 func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.JobReference, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsNetworksPutParams().
@@ -145,7 +144,7 @@ func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.Job
 		WithBody(&models.NetworkID{NetworkID: &networkID})
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Add Network %s to VPN Connection %s: %w", networkID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Add Network %s to VPN Connection %s: %w", networkID, id, err))
 	}
 	if resp != nil && resp.Payload != nil {
 		return resp.Payload, nil
@@ -155,7 +154,7 @@ func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.Job
 
 // Detach a Network from a VPN Connection
 func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.JobReference, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsNetworksDeleteParams().
@@ -164,7 +163,7 @@ func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.
 		WithBody(&models.NetworkID{NetworkID: &networkID})
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsNetworksDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Delete Network %s from VPN Connection %s: %w", networkID, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Delete Network %s from VPN Connection %s: %w", networkID, id, err))
 	}
 	if resp != nil && resp.Payload != nil {
 		return resp.Payload, nil
@@ -174,7 +173,7 @@ func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.
 
 // Get a VPN Connection's Subnet
 func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPeersubnetsGetParams().
@@ -182,7 +181,7 @@ func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, er
 		WithCloudInstanceID(f.cloudInstanceID).WithVpnConnectionID(id)
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get Subnets from VPN Connection %s: %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get Subnets from VPN Connection %s: %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Subnets from VPN Connection %s", id)
@@ -192,7 +191,7 @@ func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, er
 
 // Attach a Subnet to a VPN Connection
 func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSubnets, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPeersubnetsPutParams().
@@ -201,7 +200,7 @@ func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSub
 		WithBody(&models.PeerSubnetUpdate{Cidr: &subnet})
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsPut(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Add Subnets to VPN Connection %s: %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Add Subnets to VPN Connection %s: %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Add Subnets to VPN Connection %s", id)
@@ -211,7 +210,7 @@ func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSub
 
 // Detach a Subnet from a VPN Connection
 func (f *IBMPIVpnConnectionClient) DeleteSubnet(id, subnet string) (*models.PeerSubnets, error) {
-	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
+	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_v_p_n_connections.NewPcloudVpnconnectionsPeersubnetsDeleteParams().
@@ -220,7 +219,7 @@ func (f *IBMPIVpnConnectionClient) DeleteSubnet(id, subnet string) (*models.Peer
 		WithBody(&models.PeerSubnetUpdate{Cidr: &subnet})
 	resp, err := f.session.Power.PCloudvpnConnections.PcloudVpnconnectionsPeersubnetsDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Delete Subnet from VPN Connection %s: %w", id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Delete Subnet from VPN Connection %s: %w", id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Delete Subnet from VPN Connection %s", id)

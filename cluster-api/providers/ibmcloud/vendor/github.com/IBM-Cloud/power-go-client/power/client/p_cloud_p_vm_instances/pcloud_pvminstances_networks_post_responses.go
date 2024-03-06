@@ -41,6 +41,18 @@ func (o *PcloudPvminstancesNetworksPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesNetworksPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudPvminstancesNetworksPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudPvminstancesNetworksPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -257,6 +269,142 @@ func (o *PcloudPvminstancesNetworksPostUnauthorized) GetPayload() *models.Error 
 }
 
 func (o *PcloudPvminstancesNetworksPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesNetworksPostForbidden creates a PcloudPvminstancesNetworksPostForbidden with default headers values
+func NewPcloudPvminstancesNetworksPostForbidden() *PcloudPvminstancesNetworksPostForbidden {
+	return &PcloudPvminstancesNetworksPostForbidden{}
+}
+
+/*
+PcloudPvminstancesNetworksPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesNetworksPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances networks post forbidden response has a 2xx status code
+func (o *PcloudPvminstancesNetworksPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks post forbidden response has a 3xx status code
+func (o *PcloudPvminstancesNetworksPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks post forbidden response has a 4xx status code
+func (o *PcloudPvminstancesNetworksPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks post forbidden response has a 5xx status code
+func (o *PcloudPvminstancesNetworksPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks post forbidden response a status code equal to that given
+func (o *PcloudPvminstancesNetworksPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances networks post forbidden response
+func (o *PcloudPvminstancesNetworksPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesNetworksPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks][%d] pcloudPvminstancesNetworksPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks][%d] pcloudPvminstancesNetworksPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesNetworksPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesNetworksPostNotFound creates a PcloudPvminstancesNetworksPostNotFound with default headers values
+func NewPcloudPvminstancesNetworksPostNotFound() *PcloudPvminstancesNetworksPostNotFound {
+	return &PcloudPvminstancesNetworksPostNotFound{}
+}
+
+/*
+PcloudPvminstancesNetworksPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudPvminstancesNetworksPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances networks post not found response has a 2xx status code
+func (o *PcloudPvminstancesNetworksPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances networks post not found response has a 3xx status code
+func (o *PcloudPvminstancesNetworksPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances networks post not found response has a 4xx status code
+func (o *PcloudPvminstancesNetworksPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances networks post not found response has a 5xx status code
+func (o *PcloudPvminstancesNetworksPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances networks post not found response a status code equal to that given
+func (o *PcloudPvminstancesNetworksPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud pvminstances networks post not found response
+func (o *PcloudPvminstancesNetworksPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudPvminstancesNetworksPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks][%d] pcloudPvminstancesNetworksPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/networks][%d] pcloudPvminstancesNetworksPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudPvminstancesNetworksPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesNetworksPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

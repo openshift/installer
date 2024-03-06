@@ -12,8 +12,6 @@ const (
 
 	SDK_NAME = "vpc-go-sdk"
 
-	X_CORRELATION_ID = "X-Correlation-Id"
-
 	X_REQUEST_ID = "X-Request-Id"
 )
 
@@ -42,7 +40,6 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationId string
 	sdkHeaders := make(map[string]string)
 
 	sdkHeaders[HEADER_NAME_USER_AGENT] = GetUserAgentInfo()
-	sdkHeaders[X_CORRELATION_ID] = GetNewXCorrelationID()
 	sdkHeaders[X_REQUEST_ID] = GetNewXRequestID()
 
 	return sdkHeaders
@@ -52,9 +49,6 @@ var UserAgent string = fmt.Sprintf("%s-%s %s", SDK_NAME, Version, GetSystemInfo(
 
 func GetUserAgentInfo() string {
 	return UserAgent
-}
-func GetNewXCorrelationID() string {
-	return uuid.New().String()
 }
 func GetNewXRequestID() string {
 	return uuid.New().String()

@@ -144,8 +144,8 @@ func FetchRCEndpoint(serviceEndpoint []ServiceEndpoint) string {
 	return ""
 }
 
-// CostructRegionFromZone Calculate region based on location/zone.
-func CostructRegionFromZone(zone string) string {
+// ConstructRegionFromZone Calculate region based on location/zone.
+func ConstructRegionFromZone(zone string) string {
 	var regex string
 	if strings.Contains(zone, "-") {
 		// it's a region or AZ

@@ -35,6 +35,12 @@ func (o *PcloudPlacementgroupsMembersPostReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudPlacementgroupsMembersPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudPlacementgroupsMembersPostForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -195,6 +201,74 @@ func (o *PcloudPlacementgroupsMembersPostBadRequest) GetPayload() *models.Error 
 }
 
 func (o *PcloudPlacementgroupsMembersPostBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPlacementgroupsMembersPostUnauthorized creates a PcloudPlacementgroupsMembersPostUnauthorized with default headers values
+func NewPcloudPlacementgroupsMembersPostUnauthorized() *PcloudPlacementgroupsMembersPostUnauthorized {
+	return &PcloudPlacementgroupsMembersPostUnauthorized{}
+}
+
+/*
+PcloudPlacementgroupsMembersPostUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudPlacementgroupsMembersPostUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud placementgroups members post unauthorized response has a 2xx status code
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud placementgroups members post unauthorized response has a 3xx status code
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud placementgroups members post unauthorized response has a 4xx status code
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud placementgroups members post unauthorized response has a 5xx status code
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud placementgroups members post unauthorized response a status code equal to that given
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud placementgroups members post unauthorized response
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/placement-groups/{placement_group_id}/members][%d] pcloudPlacementgroupsMembersPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPlacementgroupsMembersPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

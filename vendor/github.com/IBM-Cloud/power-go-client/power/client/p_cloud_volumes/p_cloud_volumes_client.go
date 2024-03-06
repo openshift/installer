@@ -58,11 +58,15 @@ type ClientService interface {
 
 	PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesVolumesSetbootPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudPvminstancesVolumesSetbootPutOK, error)
 
+	PcloudV2PvminstancesVolumesDelete(params *PcloudV2PvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesDeleteAccepted, error)
+
 	PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesPostAccepted, error)
 
 	PcloudV2VolumesClonePost(params *PcloudV2VolumesClonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonePostAccepted, error)
 
 	PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesClonetasksGetOK, error)
+
+	PcloudV2VolumesDelete(params *PcloudV2VolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesDeleteAccepted, *PcloudV2VolumesDeletePartialContent, error)
 
 	PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesPostCreated, error)
 
@@ -632,6 +636,45 @@ func (a *Client) PcloudPvminstancesVolumesSetbootPut(params *PcloudPvminstancesV
 }
 
 /*
+PcloudV2PvminstancesVolumesDelete detaches multiple volumes from a p VM instance
+*/
+func (a *Client) PcloudV2PvminstancesVolumesDelete(params *PcloudV2PvminstancesVolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesDeleteAccepted, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudV2PvminstancesVolumesDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.v2.pvminstances.volumes.delete",
+		Method:             "DELETE",
+		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/volumes",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudV2PvminstancesVolumesDeleteReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PcloudV2PvminstancesVolumesDeleteAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for pcloud.v2.pvminstances.volumes.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
 PcloudV2PvminstancesVolumesPost attaches all volumes to a p VM instance
 */
 func (a *Client) PcloudV2PvminstancesVolumesPost(params *PcloudV2PvminstancesVolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2PvminstancesVolumesPostAccepted, error) {
@@ -749,6 +792,46 @@ func (a *Client) PcloudV2VolumesClonetasksGet(params *PcloudV2VolumesClonetasksG
 }
 
 /*
+PcloudV2VolumesDelete deletes all volumes
+*/
+func (a *Client) PcloudV2VolumesDelete(params *PcloudV2VolumesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesDeleteAccepted, *PcloudV2VolumesDeletePartialContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPcloudV2VolumesDeleteParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "pcloud.v2.volumes.delete",
+		Method:             "DELETE",
+		PathPattern:        "/pcloud/v2/cloud-instances/{cloud_instance_id}/volumes",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PcloudV2VolumesDeleteReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, nil, err
+	}
+	switch value := result.(type) {
+	case *PcloudV2VolumesDeleteAccepted:
+		return value, nil, nil
+	case *PcloudV2VolumesDeletePartialContent:
+		return nil, value, nil
+	}
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for p_cloud_volumes: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
 PcloudV2VolumesPost creates multiple data volumes from a single definition
 */
 func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesPostCreated, error) {
@@ -788,7 +871,9 @@ func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo
 }
 
 /*
-PcloudV2VolumescloneCancelPost cancels a volumes clone request initiates the cleanup action cleanup action performs the cleanup of the preparatory clones and snapshot volumes
+PcloudV2VolumescloneCancelPost cancels a volumes clone request
+
+Initiates the cleanup action that performs the cleanup of the preparatory clones and snapshot volumes.
 */
 func (a *Client) PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCancelPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneCancelPostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -866,7 +951,9 @@ func (a *Client) PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeletePa
 }
 
 /*
-PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request execute action creates the cloned volumes using the volume snapshots
+PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request
+
+Execute action creates the cloned volumes using the volume snapshots.
 */
 func (a *Client) PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExecutePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneExecutePostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -983,7 +1070,14 @@ func (a *Client) PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallPa
 }
 
 /*
-PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action requires a minimum of two volumes requires a minimum of one volume to be in the in use state requires a unique volumes clone name prepare action does the preparatory work for creating the snapshot volumes
+	PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action
+
+	Requires a minimum of two volumes.
+
+Requires a minimum of one volume to be in the `in-use` state.
+Requires a unique volumes clone name.
+Prepare action does the preparatory work for creating the snapshot volumes.
+>**Note**: If there is an existing prepare, user cannot trigger another prepare for the same set of volumes. Prepare should be followed by start and execute. If existing prepare does not have to be used then it should be first cancelled before the next prepare operation.
 */
 func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesclonePostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -1022,7 +1116,9 @@ func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams
 }
 
 /*
-PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request start action starts the consistency group to initiate the flash copy
+PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request
+
+Start action starts the consistency group to initiate the flash copy.
 */
 func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStartPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneStartPostOK, error) {
 	// TODO: Validate the params before sending

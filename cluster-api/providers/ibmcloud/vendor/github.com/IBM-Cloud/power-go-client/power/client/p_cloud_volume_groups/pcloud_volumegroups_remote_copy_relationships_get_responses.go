@@ -35,6 +35,12 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetReader) ReadResponse(respon
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudVolumegroupsRemoteCopyRelationshipsGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -189,6 +195,74 @@ func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) GetPayload() *m
 }
 
 func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized creates a PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized with default headers values
+func NewPcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized() *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized {
+	return &PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized{}
+}
+
+/*
+PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 2xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 3xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 4xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups remote copy relationships get unauthorized response has a 5xx status code
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups remote copy relationships get unauthorized response a status code equal to that given
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud volumegroups remote copy relationships get unauthorized response
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/remote-copy-relationships][%d] pcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsRemoteCopyRelationshipsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

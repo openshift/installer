@@ -41,6 +41,12 @@ func (o *PcloudCloudinstancesStockimagesGetallReader) ReadResponse(response runt
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesStockimagesGetallForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudinstancesStockimagesGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -251,6 +257,74 @@ func (o *PcloudCloudinstancesStockimagesGetallUnauthorized) GetPayload() *models
 }
 
 func (o *PcloudCloudinstancesStockimagesGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesStockimagesGetallForbidden creates a PcloudCloudinstancesStockimagesGetallForbidden with default headers values
+func NewPcloudCloudinstancesStockimagesGetallForbidden() *PcloudCloudinstancesStockimagesGetallForbidden {
+	return &PcloudCloudinstancesStockimagesGetallForbidden{}
+}
+
+/*
+PcloudCloudinstancesStockimagesGetallForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesStockimagesGetallForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances stockimages getall forbidden response has a 2xx status code
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances stockimages getall forbidden response has a 3xx status code
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances stockimages getall forbidden response has a 4xx status code
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances stockimages getall forbidden response has a 5xx status code
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances stockimages getall forbidden response a status code equal to that given
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances stockimages getall forbidden response
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images][%d] pcloudCloudinstancesStockimagesGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/stock-images][%d] pcloudCloudinstancesStockimagesGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesStockimagesGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

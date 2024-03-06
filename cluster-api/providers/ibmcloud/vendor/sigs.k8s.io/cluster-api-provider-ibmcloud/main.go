@@ -33,8 +33,11 @@ import (
 	"k8s.io/klog/v2/klogr"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/flags"
 
 	infrav1beta1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1"
 	infrav1beta2 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
@@ -48,13 +51,15 @@ import (
 
 var (
 	watchNamespace       string
-	metricsAddr          string
 	enableLeaderElection bool
 	healthAddr           string
 	syncPeriod           time.Duration
+	diagnosticsOptions   = flags.DiagnosticsOptions{}
 
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme         = runtime.NewScheme()
+	setupLog       = ctrl.Log.WithName("setup")
+	webhookPort    int
+	webhookCertDir string
 )
 
 func init() {
@@ -65,6 +70,10 @@ func init() {
 	_ = capiv1beta1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
+
+// Add RBAC for the authorized diagnostics endpoint.
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 
 func main() {
 	klog.InitFlags(nil)
@@ -97,16 +106,30 @@ func main() {
 		BurstSize: 100,
 	})
 
+	diagnosticsOpts := flags.GetDiagnosticsOptions(diagnosticsOptions)
+
+	var watchNamespaces map[string]cache.Config
+	if watchNamespace != "" {
+		watchNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "effcf9b8.cluster.x-k8s.io",
-		SyncPeriod:             &syncPeriod,
-		Namespace:              watchNamespace,
+		Scheme:           scheme,
+		LeaderElection:   enableLeaderElection,
+		Metrics:          diagnosticsOpts,
+		LeaderElectionID: "effcf9b8.cluster.x-k8s.io",
+		Cache: cache.Options{
+			DefaultNamespaces: watchNamespaces,
+			SyncPeriod:        &syncPeriod,
+		},
 		EventBroadcaster:       broadcaster,
 		HealthProbeBindAddress: healthAddr,
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    webhookPort,
+			CertDir: webhookCertDir,
+		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -129,13 +152,6 @@ func main() {
 }
 
 func initFlags(fs *pflag.FlagSet) {
-	fs.StringVar(
-		&metricsAddr,
-		"metrics-bind-addr",
-		":8080",
-		"The address the metric endpoint binds to.",
-	)
-
 	fs.BoolVar(
 		&enableLeaderElection,
 		"leader-elect",
@@ -165,15 +181,6 @@ func initFlags(fs *pflag.FlagSet) {
 		"The minimum interval at which watched resources are reconciled.",
 	)
 
-	// Deprecated: Use provider-id-fmt flag go set provider id format for Power VS.
-	fs.StringVar(
-		&options.PowerVSProviderIDFormat,
-		"powervs-provider-id-fmt",
-		string(options.PowerVSProviderIDFormatV1),
-		"ProviderID format is used set the Provider ID format for Machine",
-	)
-	_ = fs.MarkDeprecated("powervs-provider-id-fmt", "please use provider-id-fmt flag")
-
 	fs.StringVar(
 		&options.ProviderIDFormat,
 		"provider-id-fmt",
@@ -187,17 +194,20 @@ func initFlags(fs *pflag.FlagSet) {
 		"",
 		"Set custom service endpoint in semi-colon separated format: ${ServiceRegion1}:${ServiceID1}=${URL1},${ServiceID2}=${URL2};${ServiceRegion2}:${ServiceID1}=${URL1}",
 	)
+
+	fs.IntVar(&webhookPort,
+		"webhook-port",
+		9443,
+		"The webhook server port the manager will listen on.",
+	)
+
+	fs.StringVar(&webhookCertDir, "webhook-cert-dir", "/tmp/k8s-webhook-server/serving-certs/",
+		"The webhook certificate directory, where the server should find the TLS certificate and key.")
+
+	flags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
 }
 
 func validateFlags() error {
-	switch options.ProviderIDFormatType(options.PowerVSProviderIDFormat) {
-	case options.PowerVSProviderIDFormatV1:
-		setupLog.Info("Power VS ProviderID format is set to v1 version")
-	case options.PowerVSProviderIDFormatV2:
-		setupLog.Info("Power VS ProviderID format is set to v2 version")
-	default:
-		return fmt.Errorf("invalid value for flag powervs-provider-id-fmt: %s, Supported values: v1, v2 ", options.PowerVSProviderIDFormat)
-	}
 	switch options.ProviderIDFormatType(options.ProviderIDFormat) {
 	case options.ProviderIDFormatV1:
 		setupLog.Info("Using v1 version of ProviderID format")
@@ -267,6 +277,15 @@ func setupReconcilers(mgr ctrl.Manager, serviceEndpoint []endpoints.ServiceEndpo
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ibmpowervsmachinetemplate")
+		os.Exit(1)
+	}
+
+	if err := (&controllers.IBMVPCMachineTemplateReconciler{
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		ServiceEndpoint: serviceEndpoint,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ibmvpcmachinetemplate")
 		os.Exit(1)
 	}
 }

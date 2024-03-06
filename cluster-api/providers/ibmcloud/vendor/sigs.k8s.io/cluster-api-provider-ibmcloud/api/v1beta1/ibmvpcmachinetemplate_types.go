@@ -31,6 +31,12 @@ type IBMVPCMachineTemplateResource struct {
 	Spec IBMVPCMachineSpec `json:"spec"`
 }
 
+// IBMVPCMachineTemplateStatus defines the observed state of IBMVPCMachineTemplate.
+type IBMVPCMachineTemplateStatus struct {
+	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=ibmvpcmachinetemplates,scope=Namespaced,categories=cluster-api
 
@@ -39,7 +45,8 @@ type IBMVPCMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec IBMVPCMachineTemplateSpec `json:"spec,omitempty"`
+	Spec   IBMVPCMachineTemplateSpec   `json:"spec,omitempty"`
+	Status IBMVPCMachineTemplateStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -37,7 +37,7 @@ import (
 var Debug = logger.DebugEnabled()
 var Logger logger.Logger = logger.StandardLogger{}
 
-func debugLog(format string, args ...interface{}) {
+func debugLog(format string, args ...interface{}) { //nolint:goprintffuncname
 	if Debug {
 		Logger.Printf(format, args...)
 	}
@@ -162,7 +162,7 @@ func (r *routableUntypedAPI) HandlerFor(method, path string) (http.Handler, bool
 	r.hlock.Unlock()
 	return handler, ok
 }
-func (r *routableUntypedAPI) ServeErrorFor(operationID string) func(http.ResponseWriter, *http.Request, error) {
+func (r *routableUntypedAPI) ServeErrorFor(_ string) func(http.ResponseWriter, *http.Request, error) {
 	return r.api.ServeError
 }
 func (r *routableUntypedAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer {
@@ -195,6 +195,17 @@ func NewRoutableContext(spec *loads.Document, routableAPI RoutableAPI, routes Ro
 	if spec != nil {
 		an = analysis.New(spec.Spec())
 	}
+
+	return NewRoutableContextWithAnalyzedSpec(spec, an, routableAPI, routes)
+}
+
+// NewRoutableContextWithAnalyzedSpec is like NewRoutableContext but takes in input the analysed spec too
+func NewRoutableContextWithAnalyzedSpec(spec *loads.Document, an *analysis.Spec, routableAPI RoutableAPI, routes Router) *Context {
+	// Either there are no spec doc and analysis, or both of them.
+	if !((spec == nil && an == nil) || (spec != nil && an != nil)) {
+		panic(errors.New(http.StatusInternalServerError, "routable context requires either both spec doc and analysis, or none of them"))
+	}
+
 	ctx := &Context{spec: spec, api: routableAPI, analyzer: an, router: routes}
 	return ctx
 }
@@ -498,12 +509,14 @@ func (c *Context) Respond(rw http.ResponseWriter, r *http.Request, produces []st
 
 	if resp, ok := data.(Responder); ok {
 		producers := route.Producers
-		prod, ok := producers[format]
+		// producers contains keys with normalized format, if a format has MIME type parameter such as `text/plain; charset=utf-8`
+		// then you must provide `text/plain` to get the correct producer. HOWEVER, format here is not normalized.
+		prod, ok := producers[normalizeOffer(format)]
 		if !ok {
 			prods := c.api.ProducersFor(normalizeOffers([]string{c.api.DefaultProduces()}))
 			pr, ok := prods[c.api.DefaultProduces()]
 			if !ok {
-				panic(errors.New(http.StatusInternalServerError, "can't find a producer for "+format))
+				panic(errors.New(http.StatusInternalServerError, cantFindProducer(format)))
 			}
 			prod = pr
 		}
@@ -529,14 +542,14 @@ func (c *Context) Respond(rw http.ResponseWriter, r *http.Request, produces []st
 	}
 
 	if route == nil || route.Operation == nil {
-		rw.WriteHeader(200)
-		if r.Method == "HEAD" {
+		rw.WriteHeader(http.StatusOK)
+		if r.Method == http.MethodHead {
 			return
 		}
 		producers := c.api.ProducersFor(normalizeOffers(offers))
 		prod, ok := producers[format]
 		if !ok {
-			panic(errors.New(http.StatusInternalServerError, "can't find a producer for "+format))
+			panic(errors.New(http.StatusInternalServerError, cantFindProducer(format)))
 		}
 		if err := prod.Produce(rw, data); err != nil {
 			panic(err) // let the recovery middleware deal with this
@@ -546,7 +559,7 @@ func (c *Context) Respond(rw http.ResponseWriter, r *http.Request, produces []st
 
 	if _, code, ok := route.Operation.SuccessResponse(); ok {
 		rw.WriteHeader(code)
-		if code == 204 || r.Method == "HEAD" {
+		if code == http.StatusNoContent || r.Method == http.MethodHead {
 			return
 		}
 
@@ -557,7 +570,7 @@ func (c *Context) Respond(rw http.ResponseWriter, r *http.Request, produces []st
 				prods := c.api.ProducersFor(normalizeOffers([]string{c.api.DefaultProduces()}))
 				pr, ok := prods[c.api.DefaultProduces()]
 				if !ok {
-					panic(errors.New(http.StatusInternalServerError, "can't find a producer for "+format))
+					panic(errors.New(http.StatusInternalServerError, cantFindProducer(format)))
 				}
 				prod = pr
 			}
@@ -619,4 +632,8 @@ func (c *Context) RoutesHandler(builder Builder) http.Handler {
 		b = PassthroughBuilder
 	}
 	return NewRouter(c, b(NewOperationExecutor(c)))
+}
+
+func cantFindProducer(format string) string {
+	return "can't find a producer for " + format
 }

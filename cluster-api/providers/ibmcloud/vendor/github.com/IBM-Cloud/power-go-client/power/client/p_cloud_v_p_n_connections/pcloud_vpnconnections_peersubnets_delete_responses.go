@@ -47,6 +47,12 @@ func (o *PcloudVpnconnectionsPeersubnetsDeleteReader) ReadResponse(response runt
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVpnconnectionsPeersubnetsDeleteNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudVpnconnectionsPeersubnetsDeleteUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -325,6 +331,74 @@ func (o *PcloudVpnconnectionsPeersubnetsDeleteForbidden) GetPayload() *models.Er
 }
 
 func (o *PcloudVpnconnectionsPeersubnetsDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVpnconnectionsPeersubnetsDeleteNotFound creates a PcloudVpnconnectionsPeersubnetsDeleteNotFound with default headers values
+func NewPcloudVpnconnectionsPeersubnetsDeleteNotFound() *PcloudVpnconnectionsPeersubnetsDeleteNotFound {
+	return &PcloudVpnconnectionsPeersubnetsDeleteNotFound{}
+}
+
+/*
+PcloudVpnconnectionsPeersubnetsDeleteNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVpnconnectionsPeersubnetsDeleteNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud vpnconnections peersubnets delete not found response has a 2xx status code
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections peersubnets delete not found response has a 3xx status code
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections peersubnets delete not found response has a 4xx status code
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections peersubnets delete not found response has a 5xx status code
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections peersubnets delete not found response a status code equal to that given
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud vpnconnections peersubnets delete not found response
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsDeleteNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsDeleteNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

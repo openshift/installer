@@ -29,8 +29,26 @@ func (o *ServiceBrokerAuthRegistrationCallbackReader) ReadResponse(response runt
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewServiceBrokerAuthRegistrationCallbackBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewServiceBrokerAuthRegistrationCallbackUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewServiceBrokerAuthRegistrationCallbackForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewServiceBrokerAuthRegistrationCallbackNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -114,6 +132,74 @@ func (o *ServiceBrokerAuthRegistrationCallbackOK) readResponse(response runtime.
 	return nil
 }
 
+// NewServiceBrokerAuthRegistrationCallbackBadRequest creates a ServiceBrokerAuthRegistrationCallbackBadRequest with default headers values
+func NewServiceBrokerAuthRegistrationCallbackBadRequest() *ServiceBrokerAuthRegistrationCallbackBadRequest {
+	return &ServiceBrokerAuthRegistrationCallbackBadRequest{}
+}
+
+/*
+ServiceBrokerAuthRegistrationCallbackBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type ServiceBrokerAuthRegistrationCallbackBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth registration callback bad request response has a 2xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth registration callback bad request response has a 3xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth registration callback bad request response has a 4xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth registration callback bad request response has a 5xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth registration callback bad request response a status code equal to that given
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the service broker auth registration callback bad request response
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) Code() int {
+	return 400
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) String() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewServiceBrokerAuthRegistrationCallbackUnauthorized creates a ServiceBrokerAuthRegistrationCallbackUnauthorized with default headers values
 func NewServiceBrokerAuthRegistrationCallbackUnauthorized() *ServiceBrokerAuthRegistrationCallbackUnauthorized {
 	return &ServiceBrokerAuthRegistrationCallbackUnauthorized{}
@@ -171,6 +257,142 @@ func (o *ServiceBrokerAuthRegistrationCallbackUnauthorized) GetPayload() *models
 }
 
 func (o *ServiceBrokerAuthRegistrationCallbackUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthRegistrationCallbackForbidden creates a ServiceBrokerAuthRegistrationCallbackForbidden with default headers values
+func NewServiceBrokerAuthRegistrationCallbackForbidden() *ServiceBrokerAuthRegistrationCallbackForbidden {
+	return &ServiceBrokerAuthRegistrationCallbackForbidden{}
+}
+
+/*
+ServiceBrokerAuthRegistrationCallbackForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type ServiceBrokerAuthRegistrationCallbackForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth registration callback forbidden response has a 2xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth registration callback forbidden response has a 3xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth registration callback forbidden response has a 4xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth registration callback forbidden response has a 5xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth registration callback forbidden response a status code equal to that given
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the service broker auth registration callback forbidden response
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) Code() int {
+	return 403
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) String() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackForbidden  %+v", 403, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewServiceBrokerAuthRegistrationCallbackNotFound creates a ServiceBrokerAuthRegistrationCallbackNotFound with default headers values
+func NewServiceBrokerAuthRegistrationCallbackNotFound() *ServiceBrokerAuthRegistrationCallbackNotFound {
+	return &ServiceBrokerAuthRegistrationCallbackNotFound{}
+}
+
+/*
+ServiceBrokerAuthRegistrationCallbackNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type ServiceBrokerAuthRegistrationCallbackNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this service broker auth registration callback not found response has a 2xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth registration callback not found response has a 3xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth registration callback not found response has a 4xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth registration callback not found response has a 5xx status code
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth registration callback not found response a status code equal to that given
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the service broker auth registration callback not found response
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) Code() int {
+	return 404
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) Error() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) String() string {
+	return fmt.Sprintf("[GET /auth/v1/callback-registration][%d] serviceBrokerAuthRegistrationCallbackNotFound  %+v", 404, o.Payload)
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *ServiceBrokerAuthRegistrationCallbackNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -31,7 +31,7 @@ func (f *IBMPIDhcpClient) Create(body *models.DHCPServerCreate) (*models.DHCPSer
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postaccepted, err := f.session.Power.PCloudServicedhcp.PcloudDhcpPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.CreateDchpOperationFailed, f.cloudInstanceID, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateDchpOperationFailed, f.cloudInstanceID, err))
 	}
 	if postaccepted != nil && postaccepted.Payload != nil {
 		return postaccepted.Payload, nil
@@ -46,7 +46,7 @@ func (f *IBMPIDhcpClient) Get(id string) (*models.DHCPServerDetail, error) {
 		WithCloudInstanceID(f.cloudInstanceID).WithDhcpID(id)
 	resp, err := f.session.Power.PCloudServicedhcp.PcloudDhcpGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf(errors.GetDhcpOperationFailed, id, err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetDhcpOperationFailed, id, err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get DHCP %s", id)
@@ -61,7 +61,7 @@ func (f *IBMPIDhcpClient) GetAll() (models.DHCPServers, error) {
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudServicedhcp.PcloudDhcpGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to Get all DHCP servers: %w", err)
+		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get all DHCP servers: %w", err))
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all DHCP servers")
