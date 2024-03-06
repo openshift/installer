@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -323,13 +324,38 @@ func (i *InfraProvider) DestroyBootstrap(dir string) error {
 
 	// TODO(padillon): start system if not running
 	if sys := clusterapi.System(); sys.State() == clusterapi.SystemStateRunning {
+		machineName := capiutils.GenerateBoostrapMachineName(metadata.InfraID)
+		machineNamespace := capiutils.Namespace
 		if err := sys.Client().Delete(context.TODO(), &clusterv1.Machine{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      capiutils.GenerateBoostrapMachineName(metadata.InfraID),
-				Namespace: capiutils.Namespace,
+				Name:      machineName,
+				Namespace: machineNamespace,
 			},
-		}); client.IgnoreNotFound(err) != nil {
+		}); err != nil {
 			return fmt.Errorf("failed to delete bootstrap machine: %w", err)
+		}
+
+		machineDeletionTimeout := 2 * time.Minute
+		logrus.Infof("Waiting up to %v for bootstrap machine deletion %s/%s...", machineDeletionTimeout, machineNamespace, machineName)
+		machineContext, cancel := context.WithTimeout(context.TODO(), machineDeletionTimeout)
+		wait.Until(func() {
+			err := sys.Client().Get(context.TODO(), client.ObjectKey{
+				Name:      machineName,
+				Namespace: machineNamespace,
+			}, &clusterv1.Machine{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					logrus.Debugf("Machine deleted: %s", machineName)
+					cancel()
+				} else {
+					logrus.Debugf("Error when deleting bootstrap machine: %s", err)
+				}
+			}
+		}, 2*time.Second, machineContext.Done())
+
+		err = machineContext.Err()
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logrus.Infof("Timeout deleting bootstrap machine: %s", err)
 		}
 	}
 	logrus.Infof("Finished destroying bootstrap resources")
