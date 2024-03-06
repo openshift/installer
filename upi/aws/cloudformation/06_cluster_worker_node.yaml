@@ -13,10 +13,10 @@ Parameters:
     Description: Current Red Hat Enterprise Linux CoreOS AMI to use for bootstrap.
     Type: AWS::EC2::Image::Id
   Subnet:
-    Description: The subnets, recommend private, to launch the master nodes into.
+    Description: The subnets, recommend private, to launch the worker nodes into.
     Type: AWS::EC2::Subnet::Id
   WorkerSecurityGroupId:
-    Description: The master security group ID to associate with master nodes.
+    Description: The worker security group ID to associate with worker nodes.
     Type: AWS::EC2::SecurityGroup::Id
   IgnitionLocation:
     Default: https://api-int.$CLUSTER_NAME.$DOMAIN:22623/config/worker
@@ -27,7 +27,7 @@ Parameters:
     Description: Base64 encoded certificate authority string to use.
     Type: String
   WorkerInstanceProfileName:
-    Description: IAM profile to associate with master nodes.
+    Description: IAM profile to associate with worker nodes.
     Type: String
   WorkerInstanceType:
     Default: m5.large
