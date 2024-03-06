@@ -83,6 +83,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 						},
 					},
 				},
+				APIServerLB: capz.LoadBalancerSpec{
+					Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					BackendPool: capz.BackendPool{
+						Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					},
+					LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
+						Type: capz.Internal,
+					},
+				},
 			},
 		},
 	}
