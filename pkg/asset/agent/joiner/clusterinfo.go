@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/coreos/stream-metadata-go/stream"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -12,8 +14,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/yaml"
 
-	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/coreos/stream-metadata-go/stream"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"

@@ -31,13 +31,13 @@ type BaseIso struct {
 	ocRelease    Release
 }
 
+// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
 type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
 
 var (
-	baseIsoFilename           = ""
-	DefaultCoreOSStreamGetter = func(ctx context.Context) (*stream.Stream, error) {
-		return rhcos.FetchCoreOSBuild(ctx)
-	}
+	baseIsoFilename = ""
+	// DefaultCoreOSStreamGetter uses the pinned metadata.
+	DefaultCoreOSStreamGetter = rhcos.FetchCoreOSBuild
 )
 
 var _ asset.WritableAsset = (*BaseIso)(nil)
@@ -143,7 +143,6 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) 
 
 // Generate the baseIso
 func (i *BaseIso) Generate(dependencies asset.Parents) error {
-
 	var err error
 	var baseIsoFileName string
 
