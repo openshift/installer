@@ -25,8 +25,6 @@ var (
 	IBM = provider("ibm")
 	// Ignition is the provider for creating ignition config files.
 	Ignition = provider("ignition")
-	// Ironic is the provider for provisioning baremetal machines managed by Ironic.
-	Ironic = provider("ironic")
 	// Libvirt is the provider for provisioning VMs on a libvirt host.
 	Libvirt = provider("libvirt")
 	// Local is the provider for creating local files.

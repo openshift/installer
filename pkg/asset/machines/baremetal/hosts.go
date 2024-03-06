@@ -109,7 +109,7 @@ func createBaremetalHost(host *baremetal.Host, bmc baremetalhost.BMCDetails) bar
 
 // Hosts returns the HostSettings with details of the hardware being
 // used to construct the cluster.
-func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSettings, error) {
+func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataSecret string) (*HostSettings, error) {
 	settings := &HostSettings{}
 
 	if config.Platform.BareMetal == nil {
@@ -136,20 +136,17 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 		}
 
 		if !host.IsWorker() && numMasters < numRequiredMasters {
-			// Setting ExternallyProvisioned to true and adding a
-			// ConsumerRef without setting Image associates the host
-			// with a machine without triggering provisioning. We only
-			// want to do that for control plane hosts.
-			newHost.Spec.ExternallyProvisioned = true
 			// Setting CustomDeploy early ensures that the
 			// corresponding Ironic node gets correctly configured
 			// from the beginning.
 			newHost.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
 				Method: "install_coreos",
 			}
-			// Pause reconciliation until we can annotate with the initial
-			// status containing the HardwareDetails
-			newHost.ObjectMeta.Annotations = map[string]string{"baremetalhost.metal3.io/paused": ""}
+
+			newHost.ObjectMeta.Labels = map[string]string{
+				"installer.openshift.io/role": "master",
+			}
+
 			// Link the new host to the currently available machine
 			machine := machines[numMasters]
 			newHost.Spec.ConsumerRef = &corev1.ObjectReference{
@@ -159,7 +156,15 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine) (*HostSet
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
+
+			// userDataSecret carries a reference to the master ignition file
+			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
 			numMasters++
+		} else {
+			// Pause workers until the real control plane is up.
+			newHost.ObjectMeta.Annotations = map[string]string{
+				"baremetalhost.metal3.io/paused": "",
+			}
 		}
 
 		settings.Hosts = append(settings.Hosts, newHost)

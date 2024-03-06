@@ -61,7 +61,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
+				hosts(host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy()).build(),
 		},
 		{
 			Scenario: "default-norole",
@@ -70,7 +70,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
+				hosts(host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy()).build(),
 		},
 		{
 			Scenario: "network-config",
@@ -85,10 +85,10 @@ routes:
 				networkConfigSecrets(secret("master-0-network-config-secret").nmstate(nmstate)).
 				hosts(
 					host("master-0").
+						label("installer.openshift.io/role", "master").
 						consumerRef("machine-0").
-						annotation("baremetalhost.metal3.io/paused", "").
+						userDataRef("user-data-secret").
 						preprovisioningNetworkDataName("master-0-network-config-secret").
-						externallyProvisioned().
 						customDeploy()).build(),
 		},
 		{
@@ -108,9 +108,9 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines",
@@ -122,19 +122,20 @@ routes:
 				hostType("master-0").bmc("usr0", "pwd0").role("master"),
 				hostType("master-1").bmc("usr1", "pwd1").role("master"),
 				hostType("master-2").bmc("usr2", "pwd2").role("master"),
-				hostType("master-3").bmc("usr3", "pwd3").role("worker")),
+				hostType("worker-0").bmc("usr3", "pwd3").role("worker")),
 
 			ExpectedSetting: settings().
 				secrets(
 					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
-					secret("master-3-bmc-secret").creds("usr3", "pwd3")).
+					secret("worker-0-bmc-secret").creds("usr3", "pwd3")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-3")).build(),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+				).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole",
@@ -155,10 +156,11 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("worker-0")).build(),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+				).build(),
 		},
 		{
 			Scenario: "5-hosts-3-machines",
@@ -181,11 +183,12 @@ routes:
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
 					secret("worker-1-bmc-secret").creds("wrk1", "pwd1")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("worker-0"),
-					host("worker-1")).build(),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+					host("worker-1").annotation("baremetalhost.metal3.io/paused", ""),
+				).build(),
 		},
 		{
 			Scenario: "5-hosts-3-machines-mixed",
@@ -208,11 +211,11 @@ routes:
 					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-1").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("worker-0"),
-					host("worker-1"),
-					host("master-0").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+					host("worker-1").annotation("baremetalhost.metal3.io/paused", ""),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-master",
@@ -233,10 +236,10 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("worker-0"),
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-worker",
@@ -257,16 +260,16 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
-					host("worker-0")).build(),
+					host("master-0").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
+					host("master-1").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
+					host("master-2").label("installer.openshift.io/role", "master").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "")).build(),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Scenario, func(t *testing.T) {
-			settings, err := Hosts(tc.Config, tc.Machines)
+			settings, err := Hosts(tc.Config, tc.Machines, "user-data-secret")
 
 			if tc.ExpectedError != "" {
 				assert.EqualError(t, err, tc.ExpectedError)
@@ -447,6 +450,15 @@ func (hb *hostBuilder) annotation(key, value string) *hostBuilder {
 	return hb
 }
 
+func (hb *hostBuilder) label(key, value string) *hostBuilder {
+	if hb.Labels == nil {
+		hb.Labels = map[string]string{}
+	}
+
+	hb.Labels[key] = value
+	return hb
+}
+
 func (hb *hostBuilder) consumerRef(name string) *hostBuilder {
 	hb.Spec.ConsumerRef = &corev1.ObjectReference{
 		APIVersion: "v1",
@@ -454,6 +466,11 @@ func (hb *hostBuilder) consumerRef(name string) *hostBuilder {
 		Namespace:  "namespace",
 		Name:       name,
 	}
+	return hb
+}
+
+func (hb *hostBuilder) userDataRef(name string) *hostBuilder {
+	hb.Spec.UserData = &corev1.SecretReference{Name: name}
 	return hb
 }
 
