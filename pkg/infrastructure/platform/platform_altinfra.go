@@ -13,6 +13,7 @@ import (
 	azurecapi "github.com/openshift/installer/pkg/infrastructure/azure"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
+	ibmcloudcapi "github.com/openshift/installer/pkg/infrastructure/ibmcloud/clusterapi"
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
@@ -20,6 +21,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -41,6 +43,11 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case gcptypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
 			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
+		}
+		return nil, nil
+	case ibmcloudtypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(ibmcloudcapi.Provider{}), nil
 		}
 		return nil, nil
 	case vspheretypes.Name:
