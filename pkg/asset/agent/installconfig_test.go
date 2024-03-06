@@ -867,7 +867,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 								ComputeCluster: "/testDataCenter/host/testCluster",
 								Networks:       []string{""},
 								Datastore:      "/testDataCenter/datastore/testDefaultDataStore",
-								ResourcePool:   "/testDataCenter/host/testCluster//Resources",
+								ResourcePool:   "/testDataCenter/host/testCluster/Resources",
 								Folder:         "/testDataCenter/vm/testFolder",
 							},
 						}},

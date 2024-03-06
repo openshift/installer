@@ -1,7 +1,7 @@
 package defaults
 
 import (
-	"fmt"
+	"path"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -16,7 +16,7 @@ func SetPlatformDefaults(p *vsphere.Platform, installConfig *types.InstallConfig
 	// and cluster.
 	for i := range p.FailureDomains {
 		if p.FailureDomains[i].Topology.ResourcePool == "" && p.FailureDomains[i].Topology.ComputeCluster != "" {
-			p.FailureDomains[i].Topology.ResourcePool = fmt.Sprintf("%s/%s", p.FailureDomains[i].Topology.ComputeCluster, "/Resources")
+			p.FailureDomains[i].Topology.ResourcePool = path.Join(p.FailureDomains[i].Topology.ComputeCluster, "Resources")
 		}
 	}
 }
