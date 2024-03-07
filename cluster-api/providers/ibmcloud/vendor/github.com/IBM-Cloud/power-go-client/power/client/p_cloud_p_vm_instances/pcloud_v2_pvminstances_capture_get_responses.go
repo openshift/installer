@@ -29,8 +29,20 @@ func (o *PcloudV2PvminstancesCaptureGetReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPcloudV2PvminstancesCaptureGetBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPcloudV2PvminstancesCaptureGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 403:
+		result := NewPcloudV2PvminstancesCaptureGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -120,6 +132,74 @@ func (o *PcloudV2PvminstancesCaptureGetOK) readResponse(response runtime.ClientR
 	return nil
 }
 
+// NewPcloudV2PvminstancesCaptureGetBadRequest creates a PcloudV2PvminstancesCaptureGetBadRequest with default headers values
+func NewPcloudV2PvminstancesCaptureGetBadRequest() *PcloudV2PvminstancesCaptureGetBadRequest {
+	return &PcloudV2PvminstancesCaptureGetBadRequest{}
+}
+
+/*
+PcloudV2PvminstancesCaptureGetBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PcloudV2PvminstancesCaptureGetBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 pvminstances capture get bad request response has a 2xx status code
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 pvminstances capture get bad request response has a 3xx status code
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 pvminstances capture get bad request response has a 4xx status code
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 pvminstances capture get bad request response has a 5xx status code
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 pvminstances capture get bad request response a status code equal to that given
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the pcloud v2 pvminstances capture get bad request response
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) Code() int {
+	return 400
+}
+
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2PvminstancesCaptureGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudV2PvminstancesCaptureGetUnauthorized creates a PcloudV2PvminstancesCaptureGetUnauthorized with default headers values
 func NewPcloudV2PvminstancesCaptureGetUnauthorized() *PcloudV2PvminstancesCaptureGetUnauthorized {
 	return &PcloudV2PvminstancesCaptureGetUnauthorized{}
@@ -177,6 +257,74 @@ func (o *PcloudV2PvminstancesCaptureGetUnauthorized) GetPayload() *models.Error 
 }
 
 func (o *PcloudV2PvminstancesCaptureGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2PvminstancesCaptureGetForbidden creates a PcloudV2PvminstancesCaptureGetForbidden with default headers values
+func NewPcloudV2PvminstancesCaptureGetForbidden() *PcloudV2PvminstancesCaptureGetForbidden {
+	return &PcloudV2PvminstancesCaptureGetForbidden{}
+}
+
+/*
+PcloudV2PvminstancesCaptureGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudV2PvminstancesCaptureGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 pvminstances capture get forbidden response has a 2xx status code
+func (o *PcloudV2PvminstancesCaptureGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 pvminstances capture get forbidden response has a 3xx status code
+func (o *PcloudV2PvminstancesCaptureGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 pvminstances capture get forbidden response has a 4xx status code
+func (o *PcloudV2PvminstancesCaptureGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 pvminstances capture get forbidden response has a 5xx status code
+func (o *PcloudV2PvminstancesCaptureGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 pvminstances capture get forbidden response a status code equal to that given
+func (o *PcloudV2PvminstancesCaptureGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud v2 pvminstances capture get forbidden response
+func (o *PcloudV2PvminstancesCaptureGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudV2PvminstancesCaptureGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesCaptureGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/capture][%d] pcloudV2PvminstancesCaptureGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2PvminstancesCaptureGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2PvminstancesCaptureGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

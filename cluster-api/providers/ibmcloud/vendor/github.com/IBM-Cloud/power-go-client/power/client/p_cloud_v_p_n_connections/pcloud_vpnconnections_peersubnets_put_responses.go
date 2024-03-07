@@ -47,6 +47,12 @@ func (o *PcloudVpnconnectionsPeersubnetsPutReader) ReadResponse(response runtime
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVpnconnectionsPeersubnetsPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudVpnconnectionsPeersubnetsPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -325,6 +331,74 @@ func (o *PcloudVpnconnectionsPeersubnetsPutForbidden) GetPayload() *models.Error
 }
 
 func (o *PcloudVpnconnectionsPeersubnetsPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVpnconnectionsPeersubnetsPutNotFound creates a PcloudVpnconnectionsPeersubnetsPutNotFound with default headers values
+func NewPcloudVpnconnectionsPeersubnetsPutNotFound() *PcloudVpnconnectionsPeersubnetsPutNotFound {
+	return &PcloudVpnconnectionsPeersubnetsPutNotFound{}
+}
+
+/*
+PcloudVpnconnectionsPeersubnetsPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVpnconnectionsPeersubnetsPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud vpnconnections peersubnets put not found response has a 2xx status code
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections peersubnets put not found response has a 3xx status code
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections peersubnets put not found response has a 4xx status code
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections peersubnets put not found response has a 5xx status code
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections peersubnets put not found response a status code equal to that given
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud vpnconnections peersubnets put not found response
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections/{vpn_connection_id}/peer-subnets][%d] pcloudVpnconnectionsPeersubnetsPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVpnconnectionsPeersubnetsPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

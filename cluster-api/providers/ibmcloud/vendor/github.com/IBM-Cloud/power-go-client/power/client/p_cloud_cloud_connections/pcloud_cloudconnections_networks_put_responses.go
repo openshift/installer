@@ -47,6 +47,12 @@ func (o *PcloudCloudconnectionsNetworksPutReader) ReadResponse(response runtime.
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudconnectionsNetworksPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudconnectionsNetworksPutNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -335,6 +341,74 @@ func (o *PcloudCloudconnectionsNetworksPutUnauthorized) GetPayload() *models.Err
 }
 
 func (o *PcloudCloudconnectionsNetworksPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksPutForbidden creates a PcloudCloudconnectionsNetworksPutForbidden with default headers values
+func NewPcloudCloudconnectionsNetworksPutForbidden() *PcloudCloudconnectionsNetworksPutForbidden {
+	return &PcloudCloudconnectionsNetworksPutForbidden{}
+}
+
+/*
+PcloudCloudconnectionsNetworksPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudconnectionsNetworksPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections networks put forbidden response has a 2xx status code
+func (o *PcloudCloudconnectionsNetworksPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections networks put forbidden response has a 3xx status code
+func (o *PcloudCloudconnectionsNetworksPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections networks put forbidden response has a 4xx status code
+func (o *PcloudCloudconnectionsNetworksPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections networks put forbidden response has a 5xx status code
+func (o *PcloudCloudconnectionsNetworksPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections networks put forbidden response a status code equal to that given
+func (o *PcloudCloudconnectionsNetworksPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudconnections networks put forbidden response
+func (o *PcloudCloudconnectionsNetworksPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudconnectionsNetworksPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

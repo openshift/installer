@@ -37,10 +37,10 @@ type NetworkCreate struct {
 	// IP Address Ranges
 	IPAddressRanges []*IPAddressRange `json:"ipAddressRanges"`
 
-	// Enable MTU Jumbo Network (for multi-zone locations only)
+	// (deprecated - replaced by mtu) Enable MTU Jumbo Network (for multi-zone locations only)
 	Jumbo bool `json:"jumbo,omitempty"`
 
-	// Maximum transmission unit (for satellite locations only)
+	// Maximum transmission unit
 	// Maximum: 9000
 	// Minimum: 1450
 	Mtu *int64 `json:"mtu,omitempty"`

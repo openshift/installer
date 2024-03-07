@@ -47,6 +47,39 @@ type ServiceOptions struct {
 	CloudInstanceID string
 }
 
+// NewService returns a new service for the Power VS api client.
+func NewService(options ServiceOptions) (PowerVS, error) {
+	auth, err := authenticator.GetAuthenticator()
+	if err != nil {
+		return nil, err
+	}
+	options.Authenticator = auth
+	account, err := utils.GetAccount(auth)
+	if err != nil {
+		return nil, err
+	}
+	options.IBMPIOptions.UserAccount = account
+	session, err := ibmpisession.NewIBMPISession(options.IBMPIOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Service{
+		session: session,
+	}, nil
+}
+
+// WithClients attach the clients to service.
+func (s *Service) WithClients(options ServiceOptions) *Service {
+	ctx := context.Background()
+	s.instanceClient = instance.NewIBMPIInstanceClient(ctx, s.session, options.CloudInstanceID)
+	s.networkClient = instance.NewIBMPINetworkClient(ctx, s.session, options.CloudInstanceID)
+	s.imageClient = instance.NewIBMPIImageClient(ctx, s.session, options.CloudInstanceID)
+	s.jobClient = instance.NewIBMPIJobClient(ctx, s.session, options.CloudInstanceID)
+	s.dhcpClient = instance.NewIBMPIDhcpClient(ctx, s.session, options.CloudInstanceID)
+	return s
+}
+
 // CreateInstance creates the virtual machine in the Power VS service instance.
 func (s *Service) CreateInstance(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	return s.instanceClient.Create(body)
@@ -112,6 +145,11 @@ func (s *Service) GetAllNetwork() (*models.Networks, error) {
 	return s.networkClient.GetAll()
 }
 
+// GetNetworkByID returns network corresponding to given id.
+func (s *Service) GetNetworkByID(id string) (*models.Network, error) {
+	return s.networkClient.Get(id)
+}
+
 // GetAllDHCPServers returns all the DHCP servers in the Power VS service instance.
 func (s *Service) GetAllDHCPServers() (models.DHCPServers, error) {
 	return s.dhcpClient.GetAll()
@@ -122,31 +160,28 @@ func (s *Service) GetDHCPServer(id string) (*models.DHCPServerDetail, error) {
 	return s.dhcpClient.Get(id)
 }
 
-// NewService returns a new service for the Power VS api client.
-func NewService(options ServiceOptions) (PowerVS, error) {
-	auth, err := authenticator.GetAuthenticator()
+// CreateDHCPServer creates a new DHCP server.
+func (s *Service) CreateDHCPServer(options *models.DHCPServerCreate) (*models.DHCPServer, error) {
+	return s.dhcpClient.Create(options)
+}
+
+// DeleteDHCPServer deletes the DHCP server.
+func (s *Service) DeleteDHCPServer(id string) error {
+	return s.dhcpClient.Delete(id)
+}
+
+// GetNetworkByName fetches the network with name. If not found, returns nil.
+func (s *Service) GetNetworkByName(networkName string) (*models.NetworkReference, error) {
+	var network *models.NetworkReference
+	networks, err := s.GetAllNetwork()
 	if err != nil {
 		return nil, err
 	}
-	options.Authenticator = auth
-	account, err := utils.GetAccount(auth)
-	if err != nil {
-		return nil, err
-	}
-	options.IBMPIOptions.UserAccount = account
-	session, err := ibmpisession.NewIBMPISession(options.IBMPIOptions)
-	if err != nil {
-		return nil, err
+	for _, nw := range networks.Networks {
+		if *nw.Name == networkName {
+			network = nw
+		}
 	}
 
-	ctx := context.Background()
-
-	return &Service{
-		session:        session,
-		instanceClient: instance.NewIBMPIInstanceClient(ctx, session, options.CloudInstanceID),
-		networkClient:  instance.NewIBMPINetworkClient(ctx, session, options.CloudInstanceID),
-		imageClient:    instance.NewIBMPIImageClient(ctx, session, options.CloudInstanceID),
-		jobClient:      instance.NewIBMPIJobClient(ctx, session, options.CloudInstanceID),
-		dhcpClient:     instance.NewIBMPIDhcpClient(ctx, session, options.CloudInstanceID),
-	}, nil
+	return network, nil
 }

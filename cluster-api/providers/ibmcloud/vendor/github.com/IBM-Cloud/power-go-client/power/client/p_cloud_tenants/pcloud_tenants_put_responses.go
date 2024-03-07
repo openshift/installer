@@ -41,6 +41,18 @@ func (o *PcloudTenantsPutReader) ReadResponse(response runtime.ClientResponse, c
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudTenantsPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudTenantsPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudTenantsPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -251,6 +263,142 @@ func (o *PcloudTenantsPutUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudTenantsPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsPutForbidden creates a PcloudTenantsPutForbidden with default headers values
+func NewPcloudTenantsPutForbidden() *PcloudTenantsPutForbidden {
+	return &PcloudTenantsPutForbidden{}
+}
+
+/*
+PcloudTenantsPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudTenantsPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants put forbidden response has a 2xx status code
+func (o *PcloudTenantsPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants put forbidden response has a 3xx status code
+func (o *PcloudTenantsPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants put forbidden response has a 4xx status code
+func (o *PcloudTenantsPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants put forbidden response has a 5xx status code
+func (o *PcloudTenantsPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants put forbidden response a status code equal to that given
+func (o *PcloudTenantsPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud tenants put forbidden response
+func (o *PcloudTenantsPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudTenantsPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudTenantsPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudTenantsPutNotFound creates a PcloudTenantsPutNotFound with default headers values
+func NewPcloudTenantsPutNotFound() *PcloudTenantsPutNotFound {
+	return &PcloudTenantsPutNotFound{}
+}
+
+/*
+PcloudTenantsPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudTenantsPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud tenants put not found response has a 2xx status code
+func (o *PcloudTenantsPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud tenants put not found response has a 3xx status code
+func (o *PcloudTenantsPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud tenants put not found response has a 4xx status code
+func (o *PcloudTenantsPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud tenants put not found response has a 5xx status code
+func (o *PcloudTenantsPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud tenants put not found response a status code equal to that given
+func (o *PcloudTenantsPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud tenants put not found response
+func (o *PcloudTenantsPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudTenantsPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/tenants/{tenant_id}][%d] pcloudTenantsPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudTenantsPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudTenantsPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

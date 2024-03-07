@@ -47,6 +47,12 @@ func (o *PcloudCloudconnectionsNetworksDeleteReader) ReadResponse(response runti
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudconnectionsNetworksDeleteForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudconnectionsNetworksDeleteNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -335,6 +341,74 @@ func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) GetPayload() *models.
 }
 
 func (o *PcloudCloudconnectionsNetworksDeleteUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudconnectionsNetworksDeleteForbidden creates a PcloudCloudconnectionsNetworksDeleteForbidden with default headers values
+func NewPcloudCloudconnectionsNetworksDeleteForbidden() *PcloudCloudconnectionsNetworksDeleteForbidden {
+	return &PcloudCloudconnectionsNetworksDeleteForbidden{}
+}
+
+/*
+PcloudCloudconnectionsNetworksDeleteForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudconnectionsNetworksDeleteForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudconnections networks delete forbidden response has a 2xx status code
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudconnections networks delete forbidden response has a 3xx status code
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudconnections networks delete forbidden response has a 4xx status code
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudconnections networks delete forbidden response has a 5xx status code
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudconnections networks delete forbidden response a status code equal to that given
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudconnections networks delete forbidden response
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) Error() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) String() string {
+	return fmt.Sprintf("[DELETE /pcloud/v1/cloud-instances/{cloud_instance_id}/cloud-connections/{cloud_connection_id}/networks/{network_id}][%d] pcloudCloudconnectionsNetworksDeleteForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudconnectionsNetworksDeleteForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

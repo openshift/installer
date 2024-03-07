@@ -47,6 +47,12 @@ func (o *PcloudIpsecpoliciesPutReader) ReadResponse(response runtime.ClientRespo
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudIpsecpoliciesPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudIpsecpoliciesPutConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -331,6 +337,74 @@ func (o *PcloudIpsecpoliciesPutForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudIpsecpoliciesPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudIpsecpoliciesPutNotFound creates a PcloudIpsecpoliciesPutNotFound with default headers values
+func NewPcloudIpsecpoliciesPutNotFound() *PcloudIpsecpoliciesPutNotFound {
+	return &PcloudIpsecpoliciesPutNotFound{}
+}
+
+/*
+PcloudIpsecpoliciesPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudIpsecpoliciesPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud ipsecpolicies put not found response has a 2xx status code
+func (o *PcloudIpsecpoliciesPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud ipsecpolicies put not found response has a 3xx status code
+func (o *PcloudIpsecpoliciesPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud ipsecpolicies put not found response has a 4xx status code
+func (o *PcloudIpsecpoliciesPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud ipsecpolicies put not found response has a 5xx status code
+func (o *PcloudIpsecpoliciesPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud ipsecpolicies put not found response a status code equal to that given
+func (o *PcloudIpsecpoliciesPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud ipsecpolicies put not found response
+func (o *PcloudIpsecpoliciesPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudIpsecpoliciesPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudIpsecpoliciesPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/ipsec-policies/{ipsec_policy_id}][%d] pcloudIpsecpoliciesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudIpsecpoliciesPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudIpsecpoliciesPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

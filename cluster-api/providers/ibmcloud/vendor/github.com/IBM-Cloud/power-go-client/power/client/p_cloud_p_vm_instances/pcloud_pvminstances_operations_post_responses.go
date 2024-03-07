@@ -41,6 +41,12 @@ func (o *PcloudPvminstancesOperationsPostReader) ReadResponse(response runtime.C
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudPvminstancesOperationsPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudPvminstancesOperationsPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -255,6 +261,74 @@ func (o *PcloudPvminstancesOperationsPostUnauthorized) GetPayload() *models.Erro
 }
 
 func (o *PcloudPvminstancesOperationsPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudPvminstancesOperationsPostForbidden creates a PcloudPvminstancesOperationsPostForbidden with default headers values
+func NewPcloudPvminstancesOperationsPostForbidden() *PcloudPvminstancesOperationsPostForbidden {
+	return &PcloudPvminstancesOperationsPostForbidden{}
+}
+
+/*
+PcloudPvminstancesOperationsPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudPvminstancesOperationsPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud pvminstances operations post forbidden response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post forbidden response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post forbidden response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post forbidden response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post forbidden response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud pvminstances operations post forbidden response
+func (o *PcloudPvminstancesOperationsPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudPvminstancesOperationsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

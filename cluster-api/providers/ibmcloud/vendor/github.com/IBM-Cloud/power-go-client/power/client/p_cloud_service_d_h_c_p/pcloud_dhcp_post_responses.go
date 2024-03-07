@@ -35,8 +35,20 @@ func (o *PcloudDhcpPostReader) ReadResponse(response runtime.ClientResponse, con
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudDhcpPostUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudDhcpPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudDhcpPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -188,6 +200,74 @@ func (o *PcloudDhcpPostBadRequest) readResponse(response runtime.ClientResponse,
 	return nil
 }
 
+// NewPcloudDhcpPostUnauthorized creates a PcloudDhcpPostUnauthorized with default headers values
+func NewPcloudDhcpPostUnauthorized() *PcloudDhcpPostUnauthorized {
+	return &PcloudDhcpPostUnauthorized{}
+}
+
+/*
+PcloudDhcpPostUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudDhcpPostUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud dhcp post unauthorized response has a 2xx status code
+func (o *PcloudDhcpPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud dhcp post unauthorized response has a 3xx status code
+func (o *PcloudDhcpPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud dhcp post unauthorized response has a 4xx status code
+func (o *PcloudDhcpPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud dhcp post unauthorized response has a 5xx status code
+func (o *PcloudDhcpPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud dhcp post unauthorized response a status code equal to that given
+func (o *PcloudDhcpPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud dhcp post unauthorized response
+func (o *PcloudDhcpPostUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudDhcpPostUnauthorized) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudDhcpPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpPostUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudDhcpPostUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudDhcpPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPcloudDhcpPostForbidden creates a PcloudDhcpPostForbidden with default headers values
 func NewPcloudDhcpPostForbidden() *PcloudDhcpPostForbidden {
 	return &PcloudDhcpPostForbidden{}
@@ -245,6 +325,74 @@ func (o *PcloudDhcpPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudDhcpPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudDhcpPostNotFound creates a PcloudDhcpPostNotFound with default headers values
+func NewPcloudDhcpPostNotFound() *PcloudDhcpPostNotFound {
+	return &PcloudDhcpPostNotFound{}
+}
+
+/*
+PcloudDhcpPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudDhcpPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud dhcp post not found response has a 2xx status code
+func (o *PcloudDhcpPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud dhcp post not found response has a 3xx status code
+func (o *PcloudDhcpPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud dhcp post not found response has a 4xx status code
+func (o *PcloudDhcpPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud dhcp post not found response has a 5xx status code
+func (o *PcloudDhcpPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud dhcp post not found response a status code equal to that given
+func (o *PcloudDhcpPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud dhcp post not found response
+func (o *PcloudDhcpPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudDhcpPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudDhcpPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp][%d] pcloudDhcpPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudDhcpPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudDhcpPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

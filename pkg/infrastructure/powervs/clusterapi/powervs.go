@@ -12,7 +12,8 @@ type Provider struct {
 	clusterapi.InfraProvider
 }
 
-var _ clusterapi.PreProvider = Provider{}
+var _ clusterapi.PreProvider = (*Provider)(nil)
+var _ clusterapi.Provider = (*Provider)(nil)
 
 // Name returns the PowerVS provider name.
 func (p Provider) Name() string {

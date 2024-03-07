@@ -41,6 +41,12 @@ func (o *PcloudCloudinstancesGetReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesGetForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudCloudinstancesGetNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -251,6 +257,74 @@ func (o *PcloudCloudinstancesGetUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudinstancesGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesGetForbidden creates a PcloudCloudinstancesGetForbidden with default headers values
+func NewPcloudCloudinstancesGetForbidden() *PcloudCloudinstancesGetForbidden {
+	return &PcloudCloudinstancesGetForbidden{}
+}
+
+/*
+PcloudCloudinstancesGetForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesGetForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances get forbidden response has a 2xx status code
+func (o *PcloudCloudinstancesGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances get forbidden response has a 3xx status code
+func (o *PcloudCloudinstancesGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances get forbidden response has a 4xx status code
+func (o *PcloudCloudinstancesGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances get forbidden response has a 5xx status code
+func (o *PcloudCloudinstancesGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances get forbidden response a status code equal to that given
+func (o *PcloudCloudinstancesGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances get forbidden response
+func (o *PcloudCloudinstancesGetForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudinstancesGetForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesGetForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesGetForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesGetForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesGetForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -53,6 +53,18 @@ func (o *PcloudSapPostReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudSapPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudSapPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudSapPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -399,6 +411,142 @@ func (o *PcloudSapPostUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudSapPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSapPostForbidden creates a PcloudSapPostForbidden with default headers values
+func NewPcloudSapPostForbidden() *PcloudSapPostForbidden {
+	return &PcloudSapPostForbidden{}
+}
+
+/*
+PcloudSapPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudSapPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sap post forbidden response has a 2xx status code
+func (o *PcloudSapPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap post forbidden response has a 3xx status code
+func (o *PcloudSapPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap post forbidden response has a 4xx status code
+func (o *PcloudSapPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sap post forbidden response has a 5xx status code
+func (o *PcloudSapPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap post forbidden response a status code equal to that given
+func (o *PcloudSapPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud sap post forbidden response
+func (o *PcloudSapPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudSapPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSapPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudSapPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSapPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudSapPostNotFound creates a PcloudSapPostNotFound with default headers values
+func NewPcloudSapPostNotFound() *PcloudSapPostNotFound {
+	return &PcloudSapPostNotFound{}
+}
+
+/*
+PcloudSapPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudSapPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud sap post not found response has a 2xx status code
+func (o *PcloudSapPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap post not found response has a 3xx status code
+func (o *PcloudSapPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap post not found response has a 4xx status code
+func (o *PcloudSapPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sap post not found response has a 5xx status code
+func (o *PcloudSapPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap post not found response a status code equal to that given
+func (o *PcloudSapPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud sap post not found response
+func (o *PcloudSapPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudSapPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudSapPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudSapPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudSapPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

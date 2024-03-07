@@ -41,6 +41,18 @@ func (o *PcloudCloudinstancesStoragetiersGetallReader) ReadResponse(response run
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesStoragetiersGetallForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudCloudinstancesStoragetiersGetallNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 500:
 		result := NewPcloudCloudinstancesStoragetiersGetallInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -243,6 +255,142 @@ func (o *PcloudCloudinstancesStoragetiersGetallUnauthorized) GetPayload() *model
 }
 
 func (o *PcloudCloudinstancesStoragetiersGetallUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesStoragetiersGetallForbidden creates a PcloudCloudinstancesStoragetiersGetallForbidden with default headers values
+func NewPcloudCloudinstancesStoragetiersGetallForbidden() *PcloudCloudinstancesStoragetiersGetallForbidden {
+	return &PcloudCloudinstancesStoragetiersGetallForbidden{}
+}
+
+/*
+PcloudCloudinstancesStoragetiersGetallForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesStoragetiersGetallForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances storagetiers getall forbidden response has a 2xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances storagetiers getall forbidden response has a 3xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances storagetiers getall forbidden response has a 4xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances storagetiers getall forbidden response has a 5xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances storagetiers getall forbidden response a status code equal to that given
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances storagetiers getall forbidden response
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-tiers][%d] pcloudCloudinstancesStoragetiersGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-tiers][%d] pcloudCloudinstancesStoragetiersGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesStoragetiersGetallNotFound creates a PcloudCloudinstancesStoragetiersGetallNotFound with default headers values
+func NewPcloudCloudinstancesStoragetiersGetallNotFound() *PcloudCloudinstancesStoragetiersGetallNotFound {
+	return &PcloudCloudinstancesStoragetiersGetallNotFound{}
+}
+
+/*
+PcloudCloudinstancesStoragetiersGetallNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesStoragetiersGetallNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances storagetiers getall not found response has a 2xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances storagetiers getall not found response has a 3xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances storagetiers getall not found response has a 4xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances storagetiers getall not found response has a 5xx status code
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances storagetiers getall not found response a status code equal to that given
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances storagetiers getall not found response
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-tiers][%d] pcloudCloudinstancesStoragetiersGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/storage-tiers][%d] pcloudCloudinstancesStoragetiersGetallNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesStoragetiersGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

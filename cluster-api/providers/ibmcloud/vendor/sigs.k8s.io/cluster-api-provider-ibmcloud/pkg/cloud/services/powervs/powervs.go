@@ -30,6 +30,7 @@ type PowerVS interface {
 	GetAllInstance() (*models.PVMInstances, error)
 	GetAllImage() (*models.Images, error)
 	GetAllNetwork() (*models.Networks, error)
+	GetNetworkByID(id string) (*models.Network, error)
 	GetInstance(id string) (*models.PVMInstance, error)
 	GetImage(id string) (*models.Image, error)
 	DeleteImage(id string) error
@@ -39,4 +40,8 @@ type PowerVS interface {
 	DeleteJob(id string) error
 	GetAllDHCPServers() (models.DHCPServers, error)
 	GetDHCPServer(id string) (*models.DHCPServerDetail, error)
+	CreateDHCPServer(*models.DHCPServerCreate) (*models.DHCPServer, error)
+	DeleteDHCPServer(id string) error
+	WithClients(options ServiceOptions) *Service
+	GetNetworkByName(networkName string) (*models.NetworkReference, error)
 }

@@ -20,6 +20,9 @@ import (
 // swagger:model PVMInstanceUpdate
 type PVMInstanceUpdate struct {
 
+	// Cloud Initialization Volume operations
+	CloudInitialization *CloudInitialization `json:"cloudInitialization,omitempty"`
+
 	// The VTL license repository capacity TB value
 	LicenseRepositoryCapacity int64 `json:"licenseRepositoryCapacity,omitempty"`
 
@@ -59,6 +62,10 @@ type PVMInstanceUpdate struct {
 func (m *PVMInstanceUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateCloudInitialization(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validatePinPolicy(formats); err != nil {
 		res = append(res, err)
 	}
@@ -78,6 +85,25 @@ func (m *PVMInstanceUpdate) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *PVMInstanceUpdate) validateCloudInitialization(formats strfmt.Registry) error {
+	if swag.IsZero(m.CloudInitialization) { // not required
+		return nil
+	}
+
+	if m.CloudInitialization != nil {
+		if err := m.CloudInitialization.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("cloudInitialization")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("cloudInitialization")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -185,6 +211,10 @@ func (m *PVMInstanceUpdate) validateVirtualCores(formats strfmt.Registry) error 
 func (m *PVMInstanceUpdate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateCloudInitialization(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidatePinPolicy(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -200,6 +230,27 @@ func (m *PVMInstanceUpdate) ContextValidate(ctx context.Context, formats strfmt.
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *PVMInstanceUpdate) contextValidateCloudInitialization(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.CloudInitialization != nil {
+
+		if swag.IsZero(m.CloudInitialization) { // not required
+			return nil
+		}
+
+		if err := m.CloudInitialization.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("cloudInitialization")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("cloudInitialization")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

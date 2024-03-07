@@ -12,6 +12,7 @@ import (
 
 	"github.com/IBM-Cloud/power-go-client/power/client"
 	"github.com/IBM/go-sdk-core/v5/core"
+	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
 )
@@ -105,4 +106,19 @@ func SDKFailWithAPIError(err error, origErr error) error {
 		}
 	}
 	return origErr
+}
+
+// CreateResourceControllerV2  returns a resourceControllerV2
+func CreateResourceControllerV2(url string, authenticator core.Authenticator) (service *rc.ResourceControllerV2, err error) {
+	env := ""
+	if strings.Contains(url, "test") {
+		env = ".test"
+	}
+	rcUrl := "https://resource-controller" + env + ".cloud.ibm.com"
+
+	resourceController, err := rc.NewResourceControllerV2(&rc.ResourceControllerV2Options{
+		Authenticator: authenticator,
+		URL:           rcUrl,
+	})
+	return resourceController, err
 }

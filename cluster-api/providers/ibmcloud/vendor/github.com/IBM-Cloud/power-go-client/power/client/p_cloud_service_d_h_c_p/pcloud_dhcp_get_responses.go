@@ -35,6 +35,12 @@ func (o *PcloudDhcpGetReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudDhcpGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudDhcpGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -183,6 +189,74 @@ func (o *PcloudDhcpGetBadRequest) GetPayload() *models.Error {
 }
 
 func (o *PcloudDhcpGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudDhcpGetUnauthorized creates a PcloudDhcpGetUnauthorized with default headers values
+func NewPcloudDhcpGetUnauthorized() *PcloudDhcpGetUnauthorized {
+	return &PcloudDhcpGetUnauthorized{}
+}
+
+/*
+PcloudDhcpGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudDhcpGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud dhcp get unauthorized response has a 2xx status code
+func (o *PcloudDhcpGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud dhcp get unauthorized response has a 3xx status code
+func (o *PcloudDhcpGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud dhcp get unauthorized response has a 4xx status code
+func (o *PcloudDhcpGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud dhcp get unauthorized response has a 5xx status code
+func (o *PcloudDhcpGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud dhcp get unauthorized response a status code equal to that given
+func (o *PcloudDhcpGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud dhcp get unauthorized response
+func (o *PcloudDhcpGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudDhcpGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp/{dhcp_id}][%d] pcloudDhcpGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudDhcpGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/services/dhcp/{dhcp_id}][%d] pcloudDhcpGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudDhcpGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudDhcpGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

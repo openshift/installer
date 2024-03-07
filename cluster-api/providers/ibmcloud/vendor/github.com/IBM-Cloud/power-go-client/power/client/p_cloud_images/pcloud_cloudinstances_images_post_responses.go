@@ -53,6 +53,12 @@ func (o *PcloudCloudinstancesImagesPostReader) ReadResponse(response runtime.Cli
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudCloudinstancesImagesPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudCloudinstancesImagesPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -405,6 +411,74 @@ func (o *PcloudCloudinstancesImagesPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudinstancesImagesPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesImagesPostNotFound creates a PcloudCloudinstancesImagesPostNotFound with default headers values
+func NewPcloudCloudinstancesImagesPostNotFound() *PcloudCloudinstancesImagesPostNotFound {
+	return &PcloudCloudinstancesImagesPostNotFound{}
+}
+
+/*
+PcloudCloudinstancesImagesPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesImagesPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances images post not found response has a 2xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances images post not found response has a 3xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances images post not found response has a 4xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances images post not found response has a 5xx status code
+func (o *PcloudCloudinstancesImagesPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances images post not found response a status code equal to that given
+func (o *PcloudCloudinstancesImagesPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances images post not found response
+func (o *PcloudCloudinstancesImagesPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/images][%d] pcloudCloudinstancesImagesPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesImagesPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

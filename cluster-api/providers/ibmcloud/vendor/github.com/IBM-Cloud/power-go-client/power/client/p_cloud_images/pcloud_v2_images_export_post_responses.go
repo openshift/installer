@@ -41,6 +41,12 @@ func (o *PcloudV2ImagesExportPostReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudV2ImagesExportPostForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewPcloudV2ImagesExportPostNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -263,6 +269,74 @@ func (o *PcloudV2ImagesExportPostUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudV2ImagesExportPostUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudV2ImagesExportPostForbidden creates a PcloudV2ImagesExportPostForbidden with default headers values
+func NewPcloudV2ImagesExportPostForbidden() *PcloudV2ImagesExportPostForbidden {
+	return &PcloudV2ImagesExportPostForbidden{}
+}
+
+/*
+PcloudV2ImagesExportPostForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudV2ImagesExportPostForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud v2 images export post forbidden response has a 2xx status code
+func (o *PcloudV2ImagesExportPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 images export post forbidden response has a 3xx status code
+func (o *PcloudV2ImagesExportPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 images export post forbidden response has a 4xx status code
+func (o *PcloudV2ImagesExportPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 images export post forbidden response has a 5xx status code
+func (o *PcloudV2ImagesExportPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 images export post forbidden response a status code equal to that given
+func (o *PcloudV2ImagesExportPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud v2 images export post forbidden response
+func (o *PcloudV2ImagesExportPostForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudV2ImagesExportPostForbidden) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2ImagesExportPostForbidden) String() string {
+	return fmt.Sprintf("[POST /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportPostForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2ImagesExportPostForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudV2ImagesExportPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

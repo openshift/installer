@@ -53,6 +53,12 @@ func (o *PcloudVolumegroupsPostReader) ReadResponse(response runtime.ClientRespo
 			return nil, err
 		}
 		return nil, result
+	case 404:
+		result := NewPcloudVolumegroupsPostNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 409:
 		result := NewPcloudVolumegroupsPostConflict()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -411,6 +417,74 @@ func (o *PcloudVolumegroupsPostForbidden) GetPayload() *models.Error {
 }
 
 func (o *PcloudVolumegroupsPostForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsPostNotFound creates a PcloudVolumegroupsPostNotFound with default headers values
+func NewPcloudVolumegroupsPostNotFound() *PcloudVolumegroupsPostNotFound {
+	return &PcloudVolumegroupsPostNotFound{}
+}
+
+/*
+PcloudVolumegroupsPostNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudVolumegroupsPostNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups post not found response has a 2xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups post not found response has a 3xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups post not found response has a 4xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups post not found response has a 5xx status code
+func (o *PcloudVolumegroupsPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups post not found response a status code equal to that given
+func (o *PcloudVolumegroupsPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud volumegroups post not found response
+func (o *PcloudVolumegroupsPostNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudVolumegroupsPostNotFound) Error() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups][%d] pcloudVolumegroupsPostNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudVolumegroupsPostNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsPostNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -35,6 +35,12 @@ func (o *PcloudVolumegroupsStorageDetailsGetReader) ReadResponse(response runtim
 			return nil, err
 		}
 		return nil, result
+	case 401:
+		result := NewPcloudVolumegroupsStorageDetailsGetUnauthorized()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 403:
 		result := NewPcloudVolumegroupsStorageDetailsGetForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -189,6 +195,74 @@ func (o *PcloudVolumegroupsStorageDetailsGetBadRequest) GetPayload() *models.Err
 }
 
 func (o *PcloudVolumegroupsStorageDetailsGetBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudVolumegroupsStorageDetailsGetUnauthorized creates a PcloudVolumegroupsStorageDetailsGetUnauthorized with default headers values
+func NewPcloudVolumegroupsStorageDetailsGetUnauthorized() *PcloudVolumegroupsStorageDetailsGetUnauthorized {
+	return &PcloudVolumegroupsStorageDetailsGetUnauthorized{}
+}
+
+/*
+PcloudVolumegroupsStorageDetailsGetUnauthorized describes a response with status code 401, with default header values.
+
+Unauthorized
+*/
+type PcloudVolumegroupsStorageDetailsGetUnauthorized struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud volumegroups storage details get unauthorized response has a 2xx status code
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud volumegroups storage details get unauthorized response has a 3xx status code
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud volumegroups storage details get unauthorized response has a 4xx status code
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud volumegroups storage details get unauthorized response has a 5xx status code
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud volumegroups storage details get unauthorized response a status code equal to that given
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
+// Code gets the status code for the pcloud volumegroups storage details get unauthorized response
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) Code() int {
+	return 401
+}
+
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/storage-details][%d] pcloudVolumegroupsStorageDetailsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/volume-groups/{volume_group_id}/storage-details][%d] pcloudVolumegroupsStorageDetailsGetUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudVolumegroupsStorageDetailsGetUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

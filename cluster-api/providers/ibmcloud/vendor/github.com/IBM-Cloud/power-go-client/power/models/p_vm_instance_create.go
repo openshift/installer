@@ -83,17 +83,21 @@ type PVMInstanceCreate struct {
 	// The pvm instance Software Licenses
 	SoftwareLicenses *SoftwareLicenses `json:"softwareLicenses,omitempty"`
 
-	// The storage affinity data; ignored if storagePool is provided; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// The storage affinity data; ignored if storagePool is provided; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StorageAffinity *StorageAffinity `json:"storageAffinity,omitempty"`
 
 	// The storage connection type
 	// Enum: [vSCSI]
 	StorageConnection string `json:"storageConnection,omitempty"`
 
-	// Storage Pool for server deployment; if provided then storageAffinity and storageType will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// The storage connection type
+	// Enum: [vSCSI maxVolumeAttachement]
+	StorageConnectionV2 string `json:"storageConnectionV2,omitempty"`
+
+	// Storage Pool for server deployment; if provided then storageAffinity will be ignored; Only valid when you deploy one of the IBM supplied stock images. Storage pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage pool the image was created in
 	StoragePool string `json:"storagePool,omitempty"`
 
-	// Storage type for server deployment; will be ignored if storagePool or storageAffinity is provided; Only valid when you deploy one of the IBM supplied stock images. Storage type and pool for a custom image (an imported image or an image that is created from a PVMInstance capture) defaults to the storage type and pool the image was created in
+	// Storage type for server deployment; if storageType is not provided the storage type will default to 'tier3'.
 	StorageType string `json:"storageType,omitempty"`
 
 	// System type used to host the instance
@@ -158,6 +162,10 @@ func (m *PVMInstanceCreate) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateStorageConnection(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStorageConnectionV2(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -454,6 +462,48 @@ func (m *PVMInstanceCreate) validateStorageConnection(formats strfmt.Registry) e
 
 	// value enum
 	if err := m.validateStorageConnectionEnum("storageConnection", "body", m.StorageConnection); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var pVmInstanceCreateTypeStorageConnectionV2PropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["vSCSI","maxVolumeAttachement"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		pVmInstanceCreateTypeStorageConnectionV2PropEnum = append(pVmInstanceCreateTypeStorageConnectionV2PropEnum, v)
+	}
+}
+
+const (
+
+	// PVMInstanceCreateStorageConnectionV2VSCSI captures enum value "vSCSI"
+	PVMInstanceCreateStorageConnectionV2VSCSI string = "vSCSI"
+
+	// PVMInstanceCreateStorageConnectionV2MaxVolumeAttachement captures enum value "maxVolumeAttachement"
+	PVMInstanceCreateStorageConnectionV2MaxVolumeAttachement string = "maxVolumeAttachement"
+)
+
+// prop value enum
+func (m *PVMInstanceCreate) validateStorageConnectionV2Enum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, pVmInstanceCreateTypeStorageConnectionV2PropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *PVMInstanceCreate) validateStorageConnectionV2(formats strfmt.Registry) error {
+	if swag.IsZero(m.StorageConnectionV2) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateStorageConnectionV2Enum("storageConnectionV2", "body", m.StorageConnectionV2); err != nil {
 		return err
 	}
 

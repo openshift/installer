@@ -41,6 +41,18 @@ func (o *PcloudCloudinstancesPutReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewPcloudCloudinstancesPutForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
+	case 404:
+		result := NewPcloudCloudinstancesPutNotFound()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 422:
 		result := NewPcloudCloudinstancesPutUnprocessableEntity()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -251,6 +263,142 @@ func (o *PcloudCloudinstancesPutUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PcloudCloudinstancesPutUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesPutForbidden creates a PcloudCloudinstancesPutForbidden with default headers values
+func NewPcloudCloudinstancesPutForbidden() *PcloudCloudinstancesPutForbidden {
+	return &PcloudCloudinstancesPutForbidden{}
+}
+
+/*
+PcloudCloudinstancesPutForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type PcloudCloudinstancesPutForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances put forbidden response has a 2xx status code
+func (o *PcloudCloudinstancesPutForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances put forbidden response has a 3xx status code
+func (o *PcloudCloudinstancesPutForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances put forbidden response has a 4xx status code
+func (o *PcloudCloudinstancesPutForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances put forbidden response has a 5xx status code
+func (o *PcloudCloudinstancesPutForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances put forbidden response a status code equal to that given
+func (o *PcloudCloudinstancesPutForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+// Code gets the status code for the pcloud cloudinstances put forbidden response
+func (o *PcloudCloudinstancesPutForbidden) Code() int {
+	return 403
+}
+
+func (o *PcloudCloudinstancesPutForbidden) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesPutForbidden) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudCloudinstancesPutForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesPutForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
+// NewPcloudCloudinstancesPutNotFound creates a PcloudCloudinstancesPutNotFound with default headers values
+func NewPcloudCloudinstancesPutNotFound() *PcloudCloudinstancesPutNotFound {
+	return &PcloudCloudinstancesPutNotFound{}
+}
+
+/*
+PcloudCloudinstancesPutNotFound describes a response with status code 404, with default header values.
+
+Not Found
+*/
+type PcloudCloudinstancesPutNotFound struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this pcloud cloudinstances put not found response has a 2xx status code
+func (o *PcloudCloudinstancesPutNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud cloudinstances put not found response has a 3xx status code
+func (o *PcloudCloudinstancesPutNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud cloudinstances put not found response has a 4xx status code
+func (o *PcloudCloudinstancesPutNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud cloudinstances put not found response has a 5xx status code
+func (o *PcloudCloudinstancesPutNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud cloudinstances put not found response a status code equal to that given
+func (o *PcloudCloudinstancesPutNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
+// Code gets the status code for the pcloud cloudinstances put not found response
+func (o *PcloudCloudinstancesPutNotFound) Code() int {
+	return 404
+}
+
+func (o *PcloudCloudinstancesPutNotFound) Error() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesPutNotFound) String() string {
+	return fmt.Sprintf("[PUT /pcloud/v1/cloud-instances/{cloud_instance_id}][%d] pcloudCloudinstancesPutNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PcloudCloudinstancesPutNotFound) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PcloudCloudinstancesPutNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

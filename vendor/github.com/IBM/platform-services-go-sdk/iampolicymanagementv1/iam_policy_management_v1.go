@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.65.0-79fc0b8f-20230209-215651
+ * IBM OpenAPI SDK Code Generator Version: 3.85.0-75c38f8f-20240206-210220
  */
 
 // Package iampolicymanagementv1 : Operations and models for the IamPolicyManagementV1 service
@@ -1138,9 +1138,15 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 // The policy resource must include either the **`serviceType`**, **`serviceName`**, **`resourceGroupId`** or
 // **`service_group_id`** attribute and the **`accountId`** attribute. In the rule field, you can specify a single
 // condition by using **`key`**, **`value`**, and condition **`operator`**, or a set of **`conditions`** with a
-// combination **`operator`**. The possible combination operators are **`and`** and **`or`**. Combine conditions to
-// specify a time-based restriction (e.g., access only during business hours, during the Monday-Friday work week). For
-// example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following rule:
+// combination **`operator`**. The possible combination operators are **`and`** and **`or`**.
+//
+// Currently, we support two types of patterns:
+//
+// 1. `time-based`: Used to specify a time-based restriction
+//
+// Combine conditions to specify a time-based restriction (e.g., access only during business hours, during the
+// Monday-Friday work week). For example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following
+// rule:
 // ```json
 //   "rule": {
 //     "operator": "and",
@@ -1161,17 +1167,54 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx 
 // ``` You can use the following operators in the **`key`** and **`value`** pair:
 // ```
 //   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//   'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
 //   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
-//   'dayOfWeekEquals', 'dayOfWeekAnyOf',
+//   'dayOfWeekEquals', 'dayOfWeekAnyOf'
+// ``` The pattern field that matches the rule is required when rule is provided. For the business hour rule example
+// above, the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
+// operators](/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties) and
+// [Limiting access with time-based conditions](/docs/account?topic=account-iam-time-based&interface=ui). If the subject
+// is a locked service-id, the request will fail.
+//
+// 2. `attribute-based`: Used to specify a combination of OR/AND based conditions applied on resource attributes.
+//
+// Combine conditions to specify an attribute-based condition using AND/OR-based operators.
+//
+// For example, a policy can grant access based on multiple conditions applied on the resource attributes below:
+// ```json
+//   "pattern": "attribute-based-condition:resource:literal-and-wildcard"
+//   "rule": {
+//       "operator": "or",
+//       "conditions": [
+//         {
+//           "operator": "and",
+//           "conditions": [
+//             {
+//               "key": "{{resource.attributes.prefix}}",
+//               "operator": "stringEquals",
+//               "value": "home/test"
+//             },
+//             {
+//               "key": "{{environment.attributes.delimiter}}",
+//               "operator": "stringEquals",
+//               "value": "/"
+//             }
+//           ]
+//         },
+//         {
+//           "key": "{{resource.attributes.path}}",
+//           "operator": "stringMatch",
+//           "value": "home/David/_*"
+//         }
+//       ]
+//   }
 // ```
 //
-// The pattern field that matches the rule is required when rule is provided. For the business hour rule example above,
-// the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
-// operators](https://cloud.ibm.com/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties)
-// and
-// [Limiting access with time-based
-// conditions](https://cloud.ibm.com/docs/account?topic=account-iam-time-based&interface=ui). If the subject is a locked
-// service-id, the request will fail.
+// In addition to satisfying the `resources` section, the policy grants permission only if either the `path` begins with
+// `home/David/` **OR**  the `prefix` is `home/test` and the `delimiter` is `/`. This mechanism helps you consolidate
+// multiple policies in to a single policy,  making policies easier to administer and stay within the policy limit for
+// an account. View the list of operators that can be used in the condition
+// [here](/docs/account?topic=account-wildcard#string-comparisons).
 //
 // ### Authorization
 //
@@ -1297,9 +1340,15 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 // The policy resource must include either the **`serviceType`**, **`serviceName`**, **`resourceGroupId`** or
 // **`service_group_id`** attribute and the **`accountId`** attribute. In the rule field, you can specify a single
 // condition by using **`key`**, **`value`**, and condition **`operator`**, or a set of **`conditions`** with a
-// combination **`operator`**. The possible combination operators are **`and`** and **`or`**. Combine conditions to
-// specify a time-based restriction (e.g., access only during business hours, during the Monday-Friday work week). For
-// example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following rule:
+// combination **`operator`**. The possible combination operators are **`and`** and **`or`**.
+//
+// Currently, we support two types of patterns:
+//
+// 1. `time-based`: Used to specify a time-based restriction
+//
+// Combine conditions to specify a time-based restriction (e.g., access only during business hours, during the
+// Monday-Friday work week). For example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following
+// rule:
 // ```json
 //   "rule": {
 //     "operator": "and",
@@ -1317,17 +1366,57 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx 
 //       "value": "17:00:00+00:00"
 //     }]
 //   }
-// ``` You can use the following operators in the **`key`**, **`value`** pair:
+// ``` You can use the following operators in the **`key`** and **`value`** pair:
 // ```
 //   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//   'dateLessThan', 'dateLessThanOrEquals', 'dateGreaterThan', 'dateGreaterThanOrEquals',
 //   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
-//   'dayOfWeekEquals', 'dayOfWeekAnyOf',
+//   'dayOfWeekEquals', 'dayOfWeekAnyOf'
 // ``` The pattern field that matches the rule is required when rule is provided. For the business hour rule example
 // above, the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
-// operators](https://cloud.ibm.com/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties)
-// and
-// [Limiting access with time-based
-// conditions](https://cloud.ibm.com/docs/account?topic=account-iam-time-based&interface=ui).
+// operators](/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties) and
+// [Limiting access with time-based conditions](/docs/account?topic=account-iam-time-based&interface=ui). If the subject
+// is a locked service-id, the request will fail.
+//
+// 2. `attribute-based`: Used to specify a combination of OR/AND based conditions applied on resource attributes.
+//
+// Combine conditions to specify an attribute-based condition using AND/OR-based operators.
+//
+// For example, a policy can grant access based on multiple conditions applied on the resource attributes below:
+// ```json
+//   "pattern": "attribute-based-condition:resource:literal-and-wildcard"
+//   "rule": {
+//       "operator": "or",
+//       "conditions": [
+//         {
+//           "operator": "and",
+//           "conditions": [
+//             {
+//               "key": "{{resource.attributes.prefix}}",
+//               "operator": "stringEquals",
+//               "value": "home/test"
+//             },
+//             {
+//               "key": "{{environment.attributes.delimiter}}",
+//               "operator": "stringEquals",
+//               "value": "/"
+//             }
+//           ]
+//         },
+//         {
+//           "key": "{{resource.attributes.path}}",
+//           "operator": "stringMatch",
+//           "value": "home/David/_*"
+//         }
+//       ]
+//   }
+// ```
+//
+// In addition to satisfying the `resources` section, the policy grants permission only if either the `path` begins with
+// `home/David/` **OR**  the `prefix` is `home/test` and the `delimiter` is `/`. This mechanism helps you consolidate
+// multiple policies in to a single policy,  making policies easier to administer and stay within the policy limit for
+// an account. View the list of operators that can be used in the condition
+// [here](/docs/account?topic=account-wildcard#string-comparisons).
 //
 // ### Authorization
 //
@@ -1597,6 +1686,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplatesWithContext
 	}
 
 	builder.AddQuery("account_id", fmt.Sprint(*listPolicyTemplatesOptions.AccountID))
+	if listPolicyTemplatesOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listPolicyTemplatesOptions.State))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1739,6 +1831,10 @@ func (iamPolicyManagement *IamPolicyManagementV1) GetPolicyTemplateWithContext(c
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if getPolicyTemplateOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*getPolicyTemplateOptions.State))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -1929,6 +2025,10 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPolicyTemplateVersionsWith
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
+
+	if listPolicyTemplateVersionsOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listPolicyTemplateVersionsOptions.State))
+	}
 
 	request, err := builder.Build()
 	if err != nil {
@@ -3379,9 +3479,19 @@ type GetPolicyTemplateOptions struct {
 	// The policy template ID.
 	PolicyTemplateID *string `json:"policy_template_id" validate:"required,ne="`
 
+	// The policy template state.
+	State *string `json:"state,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the GetPolicyTemplateOptions.State property.
+// The policy template state.
+const (
+	GetPolicyTemplateOptionsStateActiveConst = "active"
+	GetPolicyTemplateOptionsStateDeletedConst = "deleted"
+)
 
 // NewGetPolicyTemplateOptions : Instantiate GetPolicyTemplateOptions
 func (*IamPolicyManagementV1) NewGetPolicyTemplateOptions(policyTemplateID string) *GetPolicyTemplateOptions {
@@ -3393,6 +3503,12 @@ func (*IamPolicyManagementV1) NewGetPolicyTemplateOptions(policyTemplateID strin
 // SetPolicyTemplateID : Allow user to set PolicyTemplateID
 func (_options *GetPolicyTemplateOptions) SetPolicyTemplateID(policyTemplateID string) *GetPolicyTemplateOptions {
 	_options.PolicyTemplateID = core.StringPtr(policyTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *GetPolicyTemplateOptions) SetState(state string) *GetPolicyTemplateOptions {
+	_options.State = core.StringPtr(state)
 	return _options
 }
 
@@ -3840,9 +3956,19 @@ type ListPolicyTemplateVersionsOptions struct {
 	// The policy template ID.
 	PolicyTemplateID *string `json:"policy_template_id" validate:"required,ne="`
 
+	// The policy template state.
+	State *string `json:"state,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the ListPolicyTemplateVersionsOptions.State property.
+// The policy template state.
+const (
+	ListPolicyTemplateVersionsOptionsStateActiveConst = "active"
+	ListPolicyTemplateVersionsOptionsStateDeletedConst = "deleted"
+)
 
 // NewListPolicyTemplateVersionsOptions : Instantiate ListPolicyTemplateVersionsOptions
 func (*IamPolicyManagementV1) NewListPolicyTemplateVersionsOptions(policyTemplateID string) *ListPolicyTemplateVersionsOptions {
@@ -3854,6 +3980,12 @@ func (*IamPolicyManagementV1) NewListPolicyTemplateVersionsOptions(policyTemplat
 // SetPolicyTemplateID : Allow user to set PolicyTemplateID
 func (_options *ListPolicyTemplateVersionsOptions) SetPolicyTemplateID(policyTemplateID string) *ListPolicyTemplateVersionsOptions {
 	_options.PolicyTemplateID = core.StringPtr(policyTemplateID)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *ListPolicyTemplateVersionsOptions) SetState(state string) *ListPolicyTemplateVersionsOptions {
+	_options.State = core.StringPtr(state)
 	return _options
 }
 
@@ -3882,9 +4014,19 @@ type ListPolicyTemplatesOptions struct {
 	// * `zh-tw` - (Chinese, Taiwan).
 	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
+	// The policy template state.
+	State *string `json:"state,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the ListPolicyTemplatesOptions.State property.
+// The policy template state.
+const (
+	ListPolicyTemplatesOptionsStateActiveConst = "active"
+	ListPolicyTemplatesOptionsStateDeletedConst = "deleted"
+)
 
 // NewListPolicyTemplatesOptions : Instantiate ListPolicyTemplatesOptions
 func (*IamPolicyManagementV1) NewListPolicyTemplatesOptions(accountID string) *ListPolicyTemplatesOptions {
@@ -3902,6 +4044,12 @@ func (_options *ListPolicyTemplatesOptions) SetAccountID(accountID string) *List
 // SetAcceptLanguage : Allow user to set AcceptLanguage
 func (_options *ListPolicyTemplatesOptions) SetAcceptLanguage(acceptLanguage string) *ListPolicyTemplatesOptions {
 	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *ListPolicyTemplatesOptions) SetState(state string) *ListPolicyTemplatesOptions {
+	_options.State = core.StringPtr(state)
 	return _options
 }
 
@@ -4173,6 +4321,80 @@ func (_options *ListV2PoliciesOptions) SetState(state string) *ListV2PoliciesOpt
 func (options *ListV2PoliciesOptions) SetHeaders(param map[string]string) *ListV2PoliciesOptions {
 	options.Headers = param
 	return options
+}
+
+// NestedCondition : Condition that specifies additional conditions or RuleAttribute to grant access.
+// Models which "extend" this model:
+// - NestedConditionRuleAttribute
+// - NestedConditionRuleWithConditions
+type NestedCondition struct {
+	// The name of an attribute.
+	Key *string `json:"key,omitempty"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator,omitempty"`
+
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value,omitempty"`
+
+	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
+	// period.
+	Conditions []RuleAttribute `json:"conditions,omitempty"`
+}
+
+// Constants associated with the NestedCondition.Operator property.
+// The operator of an attribute.
+const (
+	NestedConditionOperatorDategreaterthanConst = "dateGreaterThan"
+	NestedConditionOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
+	NestedConditionOperatorDatelessthanConst = "dateLessThan"
+	NestedConditionOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
+	NestedConditionOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	NestedConditionOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
+	NestedConditionOperatorDatetimelessthanConst = "dateTimeLessThan"
+	NestedConditionOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
+	NestedConditionOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
+	NestedConditionOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	NestedConditionOperatorStringequalsConst = "stringEquals"
+	NestedConditionOperatorStringequalsanyofConst = "stringEqualsAnyOf"
+	NestedConditionOperatorStringexistsConst = "stringExists"
+	NestedConditionOperatorStringmatchConst = "stringMatch"
+	NestedConditionOperatorStringmatchanyofConst = "stringMatchAnyOf"
+	NestedConditionOperatorTimegreaterthanConst = "timeGreaterThan"
+	NestedConditionOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
+	NestedConditionOperatorTimelessthanConst = "timeLessThan"
+	NestedConditionOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+)
+func (*NestedCondition) isaNestedCondition() bool {
+	return true
+}
+
+type NestedConditionIntf interface {
+	isaNestedCondition() bool
+}
+
+// UnmarshalNestedCondition unmarshals an instance of NestedCondition from the specified map of raw messages.
+func UnmarshalNestedCondition(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NestedCondition)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // Policy : The core set of properties associated with a policy.
@@ -4633,6 +4855,9 @@ type PolicyTemplate struct {
 	// The core set of properties associated with the template's policy objet.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
+	// State of policy template.
+	State *string `json:"state,omitempty"`
+
 	// The policy template ID.
 	ID *string `json:"id,omitempty"`
 
@@ -4651,6 +4876,13 @@ type PolicyTemplate struct {
 	// The iam ID of the entity that last modified the policy template.
 	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
 }
+
+// Constants associated with the PolicyTemplate.State property.
+// State of policy template.
+const (
+	PolicyTemplateStateActiveConst = "active"
+	PolicyTemplateStateDeletedConst = "deleted"
+)
 
 // UnmarshalPolicyTemplate unmarshals an instance of PolicyTemplate from the specified map of raw messages.
 func UnmarshalPolicyTemplate(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -4676,6 +4908,10 @@ func UnmarshalPolicyTemplate(m map[string]json.RawMessage, result interface{}) (
 		return
 	}
 	err = core.UnmarshalModel(m, "policy", &obj.Policy, UnmarshalTemplatePolicy)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
 		return
 	}
@@ -4763,6 +4999,9 @@ type PolicyTemplateLimitData struct {
 	// The core set of properties associated with the template's policy objet.
 	Policy *TemplatePolicy `json:"policy" validate:"required"`
 
+	// State of policy template.
+	State *string `json:"state,omitempty"`
+
 	// The policy template ID.
 	ID *string `json:"id,omitempty"`
 
@@ -4784,6 +5023,13 @@ type PolicyTemplateLimitData struct {
 	// policy template count details.
 	Counts *TemplateCountData `json:"counts,omitempty"`
 }
+
+// Constants associated with the PolicyTemplateLimitData.State property.
+// State of policy template.
+const (
+	PolicyTemplateLimitDataStateActiveConst = "active"
+	PolicyTemplateLimitDataStateDeletedConst = "deleted"
+)
 
 // UnmarshalPolicyTemplateLimitData unmarshals an instance of PolicyTemplateLimitData from the specified map of raw messages.
 func UnmarshalPolicyTemplateLimitData(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -4809,6 +5055,10 @@ func UnmarshalPolicyTemplateLimitData(m map[string]json.RawMessage, result inter
 		return
 	}
 	err = core.UnmarshalModel(m, "policy", &obj.Policy, UnmarshalTemplatePolicy)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
 	if err != nil {
 		return
 	}
@@ -5556,20 +5806,29 @@ type RuleAttribute struct {
 	// The operator of an attribute.
 	Operator *string `json:"operator" validate:"required"`
 
-	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
-	// array of strings (e.g., array of days to permit access) for rule attribute.
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
 // Constants associated with the RuleAttribute.Operator property.
 // The operator of an attribute.
 const (
+	RuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
+	RuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
+	RuleAttributeOperatorDatelessthanConst = "dateLessThan"
+	RuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
 	RuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
 	RuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
 	RuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
 	RuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
 	RuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
 	RuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	RuleAttributeOperatorStringequalsConst = "stringEquals"
+	RuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
+	RuleAttributeOperatorStringexistsConst = "stringExists"
+	RuleAttributeOperatorStringmatchConst = "stringMatch"
+	RuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
 	RuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
 	RuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
 	RuleAttributeOperatorTimelessthanConst = "timeLessThan"
@@ -5599,72 +5858,6 @@ func UnmarshalRuleAttribute(m map[string]json.RawMessage, result interface{}) (e
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RuleAttributeWithConditions : Rule that specifies additional conditions.
-type RuleAttributeWithConditions struct {
-	// The name of an attribute.
-	Key *string `json:"key,omitempty"`
-
-	// The operator of an attribute.
-	Operator *string `json:"operator" validate:"required"`
-
-	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
-	// array of strings (e.g., array of days to permit access) for rule attribute.
-	Value interface{} `json:"value,omitempty"`
-
-	// List of additional conditions associated with a policy, e.g., time-based conditions that grant access over a certain
-	// time period.
-	Conditions []RuleAttribute `json:"conditions,omitempty"`
-}
-
-// Constants associated with the RuleAttributeWithConditions.Operator property.
-// The operator of an attribute.
-const (
-	RuleAttributeWithConditionsOperatorAndConst = "and"
-	RuleAttributeWithConditionsOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
-	RuleAttributeWithConditionsOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
-	RuleAttributeWithConditionsOperatorDatetimelessthanConst = "dateTimeLessThan"
-	RuleAttributeWithConditionsOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
-	RuleAttributeWithConditionsOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
-	RuleAttributeWithConditionsOperatorDayofweekequalsConst = "dayOfWeekEquals"
-	RuleAttributeWithConditionsOperatorOrConst = "or"
-	RuleAttributeWithConditionsOperatorTimegreaterthanConst = "timeGreaterThan"
-	RuleAttributeWithConditionsOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
-	RuleAttributeWithConditionsOperatorTimelessthanConst = "timeLessThan"
-	RuleAttributeWithConditionsOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
-)
-
-// NewRuleAttributeWithConditions : Instantiate RuleAttributeWithConditions (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewRuleAttributeWithConditions(operator string) (_model *RuleAttributeWithConditions, err error) {
-	_model = &RuleAttributeWithConditions{
-		Operator: core.StringPtr(operator),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalRuleAttributeWithConditions unmarshals an instance of RuleAttributeWithConditions from the specified map of raw messages.
-func UnmarshalRuleAttributeWithConditions(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RuleAttributeWithConditions)
-	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
 	if err != nil {
 		return
 	}
@@ -6097,8 +6290,8 @@ type V2PolicyResourceAttribute struct {
 	// The operator of an attribute.
 	Operator *string `json:"operator" validate:"required"`
 
-	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
-	// array of strings (e.g., array of days to permit access) for rule attribute.
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
@@ -6106,8 +6299,10 @@ type V2PolicyResourceAttribute struct {
 // The operator of an attribute.
 const (
 	V2PolicyResourceAttributeOperatorStringequalsConst = "stringEquals"
+	V2PolicyResourceAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
 	V2PolicyResourceAttributeOperatorStringexistsConst = "stringExists"
 	V2PolicyResourceAttributeOperatorStringmatchConst = "stringMatch"
+	V2PolicyResourceAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
 )
 
 // NewV2PolicyResourceAttribute : Instantiate V2PolicyResourceAttribute (Generic Model Constructor)
@@ -6192,7 +6387,7 @@ func UnmarshalV2PolicyResourceTag(m map[string]json.RawMessage, result interface
 // V2PolicyRule : Additional access conditions associated with the policy.
 // Models which "extend" this model:
 // - V2PolicyRuleRuleAttribute
-// - V2PolicyRuleRuleWithConditions
+// - V2PolicyRuleRuleWithNestedConditions
 type V2PolicyRule struct {
 	// The name of an attribute.
 	Key *string `json:"key,omitempty"`
@@ -6200,24 +6395,33 @@ type V2PolicyRule struct {
 	// The operator of an attribute.
 	Operator *string `json:"operator,omitempty"`
 
-	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
-	// array of strings (e.g., array of days to permit access) for rule attribute.
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
 	Value interface{} `json:"value,omitempty"`
 
 	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
 	// period.
-	Conditions []RuleAttributeWithConditions `json:"conditions,omitempty"`
+	Conditions []NestedConditionIntf `json:"conditions,omitempty"`
 }
 
 // Constants associated with the V2PolicyRule.Operator property.
 // The operator of an attribute.
 const (
+	V2PolicyRuleOperatorDategreaterthanConst = "dateGreaterThan"
+	V2PolicyRuleOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
+	V2PolicyRuleOperatorDatelessthanConst = "dateLessThan"
+	V2PolicyRuleOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
 	V2PolicyRuleOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
 	V2PolicyRuleOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
 	V2PolicyRuleOperatorDatetimelessthanConst = "dateTimeLessThan"
 	V2PolicyRuleOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
 	V2PolicyRuleOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
 	V2PolicyRuleOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	V2PolicyRuleOperatorStringequalsConst = "stringEquals"
+	V2PolicyRuleOperatorStringequalsanyofConst = "stringEqualsAnyOf"
+	V2PolicyRuleOperatorStringexistsConst = "stringExists"
+	V2PolicyRuleOperatorStringmatchConst = "stringMatch"
+	V2PolicyRuleOperatorStringmatchanyofConst = "stringMatchAnyOf"
 	V2PolicyRuleOperatorTimegreaterthanConst = "timeGreaterThan"
 	V2PolicyRuleOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
 	V2PolicyRuleOperatorTimelessthanConst = "timeLessThan"
@@ -6246,7 +6450,7 @@ func UnmarshalV2PolicyRule(m map[string]json.RawMessage, result interface{}) (er
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttributeWithConditions)
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalNestedCondition)
 	if err != nil {
 		return
 	}
@@ -6288,22 +6492,24 @@ type V2PolicySubjectAttribute struct {
 	// The operator of an attribute.
 	Operator *string `json:"operator" validate:"required"`
 
-	// The value of the ID of the subject, e.g., service ID, access group ID, IAM ID.
-	Value *string `json:"value" validate:"required"`
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value" validate:"required"`
 }
 
 // Constants associated with the V2PolicySubjectAttribute.Operator property.
 // The operator of an attribute.
 const (
 	V2PolicySubjectAttributeOperatorStringequalsConst = "stringEquals"
+	V2PolicySubjectAttributeOperatorStringexistsConst = "stringExists"
 )
 
 // NewV2PolicySubjectAttribute : Instantiate V2PolicySubjectAttribute (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewV2PolicySubjectAttribute(key string, operator string, value string) (_model *V2PolicySubjectAttribute, err error) {
+func (*IamPolicyManagementV1) NewV2PolicySubjectAttribute(key string, operator string, value interface{}) (_model *V2PolicySubjectAttribute, err error) {
 	_model = &V2PolicySubjectAttribute{
 		Key: core.StringPtr(key),
 		Operator: core.StringPtr(operator),
-		Value: core.StringPtr(value),
+		Value: value,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -6517,6 +6723,125 @@ func UnmarshalControlResponseControlWithEnrichedRoles(m map[string]json.RawMessa
 	return
 }
 
+// NestedConditionRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+// This model "extends" NestedCondition
+type NestedConditionRuleAttribute struct {
+	// The name of an attribute.
+	Key *string `json:"key" validate:"required"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator" validate:"required"`
+
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// Constants associated with the NestedConditionRuleAttribute.Operator property.
+// The operator of an attribute.
+const (
+	NestedConditionRuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
+	NestedConditionRuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatelessthanConst = "dateLessThan"
+	NestedConditionRuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	NestedConditionRuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
+	NestedConditionRuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
+	NestedConditionRuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
+	NestedConditionRuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
+	NestedConditionRuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	NestedConditionRuleAttributeOperatorStringequalsConst = "stringEquals"
+	NestedConditionRuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
+	NestedConditionRuleAttributeOperatorStringexistsConst = "stringExists"
+	NestedConditionRuleAttributeOperatorStringmatchConst = "stringMatch"
+	NestedConditionRuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
+	NestedConditionRuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
+	NestedConditionRuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
+	NestedConditionRuleAttributeOperatorTimelessthanConst = "timeLessThan"
+	NestedConditionRuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+)
+
+// NewNestedConditionRuleAttribute : Instantiate NestedConditionRuleAttribute (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewNestedConditionRuleAttribute(key string, operator string, value interface{}) (_model *NestedConditionRuleAttribute, err error) {
+	_model = &NestedConditionRuleAttribute{
+		Key: core.StringPtr(key),
+		Operator: core.StringPtr(operator),
+		Value: value,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*NestedConditionRuleAttribute) isaNestedCondition() bool {
+	return true
+}
+
+// UnmarshalNestedConditionRuleAttribute unmarshals an instance of NestedConditionRuleAttribute from the specified map of raw messages.
+func UnmarshalNestedConditionRuleAttribute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NestedConditionRuleAttribute)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// NestedConditionRuleWithConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
+// This model "extends" NestedCondition
+type NestedConditionRuleWithConditions struct {
+	// Operator to evaluate conditions.
+	Operator *string `json:"operator" validate:"required"`
+
+	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
+	// period.
+	Conditions []RuleAttribute `json:"conditions" validate:"required"`
+}
+
+// Constants associated with the NestedConditionRuleWithConditions.Operator property.
+// Operator to evaluate conditions.
+const (
+	NestedConditionRuleWithConditionsOperatorAndConst = "and"
+	NestedConditionRuleWithConditionsOperatorOrConst = "or"
+)
+
+// NewNestedConditionRuleWithConditions : Instantiate NestedConditionRuleWithConditions (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewNestedConditionRuleWithConditions(operator string, conditions []RuleAttribute) (_model *NestedConditionRuleWithConditions, err error) {
+	_model = &NestedConditionRuleWithConditions{
+		Operator: core.StringPtr(operator),
+		Conditions: conditions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*NestedConditionRuleWithConditions) isaNestedCondition() bool {
+	return true
+}
+
+// UnmarshalNestedConditionRuleWithConditions unmarshals an instance of NestedConditionRuleWithConditions from the specified map of raw messages.
+func UnmarshalNestedConditionRuleWithConditions(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(NestedConditionRuleWithConditions)
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // V2PolicyRuleRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
 // This model "extends" V2PolicyRule
 type V2PolicyRuleRuleAttribute struct {
@@ -6526,20 +6851,29 @@ type V2PolicyRuleRuleAttribute struct {
 	// The operator of an attribute.
 	Operator *string `json:"operator" validate:"required"`
 
-	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
-	// array of strings (e.g., array of days to permit access) for rule attribute.
+	// The value of a rule, resource, or subject attribute; can be boolean or string for resource and subject attribute.
+	// Can be string or an array of strings (e.g., array of days to permit access) for rule attribute.
 	Value interface{} `json:"value" validate:"required"`
 }
 
 // Constants associated with the V2PolicyRuleRuleAttribute.Operator property.
 // The operator of an attribute.
 const (
+	V2PolicyRuleRuleAttributeOperatorDategreaterthanConst = "dateGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorDategreaterthanorequalsConst = "dateGreaterThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDatelessthanConst = "dateLessThan"
+	V2PolicyRuleRuleAttributeOperatorDatelessthanorequalsConst = "dateLessThanOrEquals"
 	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
 	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
 	V2PolicyRuleRuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
 	V2PolicyRuleRuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
 	V2PolicyRuleRuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
 	V2PolicyRuleRuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	V2PolicyRuleRuleAttributeOperatorStringequalsConst = "stringEquals"
+	V2PolicyRuleRuleAttributeOperatorStringequalsanyofConst = "stringEqualsAnyOf"
+	V2PolicyRuleRuleAttributeOperatorStringexistsConst = "stringExists"
+	V2PolicyRuleRuleAttributeOperatorStringmatchConst = "stringMatch"
+	V2PolicyRuleRuleAttributeOperatorStringmatchanyofConst = "stringMatchAnyOf"
 	V2PolicyRuleRuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
 	V2PolicyRuleRuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
 	V2PolicyRuleRuleAttributeOperatorTimelessthanConst = "timeLessThan"
@@ -6580,27 +6914,27 @@ func UnmarshalV2PolicyRuleRuleAttribute(m map[string]json.RawMessage, result int
 	return
 }
 
-// V2PolicyRuleRuleWithConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
+// V2PolicyRuleRuleWithNestedConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
 // This model "extends" V2PolicyRule
-type V2PolicyRuleRuleWithConditions struct {
+type V2PolicyRuleRuleWithNestedConditions struct {
 	// Operator to evaluate conditions.
 	Operator *string `json:"operator" validate:"required"`
 
 	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
 	// period.
-	Conditions []RuleAttributeWithConditions `json:"conditions" validate:"required"`
+	Conditions []NestedConditionIntf `json:"conditions" validate:"required"`
 }
 
-// Constants associated with the V2PolicyRuleRuleWithConditions.Operator property.
+// Constants associated with the V2PolicyRuleRuleWithNestedConditions.Operator property.
 // Operator to evaluate conditions.
 const (
-	V2PolicyRuleRuleWithConditionsOperatorAndConst = "and"
-	V2PolicyRuleRuleWithConditionsOperatorOrConst = "or"
+	V2PolicyRuleRuleWithNestedConditionsOperatorAndConst = "and"
+	V2PolicyRuleRuleWithNestedConditionsOperatorOrConst = "or"
 )
 
-// NewV2PolicyRuleRuleWithConditions : Instantiate V2PolicyRuleRuleWithConditions (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewV2PolicyRuleRuleWithConditions(operator string, conditions []RuleAttributeWithConditions) (_model *V2PolicyRuleRuleWithConditions, err error) {
-	_model = &V2PolicyRuleRuleWithConditions{
+// NewV2PolicyRuleRuleWithNestedConditions : Instantiate V2PolicyRuleRuleWithNestedConditions (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyRuleRuleWithNestedConditions(operator string, conditions []NestedConditionIntf) (_model *V2PolicyRuleRuleWithNestedConditions, err error) {
+	_model = &V2PolicyRuleRuleWithNestedConditions{
 		Operator: core.StringPtr(operator),
 		Conditions: conditions,
 	}
@@ -6608,18 +6942,18 @@ func (*IamPolicyManagementV1) NewV2PolicyRuleRuleWithConditions(operator string,
 	return
 }
 
-func (*V2PolicyRuleRuleWithConditions) isaV2PolicyRule() bool {
+func (*V2PolicyRuleRuleWithNestedConditions) isaV2PolicyRule() bool {
 	return true
 }
 
-// UnmarshalV2PolicyRuleRuleWithConditions unmarshals an instance of V2PolicyRuleRuleWithConditions from the specified map of raw messages.
-func UnmarshalV2PolicyRuleRuleWithConditions(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(V2PolicyRuleRuleWithConditions)
+// UnmarshalV2PolicyRuleRuleWithNestedConditions unmarshals an instance of V2PolicyRuleRuleWithNestedConditions from the specified map of raw messages.
+func UnmarshalV2PolicyRuleRuleWithNestedConditions(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyRuleRuleWithNestedConditions)
 	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttributeWithConditions)
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalNestedCondition)
 	if err != nil {
 		return
 	}
