@@ -494,7 +494,7 @@ func getControlPlaneIDs(cl client.Client, replicas *int64, infraID string) ([]st
 	if vmID := azureMachine.Spec.ProviderID; vmID != nil && len(*vmID) != 0 {
 		res = append(res, *azureMachine.Spec.ProviderID)
 	} else {
-		//return nil, fmt.Errorf("%s .Spec.ProviderID is empty", bootstrapName)
+		return nil, fmt.Errorf("%s .Spec.ProviderID is empty", bootstrapName)
 	}
 	return res, nil
 }

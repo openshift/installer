@@ -8,6 +8,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func createPublicIP(ctx context.Context, infraID, region string, pipClient *armnetwork.PublicIPAddressesClient) (*armnetwork.PublicIPAddress, error) {
@@ -219,17 +220,17 @@ func associateVMToBackendPool(
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
 			for _, ipconfig := range nic.Properties.IPConfigurations {
-				baps := ipconfig.Properties.LoadBalancerBackendAddressPools
-				baps = append(baps, bap)
+				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, bap)
 			}
 			pollerResp, err := nicClient.BeginCreateOrUpdate(ctx, resourceGroupName, nicName, nic.Interface, nil)
 			if err != nil {
 				return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
 			}
-			_, err = pollerResp.PollUntilDone(ctx, nil)
+			resp, err := pollerResp.PollUntilDone(ctx, nil)
 			if err != nil {
 				return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
 			}
+			spew.Dump(resp.Interface)
 		} else {
 			return fmt.Errorf("vm %s does not have a single VM: %v", vmName, nics)
 		}
