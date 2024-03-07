@@ -61,8 +61,6 @@ done
 echo "All ${total_required_nodes} hosts are ready." 1>&2
 clear_issue "${status_issue}"
 
-sleep 1m
-
 # Install the host
 # echo "Installing host..."
 # curl -X POST ${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install
