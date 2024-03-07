@@ -129,8 +129,13 @@ spec:
                       type: string
                     type:
                       type: string
+                  required:
+                  - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               generations:
                 description: generations are used to determine when an item needs
                   to be reconciled or has changed in a way that needs a reaction.
@@ -163,6 +168,7 @@ spec:
                       type: string
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               latestAvailableRevision:
                 description: latestAvailableRevision is the deploymentID of the most
                   recent deployment
@@ -203,6 +209,7 @@ spec:
                       items:
                         type: string
                       type: array
+                      x-kubernetes-list-type: atomic
                     lastFailedTime:
                       description: lastFailedTime is the time the last failed revision
                         failed the last time.
@@ -220,8 +227,13 @@ spec:
                         we're trying to apply
                       format: int32
                       type: integer
+                  required:
+                  - nodeName
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - nodeName
+                x-kubernetes-list-type: map
               observedGeneration:
                 description: observedGeneration is the last generation change you've
                   dealt with

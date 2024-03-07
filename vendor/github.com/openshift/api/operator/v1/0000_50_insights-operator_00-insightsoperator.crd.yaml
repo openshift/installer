@@ -111,8 +111,13 @@ spec:
                       type: string
                     type:
                       type: string
+                  required:
+                  - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               gatherStatus:
                 description: gatherStatus provides basic information about the last
                   Insights data gathering. When omitted, this means no data gathering
@@ -266,6 +271,7 @@ spec:
                       type: string
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               insightsReport:
                 description: insightsReport provides general Insights analysis results.
                   When omitted, this means no data gathering has taken place yet.

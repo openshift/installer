@@ -48,6 +48,7 @@ type NetworkList struct {
 }
 
 // NetworkSpec is the top-level network configuration object.
+// +kubebuilder:validation:XValidation:rule="!has(self.defaultNetwork) || !has(self.defaultNetwork.ovnKubernetesConfig) || !has(self.defaultNetwork.ovnKubernetesConfig.gatewayConfig) || !has(self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding) || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding == oldSelf.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding == 'Restricted' || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding == 'Global'",message="invalid value for IPForwarding, valid values are 'Restricted' or 'Global'"
 type NetworkSpec struct {
 	OperatorSpec `json:",inline"`
 

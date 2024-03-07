@@ -91,7 +91,8 @@
             audiences:
               description: Audiences is an array of audiences that the token was issued for. Valid tokens must include at least one of these values in their "aud" claim. Must be set to exactly one value.
               type: array
-              maxItems: 1
+              maxItems: 10
+              minItems: 1
               items:
                 type: string
                 minLength: 1

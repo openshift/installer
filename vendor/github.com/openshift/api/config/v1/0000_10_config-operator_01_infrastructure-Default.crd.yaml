@@ -661,6 +661,22 @@ spec:
                                   maxLength: 2048
                                   pattern: ^/.*?/host/.*?/Resources.*
                                   type: string
+                                template:
+                                  description: "template is the full inventory path
+                                    of the virtual machine or template that will be
+                                    cloned when creating new machines in this failure
+                                    domain. The maximum length of the path is 2048
+                                    characters. \n When omitted, the template will
+                                    be calculated by the control plane machineset
+                                    operator based on the region and zone defined
+                                    in VSpherePlatformFailureDomainSpec. For example,
+                                    for zone=zonea, region=region1, and infrastructure
+                                    name=test, the template path would be calculated
+                                    as /<datacenter>/vm/test-rhcos-region1-zonea."
+                                  maxLength: 2048
+                                  minLength: 1
+                                  pattern: ^/.*?/vm/.*?
+                                  type: string
                               required:
                               - computeCluster
                               - datacenter

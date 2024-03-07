@@ -6,6 +6,7 @@ metadata:
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
+    release.openshift.io/feature-set: TechPreviewNoUpgrade
   name: schedulers.config.openshift.io
 spec:
   group: config.openshift.io
@@ -94,6 +95,27 @@ spec:
                 - HighNodeUtilization
                 - NoScoring
                 type: string
+              profileCustomizations:
+                description: profileCustomizations contains configuration for modifying
+                  the default behavior of existing scheduler profiles.
+                properties:
+                  dynamicResourceAllocation:
+                    description: dynamicResourceAllocation allows to enable or disable
+                      dynamic resource allocation within the scheduler. Dynamic resource
+                      allocation is an API for requesting and sharing resources between
+                      pods and containers inside a pod. Third-party resource drivers
+                      are responsible for tracking and allocating resources. Different
+                      kinds of resources support arbitrary parameters for defining
+                      requirements and initialization. Valid values are Enabled, Disabled
+                      and omitted. When omitted, this means no opinion and the platform
+                      is left to choose a reasonable default, which is subject to
+                      change over time. The current default is Disabled.
+                    enum:
+                    - ""
+                    - Enabled
+                    - Disabled
+                    type: string
+                type: object
             type: object
           status:
             description: status holds observed values from the cluster. They may not

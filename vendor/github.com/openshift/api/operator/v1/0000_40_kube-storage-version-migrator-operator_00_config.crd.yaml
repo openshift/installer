@@ -108,8 +108,13 @@ spec:
                       type: string
                     type:
                       type: string
+                  required:
+                  - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               generations:
                 description: generations are used to determine when an item needs
                   to be reconciled or has changed in a way that needs a reaction.
@@ -142,6 +147,7 @@ spec:
                       type: string
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               observedGeneration:
                 description: observedGeneration is the last generation change you've
                   dealt with

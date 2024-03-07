@@ -817,6 +817,17 @@ spec:
                   is ignored.
                 type: boolean
             type: object
+            x-kubernetes-validations:
+            - message: invalid value for IPForwarding, valid values are 'Restricted'
+                or 'Global'
+              rule: '!has(self.defaultNetwork) || !has(self.defaultNetwork.ovnKubernetesConfig)
+                || !has(self.defaultNetwork.ovnKubernetesConfig.gatewayConfig) ||
+                !has(self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding)
+                || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding
+                == oldSelf.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding
+                || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding
+                == ''Restricted'' || self.defaultNetwork.ovnKubernetesConfig.gatewayConfig.ipForwarding
+                == ''Global'''
           status:
             description: NetworkStatus is detailed operator status, which is distilled
               up to the Network clusteroperator object.
@@ -837,8 +848,13 @@ spec:
                       type: string
                     type:
                       type: string
+                  required:
+                  - type
                   type: object
                 type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               generations:
                 description: generations are used to determine when an item needs
                   to be reconciled or has changed in a way that needs a reaction.
@@ -871,6 +887,7 @@ spec:
                       type: string
                   type: object
                 type: array
+                x-kubernetes-list-type: atomic
               observedGeneration:
                 description: observedGeneration is the last generation change you've
                   dealt with
