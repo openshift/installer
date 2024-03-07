@@ -9,13 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/IBM-Cloud/bluemix-go"
-	"github.com/IBM-Cloud/bluemix-go/api/resource/resourcev2/controllerv2"
-	"github.com/IBM-Cloud/bluemix-go/authentication"
 	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/IBM-Cloud/bluemix-go/http"
-	"github.com/IBM-Cloud/bluemix-go/rest"
-	bxsession "github.com/IBM-Cloud/bluemix-go/session"
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -27,7 +21,6 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
-	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -69,72 +62,6 @@ type User struct {
 	cloudName  string `default:"bluemix"`
 	cloudType  string `default:"public"`
 	generation int    `default:"2"`
-}
-
-func fetchUserDetails(bxSession *bxsession.Session, generation int) (*User, error) {
-	config := bxSession.Config
-	user := User{}
-	var bluemixToken string
-
-	if strings.HasPrefix(config.IAMAccessToken, "Bearer") {
-		bluemixToken = config.IAMAccessToken[7:len(config.IAMAccessToken)]
-	} else {
-		bluemixToken = config.IAMAccessToken
-	}
-
-	token, err := jwt.Parse(bluemixToken, func(token *jwt.Token) (interface{}, error) {
-		return "", nil
-	})
-	if err != nil && !strings.Contains(err.Error(), "key is of invalid type") {
-		return &user, err
-	}
-
-	claims := token.Claims.(jwt.MapClaims)
-	if email, ok := claims["email"]; ok {
-		user.Email = email.(string)
-	}
-	user.ID = claims["id"].(string)
-	user.Account = claims["account"].(map[string]interface{})["bss"].(string)
-	iss := claims["iss"].(string)
-	if strings.Contains(iss, "https://iam.cloud.ibm.com") {
-		user.cloudName = "bluemix"
-	} else {
-		user.cloudName = "staging"
-	}
-	user.cloudType = "public"
-
-	user.generation = generation
-	return &user, nil
-}
-
-// GetRegion converts from a zone into a region.
-func GetRegion(zone string) (region string, err error) {
-	err = nil
-	switch {
-	case strings.HasPrefix(zone, "dal"), strings.HasPrefix(zone, "us-south"):
-		region = "us-south"
-	case strings.HasPrefix(zone, "sao"):
-		region = "sao"
-	case strings.HasPrefix(zone, "us-east"):
-		region = "us-east"
-	case strings.HasPrefix(zone, "tor"):
-		region = "tor"
-	case strings.HasPrefix(zone, "eu-de-"):
-		region = "eu-de"
-	case strings.HasPrefix(zone, "lon"):
-		region = "lon"
-	case strings.HasPrefix(zone, "syd"):
-		region = "syd"
-	case strings.HasPrefix(zone, "tok"):
-		region = "tok"
-	case strings.HasPrefix(zone, "osa"):
-		region = "osa"
-	case strings.HasPrefix(zone, "mon"):
-		region = "mon"
-	default:
-		return "", fmt.Errorf("region not found for the zone: %s", zone)
-	}
-	return
 }
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -444,23 +371,14 @@ func (o *ClusterUninstaller) newAuthenticator(apikey string) (core.Authenticator
 
 func (o *ClusterUninstaller) loadSDKServices() error {
 	var (
-		bxSession             *bxsession.Session
-		tokenProviderEndpoint = "https://iam.cloud.ibm.com" //nolint:gosec // not a credential despite `token` in its name
-		tokenRefresher        *authentication.IAMAuthRepository
-		err                   error
-		ctrlv2                controllerv2.ResourceControllerAPIV2
-		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
-		authenticator         core.Authenticator
-		serviceInstances      cloudResources
-		versionDate           = "2023-07-04"
-		tgOptions             *transitgatewayapisv1.TransitGatewayApisV1Options
+		err              error
+		authenticator    core.Authenticator
+		versionDate      = "2023-07-04"
+		tgOptions        *transitgatewayapisv1.TransitGatewayApisV1Options
+		serviceInstances cloudResources
 	)
 
 	defer func() {
-		o.Logger.Debugf("loadSDKServices: bxSession = %v", bxSession)
-		o.Logger.Debugf("loadSDKServices: tokenRefresher = %v", tokenRefresher)
-		o.Logger.Debugf("loadSDKServices: ctrlv2 = %v", ctrlv2)
-		o.Logger.Debugf("loadSDKServices: resourceClientV2 = %v", resourceClientV2)
 		o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
 		o.Logger.Debugf("loadSDKServices: o.piSession = %v", o.piSession)
 		o.Logger.Debugf("loadSDKServices: o.instanceClient = %v", o.instanceClient)
@@ -477,41 +395,9 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: missing APIKey in metadata.json")
 	}
 
-	bxSession, err = bxsession.New(&bluemix.Config{
-		BluemixAPIKey:         o.APIKey,
-		TokenProviderEndpoint: &tokenProviderEndpoint,
-		Debug:                 false,
-	})
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: bxsession.New: %w", err)
-	}
-
-	tokenRefresher, err = authentication.NewIAMAuthRepository(bxSession.Config, &rest.Client{
-		DefaultHeader: gohttp.Header{
-			"User-Agent": []string{http.UserAgent()},
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: authentication.NewIAMAuthRepository: %w", err)
-	}
-	err = tokenRefresher.AuthenticateAPIKey(bxSession.Config.BluemixAPIKey)
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: tokenRefresher.AuthenticateAPIKey: %w", err)
-	}
-
-	user, err := fetchUserDetails(bxSession, 2)
+	user, err := powervs.FetchUserDetails(o.APIKey)
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: fetchUserDetails: %w", err)
-	}
-
-	ctrlv2, err = controllerv2.New(bxSession)
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: controllerv2.New: %w", err)
-	}
-
-	resourceClientV2 = ctrlv2.ResourceServiceInstanceV2()
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %w", err)
 	}
 
 	authenticator, err = o.newAuthenticator(o.APIKey)
