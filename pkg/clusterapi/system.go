@@ -18,6 +18,7 @@ import (
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	powervsic "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process/addr"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -26,6 +27,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -224,6 +226,32 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				map[string]string{
 					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
 					"EXP_CLUSTER_RESOURCE_SET":              "true",
+				},
+			),
+		)
+	case powervs.Name:
+		// We need to prompt for missing variables because NewPISession requires them!
+		bxClient, err := powervsic.NewBxClient(true)
+		if err != nil {
+			return fmt.Errorf("failed to create a BxClient in Run: %w", err)
+		}
+		APIKey := bxClient.GetBxClientAPIKey()
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&IBMCloud,
+				[]string{
+					"--provider-id-fmt=v2",
+					"--v=5",
+					"--health-addr={{suggestHealthHostPort}}",
+					"--webhook-port={{.WebhookPort}}",
+					"--webhook-cert-dir={{.WebhookCertDir}}",
+				},
+				map[string]string{
+					"IBMCLOUD_AUTH_TYPE": "iam",
+					"IBMCLOUD_APIKEY":    APIKey,
+					"IBMCLOUD_AUTH_URL":  "https://iam.cloud.ibm.com",
+					"LOGLEVEL":           "5",
 				},
 			),
 		)
