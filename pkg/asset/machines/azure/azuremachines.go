@@ -83,6 +83,11 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			StorageAccountType: mpool.DiskType,
 		},
 	}
+	if pool.Platform.Azure.DiskEncryptionSet != nil {
+		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
+			ID: mpool.OSDisk.DiskEncryptionSet.ToID(),
+		}
+	}
 	ultrassd := mpool.UltraSSDCapability == "Enabled"
 	additionalCapabilities := &capz.AdditionalCapabilities{
 		UltraSSDEnabled: &ultrassd,
@@ -161,7 +166,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			Object: controlPlaneMachine,
 		})
 	}
-
+	osDisk.ManagedDisk.DiskEncryptionSet = nil
 	bootstrapAzureMachine := &capz.AzureMachine{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
