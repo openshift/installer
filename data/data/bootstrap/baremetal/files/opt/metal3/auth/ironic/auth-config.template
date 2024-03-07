@@ -1,4 +1,0 @@
-[ironic]
-auth_type = http_basic
-username = {{.PlatformData.BareMetal.IronicUsername}}
-password = {{.PlatformData.BareMetal.IronicPassword}}
