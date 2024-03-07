@@ -4,34 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
-	gohttp "net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	survey "github.com/AlecAivazis/survey/v2"
-	surveycore "github.com/AlecAivazis/survey/v2/core"
-	"github.com/IBM-Cloud/bluemix-go"
-	"github.com/IBM-Cloud/bluemix-go/authentication"
-	"github.com/IBM-Cloud/bluemix-go/http"
-	"github.com/IBM-Cloud/bluemix-go/rest"
-	bxsession "github.com/IBM-Cloud/bluemix-go/session"
-	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
-	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	machinev1 "github.com/openshift/api/machine/v1"
-	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/powervs"
 )
 
 var (
@@ -42,7 +25,6 @@ var (
 
 // BxClient is struct which provides bluemix session details
 type BxClient struct {
-	*bxsession.Session
 	APIKey               string
 	Region               string
 	Zone                 string
@@ -79,28 +61,32 @@ type SessionVars struct {
 	PowerVSResourceGroup string
 }
 
-func authenticateAPIKey(sess *bxsession.Session) error {
-	config := sess.Config
-	tokenRefresher, err := authentication.NewIAMAuthRepository(config, &rest.Client{
-		DefaultHeader: gohttp.Header{
-			"User-Agent": []string{http.UserAgent()},
-		},
-	})
+func authenticateAPIKey(apikey string) (string, error) {
+	a, err := core.NewIamAuthenticatorBuilder().SetApiKey(apikey).Build()
 	if err != nil {
-		return err
+		return "", err
 	}
-	return tokenRefresher.AuthenticateAPIKey(config.BluemixAPIKey)
+	token, err := a.GetToken()
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
-func fetchUserDetails(sess *bxsession.Session) (*User, error) {
-	config := sess.Config
+// FetchUserDetails returns User details from the given API key.
+func FetchUserDetails(apikey string) (*User, error) {
 	user := User{}
 	var bluemixToken string
 
-	if strings.HasPrefix(config.IAMAccessToken, "Bearer") {
-		bluemixToken = config.IAMAccessToken[7:len(config.IAMAccessToken)]
+	iamToken, err := authenticateAPIKey(apikey)
+	if err != nil {
+		return &user, err
+	}
+
+	if strings.HasPrefix(iamToken, "Bearer ") {
+		bluemixToken = iamToken[len("Bearer "):]
 	} else {
-		bluemixToken = config.IAMAccessToken
+		bluemixToken = iamToken
 	}
 
 	token, err := jwt.Parse(bluemixToken, func(token *jwt.Token) (interface{}, error) {
@@ -134,29 +120,10 @@ func NewBxClient(survey bool) (*BxClient, error) {
 	c.ServiceInstanceID = sv.ServiceInstanceID
 	c.PowerVSResourceGroup = sv.PowerVSResourceGroup
 
-	bxSess, err := bxsession.New(&bluemix.Config{
-		BluemixAPIKey: sv.APIKey,
-	})
+	c.User, err = FetchUserDetails(c.APIKey)
 	if err != nil {
 		return nil, err
 	}
-	if bxSess == nil {
-		return nil, errors.New("failed to create bxsession.New in NewBxClient")
-	}
-
-	c.Session = bxSess
-
-	err = authenticateAPIKey(bxSess)
-	if err != nil {
-		return nil, err
-	}
-
-	c.User, err = fetchUserDetails(bxSess)
-	if err != nil {
-		return nil, err
-	}
-
-	c.Session.Config.Region = powervs.Regions[sv.Region].VPCRegion
 
 	return c, nil
 }
