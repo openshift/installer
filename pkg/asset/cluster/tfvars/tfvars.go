@@ -775,29 +775,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case baremetal.Name:
-		var imageCacheIP string
-		if installConfig.Config.Platform.BareMetal.ProvisioningNetwork == baremetal.DisabledProvisioningNetwork {
-			imageCacheIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
-		} else {
-			imageCacheIP = installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP
-		}
-
 		data, err = baremetaltfvars.TFVars(
-			*installConfig.Config.ControlPlane.Replicas,
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
-			installConfig.Config.Platform.BareMetal.APIVIPs,
-			imageCacheIP,
 			string(*rhcosBootstrapImage),
 			installConfig.Config.Platform.BareMetal.ExternalBridge,
 			installConfig.Config.Platform.BareMetal.ExternalMACAddress,
 			installConfig.Config.Platform.BareMetal.ProvisioningBridge,
 			installConfig.Config.Platform.BareMetal.ProvisioningMACAddress,
-			installConfig.Config.Platform.BareMetal.Hosts,
-			mastersAsset.HostFiles,
-			string(*rhcosImage),
-			ironicCreds.Username,
-			ironicCreds.Password,
-			masterIgn,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
