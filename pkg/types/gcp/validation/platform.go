@@ -41,6 +41,7 @@ var (
 		"europe-west12":           "Turin, Italy",
 		"europe-southwest1":       "Madrid, Spain",
 		"me-central1":             "Doha, Qatar, Middle East",
+		"me-central2":             "Dammam, Saudi Arabia, Middle East",
 		"me-west1":                "Tel Aviv, Israel",
 		"northamerica-northeast1": "Montréal, Québec, Canada",
 		"northamerica-northeast2": "Toronto, Ontario, Canada",
