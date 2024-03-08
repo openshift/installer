@@ -1,20 +1,29 @@
 package aws
 
 import (
+	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
 )
 
 //go:generate mockgen -source=./route53.go -destination=mock/awsroute53_generated.go -package=mock
+
+// regions for which ALIAS records are not available
+// https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-r53.html
+var cnameRegions = sets.New[string]("us-gov-west-1", "us-gov-east-1")
 
 // API represents the calls made to the API.
 type API interface {
@@ -148,37 +157,227 @@ func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
-func (c *Client) CreateOrUpdateRecord(ic *types.InstallConfig, target string, cfg *aws.Config) error {
-	zone, err := c.GetBaseDomain(ic.BaseDomain)
-	if err != nil {
-		return err
+func (c *Client) CreateOrUpdateRecord(ctx context.Context, ic *types.InstallConfig, target string, intTarget string, phzID string) error {
+	useCNAME := cnameRegions.Has(ic.AWS.Region)
+	aliasZoneID := hostedZoneIDPerRegionNLBMap[ic.AWS.Region]
+
+	apiName := fmt.Sprintf("api.%s.", ic.ClusterDomain())
+	apiIntName := fmt.Sprintf("api-int.%s.", ic.ClusterDomain())
+
+	// Create api record in public zone
+	if ic.Publish == types.ExternalPublishingStrategy {
+		zone, err := c.GetBaseDomain(ic.BaseDomain)
+		if err != nil {
+			return err
+		}
+
+		svc := route53.New(c.ssn) // we dont want to assume role here
+		if _, err := createRecord(ctx, svc, aws.StringValue(zone.Id), apiName, target, aliasZoneID, useCNAME); err != nil {
+			return fmt.Errorf("failed to create records for api: %w", err)
+		}
+		logrus.Debugln("Created public API record in public zone")
 	}
 
-	params := &route53.ChangeResourceRecordSetsInput{
-		ChangeBatch: &route53.ChangeBatch{
-			Comment: aws.String(fmt.Sprintf("Creating record for api and api-int in domain %s", ic.ClusterDomain())),
-		},
-		HostedZoneId: zone.Id,
+	// Create service with assumed role for PHZ
+	svc := route53.New(c.ssn, GetR53ClientCfg(c.ssn, ic.AWS.HostedZoneRole))
+
+	// Create api record in private zone
+	if _, err := createRecord(ctx, svc, phzID, apiName, intTarget, aliasZoneID, useCNAME); err != nil {
+		return fmt.Errorf("failed to create records for api: %w", err)
 	}
-	for _, prefix := range []string{"api", "api-int"} {
-		params.ChangeBatch.Changes = append(params.ChangeBatch.Changes, &route53.Change{
-			Action: aws.String("UPSERT"),
-			ResourceRecordSet: &route53.ResourceRecordSet{
-				Name: aws.String(fmt.Sprintf("%s.%s.", prefix, ic.ClusterDomain())),
-				Type: aws.String("A"),
-				AliasTarget: &route53.AliasTarget{
-					DNSName:              aws.String(target),
-					HostedZoneId:         aws.String(hostedZoneIDPerRegionNLBMap[ic.AWS.Region]),
-					EvaluateTargetHealth: aws.Bool(true),
-				},
-			},
+	logrus.Debugln("Created public API record in private zone")
+
+	// Create api-int record in private zone
+	if _, err := createRecord(ctx, svc, phzID, apiIntName, intTarget, aliasZoneID, useCNAME); err != nil {
+		return fmt.Errorf("failed to create records for api-int: %w", err)
+	}
+	logrus.Debugln("Created private API record in private zone")
+
+	return nil
+}
+
+func createRecord(ctx context.Context, client *route53.Route53, zoneID, name, dnsName, aliasZoneID string, useCNAME bool) (*route53.ChangeInfo, error) {
+	recordSet := &route53.ResourceRecordSet{
+		Name: aws.String(name),
+	}
+	if useCNAME {
+		recordSet.SetType("CNAME")
+		recordSet.SetTTL(10)
+		recordSet.SetResourceRecords([]*route53.ResourceRecord{
+			{Value: aws.String(dnsName)},
+		})
+	} else {
+		recordSet.SetType("A")
+		recordSet.SetAliasTarget(&route53.AliasTarget{
+			DNSName:              aws.String(dnsName),
+			HostedZoneId:         aws.String(aliasZoneID),
+			EvaluateTargetHealth: aws.Bool(false),
 		})
 	}
-	svc := route53.New(c.ssn, cfg)
-	if _, err := svc.ChangeResourceRecordSets(params); err != nil {
-		return fmt.Errorf("failed to create records for api/api-int: %w", err)
+	input := &route53.ChangeResourceRecordSetsInput{
+		HostedZoneId: aws.String(zoneID),
+		ChangeBatch: &route53.ChangeBatch{
+			Comment: aws.String(fmt.Sprintf("Creating record %s", name)),
+			Changes: []*route53.Change{
+				{
+					Action:            aws.String("UPSERT"),
+					ResourceRecordSet: recordSet,
+				},
+			},
+		},
 	}
-	return nil
+	res, err := client.ChangeResourceRecordSetsWithContext(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.ChangeInfo, nil
+}
+
+// HostedZoneInput defines the input parameters for hosted zone creation.
+type HostedZoneInput struct {
+	Name     string
+	InfraID  string
+	VpcID    string
+	Region   string
+	Role     string
+	UserTags map[string]string
+}
+
+// CreateHostedZone creates a private hosted zone.
+func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (*route53.HostedZone, error) {
+	cfg := GetR53ClientCfg(c.ssn, input.Role)
+	svc := route53.New(c.ssn, cfg)
+
+	callRef := fmt.Sprintf("%d", time.Now().Unix())
+	res, err := svc.CreateHostedZoneWithContext(ctx, &route53.CreateHostedZoneInput{
+		CallerReference: aws.String(callRef),
+		Name:            aws.String(input.Name),
+		HostedZoneConfig: &route53.HostedZoneConfig{
+			PrivateZone: aws.Bool(true),
+			Comment:     aws.String("Created by Openshift Installer"),
+		},
+		VPC: &route53.VPC{
+			VPCId:     aws.String(input.VpcID),
+			VPCRegion: aws.String(input.Region),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating private hosted zone: %w", err)
+	}
+
+	if res == nil {
+		return nil, fmt.Errorf("error creating private hosted zone: %w", err)
+	}
+
+	// Tag the hosted zone
+	tags := mergeTags(input.UserTags, map[string]string{
+		"Name": fmt.Sprintf("%s-int", input.InfraID),
+	})
+	_, err = svc.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
+		ResourceType: aws.String("hostedzone"),
+		ResourceId:   res.HostedZone.Id,
+		AddTags:      r53Tags(tags),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to tag private hosted zone: %w", err)
+	}
+
+	// Set SOA minimum TTL
+	recordSet, err := existingRecordSet(ctx, svc, res.HostedZone.Id, input.Name, "SOA")
+	if err != nil {
+		return nil, fmt.Errorf("failed to find SOA record set for private zone: %w", err)
+	}
+	if len(recordSet.ResourceRecords) == 0 || recordSet.ResourceRecords[0] == nil || recordSet.ResourceRecords[0].Value == nil {
+		return nil, fmt.Errorf("failed to find SOA record for private zone")
+	}
+	record := recordSet.ResourceRecords[0]
+	fields := strings.Split(aws.StringValue(record.Value), " ")
+	if len(fields) != 7 {
+		return nil, fmt.Errorf("SOA record value has %d fields, expected 7", len(fields))
+	}
+	fields[0] = "60"
+	record.Value = aws.String(strings.Join(fields, " "))
+	req, err := svc.ChangeResourceRecordSetsWithContext(ctx, &route53.ChangeResourceRecordSetsInput{
+		HostedZoneId: res.HostedZone.Id,
+		ChangeBatch: &route53.ChangeBatch{
+			Changes: []*route53.Change{
+				{
+					Action:            aws.String("UPSERT"),
+					ResourceRecordSet: recordSet,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to set SOA TTL to minimum: %w", err)
+	}
+
+	if err = svc.WaitUntilResourceRecordSetsChangedWithContext(ctx, &route53.GetChangeInput{Id: req.ChangeInfo.Id}); err != nil {
+		return nil, fmt.Errorf("failed to wait for SOA TTL change: %w", err)
+	}
+
+	return res.HostedZone, nil
+}
+
+func existingRecordSet(ctx context.Context, client *route53.Route53, zoneID *string, recordName string, recordType string) (*route53.ResourceRecordSet, error) {
+	name := fqdn(strings.ToLower(recordName))
+	res, err := client.ListResourceRecordSetsWithContext(ctx, &route53.ListResourceRecordSetsInput{
+		HostedZoneId:    zoneID,
+		StartRecordName: aws.String(name),
+		StartRecordType: aws.String(recordType),
+		MaxItems:        aws.String("1"),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list record sets: %w", err)
+	}
+	for _, rs := range res.ResourceRecordSets {
+		resName := strings.ToLower(cleanRecordName(aws.StringValue(rs.Name)))
+		resType := strings.ToUpper(aws.StringValue(rs.Type))
+		if resName == name && resType == recordType {
+			return rs, nil
+		}
+	}
+
+	return nil, fmt.Errorf("not found")
+}
+
+func fqdn(name string) string {
+	n := len(name)
+	if n == 0 || name[n-1] == '.' {
+		return name
+	}
+	return name + "."
+}
+
+func cleanRecordName(name string) string {
+	s, err := strconv.Unquote(`"` + name + `"`)
+	if err != nil {
+		return name
+	}
+	return s
+}
+
+func mergeTags(lhsTags, rhsTags map[string]string) map[string]string {
+	merged := make(map[string]string, len(lhsTags)+len(rhsTags))
+	for k, v := range lhsTags {
+		merged[k] = v
+	}
+	for k, v := range rhsTags {
+		merged[k] = v
+	}
+	return merged
+}
+
+func r53Tags(tags map[string]string) []*route53.Tag {
+	rtags := make([]*route53.Tag, 0, len(tags))
+	for k, v := range tags {
+		rtags = append(rtags, &route53.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+	return rtags
 }
 
 // See https://docs.aws.amazon.com/general/latest/gr/elb.html#elb_region
