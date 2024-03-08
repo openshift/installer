@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package secretsmanager provides a way to interact with AWS Secrets Manager.
 package secretsmanager
 
 import (

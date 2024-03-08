@@ -3470,6 +3470,8 @@ spec:
             description: AWSClusterTemplateSpec defines the desired state of AWSClusterTemplate.
             properties:
               template:
+                description: AWSClusterTemplateResource defines the desired state
+                  of AWSClusterTemplate.
                 properties:
                   metadata:
                     description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
@@ -3899,6 +3901,8 @@ spec:
             description: AWSClusterTemplateSpec defines the desired state of AWSClusterTemplate.
             properties:
               template:
+                description: AWSClusterTemplateResource defines the desired state
+                  of AWSClusterTemplateResource.
                 properties:
                   metadata:
                     description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
@@ -6905,6 +6909,40 @@ spec:
                 description: Ignition defined options related to the bootstrapping
                   systems where Ignition is used.
                 properties:
+                  proxy:
+                    description: Proxy defines proxy settings for Ignition. Only valid
+                      for Ignition versions 3.1 and above.
+                    properties:
+                      httpProxy:
+                        description: HTTPProxy is the HTTP proxy to use for Ignition.
+                          A single URL that specifies the proxy server to use for
+                          HTTP and HTTPS requests, unless overridden by the HTTPSProxy
+                          or NoProxy options.
+                        type: string
+                      httpsProxy:
+                        description: HTTPSProxy is the HTTPS proxy to use for Ignition.
+                          A single URL that specifies the proxy server to use for
+                          HTTPS requests, unless overridden by the NoProxy option.
+                        type: string
+                      noProxy:
+                        description: "NoProxy is the list of domains to not proxy
+                          for Ignition. Specifies a list of strings to hosts that
+                          should be excluded from proxying. \n Each value is represented
+                          by: - An IP address prefix (1.2.3.4) - An IP address prefix
+                          in CIDR notation (1.2.3.4/8) - A domain name - A domain
+                          name matches that name and all subdomains - A domain name
+                          with a leading . matches subdomains only - A special DNS
+                          label (*), indicates that no proxying should be done \n
+                          An IP address prefix and domain name can also include a
+                          literal port number (1.2.3.4:80)."
+                        items:
+                          description: IgnitionNoProxy defines the list of domains
+                            to not proxy for Ignition.
+                          maxLength: 2048
+                          type: string
+                        maxItems: 64
+                        type: array
+                    type: object
                   storageType:
                     default: ClusterObjectStore
                     description: "StorageType defines how to store the boostrap user
@@ -6927,6 +6965,24 @@ spec:
                     - ClusterObjectStore
                     - UnencryptedUserData
                     type: string
+                  tls:
+                    description: TLS defines TLS settings for Ignition. Only valid
+                      for Ignition versions 3.1 and above.
+                    properties:
+                      certificateAuthorities:
+                        description: CASources defines the list of certificate authorities
+                          to use for Ignition. The value is the certificate bundle
+                          (in PEM format). The bundle can contain multiple concatenated
+                          certificates. Supported schemes are http, https, tftp, s3,
+                          arn, gs, and `data` (RFC 2397) URL scheme.
+                        items:
+                          description: IgnitionCASource defines the source of the
+                            certificate authority to use for Ignition.
+                          maxLength: 65536
+                          type: string
+                        maxItems: 64
+                        type: array
+                    type: object
                   version:
                     default: "2.3"
                     description: Version defines which version of Ignition will be
@@ -7924,6 +7980,42 @@ spec:
                         description: Ignition defined options related to the bootstrapping
                           systems where Ignition is used.
                         properties:
+                          proxy:
+                            description: Proxy defines proxy settings for Ignition.
+                              Only valid for Ignition versions 3.1 and above.
+                            properties:
+                              httpProxy:
+                                description: HTTPProxy is the HTTP proxy to use for
+                                  Ignition. A single URL that specifies the proxy
+                                  server to use for HTTP and HTTPS requests, unless
+                                  overridden by the HTTPSProxy or NoProxy options.
+                                type: string
+                              httpsProxy:
+                                description: HTTPSProxy is the HTTPS proxy to use
+                                  for Ignition. A single URL that specifies the proxy
+                                  server to use for HTTPS requests, unless overridden
+                                  by the NoProxy option.
+                                type: string
+                              noProxy:
+                                description: "NoProxy is the list of domains to not
+                                  proxy for Ignition. Specifies a list of strings
+                                  to hosts that should be excluded from proxying.
+                                  \n Each value is represented by: - An IP address
+                                  prefix (1.2.3.4) - An IP address prefix in CIDR
+                                  notation (1.2.3.4/8) - A domain name - A domain
+                                  name matches that name and all subdomains - A domain
+                                  name with a leading . matches subdomains only -
+                                  A special DNS label (*), indicates that no proxying
+                                  should be done \n An IP address prefix and domain
+                                  name can also include a literal port number (1.2.3.4:80)."
+                                items:
+                                  description: IgnitionNoProxy defines the list of
+                                    domains to not proxy for Ignition.
+                                  maxLength: 2048
+                                  type: string
+                                maxItems: 64
+                                type: array
+                            type: object
                           storageType:
                             default: ClusterObjectStore
                             description: "StorageType defines how to store the boostrap
@@ -7948,6 +8040,25 @@ spec:
                             - ClusterObjectStore
                             - UnencryptedUserData
                             type: string
+                          tls:
+                            description: TLS defines TLS settings for Ignition. Only
+                              valid for Ignition versions 3.1 and above.
+                            properties:
+                              certificateAuthorities:
+                                description: CASources defines the list of certificate
+                                  authorities to use for Ignition. The value is the
+                                  certificate bundle (in PEM format). The bundle can
+                                  contain multiple concatenated certificates. Supported
+                                  schemes are http, https, tftp, s3, arn, gs, and
+                                  `data` (RFC 2397) URL scheme.
+                                items:
+                                  description: IgnitionCASource defines the source
+                                    of the certificate authority to use for Ignition.
+                                  maxLength: 65536
+                                  type: string
+                                maxItems: 64
+                                type: array
+                            type: object
                           version:
                             default: "2.3"
                             description: Version defines which version of Ignition
@@ -14212,6 +14323,7 @@ spec:
     name: v1beta2
     schema:
       openAPIV3Schema:
+        description: ROSACluster is the Schema for the ROSAClusters API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -14226,6 +14338,7 @@ spec:
           metadata:
             type: object
           spec:
+            description: ROSAClusterSpec defines the desired state of ROSACluster.
             properties:
               controlPlaneEndpoint:
                 description: ControlPlaneEndpoint represents the endpoint used to
@@ -14244,7 +14357,7 @@ spec:
                 type: object
             type: object
           status:
-            description: ROSAClusterStatus defines the observed state of ROSACluster
+            description: ROSAClusterStatus defines the observed state of ROSACluster.
             properties:
               failureDomains:
                 additionalProperties:
@@ -14312,6 +14425,7 @@ spec:
     name: v1beta2
     schema:
       openAPIV3Schema:
+        description: ROSAControlPlane is the Schema for the ROSAControlPlanes API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -14326,7 +14440,14 @@ spec:
           metadata:
             type: object
           spec:
+            description: RosaControlPlaneSpec defines the desired state of ROSAControlPlane.
             properties:
+              additionalTags:
+                additionalProperties:
+                  type: string
+                description: AdditionalTags are user-defined tags to be added on the
+                  AWS resources associated with the control plane.
+                type: object
               autoscaling:
                 description: Autoscaling specifies auto scaling behaviour for the
                   MachinePools.
@@ -14382,6 +14503,19 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              endpointAccess:
+                default: Public
+                description: EndpointAccess specifies the publishing scope of cluster
+                  endpoints. The default is Public.
+                enum:
+                - Public
+                - Private
+                type: string
+              etcdEncryptionKMSArn:
+                description: EtcdEncryptionKMSArn is the ARN of the KMS key used to
+                  encrypt etcd. The key itself needs to be created out-of-band by
+                  the user and tagged with `red-hat:true`.
+                type: string
               identityRef:
                 description: IdentityRef is a reference to an identity to be used
                   when reconciling the managed control plane. If no identity is specified,
@@ -14623,9 +14757,6 @@ spec:
               version:
                 description: OpenShift semantic version, for example "4.14.5".
                 type: string
-                x-kubernetes-validations:
-                - message: version must be a valid semantic version
-                  rule: self.matches('^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$')
               workerRoleARN:
                 type: string
             required:
@@ -14641,9 +14772,10 @@ spec:
             - workerRoleARN
             type: object
           status:
+            description: RosaControlPlaneStatus defines the observed state of ROSAControlPlane.
             properties:
               conditions:
-                description: Conditions specifies the cpnditions for the managed control
+                description: Conditions specifies the conditions for the managed control
                   plane
                 items:
                   description: Condition defines an observation of a Cluster API resource
@@ -14715,7 +14847,7 @@ spec:
                 type: boolean
               oidcEndpointURL:
                 description: OIDCEndpointURL is the endpoint url for the managed OIDC
-                  porvider.
+                  provider.
                 type: string
               ready:
                 default: false
@@ -14784,6 +14916,12 @@ spec:
           spec:
             description: RosaMachinePoolSpec defines the desired state of RosaMachinePool.
             properties:
+              additionalSecurityGroups:
+                description: AdditionalSecurityGroups is an optional set of security
+                  groups to associate with all node instances of the machine pool.
+                items:
+                  type: string
+                type: array
               autoRepair:
                 default: false
                 description: AutoRepair specifies whether health checks should be
@@ -14831,14 +14969,49 @@ spec:
                 type: array
               subnet:
                 type: string
-              version:
-                description: Version specifies the penshift version of the nodes associated
-                  with this machinepool. ROSAControlPlane version is used if not set.
-                type: string
                 x-kubernetes-validations:
-                - message: version must be a valid semantic version
-                  rule: self.matches('^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$')
+                - message: subnet is immutable
+                  rule: self == oldSelf
+              taints:
+                description: Taints specifies the taints to apply to the nodes of
+                  the machine pool
+                items:
+                  description: RosaTaint represents a taint to be applied to a node.
+                  properties:
+                    effect:
+                      description: The effect of the taint on pods that do not tolerate
+                        the taint. Valid effects are NoSchedule, PreferNoSchedule
+                        and NoExecute.
+                      enum:
+                      - NoSchedule
+                      - PreferNoSchedule
+                      - NoExecute
+                      type: string
+                    key:
+                      description: The taint key to be applied to a node.
+                      type: string
+                    value:
+                      description: The taint value corresponding to the taint key.
+                      pattern: ^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$
+                      type: string
+                  required:
+                  - effect
+                  - key
+                  type: object
+                type: array
+              tuningConfigs:
+                description: TuningConfigs specifies the names of the tuning configs
+                  to be applied to this MachinePool. Tuning configs must already exist.
+                items:
+                  type: string
+                type: array
+              version:
+                description: Version specifies the OpenShift version of the nodes
+                  associated with this machinepool. ROSAControlPlane version is used
+                  if not set.
+                type: string
             required:
+            - instanceType
             - nodePoolName
             type: object
           status:
@@ -15159,6 +15332,12 @@ rules:
 - apiGroups:
   - controlplane.cluster.x-k8s.io
   resources:
+  - rosacontrolplanes/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - controlplane.cluster.x-k8s.io
+  resources:
   - rosacontrolplanes/status
   verbs:
   - get
@@ -15393,6 +15572,12 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
+  - rosamachinepools/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
   - rosamachinepools/status
   verbs:
   - get
@@ -15516,7 +15701,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: registry.k8s.io/cluster-api-aws/cluster-api-aws-controller:v2.4.0
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.4.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -15812,6 +15997,28 @@ webhooks:
     service:
       name: capa-webhook-service
       namespace: capa-system
+      path: /mutate-infrastructure-cluster-x-k8s-io-v1beta2-rosamachinepool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.rosamachinepool.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rosamachinepools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capa-webhook-service
+      namespace: capa-system
       path: /mutate-bootstrap-cluster-x-k8s-io-v1beta2-eksconfig
   failurePolicy: Fail
   matchPolicy: Equivalent
@@ -15870,6 +16077,28 @@ webhooks:
     - UPDATE
     resources:
     - awsmanagedcontrolplanes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capa-webhook-service
+      namespace: capa-system
+      path: /mutate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: default.rosacontrolplanes.controlplane.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - controlplane.cluster.x-k8s.io
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rosacontrolplanes
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -16108,6 +16337,28 @@ webhooks:
     service:
       name: capa-webhook-service
       namespace: capa-system
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta2-rosamachinepool
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.rosamachinepool.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rosamachinepools
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capa-webhook-service
+      namespace: capa-system
       path: /validate-bootstrap-cluster-x-k8s-io-v1beta2-eksconfig
   failurePolicy: Fail
   matchPolicy: Equivalent
@@ -16166,4 +16417,26 @@ webhooks:
     - UPDATE
     resources:
     - awsmanagedcontrolplanes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: capa-webhook-service
+      namespace: capa-system
+      path: /validate-controlplane-cluster-x-k8s-io-v1beta2-rosacontrolplane
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: validation.rosacontrolplanes.controlplane.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - controlplane.cluster.x-k8s.io
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rosacontrolplanes
   sideEffects: None

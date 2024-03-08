@@ -98,11 +98,11 @@ func (s *Service) InstanceIfExists(id *string) (*infrav1.Instance, error) {
 
 	if len(out.Reservations) > 0 && len(out.Reservations[0].Instances) > 0 {
 		return s.SDKToInstance(out.Reservations[0].Instances[0])
-	} else {
-		// Failed to find instance with provider id.
-		record.Eventf(s.scope.InfraCluster(), "FailedFindInstances", "failed to find instance by providerId %q: %v", *id, err)
-		return nil, ErrInstanceNotFoundByID
 	}
+
+	// Failed to find instance with provider id.
+	record.Eventf(s.scope.InfraCluster(), "FailedFindInstances", "failed to find instance by providerId %q: %v", *id, err)
+	return nil, ErrInstanceNotFoundByID
 }
 
 // CreateInstance runs an ec2 instance.

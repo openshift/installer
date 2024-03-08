@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package userdata provides a way to generate ec2 instance userdata.
 package userdata
 
 const (

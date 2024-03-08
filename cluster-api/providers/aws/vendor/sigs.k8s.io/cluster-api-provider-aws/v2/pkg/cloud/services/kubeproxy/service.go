@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package kubeproxy provides a way to interact with the kube-proxy service.
 package kubeproxy
 
 import (

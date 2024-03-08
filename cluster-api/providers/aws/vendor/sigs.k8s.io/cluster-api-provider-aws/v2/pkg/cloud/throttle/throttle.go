@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package throttle provides a way to limit the number of requests to AWS services.
 package throttle
 
 import (
@@ -60,7 +61,7 @@ func (o *OperationLimiter) Match(r *request.Request) (bool, error) {
 			return false, err
 		}
 	}
-	return o.regexp.Match([]byte(r.Operation.Name)), nil
+	return o.regexp.MatchString(r.Operation.Name), nil
 }
 
 // LimitRequest will limit a request.

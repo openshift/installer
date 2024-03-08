@@ -169,6 +169,6 @@ func (c *Client) GetConnectionURL() string {
 	return c.ocm.URL()
 }
 
-func (c *Client) GetConnectionTokens() (string, string, error) {
-	return c.ocm.Tokens()
+func (c *Client) GetConnectionTokens(expiresIn ...time.Duration) (string, string, error) {
+	return c.ocm.Tokens(expiresIn...)
 }

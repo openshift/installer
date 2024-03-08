@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package logs provides a wrapper for the logr.Logger to be used as an AWS Logger.
 package logs
 
 import (

@@ -28,14 +28,17 @@ import (
 
 var oidcType = aws.String("oidc")
 
+// WaitIdentityProviderAssociatedProcedure waits for the identity provider to be associated.
 type WaitIdentityProviderAssociatedProcedure struct {
 	plan *plan
 }
 
+// Name returns the name of the procedure.
 func (w *WaitIdentityProviderAssociatedProcedure) Name() string {
 	return "wait_identity_provider_association"
 }
 
+// Do waits for the identity provider to be associated.
 func (w *WaitIdentityProviderAssociatedProcedure) Do(ctx context.Context) error {
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 		out, err := w.plan.eksClient.DescribeIdentityProviderConfigWithContext(ctx, &eks.DescribeIdentityProviderConfigInput{
@@ -62,14 +65,17 @@ func (w *WaitIdentityProviderAssociatedProcedure) Do(ctx context.Context) error 
 	return nil
 }
 
+// DisassociateIdentityProviderConfig disassociates the identity provider.
 type DisassociateIdentityProviderConfig struct {
 	plan *plan
 }
 
+// Name returns the name of the procedure.
 func (d *DisassociateIdentityProviderConfig) Name() string {
 	return "dissociate_identity_provider"
 }
 
+// Do disassociates the identity provider.
 func (d *DisassociateIdentityProviderConfig) Do(ctx context.Context) error {
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 		_, err := d.plan.eksClient.DisassociateIdentityProviderConfigWithContext(ctx, &eks.DisassociateIdentityProviderConfigInput{
@@ -92,14 +98,17 @@ func (d *DisassociateIdentityProviderConfig) Do(ctx context.Context) error {
 	return nil
 }
 
+// AssociateIdentityProviderProcedure associates the identity provider.
 type AssociateIdentityProviderProcedure struct {
 	plan *plan
 }
 
+// Name returns the name of the procedure.
 func (a *AssociateIdentityProviderProcedure) Name() string {
 	return "associate_identity_provider"
 }
 
+// Do associates the identity provider.
 func (a *AssociateIdentityProviderProcedure) Do(ctx context.Context) error {
 	oidc := a.plan.desiredIdentityProvider
 	input := &eks.AssociateIdentityProviderConfigInput{
@@ -128,15 +137,18 @@ func (a *AssociateIdentityProviderProcedure) Do(ctx context.Context) error {
 	return nil
 }
 
+// UpdatedIdentityProviderTagsProcedure updates the tags for the identity provider.
 type UpdatedIdentityProviderTagsProcedure struct {
 	plan *plan
 }
 
+// Name returns the name of the procedure.
 func (u *UpdatedIdentityProviderTagsProcedure) Name() string {
 	return "update_identity_provider_tags"
 }
 
-func (u *UpdatedIdentityProviderTagsProcedure) Do(ctx context.Context) error {
+// Do updates the tags for the identity provider.
+func (u *UpdatedIdentityProviderTagsProcedure) Do(_ context.Context) error {
 	arn := u.plan.currentIdentityProvider.IdentityProviderConfigArn
 	_, err := u.plan.eksClient.TagResource(&eks.TagResourceInput{
 		ResourceArn: &arn,
@@ -150,15 +162,18 @@ func (u *UpdatedIdentityProviderTagsProcedure) Do(ctx context.Context) error {
 	return nil
 }
 
+// RemoveIdentityProviderTagsProcedure removes the tags from the identity provider.
 type RemoveIdentityProviderTagsProcedure struct {
 	plan *plan
 }
 
+// Name returns the name of the procedure.
 func (r *RemoveIdentityProviderTagsProcedure) Name() string {
 	return "remove_identity_provider_tags"
 }
 
-func (r *RemoveIdentityProviderTagsProcedure) Do(ctx context.Context) error {
+// Do removes the tags from the identity provider.
+func (r *RemoveIdentityProviderTagsProcedure) Do(_ context.Context) error {
 	keys := make([]*string, 0, len(r.plan.currentIdentityProvider.Tags))
 
 	for key := range r.plan.currentIdentityProvider.Tags {

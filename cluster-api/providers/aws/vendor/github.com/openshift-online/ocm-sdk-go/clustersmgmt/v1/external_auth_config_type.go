@@ -23,8 +23,9 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // ExternalAuthConfig configuration
 type ExternalAuthConfig struct {
-	bitmap_ uint32
-	enabled bool
+	bitmap_       uint32
+	externalAuths *ExternalAuthList
+	enabled       bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -61,6 +62,25 @@ func (o *ExternalAuthConfig) GetEnabled() (value bool, ok bool) {
 	ok = o != nil && o.bitmap_&1 != 0
 	if ok {
 		value = o.enabled
+	}
+	return
+}
+
+// ExternalAuths returns the value of the 'external_auths' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *ExternalAuthConfig) ExternalAuths() *ExternalAuthList {
+	if o != nil && o.bitmap_&2 != 0 {
+		return o.externalAuths
+	}
+	return nil
+}
+
+// GetExternalAuths returns the value of the 'external_auths' attribute and
+// a flag indicating if the attribute has a value.
+func (o *ExternalAuthConfig) GetExternalAuths() (value *ExternalAuthList, ok bool) {
+	ok = o != nil && o.bitmap_&2 != 0
+	if ok {
+		value = o.externalAuths
 	}
 	return
 }

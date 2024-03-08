@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package mime provides a function to generate a multipart MIME document.
 package mime
 
 import (

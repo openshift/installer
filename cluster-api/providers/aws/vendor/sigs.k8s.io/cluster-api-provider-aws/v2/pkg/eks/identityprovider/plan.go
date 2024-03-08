@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package identityprovider provides a plan to manage EKS OIDC identity provider association.
 package identityprovider
 
 import (
@@ -46,7 +47,8 @@ type plan struct {
 	clusterName             string
 }
 
-func (p *plan) Create(ctx context.Context) ([]planner.Procedure, error) {
+// Create will create the plan (i.e. list of procedures) for managing EKS OIDC identity provider association.
+func (p *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 	procedures := []planner.Procedure{}
 
 	if p.desiredIdentityProvider == nil && p.currentIdentityProvider == nil {

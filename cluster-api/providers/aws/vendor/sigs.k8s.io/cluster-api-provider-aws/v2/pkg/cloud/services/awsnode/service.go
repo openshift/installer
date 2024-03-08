@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package awsnode provides a way to interact with AWS nodes.
 package awsnode
 
 import (

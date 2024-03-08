@@ -72,7 +72,7 @@ func (s *Service) deleteSecurityGroup(ctx context.Context, securityGroupID strin
 }
 
 // getProviderOwnedSecurityGroups gets cloud provider created security groups of ELBs for this cluster, filtering by tag: kubernetes.io/cluster/<cluster-name>:owned and VPC Id.
-func (s *Service) getProviderOwnedSecurityGroups(ctx context.Context) ([]*AWSResource, error) {
+func (s *Service) getProviderOwnedSecurityGroups(_ context.Context) ([]*AWSResource, error) {
 	input := &ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
 			filter.EC2.ProviderOwned(s.scope.KubernetesClusterName()),

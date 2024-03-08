@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package awserrors provides a way to generate AWS errors.
 package awserrors
 
 import (
@@ -102,6 +103,7 @@ func NewConflict(msg string) error {
 	}
 }
 
+// IsBucketAlreadyOwnedByYou checks if the bucket is already owned.
 func IsBucketAlreadyOwnedByYou(err error) bool {
 	if code, ok := Code(err); ok {
 		return code == BucketAlreadyOwnedByYou

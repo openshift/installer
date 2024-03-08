@@ -234,34 +234,40 @@ func (m *MachinePoolScope) SetASGStatus(v expinfrav1.ASGStatus) {
 	m.AWSMachinePool.Status.ASGStatus = &v
 }
 
+// GetObjectMeta returns the AWSMachinePool ObjectMeta.
 func (m *MachinePoolScope) GetObjectMeta() *metav1.ObjectMeta {
 	return &m.AWSMachinePool.ObjectMeta
 }
 
+// GetSetter returns the AWSMachinePool object setter.
 func (m *MachinePoolScope) GetSetter() conditions.Setter {
 	return m.AWSMachinePool
 }
 
+// GetEC2Scope returns the EC2 scope.
 func (m *MachinePoolScope) GetEC2Scope() EC2Scope {
 	return m.InfraCluster
 }
 
+// GetLaunchTemplateIDStatus returns the launch template ID status.
 func (m *MachinePoolScope) GetLaunchTemplateIDStatus() string {
 	return m.AWSMachinePool.Status.LaunchTemplateID
 }
 
+// SetLaunchTemplateIDStatus sets the launch template ID status.
 func (m *MachinePoolScope) SetLaunchTemplateIDStatus(id string) {
 	m.AWSMachinePool.Status.LaunchTemplateID = id
 }
 
+// GetLaunchTemplateLatestVersionStatus returns the launch template latest version status.
 func (m *MachinePoolScope) GetLaunchTemplateLatestVersionStatus() string {
 	if m.AWSMachinePool.Status.LaunchTemplateVersion != nil {
 		return *m.AWSMachinePool.Status.LaunchTemplateVersion
-	} else {
-		return ""
 	}
+	return ""
 }
 
+// SetLaunchTemplateLatestVersionStatus sets the launch template latest version status.
 func (m *MachinePoolScope) SetLaunchTemplateLatestVersionStatus(version string) {
 	m.AWSMachinePool.Status.LaunchTemplateVersion = &version
 }
@@ -370,18 +376,22 @@ func nodeIsReady(node corev1.Node) bool {
 	return false
 }
 
+// GetLaunchTemplate returns the launch template.
 func (m *MachinePoolScope) GetLaunchTemplate() *expinfrav1.AWSLaunchTemplate {
 	return &m.AWSMachinePool.Spec.AWSLaunchTemplate
 }
 
+// GetMachinePool returns the machine pool object.
 func (m *MachinePoolScope) GetMachinePool() *expclusterv1.MachinePool {
 	return m.MachinePool
 }
 
+// LaunchTemplateName returns the name of the launch template.
 func (m *MachinePoolScope) LaunchTemplateName() string {
 	return m.Name()
 }
 
+// GetRuntimeObject returns the AWSMachinePool object, in runtime.Object form.
 func (m *MachinePoolScope) GetRuntimeObject() runtime.Object {
 	return m.AWSMachinePool
 }

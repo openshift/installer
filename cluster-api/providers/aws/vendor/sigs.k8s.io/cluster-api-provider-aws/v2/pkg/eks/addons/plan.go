@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package addons provides a plan to manage EKS addons.
 package addons
 
 import (
@@ -45,7 +46,7 @@ type plan struct {
 }
 
 // Create will create the plan (i.e. list of procedures) for managing EKS addons.
-func (a *plan) Create(ctx context.Context) ([]planner.Procedure, error) {
+func (a *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 	procedures := []planner.Procedure{}
 
 	// Handle create and update
@@ -54,8 +55,10 @@ func (a *plan) Create(ctx context.Context) ([]planner.Procedure, error) {
 		installed := a.getInstalled(*desired.Name)
 		if installed == nil {
 			// Need to add the addon
-			procedures = append(procedures, &CreateAddonProcedure{plan: a, name: *desired.Name})
-			procedures = append(procedures, &WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true})
+			procedures = append(procedures,
+				&CreateAddonProcedure{plan: a, name: *desired.Name},
+				&WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true},
+			)
 		} else {
 			// Check if its just the tags that need updating
 			diffTags := desired.Tags.Difference(installed.Tags)
@@ -64,8 +67,10 @@ func (a *plan) Create(ctx context.Context) ([]planner.Procedure, error) {
 			}
 			// Check if we also need to update the addon
 			if !desired.IsEqual(installed, false) {
-				procedures = append(procedures, &UpdateAddonProcedure{plan: a, name: *installed.Name})
-				procedures = append(procedures, &WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true})
+				procedures = append(procedures,
+					&UpdateAddonProcedure{plan: a, name: *installed.Name},
+					&WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true},
+				)
 			} else if *installed.Status != eks.AddonStatusActive {
 				// If the desired and installed are the same make sure its active
 				procedures = append(procedures, &WaitAddonActiveProcedure{plan: a, name: *desired.Name, includeDegraded: true})

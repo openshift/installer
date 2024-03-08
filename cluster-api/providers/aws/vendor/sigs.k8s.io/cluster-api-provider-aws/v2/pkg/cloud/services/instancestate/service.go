@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package instancestate provides a way to interact with the EC2 instance state.
 package instancestate
 
 import (

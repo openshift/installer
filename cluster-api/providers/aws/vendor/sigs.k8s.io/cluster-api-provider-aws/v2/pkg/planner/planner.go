@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package planner provides a simple interface for creating and executing plans.
 package planner
 
 import "context"

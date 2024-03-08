@@ -315,14 +315,17 @@ func (s *ManagedMachinePoolScope) NodegroupName() string {
 	return s.ManagedMachinePool.Spec.EKSNodegroupName
 }
 
+// Name returns the name of the AWSManagedMachinePool.
 func (s *ManagedMachinePoolScope) Name() string {
 	return s.ManagedMachinePool.Name
 }
 
+// Namespace returns the namespace of the AWSManagedMachinePool.
 func (s *ManagedMachinePoolScope) Namespace() string {
 	return s.ManagedMachinePool.Namespace
 }
 
+// GetRawBootstrapData returns the raw bootstrap data from the linked Machine's bootstrap.dataSecretName.
 func (s *ManagedMachinePoolScope) GetRawBootstrapData() ([]byte, *types.NamespacedName, error) {
 	if s.MachinePool.Spec.Template.Spec.Bootstrap.DataSecretName == nil {
 		return nil, nil, errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
@@ -343,58 +346,68 @@ func (s *ManagedMachinePoolScope) GetRawBootstrapData() ([]byte, *types.Namespac
 	return value, &key, nil
 }
 
+// GetObjectMeta returns the ObjectMeta for the AWSManagedMachinePool.
 func (s *ManagedMachinePoolScope) GetObjectMeta() *metav1.ObjectMeta {
 	return &s.ManagedMachinePool.ObjectMeta
 }
 
+// GetSetter returns the condition setter.
 func (s *ManagedMachinePoolScope) GetSetter() conditions.Setter {
 	return s.ManagedMachinePool
 }
 
+// GetEC2Scope returns the EC2Scope.
 func (s *ManagedMachinePoolScope) GetEC2Scope() EC2Scope {
 	return s.EC2Scope
 }
 
+// IsEKSManaged returns true if the control plane is managed by EKS.
 func (s *ManagedMachinePoolScope) IsEKSManaged() bool {
 	return true
 }
 
+// GetLaunchTemplateIDStatus returns the launch template ID status.
 func (s *ManagedMachinePoolScope) GetLaunchTemplateIDStatus() string {
 	if s.ManagedMachinePool.Status.LaunchTemplateID != nil {
 		return *s.ManagedMachinePool.Status.LaunchTemplateID
-	} else {
-		return ""
 	}
+	return ""
 }
 
+// SetLaunchTemplateIDStatus sets the launch template ID status.
 func (s *ManagedMachinePoolScope) SetLaunchTemplateIDStatus(id string) {
 	s.ManagedMachinePool.Status.LaunchTemplateID = &id
 }
 
+// GetLaunchTemplateLatestVersionStatus returns the launch template latest version status.
 func (s *ManagedMachinePoolScope) GetLaunchTemplateLatestVersionStatus() string {
 	if s.ManagedMachinePool.Status.LaunchTemplateVersion != nil {
 		return *s.ManagedMachinePool.Status.LaunchTemplateVersion
-	} else {
-		return ""
 	}
+	return ""
 }
 
+// SetLaunchTemplateLatestVersionStatus sets the launch template latest version status.
 func (s *ManagedMachinePoolScope) SetLaunchTemplateLatestVersionStatus(version string) {
 	s.ManagedMachinePool.Status.LaunchTemplateVersion = &version
 }
 
+// GetLaunchTemplate returns the launch template.
 func (s *ManagedMachinePoolScope) GetLaunchTemplate() *expinfrav1.AWSLaunchTemplate {
 	return s.ManagedMachinePool.Spec.AWSLaunchTemplate
 }
 
+// GetMachinePool returns the machine pool.
 func (s *ManagedMachinePoolScope) GetMachinePool() *expclusterv1.MachinePool {
 	return s.MachinePool
 }
 
+// LaunchTemplateName returns the launch template name.
 func (s *ManagedMachinePoolScope) LaunchTemplateName() string {
 	return fmt.Sprintf("%s-%s", s.ControlPlane.Name, s.ManagedMachinePool.Name)
 }
 
+// GetRuntimeObject returns the AWSManagedMachinePool, in runtime.Object form.
 func (s *ManagedMachinePoolScope) GetRuntimeObject() runtime.Object {
 	return s.ManagedMachinePool
 }

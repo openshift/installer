@@ -23,8 +23,9 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // ExternalAuthConfig configuration
 type ExternalAuthConfigBuilder struct {
-	bitmap_ uint32
-	enabled bool
+	bitmap_       uint32
+	externalAuths *ExternalAuthListBuilder
+	enabled       bool
 }
 
 // NewExternalAuthConfig creates a new builder of 'external_auth_config' objects.
@@ -44,6 +45,13 @@ func (b *ExternalAuthConfigBuilder) Enabled(value bool) *ExternalAuthConfigBuild
 	return b
 }
 
+// ExternalAuths sets the value of the 'external_auths' attribute to the given values.
+func (b *ExternalAuthConfigBuilder) ExternalAuths(value *ExternalAuthListBuilder) *ExternalAuthConfigBuilder {
+	b.externalAuths = value
+	b.bitmap_ |= 2
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *ExternalAuthConfigBuilder) Copy(object *ExternalAuthConfig) *ExternalAuthConfigBuilder {
 	if object == nil {
@@ -51,6 +59,11 @@ func (b *ExternalAuthConfigBuilder) Copy(object *ExternalAuthConfig) *ExternalAu
 	}
 	b.bitmap_ = object.bitmap_
 	b.enabled = object.enabled
+	if object.externalAuths != nil {
+		b.externalAuths = NewExternalAuthList().Copy(object.externalAuths)
+	} else {
+		b.externalAuths = nil
+	}
 	return b
 }
 
@@ -59,5 +72,11 @@ func (b *ExternalAuthConfigBuilder) Build() (object *ExternalAuthConfig, err err
 	object = new(ExternalAuthConfig)
 	object.bitmap_ = b.bitmap_
 	object.enabled = b.enabled
+	if b.externalAuths != nil {
+		object.externalAuths, err = b.externalAuths.Build()
+		if err != nil {
+			return
+		}
+	}
 	return
 }

@@ -207,7 +207,7 @@ func (s *Service) securityGroupIsAnOverride(securityGroupID string) bool {
 }
 
 func (s *Service) describeSecurityGroupOverridesByID() (map[infrav1.SecurityGroupRole]*ec2.SecurityGroup, error) {
-	securityGroupIds := map[infrav1.SecurityGroupRole]*string{}
+	securityGroupIDs := map[infrav1.SecurityGroupRole]*string{}
 	input := &ec2.DescribeSecurityGroupsInput{}
 
 	overrides := s.scope.SecurityGroupOverrides()
@@ -221,7 +221,7 @@ func (s *Service) describeSecurityGroupOverridesByID() (map[infrav1.SecurityGrou
 		for _, role := range s.roles {
 			securityGroupID, ok := s.scope.SecurityGroupOverrides()[role]
 			if ok {
-				securityGroupIds[role] = aws.String(securityGroupID)
+				securityGroupIDs[role] = aws.String(securityGroupID)
 				input.GroupIds = append(input.GroupIds, aws.String(securityGroupID))
 			}
 		}
@@ -235,10 +235,10 @@ func (s *Service) describeSecurityGroupOverridesByID() (map[infrav1.SecurityGrou
 	res := make(map[infrav1.SecurityGroupRole]*ec2.SecurityGroup, len(out.SecurityGroups))
 	for _, role := range s.roles {
 		for _, ec2sg := range out.SecurityGroups {
-			if securityGroupIds[role] == nil {
+			if securityGroupIDs[role] == nil {
 				continue
 			}
-			if *ec2sg.GroupId == *securityGroupIds[role] {
+			if *ec2sg.GroupId == *securityGroupIDs[role] {
 				s.scope.Debug("found security group override", "role", role, "security group", *ec2sg.GroupName)
 
 				res[role] = ec2sg
@@ -285,7 +285,7 @@ func (s *Service) DeleteSecurityGroups() error {
 	for i := range clusterGroups {
 		sg := clusterGroups[i]
 		current := sg.IngressRules
-		if err := s.revokeAllSecurityGroupIngressRules(sg.ID); awserrors.IsIgnorableSecurityGroupError(err) != nil {
+		if err := s.revokeAllSecurityGroupIngressRules(sg.ID); awserrors.IsIgnorableSecurityGroupError(err) != nil { //nolint:gocritic
 			conditions.MarkFalse(s.scope.InfraCluster(), infrav1.ClusterSecurityGroupsReadyCondition, "DeletingFailed", clusterv1.ConditionSeverityWarning, err.Error())
 			return err
 		}
@@ -311,7 +311,7 @@ func (s *Service) deleteSecurityGroup(sg *infrav1.SecurityGroup, typ string) err
 		GroupId: aws.String(sg.ID),
 	}
 
-	if _, err := s.EC2Client.DeleteSecurityGroupWithContext(context.TODO(), input); awserrors.IsIgnorableSecurityGroupError(err) != nil {
+	if _, err := s.EC2Client.DeleteSecurityGroupWithContext(context.TODO(), input); awserrors.IsIgnorableSecurityGroupError(err) != nil { //nolint:gocritic
 		record.Warnf(s.scope.InfraCluster(), "FailedDeleteSecurityGroup", "Failed to delete %s SecurityGroup %q with name %q: %v", typ, sg.ID, sg.Name, err)
 		return errors.Wrapf(err, "failed to delete security group %q with name %q", sg.ID, sg.Name)
 	}

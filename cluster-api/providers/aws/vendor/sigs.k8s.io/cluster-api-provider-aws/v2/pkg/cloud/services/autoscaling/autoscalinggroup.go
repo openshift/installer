@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package asg provides a service for managing AWS AutoScalingGroups.
 package asg
 
 import (
@@ -471,6 +472,7 @@ func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[stri
 	return nil
 }
 
+// SuspendProcesses suspends the processes for an autoscaling group.
 func (s *Service) SuspendProcesses(name string, processes []string) error {
 	input := autoscaling.ScalingProcessQuery{
 		AutoScalingGroupName: aws.String(name),
@@ -482,6 +484,7 @@ func (s *Service) SuspendProcesses(name string, processes []string) error {
 	return nil
 }
 
+// ResumeProcesses resumes the processes for an autoscaling group.
 func (s *Service) ResumeProcesses(name string, processes []string) error {
 	input := autoscaling.ScalingProcessQuery{
 		AutoScalingGroupName: aws.String(name),
