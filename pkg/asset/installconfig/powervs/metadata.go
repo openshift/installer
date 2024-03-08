@@ -56,12 +56,10 @@ func (m *Metadata) AccountID(ctx context.Context) (string, error) {
 	}
 
 	if m.accountID == "" {
-		apiKeyDetails, err := m.client.GetAuthenticatorAPIKeyDetails(ctx)
-		if err != nil {
-			return "", err
+		if m.client.BXCli.User == nil || m.client.BXCli.User.Account == "" {
+			return "", fmt.Errorf("failed to get find account ID: %+v", m.client.BXCli.User)
 		}
-
-		m.accountID = *apiKeyDetails.AccountID
+		m.accountID = m.client.BXCli.User.Account
 	}
 
 	return m.accountID, nil
