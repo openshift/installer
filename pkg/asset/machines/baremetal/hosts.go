@@ -144,7 +144,7 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 			}
 
 			newHost.ObjectMeta.Labels = map[string]string{
-				"installer.openshift.io/role": "master",
+				"installer.openshift.io/role": "control-plane",
 			}
 
 			// Link the new host to the currently available machine
