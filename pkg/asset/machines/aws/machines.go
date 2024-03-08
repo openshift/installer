@@ -261,8 +261,8 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		{
 			Name: "tag:Name",
 			Values: []string{
-				fmt.Sprintf("%s-%s-%s", in.clusterID, visibility, in.zone),
-				fmt.Sprintf("%s-subnet-%s-%s", in.clusterID, visibility, in.zone), // legacy Terraform config, remove with Terraform
+				fmt.Sprintf("%s-%s-%s", in.clusterID, visibility, in.zone), // legacy Terraform config, remove with Terraform
+				fmt.Sprintf("%s-subnet-%s-%s", in.clusterID, visibility, in.zone),
 			},
 		},
 	}
