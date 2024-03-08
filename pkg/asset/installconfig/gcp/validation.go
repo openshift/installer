@@ -51,6 +51,8 @@ const unknownArchitecture = ""
 func Validate(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 
+	logrus.Infoln("GCP validation")
+
 	if err := validate.GCPClusterName(ic.ObjectMeta.Name); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("clusterName"), ic.ObjectMeta.Name, err.Error()))
 	}
