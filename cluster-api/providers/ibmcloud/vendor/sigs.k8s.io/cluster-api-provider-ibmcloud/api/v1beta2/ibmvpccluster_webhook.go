@@ -17,10 +17,7 @@ limitations under the License.
 package v1beta2
 
 import (
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,38 +51,17 @@ var _ webhook.Validator = &IBMVPCCluster{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *IBMVPCCluster) ValidateCreate() (admission.Warnings, error) {
 	ibmvpcclusterlog.Info("validate create", "name", r.Name)
-	return r.validateIBMVPCCluster()
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (r *IBMVPCCluster) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	ibmvpcclusterlog.Info("validate update", "name", r.Name)
-	return r.validateIBMVPCCluster()
+	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
 func (r *IBMVPCCluster) ValidateDelete() (admission.Warnings, error) {
 	ibmvpcclusterlog.Info("validate delete", "name", r.Name)
 	return nil, nil
-}
-
-func (r *IBMVPCCluster) validateIBMVPCCluster() (admission.Warnings, error) {
-	var allErrs field.ErrorList
-	if err := r.validateIBMVPCClusterControlPlane(); err != nil {
-		allErrs = append(allErrs, err)
-	}
-	if len(allErrs) == 0 {
-		return nil, nil
-	}
-
-	return nil, apierrors.NewInvalid(
-		schema.GroupKind{Group: "infrastructure.cluster.x-k8s.io", Kind: "IBMVPCCluster"},
-		r.Name, allErrs)
-}
-
-func (r *IBMVPCCluster) validateIBMVPCClusterControlPlane() *field.Error {
-	if r.Spec.ControlPlaneEndpoint.Host == "" && r.Spec.ControlPlaneLoadBalancer == nil {
-		return field.Invalid(field.NewPath(""), "", "One of - ControlPlaneEndpoint or ControlPlaneLoadBalancer must be specified")
-	}
-	return nil
 }

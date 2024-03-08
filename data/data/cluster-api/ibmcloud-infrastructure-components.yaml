@@ -11,7 +11,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -197,194 +197,9 @@ spec:
                 - host
                 - port
                 type: object
-              cosInstance:
-                description: cosInstance contains options to configure a supporting
-                  IBM Cloud COS bucket for this cluster - currently used for nodes
-                  requiring Ignition (https://coreos.github.io/ignition/) for bootstrapping
-                  (requires BootstrapFormatIgnition feature flag to be enabled). when
-                  powervs.cluster.x-k8s.io/create-infra=true annotation is set on
-                  IBMPowerVSCluster resource and Ignition is set, then 1. CosInstance.Name
-                  should be set not setting will result in webhook error. 2. CosInstance.BucketName
-                  should be set not setting will result in webhook error. 3. CosInstance.BucketRegion
-                  should be set not setting will result in webhook error.
-                properties:
-                  bucketName:
-                    description: bucketName is IBM cloud COS bucket name
-                    type: string
-                  bucketRegion:
-                    description: bucketRegion is IBM cloud COS bucket region
-                    type: string
-                  name:
-                    description: name defines name of IBM cloud COS instance to be
-                      created. when IBMPowerVSCluster.Ignition is set
-                    maxLength: 63
-                    minLength: 3
-                    pattern: ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
-                    type: string
-                type: object
-              dhcpServer:
-                description: dhcpServer is contains the configuration to be used while
-                  creating a new DHCP server in PowerVS workspace. when the field
-                  is omitted, CLUSTER_NAME will be used as DHCPServer.Name and DHCP
-                  server will be created. it will automatically create network with
-                  name DHCPSERVER<DHCPServer.Name>_Private in PowerVS workspace.
-                properties:
-                  cidr:
-                    description: Optional cidr for DHCP private network
-                    type: string
-                  dnsServer:
-                    default: 1.1.1.1
-                    description: Optional DNS Server for DHCP service
-                    type: string
-                  id:
-                    description: Optional id of the existing DHCPServer
-                    type: string
-                  name:
-                    description: Optional name of DHCP Service. Only alphanumeric
-                      characters and dashes are allowed.
-                    type: string
-                  snat:
-                    default: true
-                    description: Optional indicates if SNAT will be enabled for DHCP
-                      service
-                    type: boolean
-                type: object
-              ignition:
-                description: Ignition defined options related to the bootstrapping
-                  systems where Ignition is used.
-                properties:
-                  version:
-                    default: "2.3"
-                    description: Version defines which version of Ignition will be
-                      used to generate bootstrap data.
-                    enum:
-                    - "2.3"
-                    - "2.4"
-                    - "3.0"
-                    - "3.1"
-                    - "3.2"
-                    - "3.3"
-                    - "3.4"
-                    type: string
-                type: object
-              loadBalancers:
-                description: loadBalancers is optional configuration for configuring
-                  loadbalancers to control plane or data plane nodes. when omitted
-                  system will create a public loadbalancer with name CLUSTER_NAME-loadbalancer.
-                  when specified a vpc loadbalancer will be created and controlPlaneEndpoint
-                  will be set with associated hostname of loadbalancer. ControlPlaneEndpoint
-                  will be set with associated hostname of public loadbalancer. when
-                  LoadBalancers[].ID is set, its expected that there exist a loadbalancer
-                  with ID or else system will give error. when LoadBalancers[].Name
-                  is set, system will first check for loadbalancer with Name, if not
-                  exist system will create new loadbalancer.
-                items:
-                  description: VPCLoadBalancerSpec defines the desired state of an
-                    VPC load balancer.
-                  properties:
-                    additionalListeners:
-                      description: AdditionalListeners sets the additional listeners
-                        for the control plane load balancer. .
-                      items:
-                        description: AdditionalListenerSpec defines the desired state
-                          of an additional listener on an VPC load balancer.
-                        properties:
-                          port:
-                            description: Port sets the port for the additional listener.
-                            format: int64
-                            maximum: 65535
-                            minimum: 1
-                            type: integer
-                        required:
-                        - port
-                        type: object
-                      type: array
-                      x-kubernetes-list-map-keys:
-                      - port
-                      x-kubernetes-list-type: map
-                    id:
-                      description: id of the loadbalancer
-                      type: string
-                    name:
-                      description: Name sets the name of the VPC load balancer.
-                      maxLength: 63
-                      type: string
-                    public:
-                      default: true
-                      description: public indicates that load balancer is public or
-                        private
-                      type: boolean
-                  type: object
-                type: array
               network:
                 description: Network is the reference to the Network to use for this
-                  cluster. when the field is omitted, A DHCP service will be created
-                  in the Power VS workspace and its private network will be used.
-                  the DHCP service created network will have the following name format
-                  1. in the case of DHCPServer.Name is not set the name will be DHCPSERVER<CLUSTER_NAME>_Private.
-                  2. if DHCPServer.Name is set the name will be DHCPSERVER<DHCPServer.Name>_Private.
-                  when Network.ID is set, its expected that there exist a network
-                  in PowerVS workspace with id or else system will give error. when
-                  Network.Name is set, system will first check for network with Name
-                  in PowerVS workspace, if not exist network will be created by DHCP
-                  service. Network.RegEx is not yet supported and system will ignore
-                  the value.
-                properties:
-                  id:
-                    description: ID of resource
-                    minLength: 1
-                    type: string
-                  name:
-                    description: Name of resource
-                    minLength: 1
-                    type: string
-                  regex:
-                    description: Regular expression to match resource, In case of
-                      multiple resources matches the provided regular expression the
-                      first matched resource will be selected
-                    minLength: 1
-                    type: string
-                type: object
-              resourceGroup:
-                description: resourceGroup name under which the resources will be
-                  created. when powervs.cluster.x-k8s.io/create-infra=true annotation
-                  is set on IBMPowerVSCluster resource, 1. it is expected to set the
-                  ResourceGroup.Name, not setting will result in webhook error. ServiceInstance.ID
-                  and ServiceInstance.Regex is not yet supported and system will ignore
-                  the value.
-                properties:
-                  id:
-                    description: ID of resource
-                    minLength: 1
-                    type: string
-                  name:
-                    description: Name of resource
-                    minLength: 1
-                    type: string
-                  regex:
-                    description: Regular expression to match resource, In case of
-                      multiple resources matches the provided regular expression the
-                      first matched resource will be selected
-                    minLength: 1
-                    type: string
-                type: object
-              serviceInstance:
-                description: serviceInstance is the reference to the Power VS server
-                  workspace on which the server instance(VM) will be created. Power
-                  VS server workspace is a container for all Power VS instances at
-                  a specific geographic region. serviceInstance can be created via
-                  IBM Cloud catalog or CLI. supported serviceInstance identifier in
-                  PowerVSResource are Name and ID and that can be obtained from IBM
-                  Cloud UI or IBM Cloud cli. More detail about Power VS service instance.
-                  https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server
-                  when omitted system will dynamically create the service instance
-                  with name CLUSTER_NAME-serviceInstance. when ServiceInstance.ID
-                  is set, its expected that there exist a service instance in PowerVS
-                  workspace with id or else system will give error. when ServiceInstance.Name
-                  is set, system will first check for service instance with Name in
-                  PowerVS workspace, if not exist system will create new instance.
-                  ServiceInstance.Regex is not yet supported not yet supported and
-                  system will ignore the value.
+                  cluster.
                 properties:
                   id:
                     description: ID of resource
@@ -402,82 +217,9 @@ spec:
                     type: string
                 type: object
               serviceInstanceID:
-                description: 'ServiceInstanceID is the id of the power cloud instance
-                  where the vsi instance will get deployed. Deprecated: use ServiceInstance
-                  instead'
-                type: string
-              transitGateway:
-                description: transitGateway contains information about IBM Cloud TransitGateway
-                  IBM Cloud TransitGateway helps in establishing network connectivity
-                  between IBM Cloud Power VS and VPC infrastructure more information
-                  about TransitGateway can be found here https://www.ibm.com/products/transit-gateway.
-                  when TransitGateway.ID is set, its expected that there exist a TransitGateway
-                  with ID or else system will give error. when TransitGateway.Name
-                  is set, system will first check for TransitGateway with Name, if
-                  not exist system will create new TransitGateway.
-                properties:
-                  id:
-                    description: id of resource.
-                    type: string
-                  name:
-                    description: name of resource.
-                    type: string
-                type: object
-              vpc:
-                description: vpc contains information about IBM Cloud VPC resources.
-                  when omitted system will dynamically create the VPC with name CLUSTER_NAME-vpc.
-                  when VPC.ID is set, its expected that there exist a VPC with ID
-                  or else system will give error. when VPC.Name is set, system will
-                  first check for VPC with Name, if not exist system will create new
-                  VPC. when powervs.cluster.x-k8s.io/create-infra=true annotation
-                  is set on IBMPowerVSCluster resource, 1. it is expected to set the
-                  VPC.Region, not setting will result in webhook error.
-                properties:
-                  id:
-                    description: id of resource.
-                    minLength: 1
-                    type: string
-                  name:
-                    description: name of resource.
-                    minLength: 1
-                    type: string
-                  region:
-                    description: region of IBM Cloud VPC. when powervs.cluster.x-k8s.io/create-infra=true
-                      annotation is set on IBMPowerVSCluster resource, it is expected
-                      to set the region, not setting will result in webhook error.
-                    type: string
-                type: object
-              vpcSubnets:
-                description: vpcSubnets contains information about IBM Cloud VPC Subnet
-                  resources. when omitted system will create the subnets in all the
-                  zone corresponding to VPC.Region, with name CLUSTER_NAME-vpcsubnet-ZONE_NAME.
-                  possible values can be found here https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server.
-                  when VPCSubnets[].ID is set, its expected that there exist a subnet
-                  with ID or else system will give error. when VPCSubnets[].Zone is
-                  not set, a random zone is picked from available zones of VPC.Region.
-                  when VPCSubnets[].Name is not set, system will set name as CLUSTER_NAME-vpcsubnet-INDEX.
-                  if subnet with name VPCSubnets[].Name not found, system will create
-                  new subnet in VPCSubnets[].Zone.
-                items:
-                  description: Subnet describes a subnet.
-                  properties:
-                    cidr:
-                      type: string
-                    id:
-                      type: string
-                    name:
-                      type: string
-                    zone:
-                      type: string
-                  type: object
-                type: array
-              zone:
-                description: zone is the name of Power VS zone where the cluster will
-                  be created possible values can be found here https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server.
-                  when powervs.cluster.x-k8s.io/create-infra=true annotation is set
-                  on IBMPowerVSCluster resource, 1. it is expected to set the zone,
-                  not setting will result in webhook error. 2. the zone should have
-                  PER capabilities, or else system will give error.
+                description: ServiceInstanceID is the id of the power cloud instance
+                  where the vsi instance will get deployed.
+                minLength: 1
                 type: string
             required:
             - network
@@ -486,178 +228,11 @@ spec:
           status:
             description: IBMPowerVSClusterStatus defines the observed state of IBMPowerVSCluster.
             properties:
-              conditions:
-                description: Conditions defines current service state of the IBMPowerVSCluster.
-                items:
-                  description: Condition defines an observation of a Cluster API resource
-                    operational state.
-                  properties:
-                    lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
-                      format: date-time
-                      type: string
-                    message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
-                      type: string
-                    reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
-                      type: string
-                    severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
-                      type: string
-                    status:
-                      description: Status of the condition, one of True, False, Unknown.
-                      type: string
-                    type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
-                      type: string
-                  required:
-                  - lastTransitionTime
-                  - status
-                  - type
-                  type: object
-                type: array
-              cosInstance:
-                description: cosInstance is reference to IBM Cloud COS Instance resource.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              dhcpServer:
-                description: dhcpServer is the reference to the Power VS DHCP server.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              loadBalancers:
-                additionalProperties:
-                  description: VPCLoadBalancerStatus defines the status VPC load balancer.
-                  properties:
-                    controllerCreated:
-                      default: false
-                      description: controllerCreated indicates whether the resource
-                        is created by the controller.
-                      type: boolean
-                    hostname:
-                      description: hostname is the hostname of load balancer.
-                      type: string
-                    id:
-                      description: id of VPC load balancer.
-                      type: string
-                    state:
-                      description: State is the status of the load balancer.
-                      type: string
-                  type: object
-                description: loadBalancers reference to IBM Cloud VPC Loadbalancer.
-                type: object
-              network:
-                description: networkID is the reference to the Power VS network to
-                  use for this cluster.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
               ready:
-                default: false
-                description: ready is true when the provider resource is ready.
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
                 type: boolean
-              resourceGroupID:
-                description: ResourceGroup is the reference to the Power VS resource
-                  group under which the resources will be created.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              serviceInstance:
-                description: serviceInstance is the reference to the Power VS service
-                  on which the server instance(VM) will be created.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              transitGateway:
-                description: transitGateway is reference to IBM Cloud TransitGateway.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              vpc:
-                description: vpc is reference to IBM Cloud VPC resources.
-                properties:
-                  controllerCreated:
-                    default: false
-                    description: controllerCreated indicates whether the resource
-                      is created by the controller.
-                    type: boolean
-                  id:
-                    description: id represents the id of the resource.
-                    type: string
-                type: object
-              vpcSubnet:
-                additionalProperties:
-                  description: ResourceReference identifies a resource with id.
-                  properties:
-                    controllerCreated:
-                      default: false
-                      description: controllerCreated indicates whether the resource
-                        is created by the controller.
-                      type: boolean
-                    id:
-                      description: id represents the id of the resource.
-                      type: string
-                  type: object
-                description: vpcSubnet is reference to IBM Cloud VPC subnet.
-                type: object
             required:
             - ready
             type: object
@@ -671,7 +246,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -869,203 +444,9 @@ spec:
                         - host
                         - port
                         type: object
-                      cosInstance:
-                        description: cosInstance contains options to configure a supporting
-                          IBM Cloud COS bucket for this cluster - currently used for
-                          nodes requiring Ignition (https://coreos.github.io/ignition/)
-                          for bootstrapping (requires BootstrapFormatIgnition feature
-                          flag to be enabled). when powervs.cluster.x-k8s.io/create-infra=true
-                          annotation is set on IBMPowerVSCluster resource and Ignition
-                          is set, then 1. CosInstance.Name should be set not setting
-                          will result in webhook error. 2. CosInstance.BucketName
-                          should be set not setting will result in webhook error.
-                          3. CosInstance.BucketRegion should be set not setting will
-                          result in webhook error.
-                        properties:
-                          bucketName:
-                            description: bucketName is IBM cloud COS bucket name
-                            type: string
-                          bucketRegion:
-                            description: bucketRegion is IBM cloud COS bucket region
-                            type: string
-                          name:
-                            description: name defines name of IBM cloud COS instance
-                              to be created. when IBMPowerVSCluster.Ignition is set
-                            maxLength: 63
-                            minLength: 3
-                            pattern: ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
-                            type: string
-                        type: object
-                      dhcpServer:
-                        description: dhcpServer is contains the configuration to be
-                          used while creating a new DHCP server in PowerVS workspace.
-                          when the field is omitted, CLUSTER_NAME will be used as
-                          DHCPServer.Name and DHCP server will be created. it will
-                          automatically create network with name DHCPSERVER<DHCPServer.Name>_Private
-                          in PowerVS workspace.
-                        properties:
-                          cidr:
-                            description: Optional cidr for DHCP private network
-                            type: string
-                          dnsServer:
-                            default: 1.1.1.1
-                            description: Optional DNS Server for DHCP service
-                            type: string
-                          id:
-                            description: Optional id of the existing DHCPServer
-                            type: string
-                          name:
-                            description: Optional name of DHCP Service. Only alphanumeric
-                              characters and dashes are allowed.
-                            type: string
-                          snat:
-                            default: true
-                            description: Optional indicates if SNAT will be enabled
-                              for DHCP service
-                            type: boolean
-                        type: object
-                      ignition:
-                        description: Ignition defined options related to the bootstrapping
-                          systems where Ignition is used.
-                        properties:
-                          version:
-                            default: "2.3"
-                            description: Version defines which version of Ignition
-                              will be used to generate bootstrap data.
-                            enum:
-                            - "2.3"
-                            - "2.4"
-                            - "3.0"
-                            - "3.1"
-                            - "3.2"
-                            - "3.3"
-                            - "3.4"
-                            type: string
-                        type: object
-                      loadBalancers:
-                        description: loadBalancers is optional configuration for configuring
-                          loadbalancers to control plane or data plane nodes. when
-                          omitted system will create a public loadbalancer with name
-                          CLUSTER_NAME-loadbalancer. when specified a vpc loadbalancer
-                          will be created and controlPlaneEndpoint will be set with
-                          associated hostname of loadbalancer. ControlPlaneEndpoint
-                          will be set with associated hostname of public loadbalancer.
-                          when LoadBalancers[].ID is set, its expected that there
-                          exist a loadbalancer with ID or else system will give error.
-                          when LoadBalancers[].Name is set, system will first check
-                          for loadbalancer with Name, if not exist system will create
-                          new loadbalancer.
-                        items:
-                          description: VPCLoadBalancerSpec defines the desired state
-                            of an VPC load balancer.
-                          properties:
-                            additionalListeners:
-                              description: AdditionalListeners sets the additional
-                                listeners for the control plane load balancer. .
-                              items:
-                                description: AdditionalListenerSpec defines the desired
-                                  state of an additional listener on an VPC load balancer.
-                                properties:
-                                  port:
-                                    description: Port sets the port for the additional
-                                      listener.
-                                    format: int64
-                                    maximum: 65535
-                                    minimum: 1
-                                    type: integer
-                                required:
-                                - port
-                                type: object
-                              type: array
-                              x-kubernetes-list-map-keys:
-                              - port
-                              x-kubernetes-list-type: map
-                            id:
-                              description: id of the loadbalancer
-                              type: string
-                            name:
-                              description: Name sets the name of the VPC load balancer.
-                              maxLength: 63
-                              type: string
-                            public:
-                              default: true
-                              description: public indicates that load balancer is
-                                public or private
-                              type: boolean
-                          type: object
-                        type: array
                       network:
                         description: Network is the reference to the Network to use
-                          for this cluster. when the field is omitted, A DHCP service
-                          will be created in the Power VS workspace and its private
-                          network will be used. the DHCP service created network will
-                          have the following name format 1. in the case of DHCPServer.Name
-                          is not set the name will be DHCPSERVER<CLUSTER_NAME>_Private.
-                          2. if DHCPServer.Name is set the name will be DHCPSERVER<DHCPServer.Name>_Private.
-                          when Network.ID is set, its expected that there exist a
-                          network in PowerVS workspace with id or else system will
-                          give error. when Network.Name is set, system will first
-                          check for network with Name in PowerVS workspace, if not
-                          exist network will be created by DHCP service. Network.RegEx
-                          is not yet supported and system will ignore the value.
-                        properties:
-                          id:
-                            description: ID of resource
-                            minLength: 1
-                            type: string
-                          name:
-                            description: Name of resource
-                            minLength: 1
-                            type: string
-                          regex:
-                            description: Regular expression to match resource, In
-                              case of multiple resources matches the provided regular
-                              expression the first matched resource will be selected
-                            minLength: 1
-                            type: string
-                        type: object
-                      resourceGroup:
-                        description: resourceGroup name under which the resources
-                          will be created. when powervs.cluster.x-k8s.io/create-infra=true
-                          annotation is set on IBMPowerVSCluster resource, 1. it is
-                          expected to set the ResourceGroup.Name, not setting will
-                          result in webhook error. ServiceInstance.ID and ServiceInstance.Regex
-                          is not yet supported and system will ignore the value.
-                        properties:
-                          id:
-                            description: ID of resource
-                            minLength: 1
-                            type: string
-                          name:
-                            description: Name of resource
-                            minLength: 1
-                            type: string
-                          regex:
-                            description: Regular expression to match resource, In
-                              case of multiple resources matches the provided regular
-                              expression the first matched resource will be selected
-                            minLength: 1
-                            type: string
-                        type: object
-                      serviceInstance:
-                        description: serviceInstance is the reference to the Power
-                          VS server workspace on which the server instance(VM) will
-                          be created. Power VS server workspace is a container for
-                          all Power VS instances at a specific geographic region.
-                          serviceInstance can be created via IBM Cloud catalog or
-                          CLI. supported serviceInstance identifier in PowerVSResource
-                          are Name and ID and that can be obtained from IBM Cloud
-                          UI or IBM Cloud cli. More detail about Power VS service
-                          instance. https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server
-                          when omitted system will dynamically create the service
-                          instance with name CLUSTER_NAME-serviceInstance. when ServiceInstance.ID
-                          is set, its expected that there exist a service instance
-                          in PowerVS workspace with id or else system will give error.
-                          when ServiceInstance.Name is set, system will first check
-                          for service instance with Name in PowerVS workspace, if
-                          not exist system will create new instance. ServiceInstance.Regex
-                          is not yet supported not yet supported and system will ignore
-                          the value.
+                          for this cluster.
                         properties:
                           id:
                             description: ID of resource
@@ -1083,90 +464,9 @@ spec:
                             type: string
                         type: object
                       serviceInstanceID:
-                        description: 'ServiceInstanceID is the id of the power cloud
-                          instance where the vsi instance will get deployed. Deprecated:
-                          use ServiceInstance instead'
-                        type: string
-                      transitGateway:
-                        description: transitGateway contains information about IBM
-                          Cloud TransitGateway IBM Cloud TransitGateway helps in establishing
-                          network connectivity between IBM Cloud Power VS and VPC
-                          infrastructure more information about TransitGateway can
-                          be found here https://www.ibm.com/products/transit-gateway.
-                          when TransitGateway.ID is set, its expected that there exist
-                          a TransitGateway with ID or else system will give error.
-                          when TransitGateway.Name is set, system will first check
-                          for TransitGateway with Name, if not exist system will create
-                          new TransitGateway.
-                        properties:
-                          id:
-                            description: id of resource.
-                            type: string
-                          name:
-                            description: name of resource.
-                            type: string
-                        type: object
-                      vpc:
-                        description: vpc contains information about IBM Cloud VPC
-                          resources. when omitted system will dynamically create the
-                          VPC with name CLUSTER_NAME-vpc. when VPC.ID is set, its
-                          expected that there exist a VPC with ID or else system will
-                          give error. when VPC.Name is set, system will first check
-                          for VPC with Name, if not exist system will create new VPC.
-                          when powervs.cluster.x-k8s.io/create-infra=true annotation
-                          is set on IBMPowerVSCluster resource, 1. it is expected
-                          to set the VPC.Region, not setting will result in webhook
-                          error.
-                        properties:
-                          id:
-                            description: id of resource.
-                            minLength: 1
-                            type: string
-                          name:
-                            description: name of resource.
-                            minLength: 1
-                            type: string
-                          region:
-                            description: region of IBM Cloud VPC. when powervs.cluster.x-k8s.io/create-infra=true
-                              annotation is set on IBMPowerVSCluster resource, it
-                              is expected to set the region, not setting will result
-                              in webhook error.
-                            type: string
-                        type: object
-                      vpcSubnets:
-                        description: vpcSubnets contains information about IBM Cloud
-                          VPC Subnet resources. when omitted system will create the
-                          subnets in all the zone corresponding to VPC.Region, with
-                          name CLUSTER_NAME-vpcsubnet-ZONE_NAME. possible values can
-                          be found here https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server.
-                          when VPCSubnets[].ID is set, its expected that there exist
-                          a subnet with ID or else system will give error. when VPCSubnets[].Zone
-                          is not set, a random zone is picked from available zones
-                          of VPC.Region. when VPCSubnets[].Name is not set, system
-                          will set name as CLUSTER_NAME-vpcsubnet-INDEX. if subnet
-                          with name VPCSubnets[].Name not found, system will create
-                          new subnet in VPCSubnets[].Zone.
-                        items:
-                          description: Subnet describes a subnet.
-                          properties:
-                            cidr:
-                              type: string
-                            id:
-                              type: string
-                            name:
-                              type: string
-                            zone:
-                              type: string
-                          type: object
-                        type: array
-                      zone:
-                        description: zone is the name of Power VS zone where the cluster
-                          will be created possible values can be found here https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server.
-                          when powervs.cluster.x-k8s.io/create-infra=true annotation
-                          is set on IBMPowerVSCluster resource, 1. it is expected
-                          to set the zone, not setting will result in webhook error.
-                          2. the zone should have PER capabilities, or else system
-                          will give error.
+                        description: ServiceInstanceID is the id of the power cloud
+                          instance where the vsi instance will get deployed.
+                        minLength: 1
                         type: string
                     required:
                     - network
@@ -1188,7 +488,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -1401,35 +701,9 @@ spec:
               region:
                 description: Cloud Object Storage region.
                 type: string
-              serviceInstance:
-                description: serviceInstance is the reference to the Power VS workspace
-                  on which the server instance(VM) will be created. Power VS workspace
-                  is a container for all Power VS instances at a specific geographic
-                  region. serviceInstance can be created via IBM Cloud catalog or
-                  CLI. supported serviceInstance identifier in PowerVSResource are
-                  Name and ID and that can be obtained from IBM Cloud UI or IBM Cloud
-                  cli. More detail about Power VS service instance. https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server
-                  when omitted system will dynamically create the service instance
-                properties:
-                  id:
-                    description: ID of resource
-                    minLength: 1
-                    type: string
-                  name:
-                    description: Name of resource
-                    minLength: 1
-                    type: string
-                  regex:
-                    description: Regular expression to match resource, In case of
-                      multiple resources matches the provided regular expression the
-                      first matched resource will be selected
-                    minLength: 1
-                    type: string
-                type: object
               serviceInstanceID:
-                description: 'ServiceInstanceID is the id of the power cloud instance
-                  where the image will get imported. Deprecated: use ServiceInstance
-                  instead'
+                description: ServiceInstanceID is the id of the power cloud instance
+                  where the image will get imported.
                 type: string
               storageType:
                 default: tier1
@@ -1518,7 +792,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -1964,35 +1238,10 @@ spec:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.
                 type: string
-              serviceInstance:
-                description: serviceInstance is the reference to the Power VS workspace
-                  on which the server instance(VM) will be created. Power VS workspace
-                  is a container for all Power VS instances at a specific geographic
-                  region. serviceInstance can be created via IBM Cloud catalog or
-                  CLI. supported serviceInstance identifier in PowerVSResource are
-                  Name and ID and that can be obtained from IBM Cloud UI or IBM Cloud
-                  cli. More detail about Power VS service instance. https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server
-                  when omitted system will dynamically create the service instance
-                properties:
-                  id:
-                    description: ID of resource
-                    minLength: 1
-                    type: string
-                  name:
-                    description: Name of resource
-                    minLength: 1
-                    type: string
-                  regex:
-                    description: Regular expression to match resource, In case of
-                      multiple resources matches the provided regular expression the
-                      first matched resource will be selected
-                    minLength: 1
-                    type: string
-                type: object
               serviceInstanceID:
-                description: 'ServiceInstanceID is the id of the power cloud instance
-                  where the vsi instance will get deployed. Deprecated: use ServiceInstance
-                  instead'
+                description: ServiceInstanceID is the id of the power cloud instance
+                  where the vsi instance will get deployed.
+                minLength: 1
                 type: string
               sshKey:
                 description: SSHKey is the name of the SSH key pair provided to the
@@ -2011,7 +1260,6 @@ spec:
                 - s922
                 - e880
                 - e980
-                - s1022
                 - ""
                 type: string
             required:
@@ -2145,7 +1393,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -2449,37 +1697,10 @@ spec:
                         description: ProviderID is the unique identifier as specified
                           by the cloud provider.
                         type: string
-                      serviceInstance:
-                        description: serviceInstance is the reference to the Power
-                          VS workspace on which the server instance(VM) will be created.
-                          Power VS workspace is a container for all Power VS instances
-                          at a specific geographic region. serviceInstance can be
-                          created via IBM Cloud catalog or CLI. supported serviceInstance
-                          identifier in PowerVSResource are Name and ID and that can
-                          be obtained from IBM Cloud UI or IBM Cloud cli. More detail
-                          about Power VS service instance. https://cloud.ibm.com/docs/power-iaas?topic=power-iaas-creating-power-virtual-server
-                          when omitted system will dynamically create the service
-                          instance
-                        properties:
-                          id:
-                            description: ID of resource
-                            minLength: 1
-                            type: string
-                          name:
-                            description: Name of resource
-                            minLength: 1
-                            type: string
-                          regex:
-                            description: Regular expression to match resource, In
-                              case of multiple resources matches the provided regular
-                              expression the first matched resource will be selected
-                            minLength: 1
-                            type: string
-                        type: object
                       serviceInstanceID:
-                        description: 'ServiceInstanceID is the id of the power cloud
-                          instance where the vsi instance will get deployed. Deprecated:
-                          use ServiceInstance instead'
+                        description: ServiceInstanceID is the id of the power cloud
+                          instance where the vsi instance will get deployed.
+                        minLength: 1
                         type: string
                       sshKey:
                         description: SSHKey is the name of the SSH key pair provided
@@ -2499,7 +1720,6 @@ spec:
                         - s922
                         - e880
                         - e980
-                        - s1022
                         - ""
                         type: string
                     required:
@@ -2539,7 +1759,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -2730,8 +1950,6 @@ spec:
                   address:
                     type: string
                   floatingIPID:
-                    description: 'Deprecated: This field has no function and is going
-                      to be removed in the next release.'
                     type: string
                   loadBalancerIPID:
                     type: string
@@ -2792,38 +2010,11 @@ spec:
                 description: ControlPlaneLoadBalancer is optional configuration for
                   customizing control plane behavior.
                 properties:
-                  additionalListeners:
-                    description: AdditionalListeners sets the additional listeners
-                      for the control plane load balancer. .
-                    items:
-                      description: AdditionalListenerSpec defines the desired state
-                        of an additional listener on an VPC load balancer.
-                      properties:
-                        port:
-                          description: Port sets the port for the additional listener.
-                          format: int64
-                          maximum: 65535
-                          minimum: 1
-                          type: integer
-                      required:
-                      - port
-                      type: object
-                    type: array
-                    x-kubernetes-list-map-keys:
-                    - port
-                    x-kubernetes-list-type: map
-                  id:
-                    description: id of the loadbalancer
-                    type: string
                   name:
                     description: Name sets the name of the VPC load balancer.
                     maxLength: 63
+                    pattern: ^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$
                     type: string
-                  public:
-                    default: true
-                    description: public indicates that load balancer is public or
-                      private
-                    type: boolean
                 type: object
               region:
                 description: The IBM Cloud Region the cluster lives in.
@@ -2909,6 +2100,11 @@ spec:
                     type: string
                   zone:
                     type: string
+                required:
+                - cidr
+                - id
+                - name
+                - zone
                 type: object
               vpc:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
@@ -2929,8 +2125,6 @@ spec:
                   address:
                     type: string
                   floatingIPID:
-                    description: 'Deprecated: This field has no function and is going
-                      to be removed in the next release.'
                     type: string
                   loadBalancerIPID:
                     type: string
@@ -2948,163 +2142,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
-  labels:
-    cluster.x-k8s.io/provider: infrastructure-ibmcloud
-    cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-  name: ibmvpcclustertemplates.infrastructure.cluster.x-k8s.io
-spec:
-  group: infrastructure.cluster.x-k8s.io
-  names:
-    categories:
-    - cluster-api
-    kind: IBMVPCClusterTemplate
-    listKind: IBMVPCClusterTemplateList
-    plural: ibmvpcclustertemplates
-    shortNames:
-    - ibmvpcct
-    singular: ibmvpcclustertemplate
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - description: Time duration since creation of IBMVPCClusterTemplate
-      jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1beta2
-    schema:
-      openAPIV3Schema:
-        description: IBMVPCClusterTemplate is the Schema for the ibmvpcclustertemplates
-          API.
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: IBMVPCClusterTemplateSpec defines the desired state of IBMVPCClusterTemplate.
-            properties:
-              template:
-                description: IBMVPCClusterTemplateResource describes the data needed
-                  to create an IBMVPCCluster from a template.
-                properties:
-                  metadata:
-                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
-                    properties:
-                      annotations:
-                        additionalProperties:
-                          type: string
-                        description: 'Annotations is an unstructured key value map
-                          stored with a resource that may be set by external tools
-                          to store and retrieve arbitrary metadata. They are not queryable
-                          and should be preserved when modifying objects. More info:
-                          http://kubernetes.io/docs/user-guide/annotations'
-                        type: object
-                      labels:
-                        additionalProperties:
-                          type: string
-                        description: 'Map of string keys and values that can be used
-                          to organize and categorize (scope and select) objects. May
-                          match selectors of replication controllers and services.
-                          More info: http://kubernetes.io/docs/user-guide/labels'
-                        type: object
-                    type: object
-                  spec:
-                    description: IBMVPCClusterSpec defines the desired state of IBMVPCCluster.
-                    properties:
-                      controlPlaneEndpoint:
-                        description: ControlPlaneEndpoint represents the endpoint
-                          used to communicate with the control plane.
-                        properties:
-                          host:
-                            description: The hostname on which the API server is serving.
-                            type: string
-                          port:
-                            description: The port on which the API server is serving.
-                            format: int32
-                            type: integer
-                        required:
-                        - host
-                        - port
-                        type: object
-                      controlPlaneLoadBalancer:
-                        description: ControlPlaneLoadBalancer is optional configuration
-                          for customizing control plane behavior.
-                        properties:
-                          additionalListeners:
-                            description: AdditionalListeners sets the additional listeners
-                              for the control plane load balancer. .
-                            items:
-                              description: AdditionalListenerSpec defines the desired
-                                state of an additional listener on an VPC load balancer.
-                              properties:
-                                port:
-                                  description: Port sets the port for the additional
-                                    listener.
-                                  format: int64
-                                  maximum: 65535
-                                  minimum: 1
-                                  type: integer
-                              required:
-                              - port
-                              type: object
-                            type: array
-                            x-kubernetes-list-map-keys:
-                            - port
-                            x-kubernetes-list-type: map
-                          id:
-                            description: id of the loadbalancer
-                            type: string
-                          name:
-                            description: Name sets the name of the VPC load balancer.
-                            maxLength: 63
-                            type: string
-                          public:
-                            default: true
-                            description: public indicates that load balancer is public
-                              or private
-                            type: boolean
-                        type: object
-                      region:
-                        description: The IBM Cloud Region the cluster lives in.
-                        type: string
-                      resourceGroup:
-                        description: The VPC resources should be created under the
-                          resource group.
-                        type: string
-                      vpc:
-                        description: The Name of VPC.
-                        type: string
-                      zone:
-                        description: The Name of availability zone.
-                        type: string
-                    required:
-                    - region
-                    - resourceGroup
-                    type: object
-                required:
-                - spec
-                type: object
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -3454,7 +2493,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: capi-ibmcloud-system/capi-ibmcloud-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-ibmcloud
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
@@ -3613,10 +2652,6 @@ spec:
             required:
             - template
             type: object
-          status:
-            description: IBMVPCMachineTemplateStatus defines the observed state of
-              IBMVPCMachineTemplate.
-            type: object
         type: object
     served: true
     storage: false
@@ -3766,27 +2801,9 @@ spec:
             required:
             - template
             type: object
-          status:
-            description: IBMVPCMachineTemplateStatus defines the observed state of
-              IBMVPCMachineTemplate.
-            properties:
-              capacity:
-                additionalProperties:
-                  anyOf:
-                  - type: integer
-                  - type: string
-                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                  x-kubernetes-int-or-string: true
-                description: 'Capacity defines the resource capacity for this machine.
-                  This value is used for autoscaling from zero operations as defined
-                  in: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md'
-                type: object
-            type: object
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -3869,18 +2886,6 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
 - apiGroups:
   - cluster.x-k8s.io
   resources:
@@ -4011,22 +3016,6 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - ibmvpcmachines/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - ibmvpcmachinetemplates
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - ibmvpcmachinetemplates/status
   verbs:
   - get
   - patch
@@ -4183,8 +3172,9 @@ spec:
       containers:
       - args:
         - --leader-elect
-        - --provider-id-fmt=${PROVIDER_ID_FORMAT:=v1}
         - --metrics-bind-addr=127.0.0.1:8080
+        - --powervs-provider-id-fmt=${POWERVS_PROVIDER_ID_FORMAT:=v1}
+        - --provider-id-fmt=${PROVIDER_ID_FORMAT:=v1}
         - --service-endpoint=${SERVICE_ENDPOINT:=none}
         - --v=${LOGLEVEL:=0}
         command:
@@ -4192,7 +3182,7 @@ spec:
         env:
         - name: IBM_CREDENTIALS_FILE
           value: /home/.ibmcloud/ibm-credentials.env
-        image: gcr.io/k8s-staging-capi-ibmcloud/cluster-api-ibmcloud-controller:v0.8.0-alpha.0
+        image: registry.k8s.io/capi-ibmcloud/cluster-api-ibmcloud-controller:v0.6.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -4212,8 +3202,8 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 300m
-            memory: 100Mi
+            cpu: 100m
+            memory: 30Mi
           requests:
             cpu: 100m
             memory: 20Mi

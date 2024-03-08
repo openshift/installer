@@ -871,9 +871,7 @@ func (a *Client) PcloudV2VolumesPost(params *PcloudV2VolumesPostParams, authInfo
 }
 
 /*
-PcloudV2VolumescloneCancelPost cancels a volumes clone request
-
-Initiates the cleanup action that performs the cleanup of the preparatory clones and snapshot volumes.
+PcloudV2VolumescloneCancelPost cancels a volumes clone request initiates the cleanup action cleanup action performs the cleanup of the preparatory clones and snapshot volumes
 */
 func (a *Client) PcloudV2VolumescloneCancelPost(params *PcloudV2VolumescloneCancelPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneCancelPostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -951,9 +949,7 @@ func (a *Client) PcloudV2VolumescloneDelete(params *PcloudV2VolumescloneDeletePa
 }
 
 /*
-PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request
-
-Execute action creates the cloned volumes using the volume snapshots.
+PcloudV2VolumescloneExecutePost initiates the execute action for a volumes clone request execute action creates the cloned volumes using the volume snapshots
 */
 func (a *Client) PcloudV2VolumescloneExecutePost(params *PcloudV2VolumescloneExecutePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneExecutePostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -1070,14 +1066,7 @@ func (a *Client) PcloudV2VolumescloneGetall(params *PcloudV2VolumescloneGetallPa
 }
 
 /*
-	PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action
-
-	Requires a minimum of two volumes.
-
-Requires a minimum of one volume to be in the `in-use` state.
-Requires a unique volumes clone name.
-Prepare action does the preparatory work for creating the snapshot volumes.
->**Note**: If there is an existing prepare, user cannot trigger another prepare for the same set of volumes. Prepare should be followed by start and execute. If existing prepare does not have to be used then it should be first cancelled before the next prepare operation.
+PcloudV2VolumesclonePost creates a new volumes clone request and initiates the prepare action requires a minimum of two volumes requires a minimum of one volume to be in the in use state requires a unique volumes clone name prepare action does the preparatory work for creating the snapshot volumes
 */
 func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumesclonePostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -1116,9 +1105,7 @@ func (a *Client) PcloudV2VolumesclonePost(params *PcloudV2VolumesclonePostParams
 }
 
 /*
-PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request
-
-Start action starts the consistency group to initiate the flash copy.
+PcloudV2VolumescloneStartPost initiates the start action for a volumes clone request start action starts the consistency group to initiate the flash copy
 */
 func (a *Client) PcloudV2VolumescloneStartPost(params *PcloudV2VolumescloneStartPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudV2VolumescloneStartPostOK, error) {
 	// TODO: Validate the params before sending

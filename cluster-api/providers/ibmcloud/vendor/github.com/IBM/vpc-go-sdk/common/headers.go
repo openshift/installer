@@ -3,16 +3,12 @@ package common
 import (
 	"fmt"
 	"runtime"
-
-	"github.com/google/uuid"
 )
 
 const (
 	HEADER_NAME_USER_AGENT = "User-Agent"
 
 	SDK_NAME = "vpc-go-sdk"
-
-	X_REQUEST_ID = "X-Request-Id"
 )
 
 // GetSdkHeaders - returns the set of SDK-specific headers to be included in an outgoing request.
@@ -40,7 +36,6 @@ func GetSdkHeaders(serviceName string, serviceVersion string, operationId string
 	sdkHeaders := make(map[string]string)
 
 	sdkHeaders[HEADER_NAME_USER_AGENT] = GetUserAgentInfo()
-	sdkHeaders[X_REQUEST_ID] = GetNewXRequestID()
 
 	return sdkHeaders
 }
@@ -49,9 +44,6 @@ var UserAgent string = fmt.Sprintf("%s-%s %s", SDK_NAME, Version, GetSystemInfo(
 
 func GetUserAgentInfo() string {
 	return UserAgent
-}
-func GetNewXRequestID() string {
-	return uuid.New().String()
 }
 
 var systemInfo = fmt.Sprintf("(arch=%s; os=%s; go.version=%s)", runtime.GOARCH, runtime.GOOS, runtime.Version())

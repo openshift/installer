@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 //go:build zos && s390x
+// +build zos,s390x
 
 package unix
 
@@ -191,6 +192,7 @@ func (cmsg *Cmsghdr) SetLen(length int) {
 
 //sys   fcntl(fd int, cmd int, arg int) (val int, err error)
 //sys	read(fd int, p []byte) (n int, err error)
+//sys   readlen(fd int, buf *byte, nbuf int) (n int, err error) = SYS_READ
 //sys	write(fd int, p []byte) (n int, err error)
 
 //sys	accept(s int, rsa *RawSockaddrAny, addrlen *_Socklen) (fd int, err error) = SYS___ACCEPT_A
@@ -1104,7 +1106,7 @@ func GetsockoptString(fd, level, opt int) (string, error) {
 		return "", err
 	}
 
-	return ByteSliceToString(buf[:vallen]), nil
+	return string(buf[:vallen-1]), nil
 }
 
 func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from Sockaddr, err error) {

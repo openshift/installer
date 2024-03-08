@@ -48,8 +48,7 @@ type Helper struct {
 	isConditionsSetter bool
 }
 
-// NewHelper returns an initialized Helper. Use NewHelper before changing
-// obj. After changing obj use Helper.Patch to persist your changes.
+// NewHelper returns an initialized Helper.
 func NewHelper(obj client.Object, crClient client.Client) (*Helper, error) {
 	// Return early if the object is nil.
 	if util.IsNil(obj) {

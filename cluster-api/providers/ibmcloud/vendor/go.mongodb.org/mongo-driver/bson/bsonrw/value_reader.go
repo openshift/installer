@@ -28,15 +28,11 @@ var vrPool = sync.Pool{
 }
 
 // BSONValueReaderPool is a pool for ValueReaders that read BSON.
-//
-// Deprecated: BSONValueReaderPool will not be supported in Go Driver 2.0.
 type BSONValueReaderPool struct {
 	pool sync.Pool
 }
 
 // NewBSONValueReaderPool instantiates a new BSONValueReaderPool.
-//
-// Deprecated: BSONValueReaderPool will not be supported in Go Driver 2.0.
 func NewBSONValueReaderPool() *BSONValueReaderPool {
 	return &BSONValueReaderPool{
 		pool: sync.Pool{
@@ -48,8 +44,6 @@ func NewBSONValueReaderPool() *BSONValueReaderPool {
 }
 
 // Get retrieves a ValueReader from the pool and uses src as the underlying BSON.
-//
-// Deprecated: BSONValueReaderPool will not be supported in Go Driver 2.0.
 func (bvrp *BSONValueReaderPool) Get(src []byte) ValueReader {
 	vr := bvrp.pool.Get().(*valueReader)
 	vr.reset(src)
@@ -58,8 +52,6 @@ func (bvrp *BSONValueReaderPool) Get(src []byte) ValueReader {
 
 // Put inserts a ValueReader into the pool. If the ValueReader is not a BSON ValueReader nothing
 // is inserted into the pool and ok will be false.
-//
-// Deprecated: BSONValueReaderPool will not be supported in Go Driver 2.0.
 func (bvrp *BSONValueReaderPool) Put(vr ValueReader) (ok bool) {
 	bvr, ok := vr.(*valueReader)
 	if !ok {
@@ -739,7 +731,8 @@ func (vr *valueReader) ReadValue() (ValueReader, error) {
 		return nil, ErrEOA
 	}
 
-	if err := vr.skipCString(); err != nil {
+	_, err = vr.readCString()
+	if err != nil {
 		return nil, err
 	}
 
@@ -791,15 +784,6 @@ func (vr *valueReader) readByte() (byte, error) {
 
 	vr.offset++
 	return vr.d[vr.offset-1], nil
-}
-
-func (vr *valueReader) skipCString() error {
-	idx := bytes.IndexByte(vr.d[vr.offset:], 0x00)
-	if idx < 0 {
-		return io.EOF
-	}
-	vr.offset += int64(idx) + 1
-	return nil
 }
 
 func (vr *valueReader) readCString() (string, error) {

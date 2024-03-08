@@ -48,6 +48,7 @@ func (ex *exampleValidator) isVisited(path string) bool {
 //   - schemas
 //   - individual property
 //   - responses
+//
 func (ex *exampleValidator) Validate() (errs *Result) {
 	errs = new(Result)
 	if ex == nil || ex.SpecValidator == nil {
@@ -67,7 +68,7 @@ func (ex *exampleValidator) validateExampleValueValidAgainstSchema() *Result {
 	res := new(Result)
 	s := ex.SpecValidator
 
-	for method, pathItem := range s.expandedAnalyzer().Operations() {
+	for method, pathItem := range s.analyzer.Operations() {
 		for path, op := range pathItem {
 			// parameters
 			for _, param := range paramHelp.safeExpandedParamsFor(path, method, op.ID, res, s) {
@@ -145,6 +146,7 @@ func (ex *exampleValidator) validateExampleInResponse(resp *spec.Response, respo
 
 	responseName, responseCodeAsStr := responseHelp.responseMsgVariants(responseType, responseCode)
 
+	// nolint: dupl
 	if response.Headers != nil { // Safeguard
 		for nm, h := range response.Headers {
 			// reset explored schemas to get depth-first recursive-proof exploration
@@ -249,8 +251,7 @@ func (ex *exampleValidator) validateExampleValueSchemaAgainstSchema(path, in str
 }
 
 // TODO: Temporary duplicated code. Need to refactor with examples
-//
-
+// nolint: dupl
 func (ex *exampleValidator) validateExampleValueItemsAgainstSchema(path, in string, root interface{}, items *spec.Items) *Result {
 	res := new(Result)
 	s := ex.SpecValidator

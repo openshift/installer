@@ -59,6 +59,8 @@ func (v Value) IsNumber() bool {
 
 // AsInt32 returns a BSON number as an int32. If the BSON type is not a numeric one, this method
 // will panic.
+//
+// TODO(skriptble): Add support for Decimal128.
 func (v Value) AsInt32() int32 {
 	if !v.IsNumber() {
 		panic(ElementTypeError{"bsoncore.Value.AsInt32", v.Type})
@@ -91,6 +93,8 @@ func (v Value) AsInt32() int32 {
 
 // AsInt32OK functions the same as AsInt32 but returns a boolean instead of panicking. False
 // indicates an error.
+//
+// TODO(skriptble): Add support for Decimal128.
 func (v Value) AsInt32OK() (int32, bool) {
 	if !v.IsNumber() {
 		return 0, false
@@ -123,6 +127,8 @@ func (v Value) AsInt32OK() (int32, bool) {
 
 // AsInt64 returns a BSON number as an int64. If the BSON type is not a numeric one, this method
 // will panic.
+//
+// TODO(skriptble): Add support for Decimal128.
 func (v Value) AsInt64() int64 {
 	if !v.IsNumber() {
 		panic(ElementTypeError{"bsoncore.Value.AsInt64", v.Type})
@@ -156,6 +162,8 @@ func (v Value) AsInt64() int64 {
 
 // AsInt64OK functions the same as AsInt64 but returns a boolean instead of panicking. False
 // indicates an error.
+//
+// TODO(skriptble): Add support for Decimal128.
 func (v Value) AsInt64OK() (int64, bool) {
 	if !v.IsNumber() {
 		return 0, false
@@ -190,14 +198,21 @@ func (v Value) AsInt64OK() (int64, bool) {
 // AsFloat64 returns a BSON number as an float64. If the BSON type is not a numeric one, this method
 // will panic.
 //
-// TODO(GODRIVER-2751): Implement AsFloat64.
-// func (v Value) AsFloat64() float64
+// TODO(skriptble): Add support for Decimal128.
+func (v Value) AsFloat64() float64 { return 0 }
 
 // AsFloat64OK functions the same as AsFloat64 but returns a boolean instead of panicking. False
 // indicates an error.
 //
-// TODO(GODRIVER-2751): Implement AsFloat64OK.
-// func (v Value) AsFloat64OK() (float64, bool)
+// TODO(skriptble): Add support for Decimal128.
+func (v Value) AsFloat64OK() (float64, bool) { return 0, false }
+
+// Add will add this value to another. This is currently only implemented for strings and numbers.
+// If either value is a string, the other type is coerced into a string and added to the other.
+//
+// This method will alter v and will attempt to reuse the []byte of v. If the []byte is too small,
+// it will be expanded.
+func (v *Value) Add(v2 Value) error { return nil }
 
 // Equal compaes v to v2 and returns true if they are equal.
 func (v Value) Equal(v2 Value) bool {

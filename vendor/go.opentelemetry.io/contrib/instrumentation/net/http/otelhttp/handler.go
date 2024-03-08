@@ -108,23 +108,23 @@ func handleErr(err error) {
 func (h *middleware) createMeasures() {
 	var err error
 	h.requestBytesCounter, err = h.meter.Int64Counter(
-		serverRequestSize,
+		RequestContentLength,
 		metric.WithUnit("By"),
-		metric.WithDescription("Measures the size of HTTP request messages."),
+		metric.WithDescription("Measures the size of HTTP request content length (uncompressed)"),
 	)
 	handleErr(err)
 
 	h.responseBytesCounter, err = h.meter.Int64Counter(
-		serverResponseSize,
+		ResponseContentLength,
 		metric.WithUnit("By"),
-		metric.WithDescription("Measures the size of HTTP response messages."),
+		metric.WithDescription("Measures the size of HTTP response content length (uncompressed)"),
 	)
 	handleErr(err)
 
 	h.serverLatencyMeasure, err = h.meter.Float64Histogram(
-		serverDuration,
+		ServerLatency,
 		metric.WithUnit("ms"),
-		metric.WithDescription("Measures the duration of inbound HTTP requests."),
+		metric.WithDescription("Measures the duration of HTTP request handling"),
 	)
 	handleErr(err)
 }

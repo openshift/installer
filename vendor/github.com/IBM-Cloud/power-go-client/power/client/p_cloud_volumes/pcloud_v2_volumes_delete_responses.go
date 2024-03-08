@@ -87,7 +87,7 @@ PcloudV2VolumesDeleteAccepted describes a response with status code 202, with de
 Accepted
 */
 type PcloudV2VolumesDeleteAccepted struct {
-	Payload *models.VolumesDeleteResponse
+	Payload models.Object
 }
 
 // IsSuccess returns true when this pcloud v2 volumes delete accepted response has a 2xx status code
@@ -128,16 +128,14 @@ func (o *PcloudV2VolumesDeleteAccepted) String() string {
 	return fmt.Sprintf("[DELETE /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes][%d] pcloudV2VolumesDeleteAccepted  %+v", 202, o.Payload)
 }
 
-func (o *PcloudV2VolumesDeleteAccepted) GetPayload() *models.VolumesDeleteResponse {
+func (o *PcloudV2VolumesDeleteAccepted) GetPayload() models.Object {
 	return o.Payload
 }
 
 func (o *PcloudV2VolumesDeleteAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.VolumesDeleteResponse)
-
 	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 

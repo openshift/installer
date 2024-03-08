@@ -1,9 +1,7 @@
 package validator
 
 import (
-	"fmt"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -263,19 +261,13 @@ func asUint(param string) uint64 {
 	return i
 }
 
-// asFloat64 returns the parameter as a float64
+// asFloat returns the parameter as a float64
 // or panics if it can't convert
-func asFloat64(param string) float64 {
+func asFloat(param string) float64 {
+
 	i, err := strconv.ParseFloat(param, 64)
 	panicIf(err)
-	return i
-}
 
-// asFloat64 returns the parameter as a float64
-// or panics if it can't convert
-func asFloat32(param string) float64 {
-	i, err := strconv.ParseFloat(param, 32)
-	panicIf(err)
 	return i
 }
 
@@ -292,20 +284,5 @@ func asBool(param string) bool {
 func panicIf(err error) {
 	if err != nil {
 		panic(err.Error())
-	}
-}
-
-// Checks if field value matches regex. If fl.Field can be cast to Stringer, it uses the Stringer interfaces
-// String() return value. Otherwise, it uses fl.Field's String() value.
-func fieldMatchesRegexByStringerValOrString(regex *regexp.Regexp, fl FieldLevel) bool {
-	switch fl.Field().Kind() {
-	case reflect.String:
-		return regex.MatchString(fl.Field().String())
-	default:
-		if stringer, ok := fl.Field().Interface().(fmt.Stringer); ok {
-			return regex.MatchString(stringer.String())
-		} else {
-			return regex.MatchString(fl.Field().String())
-		}
 	}
 }

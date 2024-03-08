@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // Package retryablehttp provides a familiar HTTP client interface with
 // automatic retries and exponential backoff. It is a thin wrapper over the
 // standard net/http client library and exposes nearly the same public API.
@@ -160,20 +157,6 @@ func (r *Request) SetBody(rawBody interface{}) error {
 	}
 	r.body = bodyReader
 	r.ContentLength = contentLength
-	if bodyReader != nil {
-		r.GetBody = func() (io.ReadCloser, error) {
-			body, err := bodyReader()
-			if err != nil {
-				return nil, err
-			}
-			if rc, ok := body.(io.ReadCloser); ok {
-				return rc, nil
-			}
-			return io.NopCloser(body), nil
-		}
-	} else {
-		r.GetBody = func() (io.ReadCloser, error) { return http.NoBody, nil }
-	}
 	return nil
 }
 
@@ -274,17 +257,10 @@ func getBodyReaderAndContentLength(rawBody interface{}) (ReaderFunc, int64, erro
 		if err != nil {
 			return nil, 0, err
 		}
-		if len(buf) == 0 {
-			bodyReader = func() (io.Reader, error) {
-				return http.NoBody, nil
-			}
-			contentLength = 0
-		} else {
-			bodyReader = func() (io.Reader, error) {
-				return bytes.NewReader(buf), nil
-			}
-			contentLength = int64(len(buf))
+		bodyReader = func() (io.Reader, error) {
+			return bytes.NewReader(buf), nil
 		}
+		contentLength = int64(len(buf))
 
 	// No body provided, nothing to do
 	case nil:
@@ -316,19 +292,18 @@ func NewRequest(method, url string, rawBody interface{}) (*Request, error) {
 // The context controls the entire lifetime of a request and its response:
 // obtaining a connection, sending the request, and reading the response headers and body.
 func NewRequestWithContext(ctx context.Context, method, url string, rawBody interface{}) (*Request, error) {
-	httpReq, err := http.NewRequestWithContext(ctx, method, url, nil)
+	bodyReader, contentLength, err := getBodyReaderAndContentLength(rawBody)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &Request{
-		Request: httpReq,
-	}
-	if err := req.SetBody(rawBody); err != nil {
+	httpReq, err := http.NewRequestWithContext(ctx, method, url, nil)
+	if err != nil {
 		return nil, err
 	}
+	httpReq.ContentLength = contentLength
 
-	return req, nil
+	return &Request{body: bodyReader, Request: httpReq}, nil
 }
 
 // Logger interface allows to use other loggers than

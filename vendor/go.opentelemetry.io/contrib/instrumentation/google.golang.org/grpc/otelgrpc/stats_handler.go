@@ -20,7 +20,6 @@ import (
 	"time"
 
 	grpc_codes "google.golang.org/grpc/codes"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/stats"
 	"google.golang.org/grpc/status"
 
@@ -180,10 +179,6 @@ func (c *config) handleRPC(ctx context.Context, rs stats.RPCStats, isServer bool
 			)
 		}
 	case *stats.OutTrailer:
-	case *stats.OutHeader:
-		if p, ok := peer.FromContext(ctx); ok {
-			span.SetAttributes(peerAttr(p.Addr.String())...)
-		}
 	case *stats.End:
 		var rpcStatusAttr attribute.KeyValue
 

@@ -455,6 +455,7 @@ func (s *SpecValidator) validateReferenced() *Result {
 	return &res
 }
 
+// nolint: dupl
 func (s *SpecValidator) validateReferencedParameters() *Result {
 	// Each referenceable definition should have references.
 	params := s.spec.Spec().Parameters
@@ -480,6 +481,7 @@ func (s *SpecValidator) validateReferencedParameters() *Result {
 	return result
 }
 
+// nolint: dupl
 func (s *SpecValidator) validateReferencedResponses() *Result {
 	// Each referenceable definition should have references.
 	responses := s.spec.Spec().Responses
@@ -505,6 +507,7 @@ func (s *SpecValidator) validateReferencedResponses() *Result {
 	return result
 }
 
+// nolint: dupl
 func (s *SpecValidator) validateReferencedDefinitions() *Result {
 	// Each referenceable definition must have references.
 	defs := s.spec.Spec().Definitions

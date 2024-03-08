@@ -3,6 +3,7 @@ package instance
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/IBM-Cloud/power-go-client/errors"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_s_p_p_placement_groups"
@@ -26,7 +27,7 @@ func NewIBMPISPPPlacementGroupClient(ctx context.Context, sess *ibmpisession.IBM
 
 // Get a PI SPP Placement Group
 func (f *IBMPISPPPlacementGroupClient) Get(id string) (*models.SPPPlacementGroup, error) {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsGetParams().
@@ -34,7 +35,7 @@ func (f *IBMPISPPPlacementGroupClient) Get(id string) (*models.SPPPlacementGroup
 		WithCloudInstanceID(f.cloudInstanceID).WithSppPlacementGroupID(id)
 	resp, err := f.session.Power.PCloudsppPlacementGroups.PcloudSppplacementgroupsGet(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.GetSPPPlacementGroupOperationFailed, id, err))
+		return nil, fmt.Errorf(errors.GetSPPPlacementGroupOperationFailed, id, err)
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get Shared Processor Pool Placement Group %s", id)
@@ -44,7 +45,7 @@ func (f *IBMPISPPPlacementGroupClient) Get(id string) (*models.SPPPlacementGroup
 
 // Get All SPP Placement Groups
 func (f *IBMPISPPPlacementGroupClient) GetAll() (*models.SPPPlacementGroups, error) {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsGetallParams().
@@ -52,7 +53,7 @@ func (f *IBMPISPPPlacementGroupClient) GetAll() (*models.SPPPlacementGroups, err
 		WithCloudInstanceID(f.cloudInstanceID)
 	resp, err := f.session.Power.PCloudsppPlacementGroups.PcloudSppplacementgroupsGetall(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf("failed to Get All Shared Processor Pool Placement Groups: %w", err))
+		return nil, fmt.Errorf("failed to Get All Shared Processor Pool Placement Groups: %w", err)
 	}
 	if resp == nil || resp.Payload == nil {
 		return nil, fmt.Errorf("failed to Get all Shared Processor Pool Placement Groups")
@@ -62,7 +63,7 @@ func (f *IBMPISPPPlacementGroupClient) GetAll() (*models.SPPPlacementGroups, err
 
 // Create a SPP Placement Group
 func (f *IBMPISPPPlacementGroupClient) Create(body *models.SPPPlacementGroupCreate) (*models.SPPPlacementGroup, error) {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsPostParams().
@@ -70,7 +71,7 @@ func (f *IBMPISPPPlacementGroupClient) Create(body *models.SPPPlacementGroupCrea
 		WithCloudInstanceID(f.cloudInstanceID).WithBody(body)
 	postok, err := f.session.Power.PCloudsppPlacementGroups.PcloudSppplacementgroupsPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.CreateSPPPlacementGroupOperationFailed, f.cloudInstanceID, err))
+		return nil, fmt.Errorf(errors.CreateSPPPlacementGroupOperationFailed, f.cloudInstanceID, err)
 	}
 	if postok == nil || postok.Payload == nil {
 		return nil, fmt.Errorf("failed to Create Shared Processor Pool Placement Group")
@@ -80,7 +81,7 @@ func (f *IBMPISPPPlacementGroupClient) Create(body *models.SPPPlacementGroupCrea
 
 // Delete a SPP Placement Group
 func (f *IBMPISPPPlacementGroupClient) Delete(id string) error {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsDeleteParams().
@@ -95,7 +96,7 @@ func (f *IBMPISPPPlacementGroupClient) Delete(id string) error {
 
 // Add an Instance to a SPP Placement Group
 func (f *IBMPISPPPlacementGroupClient) AddMember(id string, sppID string) (*models.SPPPlacementGroup, error) {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsMembersPostParams().
@@ -104,7 +105,7 @@ func (f *IBMPISPPPlacementGroupClient) AddMember(id string, sppID string) (*mode
 		WithSharedProcessorPoolID(sppID)
 	postok, err := f.session.Power.PCloudsppPlacementGroups.PcloudSppplacementgroupsMembersPost(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.AddMemberSPPPlacementGroupOperationFailed, sppID, id, err))
+		return nil, fmt.Errorf(errors.AddMemberSPPPlacementGroupOperationFailed, sppID, id, err)
 	}
 	if postok == nil || postok.Payload == nil {
 		return nil, fmt.Errorf("failed to Add Member for pool %s and shared processor pool placement group %s", sppID, id)
@@ -114,7 +115,7 @@ func (f *IBMPISPPPlacementGroupClient) AddMember(id string, sppID string) (*mode
 
 // Remove an Instance to a SPP Placement Group
 func (f *IBMPISPPPlacementGroupClient) DeleteMember(id string, sppID string) (*models.SPPPlacementGroup, error) {
-	if f.session.IsOnPrem() {
+	if strings.Contains(f.session.Options.Zone, helpers.PIStratosRegionPrefix) {
 		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
 	}
 	params := p_cloud_s_p_p_placement_groups.NewPcloudSppplacementgroupsMembersDeleteParams().
@@ -123,7 +124,7 @@ func (f *IBMPISPPPlacementGroupClient) DeleteMember(id string, sppID string) (*m
 		WithSharedProcessorPoolID(sppID)
 	delok, err := f.session.Power.PCloudsppPlacementGroups.PcloudSppplacementgroupsMembersDelete(params, f.session.AuthInfo(f.cloudInstanceID))
 	if err != nil {
-		return nil, ibmpisession.SDKFailWithAPIError(err, fmt.Errorf(errors.DeleteMemberSPPPlacementGroupOperationFailed, sppID, id, err))
+		return nil, fmt.Errorf(errors.DeleteMemberSPPPlacementGroupOperationFailed, sppID, id, err)
 	}
 	if delok == nil || delok.Payload == nil {
 		return nil, fmt.Errorf("failed to Delete Member for pool %s and  shared processor pool placement group %s", sppID, id)

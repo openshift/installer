@@ -3,6 +3,8 @@
 // license that can be found in the LICENSE file.
 
 //go:build (amd64 || 386 || ppc64le) && !purego
+// +build amd64 386 ppc64le
+// +build !purego
 
 package sha3
 

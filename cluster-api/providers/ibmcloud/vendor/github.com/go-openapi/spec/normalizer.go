@@ -40,7 +40,7 @@ const fileScheme = "file"
 //
 // The base path argument is assumed to be canonicalized (e.g. using normalizeBase()).
 func normalizeURI(refPath, base string) string {
-	refURL, err := parseURL(refPath)
+	refURL, err := url.Parse(refPath)
 	if err != nil {
 		specLogger.Printf("warning: invalid URI in $ref  %q: %v", refPath, err)
 		refURL, refPath = repairURI(refPath)
@@ -58,7 +58,7 @@ func normalizeURI(refPath, base string) string {
 		return refURL.String()
 	}
 
-	baseURL, _ := parseURL(base)
+	baseURL, _ := url.Parse(base)
 	if path.IsAbs(refURL.Path) {
 		baseURL.Path = refURL.Path
 	} else if refURL.Path != "" {
@@ -84,6 +84,7 @@ func normalizeURI(refPath, base string) string {
 // There is a special case for schemas that are anchored with an "id":
 // in that case, the rebasing is performed // against the id only if this is an anchor for the initial root document.
 // All other intermediate "id"'s found along the way are ignored for the purpose of rebasing.
+//
 func denormalizeRef(ref *Ref, originalRelativeBase, id string) Ref {
 	debugLog("denormalizeRef called:\n$ref: %q\noriginal: %s\nroot ID:%s", ref.String(), originalRelativeBase, id)
 
@@ -93,7 +94,7 @@ func denormalizeRef(ref *Ref, originalRelativeBase, id string) Ref {
 	}
 
 	if id != "" {
-		idBaseURL, err := parseURL(id)
+		idBaseURL, err := url.Parse(id)
 		if err == nil { // if the schema id is not usable as a URI, ignore it
 			if ref, ok := rebase(ref, idBaseURL, true); ok { // rebase, but keep references to root unchaged (do not want $ref: "")
 				// $ref relative to the ID of the schema in the root document
@@ -102,7 +103,7 @@ func denormalizeRef(ref *Ref, originalRelativeBase, id string) Ref {
 		}
 	}
 
-	originalRelativeBaseURL, _ := parseURL(originalRelativeBase)
+	originalRelativeBaseURL, _ := url.Parse(originalRelativeBase)
 
 	r, _ := rebase(ref, originalRelativeBaseURL, false)
 
@@ -167,7 +168,7 @@ func normalizeRef(ref *Ref, relativeBase string) *Ref {
 //
 // See also: https://en.wikipedia.org/wiki/File_URI_scheme
 func normalizeBase(in string) string {
-	u, err := parseURL(in)
+	u, err := url.Parse(in)
 	if err != nil {
 		specLogger.Printf("warning: invalid URI in RelativeBase  %q: %v", in, err)
 		u, in = repairURI(in)

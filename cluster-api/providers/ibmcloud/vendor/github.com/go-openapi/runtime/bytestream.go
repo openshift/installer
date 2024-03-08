@@ -52,15 +52,14 @@ func ByteStreamConsumer(opts ...byteStreamOpt) Consumer {
 			return errors.New("ByteStreamConsumer requires a reader") // early exit
 		}
 
-		closer := defaultCloser
+		close := defaultCloser
 		if vals.Close {
 			if cl, ok := reader.(io.Closer); ok {
-				closer = cl.Close
+				close = cl.Close
 			}
 		}
-		defer func() {
-			_ = closer()
-		}()
+		//nolint:errcheck // closing a reader wouldn't fail.
+		defer close()
 
 		if wrtr, ok := data.(io.Writer); ok {
 			_, err := io.Copy(wrtr, reader)
@@ -110,15 +109,14 @@ func ByteStreamProducer(opts ...byteStreamOpt) Producer {
 		if writer == nil {
 			return errors.New("ByteStreamProducer requires a writer") // early exit
 		}
-		closer := defaultCloser
+		close := defaultCloser
 		if vals.Close {
 			if cl, ok := writer.(io.Closer); ok {
-				closer = cl.Close
+				close = cl.Close
 			}
 		}
-		defer func() {
-			_ = closer()
-		}()
+		//nolint:errcheck // TODO: closing a writer would fail.
+		defer close()
 
 		if rc, ok := data.(io.ReadCloser); ok {
 			defer rc.Close()

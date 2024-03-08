@@ -17,8 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"strconv"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -76,11 +74,6 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSCluster() (admission.Warnings, err
 	if err := r.validateIBMPowerVSClusterNetwork(); err != nil {
 		allErrs = append(allErrs, err)
 	}
-
-	if err := r.validateIBMPowerVSClusterCreateInfraPrereq(); err != nil {
-		allErrs = append(allErrs, err)
-	}
-
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -93,59 +86,6 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSCluster() (admission.Warnings, err
 func (r *IBMPowerVSCluster) validateIBMPowerVSClusterNetwork() *field.Error {
 	if res, err := validateIBMPowerVSNetworkReference(r.Spec.Network); !res {
 		return err
-	}
-	return nil
-}
-
-func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.Error {
-	annotations := r.GetAnnotations()
-	if len(annotations) == 0 {
-		return nil
-	}
-
-	value, found := annotations[CreateInfrastructureAnnotation]
-	if !found {
-		return nil
-	}
-
-	createInfra, err := strconv.ParseBool(value)
-	if err != nil {
-		return field.Invalid(field.NewPath("annotations"), r.Annotations, "value of powervs.cluster.x-k8s.io/create-infra should be boolean")
-	}
-
-	if !createInfra {
-		return nil
-	}
-
-	if r.Spec.Zone == nil {
-		return field.Invalid(field.NewPath("spec.zone"), r.Spec.Zone, "value of zone is empty")
-	}
-
-	if r.Spec.VPC.Region == nil {
-		return field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, "value of VPC region is empty")
-	}
-
-	if r.Spec.ResourceGroup == nil {
-		return field.Invalid(field.NewPath("spec.resourceGroup"), r.Spec.ResourceGroup, "value of resource group is empty")
-	}
-
-	if r.Spec.Ignition == nil {
-		return nil
-	}
-
-	// TODO(Phase 1): If ignition is set and these resources are not set, auto create them.
-	// If ignition is set, make sure to check that CosInstanceName, BucketName and region is set
-	if r.Spec.CosInstance == nil {
-		return field.Invalid(field.NewPath("spec.cosInstance"), r.Spec.CosInstance, "ignition is set but value of cosInstance is empty")
-	}
-	if r.Spec.CosInstance.Name == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.name"), r.Spec.CosInstance, "ignition is set but value of cosInstance name is empty")
-	}
-	if r.Spec.CosInstance.BucketName == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.bucketName"), r.Spec.CosInstance, "ignition is set but value of bucketName is empty")
-	}
-	if r.Spec.CosInstance.BucketRegion == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.bucketRegion"), r.Spec.CosInstance, "ignition is set but value of bucketRegion is empty")
 	}
 	return nil
 }

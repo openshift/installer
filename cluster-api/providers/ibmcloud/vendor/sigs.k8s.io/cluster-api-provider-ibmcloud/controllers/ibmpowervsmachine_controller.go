@@ -18,10 +18,10 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
 
@@ -45,7 +45,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
 	capibmrecord "sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
-	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 // IBMPowerVSMachineReconciler reconciles a IBMPowerVSMachine object.
@@ -136,15 +135,13 @@ func (r *IBMPowerVSMachineReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		DHCPIPCacheStore:  dhcpCacheStore,
 	})
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to create scope: %w", err)
+		return ctrl.Result{}, errors.Errorf("failed to create scope: %v", err)
 	}
+	// Always close the scope when exiting this function so we can persist any GCPMachine changes.
 
-	// Always close the scope when exiting this function so we can persist any IBMPowerVSMachine changes.
 	defer func() {
-		if machineScope != nil {
-			if err := machineScope.Close(); err != nil && reterr == nil {
-				reterr = err
-			}
+		if err := machineScope.Close(); err != nil && reterr == nil {
+			reterr = err
 		}
 	}()
 
@@ -180,11 +177,7 @@ func (r *IBMPowerVSMachineReconciler) reconcileDelete(scope *scope.PowerVSMachin
 	}
 	if err := scope.DeleteMachine(); err != nil {
 		scope.Info("error deleting IBMPowerVSMachine")
-		return ctrl.Result{}, fmt.Errorf("error deleting IBMPowerVSMachine %v: %w", klog.KObj(scope.IBMPowerVSMachine), err)
-	}
-	if err := scope.DeleteMachineIgnition(); err != nil {
-		scope.Info("error deleting IBMPowerVSMachine ignition")
-		return ctrl.Result{}, fmt.Errorf("error deleting IBMPowerVSMachine ignition %v: %w", klog.KObj(scope.IBMPowerVSMachine), err)
+		return ctrl.Result{}, errors.Wrapf(err, "error deleting IBMPowerVSMachine %v", klog.KObj(scope.IBMPowerVSMachine))
 	}
 	// Remove the cached VM IP
 	err := scope.DHCPIPCacheStore.Delete(powervs.VMip{Name: scope.IBMPowerVSMachine.Name})
@@ -223,15 +216,13 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
-	if controllerutil.AddFinalizer(machineScope.IBMPowerVSMachine, infrav1beta2.IBMPowerVSMachineFinalizer) {
-		return ctrl.Result{}, nil
-	}
+	controllerutil.AddFinalizer(machineScope.IBMPowerVSMachine, infrav1beta2.IBMPowerVSMachineFinalizer)
 
 	ins, err := r.getOrCreate(machineScope)
 	if err != nil {
 		machineScope.Error(err, "Unable to create instance")
 		conditions.MarkFalse(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceProvisionFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
-		return ctrl.Result{}, fmt.Errorf("failed to reconcile VSI for IBMPowerVSMachine %s/%s: %w", machineScope.IBMPowerVSMachine.Namespace, machineScope.IBMPowerVSMachine.Name, err)
+		return ctrl.Result{}, errors.Wrapf(err, "failed to reconcile VSI for IBMPowerVSMachine %s/%s", machineScope.IBMPowerVSMachine.Namespace, machineScope.IBMPowerVSMachine.Name)
 	}
 
 	if ins != nil {
@@ -275,27 +266,11 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 		machineScope.SetNotReady()
 		conditions.MarkUnknown(machineScope.IBMPowerVSMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceStateUnknownReason, "")
 	}
+
 	// Requeue after 2 minute if machine is not ready to update status of the machine properly.
 	if !machineScope.IsReady() {
 		return ctrl.Result{RequeueAfter: 2 * time.Minute}, nil
 	}
 
-	if !genUtil.CheckCreateInfraAnnotation(*machineScope.IBMPowerVSCluster) {
-		return ctrl.Result{}, nil
-	}
-	// Register instance with load balancer
-	machineScope.Info("updating loadbalancer for machine", "name", machineScope.IBMPowerVSMachine.Name)
-	internalIP := machineScope.GetMachineInternalIP()
-	if internalIP == "" {
-		machineScope.Info("Not able to update the LoadBalancer, Machine internal IP not yet set", "machine name", machineScope.IBMPowerVSMachine.Name)
-		return ctrl.Result{}, nil
-	}
-	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed CreateVPCLoadBalancerPoolMember %s: %w", machineScope.IBMPowerVSMachine.Name, err)
-	}
-	if poolMember != nil && *poolMember.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
-		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
-	}
 	return ctrl.Result{}, nil
 }

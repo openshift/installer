@@ -16,7 +16,6 @@ package strfmt
 
 import (
 	"encoding"
-	stderrors "errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -95,7 +94,7 @@ func NewSeededFormats(seeds []knownFormat, normalizer NameNormalizer) Registry {
 }
 
 // MapStructureHookFunc is a decode hook function for mapstructure
-func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc {
+func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc { //nolint:gocyclo,cyclop
 	return func(from reflect.Type, to reflect.Type, obj interface{}) (interface{}, error) {
 		if from.Kind() != reflect.String {
 			return obj, nil
@@ -118,7 +117,7 @@ func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc {
 				case "datetime":
 					input := data
 					if len(input) == 0 {
-						return nil, stderrors.New("empty string is an invalid datetime format")
+						return nil, fmt.Errorf("empty string is an invalid datetime format")
 					}
 					return ParseDateTime(input)
 				case "duration":

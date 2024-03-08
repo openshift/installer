@@ -16,7 +16,6 @@ package strfmt
 
 import (
 	"encoding"
-	stderrors "errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -118,7 +117,7 @@ func (f *defaultFormats) MapStructureHookFunc() mapstructure.DecodeHookFunc {
 				case "datetime":
 					input := data
 					if len(input) == 0 {
-						return nil, stderrors.New("empty string is an invalid datetime format")
+						return nil, fmt.Errorf("empty string is an invalid datetime format")
 					}
 					return ParseDateTime(input)
 				case "duration":

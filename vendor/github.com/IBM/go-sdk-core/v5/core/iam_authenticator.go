@@ -1,6 +1,6 @@
 package core
 
-// (C) Copyright IBM Corp. 2019, 2024.
+// (C) Copyright IBM Corp. 2019, 2021.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,10 +93,6 @@ const (
 	iamAuthOperationPathGetToken  = "/identity/token"
 	iamAuthGrantTypeApiKey        = "urn:ibm:params:oauth:grant-type:apikey" // #nosec G101
 	iamAuthGrantTypeRefreshToken  = "refresh_token"                          // #nosec G101
-
-	// The number of seconds before the IAM server-assigned (official) expiration time
-	// when we'll treat an otherwise valid access token as "expired".
-	iamExpirationWindow = 10
 )
 
 // IamAuthenticatorBuilder is used to construct an IamAuthenticator instance.
@@ -296,7 +292,7 @@ func (authenticator *IamAuthenticator) setTokenData(tokenData *iamTokenData) {
 //
 // Ensures that the ApiKey and RefreshToken properties are mutually exclusive,
 // and that the ClientId and ClientSecret properties are mutually inclusive.
-func (authenticator *IamAuthenticator) Validate() error {
+func (this *IamAuthenticator) Validate() error {
 
 	// The user should specify at least one of ApiKey or RefreshToken.
 	// Note: We'll allow both ApiKey and RefreshToken to be specified,
@@ -315,25 +311,25 @@ func (authenticator *IamAuthenticator) Validate() error {
 	// instance of the authenticator doesn't become invalidated simply through
 	// normal use.
 	//
-	if authenticator.ApiKey == "" && authenticator.RefreshToken == "" {
+	if this.ApiKey == "" && this.RefreshToken == "" {
 		return fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "ApiKey", "RefreshToken")
 	}
 
-	if authenticator.ApiKey != "" && HasBadFirstOrLastChar(authenticator.ApiKey) {
+	if this.ApiKey != "" && HasBadFirstOrLastChar(this.ApiKey) {
 		return fmt.Errorf(ERRORMSG_PROP_INVALID, "ApiKey")
 	}
 
 	// Validate ClientId and ClientSecret.
 	// Either both or neither should be specified.
-	if authenticator.ClientId == "" && authenticator.ClientSecret == "" {
+	if this.ClientId == "" && this.ClientSecret == "" {
 		// Do nothing as this is the valid scenario.
 	} else {
 		// Since it is NOT the case that both properties are empty, make sure BOTH are specified.
-		if authenticator.ClientId == "" {
+		if this.ClientId == "" {
 			return fmt.Errorf(ERRORMSG_PROP_MISSING, "ClientId")
 		}
 
-		if authenticator.ClientSecret == "" {
+		if this.ClientSecret == "" {
 			return fmt.Errorf(ERRORMSG_PROP_MISSING, "ClientSecret")
 		}
 	}
@@ -537,28 +533,23 @@ func newIamTokenData(tokenResponse *IamTokenServerResponse) (*iamTokenData, erro
 }
 
 // isTokenValid: returns true iff the IamTokenData instance represents a valid (non-expired) access token.
-func (td *iamTokenData) isTokenValid() bool {
-	// We'll use "exp - 10" so that we'll treat an otherwise valid (unexpired) access token
-	// to be expired if we're within 10 seconds of its TTL.
-	// This is because some IBM Cloud services reject valid access tokens with a short
-	// TTL remaining (TTL < 5 secs) because the access token might be used in a longer-running
-	// transaction and could potentially expire in the middle of the transaction.
-	if td.AccessToken != "" && GetCurrentTime() < (td.Expiration-iamExpirationWindow) {
+func (this *iamTokenData) isTokenValid() bool {
+	if this.AccessToken != "" && GetCurrentTime() < this.Expiration {
 		return true
 	}
 	return false
 }
 
-// needsRefresh: synchronously returns true iff the currently stored access token should be refreshed.
-// This method also updates the refresh time if it determines the token needs to be refreshed
-// to prevent other threads from making multiple refresh calls.
-func (td *iamTokenData) needsRefresh() bool {
+// needsRefresh: synchronously returns true iff the currently stored access token should be refreshed. This method also
+// updates the refresh time if it determines the token needs refreshed to prevent other threads from
+// making multiple refresh calls.
+func (this *iamTokenData) needsRefresh() bool {
 	iamNeedsRefreshMutex.Lock()
 	defer iamNeedsRefreshMutex.Unlock()
 
 	// Advance refresh by one minute
-	if td.RefreshTime >= 0 && GetCurrentTime() > td.RefreshTime {
-		td.RefreshTime = GetCurrentTime() + 60
+	if this.RefreshTime >= 0 && GetCurrentTime() > this.RefreshTime {
+		this.RefreshTime = GetCurrentTime() + 60
 		return true
 	}
 
