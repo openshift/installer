@@ -341,3 +341,8 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+
+// https://issues.redhat.com/browse/OCPBUGS-30642
+replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
+
+replace google.golang.org/api => google.golang.org/api v0.157.0
