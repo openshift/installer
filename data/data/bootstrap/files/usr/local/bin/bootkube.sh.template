@@ -91,6 +91,9 @@ then
     record_service_stage_start "api-bootstrap"
 	echo "Rendering api manifests..."
 
+	echo "force failing"
+	false
+
 	rm --recursive --force api-bootstrap
 
   # A more desireable end state would be require wiring up the infrastructure in some way and read it from rendered-manifest-dir
