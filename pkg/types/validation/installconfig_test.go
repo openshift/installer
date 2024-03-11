@@ -18,7 +18,6 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -1551,7 +1550,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
-				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager)
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential)
 				return c
 			}(),
 		},
@@ -1598,7 +1597,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{BaselineCapabilitySet: "v4.11"}
-				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityOpenShiftSamples, configv1.ClusterVersionCapabilityCloudControllerManager)
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityOpenShiftSamples)
 				return c
 			}(),
 		},
@@ -2254,7 +2253,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
 				}
-				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager)
+				c.Capabilities.AdditionalEnabledCapabilities = append(c.Capabilities.AdditionalEnabledCapabilities, configv1.ClusterVersionCapabilityCloudCredential)
 				return c
 			}(),
 		},
@@ -2264,7 +2263,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential},
 				}
 				return c
 			}(),
@@ -2275,7 +2274,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Capabilities = &types.Capabilities{
 					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential, configv1.ClusterVersionCapabilityCloudControllerManager},
+					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityMachineAPI, configv1.ClusterVersionCapabilityCloudCredential},
 				}
 				return c
 			}(),
@@ -2338,86 +2337,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-		},
-		{
-			name: "CloudController can't be disabled on cloud",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
-				}
-				return c
-			}(),
-			expectedError: "disabling CloudControllerManager is only supported on the Baremetal, None, or External platform with cloudControllerManager value none",
-		},
-		{
-			name: "valid disabled CloudController configuration none platform",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform.AWS = nil
-				c.Platform.None = &none.Platform{}
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
-				}
-				return c
-			}(),
-		},
-		{
-			name: "valid disabled CloudController configuration platform baremetal",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform.AWS = nil
-				c.Platform.BareMetal = validBareMetalPlatform()
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityBaremetal, configv1.ClusterVersionCapabilityMachineAPI},
-				}
-				return c
-			}(),
-		},
-		{
-			name: "valid disabled CloudController configuration platform External",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform.AWS = nil
-				c.Platform.External = &external.Platform{}
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential},
-				}
-				return c
-			}(),
-		},
-		{
-			name: "valid disabled CloudController configuration platform External 2",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform.AWS = nil
-				c.Platform.External = &external.Platform{
-					CloudControllerManager: external.CloudControllerManagerTypeNone,
-				}
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential},
-				}
-				return c
-			}(),
-		},
-		{
-			name: "invalid disabled CloudController configuration platform External 2",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform.AWS = nil
-				c.Platform.External = &external.Platform{
-					CloudControllerManager: external.CloudControllerManagerTypeExternal,
-				}
-				c.Capabilities = &types.Capabilities{
-					BaselineCapabilitySet:         configv1.ClusterVersionCapabilitySetNone,
-					AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityCloudCredential},
-				}
-				return c
-			}(),
-			expectedError: "disabling CloudControllerManager on External platform supported only with cloudControllerManager value none",
 		},
 	}
 	for _, tc := range cases {

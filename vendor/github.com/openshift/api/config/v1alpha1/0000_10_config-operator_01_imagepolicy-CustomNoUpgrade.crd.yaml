@@ -59,7 +59,6 @@ spec:
                             description: fulcioCAData contains inline base64-encoded
                               data for the PEM format fulcio CA. fulcioCAData must
                               be at most 8192 characters.
-                            format: byte
                             maxLength: 8192
                             type: string
                           fulcioSubject:
@@ -94,7 +93,6 @@ spec:
                             description: rekorKeyData contains inline base64-encoded
                               data for the PEM format from the Rekor public key. rekorKeyData
                               must be at most 8192 characters.
-                            format: byte
                             maxLength: 8192
                             type: string
                         required:
@@ -122,14 +120,12 @@ spec:
                             description: keyData contains inline base64-encoded data
                               for the PEM format public key. KeyData must be at most
                               8192 characters.
-                            format: byte
                             maxLength: 8192
                             type: string
                           rekorKeyData:
                             description: rekorKeyData contains inline base64-encoded
                               data for the PEM format from the Rekor public key. rekorKeyData
                               must be at most 8192 characters.
-                            format: byte
                             maxLength: 8192
                             type: string
                         required:

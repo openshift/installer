@@ -545,10 +545,10 @@ github.com/googleapis/gnostic v0.5.1/go.mod h1:6U4PtQXGIEt/Z3h5MAT7FNofLnw9vXk2c
 github.com/googleapis/gnostic v0.5.5/go.mod h1:7+EbHbldMins07ALC74bsA81Ovc97DwqyJO1AENw9kA=
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v1.3.0/go.mod h1:aAVqcocTSXh2vYFZ1JTvx4EQmfgzxRcNupUfxZbBNDM=
-github.com/gophercloud/gophercloud v1.7.0 h1:fyJGKh0LBvIZKLvBWvQdIgkaV5yTM3Jh9EYUh+UNCAs=
-github.com/gophercloud/gophercloud v1.7.0/go.mod h1:aAVqcocTSXh2vYFZ1JTvx4EQmfgzxRcNupUfxZbBNDM=
-github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56 h1:sH7xkTfYzxIEgzq1tDHIMKRh1vThOEOGNsettdEeLbE=
-github.com/gophercloud/utils v0.0.0-20231010081019-80377eca5d56/go.mod h1:VSalo4adEk+3sNkmVJLnhHoOyOYYS8sTWLG4mv5BKto=
+github.com/gophercloud/gophercloud v1.6.0 h1:JwJN1bauRnWPba5ueWs9IluONHteXPWjjK+MvfM4krY=
+github.com/gophercloud/gophercloud v1.6.0/go.mod h1:aAVqcocTSXh2vYFZ1JTvx4EQmfgzxRcNupUfxZbBNDM=
+github.com/gophercloud/utils v0.0.0-20230523080330-de873b9cf00d h1:6Gvua77nKyAiZQpu0N3AsamGu1L6Mlnhp3tAtDcqwvc=
+github.com/gophercloud/utils v0.0.0-20230523080330-de873b9cf00d/go.mod h1:VSalo4adEk+3sNkmVJLnhHoOyOYYS8sTWLG4mv5BKto=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
@@ -775,8 +775,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b h1:YWuSjZCQAPM8UUBLkYUk1e+rZcvWHJmFb6i6rM44Xs8=
 github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b/go.mod h1:3OVijpioIKYWTqjiG0zfF6wvoJ4fAXGbjdZuI2NgsRQ=
-github.com/openshift/api v0.0.0-20240301093301-ce10821dc999 h1:+S998xHiJApsJZjRAO8wyedU9GfqFd8mtwWly6LqHDo=
-github.com/openshift/api v0.0.0-20240301093301-ce10821dc999/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
+github.com/openshift/api v0.0.0-20240207185517-ae973131190e h1:Iv005XrzYnrIl8ptQFI32t2IBgMOx1kkBrqWO3pCp+E=
+github.com/openshift/api v0.0.0-20240207185517-ae973131190e/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
 github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2 h1:ndmguZuF+ON5ytIaQ4KUAFIlhL3GoCCmDVQlDKNFGGk=
 github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2/go.mod h1:w4GeUpl8BnEzzzIqFAe06muoWJc54XQ4rDVdUKAJns8=
 github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8 h1:+fZLKbycDo4JeLwPGVSAgf2XPaJGLM341l9ZfrrlxG0=
@@ -1479,8 +1479,8 @@ sigs.k8s.io/cluster-api-provider-gcp v1.5.0 h1:vVInLvSlBJo83sdlMbk1aYKg8n6GI8Nrh
 sigs.k8s.io/cluster-api-provider-gcp v1.5.0/go.mod h1:0voqKcKXrLKBh2SRkjhwGDoKrI+zScyjM2dkJW7G/No=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240305062327-b986999c3b0e h1:k/3yzHVdlcT3DAgLuTqgqXDqh4ULdsvDkzuQ0jjRhZs=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240305062327-b986999c3b0e/go.mod h1:oPFF8w4nX+taDptdC38lyHhonMy8OSeCZSkRQtscWJw=
-sigs.k8s.io/cluster-api-provider-openstack v0.9.0 h1:ScwZIfT1kI88+qMzeO7ppMP9DvEzrfLHuYPg2p1mcho=
-sigs.k8s.io/cluster-api-provider-openstack v0.9.0/go.mod h1:ecR9lx4XbOr3Gg2CGNgM3wguuV6l31Nd5rUccE+xjKs=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0 h1:8CLIu0mZ46tZfs2qbITVaQgWXJTlM8sJ6hjvJpS2mvc=
+sigs.k8s.io/cluster-api-provider-openstack v0.8.0/go.mod h1:XLdWHa2JUHZ5HfxZDblV/KZxCN7gWnrl7Uga3ndfV+Q=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0 h1:tMGgDmUr2Q4/INM0cn1jZyxPxYGe8wWrk9l+8hrwPSw=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0/go.mod h1:sovPL5JCGYBZdDiAKJNg2RTYp6SF+eLXhAqfUUf6mSY=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce h1:zQZV2UuXjQgWF4m/fZRgvA/5lm9jqWl7cfxoNMMl4yA=

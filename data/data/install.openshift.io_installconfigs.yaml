@@ -81,8 +81,6 @@ spec:
                   - ImageRegistry
                   - OperatorLifecycleManager
                   - CloudCredential
-                  - Ingress
-                  - CloudControllerManager
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -96,7 +94,6 @@ spec:
                 - v4.13
                 - v4.14
                 - v4.15
-                - v4.16
                 - vCurrent
                 type: string
             type: object

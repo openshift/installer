@@ -96,12 +96,12 @@ type PublicKey struct {
 	// KeyData must be at most 8192 characters.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength=8192
-	KeyData []byte `json:"keyData"`
+	KeyData string `json:"keyData"`
 	// rekorKeyData contains inline base64-encoded data for the PEM format from the Rekor public key.
 	// rekorKeyData must be at most 8192 characters.
 	// +optional
 	// +kubebuilder:validation:MaxLength=8192
-	RekorKeyData []byte `json:"rekorKeyData,omitempty"`
+	RekorKeyData string `json:"rekorKeyData,omitempty"`
 }
 
 // FulcioCAWithRekor defines the root of trust based on the Fulcio certificate and the Rekor public key.
@@ -110,12 +110,12 @@ type FulcioCAWithRekor struct {
 	// fulcioCAData must be at most 8192 characters.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength=8192
-	FulcioCAData []byte `json:"fulcioCAData"`
+	FulcioCAData string `json:"fulcioCAData"`
 	// rekorKeyData contains inline base64-encoded data for the PEM format from the Rekor public key.
 	// rekorKeyData must be at most 8192 characters.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxLength=8192
-	RekorKeyData []byte `json:"rekorKeyData"`
+	RekorKeyData string `json:"rekorKeyData"`
 	// fulcioSubject specifies OIDC issuer and the email of the Fulcio authentication configuration.
 	// +kubebuilder:validation:Required
 	FulcioSubject PolicyFulcioSubject `json:"fulcioSubject,omitempty"`
