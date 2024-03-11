@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	compute "google.golang.org/api/compute/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -171,6 +172,10 @@ func getBaseGCPMachine() *capg.GCPMachine {
 			},
 			RootDeviceSize: 128,
 			RootDeviceType: ptr.To(capg.DiskType(diskType)),
+			ServiceAccount: &capg.ServiceAccount{
+				Email:  "012345678-m@my-project.iam.gserviceaccount.com",
+				Scopes: []string{compute.CloudPlatformScope},
+			},
 		},
 	}
 	return gcpMachine
