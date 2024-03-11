@@ -9,7 +9,6 @@ import (
 )
 
 type BeTrueMatcher struct {
-	Reason string
 }
 
 func (matcher *BeTrueMatcher) Match(actual interface{}) (success bool, err error) {
@@ -21,17 +20,9 @@ func (matcher *BeTrueMatcher) Match(actual interface{}) (success bool, err error
 }
 
 func (matcher *BeTrueMatcher) FailureMessage(actual interface{}) (message string) {
-	if matcher.Reason == "" {
-		return format.Message(actual, "to be true")
-	} else {
-		return matcher.Reason
-	}
+	return format.Message(actual, "to be true")
 }
 
 func (matcher *BeTrueMatcher) NegatedFailureMessage(actual interface{}) (message string) {
-	if matcher.Reason == "" {
-		return format.Message(actual, "not to be true")
-	} else {
-		return fmt.Sprintf(`Expected not true but got true\nNegation of "%s" failed`, matcher.Reason)
-	}
+	return format.Message(actual, "not to be true")
 }

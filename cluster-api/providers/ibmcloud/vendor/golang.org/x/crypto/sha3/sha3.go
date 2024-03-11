@@ -121,11 +121,11 @@ func (d *state) padAndPermute(dsbyte byte) {
 	copyOut(d, d.buf)
 }
 
-// Write absorbs more data into the hash's state. It panics if any
-// output has already been read.
+// Write absorbs more data into the hash's state. It produces an error
+// if more data is written to the ShakeHash after writing
 func (d *state) Write(p []byte) (written int, err error) {
 	if d.state != spongeAbsorbing {
-		panic("sha3: Write after Read")
+		panic("sha3: write to sponge after read")
 	}
 	if d.buf == nil {
 		d.buf = d.storage.asBytes()[:0]
@@ -182,16 +182,12 @@ func (d *state) Read(out []byte) (n int, err error) {
 }
 
 // Sum applies padding to the hash state and then squeezes out the desired
-// number of output bytes. It panics if any output has already been read.
+// number of output bytes.
 func (d *state) Sum(in []byte) []byte {
-	if d.state != spongeAbsorbing {
-		panic("sha3: Sum after Read")
-	}
-
 	// Make a copy of the original hash so that caller can keep writing
 	// and summing.
 	dup := d.clone()
-	hash := make([]byte, dup.outputLen, 64) // explicit cap to allow stack allocation
+	hash := make([]byte, dup.outputLen)
 	dup.Read(hash)
 	return append(in, hash...)
 }

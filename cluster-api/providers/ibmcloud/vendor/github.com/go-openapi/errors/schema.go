@@ -120,10 +120,6 @@ func (c *CompositeError) Error() string {
 	return c.message
 }
 
-func (c *CompositeError) Unwrap() []error {
-	return c.Errors
-}
-
 // MarshalJSON implements the JSON encoding interface
 func (c CompositeError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
@@ -137,7 +133,7 @@ func (c CompositeError) MarshalJSON() ([]byte, error) {
 func CompositeValidationError(errors ...error) *CompositeError {
 	return &CompositeError{
 		code:    CompositeErrorCode,
-		Errors:  append(make([]error, 0, len(errors)), errors...),
+		Errors:  append([]error{}, errors...),
 		message: "validation failure list",
 	}
 }

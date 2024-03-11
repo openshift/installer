@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/go-openapi/swag"
 )
@@ -63,7 +62,6 @@ func (r *Responses) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &r.ResponsesProps); err != nil {
 		return err
 	}
-
 	if err := json.Unmarshal(data, &r.VendorExtensible); err != nil {
 		return err
 	}
@@ -109,31 +107,20 @@ func (r ResponsesProps) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON unmarshals responses from JSON
 func (r *ResponsesProps) UnmarshalJSON(data []byte) error {
-	var res map[string]json.RawMessage
+	var res map[string]Response
 	if err := json.Unmarshal(data, &res); err != nil {
-		return err
+		return nil
 	}
-
 	if v, ok := res["default"]; ok {
-		var defaultRes Response
-		if err := json.Unmarshal(v, &defaultRes); err != nil {
-			return err
-		}
-		r.Default = &defaultRes
+		r.Default = &v
 		delete(res, "default")
 	}
 	for k, v := range res {
-		if !strings.HasPrefix(k, "x-") {
-			var statusCodeResp Response
-			if err := json.Unmarshal(v, &statusCodeResp); err != nil {
-				return err
+		if nk, err := strconv.Atoi(k); err == nil {
+			if r.StatusCodeResponses == nil {
+				r.StatusCodeResponses = map[int]Response{}
 			}
-			if nk, err := strconv.Atoi(k); err == nil {
-				if r.StatusCodeResponses == nil {
-					r.StatusCodeResponses = map[int]Response{}
-				}
-				r.StatusCodeResponses[nk] = statusCodeResp
-			}
+			r.StatusCodeResponses[nk] = v
 		}
 	}
 	return nil

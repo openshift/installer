@@ -95,9 +95,7 @@ const apiId = "dns:v1"
 const apiName = "dns"
 const apiVersion = "v1"
 const basePath = "https://dns.googleapis.com/"
-const basePathTemplate = "https://dns.UNIVERSE_DOMAIN/"
 const mtlsBasePath = "https://dns.mtls.googleapis.com/"
-const defaultUniverseDomain = "googleapis.com"
 
 // OAuth2 scopes used by this API.
 const (
@@ -127,9 +125,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, err
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
 	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
-	opts = append(opts, internaloption.WithDefaultEndpointTemplate(basePathTemplate))
 	opts = append(opts, internaloption.WithDefaultMTLSEndpoint(mtlsBasePath))
-	opts = append(opts, internaloption.WithDefaultUniverseDomain(defaultUniverseDomain))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -862,11 +858,7 @@ type GoogleIamV1Binding struct {
 	Members []string `json:"members,omitempty"`
 
 	// Role: Role that is assigned to the list of `members`, or principals.
-	// For example, `roles/viewer`, `roles/editor`, or `roles/owner`. For an
-	// overview of the IAM roles and permissions, see the IAM documentation
-	// (https://cloud.google.com/iam/docs/roles-overview). For a list of the
-	// available pre-defined roles, see here
-	// (https://cloud.google.com/iam/docs/understanding-roles).
+	// For example, `roles/viewer`, `roles/editor`, or `roles/owner`.
 	Role string `json:"role,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Condition") to

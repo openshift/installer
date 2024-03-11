@@ -514,8 +514,7 @@ type MatchingLabels map[string]string
 func (m MatchingLabels) ApplyToList(opts *ListOptions) {
 	// TODO(directxman12): can we avoid reserializing this over and over?
 	if opts.LabelSelector == nil {
-		opts.LabelSelector = labels.SelectorFromValidatedSet(map[string]string(m))
-		return
+		opts.LabelSelector = labels.NewSelector()
 	}
 	// If there's already a selector, we need to AND the two together.
 	noValidSel := labels.SelectorFromValidatedSet(map[string]string(m))

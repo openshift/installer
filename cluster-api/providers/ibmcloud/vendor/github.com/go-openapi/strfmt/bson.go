@@ -39,10 +39,10 @@ func IsBSONObjectID(str string) bool {
 // ObjectId represents a BSON object ID (alias to go.mongodb.org/mongo-driver/bson/primitive.ObjectID)
 //
 // swagger:strfmt bsonobjectid
-type ObjectId bsonprim.ObjectID //nolint:revive,stylecheck
+type ObjectId bsonprim.ObjectID //nolint:revive
 
 // NewObjectId creates a ObjectId from a Hex String
-func NewObjectId(hex string) ObjectId { //nolint:revive,stylecheck
+func NewObjectId(hex string) ObjectId { //nolint:revive
 	oid, err := bsonprim.ObjectIDFromHex(hex)
 	if err != nil {
 		panic(err)
@@ -135,7 +135,7 @@ func (id *ObjectId) UnmarshalBSON(data []byte) error {
 // BSON document if the error is nil.
 func (id ObjectId) MarshalBSONValue() (bsontype.Type, []byte, error) {
 	oid := bsonprim.ObjectID(id)
-	return bson.TypeObjectID, oid[:], nil
+	return bsontype.ObjectID, oid[:], nil
 }
 
 // UnmarshalBSONValue is an interface implemented by types that can unmarshal a

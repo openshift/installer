@@ -16,7 +16,6 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -103,7 +102,7 @@ func logClose(err error, pw *io.PipeWriter) {
 	}
 }
 
-func (r *request) buildHTTP(mediaType, basePath string, producers map[string]runtime.Producer, registry strfmt.Registry, auth runtime.ClientAuthInfoWriter) (*http.Request, error) { //nolint:gocyclo,maintidx
+func (r *request) buildHTTP(mediaType, basePath string, producers map[string]runtime.Producer, registry strfmt.Registry, auth runtime.ClientAuthInfoWriter) (*http.Request, error) {
 	// build the data
 	if err := r.writer.WriteToRequest(r, registry); err != nil {
 		return nil, err
@@ -171,7 +170,7 @@ func (r *request) buildHTTP(mediaType, basePath string, producers map[string]run
 						// Need to read the data so that we can detect the content type
 						buf := make([]byte, 512)
 						size, err := fi.Read(buf)
-						if err != nil && err != io.EOF {
+						if err != nil {
 							logClose(err, pw)
 							return
 						}
@@ -318,13 +317,13 @@ DoneChoosingBodySource:
 
 	urlPath := path.Join(basePathURL.Path, pathPatternURL.Path)
 	for k, v := range r.pathParams {
-		urlPath = strings.ReplaceAll(urlPath, "{"+k+"}", url.PathEscape(v))
+		urlPath = strings.Replace(urlPath, "{"+k+"}", url.PathEscape(v), -1)
 	}
 	if reinstateSlash {
-		urlPath += "/"
+		urlPath = urlPath + "/"
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), r.method, urlPath, body)
+	req, err := http.NewRequest(r.method, urlPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +361,7 @@ func (r *request) GetMethod() string {
 func (r *request) GetPath() string {
 	path := r.pathPattern
 	for k, v := range r.pathParams {
-		path = strings.ReplaceAll(path, "{"+k+"}", v)
+		path = strings.Replace(path, "{"+k+"}", v, -1)
 	}
 	return path
 }

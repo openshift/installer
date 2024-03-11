@@ -23,8 +23,6 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:crdVersions=v1"
 
-SHELL=/bin/bash
-
 # Directories.
 REPO_ROOT := $(shell git rev-parse --show-toplevel)
 ARTIFACTS ?= $(REPO_ROOT)/_artifacts
@@ -48,8 +46,6 @@ MOCKGEN := $(TOOLS_BIN_DIR)/mockgen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/controller-gen
 CONVERSION_VERIFIER := $(TOOLS_BIN_DIR)/conversion-verifier
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/setup-envtest
-GOVULNCHECK := $(TOOLS_BIN_DIR)/govulncheck
-TRIVY := $(TOOLS_BIN_DIR)/trivy
 
 STAGING_REGISTRY ?= gcr.io/k8s-staging-capi-ibmcloud
 STAGING_BUCKET ?= artifacts.k8s-staging-capi-ibmcloud.appspot.com
@@ -61,10 +57,6 @@ PULL_BASE_REF ?= $(RELEASE_TAG) # PULL_BASE_REF will be provided by Prow
 RELEASE_ALIAS_TAG ?= $(PULL_BASE_REF)
 RELEASE_DIR := out
 OUTPUT_TYPE ?= type=registry
-
-# Go
-GO_VERSION ?=1.21.7
-GO_CONTAINER_IMAGE ?= golang:$(GO_VERSION)
 
 # kind
 CAPI_KIND_CLUSTER_NAME ?= capi-test
@@ -192,14 +184,12 @@ generate-templates: $(KUSTOMIZE)
 	$(KUSTOMIZE) build $(TEMPLATES_DIR)/cluster-template-powervs --load-restrictor LoadRestrictionsNone > $(TEMPLATES_DIR)/cluster-template-powervs.yaml
 	$(KUSTOMIZE) build $(TEMPLATES_DIR)/cluster-template-powervs-cloud-provider --load-restrictor LoadRestrictionsNone > $(TEMPLATES_DIR)/cluster-template-powervs-cloud-provider.yaml
 	$(KUSTOMIZE) build $(TEMPLATES_DIR)/cluster-template-powervs-clusterclass --load-restrictor LoadRestrictionsNone > $(TEMPLATES_DIR)/cluster-template-powervs-clusterclass.yaml
-	$(KUSTOMIZE) build $(TEMPLATES_DIR)/cluster-template-vpc-clusterclass --load-restrictor LoadRestrictionsNone > $(TEMPLATES_DIR)/cluster-template-vpc-clusterclass.yaml
+	$(KUSTOMIZE) build $(TEMPLATES_DIR)/cluster-template-vpc-load-balancer --load-restrictor LoadRestrictionsNone > $(TEMPLATES_DIR)/cluster-template-vpc-load-balancer.yaml
 	
 .PHONY: generate-e2e-templates
 generate-e2e-templates: $(KUSTOMIZE)
 ifeq ($(E2E_FLAVOR), powervs-md-remediation)
 	$(KUSTOMIZE) build $(E2E_TEMPLATES)/cluster-template-powervs-md-remediation --load-restrictor LoadRestrictionsNone > $(E2E_TEMPLATES)/cluster-template-powervs-md-remediation.yaml
-else
-	$(KUSTOMIZE) build $(E2E_TEMPLATES)/cluster-template-vpc --load-restrictor LoadRestrictionsNone > $(E2E_TEMPLATES)/cluster-template-vpc.yaml
 endif
 
 .PHONY: generate-modules
@@ -285,7 +275,7 @@ $(ARTIFACTS):
 
 .PHONY: build-toolchain
 build-toolchain: ## Build the toolchain
-	docker build --target toolchain --build-arg golang_image=$(GO_CONTAINER_IMAGE) -t $(TOOLCHAIN_IMAGE) .
+	docker build --target toolchain -t $(TOOLCHAIN_IMAGE) .
 
 .PHONY: list-staging-releases
 list-staging-releases: ## List staging images for image promotion
@@ -420,7 +410,7 @@ ensure-buildx:
 
 .PHONY: docker-build
 docker-build: docker-pull-prerequisites ensure-buildx ## Build the docker image for controller-manager
-	docker buildx build --platform linux/$(ARCH) --output=$(OUTPUT_TYPE) --pull --build-arg golang_image=$(GO_CONTAINER_IMAGE) --build-arg LDFLAGS="$(LDFLAGS)" -t $(CORE_CONTROLLER_IMG)-$(ARCH):$(TAG) .
+	docker buildx build --platform linux/$(ARCH) --output=$(OUTPUT_TYPE) --pull --build-arg LDFLAGS="$(LDFLAGS)" -t $(CORE_CONTROLLER_IMG)-$(ARCH):$(TAG) .
 
 .PHONY: docker-pull-prerequisites
 docker-pull-prerequisites:
@@ -429,7 +419,7 @@ docker-pull-prerequisites:
 
 .PHONY: e2e-image
 e2e-image: docker-pull-prerequisites ensure-buildx
-	docker buildx build --platform linux/$(ARCH) --load --build-arg golang_image=$(GO_CONTAINER_IMAGE) --tag=$(CORE_CONTROLLER_ORIGINAL_IMG):e2e .
+	docker buildx build --platform linux/$(ARCH) --load --tag=$(CORE_CONTROLLER_ORIGINAL_IMG):e2e .
 	$(MAKE) set-manifest-image MANIFEST_IMG=$(CORE_CONTROLLER_ORIGINAL_IMG):e2e TARGET_RESOURCE="./config/default/manager_image_patch.yaml"
 	$(MAKE) set-manifest-pull-policy PULL_POLICY=Never TARGET_RESOURCE="./config/default/manager_pull_policy.yaml"
 
@@ -455,8 +445,8 @@ docker-build-%:
 
 .PHONY: docker-build-core-image
 docker-build-core-image: ensure-buildx ## Build the multiarch core docker image
-	docker buildx build --builder capibm --platform $(BUILDX_PLATFORMS)  --output=$(OUTPUT_TYPE) \
-		--pull --build-arg golang_image=$(GO_CONTAINER_IMAGE) --build-arg ldflags="$(LDFLAGS)" \
+	docker buildx build --builder capibm --platform $(BUILDX_PLATFORMS) --output=$(OUTPUT_TYPE) \
+		--pull --build-arg ldflags="$(LDFLAGS)" \
 		-t $(CORE_CONTROLLER_IMG):$(TAG) .
 
 ## --------------------------------------
@@ -487,7 +477,7 @@ define checkdiff
 	git --no-pager diff --name-only FETCH_HEAD
 endef
 
-ALL_VERIFY_CHECKS = boilerplate shellcheck modules gen conversions go-version
+ALL_VERIFY_CHECKS = boilerplate shellcheck modules gen conversions
 
 .PHONY: verify
 verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
@@ -522,38 +512,6 @@ verify-gen: generate ## Verfiy go generated files are up to date
 verify-conversions: $(CONVERSION_VERIFIER) ## Verifies expected API conversion are in place
 	$(CONVERSION_VERIFIER)
 
-.PHONY: verify-container-images
-verify-container-images: $(TRIVY) ## Verify container images
-	TRACE=$(TRACE) ./hack/verify-container-images.sh
-
-.PHONY: verify-govulncheck
-verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
-	$(GOVULNCHECK) ./... && R1=$$? || R1=$$?; \
-	$(GOVULNCHECK) -C "$(TOOLS_DIR)" ./... && R2=$$? || R2=$$?; \
-	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
-		exit 1; \
-	fi
-
-.PHONY: verify-security
-verify-security: ## Verify code and images for vulnerabilities
-	$(MAKE) verify-container-images && R1=$$? || R1=$$?; \
-	$(MAKE) verify-govulncheck && R2=$$? || R2=$$?; \
-	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
-	  echo "Check for vulnerabilities failed! There are vulnerabilities to be fixed"; \
-		exit 1; \
-	fi
-
-
-SUBMAKEFILE_GO_VERSION=$(shell grep "GO_VERSION" -m1 hack/ccm/Makefile | cut -d '=' -f2 )
-.SILENT:
-.PHONY: verify-go-version
-verify-go-version: ## Confirms the version of go used in Makefiles are uniform
-ifeq ($(strip $(SUBMAKEFILE_GO_VERSION)), $(strip $(GO_VERSION)))
-	echo "Versions are uniform across Makefile, the go-version used is $(GO_VERSION)"
-else
-	echo "Versions are different across Makefiles. Please ensure to keep them uniform."
-endif
-
 ## --------------------------------------
 ## Cleanup / Verification
 ## --------------------------------------
@@ -585,10 +543,6 @@ clean-temporary: ## Remove all temporary files and folders
 clean-release: ## Remove the release folder
 	rm -rf $(RELEASE_DIR)
 
-.PHONY: clean-release-git
-clean-release-git: ## Restores the git files usually modified during a release
-	git restore ./*manager_image_patch.yaml ./*manager_pull_policy.yaml
-
 .PHONY: clean-generated-conversions
 clean-generated-conversions: ## Remove files generated by conversion-gen from the mentioned dirs
 	(IFS=','; for i in $(SRC_DIRS); do find $$i -type f -name 'zz_generated.conversion*' -exec rm -f {} \;; done)
@@ -607,31 +561,3 @@ clean-kind: ## Cleans up the kind cluster with the name $CAPI_KIND_CLUSTER_NAME
 kind-cluster: ## Create a new kind cluster designed for development with Tilt
 	hack/kind-install.sh
 
-## --------------------------------------
-## Helpers
-## --------------------------------------
-
-##@ helpers:
-
-go-version: ## Print the go version we use to compile our binaries and images
-	@echo $(GO_VERSION)
-
-## --------------------------------------
-## Documentation and Publishing
-## --------------------------------------
-
-.PHONY: serve
-serve: ## Build the CAPIBM book and serve it locally to validate changes in documentation.
-	$(MAKE) -C docs/book/ serve
-
-## --------------------------------------
-## Update Go Version
-## --------------------------------------
-.PHONY: update-go
-update-go: ## Update Go version across files: Usage make update-go VERSION=X.YY.ZZ- Use only if you know what you're doing.
-ifndef VERSION
-	echo "VERSION not set. Usage: make update-go VERSION=X.YY.ZZ"
-else
-	sed -i '' "s/GO_VERSION ?=[[:digit:]].[[:digit:]]\{1,\}.[[:digit:]]\{1,\}/GO_VERSION ?=$(VERSION)/" hack/ccm/Makefile
-	echo "Updated go version to $(VERSION) in Makefile"
-endif

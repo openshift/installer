@@ -75,44 +75,6 @@ const (
 )
 
 const (
-	// ServiceInstanceReadyCondition reports on the successful reconciliation of a Power VS workspace.
-	ServiceInstanceReadyCondition capiv1beta1.ConditionType = "ServiceInstanceReady"
-	// ServiceInstanceReconciliationFailedReason used when an error occurs during workspace reconciliation.
-	ServiceInstanceReconciliationFailedReason = "ServiceInstanceReconciliationFailed"
-
-	// NetworkReadyCondition reports on the successful reconciliation of a Power VS network.
-	NetworkReadyCondition capiv1beta1.ConditionType = "NetworkReady"
-	// NetworkReconciliationFailedReason used when an error occurs during network reconciliation.
-	NetworkReconciliationFailedReason = "NetworkReconciliationFailed"
-
-	// VPCReadyCondition reports on the successful reconciliation of a VPC.
-	VPCReadyCondition capiv1beta1.ConditionType = "VPCReady"
-	// VPCReconciliationFailedReason used when an error occurs during VPC reconciliation.
-	VPCReconciliationFailedReason = "VPCReconciliationFailed"
-
-	// VPCSubnetReadyCondition reports on the successful reconciliation of a VPC subnet.
-	VPCSubnetReadyCondition capiv1beta1.ConditionType = "VPCSubnetReady"
-	// VPCSubnetReconciliationFailedReason used when an error occurs during VPC subnet reconciliation.
-	VPCSubnetReconciliationFailedReason = "VPCSubnetReconciliationFailed"
-
-	// TransitGatewayReadyCondition reports on the successful reconciliation of a Power VS transit gateway.
-	TransitGatewayReadyCondition capiv1beta1.ConditionType = "TransitGatewayReady"
-	// TransitGatewayReconciliationFailedReason used when an error occurs during transit gateway reconciliation.
-	TransitGatewayReconciliationFailedReason = "TransitGatewayReconciliationFailed"
-
-	// LoadBalancerReadyCondition reports on the successful reconciliation of a Power VS network.
+	// LoadBalancerReadyCondition reports on current status of the load balancer. Ready indicates the load balancer is in a active state.
 	LoadBalancerReadyCondition capiv1beta1.ConditionType = "LoadBalancerReady"
-	// LoadBalancerReconciliationFailedReason used when an error occurs during loadbalancer reconciliation.
-	LoadBalancerReconciliationFailedReason = "LoadBalancerReconciliationFailed"
-
-	// COSInstanceReadyCondition reports on the successful reconciliation of a COS instance.
-	COSInstanceReadyCondition capiv1beta1.ConditionType = "COSInstanceCreated"
-	// COSInstanceReconciliationFailedReason used when an error occurs during COS instance reconciliation.
-	COSInstanceReconciliationFailedReason = "COSInstanceCreationFailed"
-)
-
-const (
-	// CreateInfrastructureAnnotation is the name of an annotation that indicates if
-	// Power VS infrastructure should be created as a part of cluster creation.
-	CreateInfrastructureAnnotation = "powervs.cluster.x-k8s.io/create-infra"
 )

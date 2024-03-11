@@ -60,13 +60,13 @@ func repairURI(in string) (*url.URL, string) {
 	const prefix = fileScheme + "://"
 	if !strings.HasPrefix(in, prefix) {
 		// giving up: resolve to empty path
-		u, _ := parseURL("")
+		u, _ := url.Parse("")
 
 		return u, ""
 	}
 
 	// attempt the repair, stripping the scheme should be sufficient
-	u, _ := parseURL(strings.TrimPrefix(in, prefix))
+	u, _ := url.Parse(strings.TrimPrefix(in, prefix))
 	debugLog("repaired URI: original: %q, repaired: %q", in, u.String())
 
 	return u, u.String()

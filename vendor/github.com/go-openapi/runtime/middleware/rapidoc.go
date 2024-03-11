@@ -1,4 +1,3 @@
-//nolint:dupl
 package middleware
 
 import (
@@ -29,21 +28,22 @@ func (r *RapiDocOpts) EnsureDefaults() {
 		r.BasePath = "/"
 	}
 	if r.Path == "" {
-		r.Path = defaultDocsPath
+		r.Path = "docs"
 	}
 	if r.SpecURL == "" {
-		r.SpecURL = defaultDocsURL
+		r.SpecURL = "/swagger.json"
 	}
 	if r.RapiDocURL == "" {
 		r.RapiDocURL = rapidocLatest
 	}
 	if r.Title == "" {
-		r.Title = defaultDocsTitle
+		r.Title = "API documentation"
 	}
 }
 
 // RapiDoc creates a middleware to serve a documentation site for a swagger spec.
 // This allows for altering the spec before starting the http listener.
+//
 func RapiDoc(opts RapiDocOpts, next http.Handler) http.Handler {
 	opts.EnsureDefaults()
 
@@ -79,7 +79,7 @@ const (
 <html>
 <head>
   <title>{{ .Title }}</title>
-  <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 characters -->
+  <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 charecters -->
   <script type="module" src="{{ .RapiDocURL }}"></script>
 </head>
 <body>

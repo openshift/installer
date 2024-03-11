@@ -93,7 +93,6 @@ type Subnet struct {
 type VPCEndpoint struct {
 	Address *string `json:"address"`
 	// +optional
-	// Deprecated: This field has no function and is going to be removed in the next release.
 	FIPID *string `json:"floatingIPID,omitempty"`
 	// +optional
 	LBID *string `json:"loadBalancerIPID,omitempty"`

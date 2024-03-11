@@ -16,8 +16,6 @@ package runtime
 
 import (
 	"bufio"
-	"context"
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -98,16 +96,10 @@ func (p *peekingReader) Read(d []byte) (int, error) {
 	if p == nil {
 		return 0, io.EOF
 	}
-	if p.underlying == nil {
-		return 0, io.ErrUnexpectedEOF
-	}
 	return p.underlying.Read(d)
 }
 
 func (p *peekingReader) Close() error {
-	if p.underlying == nil {
-		return errors.New("reader already closed")
-	}
 	p.underlying = nil
 	if p.orig != nil {
 		return p.orig.Close()
@@ -115,11 +107,9 @@ func (p *peekingReader) Close() error {
 	return nil
 }
 
-// JSONRequest creates a new http request with json headers set.
-//
-// It uses context.Background.
+// JSONRequest creates a new http request with json headers set
 func JSONRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(context.Background(), method, urlStr, body)
+	req, err := http.NewRequest(method, urlStr, body)
 	if err != nil {
 		return nil, err
 	}

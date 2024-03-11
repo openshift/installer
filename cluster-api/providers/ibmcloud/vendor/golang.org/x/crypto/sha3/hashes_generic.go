@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 //go:build !gc || purego || !s390x
+// +build !gc purego !s390x
 
 package sha3
 

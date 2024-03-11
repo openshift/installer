@@ -18,10 +18,10 @@ package scope
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -85,7 +85,7 @@ func NewMachineScope(params MachineScopeParams) (*MachineScope, error) {
 
 	helper, err := patch.NewHelper(params.IBMVPCMachine, params.Client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to init patch helper: %w", err)
+		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
 
 	// Fetch the service endpoint.
@@ -93,7 +93,7 @@ func NewMachineScope(params MachineScopeParams) (*MachineScope, error) {
 
 	vpcClient, err := vpc.NewService(svcEndpoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create IBM VPC session: %w", err)
+		return nil, errors.Wrap(err, "failed to create IBM VPC session")
 	}
 
 	if params.Logger.V(DEBUGLEVEL).Enabled() {
@@ -301,7 +301,7 @@ func (m *MachineScope) CreateVPCLoadBalancerPoolMember(internalIP *string, targe
 	listOptions.SetPoolID(*loadBalancer.Pools[0].ID)
 	listLoadBalancerPoolMembers, _, err := m.IBMVPCClient.ListLoadBalancerPoolMembers(listOptions)
 	if err != nil {
-		return nil, fmt.Errorf("failed to bind ListLoadBalancerPoolMembers to control plane %s/%s: %w", m.IBMVPCMachine.Namespace, m.IBMVPCMachine.Name, err)
+		return nil, errors.Wrapf(err, "failed to bind ListLoadBalancerPoolMembers to control plane %s/%s", m.IBMVPCMachine.Namespace, m.IBMVPCMachine.Name)
 	}
 
 	for _, member := range listLoadBalancerPoolMembers.Members {
@@ -391,7 +391,7 @@ func (m *MachineScope) GetBootstrapData() (string, error) {
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{Namespace: m.Machine.Namespace, Name: *m.Machine.Spec.Bootstrap.DataSecretName}
 	if err := m.Client.Get(context.TODO(), key, secret); err != nil {
-		return "", fmt.Errorf("failed to retrieve bootstrap data secret for IBMVPCMachine %s/%s: %w", m.Machine.Namespace, m.Machine.Name, err)
+		return "", errors.Wrapf(err, "failed to retrieve bootstrap data secret for IBMVPCMachine %s/%s", m.Machine.Namespace, m.Machine.Name)
 	}
 
 	value, ok := secret.Data["value"]
@@ -528,5 +528,5 @@ func (m *MachineScope) APIServerPort() int32 {
 	if m.Cluster.Spec.ClusterNetwork != nil && m.Cluster.Spec.ClusterNetwork.APIServerPort != nil {
 		return *m.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
-	return infrav1beta2.DefaultAPIServerPort
+	return 6443
 }

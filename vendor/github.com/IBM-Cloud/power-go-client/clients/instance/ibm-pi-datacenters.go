@@ -23,6 +23,9 @@ func NewIBMPIDatacenterClient(ctx context.Context, sess *ibmpisession.IBMPISessi
 	}
 }
 func (f *IBMPIDatacentersClient) Get(datacenterRegion string) (*models.Datacenter, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := datacenters.NewV1DatacentersGetParams().WithContext(f.ctx).WithTimeout(helpers.PIGetTimeOut).WithDatacenterRegion(datacenterRegion)
 	resp, err := f.session.Power.Datacenters.V1DatacentersGet(params)
 	if err != nil {
@@ -35,6 +38,9 @@ func (f *IBMPIDatacentersClient) Get(datacenterRegion string) (*models.Datacente
 }
 
 func (f *IBMPIDatacentersClient) GetAll() (*models.Datacenters, error) {
+	if f.session.IsOnPrem() {
+		return nil, fmt.Errorf("operation not supported in satellite location, check documentation")
+	}
 	params := datacenters.NewV1DatacentersGetallParams().WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut)
 	resp, err := f.session.Power.Datacenters.V1DatacentersGetall(params)
 

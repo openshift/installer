@@ -33,12 +33,12 @@ type Datacenter struct {
 
 	// The Datacenter status
 	// Required: true
-	// Enum: [active maintenance down]
+	// Enum: [Active Maintenance Down]
 	Status *string `json:"status"`
 
 	// The Datacenter type
 	// Required: true
-	// Enum: [off-premises on-premises]
+	// Enum: [Public Cloud Private Cloud]
 	Type *string `json:"type"`
 }
 
@@ -101,7 +101,7 @@ var datacenterTypeStatusPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["active","maintenance","down"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["Active","Maintenance","Down"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -111,14 +111,14 @@ func init() {
 
 const (
 
-	// DatacenterStatusActive captures enum value "active"
-	DatacenterStatusActive string = "active"
+	// DatacenterStatusActive captures enum value "Active"
+	DatacenterStatusActive string = "Active"
 
-	// DatacenterStatusMaintenance captures enum value "maintenance"
-	DatacenterStatusMaintenance string = "maintenance"
+	// DatacenterStatusMaintenance captures enum value "Maintenance"
+	DatacenterStatusMaintenance string = "Maintenance"
 
-	// DatacenterStatusDown captures enum value "down"
-	DatacenterStatusDown string = "down"
+	// DatacenterStatusDown captures enum value "Down"
+	DatacenterStatusDown string = "Down"
 )
 
 // prop value enum
@@ -147,7 +147,7 @@ var datacenterTypeTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["off-premises","on-premises"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["Public Cloud","Private Cloud"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -157,11 +157,11 @@ func init() {
 
 const (
 
-	// DatacenterTypeOffDashPremises captures enum value "off-premises"
-	DatacenterTypeOffDashPremises string = "off-premises"
+	// DatacenterTypePublicCloud captures enum value "Public Cloud"
+	DatacenterTypePublicCloud string = "Public Cloud"
 
-	// DatacenterTypeOnDashPremises captures enum value "on-premises"
-	DatacenterTypeOnDashPremises string = "on-premises"
+	// DatacenterTypePrivateCloud captures enum value "Private Cloud"
+	DatacenterTypePrivateCloud string = "Private Cloud"
 )
 
 // prop value enum

@@ -37,10 +37,10 @@ func (r *SwaggerUIOpts) EnsureDefaults() {
 		r.BasePath = "/"
 	}
 	if r.Path == "" {
-		r.Path = defaultDocsPath
+		r.Path = "docs"
 	}
 	if r.SpecURL == "" {
-		r.SpecURL = defaultDocsURL
+		r.SpecURL = "/swagger.json"
 	}
 	if r.OAuthCallbackURL == "" {
 		r.OAuthCallbackURL = path.Join(r.BasePath, r.Path, "oauth2-callback")
@@ -61,7 +61,7 @@ func (r *SwaggerUIOpts) EnsureDefaults() {
 		r.Favicon32 = swaggerFavicon32Latest
 	}
 	if r.Title == "" {
-		r.Title = defaultDocsTitle
+		r.Title = "API documentation"
 	}
 }
 

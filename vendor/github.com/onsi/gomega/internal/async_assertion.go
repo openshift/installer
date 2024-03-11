@@ -553,12 +553,7 @@ func (assertion *AsyncAssertion) match(matcher types.GomegaMatcher, desiredMatch
 				lock.Unlock()
 			}
 		case <-contextDone:
-			err := context.Cause(assertion.ctx)
-			if err != nil && err != context.Canceled {
-				fail(fmt.Sprintf("Context was cancelled (cause: %s)", err))
-			} else {
-				fail("Context was cancelled")
-			}
+			fail("Context was cancelled")
 			return false
 		case <-timeout:
 			if assertion.asyncType == AsyncAssertionTypeEventually {

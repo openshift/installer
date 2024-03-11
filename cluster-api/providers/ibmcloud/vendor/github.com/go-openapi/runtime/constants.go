@@ -23,8 +23,6 @@ const (
 
 	// HeaderAccept the Accept header
 	HeaderAccept = "Accept"
-	// HeaderAuthorization the Authorization header
-	HeaderAuthorization = "Authorization"
 
 	charsetKey = "charset"
 

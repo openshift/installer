@@ -20,7 +20,6 @@ const (
 	typeOr
 	typeKeys
 	typeEndKeys
-	typeOmitNil
 )
 
 const (
@@ -251,10 +250,6 @@ func (v *Validate) parseFieldTagsRecursive(tag string, fieldName string, alias s
 
 		case omitempty:
 			current.typeof = typeOmitEmpty
-			continue
-
-		case omitnil:
-			current.typeof = typeOmitNil
 			continue
 
 		case structOnlyTag:

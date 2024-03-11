@@ -95,9 +95,7 @@ const apiId = "serviceusage:v1beta1"
 const apiName = "serviceusage"
 const apiVersion = "v1beta1"
 const basePath = "https://serviceusage.googleapis.com/"
-const basePathTemplate = "https://serviceusage.UNIVERSE_DOMAIN/"
 const mtlsBasePath = "https://serviceusage.mtls.googleapis.com/"
-const defaultUniverseDomain = "googleapis.com"
 
 // OAuth2 scopes used by this API.
 const (
@@ -123,9 +121,7 @@ func NewService(ctx context.Context, opts ...option.ClientOption) (*APIService, 
 	// NOTE: prepend, so we don't override user-specified scopes.
 	opts = append([]option.ClientOption{scopesOption}, opts...)
 	opts = append(opts, internaloption.WithDefaultEndpoint(basePath))
-	opts = append(opts, internaloption.WithDefaultEndpointTemplate(basePathTemplate))
 	opts = append(opts, internaloption.WithDefaultMTLSEndpoint(mtlsBasePath))
-	opts = append(opts, internaloption.WithDefaultUniverseDomain(defaultUniverseDomain))
 	client, endpoint, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -2751,11 +2747,19 @@ func (s *GoogleApiServiceusageV2alphaConsumerPolicy) MarshalJSON() ([]byte, erro
 // GoogleApiServiceusageV2alphaEnableRule: The consumer policy rule that
 // defines enabled services, groups, and categories.
 type GoogleApiServiceusageV2alphaEnableRule struct {
+	// Categories: The names of the categories that are enabled. Example:
+	// `categories/googleServices`.
+	Categories []string `json:"categories,omitempty"`
+
+	// Groups: The names of the service groups that are enabled. Example:
+	// `services/container.googleapis.com/groups/dependencies`.
+	Groups []string `json:"groups,omitempty"`
+
 	// Services: The names of the services that are enabled. Example:
 	// `services/storage.googleapis.com`.
 	Services []string `json:"services,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Services") to
+	// ForceSendFields is a list of field names (e.g. "Categories") to
 	// unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
 	// non-pointer, non-interface field appearing in ForceSendFields will be
@@ -2763,7 +2767,7 @@ type GoogleApiServiceusageV2alphaEnableRule struct {
 	// This may be used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Services") to include in
+	// NullFields is a list of field names (e.g. "Categories") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
