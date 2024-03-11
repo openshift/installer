@@ -32,6 +32,8 @@ var (
 	longTimeout    = 10 * time.Minute
 )
 
+type resourceScope string
+
 const (
 	// ocpDefaultLabelFmt is the format string for the default label
 	// added to the OpenShift created GCP resources.
@@ -40,6 +42,14 @@ const (
 	// capgProviderOwnedLabelFmt is the format string for the label
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
+
+	// gcpGlobalResource is an identifier to indicate that the resource(s)
+	// that are being deleted are globally scoped.
+	gcpGlobalResource resourceScope = "global"
+
+	// gcpRegionalResource is an identifier to indicate that the resource(s)
+	// that are being deleted are regionally scoped.
+	gcpRegionalResource resourceScope = "regional"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
