@@ -5,10 +5,10 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
-	"github.com/libvirt/libvirt-go"
-	"github.com/pkg/errors"
+	libvirt "github.com/digitalocean/go-libvirt"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -59,36 +59,35 @@ func interfaceValidator(libvirtURI string) (func(string) error, error) {
 	// Connect to libvirt and obtain a list of interface names
 	interfaces := make(map[string]struct{})
 	var exists = struct{}{}
-	conn, err := libvirt.NewConnect(libvirtURI)
+
+	uri, err := url.Parse(libvirtURI)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not connect to libvirt")
+		return nil, err
 	}
 
-	networks, err := conn.ListAllNetworks(libvirt.CONNECT_LIST_NETWORKS_ACTIVE)
+	virt, err := libvirt.ConnectToURI(uri)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not list libvirt networks")
+		return nil, err
+	}
+	defer virt.Disconnect()
+
+	networks, _, err := virt.ConnectListAllNetworks(1, libvirt.ConnectListNetworksActive)
+	if err != nil {
+		return nil, fmt.Errorf("could not list libvirt networks: %w", err)
 	}
 	for _, network := range networks {
-		networkName, err := network.GetName()
-		if err == nil {
-			bridgeName, err := network.GetBridgeName()
-			if err == nil && bridgeName == networkName {
-				interfaces[networkName] = exists
-			}
+		bridgeName, err := virt.NetworkGetBridgeName(network)
+		if err == nil && bridgeName == network.Name {
+			interfaces[network.Name] = exists
 		}
 	}
-	bridges, err := conn.ListAllInterfaces(libvirt.CONNECT_LIST_INTERFACES_ACTIVE)
+	bridges, _, err := virt.ConnectListAllInterfaces(1, libvirt.ConnectListInterfacesActive)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not list libvirt interfaces")
+		return nil, fmt.Errorf("could not list libvirt interfaces: %w", err)
 	}
 
 	for _, bridge := range bridges {
-		bridgeName, err := bridge.GetName()
-		if err == nil {
-			interfaces[bridgeName] = exists
-		} else {
-			return nil, errors.Wrap(err, "could not get interface name from libvirt")
-		}
+		interfaces[bridge.Name] = exists
 	}
 	interfaceNames := make([]string, len(interfaces))
 	idx := 0

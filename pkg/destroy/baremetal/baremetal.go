@@ -4,8 +4,10 @@
 package baremetal
 
 import (
-	"github.com/libvirt/libvirt-go"
-	"github.com/pkg/errors"
+	"fmt"
+	"net/url"
+
+	libvirt "github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
@@ -24,17 +26,27 @@ type ClusterUninstaller struct {
 func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	o.Logger.Debug("Deleting bare metal resources")
 
-	// FIXME: close the connection
-	conn, err := libvirt.NewConnect(o.LibvirtURI)
+	uri, err := url.Parse(o.LibvirtURI)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to Libvirt daemon")
-	}
-	err = o.deleteStoragePool(conn)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to clean baremetal bootstrap storage pool")
+		return nil, err
 	}
 
-	o.Logger.Debug("FIXME: delete resources!")
+	virt, err := libvirt.ConnectToURI(uri)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := virt.Disconnect(); err != nil {
+			if o.Logger != nil {
+				o.Logger.Warn("failed to disconnect from libvirt", err)
+			}
+		}
+	}()
+
+	err = o.deleteStoragePool(virt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clean baremetal bootstrap storage pool: %w", err)
+	}
 
 	return nil, nil
 }
@@ -51,47 +63,45 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 
 // deleteStoragePool destroys, deletes and undefines any storagePool left behind during the creation
 // of the bootstrap VM
-func (o *ClusterUninstaller) deleteStoragePool(conn *libvirt.Connect) error {
+func (o *ClusterUninstaller) deleteStoragePool(virt *libvirt.Libvirt) error {
 	o.Logger.Debug("Deleting baremetal bootstrap volumes")
 
 	pName := o.InfraID + "-bootstrap"
-	pool, err := conn.LookupStoragePoolByName(pName)
+	pool, err := virt.StoragePoolLookupByName(pName)
 	if err != nil {
 		o.Logger.Warnf("Unable to get storage pool %s: %s", pName, err)
 		return nil
 	}
-	defer pool.Free()
 
 	// delete vols
-	vols, err := pool.ListAllStorageVolumes(0)
+	vols, err := virt.StoragePoolListVolumes(pool, 0)
 	if err != nil {
 		o.Logger.Warnf("Unable to get volumes in storage pool %s: %s", pName, err)
 		return nil
 	}
 
-	for _, vol := range vols {
-		defer vol.Free()
-		vName, err := vol.GetName()
+	for _, vName := range vols {
+		vol, err := virt.StorageVolLookupByName(pool, vName)
 		if err != nil {
 			o.Logger.Warnf("Unable to get volume %s in storage pool %s: %s", vName, pName, err)
 			return nil
 		}
-		if err := vol.Delete(0); err != nil {
+		if err := virt.StorageVolDelete(vol, 0); err != nil {
 			o.Logger.Warnf("Unable to delete volume %s in storage pool %s: %s", vName, pName, err)
 			return nil
 		}
 		o.Logger.WithField("volume", vName).Info("Deleted volume")
 	}
 
-	if err := pool.Destroy(); err != nil {
+	if err := virt.StoragePoolDestroy(pool); err != nil {
 		o.Logger.Warnf("Unable to destroy storage pool %s: %s", pName, err)
 	}
 
-	if err := pool.Delete(0); err != nil {
+	if err := virt.StoragePoolDelete(pool, 0); err != nil {
 		o.Logger.Warnf("Unable to delete storage pool %s: %s", pName, err)
 	}
 
-	if err := pool.Undefine(); err != nil {
+	if err := virt.StoragePoolUndefine(pool); err != nil {
 		o.Logger.Warnf("Unable to undefine storage pool %s: %s", pName, err)
 	}
 	o.Logger.WithField("pool", pName).Info("Deleted pool")
