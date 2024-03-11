@@ -47,4 +47,4 @@ fi
 echo "building node-joiner"
 
 # shellcheck disable=SC2086
-echo go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/node-joiner
+go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/node-joiner
