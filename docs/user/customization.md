@@ -350,8 +350,7 @@ For example:
               EnvironmentFile=-/etc/kubernetes/kubelet-workaround
               EnvironmentFile=-/etc/kubernetes/kubelet-env
 
-              ExecStart=/usr/bin/hyperkube \
-                  kubelet \
+              ExecStart=/usr/bin/kubelet \
                     --config=/etc/kubernetes/kubelet.conf \
                     --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
                     --rotate-certificates \

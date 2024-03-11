@@ -3,8 +3,7 @@
 # shellcheck disable=SC1091  # using path on bootstrap machine
 . /usr/local/bin/bootstrap-service-record.sh
 
-/usr/bin/hyperkube \
-  kubelet \
+ /usr/bin/kubelet \
     --anonymous-auth=false \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
     --runtime-request-timeout="${KUBELET_RUNTIME_REQUEST_TIMEOUT}" \
