@@ -9,7 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos/cache"
 )
 
-type config struct {
+type Config struct {
 	LibvirtURI       string              `json:"libvirt_uri,omitempty"`
 	BootstrapOSImage string              `json:"bootstrap_os_image,omitempty"`
 	Bridges          []map[string]string `json:"bridges"`
@@ -49,7 +49,7 @@ func TFVars(libvirtURI string, bootstrapOSImage, externalBridge, externalMAC, pr
 			})
 	}
 
-	cfg := &config{
+	cfg := &Config{
 		LibvirtURI:       libvirtURI,
 		BootstrapOSImage: bootstrapOSImage,
 		Bridges:          bridges,

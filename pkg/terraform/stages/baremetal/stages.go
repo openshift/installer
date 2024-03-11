@@ -29,6 +29,9 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 	port = 22
 	bootstrap = config.Platform.BareMetal.BootstrapProvisioningIP
 
+	// masters.tfvars.json
+	// 1:{"control_plane_interfaces":[[{"ip":"fd00:1101::47ee:13f6:d3bd:baba","mac":"00:8c:53:d4:b5:2a","name":"enp1s0"},{"ip":"fd2e:6f44:5dd8:c956::14","mac":"00:8c:53:d4:b5:2c","name":"enp2s0"}],[{"ip":"fd00:1101::134c:e458:6e20:f0c2","mac":"00:8c:53:d4:b5:2e","name":"enp1s0"},{"ip":"fd2e:6f44:5dd8:c956::15","mac":"00:8c:53:d4:b5:30","name":"enp2s0"}],[{"ip":"fd00:1101::deab:b4ba:884:26ca","mac":"00:8c:53:d4:b5:32","name":"enp1s0"},{"ip":"fd2e:6f44:5dd8:c956::16","mac":"00:8c:53:d4:b5:34","name":"enp2s0"}]]}
+
 	outputsFilePath := filepath.Join(directory, s.OutputsFilename())
 	if _, err := os.Stat(outputsFilePath); err != nil {
 		return "", 0, nil, errors.Wrapf(err, "could not find outputs file %q", outputsFilePath)
