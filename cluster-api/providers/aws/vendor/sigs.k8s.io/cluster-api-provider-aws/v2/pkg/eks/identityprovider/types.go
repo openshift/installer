@@ -39,7 +39,6 @@ type OidcIdentityProviderConfig struct {
 	UsernamePrefix             string
 }
 
-// IsEqual returns true if the OidcIdentityProviderConfig is equal to the supplied one.
 func (o *OidcIdentityProviderConfig) IsEqual(other *OidcIdentityProviderConfig) bool {
 	if o == other {
 		return true

@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -34,10 +33,11 @@ type RosaMachinePoolSpec struct {
 	// +kubebuilder:validation:Pattern:=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
 	NodePoolName string `json:"nodePoolName"`
 
-	// Version specifies the OpenShift version of the nodes associated with this machinepool.
+	// Version specifies the penshift version of the nodes associated with this machinepool.
 	// ROSAControlPlane version is used if not set.
 	//
 	// +optional
+	// +kubebuilder:validation:XValidation:rule=`self.matches('^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$')`, message="version must be a valid semantic version"
 	Version string `json:"version,omitempty"`
 
 	// AvailabilityZone is an optinal field specifying the availability zone where instances of this machine pool should run
@@ -45,8 +45,6 @@ type RosaMachinePoolSpec struct {
 	// +optional
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="subnet is immutable"
-	// +immutable
 	// +optional
 	Subnet string `json:"subnet,omitempty"`
 
@@ -54,60 +52,28 @@ type RosaMachinePoolSpec struct {
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Taints specifies the taints to apply to the nodes of the machine pool
-	// +optional
-	Taints []RosaTaint `json:"taints,omitempty"`
-
 	// AutoRepair specifies whether health checks should be enabled for machines
 	// in the NodePool. The default is false.
-	// +kubebuilder:default=false
 	// +optional
+	// +kubebuilder:default=false
 	AutoRepair bool `json:"autoRepair,omitempty"`
 
 	// InstanceType specifies the AWS instance type
-	//
-	// +kubebuilder:validation:Required
-	InstanceType string `json:"instanceType"`
+	InstanceType string `json:"instanceType,omitempty"`
 
 	// Autoscaling specifies auto scaling behaviour for this MachinePool.
 	// required if Replicas is not configured
 	// +optional
 	Autoscaling *RosaMachinePoolAutoScaling `json:"autoscaling,omitempty"`
 
-	// TuningConfigs specifies the names of the tuning configs to be applied to this MachinePool.
-	// Tuning configs must already exist.
-	// +optional
-	TuningConfigs []string `json:"tuningConfigs,omitempty"`
-
-	// AdditionalSecurityGroups is an optional set of security groups to associate
-	// with all node instances of the machine pool.
-	//
-	// +immutable
-	// +optional
-	AdditionalSecurityGroups []string `json:"additionalSecurityGroups,omitempty"`
+	// TODO(alberto): Enable and propagate this API input.
+	// Taints           []*Taint                     `json:"taints,omitempty"`
+	// TuningConfigs    []string                     `json:"tuningConfigs,omitempty"`
+	// Version          *Version                     `json:"version,omitempty"`
 
 	// ProviderIDList contain a ProviderID for each machine instance that's currently managed by this machine pool.
 	// +optional
 	ProviderIDList []string `json:"providerIDList,omitempty"`
-}
-
-// RosaTaint represents a taint to be applied to a node.
-type RosaTaint struct {
-	// The taint key to be applied to a node.
-	//
-	// +kubebuilder:validation:Required
-	Key string `json:"key"`
-	// The taint value corresponding to the taint key.
-	//
-	// +kubebuilder:validation:Pattern:=`^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`
-	// +optional
-	Value string `json:"value,omitempty"`
-	// The effect of the taint on pods that do not tolerate the taint.
-	// Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
-	//
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=NoSchedule;PreferNoSchedule;NoExecute
-	Effect corev1.TaintEffect `json:"effect"`
 }
 
 // RosaMachinePoolAutoScaling specifies scaling options.

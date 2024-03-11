@@ -257,7 +257,7 @@ func (s *NodegroupService) createNodegroup() (*eks.Nodegroup, error) {
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
-			// TODO: handle other errors
+			// TODO
 			case eks.ErrCodeResourceNotFoundException:
 				return nil, nil
 			default:
@@ -301,7 +301,7 @@ func (s *NodegroupService) deleteNodegroupAndWait() (reterr error) {
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
-			// TODO handle other errors
+			// TODO
 			case eks.ErrCodeResourceNotFoundException:
 				return nil
 			default:

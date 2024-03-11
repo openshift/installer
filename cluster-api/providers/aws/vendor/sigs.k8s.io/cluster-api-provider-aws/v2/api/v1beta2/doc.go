@@ -17,5 +17,5 @@ limitations under the License.
 // +gencrdrefdocs:force
 // +groupName=infrastructure.cluster.x-k8s.io
 
-// Package v1beta2 contains the v1beta2 API implementation.
+// package v1beta2 contains the v1beta2 API implementation.
 package v1beta2

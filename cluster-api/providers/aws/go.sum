@@ -264,10 +264,10 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/openshift-online/ocm-common v0.0.0-20240129111424-ff8c6c11d909 h1:WV67GNazQuGDaLX3kBbz0859NYPOQCsDCY5XUScF85M=
 github.com/openshift-online/ocm-common v0.0.0-20240129111424-ff8c6c11d909/go.mod h1:7FaAb07S63RF4sFMLSLtQaJLvPdaRnhAT4dBLD8/5kM=
-github.com/openshift-online/ocm-sdk-go v0.1.404 h1:rcmqyUYowD1yr1f7NQmoTqa1d/6zW0ZAxqYcpHpV2dk=
-github.com/openshift-online/ocm-sdk-go v0.1.404/go.mod h1:tke8vKcE7eHKyRbkJv6qo4ljo919zhx04uyQTcgF5cQ=
-github.com/openshift/rosa v1.2.35-rc1.0.20240229115423-42874686e22d h1:5LHaLb2YhmAaSkODnPLT/jbTE5oYmkrbkJ4jkYi7tpE=
-github.com/openshift/rosa v1.2.35-rc1.0.20240229115423-42874686e22d/go.mod h1:CR7cWdXZLWpsyskvqTWtAZBG5PaWrzYHy9tbaubbXIA=
+github.com/openshift-online/ocm-sdk-go v0.1.403 h1:IGp921wwwp/bmAdvTDFJjS0Bqto7yfevPgh5JQI5XFo=
+github.com/openshift-online/ocm-sdk-go v0.1.403/go.mod h1:tke8vKcE7eHKyRbkJv6qo4ljo919zhx04uyQTcgF5cQ=
+github.com/openshift/rosa v1.2.35-rc1.0.20240221134836-0beb882e5836 h1:gdsNdTF/FuVlfaOTFHYL5+QweYz0R5Ogeu1sWJvAuMQ=
+github.com/openshift/rosa v1.2.35-rc1.0.20240221134836-0beb882e5836/go.mod h1:eCjTo7aTeuUNNwo1bPxIJb6hxyi4J1MfSqUTkNx63q0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -458,7 +458,6 @@ golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtn
 golang.org/x/tools v0.0.0-20200619180055-7c47624df98f/go.mod h1:EkVYQZoAsY45+roYkvgYkIh4xh/qjgUK9TdY2XT94GE=
 golang.org/x/tools v0.0.0-20201224043029-2b0845dc783e/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
 golang.org/x/tools v0.0.0-20210106214847-113979e3529a/go.mod h1:emZCQorbCU4vsT4fOWvOPXz4eW1wZW4PmDk9uLelYpA=
-golang.org/x/tools v0.1.1/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
 golang.org/x/tools v0.1.5/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
 golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
 golang.org/x/tools v0.14.0 h1:jvNa2pY0M4r62jkRQ6RwEZZyPcymeL9XZMLBbV7U2nc=
@@ -537,8 +536,8 @@ sigs.k8s.io/aws-iam-authenticator v0.6.13 h1:QSQcAkpt/hF97Ogyoz6sj3WD2twTd2cmxFb
 sigs.k8s.io/aws-iam-authenticator v0.6.13/go.mod h1:CnvFyzR/xeLHmUY/BD0qW6q0wp6KIwXmFp4eTfrHdP8=
 sigs.k8s.io/cluster-api v1.6.1 h1:I34p/fwgRlEhs+o9cUhKXDwNNfPS3no0yJsd2bJyQVc=
 sigs.k8s.io/cluster-api v1.6.1/go.mod h1:DaxwruDvSaEYq5q6FREDaGzX6UsAVUCA99Sp8vfMHyQ=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.1-0.20240306201835-baf8d59ff495 h1:TZzGXnwUyVWxwRxYo4OUHVMZNChbRKlZ/Y8Ybxj94RU=
-sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.1-0.20240306201835-baf8d59ff495/go.mod h1:HByWUklYZD/abXD07CNhMtqmieq+EYV6PpsntJS9kPA=
+sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.0 h1:m8mDWGDkTbOgia5br9Gklzf9X/6RfvmHDnW0f/cfQhc=
+sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.0/go.mod h1:E/7VHYlm0fxDC5Rupfp5aR49+gIgdGCPOboR1g9rL+w=
 sigs.k8s.io/controller-runtime v0.16.3 h1:2TuvuokmfXvDUamSx1SuAOO3eTyye+47mJCigwG62c4=
 sigs.k8s.io/controller-runtime v0.16.3/go.mod h1:j7bialYoSn142nv9sCOJmQgDXQXxnroFU4VnX/brVJ0=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=

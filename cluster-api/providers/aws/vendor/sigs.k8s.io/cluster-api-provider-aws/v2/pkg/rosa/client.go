@@ -1,4 +1,3 @@
-// Package rosa provides a way to interact with the Red Hat OpenShift Service on AWS (ROSA) API.
 package rosa
 
 import (
@@ -19,7 +18,6 @@ const (
 	ocmAPIURLKey = "ocmApiUrl"
 )
 
-// NewOCMClient creates a new OCM client.
 func NewOCMClient(ctx context.Context, rosaScope *scope.ROSAControlPlaneScope) (*ocm.Client, error) {
 	token, url, err := ocmCredentials(ctx, rosaScope)
 	if err != nil {

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package iam provides a service for managing IAM roles and policies.
 package iam
 
 import (
@@ -484,7 +483,7 @@ func (s *IAMService) FindAndVerifyOIDCProvider(cluster *eks.Cluster) (string, er
 
 func fetchRootCAThumbprint(issuerURL string, client *http.Client) (string, error) {
 	// needed to appease noctx.
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, issuerURL, http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, issuerURL, nil)
 	if err != nil {
 		return "", err
 	}

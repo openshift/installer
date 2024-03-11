@@ -17,7 +17,6 @@ limitations under the License.
 package scope
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -124,15 +123,4 @@ func (p *ProviderID) Validate() bool {
 // Deprecated: This method is going to be removed in a future release.
 func (p *ProviderID) IndexKey() string {
 	return p.String()
-}
-
-// ProviderIDPrefix is the prefix of AWS resource IDs to form the Kubernetes Provider ID.
-// NOTE: this format matches the 2 slashes format used in cloud-provider and cluster-autoscaler.
-const ProviderIDPrefix = "aws://"
-
-// GenerateProviderID generates a valid AWS Node/Machine ProviderID field.
-//
-// By default, the last id provided is used as identifier (last part).
-func GenerateProviderID(ids ...string) string {
-	return fmt.Sprintf("%s/%s", ProviderIDPrefix, strings.Join(ids, "/"))
 }

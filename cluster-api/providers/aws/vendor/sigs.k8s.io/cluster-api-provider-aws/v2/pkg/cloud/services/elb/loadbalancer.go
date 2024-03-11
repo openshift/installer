@@ -250,7 +250,7 @@ func (s *Service) getAPIServerLBSpec(elbName string, lbSpec *infrav1.AWSLoadBala
 		// The load balancer APIs require us to only attach one subnet for each AZ.
 		subnets := s.scope.Subnets().FilterPrivate()
 
-		if scheme == infrav1.ELBSchemeInternetFacing {
+		if s.scope.ControlPlaneLoadBalancerScheme() == infrav1.ELBSchemeInternetFacing {
 			subnets = s.scope.Subnets().FilterPublic()
 		}
 
@@ -812,7 +812,7 @@ func (s *Service) RegisterInstanceWithAPIServerLB(instance *infrav1.Instance, lb
 		return errors.Wrapf(err, "error describing ELB's target groups %q", name)
 	}
 	if len(targetGroups.TargetGroups) == 0 {
-		return fmt.Errorf("no target groups found for load balancer with arn '%s'", out.ARN)
+		return errors.New(fmt.Sprintf("no target groups found for load balancer with arn '%s'", out.ARN))
 	}
 	// Since TargetGroups and Listeners don't care, or are not aware, of subnets before registration, we ignore that check.
 	// Also, registering with AZ is not supported using the an InstanceID.
@@ -989,14 +989,9 @@ func (s *Service) getAPIServerClassicELBSpec(elbName string) (*infrav1.LoadBalan
 	}
 	securityGroupIDs = append(securityGroupIDs, s.scope.SecurityGroups()[infrav1.SecurityGroupAPIServerLB].ID)
 
-	scheme := infrav1.ELBSchemeInternetFacing
-	if controlPlaneLoadBalancer != nil && controlPlaneLoadBalancer.Scheme != nil {
-		scheme = *controlPlaneLoadBalancer.Scheme
-	}
-
 	res := &infrav1.LoadBalancer{
 		Name:   elbName,
-		Scheme: scheme,
+		Scheme: s.scope.ControlPlaneLoadBalancerScheme(),
 		ClassicELBListeners: []infrav1.ClassicELBListener{
 			{
 				Protocol:         infrav1.ELBProtocolTCP,
@@ -1049,7 +1044,7 @@ func (s *Service) getAPIServerClassicELBSpec(elbName string) (*infrav1.LoadBalan
 		// The load balancer APIs require us to only attach one subnet for each AZ.
 		subnets := s.scope.Subnets().FilterPrivate()
 
-		if scheme == infrav1.ELBSchemeInternetFacing {
+		if s.scope.ControlPlaneLoadBalancerScheme() == infrav1.ELBSchemeInternetFacing {
 			subnets = s.scope.Subnets().FilterPublic()
 		}
 
@@ -1253,28 +1248,27 @@ func (s *Service) listByTag(tag string) ([]string, error) {
 
 	err := s.ResourceTaggingClient.GetResourcesPages(&input, func(r *rgapi.GetResourcesOutput, last bool) bool {
 		for _, tagmapping := range r.ResourceTagMappingList {
-			if tagmapping.ResourceARN == nil {
-				continue
+			if tagmapping.ResourceARN != nil {
+				parsedARN, err := arn.Parse(*tagmapping.ResourceARN)
+				if err != nil {
+					s.scope.Info("failed to parse ARN", "arn", *tagmapping.ResourceARN, "tag", tag)
+					continue
+				}
+				if strings.Contains(parsedARN.Resource, "loadbalancer/net/") {
+					s.scope.Info("ignoring nlb created by service, consider enabling garbage collection", "arn", *tagmapping.ResourceARN, "tag", tag)
+					continue
+				}
+				if strings.Contains(parsedARN.Resource, "loadbalancer/app/") {
+					s.scope.Info("ignoring alb created by service, consider enabling garbage collection", "arn", *tagmapping.ResourceARN, "tag", tag)
+					continue
+				}
+				name := strings.ReplaceAll(parsedARN.Resource, "loadbalancer/", "")
+				if name == "" {
+					s.scope.Info("failed to parse ARN", "arn", *tagmapping.ResourceARN, "tag", tag)
+					continue
+				}
+				names = append(names, name)
 			}
-			parsedARN, err := arn.Parse(*tagmapping.ResourceARN)
-			if err != nil {
-				s.scope.Info("failed to parse ARN", "arn", *tagmapping.ResourceARN, "tag", tag)
-				continue
-			}
-			if strings.Contains(parsedARN.Resource, "loadbalancer/net/") {
-				s.scope.Info("ignoring nlb created by service, consider enabling garbage collection", "arn", *tagmapping.ResourceARN, "tag", tag)
-				continue
-			}
-			if strings.Contains(parsedARN.Resource, "loadbalancer/app/") {
-				s.scope.Info("ignoring alb created by service, consider enabling garbage collection", "arn", *tagmapping.ResourceARN, "tag", tag)
-				continue
-			}
-			name := strings.ReplaceAll(parsedARN.Resource, "loadbalancer/", "")
-			if name == "" {
-				s.scope.Info("failed to parse ARN", "arn", *tagmapping.ResourceARN, "tag", tag)
-				continue
-			}
-			names = append(names, name)
 		}
 		return true
 	})
@@ -1533,17 +1527,17 @@ func fromSDKTypeToClassicELB(v *elb.LoadBalancerDescription, attrs *elb.LoadBala
 }
 
 func fromSDKTypeToLB(v *elbv2.LoadBalancer, attrs []*elbv2.LoadBalancerAttribute, tags []*elbv2.Tag) *infrav1.LoadBalancer {
-	subnetIDs := make([]*string, len(v.AvailabilityZones))
+	subnetIds := make([]*string, len(v.AvailabilityZones))
 	availabilityZones := make([]*string, len(v.AvailabilityZones))
 	for i, az := range v.AvailabilityZones {
-		subnetIDs[i] = az.SubnetId
+		subnetIds[i] = az.SubnetId
 		availabilityZones[i] = az.ZoneName
 	}
 	res := &infrav1.LoadBalancer{
 		ARN:               aws.StringValue(v.LoadBalancerArn),
 		Name:              aws.StringValue(v.LoadBalancerName),
 		Scheme:            infrav1.ELBScheme(aws.StringValue(v.Scheme)),
-		SubnetIDs:         aws.StringValueSlice(subnetIDs),
+		SubnetIDs:         aws.StringValueSlice(subnetIds),
 		SecurityGroupIDs:  aws.StringValueSlice(v.SecurityGroups),
 		AvailabilityZones: aws.StringValueSlice(availabilityZones),
 		DNSName:           aws.StringValue(v.DNSName),

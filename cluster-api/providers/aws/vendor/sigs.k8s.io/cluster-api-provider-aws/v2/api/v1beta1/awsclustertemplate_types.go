@@ -53,7 +53,6 @@ func init() {
 	SchemeBuilder.Register(&AWSClusterTemplate{}, &AWSClusterTemplateList{})
 }
 
-// AWSClusterTemplateResource defines the desired state of AWSClusterTemplate.
 type AWSClusterTemplateResource struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata

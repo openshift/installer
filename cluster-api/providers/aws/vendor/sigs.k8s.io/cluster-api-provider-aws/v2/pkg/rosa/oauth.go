@@ -14,7 +14,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 )
 
-// TokenResponse contains the access token and the duration until it expires.
 type TokenResponse struct {
 	AccessToken string
 	ExpiresIn   time.Duration
@@ -30,7 +29,7 @@ func RequestToken(ctx context.Context, apiURL, username, password string, config
 	}
 
 	tokenReqURL := fmt.Sprintf("%s/oauth/authorize?response_type=token&client_id=%s", oauthURL, clientID)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, tokenReqURL, http.NoBody)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, tokenReqURL, nil)
 	if err != nil {
 		return nil, err
 	}

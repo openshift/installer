@@ -19,6 +19,7 @@ package scope
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -141,7 +142,7 @@ func (m *MachineScope) GetProviderID() string {
 
 // SetProviderID sets the AWSMachine providerID in spec.
 func (m *MachineScope) SetProviderID(instanceID, availabilityZone string) {
-	providerID := GenerateProviderID(availabilityZone, instanceID)
+	providerID := fmt.Sprintf("aws:///%s/%s", availabilityZone, instanceID)
 	m.AWSMachine.Spec.ProviderID = ptr.To[string](providerID)
 }
 
@@ -194,7 +195,6 @@ func (m *MachineScope) UseSecretsManager(userDataFormat string) bool {
 	return !m.AWSMachine.Spec.CloudInit.InsecureSkipSecretsManager && !m.UseIgnition(userDataFormat)
 }
 
-// UseIgnition returns true if the AWSMachine should use Ignition.
 func (m *MachineScope) UseIgnition(userDataFormat string) bool {
 	return userDataFormat == "ignition" || (m.AWSMachine.Spec.Ignition != nil)
 }
@@ -265,7 +265,6 @@ func (m *MachineScope) GetRawBootstrapData() ([]byte, error) {
 	return data, err
 }
 
-// GetRawBootstrapDataWithFormat returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName.
 func (m *MachineScope) GetRawBootstrapDataWithFormat() ([]byte, string, error) {
 	if m.Machine.Spec.Bootstrap.DataSecretName == nil {
 		return nil, "", errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")

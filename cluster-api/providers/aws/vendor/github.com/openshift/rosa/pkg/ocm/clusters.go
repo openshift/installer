@@ -129,7 +129,7 @@ type Spec struct {
 	Mode                string
 
 	// External authentication configuration
-	ExternalAuthProvidersEnabled bool
+	ExternalAuthConfig cmv1.ExternalAuthConfig
 
 	NodeDrainGracePeriodInMinutes float64
 
@@ -862,7 +862,7 @@ func (c *Client) createClusterSpec(config Spec) (*cmv1.Cluster, error) {
 		clusterBuilder.Hypershift(hyperShiftBuilder)
 	}
 
-	if config.ExternalAuthProvidersEnabled {
+	if config.ExternalAuthConfig.Enabled() {
 		externalAuthConfigBuilder := cmv1.NewExternalAuthConfig().Enabled(true)
 		clusterBuilder.ExternalAuthConfig(externalAuthConfigBuilder)
 	}

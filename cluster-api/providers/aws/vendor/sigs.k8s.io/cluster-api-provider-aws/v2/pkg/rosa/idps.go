@@ -97,19 +97,17 @@ func findExistingClusterAdminIDP(client *ocm.Client, clusterID string) (
 	}
 
 	for _, idp := range idps {
-		if idp.Name() != clusterAdminIDPname {
-			continue
-		}
+		if idp.Name() == clusterAdminIDPname {
+			itemUserList, err := client.GetHTPasswdUserList(clusterID, idp.ID())
+			if err != nil {
+				reterr = fmt.Errorf("failed to get user list of the HTPasswd IDP of '%s: %s': %v", idp.Name(), clusterID, err)
+				return
+			}
 
-		itemUserList, err := client.GetHTPasswdUserList(clusterID, idp.ID())
-		if err != nil {
-			reterr = fmt.Errorf("failed to get user list of the HTPasswd IDP of '%s: %s': %v", idp.Name(), clusterID, err)
+			htpasswdIDP = idp
+			userList = itemUserList
 			return
 		}
-
-		htpasswdIDP = idp
-		userList = itemUserList
-		return
 	}
 
 	return

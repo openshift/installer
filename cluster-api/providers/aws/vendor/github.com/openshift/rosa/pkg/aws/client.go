@@ -65,8 +65,6 @@ import (
 )
 
 // Name of the AWS user that will be used to create all the resources of the cluster:
-//
-//go:generate mockgen -source=client.go -package=aws -destination=mock_client.go
 const (
 	AdminUserName        = "osdCcsAdmin"
 	OsdCcsAdminStackName = "osdCcsAdminIAMUser"
@@ -137,7 +135,7 @@ type Client interface {
 	ListOCMRoles() ([]Role, error)
 	ListAccountRoles(version string) ([]Role, error)
 	ListOperatorRoles(version string, clusterID string) (map[string][]OperatorRoleDetail, error)
-	ListOidcProviders(targetClusterId string, config *cmv1.OidcConfig) ([]OidcProviderOutput, error)
+	ListOidcProviders(targetClusterId string) ([]OidcProviderOutput, error)
 	GetRoleByARN(roleARN string) (*iam.Role, error)
 	DeleteOperatorRole(roles string, managedPolicies bool) error
 	GetOperatorRolesFromAccountByClusterID(

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package record provides a way to record Kubernetes events.
 package record
 
 import (

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package system contains utiilities for the system namespace.
 package system
 
 import (

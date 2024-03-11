@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package controlleridentitycreator provides a way to reconcile AWSClusterControllerIdentity instance.
 package controlleridentitycreator
 
 import (

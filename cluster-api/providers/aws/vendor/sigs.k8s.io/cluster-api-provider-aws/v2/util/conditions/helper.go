@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package conditions provides helper functions for working with conditions.
 package conditions
 
 import (

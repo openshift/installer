@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package annotations provides utility functions for working with annotations.
 package annotations
 
 import (

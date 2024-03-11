@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package s3 provides a way to interact with AWS S3.
 package s3
 
 import (
@@ -39,9 +38,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/util/system"
 )
 
-// AWSDefaultRegion is the default AWS region.
-const AWSDefaultRegion string = "us-east-1"
-
 // Service holds a collection of interfaces.
 // The interfaces are broken down like this to group functions together.
 // One alternative is to have a large list of functions from the ec2 client.
@@ -63,7 +59,6 @@ func NewService(s3Scope scope.S3Scope) *Service {
 	}
 }
 
-// ReconcileBucket reconciles the S3 bucket.
 func (s *Service) ReconcileBucket() error {
 	if !s.bucketManagementEnabled() {
 		return nil
@@ -86,7 +81,6 @@ func (s *Service) ReconcileBucket() error {
 	return nil
 }
 
-// DeleteBucket deletes the S3 bucket.
 func (s *Service) DeleteBucket() error {
 	if !s.bucketManagementEnabled() {
 		return nil
@@ -122,7 +116,6 @@ func (s *Service) DeleteBucket() error {
 	return nil
 }
 
-// Create creates an object in the S3 bucket.
 func (s *Service) Create(m *scope.MachineScope, data []byte) (string, error) {
 	if !s.bucketManagementEnabled() {
 		return "", errors.New("requested object creation but bucket management is not enabled")
@@ -168,7 +161,6 @@ func (s *Service) Create(m *scope.MachineScope, data []byte) (string, error) {
 	return objectURL.String(), nil
 }
 
-// Delete deletes the object from the S3 bucket.
 func (s *Service) Delete(m *scope.MachineScope) error {
 	if !s.bucketManagementEnabled() {
 		return errors.New("requested object creation but bucket management is not enabled")
@@ -231,13 +223,11 @@ func (s *Service) Delete(m *scope.MachineScope) error {
 }
 
 func (s *Service) createBucketIfNotExist(bucketName string) error {
-	input := &s3.CreateBucketInput{Bucket: aws.String(bucketName)}
-
-	// See https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html#AmazonS3-CreateBucket-request-LocationConstraint.
-	if s.scope.Region() != AWSDefaultRegion {
-		input.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
+	input := &s3.CreateBucketInput{
+		Bucket: aws.String(bucketName),
+		CreateBucketConfiguration: &s3.CreateBucketConfiguration{
 			LocationConstraint: aws.String(s.scope.Region()),
-		}
+		},
 	}
 
 	_, err := s.S3Client.CreateBucket(input)

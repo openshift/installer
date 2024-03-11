@@ -19,7 +19,6 @@ package aws
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -217,8 +216,8 @@ type OidcProviderOutput struct {
 	ClusterId string
 }
 
-func (c *awsClient) ListOidcProviders(targetClusterId string, config *cmv1.OidcConfig) ([]OidcProviderOutput, error) {
-	var providers []OidcProviderOutput
+func (c *awsClient) ListOidcProviders(targetClusterId string) ([]OidcProviderOutput, error) {
+	providers := []OidcProviderOutput{}
 	output, err := c.iamClient.ListOpenIDConnectProviders(&iam.ListOpenIDConnectProvidersInput{})
 	if err != nil {
 		return providers, err
@@ -258,15 +257,6 @@ func (c *awsClient) ListOidcProviders(targetClusterId string, config *cmv1.OidcC
 						ClusterId: clusterId,
 					})
 					return providers, nil
-				}
-			}
-			if config != nil {
-				resourceId, err := GetResourceIdFromOidcProviderARN(*provider.Arn)
-				if err != nil {
-					return nil, fmt.Errorf("unable to get resource ID from OIDC Provider's ARN. Error: '%v'", err)
-				}
-				if config == nil || !strings.Contains(config.IssuerUrl(), resourceId) {
-					skip = true
 				}
 			}
 			if skip {

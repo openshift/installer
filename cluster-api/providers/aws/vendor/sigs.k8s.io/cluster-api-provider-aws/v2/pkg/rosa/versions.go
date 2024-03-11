@@ -1,7 +1,6 @@
 package rosa
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/blang/semver"
@@ -9,7 +8,6 @@ import (
 	"github.com/openshift/rosa/pkg/ocm"
 )
 
-// MinSupportedVersion is the minimum supported version for ROSA.
 var MinSupportedVersion = semver.MustParse("4.14.0")
 
 // CheckExistingScheduledUpgrade checks and returns the current upgrade schedule if any.
@@ -29,8 +27,7 @@ func CheckExistingScheduledUpgrade(client *ocm.Client, cluster *cmv1.Cluster) (*
 // ScheduleControlPlaneUpgrade schedules a new control plane upgrade to the specified version at the specified time.
 func ScheduleControlPlaneUpgrade(client *ocm.Client, cluster *cmv1.Cluster, version string, nextRun time.Time) (*cmv1.ControlPlaneUpgradePolicy, error) {
 	// earliestNextRun is set to at least 5 min from now by the OCM API.
-	// Set our next run request to something slightly longer than 5min to make sure we account for the latency between when we send this
-	// request and when the server processes it.
+	// we set it to 6 min here to account for latencty.
 	earliestNextRun := time.Now().Add(time.Minute * 6)
 	if nextRun.Before(earliestNextRun) {
 		nextRun = earliestNextRun
@@ -48,40 +45,9 @@ func ScheduleControlPlaneUpgrade(client *ocm.Client, cluster *cmv1.Cluster, vers
 	return client.ScheduleHypershiftControlPlaneUpgrade(cluster.ID(), upgradePolicy)
 }
 
-// ScheduleNodePoolUpgrade schedules a new nodePool upgrade to the specified version at the specified time.
-func ScheduleNodePoolUpgrade(client *ocm.Client, clusterID string, nodePool *cmv1.NodePool, version string, nextRun time.Time) (*cmv1.NodePoolUpgradePolicy, error) {
-	// earliestNextRun is set to at least 5 min from now by the OCM API.
-	// Set our next run request to something slightly longer than 5min to make sure we account for the latency between when we send this
-	// request and when the server processes it.
-	earliestNextRun := time.Now().Add(time.Minute * 6)
-	if nextRun.Before(earliestNextRun) {
-		nextRun = earliestNextRun
-	}
-
-	upgradePolicy, err := cmv1.NewNodePoolUpgradePolicy().
-		UpgradeType(cmv1.UpgradeTypeNodePool).
-		NodePoolID(nodePool.ID()).
-		ScheduleType(cmv1.ScheduleTypeManual).
-		Version(version).
-		NextRun(nextRun).
-		Build()
-	if err != nil {
-		return nil, err
-	}
-
-	scheduledUpgrade, err := client.ScheduleNodePoolUpgrade(clusterID, nodePool.ID(), upgradePolicy)
-	if err != nil {
-		return nil, fmt.Errorf("failed to schedule nodePool upgrade to version %s: %w", version, err)
-	}
-
-	return scheduledUpgrade, nil
-}
-
 // machinepools can be created with a minimal of two minor versions from the control plane.
 const minorVersionsAllowedDeviation = 2
 
-// MachinePoolSupportedVersionsRange returns the supported range of versions
-// for a machine pool based on the control plane version.
 func MachinePoolSupportedVersionsRange(controlPlaneVersion string) (*semver.Version, *semver.Version, error) {
 	maxVersion, err := semver.Parse(controlPlaneVersion)
 	if err != nil {

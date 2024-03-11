@@ -187,7 +187,6 @@ func (s *Service) ReconcileLaunchTemplate(
 	return nil
 }
 
-// ReconcileTags reconciles the tags for the AWSMachinePool instances.
 func (s *Service) ReconcileTags(scope scope.LaunchTemplateScope, resourceServicesToUpdate []scope.ResourceServiceToUpdate) error {
 	additionalTags := scope.AdditionalTags()
 
@@ -227,7 +226,6 @@ func (s *Service) ensureTags(scope scope.LaunchTemplateScope, resourceServicesTo
 	return changed, nil
 }
 
-// MachinePoolAnnotationJSON returns the annotation's json value as a map.
 func MachinePoolAnnotationJSON(lts scope.LaunchTemplateScope, annotation string) (map[string]interface{}, error) {
 	out := map[string]interface{}{}
 
@@ -248,7 +246,6 @@ func machinePoolAnnotation(lts scope.LaunchTemplateScope, annotation string) str
 	return lts.GetObjectMeta().GetAnnotations()[annotation]
 }
 
-// UpdateMachinePoolAnnotationJSON updates the annotation with the given content.
 func UpdateMachinePoolAnnotationJSON(lts scope.LaunchTemplateScope, annotation string, content map[string]interface{}) error {
 	b, err := json.Marshal(content)
 	if err != nil {
@@ -621,7 +618,6 @@ func (s *Service) PruneLaunchTemplateVersions(id string) error {
 	return s.deleteLaunchTemplateVersion(id, versionToPrune)
 }
 
-// GetLaunchTemplateLatestVersion returns the latest version of a launch template.
 func (s *Service) GetLaunchTemplateLatestVersion(id string) (string, error) {
 	input := &ec2.DescribeLaunchTemplateVersionsInput{
 		LaunchTemplateId: aws.String(id),
@@ -858,7 +854,6 @@ func (s *Service) DiscoverLaunchTemplateAMI(scope scope.LaunchTemplateScope) (*s
 	return aws.String(lookupAMI), nil
 }
 
-// GetAdditionalSecurityGroupsIDs returns the security group IDs for the additional security groups.
 func (s *Service) GetAdditionalSecurityGroupsIDs(securityGroups []infrav1.AWSResourceReference) ([]string, error) {
 	var additionalSecurityGroupsIDs []string
 
