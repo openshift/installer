@@ -129,6 +129,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 	}
 
+	if err := createInternalLoadBalancer(ctx, in.InstallConfig, in.InfraID); err != nil {
+		return fmt.Errorf("failed to create internal load balancer")
+	}
+
 	return nil
 }
 
