@@ -178,7 +178,9 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		a.RendezvousIP = "127.0.0.1"
 		// Reuse the existing cluster name.
 		clusterName = clusterInfo.ClusterName
-		// Fetch the required number of master and worker nodes.
+		// Fetch the required number of master and worker nodes. Currently only adding workers
+		// is supported, so forcing the expected number of masters to zero, and assuming implcitly
+		// that all the hosts defined are workers.
 		numMasters = 0
 		numWorkers = len(addNodesConfig.Config.Hosts)
 		// Enable add-nodes specific services
@@ -340,7 +342,7 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
-	numMasters int, numWorkers int,
+	numMasters, numWorkers int,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
