@@ -121,7 +121,11 @@ func (o *ClusterUninstaller) destroyBackendServices(ctx context.Context) error {
 			}
 		}
 		if items = o.getPendingItems("backendservice"); len(items) > 0 {
-			return fmt.Errorf("%d items pending", len(items))
+			for _, item := range items {
+				if err := o.deleteBackendService(ctx, item, scope); err != nil {
+					return fmt.Errorf("error deleting pending backend service %s: %w", item.name, err)
+				}
+			}
 		}
 	}
 	return nil

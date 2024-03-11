@@ -90,7 +90,7 @@ func (o *ClusterUninstaller) listForwardingRulesWithFilter(ctx context.Context, 
 }
 
 func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item cloudResource, scope resourceScope) error {
-	o.Logger.Debugf("Deleting forwarding rule %s", item.name)
+	o.Logger.Debugf("Deleting %s forwarding rule %s", scope, item.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
@@ -110,7 +110,7 @@ func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item clou
 		o.resetRequestID(item.typeName, item.name)
 		return fmt.Errorf("failed to delete forwarding rule %s with error: %s: %w", item.name, operationErrorMessage(op), err)
 	}
-	if (err != nil && isNoOp(err)) || (op != nil && op.Status == "DONE") {
+	if op != nil && op.Status == "DONE" {
 		o.resetRequestID(item.typeName, item.name)
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted forwarding rule %s", item.name)
@@ -121,7 +121,7 @@ func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item clou
 // destroyForwardingRules removes all forwarding rules with a name prefixed
 // with the cluster's infra ID.
 func (o *ClusterUninstaller) destroyForwardingRules(ctx context.Context) error {
-	for _, scope := range []resourceScope{gcpGlobalResource, gcpRegionalResource} {
+	for _, scope := range []resourceScope{gcpRegionalResource, gcpGlobalResource} {
 		found, err := o.listForwardingRules(ctx, scope)
 		if err != nil {
 			return fmt.Errorf("failed to list forwarding rules: %w", err)
@@ -134,7 +134,11 @@ func (o *ClusterUninstaller) destroyForwardingRules(ctx context.Context) error {
 			}
 		}
 		if items = o.getPendingItems("forwardingrule"); len(items) > 0 {
-			return fmt.Errorf("%d items pending", len(items))
+			for _, item := range items {
+				if err := o.deleteForwardingRule(ctx, item, scope); err != nil {
+					return fmt.Errorf("error deleting pending forwarding rule %s: %w", item.name, err)
+				}
+			}
 		}
 	}
 	return nil
