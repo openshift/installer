@@ -62,7 +62,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
 		},
 		{
 			Scenario: "default-norole",
@@ -71,7 +71,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+				hosts(host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
 		},
 		{
 			Scenario: "network-config",
@@ -89,7 +89,8 @@ routes:
 						consumerRef("machine-0").
 						annotation("baremetalhost.metal3.io/paused", "").
 						preprovisioningNetworkDataName("master-0-network-config-secret").
-						externallyProvisioned()).build(),
+						externallyProvisioned().
+						customDeploy()).build(),
 		},
 		{
 			Scenario: "3-hosts-3-machines-norole-all",
@@ -108,9 +109,9 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines",
@@ -131,9 +132,9 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("master-3-bmc-secret").creds("usr3", "pwd3")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
 					host("master-3")).build(),
 		},
 		{
@@ -155,9 +156,9 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
 					host("worker-0")).build(),
 		},
 		{
@@ -181,9 +182,9 @@ routes:
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
 					secret("worker-1-bmc-secret").creds("wrk1", "pwd1")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
 					host("worker-0"),
 					host("worker-1")).build(),
 		},
@@ -208,11 +209,11 @@ routes:
 					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-1").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-1").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
 					host("worker-0"),
 					host("worker-1"),
-					host("master-0").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+					host("master-0").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-master",
@@ -234,9 +235,9 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
 					host("worker-0"),
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned()).build(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy()).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-worker",
@@ -257,9 +258,9 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
-					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned(),
+					host("master-0").consumerRef("machine-0").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-1").consumerRef("machine-1").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
+					host("master-2").consumerRef("machine-2").annotation("baremetalhost.metal3.io/paused", "").externallyProvisioned().customDeploy(),
 					host("worker-0")).build(),
 		},
 	}
@@ -428,6 +429,13 @@ func (hb *hostBuilder) build() *baremetalhost.BareMetalHost {
 
 func (hb *hostBuilder) externallyProvisioned() *hostBuilder {
 	hb.Spec.ExternallyProvisioned = true
+	return hb
+}
+
+func (hb *hostBuilder) customDeploy() *hostBuilder {
+	hb.Spec.CustomDeploy = &baremetalhost.CustomDeploy{
+		Method: "install_coreos",
+	}
 	return hb
 }
 
