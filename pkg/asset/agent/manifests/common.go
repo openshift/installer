@@ -27,10 +27,6 @@ func getProxy(proxy *types.Proxy) *aiv1beta1.Proxy {
 	}
 }
 
-func getNMStateConfigName(ic *agent.OptionalInstallConfig) string {
-	return ic.ClusterName()
-}
-
 func getNMStateConfigLabels(clusterName string) map[string]string {
 	return map[string]string{
 		"infraenvs.agent-install.openshift.io": clusterName,
