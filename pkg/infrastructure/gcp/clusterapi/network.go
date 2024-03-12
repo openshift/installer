@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
@@ -31,48 +32,77 @@ func getInternalLBAddress(ctx context.Context, project, region, name string) (st
 	return addrOutput.Address, nil
 }
 
-// createInternalLBAddress creates a static ip address for the internal load balancer.
-func createInternalLBAddress(ctx context.Context, in clusterapi.InfraReadyInput) (string, error) {
+// createInternalLB creates a static ip address for the internal load balancer.
+// Returns the IP address of the created load balancer.
+func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnetSelfLink, networkSelfLink string, zones []*string) (string, error) {
+	projectID := in.InstallConfig.Config.GCP.ProjectID
+	region := in.InstallConfig.Config.GCP.Region
 	name := getAPIAddressName(in.InfraID)
-
-	// TODO: Find the self link for a subnet from the in.Client
-	// TODO: can we pick one returned from the service.Get() ?
-	subnetSelfLink := ""
-
-	// TODO: the subnet is only relevant for internal load balancer
-	addr := &compute.Address{
-		Name:        name,
-		AddressType: "INTERNAL",
-		Subnetwork:  subnetSelfLink,
-		Description: resourceDescription,
-		Labels:      mergeLabels(in.InstallConfig, in.InfraID),
-		Region:      in.InstallConfig.Config.GCP.Region,
-	}
+	labels := mergeLabels(in.InstallConfig, in.InfraID)
 
 	service, err := NewComputeService()
 	if err != nil {
 		return "", err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*3)
 	defer cancel()
 
-	op, err := service.Addresses.Insert(in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, addr).Context(ctx).Do()
+	// Patch the balancing mode on CAPG proxy classic load balancer backends
+	// to match the CONNECTION balancing mode used by installer-created
+	// internal passthrough LB, because:
+	// "all backend services that reference the instance group must use the same balancing mode"
+	// cf: https://cloud.google.com/load-balancing/docs/backend-service
+	logrus.Debug("Patching external load balancer")
+	extBesvcName := fmt.Sprintf("%s-apiserver", in.InfraID)
+	extBesvc, err := service.BackendServices.Get(projectID, extBesvcName).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to get backend service: %w", err)
+	}
+
+	for _, be := range extBesvc.Backends {
+		be.BalancingMode = "CONNECTION"
+		be.MaxConnections = int64(2 ^ 32)
+	}
+
+	op, err := service.BackendServices.Patch(projectID, extBesvcName, extBesvc).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to patch external load balancer: %w", err)
+	}
+
+	if err := WaitForOperationGlobal(ctx, projectID, op); err != nil {
+		return "", fmt.Errorf("failed to wait for patching external load balancer: %w", err)
+	}
+	logrus.Debug("Successfully patched external load balancer")
+
+	logrus.Debug("Creating internal load balancer")
+	addr := &compute.Address{
+		Name:        name,
+		AddressType: "INTERNAL",
+		Subnetwork:  subnetSelfLink,
+		Description: resourceDescription,
+		Labels:      labels,
+		Region:      region,
+	}
+
+	op, err = service.Addresses.Insert(projectID, region, addr).Context(ctx).Do()
 	if err != nil {
 		return "", fmt.Errorf("failed to create internal compute address: %w", err)
 	}
 
-	if err := WaitForOperationRegional(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, op); err != nil {
+	if err := WaitForOperationRegional(ctx, projectID, region, op); err != nil {
 		return "", fmt.Errorf("failed to wait for compute address creation: %w", err)
 	}
 
-	ipAddress, err := getInternalLBAddress(ctx, in.InstallConfig.Config.GCP.ProjectID, in.InstallConfig.Config.GCP.Region, name)
+	ipAddress, err := getInternalLBAddress(ctx, projectID, region, name)
 	if err != nil {
 		return "", fmt.Errorf("failed to get internal load balancer IP address: %w", err)
 	}
 
+	hcName := getAPIInternalResourceName(in.InfraID)
 	healthCheck := &compute.HealthCheck{
-		Name:               getAPIInternalResourceName(in.InfraID),
+		Region:             region,
+		Name:               hcName,
 		Description:        resourceDescription,
 		HealthyThreshold:   3,
 		UnhealthyThreshold: 3,
@@ -85,9 +115,75 @@ func createInternalLBAddress(ctx context.Context, in clusterapi.InfraReadyInput)
 		},
 	}
 
-	if _, err := service.HealthChecks.Insert(in.InstallConfig.Config.GCP.ProjectID, healthCheck).Context(ctx).Do(); err != nil {
+	_, err = service.RegionHealthChecks.Insert(projectID, region, healthCheck).Context(ctx).Do()
+	if err != nil {
 		return "", fmt.Errorf("failed to create api-internal health check: %w", err)
 	}
 
+	if err := WaitForOperationRegional(ctx, projectID, region, op); err != nil {
+		return "", fmt.Errorf("failed to wait for health check creation: %w", err)
+	}
+
+	hc, err := service.RegionHealthChecks.Get(projectID, region, hcName).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("error getting health check: %w", err)
+	}
+	backends := []*compute.Backend{}
+	for _, zone := range zones {
+		igName := fmt.Sprintf("%s-apiserver-%s", in.InfraID, *zone)
+		ig, err := service.InstanceGroups.Get(projectID, *zone, igName).Context(ctx).Do()
+		if err != nil {
+			return "", fmt.Errorf("error getting instance group %s in zone %s: %w", igName, *zone, err)
+		}
+		backends = append(backends, &compute.Backend{
+			BalancingMode: "CONNECTION",
+			Group:         ig.SelfLink,
+		})
+	}
+
+	besvcName := fmt.Sprintf("%s-api-internal", in.InfraID)
+	op, err = service.RegionBackendServices.Insert(projectID, region, &compute.BackendService{
+		Backends:            backends,
+		Name:                besvcName,
+		LoadBalancingScheme: "INTERNAL",
+		Protocol:            "TCP",
+		TimeoutSec:          int64((10 * time.Minute).Seconds()),
+		HealthChecks:        []string{hc.SelfLink},
+		Region:              region,
+		Network:             networkSelfLink,
+	}).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to create internal backend service: %w", err)
+	}
+
+	if err := WaitForOperationRegional(ctx, projectID, region, op); err != nil {
+		return "", fmt.Errorf("failed to wait for internal backend service creation: %w", err)
+	}
+
+	besvc, err := service.RegionBackendServices.Get(projectID, region, besvcName).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to get backend service: %w", err)
+	}
+
+	op, err = service.ForwardingRules.Insert(projectID, region, &compute.ForwardingRule{
+		Name:                fmt.Sprintf("%s-api-internal", in.InfraID),
+		IPProtocol:          "TCP",
+		IPAddress:           ipAddress,
+		LoadBalancingScheme: "INTERNAL",
+		Ports:               []string{"6443", "22623"},
+		BackendService:      besvc.SelfLink,
+		Network:             networkSelfLink,
+		Subnetwork:          subnetSelfLink,
+		Region:              region,
+		Labels:              labels,
+	}).Context(ctx).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to create forwarding rule: %w", err)
+	}
+
+	if err := WaitForOperationRegional(ctx, projectID, region, op); err != nil {
+		return "", fmt.Errorf("failed to wait for forwarding rule creation: %w", err)
+	}
+	logrus.Debug("Successfully created internal load balancer")
 	return ipAddress, nil
 }

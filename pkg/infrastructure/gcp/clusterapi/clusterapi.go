@@ -3,6 +3,8 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/types"
@@ -126,13 +129,47 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debugf("publish strategy is set to external but api address is empty")
 	}
 
+	client, err := icgcp.NewClient(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	networkProjectID := in.InstallConfig.Config.GCP.NetworkProjectID
+	if networkProjectID == "" {
+		networkProjectID = in.InstallConfig.Config.GCP.ProjectID
+	}
+
+	networkSelfLink := *gcpCluster.Status.Network.SelfLink
+	networkName := path.Base(networkSelfLink)
+	masterSubnetName := gcptypes.DefaultSubnetName(in.InfraID, "master")
+	if in.InstallConfig.Config.GCP.ControlPlaneSubnet != "" {
+		masterSubnetName = in.InstallConfig.Config.GCP.ControlPlaneSubnet
+	}
+
+	subnets, err := client.GetSubnetworks(context.TODO(), networkName, networkProjectID, in.InstallConfig.Config.GCP.Region)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve subnets: %w", err)
+	}
+
+	var masterSubnetSelflink string
+	for _, s := range subnets {
+		if strings.EqualFold(s.Name, masterSubnetName) {
+			masterSubnetSelflink = s.SelfLink
+			break
+		}
+	}
+
+	if masterSubnetSelflink == "" {
+		return fmt.Errorf("could not find master subnet %s in subnets %v", masterSubnetName, subnets)
+	}
+
+	zones := gcpCluster.Status.FailureDomains.GetIDs()
+
 	// Currently, the internal/private load balancer is not created by CAPG. The load balancer will be created
-	// by the installer for now
+	// by the installer for now.
 	// TODO: remove the creation of the LB and health check here when supported by CAPG.
 	// https://github.com/kubernetes-sigs/cluster-api-provider-gcp/issues/903
-	// Create the public (optional) and private load balancer static ip addresses
-	// TODO: Do we then need to setup a subnet for internal load balancing ?
-	apiIntIPAddress, err := createInternalLBAddress(ctx, in)
+	apiIntIPAddress, err := createInternalLB(ctx, in, masterSubnetSelflink, networkSelfLink, zones)
 	if err != nil {
 		return fmt.Errorf("failed to create internal load balancer address: %w", err)
 	}
