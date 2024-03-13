@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -21,11 +20,10 @@ type ClusterKubeAPIClient struct {
 }
 
 // NewClusterKubeAPIClient Create a new kube client to interact with the cluster under install.
-func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKubeAPIClient, error) {
+func NewClusterKubeAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterKubeAPIClient, error) {
 	kubeClient := &ClusterKubeAPIClient{}
 
-	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading kubeconfig from assets")
 	}
@@ -38,7 +36,7 @@ func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKube
 	kubeClient.Client = kubeclient
 	kubeClient.ctx = ctx
 	kubeClient.config = kubeconfig
-	kubeClient.configPath = kubeconfigpath
+	kubeClient.configPath = kubeconfigPath
 
 	return kubeClient, nil
 }
