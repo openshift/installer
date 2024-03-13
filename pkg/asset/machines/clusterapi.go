@@ -2,6 +2,7 @@ package machines
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -241,8 +242,9 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		useImageGallery := false
 		masterUserDataSecretName := "master-user-data"
 		resourceGroupName := fmt.Sprintf("%s-rg", clusterID.InfraID)
+		sshKey := base64.StdEncoding.EncodeToString([]byte(installConfig.Config.SSHKey))
 
-		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, subnet, resourceGroupName, session.Credentials.SubscriptionID)
+		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, sshKey, subnet, resourceGroupName, session.Credentials.SubscriptionID)
 		if err != nil {
 			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}

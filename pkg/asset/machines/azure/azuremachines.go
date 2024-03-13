@@ -24,7 +24,7 @@ const (
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, subnet string, resourceGroup string, subscriptionID string) ([]*asset.RuntimeFile, error) {
+func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, sshKey string, subnet string, resourceGroup string, subscriptionID string) ([]*asset.RuntimeFile, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
@@ -122,7 +122,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				FailureDomain:          ptr.To(zone),
 				Image:                  image,
 				OSDisk:                 osDisk, // required
-				SSHPublicKey:           "",
+				SSHPublicKey:           sshKey,
 				AdditionalTags:         tags,
 				AdditionalCapabilities: additionalCapabilities,
 				AllocatePublicIP:       false,
@@ -175,6 +175,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			VMSize:                 mpool.InstanceType,
 			Image:                  image,
 			FailureDomain:          ptr.To(mpool.Zones[0]),
+			SSHPublicKey:           sshKey,
 			OSDisk:                 osDisk,
 			AdditionalTags:         tags,
 			AllocatePublicIP:       true,
