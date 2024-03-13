@@ -32,8 +32,32 @@ type NodeZeroRestClient struct {
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
-func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestClient, error) {
+func NewNodeZeroRestClient(ctx context.Context, rendezvousIP string, sshKey string) (*NodeZeroRestClient, error) {
 	restClient := &NodeZeroRestClient{}
+
+	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
+	if sshKey != "" {
+		restClient.NodeSSHKey = append(restClient.NodeSSHKey, sshKey)
+	}
+
+	config := client.Config{}
+	config.URL = &url.URL{
+		Scheme: "http",
+		Host:   net.JoinHostPort(rendezvousIP, "8090"),
+		Path:   client.DefaultBasePath,
+	}
+	client := client.New(config)
+
+	restClient.Client = client
+	restClient.ctx = ctx
+	restClient.config = config
+	restClient.NodeZeroIP = rendezvousIP
+
+	return restClient, nil
+}
+
+// FindRendezvouIPAndSSHKeyFromAssetStore returns the rendezvousIP and public ssh key.
+func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, error) {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentManifestsAsset := &manifests.AgentManifests{}
 	installConfigAsset := &installconfig.InstallConfig{}
@@ -41,7 +65,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create asset store")
+		return "", "", errors.Wrap(err, "failed to create asset store")
 	}
 
 	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
@@ -62,45 +86,33 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentHostsAsset.Name()))
 	}
 	if agentConfigError != nil || manifestError != nil || installConfigError != nil || agentHostsError != nil {
-		return nil, errors.New("failed to load AgentConfig, NMStateConfig, InstallConfig, or AgentHosts")
+		return "", "", errors.New("failed to load AgentConfig, NMStateConfig, InstallConfig, or AgentHosts")
 	}
 
-	var RendezvousIP string
+	var rendezvousIP string
 	var rendezvousIPError error
 	var emptyNMStateConfigs []*v1beta1.NMStateConfig
 
 	if agentConfig != nil && agentManifests != nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+		rendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
 	} else if agentConfig == nil && agentManifests != nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(&agent.Config{}, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
+		rendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(&agent.Config{}, agentHosts.(*agentconfig.AgentHosts).Hosts, agentManifests.(*manifests.AgentManifests).NMStateConfigs)
 	} else if agentConfig != nil && agentManifests == nil {
-		RendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, emptyNMStateConfigs)
+		rendezvousIP, rendezvousIPError = image.RetrieveRendezvousIP(agentConfig.(*agentconfig.AgentConfig).Config, agentHosts.(*agentconfig.AgentHosts).Hosts, emptyNMStateConfigs)
 	} else {
-		return nil, errors.New("both AgentConfig and NMStateConfig are empty")
+		return "", "", errors.New("both AgentConfig and NMStateConfig are empty")
 	}
 	if rendezvousIPError != nil {
-		return nil, rendezvousIPError
+		return "", "", rendezvousIPError
 	}
 
+	var sshKey string
 	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
 	if installConfig != nil {
-		restClient.NodeSSHKey = append(restClient.NodeSSHKey, installConfig.(*installconfig.InstallConfig).Config.SSHKey)
+		sshKey = installConfig.(*installconfig.InstallConfig).Config.SSHKey
 	}
 
-	config := client.Config{}
-	config.URL = &url.URL{
-		Scheme: "http",
-		Host:   net.JoinHostPort(RendezvousIP, "8090"),
-		Path:   client.DefaultBasePath,
-	}
-	client := client.New(config)
-
-	restClient.Client = client
-	restClient.ctx = ctx
-	restClient.config = config
-	restClient.NodeZeroIP = RendezvousIP
-
-	return restClient, nil
+	return rendezvousIP, sshKey, nil
 }
 
 // IsRestAPILive Determine if the Agent Rest API on node zero has initialized

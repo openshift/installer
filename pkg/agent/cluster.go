@@ -63,21 +63,21 @@ type clusterInstallStatusHistory struct {
 }
 
 // NewCluster initializes a Cluster object
-func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
+func NewCluster(ctx context.Context, kubeconfigPath, rendezvousIP, sshKey string) (*Cluster, error) {
 
 	czero := &Cluster{}
 	capi := &clientSet{}
 
-	restclient, err := NewNodeZeroRestClient(ctx, assetDir)
+	restclient, err := NewNodeZeroRestClient(ctx, rendezvousIP, sshKey)
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	kubeclient, err := NewClusterKubeAPIClient(ctx, assetDir)
+	kubeclient, err := NewClusterKubeAPIClient(ctx, kubeconfigPath)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	ocpclient, err := NewClusterOpenShiftAPIClient(ctx, assetDir)
+	ocpclient, err := NewClusterOpenShiftAPIClient(ctx, kubeconfigPath)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 	czero.API = capi
 	czero.clusterID = nil
 	czero.clusterInfraEnvID = nil
-	czero.assetDir = assetDir
+	czero.assetDir = kubeconfigPath
 	czero.clusterConsoleRouteURL = ""
 	czero.installHistory = cinstallstatushistory
 	czero.installHistory.ValidationResults = cvalidationresults
