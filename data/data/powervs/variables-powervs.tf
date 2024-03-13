@@ -47,7 +47,7 @@ variable "powervs_service_instance_name" {
 
 variable "powervs_wait_for_workspace" {
   type        = string
-  description = "The seconds wait for the Power VS Workspace after creation, default is 60s"
+  description = "The seconds wait for the Power VS Workspace after creation, default is 3m"
   default     = "3m"
 }
 
