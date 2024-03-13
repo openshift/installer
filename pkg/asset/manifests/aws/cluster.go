@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -19,19 +18,14 @@ import (
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
-func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
+func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
-	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
 
-	zones, err := installConfig.AWS.AvailabilityZones(context.TODO())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get availability zones")
-	}
-
-	tags, err := aws.CapaTagsFromUserTags(clusterID.InfraID, installConfig.Config.AWS.UserTags)
+	tags, err := aws.CapaTagsFromUserTags(clusterID.InfraID, ic.Config.AWS.UserTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user tags: %w", err)
 	}
+	mainCIDR := capiutils.CIDRFromInstallConfig(ic)
 
 	awsCluster := &capa.AWSCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -39,13 +33,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capa.AWSClusterSpec{
-			Region: installConfig.Config.AWS.Region,
+			Region: ic.Config.AWS.Region,
 			NetworkSpec: capa.NetworkSpec{
-				VPC: capa.VPCSpec{
-					CidrBlock:                  mainCIDR.String(),
-					AvailabilityZoneUsageLimit: ptr.To(len(zones)),
-					AvailabilityZoneSelection:  &capa.AZSelectionSchemeOrdered,
-				},
 				CNI: &capa.CNISpec{
 					CNIIngressRules: capa.CNIIngressRules{
 						{
@@ -182,7 +171,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}
 
-	if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+	if ic.Config.Publish == types.ExternalPublishingStrategy {
 		// FIXME: CAPA bug. Remove when fixed upstream
 		// The primary and secondary load balancers in CAPA share the same
 		// security group. However, specifying an ingress rule only in the
@@ -217,41 +206,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
-	// If the install config has subnets, use them.
-	if len(installConfig.AWS.Subnets) > 0 {
-		privateSubnets, err := installConfig.AWS.PrivateSubnets(context.TODO())
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get private subnets")
-		}
-		for _, subnet := range privateSubnets {
-			awsCluster.Spec.NetworkSpec.Subnets = append(awsCluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
-				ID:               subnet.ID,
-				CidrBlock:        subnet.CIDR,
-				AvailabilityZone: subnet.Zone.Name,
-				IsPublic:         subnet.Public,
-			})
-		}
-		publicSubnets, err := installConfig.AWS.PublicSubnets(context.TODO())
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get public subnets")
-		}
-
-		for _, subnet := range publicSubnets {
-			awsCluster.Spec.NetworkSpec.Subnets = append(awsCluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
-				ID:               subnet.ID,
-				CidrBlock:        subnet.CIDR,
-				AvailabilityZone: subnet.Zone.Name,
-				IsPublic:         subnet.Public,
-			})
-		}
-
-		vpc, err := installConfig.AWS.VPC(context.TODO())
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get VPC")
-		}
-		awsCluster.Spec.NetworkSpec.VPC = capa.VPCSpec{
-			ID: vpc,
-		}
+	// Set the VPC and zones (managed) or subnets (BYO VPC) based in the
+	// install-config.yaml.
+	err = setZones(&zoneConfigInput{
+		InstallConfig: ic,
+		Config:        ic.Config,
+		Meta:          ic.AWS,
+		ClusterID:     clusterID,
+		Cluster:       awsCluster,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set cluster zones or subnets")
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
