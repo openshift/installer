@@ -12,12 +12,13 @@ import (
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role string, userTags map[string]string) ([]*asset.RuntimeFile, error) {
+func GenerateMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role string, tags capa.Tags) ([]*asset.RuntimeFile, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
@@ -28,29 +29,39 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 		total = *pool.Replicas
 	}
 
-	tags, err := CapaTagsFromUserTags(clusterID, userTags)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
-	}
-
 	var result []*asset.RuntimeFile
 
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
-		subnetID, ok := subnets[zone]
-		if len(subnets) > 0 && !ok {
-			return nil, fmt.Errorf("no subnet for zone %s", zone)
-		}
 		subnet := &capa.AWSResourceReference{}
-		if subnetID == "" {
-			subnet.Filters = []capa.Filter{
-				{
-					Name:   "tag:Name",
-					Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
-				},
+		labels := map[string]string{
+			"cluster.x-k8s.io/control-plane": "",
+		}
+		usePublicIP := false
+		name := ""
+
+		switch role {
+		case "bootstrap":
+			name = capiutils.GenerateBoostrapMachineName(clusterID)
+			labels["install.openshift.io/bootstrap"] = ""
+			usePublicIP = true
+		default:
+			name = fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
+
+			zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+			subnetID, ok := subnets[zone]
+			if len(subnets) > 0 && !ok {
+				return nil, fmt.Errorf("no subnet for zone %s", zone)
 			}
-		} else {
-			subnet.ID = ptr.To(subnetID)
+			if subnetID == "" {
+				subnet.Filters = []capa.Filter{
+					{
+						Name:   "tag:Name",
+						Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
+					},
+				}
+			} else {
+				subnet.ID = ptr.To(subnetID)
+			}
 		}
 
 		awsMachine := &capa.AWSMachine{
@@ -59,10 +70,8 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 				Kind:       "AWSMachine",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
-				Labels: map[string]string{
-					"cluster.x-k8s.io/control-plane": "",
-				},
+				Name:   name,
+				Labels: labels,
 			},
 			Spec: capa.AWSMachineSpec{
 				Ignition:             &capa.Ignition{Version: "3.2"},
@@ -72,6 +81,7 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 				SSHKeyName:           ptr.To(""),
 				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				Subnet:               subnet,
+				PublicIP:             ptr.To(usePublicIP),
 				AdditionalTags:       tags,
 				RootVolume: &capa.Volume{
 					Size:          int64(mpool.EC2RootVolume.Size),
