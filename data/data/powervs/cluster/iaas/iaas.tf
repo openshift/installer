@@ -24,6 +24,7 @@ resource "ibm_resource_instance" "created_service_instance" {
     delete = "10m"
   }
 }
+
 resource "time_sleep" "wait_for_workspace" {
   count           = var.service_instance_name == "" ? 1 : 0
   depends_on      = [ibm_resource_instance.created_service_instance]
