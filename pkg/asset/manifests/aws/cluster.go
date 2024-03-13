@@ -151,13 +151,22 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
+				Name:             ptr.To(clusterID.InfraID + "-int"),
 				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
+				Scheme:           &capa.ELBSchemeInternal,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
 						Protocol: capa.ELBProtocolTCP,
+					},
+				},
+				IngressRules: []capa.IngressRule{
+					{
+						Description: "Machine Config Server internal traffic from cluster",
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    22623,
+						ToPort:      22623,
+						CidrBlocks:  []string{mainCIDR.String()},
 					},
 				},
 			},
