@@ -173,12 +173,21 @@ func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient,
 func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
 	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	var sku []azsku.ResourceSku
 
-	for skuPage, err := client.List(ctx); skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
+	// This has to be initialized outside the `for` because we need access to
+	// `err`. If initialized in the loop and the API call fails right away,
+	// `page.NotDone()` will return `false` and we'll never check for the error
+	skuPage, err := client.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; skuPage.NotDone(); err = skuPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
@@ -220,7 +229,11 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 	defer cancel()
 
 	var res []string
-	for resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil); resPage.NotDone(); err = resPage.NextWithContext(ctx) {
+	resPage, err := client.ListByResourceGroup(ctx, groupName, "", "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list resources: %w", err)
+	}
+	for ; resPage.NotDone(); err = resPage.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching resource pages: %w", err)
 		}
@@ -235,10 +248,19 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error) {
 	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+	// See https://issues.redhat.com/browse/OCPBUGS-29469 before chaging this timeout
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	for page, err := client.List(ctx); page.NotDone(); err = page.NextWithContext(ctx) {
+	// This has to be initialized outside the `for` because we need access to
+	// `err`. If initialized in the loop and the API call fails right away,
+	// `page.NotDone()` will return `false` and we'll never check for the error
+	page, err := client.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; page.NotDone(); err = page.NextWithContext(ctx) {
 		if err != nil {
 			return nil, fmt.Errorf("error fetching SKU pages: %w", err)
 		}
@@ -259,6 +281,7 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 			}
 		}
 	}
+
 	return nil, nil
 }
 
@@ -375,7 +398,11 @@ func (c *Client) GetLocationInfo(ctx context.Context, region string, instanceTyp
 
 	// Only supported filter atm is `location`
 	filter := fmt.Sprintf("location eq '%s'", region)
-	for res, err := client.List(ctx, filter, "false"); res.NotDone(); err = res.NextWithContext(ctx) {
+	res, err := client.List(ctx, filter, "false")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list SKUs: %w", err)
+	}
+	for ; res.NotDone(); err = res.NextWithContext(ctx) {
 		if err != nil {
 			return nil, err
 		}
