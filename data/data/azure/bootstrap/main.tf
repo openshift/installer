@@ -70,7 +70,9 @@ resource "azurerm_storage_blob" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = "${azurerm_storage_blob.ignition.url}${data.azurerm_storage_account_sas.ignition.sas}"
+    source = replace(var.azure_bootstrap_ignition_stub,
+      var.azure_bootstrap_ignition_url_placeholder,
+      "${azurerm_storage_blob.ignition.url}${data.azurerm_storage_account_sas.ignition.sas}")
   }
 }
 

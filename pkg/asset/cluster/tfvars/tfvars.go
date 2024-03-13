@@ -381,17 +381,14 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		preexistingnetwork := installConfig.Config.Azure.VirtualNetwork != ""
 
-		var bootstrapIgnStub, bootstrapIgnURLPlaceholder string
-		if installConfig.Azure.CloudName == azure.StackCloud {
-			// Due to the SAS created in Terraform to limit access to bootstrap ignition, we cannot know the URL in advance.
-			// Instead, we will pass a placeholder string in the ignition to be replaced in TF once the value is known.
-			bootstrapIgnURLPlaceholder = "BOOTSTRAP_IGNITION_URL_PLACEHOLDER"
-			shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(bootstrapIgnURLPlaceholder, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
-			if err != nil {
-				return errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
-			}
-			bootstrapIgnStub = string(shim)
+		// Due to the SAS created in Terraform to limit access to bootstrap ignition, we cannot know the URL in advance.
+		// Instead, we will pass a placeholder string in the ignition to be replaced in TF once the value is known.
+		bootstrapIgnURLPlaceholder := "BOOTSTRAP_IGNITION_URL_PLACEHOLDER"
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(bootstrapIgnURLPlaceholder, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return errors.Wrap(err, "failed to create stub Ignition config for bootstrap")
 		}
+		bootstrapIgnStub := string(shim)
 
 		managedKeys := azure.CustomerManagedKey{}
 		if installConfig.Config.Azure.CustomerManagedKey != nil {
