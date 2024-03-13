@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -171,6 +172,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			if !strings.Contains(failureDomain.Topology.Datastore, failureDomain.Topology.Datacenter) {
 				return append(allErrs, field.Invalid(topologyFld.Child("datastore"), failureDomain.Topology.Datastore, "the datastore defined does not exist in the correct datacenter"))
 			}
+			p.FailureDomains[index].Topology.Datastore = filepath.Clean(p.FailureDomains[index].Topology.Datastore)
 		}
 
 		if len(failureDomain.Topology.TagIDs) > 10 {
@@ -222,6 +224,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			if len(failureDomain.Topology.Datacenter) != 0 && datacenterName != failureDomain.Topology.Datacenter {
 				return append(allErrs, field.Invalid(topologyFld.Child("computeCluster"), computeCluster, fmt.Sprintf("compute cluster must be in datacenter %s", failureDomain.Topology.Datacenter)))
 			}
+			p.FailureDomains[index].Topology.ComputeCluster = filepath.Clean(p.FailureDomains[index].Topology.ComputeCluster)
 		}
 
 		if len(failureDomain.Topology.ResourcePool) != 0 {
@@ -239,6 +242,12 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			if len(failureDomain.Topology.ComputeCluster) != 0 && !strings.Contains(failureDomain.Topology.ComputeCluster, clusterName) {
 				return append(allErrs, field.Invalid(topologyFld.Child("resourcePool"), resourcePool, fmt.Sprintf("resource pool must be in compute cluster %s", failureDomain.Topology.ComputeCluster)))
 			}
+
+			p.FailureDomains[index].Topology.ResourcePool = filepath.Clean(p.FailureDomains[index].Topology.ResourcePool)
+		}
+
+		if len(failureDomain.Topology.Template) > 0 {
+			p.FailureDomains[index].Topology.Template = filepath.Clean(p.FailureDomains[index].Topology.Template)
 		}
 	}
 
