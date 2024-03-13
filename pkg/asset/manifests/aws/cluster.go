@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -178,6 +179,24 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			AdditionalTags: tags,
 		},
+	}
+
+	if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
+			Name:                   ptr.To(clusterID.InfraID + "-ext"),
+			LoadBalancerType:       capa.LoadBalancerTypeNLB,
+			Scheme:                 &capa.ELBSchemeInternetFacing,
+			CrossZoneLoadBalancing: true,
+			IngressRules: []capa.IngressRule{
+				{
+					Description: "Kubernetes API Server traffic for public access",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    6443,
+					ToPort:      6443,
+					CidrBlocks:  []string{"0.0.0.0/0"},
+				},
+			},
+		}
 	}
 
 	// If the install config has subnets, use them.
