@@ -80,6 +80,10 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 					Encrypted:     ptr.To(true),
 					EncryptionKey: mpool.KMSKeyARN,
 				},
+				InstanceMetadataOptions: &capa.InstanceMetadataOptions{
+					HTTPTokens:   capa.HTTPTokensState(mpool.EC2Metadata.Authentication),
+					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+				},
 			},
 		}
 
