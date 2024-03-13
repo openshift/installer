@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 )
 
@@ -24,6 +25,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	zones, err := installConfig.AWS.AvailabilityZones(context.TODO())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get availability zones")
+	}
+
+	tags, err := aws.CapaTagsFromUserTags(clusterID.InfraID, installConfig.Config.AWS.UserTags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user tags: %w", err)
 	}
 
 	awsCluster := &capa.AWSCluster{
@@ -161,6 +167,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					},
 				},
 			},
+			AdditionalTags: tags,
 		},
 	}
 
