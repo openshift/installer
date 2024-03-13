@@ -50,7 +50,11 @@ var _ webhook.Validator = &GCPMachine{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (m *GCPMachine) ValidateCreate() (admission.Warnings, error) {
 	clusterlog.Info("validate create", "name", m.Name)
-	return nil, validateConfidentialCompute(m.Spec)
+
+	if err := validateConfidentialCompute(m.Spec); err != nil {
+		return nil, err
+	}
+	return nil, validateCustomerEncryptionKey(m.Spec)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
@@ -113,6 +117,42 @@ func validateConfidentialCompute(spec GCPMachineSpec) error {
 		machineSeries := strings.Split(spec.InstanceType, "-")[0]
 		if !slices.Contains(confidentialComputeSupportedMachineSeries, machineSeries) {
 			return fmt.Errorf("ConfidentialCompute require instance type in the following series: %s", confidentialComputeSupportedMachineSeries)
+		}
+	}
+	return nil
+}
+
+func checkKeyType(key *CustomerEncryptionKey) error {
+	switch key.KeyType {
+	case CustomerManagedKey:
+		if key.ManagedKey == nil || key.SuppliedKey != nil {
+			return fmt.Errorf("CustomerEncryptionKey KeyType of Managed requires only ManagedKey to be set")
+		}
+	case CustomerSuppliedKey:
+		if key.SuppliedKey == nil || key.ManagedKey != nil {
+			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires only SuppliedKey to be set")
+		}
+		if len(key.SuppliedKey.RawKey) > 0 && len(key.SuppliedKey.RSAEncryptedKey) > 0 {
+			return fmt.Errorf("CustomerEncryptionKey KeyType of Supplied requires either RawKey or RSAEncryptedKey to be set, not both")
+		}
+	default:
+		return fmt.Errorf("invalid value for CustomerEncryptionKey KeyType %s", key.KeyType)
+	}
+	return nil
+}
+
+func validateCustomerEncryptionKey(spec GCPMachineSpec) error {
+	if spec.RootDiskEncryptionKey != nil {
+		if err := checkKeyType(spec.RootDiskEncryptionKey); err != nil {
+			return err
+		}
+	}
+
+	for _, disk := range spec.AdditionalDisks {
+		if disk.EncryptionKey != nil {
+			if err := checkKeyType(disk.EncryptionKey); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

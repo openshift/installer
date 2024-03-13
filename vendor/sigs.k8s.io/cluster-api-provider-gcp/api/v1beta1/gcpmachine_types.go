@@ -54,6 +54,9 @@ type AttachedDiskSpec struct {
 	// Defaults to 30GB. For "local-ssd" size is always 375GB.
 	// +optional
 	Size *int64 `json:"size,omitempty"`
+	// EncryptionKey defines the KMS key to be used to encrypt the disk.
+	// +optional
+	EncryptionKey *CustomerEncryptionKey `json:"encryptionKey,omitempty"`
 }
 
 // IPForwarding represents the IP forwarding configuration for the GCP machine.
@@ -146,6 +149,72 @@ const (
 	HostMaintenancePolicyTerminate HostMaintenancePolicy = "Terminate"
 )
 
+// KeyType is a type for disk encryption.
+type KeyType string
+
+const (
+	// CustomerManagedKey (CMEK) references an encryption key stored in Google Cloud KMS.
+	CustomerManagedKey KeyType = "Managed"
+	// CustomerSuppliedKey (CSEK) specifies an encryption key to use.
+	CustomerSuppliedKey KeyType = "Supplied"
+)
+
+// ManagedKey is a reference to a key managed by the Cloud Key Management Service.
+type ManagedKey struct {
+	// KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+	// "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+`
+	// +kubebuilder:validation:MaxLength=160
+	KMSKeyName string `json:"kmsKeyName,omitempty"`
+}
+
+// SuppliedKey contains a key for disk encryption. Either RawKey or RSAEncryptedKey must be provided.
+// +kubebuilder:validation:MinProperties=1
+// +kubebuilder:validation:MaxProperties=1
+type SuppliedKey struct {
+	// RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+	// base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+	// For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+	// +optional
+	RawKey []byte `json:"rawKey,omitempty"`
+	// RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+	// key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+	// rsaEncryptedKey.
+	// For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
+	// z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
+	// D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
+	// The key must meet the following requirements before you can provide it to Compute Engine:
+	// 1. The key is wrapped using a RSA public key certificate provided by Google.
+	// 2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+	// Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
+	// +optional
+	RSAEncryptedKey []byte `json:"rsaEncryptedKey,omitempty"`
+}
+
+// CustomerEncryptionKey supports both Customer-Managed or Customer-Supplied encryption keys .
+type CustomerEncryptionKey struct {
+	// KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+	// Supplied, aka Customer-Supplied EncryptionKey (CSEK).
+	// +kubebuilder:validation:Enum=Managed;Supplied
+	KeyType KeyType `json:"keyType"`
+	// KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+	// If absent, the Compute Engine default service account is used. For example:
+	// "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
+	// The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+	// suffix ("iam.gserviceaccount.com").
+	// +kubebuilder:validation:MaxLength=85
+	// +kubebuilder:validation:Pattern=`[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com`
+	// +optional
+	KMSKeyServiceAccount *string `json:"kmsKeyServiceAccount,omitempty"`
+	// ManagedKey references keys managed by the Cloud Key Management Service. This should be set when KeyType is Managed.
+	// +optional
+	ManagedKey *ManagedKey `json:"managedKey,omitempty"`
+	// SuppliedKey provides the key used to create or manage a disk. This should be set when KeyType is Managed.
+	// +optional
+	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
+}
+
 // GCPMachineSpec defines the desired state of GCPMachine.
 type GCPMachineSpec struct {
 	// InstanceType is the type of instance to create. Example: n1.standard-2
@@ -197,6 +266,12 @@ type GCPMachineSpec struct {
 	// +optional
 	AdditionalNetworkTags []string `json:"additionalNetworkTags,omitempty"`
 
+	// ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+	// by the GCP provider. GCP supports a maximum of 50 tags per resource.
+	// +maxItems=50
+	// +optional
+	ResourceManagerTags ResourceManagerTags `json:"resourceManagerTags,omitempty"`
+
 	// RootDeviceSize is the size of the root volume in GB.
 	// Defaults to 30.
 	// +optional
@@ -246,6 +321,10 @@ type GCPMachineSpec struct {
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+
+	// RootDiskEncryptionKey defines the KMS key to be used to encrypt the root disk.
+	// +optional
+	RootDiskEncryptionKey *CustomerEncryptionKey `json:"rootDiskEncryptionKey,omitempty"`
 }
 
 // MetadataItem defines a single piece of metadata associated with an instance.
