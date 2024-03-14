@@ -346,7 +346,40 @@ type VPCSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum:=ip-name;resource-name
 	PrivateDNSHostnameTypeOnLaunch *string `json:"privateDnsHostnameTypeOnLaunch,omitempty"`
+
+	// AvailabilityZones specifies the availability zones (AZ) that
+	// should be used in a region when automatically creating subnets.
+	// Defaults to ?
+	// +kubebuilder:default=3
+	// +kubebuilder:validation:Minimum=1
+	AvailabilityZones []*string `json:"availabilityZones,omitempty"`
+
+	// EdgeZones specifies the availability zones (AZ) that
+	// should be used in a region when automatically creating subnets.
+	// Defaults to ?
+	// +kubebuilder:default=3
+	// +kubebuilder:validation:Minimum=1
+	// Edge *VpcEdge `json:"edgeZone,omitempty"`
 }
+
+// // VpcEdge configures an AWS VPC.
+// type VpcEdge struct {
+// 	// Zones is the list of zone names to create infrastructure resources in the edge zones:
+// 	// AWS Local Zones, and/or Wavelength.
+// 	Zones []*string
+
+// 	// PrivateGatewayOrder defines the order to create the private gateway in the edge zones.
+// 	// The NAT Gateways is not globaly supported by Local Zones to assign to private subnets.
+// 	// The order teachs the controller the preferred method to create and assign the gateway to
+// 	// private subnets. Options:
+// 	// - InZone: tries to create a NAT Gateway for every zone, when supported. This option increase
+// 	//   the cost of the edge zone, keeping the standard of the gateway by zone.
+// 	// - ParentZone: tries to associate a NAT Gateway using the private route table that the zone's
+// 	//   parent zone is associated. This option reduce the latency for egress traffic.
+// 	// - FirstZone: pick the first private route table ID from the ordered zone and associate the private
+// 	//   Local Zone or Wavelength zone subnet.
+// 	PrivateGatewayOrder string
+// }
 
 // String returns a string representation of the VPC.
 func (v *VPCSpec) String() string {
