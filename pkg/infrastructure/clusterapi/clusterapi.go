@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -364,8 +366,83 @@ func (i *InfraProvider) DestroyBootstrap(dir string) error {
 	return nil
 }
 
+type machineManifest struct {
+	Status struct {
+		Addresses []clusterv1.MachineAddress `yaml:"addresses"`
+	} `yaml:"status"`
+}
+
+// extractIPAddress extracts the IP address from a machine manifest file in a
+// provider-agnostic way by reading only the "status" stanza, which should be
+// present in all providers.
+func extractIPAddress(manifestPath string) (string, error) {
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read machine manifest %s: %w", manifestPath, err)
+	}
+	var manifest machineManifest
+	if err := yaml.Unmarshal(data, &manifest); err != nil {
+		return "", fmt.Errorf("failed to unmarshal manifest %s: %w", manifestPath, err)
+	}
+
+	var ipAddr string
+	for _, addr := range manifest.Status.Addresses {
+		switch addr.Type {
+		case clusterv1.MachineExternalIP:
+			ipAddr = addr.Address
+		case clusterv1.MachineInternalIP:
+			// Prefer external IP when present
+			if len(ipAddr) == 0 {
+				ipAddr = addr.Address
+			}
+		default:
+			continue
+		}
+	}
+
+	return ipAddr, nil
+}
+
 // ExtractHostAddresses extracts the IPs of the bootstrap and control plane machines.
 func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallConfig, ha *infrastructure.HostAddresses) error {
+	logrus.Debugf("Looking for machine manifests in %s", dir)
+
+	bootstrapFiles, err := filepath.Glob(filepath.Join(dir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-bootstrap.yaml"))
+	if err != nil {
+		return fmt.Errorf("failed to list bootstrap manifests: %w", err)
+	}
+	logrus.Debugf("bootstrap manifests found: %v", bootstrapFiles)
+
+	if len(bootstrapFiles) != 1 {
+		return fmt.Errorf("wrong number of bootstrap manifests found: %v. Expected exactly one", bootstrapFiles)
+	}
+	addr, err := extractIPAddress(bootstrapFiles[0])
+	if err != nil {
+		return fmt.Errorf("failed to extract IP address for bootstrap: %w", err)
+	}
+	logrus.Debugf("found bootstrap address: %s", addr)
+	ha.Bootstrap = addr
+
+	masterFiles, err := filepath.Glob(filepath.Join(dir, "Machine\\-openshift\\-cluster\\-api\\-guests\\-*\\-master\\-?.yaml"))
+	if err != nil {
+		return fmt.Errorf("failed to list master machine manifests: %w", err)
+	}
+	logrus.Debugf("master machine manifests found: %v", masterFiles)
+
+	if replicas := int(*config.ControlPlane.Replicas); replicas != len(masterFiles) {
+		logrus.Warnf("not all master manifests found: %d. Expected %d.", len(masterFiles), replicas)
+	}
+	for _, manifest := range masterFiles {
+		addr, err := extractIPAddress(manifest)
+		if err != nil {
+			// Log the error but keep parsing the remaining files
+			logrus.Warnf("failed to extract IP address for %s: %v", manifest, err)
+			continue
+		}
+		logrus.Debugf("found master address: %s", addr)
+		ha.Masters = append(ha.Masters, addr)
+	}
+
 	return nil
 }
 
