@@ -372,7 +372,7 @@ func (i *InfraProvider) ExtractHostAddresses(dir string, config *types.InstallCo
 // IgnitionSecret provides the basic formatting for creating the
 // ignition secret.
 func IgnitionSecret(ign []byte, infraID, role string) *corev1.Secret {
-	return &corev1.Secret{
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", infraID, role),
 			Namespace: capiutils.Namespace,
@@ -385,4 +385,6 @@ func IgnitionSecret(ign []byte, infraID, role string) *corev1.Secret {
 			"value":  ign,
 		},
 	}
+	secret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
+	return secret
 }

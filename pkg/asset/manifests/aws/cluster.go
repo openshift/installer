@@ -170,6 +170,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			AdditionalTags: tags,
 		},
 	}
+	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
 	// If the install config has subnets, use them.
 	if len(installConfig.AWS.Subnets) > 0 {
@@ -224,6 +225,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
+	id.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSClusterControllerIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: id,
 		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},

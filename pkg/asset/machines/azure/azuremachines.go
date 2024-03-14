@@ -109,10 +109,6 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 	for idx := int64(0); idx < total; idx++ {
 		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
 		azureMachine := &capz.AzureMachine{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AzureMachine",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
@@ -131,6 +127,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				SecurityProfile:        securityProfile,
 			},
 		}
+		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", azureMachine.Name)},
 			Object: azureMachine,
@@ -155,6 +152,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				},
 			},
 		}
+		controlPlaneMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", azureMachine.Name)},
@@ -163,10 +161,6 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 	}
 
 	bootstrapAzureMachine := &capz.AzureMachine{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-			Kind:       "AzureMachine",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: capiutils.GenerateBoostrapMachineName(clusterID),
 			Labels: map[string]string{
@@ -186,6 +180,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			SecurityProfile:        securityProfile,
 		},
 	}
+	bootstrapAzureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
 
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapAzureMachine.Name)},
@@ -211,6 +206,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 			},
 		},
 	}
+	bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 	result = append(result, &asset.RuntimeFile{
 		File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},

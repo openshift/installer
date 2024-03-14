@@ -117,6 +117,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			FailureDomains:   findFailureDomains(installConfig),
 		},
 	}
+	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: gcpCluster,

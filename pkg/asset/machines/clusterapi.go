@@ -193,6 +193,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+		bootstrapAWSMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 
 		// Handle additional security groups.
 		for _, sg := range mpool.AdditionalSecurityGroupIDs {
@@ -226,6 +227,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+		bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
