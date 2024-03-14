@@ -76,7 +76,7 @@ func UploadBaseImage(ctx context.Context, cloud string, rhcosImage string, image
 	if res.Err != nil {
 		return err
 	}
-	logrus.Debugf("The data was uploaded.")
+	logrus.Debugf("RHCOS image upload completed.")
 
 	return nil
 }
