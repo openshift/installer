@@ -44,6 +44,8 @@ import (
 
 var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
 
+var machineManifestDir = filepath.Join(capiutils.ManifestDir, "machines")
+
 // ClusterAPI is the asset for CAPI control-plane manifests.
 type ClusterAPI struct {
 	FileList []*asset.RuntimeFile
@@ -78,7 +80,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(machineManifestDir), 0755); err != nil {
 		return err
 	}
 
@@ -421,10 +423,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		m.Data = objData
 
 		// If the filename is already a path, do not append the manifest dir.
-		if filepath.Dir(m.Filename) == capiutils.ManifestDir {
+		if filepath.Dir(m.Filename) == machineManifestDir {
 			continue
 		}
-		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
+		m.Filename = filepath.Join(machineManifestDir, m.Filename)
 	}
 	asset.SortManifestFiles(c.FileList)
 	return nil
@@ -446,15 +448,15 @@ func (c *ClusterAPI) RuntimeFiles() []*asset.RuntimeFile {
 
 // Load returns the openshift asset from disk.
 func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
-	yamlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yaml"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
-	ymlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yml"))
+	ymlFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.yml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yml files")
 	}
-	jsonFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.json"))
+	jsonFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.json"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.json files")
 	}
