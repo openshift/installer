@@ -55,17 +55,63 @@ func (r *GCPManagedMachinePool) Default() {
 
 var _ webhook.Validator = &GCPManagedMachinePool{}
 
+// validateSpec validates that the GCPManagedMachinePool spec is valid.
+func (r *GCPManagedMachinePool) validateSpec() field.ErrorList {
+	var allErrs field.ErrorList
+
+	// Validate node pool name
+	if len(r.Spec.NodePoolName) > maxNodePoolNameLength {
+		allErrs = append(allErrs,
+			field.Invalid(field.NewPath("spec", "NodePoolName"),
+				r.Spec.NodePoolName, fmt.Sprintf("node pool name cannot have more than %d characters", maxNodePoolNameLength)),
+		)
+	}
+
+	if errs := r.validateScaling(); errs != nil || len(errs) == 0 {
+		allErrs = append(allErrs, errs...)
+	}
+
+	if errs := r.validateNonNegative(); errs != nil || len(errs) == 0 {
+		allErrs = append(allErrs, errs...)
+	}
+
+	if len(allErrs) == 0 {
+		return nil
+	}
+	return allErrs
+}
+
+// validateScaling validates that the GCPManagedMachinePool autoscaling spec is valid.
 func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
 	var allErrs field.ErrorList
 	if r.Spec.Scaling != nil {
 		minField := field.NewPath("spec", "scaling", "minCount")
 		maxField := field.NewPath("spec", "scaling", "maxCount")
+		locationPolicyField := field.NewPath("spec", "scaling", "locationPolicy")
+
 		min := r.Spec.Scaling.MinCount
 		max := r.Spec.Scaling.MaxCount
+		locationPolicy := r.Spec.Scaling.LocationPolicy
+
+		// cannot specify autoscaling config if autoscaling is disabled
+		if r.Spec.Scaling.EnableAutoscaling != nil && !*r.Spec.Scaling.EnableAutoscaling {
+			if min != nil {
+				allErrs = append(allErrs, field.Forbidden(minField, "minCount cannot be specified when autoscaling is disabled"))
+			}
+			if max != nil {
+				allErrs = append(allErrs, field.Forbidden(maxField, "maxCount cannot be specified when autoscaling is disabled"))
+			}
+			if locationPolicy != nil {
+				allErrs = append(allErrs, field.Forbidden(locationPolicyField, "locationPolicy cannot be specified when autoscaling is disabled"))
+			}
+		}
+
 		if min != nil {
+			// validates min >= 0
 			if *min < 0 {
 				allErrs = append(allErrs, field.Invalid(minField, *min, "must be greater or equal zero"))
 			}
+			// validates min <= max
 			if max != nil && *max < *min {
 				allErrs = append(allErrs, field.Invalid(maxField, *max, fmt.Sprintf("must be greater than field %s", minField.String())))
 			}
@@ -77,19 +123,58 @@ func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
 	return allErrs
 }
 
+func appendErrorIfNegative[T int32 | int64](value *T, name string, errs *field.ErrorList) {
+	if value != nil && *value < 0 {
+		*errs = append(*errs, field.Invalid(field.NewPath("spec", name), *value, "must be non-negative"))
+	}
+}
+
+// validateNonNegative validates that non-negative GCPManagedMachinePool spec fields are not negative.
+func (r *GCPManagedMachinePool) validateNonNegative() field.ErrorList {
+	var allErrs field.ErrorList
+
+	appendErrorIfNegative(r.Spec.DiskSizeGb, "diskSizeGb", &allErrs)
+	appendErrorIfNegative(r.Spec.MaxPodsPerNode, "maxPodsPerNode", &allErrs)
+	appendErrorIfNegative(r.Spec.LocalSsdCount, "localSsdCount", &allErrs)
+
+	return allErrs
+}
+
+func appendErrorIfMutated(old, update interface{}, name string, errs *field.ErrorList) {
+	if !cmp.Equal(old, update) {
+		*errs = append(
+			*errs,
+			field.Invalid(field.NewPath("spec", name), update, "field is immutable"),
+		)
+	}
+}
+
+// validateImmutable validates that immutable GCPManagedMachinePool spec fields are not mutated.
+func (r *GCPManagedMachinePool) validateImmutable(old *GCPManagedMachinePool) field.ErrorList {
+	var allErrs field.ErrorList
+
+	appendErrorIfMutated(old.Spec.InstanceType, r.Spec.InstanceType, "instanceType", &allErrs)
+	appendErrorIfMutated(old.Spec.NodePoolName, r.Spec.NodePoolName, "nodePoolName", &allErrs)
+	appendErrorIfMutated(old.Spec.MachineType, r.Spec.MachineType, "machineType", &allErrs)
+	appendErrorIfMutated(old.Spec.DiskSizeGb, r.Spec.DiskSizeGb, "diskSizeGb", &allErrs)
+	appendErrorIfMutated(old.Spec.DiskType, r.Spec.DiskType, "diskType", &allErrs)
+	appendErrorIfMutated(old.Spec.LocalSsdCount, r.Spec.LocalSsdCount, "localSsdCount", &allErrs)
+	appendErrorIfMutated(old.Spec.Management, r.Spec.Management, "management", &allErrs)
+	appendErrorIfMutated(old.Spec.MaxPodsPerNode, r.Spec.MaxPodsPerNode, "maxPodsPerNode", &allErrs)
+	appendErrorIfMutated(old.Spec.NodeNetwork.PodRangeName, r.Spec.NodeNetwork.PodRangeName, "podRangeName", &allErrs)
+	appendErrorIfMutated(old.Spec.NodeNetwork.CreatePodRange, r.Spec.NodeNetwork.CreatePodRange, "createPodRange", &allErrs)
+	appendErrorIfMutated(old.Spec.NodeNetwork.PodRangeCidrBlock, r.Spec.NodeNetwork.PodRangeCidrBlock, "podRangeCidrBlock", &allErrs)
+	appendErrorIfMutated(old.Spec.NodeSecurity, r.Spec.NodeSecurity, "nodeSecurity", &allErrs)
+
+	return allErrs
+}
+
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *GCPManagedMachinePool) ValidateCreate() (admission.Warnings, error) {
 	gcpmanagedmachinepoollog.Info("validate create", "name", r.Name)
 	var allErrs field.ErrorList
 
-	if len(r.Spec.NodePoolName) > maxNodePoolNameLength {
-		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "NodePoolName"),
-				r.Spec.NodePoolName, fmt.Sprintf("node pool name cannot have more than %d characters", maxNodePoolNameLength)),
-		)
-	}
-
-	if errs := r.validateScaling(); errs != nil || len(errs) == 0 {
+	if errs := r.validateSpec(); errs != nil || len(errs) == 0 {
 		allErrs = append(allErrs, errs...)
 	}
 
@@ -106,14 +191,11 @@ func (r *GCPManagedMachinePool) ValidateUpdate(oldRaw runtime.Object) (admission
 	var allErrs field.ErrorList
 	old := oldRaw.(*GCPManagedMachinePool)
 
-	if !cmp.Equal(r.Spec.NodePoolName, old.Spec.NodePoolName) {
-		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "NodePoolName"),
-				r.Spec.NodePoolName, "field is immutable"),
-		)
+	if errs := r.validateImmutable(old); errs != nil {
+		allErrs = append(allErrs, errs...)
 	}
 
-	if errs := r.validateScaling(); errs != nil || len(errs) == 0 {
+	if errs := r.validateSpec(); errs != nil || len(errs) == 0 {
 		allErrs = append(allErrs, errs...)
 	}
 
