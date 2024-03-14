@@ -168,6 +168,12 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 				return nil, err
 			}
 
+			// The JSON can be `nil` if auth is provided from env
+			// https://pkg.go.dev/golang.org/x/oauth2@v0.17.0/google#Credentials
+			if len(sess.Credentials.JSON) == 0 {
+				return nil, fmt.Errorf("could not extract service account from loaded credentials. Please specify a service account to be used for shared vpc installations in the install-config.yaml")
+			}
+
 			var found bool
 			serviceAccount := make(map[string]interface{})
 			err = json.Unmarshal(sess.Credentials.JSON, &serviceAccount)
