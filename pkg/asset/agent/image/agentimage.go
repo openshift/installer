@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	agentISOFilename = "agent.%s.iso"
+	agentISOFilename    = "agent.%s.iso"
+	iso9660Level1ExtLen = 3
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
@@ -174,6 +176,43 @@ func (a *AgentImage) appendKargs(kargs []byte) error {
 	return nil
 }
 
+// normalizeFilesExtension scans the extracted ISO files and trims
+// the file extensions longer than three chars.
+func (a *AgentImage) normalizeFilesExtension() error {
+	var skipFiles = map[string]bool{
+		"boot.catalog": true, // Required for arm64 iso
+	}
+
+	return filepath.WalkDir(a.tmpPath, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := filepath.Ext(p)
+		// ext includes also the dot separator
+		if len(ext) > iso9660Level1ExtLen+1 {
+			b := filepath.Base(p)
+			if _, ok := skipFiles[filepath.Base(b)]; ok {
+				return nil
+			}
+
+			// Replaces file extensions longer than three chars
+			np := p[:len(p)-len(ext)] + ext[:iso9660Level1ExtLen+1]
+			err = os.Rename(p, np)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 // PersistToFile writes the iso image in the assets folder
 func (a *AgentImage) PersistToFile(directory string) error {
 	defer os.RemoveAll(a.tmpPath)
@@ -189,7 +228,11 @@ func (a *AgentImage) PersistToFile(directory string) error {
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)
 
-	var err error
+	err := a.normalizeFilesExtension()
+	if err != nil {
+		return err
+	}
+
 	// For external platform when the bootArtifactsBaseURL is specified,
 	// output the rootfs file alongside the minimal ISO
 	if a.platform == hiveext.ExternalPlatformType {
