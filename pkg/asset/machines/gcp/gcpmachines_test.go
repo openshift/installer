@@ -224,7 +224,7 @@ func getBaseCapiMachine() *capi.Machine {
 				DataSecretName: ptr.To(dataSecret),
 			},
 			InfrastructureRef: v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				APIVersion: capg.GroupVersion.String(),
 				Kind:       "GCPMachine",
 				Name:       "012345678-master-0",
 			},

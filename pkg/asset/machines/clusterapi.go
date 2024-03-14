@@ -221,7 +221,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap")),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capa.GroupVersion.String(),
 					Kind:       "AWSMachine",
 					Name:       bootstrapAWSMachine.Name,
 				},

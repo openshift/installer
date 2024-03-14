@@ -49,7 +49,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Location:         installConfig.Config.Azure.Region,
 				AzureEnvironment: string(installConfig.Azure.CloudName),
 				IdentityRef: &corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capz.GroupVersion.String(),
 					Kind:       "AzureClusterIdentity",
 					Name:       clusterID.InfraID,
 				},
@@ -132,7 +132,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: capz.GroupVersion.String(),
 			Kind:       "AzureCluster",
 			Name:       azureCluster.Name,
 			Namespace:  azureCluster.Namespace,

@@ -159,7 +159,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capv.GroupVersion.String(),
 					Kind:       "VSphereMachine",
 					Name:       vsphereMachine.Name,
 				},
@@ -217,7 +217,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					DataSecretName: ptr.To(fmt.Sprintf("%s-bootstrap", clusterID)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capv.GroupVersion.String(),
 					Kind:       "VSphereMachine",
 					Name:       bootstrapVSphereMachine.Name,
 				},

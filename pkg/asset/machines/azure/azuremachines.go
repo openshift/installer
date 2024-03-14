@@ -146,7 +146,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capz.GroupVersion.String(),
 					Kind:       "AzureMachine",
 					Name:       azureMachine.Name,
 				},
@@ -200,7 +200,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, "bootstrap")),
 			},
 			InfrastructureRef: v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: capz.GroupVersion.String(),
 				Kind:       "AzureMachine",
 				Name:       bootstrapAzureMachine.Name,
 			},

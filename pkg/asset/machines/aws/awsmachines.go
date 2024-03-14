@@ -106,7 +106,7 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capa.GroupVersion.String(),
 					Kind:       "AWSMachine",
 					Name:       awsMachine.Name,
 				},

@@ -74,7 +74,7 @@ func GenerateMachines(clusterID string, pool *types.MachinePool, role string) ([
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capibm.GroupVersion.String(),
 					Kind:       "IBMPowerVSMachine",
 					Name:       powervsMachine.Name,
 				},
