@@ -1,6 +1,3 @@
-//go:build baremetal
-// +build baremetal
-
 package validation
 
 import (
@@ -11,10 +8,6 @@ import (
 	libvirt "github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
 )
-
-func init() {
-	interfaceValidator = libvirtInterfaceValidator
-}
 
 // libvirtInterfaceValidator fetches the valid interface names from a particular libvirt instance, and returns a closure
 // to validate if an interface is found among them

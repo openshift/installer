@@ -28,7 +28,7 @@ import (
 
 type interfaceValidatorFactory func(string) (func(string) error, error)
 
-var interfaceValidator interfaceValidatorFactory
+var interfaceValidator interfaceValidatorFactory = libvirtInterfaceValidator
 
 func validateIPinMachineCIDR(vip string, n *types.Networking) error {
 	var networks []string
