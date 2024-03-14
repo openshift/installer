@@ -31,7 +31,17 @@ func main() {
 		Use:   "monitor-add-nodes",
 		Short: "Monitors the configured nodes while they are joining an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nodejoiner.NewMonitorAddNodesCommand(wd)
+			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			if err != nil {
+				return err
+			}
+
+			ips := args
+			logrus.Infof("ips: %v", ips)
+			if len(ips) == 0 {
+				logrus.Fatal("At least one IP address must be specified")
+			}
+			return nodejoiner.NewMonitorAddNodesCommand(wd, kubeConfig, ips)
 		},
 	}
 

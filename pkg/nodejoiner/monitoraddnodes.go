@@ -1,12 +1,21 @@
 package nodejoiner
 
 import (
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/store"
+	"context"
+
+	"github.com/sirupsen/logrus"
+
+	agentpkg "github.com/openshift/installer/pkg/agent"
 )
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
-func NewMonitorAddNodesCommand(directory string) error {
-	fetcher := store.NewAssetsFetcher(directory)
-	return fetcher.FetchAndPersist([]asset.WritableAsset{})
+func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) error {
+	ctx := context.Background()
+	cluster, err := agentpkg.NewCluster(ctx, kubeconfigPath, ips[0], "")
+	if err != nil {
+		// RWSU TODO exit code enumerate
+		logrus.Exit(1)
+	}
+
+	return agentpkg.MonitorAddNodes(cluster, ips[0])
 }
