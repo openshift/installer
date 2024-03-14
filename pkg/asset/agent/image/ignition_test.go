@@ -21,6 +21,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -662,6 +663,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
