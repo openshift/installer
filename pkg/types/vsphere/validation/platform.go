@@ -73,13 +73,6 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 	}
 
-	// Platform fields only allowed in TechPreviewNoUpgrade
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		if c.VSphere.LoadBalancer != nil {
-			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
-		}
-	}
-
 	if c.VSphere.LoadBalancer != nil {
 		if !validateLoadBalancer(c.VSphere.LoadBalancer.Type) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.VSphere.LoadBalancer.Type, "invalid load balancer type"))

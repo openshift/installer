@@ -457,13 +457,6 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
 	}
 
-	// Platform fields only allowed in TechPreviewNoUpgrade
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		if c.BareMetal.LoadBalancer != nil {
-			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
-		}
-	}
-
 	if c.BareMetal.LoadBalancer != nil {
 		if !validateLoadBalancer(c.BareMetal.LoadBalancer.Type) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.BareMetal.LoadBalancer.Type, "invalid load balancer type"))
