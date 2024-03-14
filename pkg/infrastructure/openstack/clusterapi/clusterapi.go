@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	mapov1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
@@ -32,13 +33,16 @@ func (p Provider) Name() string {
 
 var _ clusterapi.PreProvider = Provider{}
 
-// PreProvision tags the VIP ports and creates the security groups that are needed during CAPI provisioning.
+// PreProvision tags the VIP ports, and creates the security groups and the
+// server groups defined in the Machine manifests.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	var (
-		infraID        = in.InfraID
-		installConfig  = in.InstallConfig
-		rhcosImage     = string(*in.RhcosImage)
-		manifestsAsset = in.ManifestsAsset
+		infraID          = in.InfraID
+		installConfig    = in.InstallConfig
+		rhcosImage       = string(*in.RhcosImage)
+		manifestsAsset   = in.ManifestsAsset
+		machineManifests = in.MachineManifests
+		workersAsset     = in.WorkersAsset
 	)
 
 	if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
@@ -68,6 +72,30 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 		if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
 			return fmt.Errorf("failed to create security groups: %w", err)
+		}
+	}
+
+	{
+		capiMachines := make([]capo.OpenStackMachine, 0, len(machineManifests))
+		for i := range machineManifests {
+			if m, ok := machineManifests[i].(*capo.OpenStackMachine); ok {
+				capiMachines = append(capiMachines, *m)
+			}
+		}
+
+		var workerSpecs []mapov1alpha1.OpenstackProviderSpec
+		{
+			machineSets, err := workersAsset.MachineSets()
+			if err != nil {
+				return fmt.Errorf("failed to extract MachineSets from the worker assets: %w", err)
+			}
+			workerSpecs = make([]mapov1alpha1.OpenstackProviderSpec, 0, len(machineSets))
+			for _, machineSet := range machineSets {
+				workerSpecs = append(workerSpecs, *machineSet.Spec.Template.Spec.ProviderSpec.Value.Object.(*mapov1alpha1.OpenstackProviderSpec))
+			}
+		}
+		if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, workerSpecs); err != nil {
+			return fmt.Errorf("failed to create server groups: %w", err)
 		}
 	}
 
