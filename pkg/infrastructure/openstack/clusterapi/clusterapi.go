@@ -35,25 +35,14 @@ var _ clusterapi.PreProvider = Provider{}
 // PreProvision tags the VIP ports and creates the security groups that are needed during CAPI provisioning.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	var (
-		infraID            = in.InfraID
-		installConfig      = in.InstallConfig
-		rhcosImage         = string(*in.RhcosImage)
-		mastersSchedulable bool
+		infraID        = in.InfraID
+		installConfig  = in.InstallConfig
+		rhcosImage     = string(*in.RhcosImage)
+		manifestsAsset = in.ManifestsAsset
 	)
 
-	for _, f := range in.ManifestsAsset.Files() {
-		if f.Filename == manifests.SchedulerCfgFilename {
-			schedulerConfig := configv1.Scheduler{}
-			if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
-				return fmt.Errorf("unable to decode the scheduler manifest: %w", err)
-			}
-			mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
-			break
-		}
-	}
-
 	if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
-		return err
+		return fmt.Errorf("failed to tag VIP ports: %w", err)
 	}
 
 	// upload the corresponding image to Glance if rhcosImage contains a
@@ -61,11 +50,28 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// Glance image.
 	if imageName, isURL := rhcos.GenerateOpenStackImageName(rhcosImage, infraID); isURL {
 		if err := preprovision.UploadBaseImage(ctx, installConfig.Config.Platform.OpenStack.Cloud, rhcosImage, imageName, infraID, installConfig.Config.Platform.OpenStack.ClusterOSImageProperties); err != nil {
-			return err
+			return fmt.Errorf("failed to upload the RHCOS base image: %w", err)
 		}
 	}
 
-	return preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable)
+	{
+		var mastersSchedulable bool
+		for _, f := range manifestsAsset.Files() {
+			if f.Filename == manifests.SchedulerCfgFilename {
+				schedulerConfig := configv1.Scheduler{}
+				if err := yaml.Unmarshal(f.Data, &schedulerConfig); err != nil {
+					return fmt.Errorf("unable to decode the scheduler manifest: %w", err)
+				}
+				mastersSchedulable = schedulerConfig.Spec.MastersSchedulable
+				break
+			}
+		}
+		if err := preprovision.SecurityGroups(ctx, installConfig, infraID, mastersSchedulable); err != nil {
+			return fmt.Errorf("failed to create security groups: %w", err)
+		}
+	}
+
+	return nil
 }
 
 var _ clusterapi.InfraReadyProvider = Provider{}
