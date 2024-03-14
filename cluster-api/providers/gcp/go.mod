@@ -3,9 +3,12 @@ module openshift/installer/cluster-api/providers/gcp
 go 1.21
 
 replace (
-        // match the changes upstream 
+	// match the changes upstream
 	// pinning cel-go due to a breaking change https://github.com/kubernetes/apiserver/issues/97
 	github.com/google/cel-go => github.com/google/cel-go v0.16.1
+	// See https://github.com/openshift/installer/pull/8133
+	golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
+	google.golang.org/api => google.golang.org/api v0.157.0
 	// kube-openapi should match the version imported by CAPI.
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9
 )
