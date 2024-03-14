@@ -158,9 +158,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-int"),
-				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternal,
+				Name:                   ptr.To(clusterID.InfraID + "-int"),
+				LoadBalancerType:       capa.LoadBalancerTypeNLB,
+				Scheme:                 &capa.ELBSchemeInternal,
+				CrossZoneLoadBalancing: true,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
