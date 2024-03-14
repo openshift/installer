@@ -140,32 +140,35 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 // only use zones if both the compute and control plane node availability zones exist.
 func findFailureDomains(installConfig *installconfig.InstallConfig) []string {
 	zones := sets.New[string]()
-	defaultMachinePlatformDefined := false
-	if gcpPlatform := installConfig.Config.Platform.GCP; gcpPlatform != nil && gcpPlatform.DefaultMachinePlatform != nil {
-		defaultMachinePlatformDefined = true
-		for _, zone := range gcpPlatform.DefaultMachinePlatform.Zones {
+
+	var controlPlaneZones, computeZones []string
+	if installConfig.Config.ControlPlane.Platform.GCP != nil {
+		controlPlaneZones = installConfig.Config.ControlPlane.Platform.GCP.Zones
+	}
+
+	if installConfig.Config.Compute[0].Platform.GCP != nil {
+		computeZones = installConfig.Config.Compute[0].Platform.GCP.Zones
+	}
+
+	def := installConfig.Config.GCP.DefaultMachinePlatform
+	if def != nil && len(def.Zones) > 0 {
+		for _, zone := range def.Zones {
 			zones.Insert(zone)
 		}
 
-		if installConfig.Config.ControlPlane.Platform.GCP != nil {
-			for _, zone := range installConfig.Config.ControlPlane.Platform.GCP.Zones {
-				zones.Insert(zone)
-			}
+		for _, zone := range controlPlaneZones {
+			zones.Insert(zone)
 		}
-		if installConfig.Config.Compute[0].Platform.GCP != nil {
-			for _, zone := range installConfig.Config.Compute[0].Platform.GCP.Zones {
-				zones.Insert(zone)
-			}
+
+		for _, zone := range computeZones {
+			zones.Insert(zone)
 		}
-	}
-	if !defaultMachinePlatformDefined {
-		if installConfig.Config.ControlPlane.Platform.GCP != nil && installConfig.Config.Compute[0].Platform.GCP != nil {
-			for _, zone := range installConfig.Config.ControlPlane.Platform.GCP.Zones {
-				zones.Insert(zone)
-			}
-			for _, zone := range installConfig.Config.Compute[0].Platform.GCP.Zones {
-				zones.Insert(zone)
-			}
+	} else if len(controlPlaneZones) > 0 && len(computeZones) > 0 {
+		for _, zone := range controlPlaneZones {
+			zones.Insert(zone)
+		}
+		for _, zone := range computeZones {
+			zones.Insert(zone)
 		}
 	}
 
