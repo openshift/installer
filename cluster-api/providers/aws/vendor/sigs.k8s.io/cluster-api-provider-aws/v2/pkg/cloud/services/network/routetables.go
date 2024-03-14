@@ -61,7 +61,7 @@ func (s *Service) reconcileRouteTables() error {
 		sn := &subnets[i]
 		// We need to compile the minimum routes for this subnet first, so we can compare it or create them.
 		var routes []*ec2.Route
-		if sn.IsPublic {
+		if sn.IsPublic && !sn.IsEdge() {
 			if s.scope.VPC().InternetGatewayID == nil {
 				return errors.Errorf("failed to create routing tables: internet gateway for %q is nil", s.scope.VPC().ID)
 			}
@@ -70,10 +70,17 @@ func (s *Service) reconcileRouteTables() error {
 				routes = append(routes, s.getGatewayPublicIPv6Route())
 			}
 		} else {
-			natGatewayID, err := s.getNatGatewayForSubnet(sn)
+			var natGatewayID string
+			// private subnets in the edge zones (Local or Wavelength zones)
+			if sn.IsEdge() {
+				natGatewayID, err = s.findNatGatewayForEdgeSubnet(sn)
+			} else {
+				natGatewayID, err = s.getNatGatewayForSubnet(sn)
+			}
 			if err != nil {
 				return err
 			}
+
 			routes = append(routes, s.getNatGatewayPrivateRoute(natGatewayID))
 			if sn.IsIPv6 {
 				if !s.scope.VPC().IsIPv6Enabled() {

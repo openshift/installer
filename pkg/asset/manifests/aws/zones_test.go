@@ -103,6 +103,16 @@ func stubInstallCOnfigPoolControl() *types.MachinePool {
 	}
 }
 
+func stubAwsCluster() *capa.AWSCluster {
+	return &capa.AWSCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "infraId",
+			Namespace: capiutils.Namespace,
+		},
+		Spec: capa.AWSClusterSpec{},
+	}
+}
+
 func Test_extractZonesFromInstallConfig(t *testing.T) {
 	type args struct {
 		in *zoneConfigInput
@@ -191,14 +201,6 @@ func Test_extractZonesFromInstallConfig(t *testing.T) {
 	}
 }
 
-var stubAwsCluster = &capa.AWSCluster{
-	ObjectMeta: metav1.ObjectMeta{
-		Name:      "infraId",
-		Namespace: capiutils.Namespace,
-	},
-	Spec: capa.AWSClusterSpec{},
-}
-
 func Test_setZonesManagedVPC(t *testing.T) {
 	type args struct {
 		in *zoneConfigInput
@@ -209,7 +211,6 @@ func Test_setZonesManagedVPC(t *testing.T) {
 		wantErr bool
 		want    *capa.AWSCluster
 	}{
-		// TODO: Add test cases.
 		{
 			name: "empty clusterx",
 			args: args{
@@ -217,7 +218,7 @@ func Test_setZonesManagedVPC(t *testing.T) {
 					ClusterID:     stubClusterID(),
 					InstallConfig: stubInstallConfigComplete(),
 					Config:        stubInstallConfigTypeZones(),
-					Cluster:       stubAwsCluster,
+					Cluster:       stubAwsCluster(),
 				},
 			},
 			want: func() *capa.AWSCluster {
@@ -265,9 +266,6 @@ func Test_setZonesManagedVPC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// if err := setZonesManagedVPC(tt.args.in); (err != nil) != tt.wantErr {
-			// 	t.Errorf("setZonesManagedVPC() error = %v, wantErr %v", err, tt.wantErr)
-			// }
 			err := setZonesManagedVPC(tt.args.in)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("setZonesManagedVPC() error = %v, wantErr %v", err, tt.wantErr)
@@ -276,8 +274,6 @@ func Test_setZonesManagedVPC(t *testing.T) {
 			if tt.args.in.Cluster != nil {
 				got = tt.args.in.Cluster
 			}
-			// spew.Dump(tt.want)
-			// spew.Dump(got)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("setZonesManagedVPC() = %v, want %v", got, tt.want)
 				fmt.Println("Want:")
