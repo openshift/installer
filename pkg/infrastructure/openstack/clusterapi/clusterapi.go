@@ -71,6 +71,10 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
+	if err := preprovision.ServerGroups(ctx, installConfig, infraID); err != nil {
+		return fmt.Errorf("failed to create server groups: %w", err)
+	}
+
 	return nil
 }
 
