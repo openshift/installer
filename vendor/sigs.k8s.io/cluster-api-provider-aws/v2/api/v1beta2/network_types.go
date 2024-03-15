@@ -106,6 +106,7 @@ type TargetGroupHealthCheck struct {
 type TargetGroupAttribute string
 
 var (
+	// TargetGroupAttributeEnablePreserveClientIP defines the attribute key for enabling preserve client IP.
 	TargetGroupAttributeEnablePreserveClientIP = "preserve_client_ip.enabled"
 )
 
@@ -113,8 +114,11 @@ var (
 type LoadBalancerAttribute string
 
 var (
-	LoadBalancerAttributeEnableLoadBalancingCrossZone           = "load_balancing.cross_zone.enabled"
-	LoadBalancerAttributeIdleTimeTimeoutSeconds                 = "idle_timeout.timeout_seconds"
+	// LoadBalancerAttributeEnableLoadBalancingCrossZone defines the attribute key for enabling load balancing cross zone.
+	LoadBalancerAttributeEnableLoadBalancingCrossZone = "load_balancing.cross_zone.enabled"
+	// LoadBalancerAttributeIdleTimeTimeoutSeconds defines the attribute key for idle timeout.
+	LoadBalancerAttributeIdleTimeTimeoutSeconds = "idle_timeout.timeout_seconds"
+	// LoadBalancerAttributeIdleTimeDefaultTimeoutSecondsInSeconds defines the default idle timeout in seconds.
 	LoadBalancerAttributeIdleTimeDefaultTimeoutSecondsInSeconds = "60"
 )
 
