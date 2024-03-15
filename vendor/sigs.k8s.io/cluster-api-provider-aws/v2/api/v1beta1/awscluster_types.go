@@ -207,6 +207,7 @@ type AWSClusterStatus struct {
 	Conditions     clusterv1.Conditions     `json:"conditions,omitempty"`
 }
 
+// S3Bucket defines a supporting S3 bucket for the cluster, currently can be optionally used for Ignition.
 type S3Bucket struct {
 	// ControlPlaneIAMInstanceProfile is a name of the IAMInstanceProfile, which will be allowed
 	// to read control-plane node bootstrap data from S3 Bucket.
