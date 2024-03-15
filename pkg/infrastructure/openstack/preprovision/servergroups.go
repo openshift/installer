@@ -20,42 +20,29 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 	}
 	computeClient.Microversion = "2.64"
 
-	defaultPolicy := openstack.SGPolicySoftAntiAffinity
-	if defaultMP := installConfig.Config.OpenStack.DefaultMachinePlatform; defaultMP != nil {
-		if defaultMP.ServerGroupPolicy.IsSet() {
-			defaultPolicy = defaultMP.ServerGroupPolicy
+	const role = "master"
+	policy := openstack.SGPolicySoftAntiAffinity
+	{
+		if defaultMP := installConfig.Config.OpenStack.DefaultMachinePlatform; defaultMP != nil {
+			if p := defaultMP.ServerGroupPolicy; p.IsSet() {
+				policy = p
+			}
+		}
+		if installConfig.Config.ControlPlane != nil {
+			if installConfig.Config.ControlPlane.Platform.OpenStack != nil {
+				if p := installConfig.Config.ControlPlane.Platform.OpenStack.ServerGroupPolicy; p.IsSet() {
+					policy = p
+				}
+			}
 		}
 	}
 
-	for role, policy := range map[string]openstack.ServerGroupPolicy{
-		"master": func() openstack.ServerGroupPolicy {
-			if installConfig.Config.ControlPlane != nil {
-				if installConfig.Config.ControlPlane.Platform.OpenStack != nil {
-					if p := installConfig.Config.ControlPlane.Platform.OpenStack.ServerGroupPolicy; p.IsSet() {
-						return p
-					}
-				}
-			}
-			return defaultPolicy
-		}(),
-		"worker": func() openstack.ServerGroupPolicy {
-			if installConfig.Config.WorkerMachinePool() != nil {
-				if installConfig.Config.WorkerMachinePool().Platform.OpenStack != nil {
-					if p := installConfig.Config.WorkerMachinePool().Platform.OpenStack.ServerGroupPolicy; p.IsSet() {
-						return p
-					}
-				}
-			}
-			return defaultPolicy
-		}(),
-	} {
-		_, err := servergroups.Create(computeClient, servergroups.CreateOpts{
-			Name:   infraID + "-" + role,
-			Policy: string(policy),
-		}).Extract()
-		if err != nil {
-			return fmt.Errorf("failed to create the %s server group: %w", role, err)
-		}
+	if _, err := servergroups.Create(computeClient, servergroups.CreateOpts{
+		Name:   infraID + "-" + role,
+		Policy: string(policy),
+	}).Extract(); err != nil {
+		return fmt.Errorf("failed to create the %s server group: %w", role, err)
 	}
+
 	return nil
 }
