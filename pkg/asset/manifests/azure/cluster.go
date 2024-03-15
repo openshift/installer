@@ -28,6 +28,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to split CIDR into subnets")
 	}
+	privateDNSZoneName := installConfig.Config.ClusterDomain()
 
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
@@ -56,7 +57,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			NetworkSpec: capz.NetworkSpec{
 				NetworkClassSpec: capz.NetworkClassSpec{
-					PrivateDNSZoneName: fmt.Sprintf("api.%s", clusterID.InfraID),
+					PrivateDNSZoneName: privateDNSZoneName,
 				},
 				Vnet: capz.VnetSpec{
 					ID: installConfig.Config.Azure.VirtualNetwork,

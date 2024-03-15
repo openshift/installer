@@ -173,18 +173,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	// Create DNS entries
-	err = createAzureDNSEntries(ctx, in)
-	if err != nil {
-		return err
-	}
-
 	installConfig := in.InstallConfig.Config
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
 	cloudConfiguration := session.CloudConfig
+	clusterDomain := in.InstallConfig.Config.ClusterDomain()
+	clusterName := in.InstallConfig.Config.ObjectMeta.Name
+	baseDomain := in.InstallConfig.Config.BaseDomain
 
 	resourceGroupName := p.ResourceGroupName
+	baseDomainResourceGroupName := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	storageAccountName := fmt.Sprintf("cluster%s", randomString(5))
 	containerName := "vhd"
 	blobName := fmt.Sprintf("rhcos%s.vhd", randomString(5))
@@ -231,6 +229,34 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	tokenCredential := session.TokenCreds
 	storageURL := fmt.Sprintf("https://%s.blob.core.windows.net", storageAccountName)
 	blobURL := fmt.Sprintf("%s/%s/%s", storageURL, containerName, blobName)
+
+	useIPv6 := false
+	for _, network := range in.InstallConfig.Config.Networking.ServiceNetwork {
+		if network.IP.To4() == nil {
+			useIPv6 = true
+		}
+	}
+
+	// Create DNS entries
+	err = CreateDNSEntries(ctx, &CreateDNSEntriesInput{
+		SubscriptionID:              subscriptionID,
+		ResourceGroupName:           resourceGroupName,
+		BaseDomainResourceGroupName: baseDomainResourceGroupName,
+		BaseDomain:                  baseDomain,
+		ClusterDomain:               clusterDomain,
+		ClusterName:                 clusterName,
+		Region:                      platform.Region,
+		InfraID:                     in.InfraID,
+		Private:                     in.InstallConfig.Config.Publish == types.InternalPublishingStrategy,
+		UseIPv6:                     useIPv6,
+		Tags:                        tags,
+		CloudName:                   platform.CloudName,
+		TokenCredential:             tokenCredential,
+		CloudConfiguration:          cloudConfiguration,
+	})
+	if err != nil {
+		log.Fatalf("failed to create DNS entries: %v", err)
+	}
 
 	// Create user assigned identity
 	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
