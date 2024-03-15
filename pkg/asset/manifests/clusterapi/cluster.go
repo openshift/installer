@@ -2,7 +2,6 @@ package clusterapi
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -69,10 +68,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
 		return nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
-		return err
 	}
 
 	c.FileList = []*asset.RuntimeFile{}

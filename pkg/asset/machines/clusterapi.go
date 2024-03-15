@@ -3,7 +3,6 @@ package machines
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -78,10 +77,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
 		return nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(machineManifestDir), 0755); err != nil {
-		return err
 	}
 
 	c.FileList = []*asset.RuntimeFile{}
