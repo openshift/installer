@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -157,18 +158,63 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				PresignedURLDuration: &metav1.Duration{Duration: 1 * time.Hour},
 			},
 			ControlPlaneLoadBalancer: &capa.AWSLoadBalancerSpec{
-				Name:             ptr.To(clusterID.InfraID + "-ext"),
-				LoadBalancerType: capa.LoadBalancerTypeNLB,
-				Scheme:           &capa.ELBSchemeInternetFacing,
+				Name:                   ptr.To(clusterID.InfraID + "-int"),
+				LoadBalancerType:       capa.LoadBalancerTypeNLB,
+				Scheme:                 &capa.ELBSchemeInternal,
+				CrossZoneLoadBalancing: true,
 				AdditionalListeners: []capa.AdditionalListenerSpec{
 					{
 						Port:     22623,
 						Protocol: capa.ELBProtocolTCP,
 					},
 				},
+				IngressRules: []capa.IngressRule{
+					{
+						Description: "Machine Config Server internal traffic from cluster",
+						Protocol:    capa.SecurityGroupProtocolTCP,
+						FromPort:    22623,
+						ToPort:      22623,
+						CidrBlocks:  []string{mainCIDR.String()},
+					},
+				},
 			},
 			AdditionalTags: tags,
 		},
+	}
+
+	if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+		// FIXME: CAPA bug. Remove when fixed upstream
+		// The primary and secondary load balancers in CAPA share the same
+		// security group. However, specifying an ingress rule only in the
+		// second LB does not seem to take effect, forcing us to add it to the
+		// primary LB instead.
+		// https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/4865
+		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
+			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
+			capa.IngressRule{
+				Description: "Kubernetes API Server traffic for public access",
+				Protocol:    capa.SecurityGroupProtocolTCP,
+				FromPort:    6443,
+				ToPort:      6443,
+				CidrBlocks:  []string{"0.0.0.0/0"},
+			},
+		)
+
+		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
+			Name:                   ptr.To(clusterID.InfraID + "-ext"),
+			LoadBalancerType:       capa.LoadBalancerTypeNLB,
+			Scheme:                 &capa.ELBSchemeInternetFacing,
+			CrossZoneLoadBalancing: true,
+			IngressRules: []capa.IngressRule{
+				{
+					Description: "Kubernetes API Server traffic for public access",
+					Protocol:    capa.SecurityGroupProtocolTCP,
+					FromPort:    6443,
+					ToPort:      6443,
+					CidrBlocks:  []string{"0.0.0.0/0"},
+				},
+			},
+		}
 	}
 
 	// If the install config has subnets, use them.
