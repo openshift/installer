@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	libvirt "github.com/digitalocean/go-libvirt"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -69,7 +70,11 @@ func interfaceValidator(libvirtURI string) (func(string) error, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer virt.Disconnect()
+	defer func() {
+		if err := virt.Disconnect(); err != nil {
+			logrus.Errorln("error disconnecting from libvirt:", err)
+		}
+	}()
 
 	networks, _, err := virt.ConnectListAllNetworks(1, libvirt.ConnectListNetworksActive)
 	if err != nil {
