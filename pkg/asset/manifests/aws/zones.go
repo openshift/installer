@@ -139,25 +139,39 @@ func setZonesManagedVPC(in *zoneConfigInput) error {
 		if len(subnetsCIDRs) < idxCIDR {
 			return errors.Wrap(err, "unable to define CIDR blocks for all private subnets")
 		}
+		zoneType := ptr.To(zone.Type)
+		parentZoneName := ptr.To(zone.ParentZoneName)
+		if zone.Name == "us-east-1-nyc-1a" {
+			zoneType = ptr.To("local-zone")
+			parentZoneName = ptr.To("us-east-1a")
+		}
 		cidr := subnetsCIDRs[idxCIDR]
 		in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
 			AvailabilityZone: zone.Name,
 			CidrBlock:        cidr.String(),
 			ID:               fmt.Sprintf("%s-private-%s", subnetNamePrefix, zone.Name),
 			IsPublic:         false,
+			ZoneName:         ptr.To(zone.Name),
+			ZoneType:         zoneType,
+			ParentZoneName:   parentZoneName,
 		})
 		if isPublishingExternal {
 			if len(publicSubnetsCIDRs) < idxCIDR {
 				return errors.Wrap(err, "unable to define CIDR blocks for all public subnets")
 			}
 			cidr = publicSubnetsCIDRs[idxCIDR]
+
 			in.Cluster.Spec.NetworkSpec.Subnets = append(in.Cluster.Spec.NetworkSpec.Subnets, capa.SubnetSpec{
 				AvailabilityZone: zone.Name,
 				CidrBlock:        cidr.String(),
 				ID:               fmt.Sprintf("%s-public-%s", subnetNamePrefix, zone.Name),
 				IsPublic:         true,
+				ZoneName:         ptr.To(zone.Name),
+				ZoneType:         zoneType,
+				ParentZoneName:   parentZoneName,
 			})
 		}
+
 		idxCIDR++
 	}
 

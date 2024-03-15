@@ -37,6 +37,12 @@ const (
 	DefaultAPIServerHealthThresholdCount = 5
 	// DefaultAPIServerUnhealthThresholdCount the API server unhealthy check threshold count.
 	DefaultAPIServerUnhealthThresholdCount = 3
+	// ZoneTypeAvailabilityZone defines the regular AWS zones in the Region.
+	ZoneTypeAvailabilityZone = "availability-zone"
+	// ZoneTypeAvailabilityZone defines the AWS zone type in Local Zone infrastructure.
+	ZoneTypeLocalZone = "local-zone"
+	// ZoneTypeAvailabilityZone defines the AWS zone type in Wavelength infrastructure.
+	ZoneTypeWavelengthZone = "wavelength-zone"
 )
 
 // NetworkStatus encapsulates AWS networking resources.
@@ -360,6 +366,11 @@ type VPCSpec struct {
 	// +optional
 	InternetGatewayID *string `json:"internetGatewayId,omitempty"`
 
+	// CaerrierGatewayID is the id of the internet gateway associated with the VPC,
+	// for carrier network (Wavelength Zones).
+	// +optional
+	CarrierGatewayID *string `json:"carrierGatewayId,omitempty"`
+
 	// Tags is a collection of tags describing the resource.
 	Tags Tags `json:"tags,omitempty"`
 
@@ -469,6 +480,36 @@ type SubnetSpec struct {
 
 	// Tags is a collection of tags describing the resource.
 	Tags Tags `json:"tags,omitempty"`
+
+	// ZoneName defines a zone name for this subnet
+	// If you're already set AvailabilityZone, it will take precendence.
+	//
+	// The valid values are availability-zone, local-zone , and wavelength-zone.
+	ZoneName *string `json:"zoneName,omitempty"`
+
+	// ZoneType defines a zone type for this subnet
+	// If you're already set AvailabilityZone, it will take precendence.
+	//
+	// The valid values are availability-zone, local-zone , and wavelength-zone.
+	//
+	// Zone types local-zone or wavelength-zone is not selected to automatically create
+	// control plane or compute nodes.
+	//
+	// When local-zone, the public subnets will be associated to the public route table,
+	// the private subnets will try to create a NAT Gateway, when supported, otherwise
+	// the subnet will be associated to the private route table in the region (preferred parent zone, zone
+	// type availability-zone in the region, or first available).
+	//
+	// When wavelength-zone, the public subnets will be associated to the  carrier route table,
+	// created altogether the Carrier Gateway when public subnets in AWS Wavelength Zone is defined.
+	// The private subnets will try to create a NAT Gateway, when supported, otherwise
+	// the subnet will be associated to the private route table in the region (preferred parent zone, zone
+	// type availability-zone in the region, or first available).
+	ZoneType *string `json:"zoneType,omitempty"`
+
+	// ParentZoneName defines a parent zone name for the zone that the subnet is created,
+	// when applied. Available only in zone types local-zone or wavelength-zone.
+	ParentZoneName *string `json:"parentZoneName,omitempty"`
 }
 
 // GetResourceID returns the identifier for this subnet,
@@ -483,6 +524,29 @@ func (s *SubnetSpec) GetResourceID() string {
 // String returns a string representation of the subnet.
 func (s *SubnetSpec) String() string {
 	return fmt.Sprintf("id=%s/az=%s/public=%v", s.GetResourceID(), s.AvailabilityZone, s.IsPublic)
+}
+
+// IsEdge returns the true when the subnet is created in the edge zone,
+// Local Zone or Wavelength.
+func (s *SubnetSpec) IsEdge() bool {
+	if s.ZoneType == nil {
+		return false
+	}
+	if *s.ZoneType == ZoneTypeLocalZone || *s.ZoneType == ZoneTypeWavelengthZone {
+		return true
+	}
+	return false
+}
+
+// IsEdgeWavelength returns true only when the subnet is edge in Wavelength Zone.
+func (s *SubnetSpec) IsEdgeWavelength() bool {
+	if s.ZoneType == nil {
+		return false
+	}
+	if *s.ZoneType == ZoneTypeWavelengthZone {
+		return true
+	}
+	return false
 }
 
 // Subnets is a slice of Subnet.
@@ -542,6 +606,9 @@ func (s Subnets) FindEqual(spec *SubnetSpec) *SubnetSpec {
 // FilterPrivate returns a slice containing all subnets marked as private.
 func (s Subnets) FilterPrivate() (res Subnets) {
 	for _, x := range s {
+		if x.AvailabilityZone == "us-east-1-nyc-1a" {
+			continue
+		}
 		if !x.IsPublic {
 			res = append(res, x)
 		}
@@ -552,6 +619,9 @@ func (s Subnets) FilterPrivate() (res Subnets) {
 // FilterPublic returns a slice containing all subnets marked as public.
 func (s Subnets) FilterPublic() (res Subnets) {
 	for _, x := range s {
+		if x.AvailabilityZone == "us-east-1-nyc-1a" {
+			continue
+		}
 		if x.IsPublic {
 			res = append(res, x)
 		}

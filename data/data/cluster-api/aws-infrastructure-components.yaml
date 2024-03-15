@@ -889,6 +889,15 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        zoneType:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        parentZoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
                       type: object
                     type: array
                   vpc:
@@ -2063,6 +2072,15 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        zoneType:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        parentZoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
                       required:
                       - id
                       type: object
@@ -4060,6 +4078,15 @@ spec:
                                   description: Tags is a collection of tags describing
                                     the resource.
                                   type: object
+                                zoneName:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
+                                zoneType:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
+                                parentZoneName:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
                               type: object
                             type: array
                           vpc:
@@ -4830,6 +4857,15 @@ spec:
                                   description: Tags is a collection of tags describing
                                     the resource.
                                   type: object
+                                zoneName:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
+                                zoneType:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
+                                parentZoneName:
+                                  description: ZoneName defines a zone name for this subnet
+                                  type: string
                               required:
                               - id
                               type: object
@@ -9478,6 +9514,15 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        zoneType:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        parentZoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
                       required:
                       - id
                       type: object
@@ -11395,6 +11440,15 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        zoneType:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
+                        parentZoneName:
+                          description: ZoneName defines a zone name for this subnet
+                          type: string
                       required:
                       - id
                       type: object

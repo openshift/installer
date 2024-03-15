@@ -450,6 +450,36 @@ type SubnetSpec struct {
 
 	// Tags is a collection of tags describing the resource.
 	Tags Tags `json:"tags,omitempty"`
+
+	// ZoneName defines a zone name for this subnet
+	// If you're already set AvailabilityZone, it will take precendence.
+	//
+	// The valid values are availability-zone, local-zone , and wavelength-zone.
+	ZoneName *string `json:"zoneName,omitempty"`
+
+	// ZoneType defines a zone type for this subnet
+	// If you're already set AvailabilityZone, it will take precendence.
+	//
+	// The valid values are availability-zone, local-zone , and wavelength-zone.
+	//
+	// Zone types local-zone or wavelength-zone is not selected to automatically create
+	// control plane or compute nodes.
+	//
+	// When local-zone, the public subnets will be associated to the public route table,
+	// the private subnets will try to create a NAT Gateway, when supported, otherwise
+	// the subnet will be associated to the private route table in the region (preferred parent zone, zone
+	// type availability-zone in the region, or first available).
+	//
+	// When wavelength-zone, the public subnets will be associated to the  carrier route table,
+	// created altogether the Carrier Gateway when public subnets in AWS Wavelength Zone is defined.
+	// The private subnets will try to create a NAT Gateway, when supported, otherwise
+	// the subnet will be associated to the private route table in the region (preferred parent zone, zone
+	// type availability-zone in the region, or first available).
+	ZoneType *string `json:"zoneType,omitempty"`
+
+	// ParentZoneName defines a parent zone name for the zone that the subnet is created,
+	// when applied. Available only in zone types local-zone or wavelength-zone.
+	ParentZoneName *string `json:"parentZoneName,omitempty"`
 }
 
 // GetResourceID returns the identifier for this subnet,

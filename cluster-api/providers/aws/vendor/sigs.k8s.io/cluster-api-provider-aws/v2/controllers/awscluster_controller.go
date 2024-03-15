@@ -288,6 +288,8 @@ func (r *AWSClusterReconciler) reconcileLoadBalancer(clusterScope *scope.Cluster
 		return &retryAfterDuration, nil
 	}
 
+	// TODO(mtulio): add check if LB has in active state, preventing DNS lookup errors.
+
 	clusterScope.Debug("Looking up IP address for DNS", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
 	if _, err := net.LookupIP(awsCluster.Status.Network.APIServerELB.DNSName); err != nil {
 		clusterScope.Error(err, "failed to get IP address for dns name", "dns", awsCluster.Status.Network.APIServerELB.DNSName)
