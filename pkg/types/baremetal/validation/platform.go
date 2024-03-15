@@ -26,13 +26,9 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
-// dynamicProvisioningValidator is a function that validates certain fields in the platform.
-type dynamicProvisioningValidator func(*baremetal.Platform, *field.Path) field.ErrorList
+type interfaceValidatorFactory func(string) (func(string) error, error)
 
-// dynamicProvisioningValidators is an array of dynamicProvisioningValidator functions. This array can be added to by an init function, and
-// is intended to be used for validations that require dependencies not built with the default tags, e.g. libvirt
-// libraries.
-var dynamicProvisioningValidators []dynamicProvisioningValidator
+var interfaceValidator interfaceValidatorFactory
 
 func validateIPinMachineCIDR(vip string, n *types.Networking) error {
 	var networks []string
@@ -593,11 +589,36 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 
 // validateProvisioningBootstrapNetworking checks that provisioning network requirements specified is valid for the bootstrap VM.
 func validateProvisioningBootstrapNetworking(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
+	errorList := field.ErrorList{}
 
-	for _, validator := range dynamicProvisioningValidators {
-		allErrs = append(allErrs, validator(p, fldPath)...)
+	if interfaceValidator != nil {
+		findInterface, err := interfaceValidator(p.LibvirtURI)
+		if err != nil {
+			errorList = append(errorList, field.InternalError(fldPath.Child("libvirtURI"), err))
+			return errorList
+		}
+
+		if err := findInterface(p.ExternalBridge); err != nil {
+			errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge, err.Error()))
+		}
+
+		if err := findInterface(p.ProvisioningBridge); p.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork && err != nil {
+			errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge, err.Error()))
+		}
+
 	}
 
-	return allErrs
+	if err := validate.MAC(p.ExternalMACAddress); p.ExternalMACAddress != "" && err != nil {
+		errorList = append(errorList, field.Invalid(fldPath.Child("externalMACAddress"), p.ExternalMACAddress, err.Error()))
+	}
+
+	if err := validate.MAC(p.ProvisioningMACAddress); p.ProvisioningMACAddress != "" && err != nil {
+		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningMACAddress"), p.ProvisioningMACAddress, err.Error()))
+	}
+
+	if p.ProvisioningMACAddress != "" && strings.EqualFold(p.ProvisioningMACAddress, p.ExternalMACAddress) {
+		errorList = append(errorList, field.Duplicate(fldPath.Child("provisioningMACAddress"), "provisioning and external MAC addresses may not be identical"))
+	}
+
+	return errorList
 }

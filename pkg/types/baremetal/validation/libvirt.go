@@ -10,53 +10,15 @@ import (
 
 	libvirt "github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/openshift/installer/pkg/types/baremetal"
-	"github.com/openshift/installer/pkg/validate"
 )
 
 func init() {
-	dynamicProvisioningValidators = append(dynamicProvisioningValidators, validateInterfaces)
+	interfaceValidator = libvirtInterfaceValidator
 }
 
-// validateInterfaces ensures that any interfaces required by the platform exist on the libvirt host.
-func validateInterfaces(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
-	errorList := field.ErrorList{}
-
-	findInterface, err := interfaceValidator(p.LibvirtURI)
-	if err != nil {
-		errorList = append(errorList, field.InternalError(fldPath.Child("libvirtURI"), err))
-		return errorList
-	}
-
-	if err := findInterface(p.ExternalBridge); err != nil {
-		errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge, err.Error()))
-	}
-
-	if err := validate.MAC(p.ExternalMACAddress); p.ExternalMACAddress != "" && err != nil {
-		errorList = append(errorList, field.Invalid(fldPath.Child("externalMACAddress"), p.ExternalMACAddress, err.Error()))
-	}
-
-	if err := findInterface(p.ProvisioningBridge); p.ProvisioningNetwork != baremetal.DisabledProvisioningNetwork && err != nil {
-		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge, err.Error()))
-	}
-
-	if err := validate.MAC(p.ProvisioningMACAddress); p.ProvisioningMACAddress != "" && err != nil {
-		errorList = append(errorList, field.Invalid(fldPath.Child("provisioningMACAddress"), p.ProvisioningMACAddress, err.Error()))
-	}
-
-	if p.ProvisioningMACAddress != "" && strings.EqualFold(p.ProvisioningMACAddress, p.ExternalMACAddress) {
-		errorList = append(errorList, field.Duplicate(fldPath.Child("provisioningMACAddress"), "provisioning and external MAC addresses may not be identical"))
-	}
-
-	return errorList
-}
-
-// interfaceValidator fetches the valid interface names from a particular libvirt instance, and returns a closure
+// libvirtInterfaceValidator fetches the valid interface names from a particular libvirt instance, and returns a closure
 // to validate if an interface is found among them
-
-func interfaceValidator(libvirtURI string) (func(string) error, error) {
+func libvirtInterfaceValidator(libvirtURI string) (func(string) error, error) {
 	// Connect to libvirt and obtain a list of interface names
 	interfaces := make(map[string]struct{})
 	var exists = struct{}{}
