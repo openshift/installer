@@ -20,11 +20,6 @@ printf '\nInfra env id is %s\n' "${INFRA_ENV_ID}" 1>&2
 
 status_issue="90_add-node"
 
-# For some reason the initial role patching doesn't seem to work properly
-echo "Patching host..."
-HOST_ID=$(curl -s "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts" | jq -r '.[].id')
-curl -X PATCH -d '{"host_role":"worker"}' -H "Content-Type: application/json" "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}"
-
 # Wait for the current host to be ready
 host_ready=false
 while [[ $host_ready == false ]]
@@ -38,10 +33,16 @@ do
     fi
 done
 
+HOST_ID=$(curl -s "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts" | jq -r '.[].id')
+printf '\nHost %s is ready for installation\n' "${HOST_ID}" 1>&2
 clear_issue "${status_issue}"
 
-sleep 1m
-
 # Add the current host to the cluster
-curl -X POST -s -S "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install"
-echo "Host installation started" 1>&2
+res=$(curl -X POST -s -S "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install")
+code=$(echo "$res" | jq -r '.code')
+message=$(echo "$res" | jq -r '.message')
+if [[ $res = "200" ]]; then 
+    printf "\nHost installation started\n" 1>&2
+else
+    printf '\nHost installation failed: %s\n' "${message}" 1>&2
+fi
