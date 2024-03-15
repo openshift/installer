@@ -46,6 +46,7 @@ type API interface {
 	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
 	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
 	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
+	GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -889,6 +890,24 @@ func (c *Client) getTransitConnections(ctx context.Context, tgID string) ([]tran
 
 		moreData = connectionCollection.Next != nil
 	}
+
+	return result, nil
+}
+
+// GetVPCSubnets retrieves all subnets in the given VPC.
+func (c *Client) GetVPCSubnets(ctx context.Context, vpcID string) ([]vpcv1.Subnet, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	listSubnetsOptions.VPCID = &vpcID
+	subnets, _, err := c.vpcAPI.ListSubnets(listSubnetsOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []vpcv1.Subnet{}
+	result = append(result, subnets.Subnets...)
 
 	return result, nil
 }

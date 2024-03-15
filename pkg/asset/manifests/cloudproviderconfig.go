@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
@@ -252,6 +253,19 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		vpcSubnets := installConfig.Config.PowerVS.VPCSubnets
 		if vpc == "" {
 			vpc = fmt.Sprintf("vpc-%s", clusterID.InfraID)
+		} else {
+			client, err := powervsconfig.NewClient()
+			if err != nil {
+				return err
+			}
+			vpcObj, err := client.GetVPCByName(context.TODO(), vpc)
+			if err != nil {
+				return err
+			}
+			subnetsArray, err := client.GetVPCSubnets(context.TODO(), *vpcObj.ID)
+			for i := range subnetsArray {
+				vpcSubnets = append(vpcSubnets, *subnetsArray[i].Name)
+			}
 		}
 
 		if len(vpcSubnets) == 0 {
