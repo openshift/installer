@@ -28,6 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -149,14 +150,17 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create capa.Tags from UserTags: %w", err)
 		}
 
+		publicSubnetsOnly := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(
 			clusterID.InfraID,
 			&aws.MachineInput{
-				Role: "master",
-				Pool: &pool,
-				Subnets: subnets,
-				Tags: tags,
+				Role:     "master",
+				Pool:     &pool,
+				Subnets:  subnets,
+				Tags:     tags,
+				PublicIP: publicSubnetsOnly,
 			},
 		)
 		if err != nil {
@@ -171,10 +175,11 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		bootstrapAWSMachine, err := aws.GenerateMachines(
 			clusterID.InfraID,
 			&aws.MachineInput{
-				Role: "bootstrap",
-				Subnets: nil,
-				Pool: &bootstrapPool,
-				Tags: tags,
+				Role:     "bootstrap",
+				Subnets:  nil,
+				Pool:     &bootstrapPool,
+				Tags:     tags,
+				PublicIP: publicSubnetsOnly || (installConfig.Config.Publish == types.ExternalPublishingStrategy),
 			},
 		)
 		if err != nil {

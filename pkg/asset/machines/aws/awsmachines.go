@@ -18,10 +18,11 @@ import (
 )
 
 type MachineInput struct {
-	Role    string
-	Pool    *types.MachinePool
-	Subnets map[string]string
-	Tags    capa.Tags
+	Role     string
+	Pool     *types.MachinePool
+	Subnets  map[string]string
+	Tags     capa.Tags
+	PublicIP bool
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
@@ -43,14 +44,12 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 		labels := map[string]string{
 			"cluster.x-k8s.io/control-plane": "",
 		}
-		usePublicIP := false
 		name := ""
 
 		switch in.Role {
 		case "bootstrap":
 			name = capiutils.GenerateBoostrapMachineName(clusterID)
 			labels["install.openshift.io/bootstrap"] = ""
-			usePublicIP = true
 		default:
 			name = fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx)
 
@@ -60,10 +59,14 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				return nil, fmt.Errorf("no subnet for zone %s", zone)
 			}
 			if subnetID == "" {
+				subnetType := "private"
+				if in.PublicIP {
+					subnetType = "public"
+				}
 				subnet.Filters = []capa.Filter{
 					{
 						Name:   "tag:Name",
-						Values: []string{fmt.Sprintf("%s-subnet-private-%s", clusterID, zone)},
+						Values: []string{fmt.Sprintf("%s-subnet-%s-%s", clusterID, subnetType, zone)},
 					},
 				}
 			} else {
@@ -88,7 +91,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				SSHKeyName:           ptr.To(""),
 				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				Subnet:               subnet,
-				PublicIP:             ptr.To(usePublicIP),
+				PublicIP:             ptr.To(in.PublicIP),
 				AdditionalTags:       in.Tags,
 				RootVolume: &capa.Volume{
 					Size:          int64(mpool.EC2RootVolume.Size),
