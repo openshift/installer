@@ -17,16 +17,23 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
+type MachineInput struct {
+	Role    string
+	Pool    *types.MachinePool
+	Subnets map[string]string
+	Tags    capa.Tags
+}
+
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(clusterID string, region string, subnets map[string]string, pool *types.MachinePool, role string, tags capa.Tags) ([]*asset.RuntimeFile, error) {
-	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
+func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile, error) {
+	if poolPlatform := in.Pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
-	mpool := pool.Platform.AWS
+	mpool := in.Pool.Platform.AWS
 
 	total := int64(1)
-	if pool.Replicas != nil {
-		total = *pool.Replicas
+	if in.Pool.Replicas != nil {
+		total = *in.Pool.Replicas
 	}
 
 	var result []*asset.RuntimeFile
@@ -39,17 +46,17 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 		usePublicIP := false
 		name := ""
 
-		switch role {
+		switch in.Role {
 		case "bootstrap":
 			name = capiutils.GenerateBoostrapMachineName(clusterID)
 			labels["install.openshift.io/bootstrap"] = ""
 			usePublicIP = true
 		default:
-			name = fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
+			name = fmt.Sprintf("%s-%s-%d", clusterID, in.Pool.Name, idx)
 
 			zone := mpool.Zones[int(idx)%len(mpool.Zones)]
-			subnetID, ok := subnets[zone]
-			if len(subnets) > 0 && !ok {
+			subnetID, ok := in.Subnets[zone]
+			if len(in.Subnets) > 0 && !ok {
 				return nil, fmt.Errorf("no subnet for zone %s", zone)
 			}
 			if subnetID == "" {
@@ -82,7 +89,7 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				Subnet:               subnet,
 				PublicIP:             ptr.To(usePublicIP),
-				AdditionalTags:       tags,
+				AdditionalTags:       in.Tags,
 				RootVolume: &capa.Volume{
 					Size:          int64(mpool.EC2RootVolume.Size),
 					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
@@ -120,7 +127,7 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 			Spec: capi.MachineSpec{
 				ClusterName: clusterID,
 				Bootstrap: capi.Bootstrap{
-					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
+					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, in.Role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",

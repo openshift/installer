@@ -152,11 +152,12 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(
 			clusterID.InfraID,
-			installConfig.Config.Platform.AWS.Region,
-			subnets,
-			&pool,
-			"master",
-			tags,
+			&aws.MachineInput{
+				Role: "master",
+				Pool: &pool,
+				Subnets: subnets,
+				Tags: tags,
+			},
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
@@ -167,7 +168,15 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		bootstrapPool.Name = "bootstrap"
 		bootstrapPool.Replicas = ptr.To(int64(1))
 		bootstrapPool.Platform.AWS = &mpool
-		bootstrapAWSMachine, err := aws.GenerateMachines(clusterID.InfraID, installConfig.Config.AWS.Region, nil, &bootstrapPool, "bootstrap", tags)
+		bootstrapAWSMachine, err := aws.GenerateMachines(
+			clusterID.InfraID,
+			&aws.MachineInput{
+				Role: "bootstrap",
+				Subnets: nil,
+				Pool: &bootstrapPool,
+				Tags: tags,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine object: %w", err)
 		}
