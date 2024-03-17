@@ -70,6 +70,14 @@ const (
 )
 
 const (
+	// CarrierGatewayReadyCondition reports on the successful reconciliation of carrier gateways.
+	// Only applicable to managed clusters.
+	CarrierGatewayReadyCondition clusterv1.ConditionType = "CarrierGatewayReady"
+	// CarrierGatewayFailedReason used when errors occur during carrier gateway reconciliation.
+	CarrierGatewayFailedReason = "CarrierGatewayFailed"
+)
+
+const (
 	// NatGatewaysReadyCondition reports successful reconciliation of NAT gateways.
 	// Only applicable to managed clusters.
 	NatGatewaysReadyCondition clusterv1.ConditionType = "NatGatewaysReady"

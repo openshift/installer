@@ -319,6 +319,11 @@ type VPCSpec struct {
 	// +optional
 	InternetGatewayID *string `json:"internetGatewayId,omitempty"`
 
+	// CaerrierGatewayID is the id of the internet gateway associated with the VPC,
+	// for carrier network (Wavelength Zones).
+	// +optional
+	CarrierGatewayID *string `json:"carrierGatewayId,omitempty"`
+
 	// Tags is a collection of tags describing the resource.
 	Tags Tags `json:"tags,omitempty"`
 
@@ -486,6 +491,17 @@ func (s *SubnetSpec) IsEdge() bool {
 	return false
 }
 
+// IsEdgeWavelength returns true only when the subnet is created in Wavelength Zone.
+func (s *SubnetSpec) IsEdgeWavelength() bool {
+	if s.ZoneType == nil {
+		return false
+	}
+	if *s.ZoneType == ZoneTypeWavelengthZone {
+		return true
+	}
+	return false
+}
+
 // Subnets is a slice of Subnet.
 // +listType=map
 // +listMapKey=id
@@ -607,6 +623,19 @@ func (s Subnets) GetUniqueZones() []string {
 		}
 	}
 	return zones
+}
+
+// IsIPv6Enabled returns true if the IPv6 block is defined on the network spec.
+func (s Subnets) HasPublicSubnetWavelength() bool {
+	for _, sub := range s {
+		if sub.ZoneType == nil {
+			return false
+		}
+		if sub.IsPublic && *sub.ZoneType == ZoneTypeWavelengthZone {
+			return true
+		}
+	}
+	return false
 }
 
 // CNISpec defines configuration for CNI.

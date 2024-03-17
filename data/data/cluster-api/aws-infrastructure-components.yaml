@@ -2013,6 +2013,11 @@ spec:
                           to 3
                         minimum: 1
                         type: integer
+                      carrierGatewayId:
+                        description: CaerrierGatewayID is the id of the internet gateway
+                          associated with the VPC, for carrier network (Wavelength
+                          Zones).
+                        type: string
                       cidrBlock:
                         description: CidrBlock is the CIDR block to be used when the
                           provider creates a managed VPC. Defaults to 10.0.0.0/16.
@@ -4511,6 +4516,11 @@ spec:
                                   when creating default subnets. Defaults to 3
                                 minimum: 1
                                 type: integer
+                              carrierGatewayId:
+                                description: CaerrierGatewayID is the id of the internet
+                                  gateway associated with the VPC, for carrier network
+                                  (Wavelength Zones).
+                                type: string
                               cidrBlock:
                                 description: CidrBlock is the CIDR block to be used
                                   when the provider creates a managed VPC. Defaults
@@ -9071,6 +9081,11 @@ spec:
                           to 3
                         minimum: 1
                         type: integer
+                      carrierGatewayId:
+                        description: CaerrierGatewayID is the id of the internet gateway
+                          associated with the VPC, for carrier network (Wavelength
+                          Zones).
+                        type: string
                       cidrBlock:
                         description: CidrBlock is the CIDR block to be used when the
                           provider creates a managed VPC. Defaults to 10.0.0.0/16.
@@ -10942,6 +10957,11 @@ spec:
                           to 3
                         minimum: 1
                         type: integer
+                      carrierGatewayId:
+                        description: CaerrierGatewayID is the id of the internet gateway
+                          associated with the VPC, for carrier network (Wavelength
+                          Zones).
+                        type: string
                       cidrBlock:
                         description: CidrBlock is the CIDR block to be used when the
                           provider creates a managed VPC. Defaults to 10.0.0.0/16.
