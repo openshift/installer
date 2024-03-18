@@ -180,6 +180,10 @@ type AWSMachineSpec struct {
 	// PrivateDNSName is the options for the instance hostname.
 	// +optional
 	PrivateDNSName *PrivateDNSName `json:"privateDnsName,omitempty"`
+
+	// PublicIpv4Pool defines the Public IPv4 Pool to be used for VPC resources created
+	// in public subnets.
+	PublicIpv4Pool *string `json:"publicIpv4Pool,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where

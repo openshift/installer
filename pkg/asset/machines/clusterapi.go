@@ -189,6 +189,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			},
 		}
 		bootstrapAWSMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
+		// TODO(mtulio): add public ip pool
+		if installConfig.Config.Platform.AWS.PublicIpv4Pool != "" {
+			bootstrapAWSMachine.Spec.PublicIpv4Pool = ptr.To(installConfig.Config.Platform.AWS.PublicIpv4Pool)
+		}
 
 		// Handle additional security groups.
 		for _, sg := range mpool.AdditionalSecurityGroupIDs {

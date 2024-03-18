@@ -238,6 +238,10 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PrivateDNSName = scope.AWSMachine.Spec.PrivateDNSName
 
+	if scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP {
+		input.AssociatePublicIpAddress = scope.AWSMachine.Spec.PublicIP
+	}
+
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -541,12 +545,23 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 		input.NetworkInterfaces = netInterfaces
 	} else {
+		netInterfaces := make([]*ec2.InstanceNetworkInterfaceSpecification, 0, len(i.NetworkInterfaces))
+		iface := &ec2.InstanceNetworkInterfaceSpecification{
+			DeviceIndex: aws.Int64(int64(0)),
+		}
+		if i.AssociatePublicIpAddress != nil && *i.AssociatePublicIpAddress {
+			iface.AssociatePublicIpAddress = i.AssociatePublicIpAddress
+		}
+		netInterfaces = append(netInterfaces, iface)
+		input.NetworkInterfaces = netInterfaces
+
 		input.SubnetId = aws.String(i.SubnetID)
 
 		if len(i.SecurityGroupIDs) > 0 {
 			input.SecurityGroupIds = aws.StringSlice(i.SecurityGroupIDs)
 		}
 	}
+	//TODO assign EIP on Public IPv4 Pool
 
 	if i.IAMProfile != "" {
 		input.IamInstanceProfile = &ec2.IamInstanceProfileSpecification{

@@ -302,6 +302,10 @@ type VPCSpec struct {
 	// Mutually exclusive with CidrBlock.
 	IPAMPool *IPAMPool `json:"ipamPool,omitempty"`
 
+	// PublicIpv4Pool defines the Public IPv4 Pool to be used for VPC resources created
+	// in public subnets.
+	PublicIpv4Pool *string `json:"publicIpv4Pool,omitempty"`
+
 	// IPv6 contains ipv6 specific settings for the network. Supported only in managed clusters.
 	// This field cannot be set on AWSCluster object.
 	// +optional
