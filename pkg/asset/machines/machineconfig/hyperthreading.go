@@ -37,7 +37,7 @@ func ForHyperthreadingDisabled(role string) (*mcfgv1.MachineConfig, error) {
 		},
 		Spec: mcfgv1.MachineConfigSpec{
 			Config:          rawExt,
-			KernelArguments: []string{"nosmt"},
+			KernelArguments: []string{"nosmt", "smt-enabled=off"},
 		},
 	}, nil
 }
