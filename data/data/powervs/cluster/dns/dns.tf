@@ -147,11 +147,15 @@ resource "ibm_is_security_group_rule" "dns_vm_sg_squid_all" {
   }
 }
 
-data "ibm_is_image" "dns_vm_image" {
-  count = local.proxy_count
-  name  = var.dns_vm_image_name
+data "ibm_is_images" "images" {
+  count  = local.proxy_count
+  status = "available"
 }
 
+data "ibm_is_image" "dns_vm_image" {
+  count = local.proxy_count
+  name  = [for image in data.ibm_is_images.images[0].images : image if startswith(image.os, var.dns_vm_image_os)][0].name
+}
 
 locals {
   dns_zone    = var.publish_strategy == "Internal" ? data.ibm_dns_zones.dns_zones[0].dns_zones[index(data.ibm_dns_zones.dns_zones[0].dns_zones.*.name, var.base_domain)] : null
