@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
+	"github.com/IBM-Cloud/power-go-client/clients/instance"
+	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM-Cloud/power-go-client/power/client/datacenters"
+	"github.com/IBM-Cloud/power-go-client/power/models"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
@@ -21,6 +24,8 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -29,23 +34,46 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	// DNS
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string, publish types.PublishingStrategy) ([]DNSRecordResponse, error)
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
+	CreateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error
+
+	// VPC
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
 	GetPublicGatewayByVPC(ctx context.Context, vpcName string) (*vpcv1.PublicGateway, error)
-	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
-	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
-	GetAPIKey() string
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
+
+	// TG
+	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
+	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
+
+	// Data Center
+	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
+
+	// API
+	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
+	GetAPIKey() string
+
+	// Subnet
+	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
+
+	// Resource Groups
 	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
+
+	// Service Instance
 	ListServiceInstances(ctx context.Context) ([]string, error)
 	ServiceInstanceGUIDToName(ctx context.Context, id string) (string, error)
-	GetDatacenterCapabilities(ctx context.Context, region string) (map[string]bool, error)
-	GetAttachedTransitGateway(ctx context.Context, svcInsID string) (string, error)
-	GetTGConnectionVPC(ctx context.Context, gatewayID string, vpcSubnetID string) (string, error)
+
+	// Security Group
+	ListSecurityGroupRules(ctx context.Context, securityGroupID string) (*vpcv1.SecurityGroupRuleCollection, error)
+	AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error
+
+	// SSH
+	CreateSSHKey(ctx context.Context, serviceInstance string, zone string, sshKeyName string, sshKey string) error
 }
 
 // Client makes calls to the PowerVS API.
@@ -354,6 +382,56 @@ func (c *Client) GetDNSInstancePermittedNetworks(ctx context.Context, dnsID stri
 		networks = append(networks, *network.PermittedNetwork.VpcCrn)
 	}
 	return networks, nil
+}
+
+// CreateDNSRecord Creates a DNS CNAME record in the given base domain and CRN.
+func (c *Client) CreateDNSRecord(ctx context.Context, crnstr string, baseDomain string, hostname string, cname string) error {
+	logrus.Debugf("CreateDNSRecord: crnstr = %s, hostname = %s, cname = %s", crnstr, hostname, cname)
+
+	var (
+		zoneID           string
+		err              error
+		authenticator    *core.IamAuthenticator
+		globalOptions    *dnsrecordsv1.DnsRecordsV1Options
+		dnsRecordService *dnsrecordsv1.DnsRecordsV1
+	)
+
+	// Get CIS zone ID by name
+	zoneID, err = c.GetDNSZoneIDByName(ctx, baseDomain, types.ExternalPublishingStrategy)
+	if err != nil {
+		logrus.Errorf("c.GetDNSZoneIDByName returns %v", err)
+		return err
+	}
+	logrus.Debugf("CreateDNSRecord: zoneID = %s", zoneID)
+
+	authenticator = &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+	globalOptions = &dnsrecordsv1.DnsRecordsV1Options{
+		Authenticator:  authenticator,
+		Crn:            ptr.To(crnstr),
+		ZoneIdentifier: ptr.To(zoneID),
+	}
+	dnsRecordService, err = dnsrecordsv1.NewDnsRecordsV1(globalOptions)
+	if err != nil {
+		logrus.Errorf("dnsrecordsv1.NewDnsRecordsV1 returns %v", err)
+		return err
+	}
+	logrus.Debugf("CreateDNSRecord: dnsRecordService = %+v", dnsRecordService)
+
+	createOptions := dnsRecordService.NewCreateDnsRecordOptions()
+	createOptions.SetName(hostname)
+	createOptions.SetType(dnsrecordsv1.CreateDnsRecordOptions_Type_Cname)
+	createOptions.SetContent(cname)
+
+	result, response, err := dnsRecordService.CreateDnsRecord(createOptions)
+	if err != nil {
+		logrus.Errorf("dnsRecordService.CreateDnsRecord returns %v", err)
+		return err
+	}
+	logrus.Debugf("CreateDNSRecord: Result.ID = %v, RawResult = %v", *result.Result.ID, response.RawResult)
+
+	return nil
 }
 
 // GetVPCByName gets a VPC by its name.
@@ -891,4 +969,128 @@ func (c *Client) getTransitConnections(ctx context.Context, tgID string) ([]tran
 	}
 
 	return result, nil
+}
+
+// ListSecurityGroupRules returns a list of the security group rules.
+func (c *Client) ListSecurityGroupRules(ctx context.Context, securityGroupID string) (*vpcv1.SecurityGroupRuleCollection, error) {
+	logrus.Debugf("ListSecurityGroupRules: securityGroupID = %s", securityGroupID)
+
+	var (
+		vpcOptions  *vpcv1.GetVPCOptions
+		vpc         *vpcv1.VPC
+		optionsLSGR *vpcv1.ListSecurityGroupRulesOptions
+		result      *vpcv1.SecurityGroupRuleCollection
+		response    *core.DetailedResponse
+		err         error
+	)
+
+	vpcOptions = c.vpcAPI.NewGetVPCOptions(securityGroupID)
+
+	vpc, response, err = c.vpcAPI.GetVPC(vpcOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failure ListSecurityGroupRules GetVPC returns %w, response is %+v", err, response)
+	}
+	logrus.Debugf("ListSecurityGroupRules: vpc = %+v", vpc)
+
+	optionsLSGR = c.vpcAPI.NewListSecurityGroupRulesOptions(*vpc.DefaultSecurityGroup.ID)
+
+	result, response, err = c.vpcAPI.ListSecurityGroupRulesWithContext(ctx, optionsLSGR)
+	if err != nil {
+		logrus.Debugf("ListSecurityGroupRules: result = %+v, response = %+v, err = %v", result, response, err)
+	}
+
+	return result, err
+}
+
+// AddSecurityGroupRule adds a security group rule to an existing security group.
+func (c *Client) AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error {
+	logrus.Debugf("AddSecurityGroupRule: securityGroupID = %s, rule = %+v", securityGroupID, *rule)
+
+	var (
+		vpcOptions  *vpcv1.GetVPCOptions
+		vpc         *vpcv1.VPC
+		optionsCSGR *vpcv1.CreateSecurityGroupRuleOptions
+		result      vpcv1.SecurityGroupRuleIntf
+		response    *core.DetailedResponse
+		err         error
+	)
+
+	vpcOptions = c.vpcAPI.NewGetVPCOptions(securityGroupID)
+
+	vpc, response, err = c.vpcAPI.GetVPC(vpcOptions)
+	if err != nil {
+		return fmt.Errorf("failure AddSecurityGroupRule GetVPC returns %w, response is %+v", err, response)
+	}
+	logrus.Debugf("AddSecurityGroupRule: vpc = %+v", vpc)
+
+	optionsCSGR = &vpcv1.CreateSecurityGroupRuleOptions{}
+	optionsCSGR.SetSecurityGroupID(*vpc.DefaultSecurityGroup.ID)
+	optionsCSGR.SetSecurityGroupRulePrototype(rule)
+
+	result, response, err = c.vpcAPI.CreateSecurityGroupRuleWithContext(ctx, optionsCSGR)
+	if err != nil {
+		logrus.Debugf("AddSecurityGroupRule: result = %+v, response = %+v, err = %v", result, response, err)
+	}
+
+	return err
+}
+
+// CreateSSHKey creates a SSH key in the PowerVS Workspace for the workers to use.
+func (c *Client) CreateSSHKey(ctx context.Context, serviceInstance string, zone string, sshKeyName string, sshKey string) error {
+	logrus.Debugf("CreateSSHKey: serviceInstance = %s, sshKeyName = %s sshKey = %s", serviceInstance, sshKeyName, sshKey)
+
+	var (
+		user          *User
+		authenticator core.Authenticator
+		options       *ibmpisession.IBMPIOptions
+		piSession     *ibmpisession.IBMPISession
+		keyClient     *instance.IBMPIKeyClient
+		sshKeyInput   *models.SSHKey
+		err           error
+	)
+
+	user, err = FetchUserDetails(c.APIKey)
+	if err != nil {
+		return fmt.Errorf("createSSHKey: failed to fetch user details %w", err)
+	}
+
+	authenticator = &core.IamAuthenticator{
+		ApiKey: c.APIKey,
+	}
+	err = authenticator.Validate()
+	if err != nil {
+		return fmt.Errorf("createSSHKey: authenticator failed validate %w", err)
+	}
+
+	options = &ibmpisession.IBMPIOptions{
+		Authenticator: authenticator,
+		Debug:         false,
+		UserAccount:   user.Account,
+		Zone:          zone,
+	}
+
+	piSession, err = ibmpisession.NewIBMPISession(options)
+	if err != nil {
+		return fmt.Errorf("createSSHKey: ibmpisession.New: %w", err)
+	}
+	if piSession == nil {
+		return fmt.Errorf("createSSHKey: piSession is nil")
+	}
+	logrus.Debugf("CreateSSHKey: piSession = %+v", piSession)
+
+	keyClient = instance.NewIBMPIKeyClient(ctx, piSession, serviceInstance)
+	logrus.Debugf("CreateSSHKey: keyClient = %+v", keyClient)
+
+	sshKeyInput = &models.SSHKey{
+		Name:   ptr.To(sshKeyName),
+		SSHKey: ptr.To(sshKey),
+	}
+	logrus.Debugf("CreateSSHKey: sshKeyInput = %+v", sshKeyInput)
+
+	_, err = keyClient.Create(sshKeyInput)
+	if err != nil {
+		return fmt.Errorf("createSSHKey: failed to create the ssh key %w", err)
+	}
+
+	return nil
 }
