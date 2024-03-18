@@ -45,6 +45,13 @@ func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string
 		dataSecret := fmt.Sprintf("%s-%s", infraID, masterRole)
 		capiMachine := createCAPIMachine(gcpMachine.Name, dataSecret, infraID)
 
+		if len(mpool.Zones) > 0 {
+			// When there are fewer zones than the number of control plane instances,
+			// cycle through the zones where the instances will reside.
+			zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+			capiMachine.Spec.FailureDomain = ptr.To(zone)
+		}
+
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", capiMachine.Name)},
 			Object: capiMachine,
