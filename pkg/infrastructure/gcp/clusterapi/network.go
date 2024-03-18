@@ -158,6 +158,7 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	op, err = service.ForwardingRules.Insert(projectID, region, &compute.ForwardingRule{
 		Name:                fmt.Sprintf("%s-api-internal", in.InfraID),
 		IPProtocol:          "TCP",
+		IPAddress:           ipAddress,
 		LoadBalancingScheme: "INTERNAL",
 		Ports:               []string{"6443", "22623"},
 		BackendService:      besvc.SelfLink,
