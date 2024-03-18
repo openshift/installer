@@ -111,9 +111,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Network: capg.NetworkSpec{
 				// TODO: Need a network project for installs where the network resources will exist in another
 				// project such as shared vpc installs
-				Name:                  ptr.To(networkName),
-				Subnets:               subnets,
-				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
+				Name:                    ptr.To(networkName),
+				Subnets:                 subnets,
+				AutoCreateSubnetworks:   ptr.To(autoCreateSubnets),
+				LoadBalancerBackendPort: ptr.To(int32(6443)),
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),
