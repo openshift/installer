@@ -142,9 +142,9 @@ func TestValidateMachinePool(t *testing.T) {
 }
 
 func Test_ValdidateSecurityGroups(t *testing.T) {
-	maxSecurityGroups := make([]string, 0, maxSecurityGroupsCount)
-	for i := 0; i < maxSecurityGroupsCount; i++ {
-		maxSecurityGroups = append(maxSecurityGroups, fmt.Sprintf("sg-valid-%d", i))
+	tooManySecurityGroups := make([]string, 0, maxUserSecurityGroupsCount+1)
+	for i := 0; i < maxUserSecurityGroupsCount+1; i++ {
+		tooManySecurityGroups = append(tooManySecurityGroups, fmt.Sprintf("sg-valid-%d", i))
 	}
 	cases := []struct {
 		name     string
@@ -177,9 +177,9 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
 			},
 			pool: &aws.MachinePool{
-				AdditionalSecurityGroupIDs: maxSecurityGroups,
+				AdditionalSecurityGroupIDs: tooManySecurityGroups,
 			},
-			err: "test-path: Too many: 16: must have at most 15 items",
+			err: "test-path: Too many: 11: must have at most 10 items",
 		},
 		{
 			name: "valid maximum security group config",
@@ -188,7 +188,7 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
 			},
 			pool: &aws.MachinePool{
-				AdditionalSecurityGroupIDs: maxSecurityGroups[:maxSecurityGroupsCount-1],
+				AdditionalSecurityGroupIDs: tooManySecurityGroups[:maxUserSecurityGroupsCount],
 			},
 		},
 	}
