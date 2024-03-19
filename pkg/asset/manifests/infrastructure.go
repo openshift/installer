@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"os"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -197,6 +198,9 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		// DNS post-install.
 		config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
 		config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
+		if custom_dns, ok := os.LookupEnv("USER_PROVISIONED_DNS"); ok && custom_dns == "TRUE" {
+                        installConfig.Config.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+                }
 		if installConfig.Config.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
 			config.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}

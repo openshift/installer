@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"os"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -314,6 +315,9 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 
 // ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(ic *types.InstallConfig) error {
+	if custom_dns, ok := os.LookupEnv("USER_PROVISIONED_DNS"); ok && custom_dns == "TRUE" {
+		ic.Platform.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+        }
 	if ic.Platform.GCP.UserProvisionedDNS == gcp.UserProvisionedDNSEnabled {
 		return nil
 	}

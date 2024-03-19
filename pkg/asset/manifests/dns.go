@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"os"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -135,6 +136,10 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}
 		}
 	case gcptypes.Name:
+		if custom_dns, ok := os.LookupEnv("USER_PROVISIONED_DNS"); ok && custom_dns == "TRUE" {
+                        installConfig.Config.GCP.UserProvisionedDNS = gcptypes.UserProvisionedDNSEnabled
+                }
+
 		// We donot want to configure cloud DNS when `UserProvisionedDNS` is enabled.
 		// So, do not set PrivateZone and PublicZone fields in the DNS manifest.
 		if installConfig.Config.GCP.UserProvisionedDNS == gcptypes.UserProvisionedDNSEnabled {
