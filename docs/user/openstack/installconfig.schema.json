@@ -1,0 +1,220 @@
+{
+  "$id": "https://raw.githubusercontent.com/openshift/installer/master/docs/user/openstack/installconfig.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "definitions": {
+    "OpenStackMachinePool": {
+      "additionalProperties": false,
+      "description": "OpenStack-specific properties to the OpenShift machine-pool.",
+      "properties": {
+        "additionalNetworkIDs": {
+          "description": "IDs of additional networks for machines.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "additionalSecurityGroupIDs": {
+          "description": "IDs of additional security groups for machines.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rootVolume": {
+          "additionalProperties": false,
+          "description": "Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.",
+          "properties": {
+            "size": {
+              "description": "Size of the root volume in GB. Must be set to at least 25. For production clusters, this must be at least 100.",
+              "type": "integer"
+            },
+            "type": {
+              "deprecated": true,
+              "description": "The volume pool to create the volume from. Deprecated; replaced by \"types\".",
+              "type": "string"
+            },
+            "types": {
+              "description": "The volume pool to create the volume from. If compute zones are defined with more than one type, the number of zones must match the number of types.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "zones": {
+              "description": "The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone. If compute zones contains at least one value, rootVolume.zones must also contain at least one value. Indeed, when a machine is created with a compute availability zone and a storage root volume with no specified rootVolume.availabilityZone, CAPO will use the compute AZ for the volume AZ. This can be problematic if the AZ doesn't exist in Cinder, therefore we enforce that rootVolume.zones to be set if zones is set.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "serverGroupPolicy": {
+          "default": "soft-anti-affinity",
+          "description": "Server group policy to apply to the group that will contain the machines in the pool. Defaults to soft-anti-affinity.",
+          "enum": [
+            "affinity",
+            "soft-affinity",
+            "anti-affinity",
+            "soft-anti-affinity"
+          ],
+          "type": "string"
+        },
+        "type": {
+          "description": "The OpenStack flavor name for machines in the pool.",
+          "type": "string"
+        },
+        "zones": {
+          "description": "The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "OpenStackPlatform": {
+      "additionalProperties": false,
+      "description": "OpenStack-specific properties to the OpenShift platform.",
+      "properties": {
+        "apiFloatingIP": {
+          "description": "Address of existing Floating IP from externalNetwork the installer will associate with the OpenShift API. This property is only valid if externalNetwork is defined. If externalNetwork is not defined, the installer will throw an error.",
+          "oneOf": [
+            {
+              "format": "ipv4"
+            },
+            {
+              "format": "ipv6"
+            }
+          ],
+          "type": "string"
+        },
+        "apiVIP": {
+          "description": "An IP address on the machineNetwork that will be assigned to the API VIP. Be aware that the 10 and 11 of the machineNetwork will be taken by neutron dhcp by default, and won't be available.",
+          "oneOf": [
+            {
+              "format": "ipv4"
+            },
+            {
+              "format": "ipv6"
+            }
+          ],
+          "type": "string"
+        },
+        "cloud": {
+          "description": "The name of the OpenStack cloud to use from clouds.yaml.",
+          "type": "string"
+        },
+        "clusterOSImage": {
+          "description": "Either a URL with http(s) or file scheme to override the default OS image for cluster nodes or an existing Glance image name.",
+          "type": "string"
+        },
+        "clusterOSImageProperties": {
+          "description": "A list of properties to be added to the installer-uploaded ClusterOSImage in Glance. The default is to not set any properties. clusterOSImageProperties is ignored when clusterOSImage points to an existing image in Glance.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "computeFlavor": {
+          "deprecated": true,
+          "description": "The OpenStack flavor to use for compute and control-plane machines.",
+          "type": "string"
+        },
+        "controlPlanePort": {
+          "additionalProperties": false,
+          "description": "ControlPlanePort contains details of the network attached to the control plane port, with the network either containing one openstack subnet for IPv4 or two openstack subnets for dualstack clusters. Providing this configuration will prevent OpenShift from managing or updating this network and its subnets. The network and its subnets will be used during creation of all nodes.",
+          "properties": {
+            "fixedIPs": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "subnet": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "network": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "defaultMachinePlatform": {
+          "$ref": "#/definitions/OpenStackMachinePool",
+          "description": "Default OpenStack-specific machine pool properties which apply to machine pools that do not define their own OpenStack-specific properties."
+        },
+        "externalDNS": {
+          "description": "The IP addresses of DNS servers to be used for the DNS resolution of all instances in the cluster. The total number of dns servers supported by an instance is three. That total includes any dns server provided by the underlying openstack infrastructure.",
+          "items": {
+            "oneOf": [
+              {
+                "format": "ipv4"
+              },
+              {
+                "format": "ipv6"
+              }
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "externalNetwork": {
+          "description": "Name of external network the installer will use to provide access to the cluster. If defined, a floating IP from this network will be created and associated with the bootstrap node to facilitate debugging and connection to the bootstrap node during installation. The apiFloatingIP property is a floating IP address selected from this network.",
+          "type": "string"
+        },
+        "ingressFloatingIP": {
+          "description": "Address of an existing Floating IP from externalNetwork the installer will associate with the ingress port. This property is only valid if externalNetwork is defined. If externalNetwork is not defined, the installer will throw an error.",
+          "oneOf": [
+            {
+              "format": "ipv4"
+            },
+            {
+              "format": "ipv6"
+            }
+          ],
+          "type": "string"
+        },
+        "octaviaSupport": {
+          "deprecated": true,
+          "description": "Whether OpenStack supports Octavia (1 for true or 0 for false).",
+          "enum": [
+            "0",
+            "1"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "cloud"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "OpenStack configuration of an Installer configuration for an OpenShift cluster.",
+  "title": "OpenStack properties of OpenShift install-config.yaml",
+  "type": "object"
+}

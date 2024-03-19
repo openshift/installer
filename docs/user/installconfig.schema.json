@@ -1,0 +1,523 @@
+{
+  "$id": "https://raw.githubusercontent.com/openshift/installer/master/docs/user/installconfig.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "definitions": {
+    "MachinePool": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "default": "amd64",
+          "description": "Determines the instruction set architecture of the machines in the pool. Currently, heterogeneous clusters are not supported, so all pools must specify the same architecture. Valid values are amd64 (the default).",
+          "enum": [
+            "amd64"
+          ],
+          "type": "string"
+        },
+        "hyperthreading": {
+          "default": "Enabled",
+          "description": "Determines the mode of hyperthreading that machines in the pool will utilize. Default: Enabled.",
+          "enum": [
+            "Enabled",
+            "Disabled"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the machine pool.",
+          "enum": [
+            "master",
+            "worker"
+          ],
+          "type": "string"
+        },
+        "platform": {
+          "description": "Platform-specific machine-pool configuration.",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "aws": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "aws"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "azure": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "azure"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "gcp": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gcp"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "openstack": {
+                  "$ref": "./openstack/installconfig.schema.json#/definitions/OpenStackMachinePool",
+                  "description": "OpenStack-specific properties to the OpenShift machine-pool."
+                }
+              },
+              "required": [
+                "openstack"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "ovirt": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ovirt"
+              ]
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "vsphere": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "vsphere"
+              ]
+            }
+          ],
+          "type": "object"
+        },
+        "replicas": {
+          "description": "The machine count for the machine pool.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "Installer configuration for an OpenShift cluster.",
+  "properties": {
+    "additionalTrustBundle": {
+      "description": "A PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store. This trust bundle may also be used when a proxy has been configured.",
+      "type": "string"
+    },
+    "additionalTrustBundlePolicy": {
+      "default": "Proxyonly",
+      "description": "Determines when to add the AdditionalTrustBundle to the nodes'' trusted certificate store. \"Proxyonly\" is the default. The field can be set to following specified values. \"Proxyonly\": adds the AdditionalTrustBundle to nodes when http/https proxy is configured. \"Always\": always adds AdditionalTrustBundle.",
+      "enum": [
+        "Proxyonly",
+        "Always"
+      ],
+      "type": "string"
+    },
+    "apiVersion": {
+      "description": "The API version for the install-config.yaml content. The current version is v1. The installer may also support older API versions.",
+      "type": "string"
+    },
+    "baseDomain": {
+      "description": "The base domain to which the cluster should belong.",
+      "type": "string"
+    },
+    "bootstrapInPlace": {
+      "additionalProperties": false,
+      "description": "BootstrapInPlace is the configuration for installing a single node with bootstrap in place installation.",
+      "properties": {
+        "installationDisk": {
+          "description": "InstallationDisk is the target disk drive for coreos-installer.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "installationDisk"
+      ],
+      "type": "object"
+    },
+    "capabilities": {
+      "additionalProperties": false,
+      "description": "Capabilities configures the installation of optional core cluster components.",
+      "properties": {
+        "additionalEnabledCapabilities": {
+          "description": "Extends the set of managed capabilities beyond the baseline defined in baselineCapabilitySet.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "baselineCapabilitySet": {
+          "default": "vCurrent",
+          "description": "Selects an initial set of optional capabilities to enable. The default value is vCurrent",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "compute": {
+      "description": "The configuration for the machines that comprise the compute nodes.",
+      "items": {
+        "$ref": "#/definitions/MachinePool"
+      },
+      "type": "array"
+    },
+    "controlPlane": {
+      "$ref": "#/definitions/MachinePool",
+      "description": "The configuration for the machines that comprise the control plane."
+    },
+    "cpuPartitioningMode": {
+      "default": "None",
+      "description": "CPUPartitioning determines if a cluster should be setup for CPU workload partitioning at install time. When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to specific CPU Sets. This does not make any decisions on workloads it only configures the nodes to allow CPU Partitioning. The 'AllNodes' value will setup all nodes for CPU Partitioning, the default is 'None'.",
+      "enum": [
+        "None",
+        "AllNodes"
+      ],
+      "type": "string"
+    },
+    "credentialsMode": {
+      "description": "CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied.\n\nIf this field is set, then the installer will not attempt to query the cloud permissions before attempting installation. If the field is not set or empty, then the installer will perform its normal verification that the credentials provided are sufficient to perform an installation.\n\nThere are three possible values for this field, but the valid values are dependent upon the platform being used.\n\n'Mint': create new credentials with a subset of the overall permissions for each CredentialsRequest.\n'Passthrough': copy the credentials with all of the overall permissions for each CredentialsRequest.\n'Manual': CredentialsRequests must be handled manually by the user.\n\nFor each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set.\nAWS: 'Mint', 'Passthrough', 'Manual'\nAzure: 'Passthrough', 'Manual'\nAzureStack: 'Manual'\nGCP: 'Mint', 'Passthrough', 'Manual'\nIBMCloud: 'Manual'\nPowerVS: 'Manual'\nNutanix: 'Manual'",
+      "enum": [
+        "Mint",
+        "Passthrough",
+        "Manual"
+      ],
+      "type": "string"
+    },
+    "featureGates": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "featureSet": {
+      "default": "",
+      "description": "A feature set as defined in the OpenShift API. Notably, TechPreviewNoUpgrade can be used to enable Installer features protected by a Tech Preview feature gate. Feature sets will be applied to the cluster - not just the Installer - and may affect the supportability and upgradability of the cluster, depending on the specified feature set.",
+      "enum": [
+        "",
+        "TechPreviewNoUpgrade",
+        "CustomNoUpgrade",
+        "LatencySensitive"
+      ],
+      "type": "string"
+    },
+    "fips": {
+      "default": false,
+      "description": "Enables FIPS mode (default false).",
+      "type": "boolean"
+    },
+    "imageContentSources": {
+      "deprecated": true,
+      "description": "Sources and repositories for the release-image content. The field is deprecated. Please use imageDigestSources.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "mirrors": {
+            "description": "One or more repositories that may also contain the same images.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "description": "The repository that users refer to, e.g. in image pull specifications.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "imageDigestSources": {
+      "description": "ImageDigestSources lists sources/repositories for the release-image content.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "mirrors": {
+            "description": "Mirrors is one or more repositories that may also contain the same images.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "description": "Source is the repository that users refer to, e.g. in image pull specifications.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "metadata": {
+      "description": "Kubernetes resource ObjectMeta, from which only the name parameter is consumed.",
+      "properties": {
+        "name": {
+          "description": "The name of the cluster. DNS records for the cluster are all subdomains of {{.metadata.name}}.{{.baseDomain}}.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "networking": {
+      "additionalProperties": false,
+      "description": "The configuration for the pod network provider in the cluster.",
+      "properties": {
+        "clusterNetwork": {
+          "default": [
+            {
+              "cidr": "10.128.0.0/14",
+              "hostPrefix": 23
+            }
+          ],
+          "description": "The IP address pools for pods. Default: 10.128.0.0/14 with a host prefix of /23.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "cidr": {
+                "anyOf": [
+                  {
+                    "pattern": "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}/(3[0-2]|[1-2]\\d|[1-9])$"
+                  },
+                  {
+                    "pattern": "^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/(12[0-8]|1[0-1]\\d|[1-9]\\d|[1-9])$"
+                  }
+                ],
+                "description": "The IP block address pool.",
+                "type": "string"
+              },
+              "hostPrefix": {
+                "description": "The prefix size to allocate to each node from the CIDR. For example, 24 would allocate 2^8=256 addresses to each node. If this field is not used by the plugin, it can be left unset.",
+                "exclusiveMinimum": 0,
+                "maximum": 128,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "cidr"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "machineNetwork": {
+          "description": "The IP address pools for machines.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "cidr": {
+                "anyOf": [
+                  {
+                    "pattern": "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}/(3[0-2]|[1-2]\\d|[1-9])$"
+                  },
+                  {
+                    "pattern": "^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/(12[0-8]|1[0-1]\\d|[1-9]\\d|[1-9])$"
+                  }
+                ],
+                "description": "The IP block address pool. The default is 10.0.0.0/16 for all platforms other than libvirt. For libvirt, the default is 192.168.126.0/24.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "cidr"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "networkType": {
+          "default": "OVNKubernetes",
+          "description": "The type of network to install. Default: OVNKubernetes.",
+          "type": "string"
+        },
+        "serviceNetwork": {
+          "default": [
+            "172.30.0.0/16"
+          ],
+          "description": "The IP address pools for services. Default: 172.30.0.0/16.",
+          "items": {
+            "anyOf": [
+              {
+                "pattern": "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}/(3[0-2]|[1-2]\\d|[1-9])$"
+              },
+              {
+                "pattern": "^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/(12[0-8]|1[0-1]\\d|[1-9]\\d|[1-9])$"
+              }
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "operatorPublishingStrategy": {
+      "additionalProperties": false,
+      "description": "OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.",
+      "properties": {
+        "apiserver": {
+          "default": "External",
+          "description": "APIServer sets the visibility of the load balancers servicing the APIserver.",
+          "enum": [
+            "External",
+            "Internal"
+          ],
+          "type": "string"
+        },
+        "ingress": {
+          "default": "External",
+          "description": "Ingress sets the visibility of the created dns resources.",
+          "enum": [
+            "External",
+            "Internal"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "platform": {
+      "description": "The configuration for the specific platform upon which to perform the installation.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "aws": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "aws"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "azure": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "azure"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "gcp": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "gcp"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "openstack": {
+              "$ref": "./openstack/installconfig.schema.json#/definitions/OpenStackPlatform",
+              "description": "OpenStack-specific properties to the OpenShift platform."
+            }
+          },
+          "required": [
+            "openstack"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ovirt": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "ovirt"
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "vsphere": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "vsphere"
+          ]
+        }
+      ],
+      "type": "object"
+    },
+    "proxy": {
+      "additionalProperties": false,
+      "description": "The proxy settings for the cluster. If unset, the cluster will not be configured to use a proxy.",
+      "properties": {
+        "httpProxy": {
+          "description": "The URL of the proxy for HTTP requests.",
+          "type": "string"
+        },
+        "httpsProxy": {
+          "description": "The URL of the proxy for HTTPS requests.",
+          "type": "string"
+        },
+        "noProxy": {
+          "description": "A comma-separated list of domains and CIDRs for which the proxy should not be used.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "publish": {
+      "default": "External",
+      "description": "This controls how the user facing endpoints of the cluster like the Kubernetes API, OpenShift routes etc. are exposed. Default: External.",
+      "enum": [
+        "External",
+        "Internal"
+      ],
+      "type": "string"
+    },
+    "pullSecret": {
+      "description": "The secret to use when pulling images.",
+      "type": "string"
+    },
+    "sshKey": {
+      "description": "The public Secure Shell (SSH) key to provide access to instances.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "baseDomain",
+    "metadata",
+    "platform",
+    "pullSecret"
+  ],
+  "title": "OpenShift install-config.yaml",
+  "type": "object"
+}
