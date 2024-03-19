@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/compute/v1"
 
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
+	"github.com/sirupsen/logrus"
 )
 
 func getAPIInternalResourceName(infraID string) string {
@@ -46,6 +47,7 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*3)
 	defer cancel()
 
+	logrus.Debug("Patching external load balancer")
 	extBesvcName := fmt.Sprintf("%s-apiserver", in.InfraID)
 	extBesvc, err := service.BackendServices.Get(projectID, extBesvcName).Context(ctx).Do()
 	if err != nil {
@@ -65,7 +67,9 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	if err := WaitForOperationGlobal(ctx, projectID, op); err != nil {
 		return "", fmt.Errorf("failed to wait for patching external load balancer: %w", err)
 	}
+	logrus.Debug("Successfully patched external load balancer")
 
+	logrus.Debug("Creating internal load balancer")
 	addr := &compute.Address{
 		Name:        name,
 		AddressType: "INTERNAL",
@@ -174,5 +178,6 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	if err := WaitForOperationRegional(ctx, projectID, region, op); err != nil {
 		return "", fmt.Errorf("failed to wait for forwarding rule creation: %w", err)
 	}
+	logrus.Debug("Successfully created internal load balancer")
 	return ipAddress, nil
 }
