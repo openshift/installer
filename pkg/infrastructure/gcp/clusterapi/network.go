@@ -120,7 +120,8 @@ func createInternalLB(ctx context.Context, in clusterapi.InfraReadyInput, subnet
 	}
 	var backends []*compute.Backend
 	for _, zone := range zones {
-		igName := fmt.Sprintf("%s-apiserver-%s", in.InfraID, *zone)
+		//igName := fmt.Sprintf("%s-apiserver-%s", in.InfraID, *zone)
+		igName := fmt.Sprintf("%s-master-%s", in.InfraID, *zone)
 		ig, err := service.InstanceGroups.Get(projectID, *zone, igName).Context(ctx).Do()
 		if err != nil {
 			return "", fmt.Errorf("error getting instance group %s in zone %s: %w", igName, *zone, err)

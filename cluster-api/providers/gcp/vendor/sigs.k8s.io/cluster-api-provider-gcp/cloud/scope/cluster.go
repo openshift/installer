@@ -340,7 +340,7 @@ func (s *ClusterScope) HealthCheckSpec() *compute.HealthCheck {
 func (s *ClusterScope) InstanceGroupSpec(zone string) *compute.InstanceGroup {
 	port := ptr.Deref(s.GCPCluster.Spec.Network.LoadBalancerBackendPort, 6443)
 	return &compute.InstanceGroup{
-		Name: fmt.Sprintf("%s-%s-%s", s.Name(), infrav1.APIServerRoleTagValue, zone),
+		Name: fmt.Sprintf("%s-%s-%s", s.Name(), "master", zone),
 		NamedPorts: []*compute.NamedPort{
 			{
 				Name: "apiserver",
