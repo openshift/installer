@@ -166,11 +166,6 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		return 0, errors.Wrap(err, "loading kubeconfig")
 	}
 
-	// Handle the case when the API server is not reachable.
-	if err := handleUnreachableAPIServer(config); err != nil {
-		logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
-	}
-
 	//
 	// Wait for the bootstrap to complete.
 	//
