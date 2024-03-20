@@ -2,7 +2,6 @@ package clusterapi
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -71,10 +70,6 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
-		return err
-	}
-
 	c.FileList = []*asset.RuntimeFile{}
 
 	namespace := &corev1.Namespace{
@@ -82,6 +77,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 			Name: capiutils.Namespace,
 		},
 	}
+	namespace.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Namespace"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: namespace, File: asset.File{Filename: "000_capi-namespace.yaml"}})
 
 	cluster := &clusterv1.Cluster{
@@ -91,6 +87,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		},
 		Spec: clusterv1.ClusterSpec{},
 	}
+	cluster.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("Cluster"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
 
 	var out *capiutils.GenerateClusterAssetsOutput

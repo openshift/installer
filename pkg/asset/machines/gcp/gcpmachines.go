@@ -104,10 +104,6 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 	}
 
 	gcpMachine := &capg.GCPMachine{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-			Kind:       "GCPMachine",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			Labels: map[string]string{
@@ -123,6 +119,7 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 			RootDeviceSize:   mpool.OSDisk.DiskSizeGB,
 		},
 	}
+	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
 	// Set optional values from machinepool
 	if mpool.OnHostMaintenance != "" {
 		gcpMachine.Spec.OnHostMaintenance = ptr.To(capg.HostMaintenancePolicy(mpool.OnHostMaintenance))
@@ -174,12 +171,13 @@ func createCAPIMachine(name string, dataSecret string, infraID string) *capi.Mac
 				DataSecretName: ptr.To(dataSecret),
 			},
 			InfrastructureRef: v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				APIVersion: capg.GroupVersion.String(),
 				Kind:       "GCPMachine",
 				Name:       name,
 			},
 		},
 	}
+	machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 	return machine
 }

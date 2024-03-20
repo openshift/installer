@@ -3,7 +3,6 @@ package machines
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -44,6 +43,8 @@ import (
 
 var _ asset.WritableRuntimeAsset = (*ClusterAPI)(nil)
 
+var machineManifestDir = filepath.Join(capiutils.ManifestDir, "machines")
+
 // ClusterAPI is the asset for CAPI control-plane manifests.
 type ClusterAPI struct {
 	FileList []*asset.RuntimeFile
@@ -76,10 +77,6 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 	// If the feature gate is not enabled, do not generate any manifests.
 	if !capiutils.IsEnabled(installConfig) {
 		return nil
-	}
-
-	if err := os.MkdirAll(filepath.Dir(capiutils.ManifestDir), 0755); err != nil {
-		return err
 	}
 
 	c.FileList = []*asset.RuntimeFile{}
@@ -191,6 +188,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				},
 			},
 		}
+		bootstrapAWSMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 
 		// Handle additional security groups.
 		for _, sg := range mpool.AdditionalSecurityGroupIDs {
@@ -218,12 +216,13 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap")),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capa.GroupVersion.String(),
 					Kind:       "AWSMachine",
 					Name:       bootstrapAWSMachine.Name,
 				},
 			},
 		}
+		bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		c.FileList = append(c.FileList, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
@@ -421,10 +420,10 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		m.Data = objData
 
 		// If the filename is already a path, do not append the manifest dir.
-		if filepath.Dir(m.Filename) == capiutils.ManifestDir {
+		if filepath.Dir(m.Filename) == machineManifestDir {
 			continue
 		}
-		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
+		m.Filename = filepath.Join(machineManifestDir, m.Filename)
 	}
 	asset.SortManifestFiles(c.FileList)
 	return nil
@@ -446,15 +445,15 @@ func (c *ClusterAPI) RuntimeFiles() []*asset.RuntimeFile {
 
 // Load returns the openshift asset from disk.
 func (c *ClusterAPI) Load(f asset.FileFetcher) (bool, error) {
-	yamlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yaml"))
+	yamlFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.yaml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yaml files")
 	}
-	ymlFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.yml"))
+	ymlFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.yml"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.yml files")
 	}
-	jsonFileList, err := f.FetchByPattern(filepath.Join(capiutils.ManifestDir, "*.json"))
+	jsonFileList, err := f.FetchByPattern(filepath.Join(machineManifestDir, "*.json"))
 	if err != nil {
 		return false, errors.Wrap(err, "failed to load *.json files")
 	}

@@ -25,6 +25,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 		Data: make(map[string][]byte),
 	}
+	vsphereCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 
 	vsphereCreds.Data["username"] = []byte(vcenter.Username)
 	vsphereCreds.Data["password"] = []byte(vcenter.Password)
@@ -51,6 +52,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
+	vsphereCluster.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereCluster"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: vsphereCluster,
 		File:   asset.File{Filename: "01_vsphere-cluster.yaml"},
@@ -59,7 +61,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: capv.GroupVersion.String(),
 			Kind:       "VSphereCluster",
 			Name:       clusterID.InfraID,
 			Namespace:  capiutils.Namespace,

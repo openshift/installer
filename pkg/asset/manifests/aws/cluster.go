@@ -181,6 +181,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			AdditionalTags: tags,
 		},
 	}
+	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
 	if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 		// FIXME: CAPA bug. Remove when fixed upstream
@@ -270,6 +271,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
+	id.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSClusterControllerIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: id,
 		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
@@ -278,7 +280,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: capa.GroupVersion.String(),
 			Kind:       "AWSCluster",
 			Name:       awsCluster.Name,
 			Namespace:  awsCluster.Namespace,

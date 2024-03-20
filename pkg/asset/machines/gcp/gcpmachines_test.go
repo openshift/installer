@@ -153,10 +153,6 @@ func getBaseGCPMachine() *capg.GCPMachine {
 	image := "rhcos-415-92-202311241643-0-gcp-x86-64"
 	diskType := "pd-ssd"
 	gcpMachine := &capg.GCPMachine{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-			Kind:       "GCPMachine",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "012345678-master-0",
 			Labels: map[string]string{
@@ -178,6 +174,7 @@ func getBaseGCPMachine() *capg.GCPMachine {
 			},
 		},
 	}
+	gcpMachine.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPMachine"))
 	return gcpMachine
 }
 
@@ -227,11 +224,12 @@ func getBaseCapiMachine() *capi.Machine {
 				DataSecretName: ptr.To(dataSecret),
 			},
 			InfrastructureRef: v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				APIVersion: capg.GroupVersion.String(),
 				Kind:       "GCPMachine",
 				Name:       "012345678-master-0",
 			},
 		},
 	}
+	capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 	return capiMachine
 }

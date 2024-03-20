@@ -111,10 +111,6 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 		}
 
 		vsphereMachine := &capv.VSphereMachine{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "VSphereMachine",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: capiutils.Namespace,
 				Name:      machine.Name,
@@ -141,6 +137,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 				},
 			},
 		}
+		vsphereMachine.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereMachine"))
 		capvMachines = append(capvMachines, vsphereMachine)
 
 		result = append(result, &asset.RuntimeFile{
@@ -162,12 +159,13 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capv.GroupVersion.String(),
 					Kind:       "VSphereMachine",
 					Name:       vsphereMachine.Name,
 				},
 			},
 		}
+		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},
@@ -199,6 +197,7 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 			},
 			Spec: bootstrapSpec,
 		}
+		bootstrapVSphereMachine.SetGroupVersionKind(capv.GroupVersion.WithKind("VSphereMachine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapVSphereMachine.Name)},
@@ -218,12 +217,13 @@ func GenerateMachines(ctx context.Context, clusterID string, config *types.Insta
 					DataSecretName: ptr.To(fmt.Sprintf("%s-bootstrap", clusterID)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capv.GroupVersion.String(),
 					Kind:       "VSphereMachine",
 					Name:       bootstrapVSphereMachine.Name,
 				},
 			},
 		}
+		bootstrapMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapVSphereMachine.Name)},
 			Object: bootstrapMachine,

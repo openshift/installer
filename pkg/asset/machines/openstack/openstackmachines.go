@@ -96,7 +96,7 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1alpha7",
+					APIVersion: capo.GroupVersion.String(),
 					Kind:       "OpenStackMachine",
 					Name:       openStackMachine.Name,
 				},

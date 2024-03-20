@@ -117,6 +117,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			FailureDomains:   findFailureDomains(installConfig),
 		},
 	}
+	gcpCluster.SetGroupVersionKind(capg.GroupVersion.WithKind("GCPCluster"))
 
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: gcpCluster,
@@ -126,7 +127,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: capg.GroupVersion.String(),
 			Kind:       "GCPCluster",
 			Name:       gcpCluster.Name,
 			Namespace:  gcpCluster.Namespace,

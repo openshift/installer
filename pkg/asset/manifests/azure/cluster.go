@@ -31,6 +31,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
+	azureNamespace.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Namespace"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: azureNamespace,
 		File:   asset.File{Filename: "00_azure-namespace.yaml"},
@@ -48,7 +49,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Location:         installConfig.Config.Azure.Region,
 				AzureEnvironment: string(installConfig.Azure.CloudName),
 				IdentityRef: &corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					APIVersion: capz.GroupVersion.String(),
 					Kind:       "AzureClusterIdentity",
 					Name:       clusterID.InfraID,
 				},
@@ -85,6 +86,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}
+	azureCluster.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureCluster"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: azureCluster,
 		File:   asset.File{Filename: "02_azure-cluster.yaml"},
@@ -99,6 +101,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			"clientSecret": session.Credentials.ClientSecret,
 		},
 	}
+	azureClientSecret.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: azureClientSecret,
 		File:   asset.File{Filename: "01_azure-client-secret.yaml"},
@@ -120,6 +123,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			TenantID: session.Credentials.TenantID,
 		},
 	}
+	id.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureClusterIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: id,
 		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
@@ -128,7 +132,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	return &capiutils.GenerateClusterAssetsOutput{
 		Manifests: manifests,
 		InfrastructureRef: &corev1.ObjectReference{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: capz.GroupVersion.String(),
 			Kind:       "AzureCluster",
 			Name:       azureCluster.Name,
 			Namespace:  azureCluster.Namespace,

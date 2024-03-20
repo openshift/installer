@@ -54,10 +54,6 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 		}
 
 		awsMachine := &capa.AWSMachine{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-				Kind:       "AWSMachine",
-			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
@@ -82,6 +78,7 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 				},
 			},
 		}
+		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
 
 		// Handle additional security groups.
 		for _, sg := range mpool.AdditionalSecurityGroupIDs {
@@ -109,12 +106,13 @@ func GenerateMachines(clusterID string, region string, subnets map[string]string
 					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID, role)),
 				},
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: capa.GroupVersion.String(),
 					Kind:       "AWSMachine",
 					Name:       awsMachine.Name,
 				},
 			},
 		}
+		machine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", machine.Name)},
