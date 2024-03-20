@@ -377,6 +377,13 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		pool.Platform.OpenStack = &mpool
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
+		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
+			ic.Platform.OpenStack.Cloud,
+			"trunk",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to check for trunk support: %w", err)
+		}
 
 		for _, role := range []string{"master", "bootstrap"} {
 			openStackMachines, err := openstack.GenerateMachines(
@@ -385,6 +392,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 				&pool,
 				imageName,
 				role,
+				trunkSupport,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to create machine objects: %w", err)
