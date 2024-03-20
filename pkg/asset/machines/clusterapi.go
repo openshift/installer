@@ -9,12 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
-	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -32,6 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/clusterapi"
 	rhcosutils "github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -148,87 +145,47 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			}
 		}
 
+		tags, err := aws.CapaTagsFromUserTags(clusterID.InfraID, installConfig.Config.AWS.UserTags)
+		if err != nil {
+			return fmt.Errorf("failed to create capa.Tags from UserTags: %w", err)
+		}
+
+		publicSubnetsOnly := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(
 			clusterID.InfraID,
-			installConfig.Config.Platform.AWS.Region,
-			subnets,
-			&pool,
-			"master",
-			installConfig.Config.Platform.AWS.UserTags,
+			&aws.MachineInput{
+				Role:     "master",
+				Pool:     &pool,
+				Subnets:  subnets,
+				Tags:     tags,
+				PublicIP: publicSubnetsOnly,
+			},
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		c.FileList = append(c.FileList, awsMachines...)
 
-		// TODO(vincepri): The following code is almost duplicated from aws.AWSMachines.
-		// Refactor and generalize around a bootstrap pool, with a single machine and
-		// a custom openshift label to determine the bootstrap machine role, so we can
-		// delete the machine when the stage is complete.
-		bootstrapAWSMachine := &capa.AWSMachine{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: capiutils.GenerateBoostrapMachineName(clusterID.InfraID),
-				Labels: map[string]string{
-					"cluster.x-k8s.io/control-plane": "",
-					"install.openshift.io/bootstrap": "",
-				},
+		bootstrapPool := *ic.ControlPlane
+		bootstrapPool.Name = "bootstrap"
+		bootstrapPool.Replicas = ptr.To(int64(1))
+		bootstrapPool.Platform.AWS = &mpool
+		bootstrapAWSMachine, err := aws.GenerateMachines(
+			clusterID.InfraID,
+			&aws.MachineInput{
+				Role:     "bootstrap",
+				Subnets:  nil,
+				Pool:     &bootstrapPool,
+				Tags:     tags,
+				PublicIP: publicSubnetsOnly || (installConfig.Config.Publish == types.ExternalPublishingStrategy),
 			},
-			Spec: capa.AWSMachineSpec{
-				Ignition:             &capa.Ignition{Version: "3.2"},
-				UncompressedUserData: ptr.To(true),
-				InstanceType:         mpool.InstanceType,
-				AMI:                  capa.AMIReference{ID: ptr.To(mpool.AMIID)},
-				SSHKeyName:           ptr.To(""),
-				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID.InfraID),
-				PublicIP:             ptr.To(true),
-				RootVolume: &capa.Volume{
-					Size:          int64(mpool.EC2RootVolume.Size),
-					Type:          capa.VolumeType(mpool.EC2RootVolume.Type),
-					IOPS:          int64(mpool.EC2RootVolume.IOPS),
-					Encrypted:     ptr.To(true),
-					EncryptionKey: mpool.KMSKeyARN,
-				},
-			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create bootstrap machine object: %w", err)
 		}
-
-		// Handle additional security groups.
-		for _, sg := range mpool.AdditionalSecurityGroupIDs {
-			bootstrapAWSMachine.Spec.AdditionalSecurityGroups = append(
-				bootstrapAWSMachine.Spec.AdditionalSecurityGroups,
-				capa.AWSResourceReference{ID: ptr.To(sg)},
-			)
-		}
-
-		c.FileList = append(c.FileList, &asset.RuntimeFile{
-			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapAWSMachine.Name)},
-			Object: bootstrapAWSMachine,
-		})
-
-		bootstrapMachine := &capi.Machine{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: bootstrapAWSMachine.Name,
-				Labels: map[string]string{
-					"cluster.x-k8s.io/control-plane": "",
-				},
-			},
-			Spec: capi.MachineSpec{
-				ClusterName: clusterID.InfraID,
-				Bootstrap: capi.Bootstrap{
-					DataSecretName: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, "bootstrap")),
-				},
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-					Kind:       "AWSMachine",
-					Name:       bootstrapAWSMachine.Name,
-				},
-			},
-		}
-
-		c.FileList = append(c.FileList, &asset.RuntimeFile{
-			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
-			Object: bootstrapMachine,
-		})
+		c.FileList = append(c.FileList, bootstrapAWSMachine...)
 	case azuretypes.Name:
 		mpool := defaultAzureMachinePoolPlatform()
 		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(
