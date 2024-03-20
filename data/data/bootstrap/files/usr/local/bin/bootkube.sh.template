@@ -341,7 +341,7 @@ then
 	fi
 
 	touch node-tuning-bootstrap.done
-    record_service_stage_success
+	record_service_stage_success
 fi
 
 if [ "$BOOTSTRAP_INPLACE" = true ] && [ ! -f cmdbootline-nto-bootstrap.done ]; then
