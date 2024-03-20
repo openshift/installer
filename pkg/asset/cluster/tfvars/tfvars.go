@@ -494,7 +494,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		// When the user has selected a custom DNS solution, the zones should be skipped.
 		publicZoneName := ""
 		privateZoneName := ""
-
+		if custom_dns, ok := os.LookupEnv("USER_PROVISIONED_DNS"); ok && custom_dns == "TRUE" {
+                        installConfig.Config.GCP.UserProvisionedDNS = gcp.UserProvisionedDNSEnabled
+                }
 		if installConfig.Config.GCP.UserProvisionedDNS != gcp.UserProvisionedDNSEnabled {
 			if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 				publicZone, err := client.GetDNSZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
