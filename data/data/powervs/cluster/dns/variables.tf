@@ -58,10 +58,10 @@ variable "vpc_permitted" {
   description = "Specifies whether an existing VPC is already a Permitted Network for DNS Instance, for Private clusters."
 }
 
-variable "dns_vm_image_name" {
+variable "dns_vm_image_os" {
   type        = string
-  description = "The image name for the DNS VM."
-  default     = "ibm-centos-7-9-minimal-amd64-6"
+  description = "The image OS for the DNS VM."
+  default     = "centos-stream-9"
 }
 
 variable "ssh_key" {
