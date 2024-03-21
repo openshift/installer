@@ -61,7 +61,8 @@
               "additionalProperties": false,
               "properties": {
                 "gcp": {
-                  "type": "object"
+                  "$ref": "./gcp/installconfig.schema.json#/definitions/GCPMachinePool",
+                  "description": "GCP-specific properties to the OpenShift machine-pool."
                 }
               },
               "required": [
@@ -432,7 +433,8 @@
           "additionalProperties": false,
           "properties": {
             "gcp": {
-              "type": "object"
+              "$ref": "./gcp/installconfig.schema.json#/definitions/GCPPlatform",
+              "description": "GCP-specific properties to the OpenShift platform."
             }
           },
           "required": [
