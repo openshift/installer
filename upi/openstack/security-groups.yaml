@@ -372,4 +372,40 @@
         port_range_max: 1936
       when: os_master_schedulable is defined and os_master_schedulable
 
+    - name: 'Create master-sg IPv6 rule "master ingress services (TCP)"'
+      openstack.cloud.security_group_rule:
+        security_group: "{{ os_sg_master }}"
+        ethertype: IPv6
+        protocol: tcp
+        remote_ip_prefix: "{{ os_subnet6_range }}"
+        port_range_min: 30000
+        port_range_max: 32767
+
+    - name: 'Create master-sg IPv6 rule "master ingress services (UDP)"'
+      openstack.cloud.security_group_rule:
+        security_group: "{{ os_sg_master }}"
+        ethertype: IPv6
+        protocol: udp
+        remote_ip_prefix: "{{ os_subnet6_range }}"
+        port_range_min: 30000
+        port_range_max: 32767
+
+    - name: 'Create worker-sg IPv6 rule "worker ingress services (TCP)"'
+      openstack.cloud.security_group_rule:
+        security_group: "{{ os_sg_worker }}"
+        ethertype: IPv6
+        protocol: tcp
+        remote_ip_prefix: "{{ os_subnet6_range }}"
+        port_range_min: 30000
+        port_range_max: 32767
+
+    - name: 'Create worker-sg rule IPv6 "worker ingress services (UDP)"'
+      openstack.cloud.security_group_rule:
+        security_group: "{{ os_sg_worker }}"
+        ethertype: IPv6
+        protocol: udp
+        remote_ip_prefix: "{{ os_subnet6_range }}"
+        port_range_min: 30000
+        port_range_max: 32767
+
     when: os_subnet6 is defined
