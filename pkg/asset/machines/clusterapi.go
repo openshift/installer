@@ -146,13 +146,13 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		}
 
 		pool.Platform.AWS = &mpool
-		awsMachines, err := aws.GenerateMachines(
-			clusterID.InfraID,
-			installConfig.Config.Platform.AWS.Region,
-			subnets,
-			&pool,
-			"master",
-			installConfig.Config.Platform.AWS.UserTags,
+		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
+			Role:     "master",
+			Pool:     &pool,
+			Subnets:  subnets,
+			Tags:     installConfig.Config.AWS.UserTags,
+			PublicIP: false,
+		},
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
