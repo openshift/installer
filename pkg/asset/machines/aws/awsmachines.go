@@ -39,7 +39,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 
 	tags, err := CapaTagsFromUserTags(clusterID, in.Tags)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
+		return nil, fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 	}
 
 	var result []*asset.RuntimeFile
