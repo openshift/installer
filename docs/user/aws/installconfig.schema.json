@@ -1,0 +1,80 @@
+{
+  "$id": "https://raw.githubusercontent.com/openshift/installer/master/docs/user/aws/installconfig.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "definitions": {
+    "AWSMachinePool": {
+      "additionalProperties": false,
+      "description": "AWS-specific properties to the OpenShift machine-pool.",
+      "properties": {
+        "amiID": {
+          "description": "The AMI that should be used to boot machines. If set, the AMI should belong to the same region as the cluster.",
+          "type": "string"
+        },
+        "rootVolume": {
+          "additionalProperties": false,
+          "description": "Defines the root volume for EC2 instances in the machine pool.",
+          "properties": {
+            "iops": {
+              "description": "The amount of provisioned IOPS. This is only valid for type io1.",
+              "type": "integer"
+            },
+            "kmsKeyARN": {
+              "description": "The ARN of KMS key that should be used to encrypt the EBS volume. When no key is specified by user, the account's default KMS Key for the region will be used. Example ARN values are: `arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` or `arn:aws:kms:us-east-1:111122223333:alias/my-key`.",
+              "type": "string"
+            },
+            "size": {
+              "description": "Size of the root volume in gibibytes (GiB).",
+              "type": "integer"
+            },
+            "type": "object"
+          }
+        },
+        "type": {
+          "description": "The EC2 instance type.",
+          "type": "string"
+        },
+        "zones": {
+          "description": "The availability zones used for machines in the pool.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "AWSPlatform": {
+      "additionalProperties": false,
+      "description": "AWS-specific properties to the OpenShift platform.",
+      "properties": {
+        "amiID": {
+          "description": "The AMI that should be used to boot machines for the cluster. If set, the AMI should belong to the same region as the cluster.",
+          "type": "string"
+        },
+        "defaultMachinePlatform": {
+          "$ref": "#/definitions/AWSMachinePool",
+          "description": "Default AWS-specific machine pool properties which applies to machine pools that do not define their own AWS-specific properties."
+        },
+        "region": {
+          "description": "The AWS region where the cluster will be created.",
+          "type": "string"
+        },
+        "subnets": {
+          "description": "Existing subnets (by ID) where cluster resources will be created. Leave unset to have the installer create subnets in a new VPC on your behalf.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "userTags": {
+          "description": "Additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "description": "AWS configuration of an Installer configuration for an OpenShift cluster.",
+  "title": "AWS properties of OpenShift install-config.yaml",
+  "type": "object"
+}

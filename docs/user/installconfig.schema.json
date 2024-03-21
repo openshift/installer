@@ -38,7 +38,8 @@
               "additionalProperties": false,
               "properties": {
                 "aws": {
-                  "type": "object"
+                  "$ref": "./aws/installconfig.schema.json#/definitions/AWSMachinePool",
+                  "description": "AWS-specific properties to the OpenShift machine-pool."
                 }
               },
               "required": [
@@ -408,7 +409,8 @@
           "additionalProperties": false,
           "properties": {
             "aws": {
-              "type": "object"
+              "$ref": "./aws/installconfig.schema.json#/definitions/AWSPlatform",
+              "description": "AWS-specific properties to the OpenShift platform."
             }
           },
           "required": [
