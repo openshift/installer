@@ -1,14 +1,15 @@
 # This Dockerfile is a used by CI to publish an installer image
 # It builds an image containing openshift-install.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
 ARG TAGS="baremetal fipscapable"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build-node-joiner.sh
 
-FROM registry.ci.openshift.org/ocp/4.16:base
+FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
+
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
 RUN dnf upgrade -y && \

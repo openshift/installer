@@ -2,7 +2,7 @@
 # It builds an image containing openshift-install and nss-wrapper for remote deployments, as well as the google cloud-sdk for nested GCE environments and
 # oc for getting assets from an existing cluster to spin up multi-architecture compute clusters on libvirt.
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
 ARG TAGS="libvirt fipscapable"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -12,7 +12,7 @@ FROM registry.ci.openshift.org/ocp/4.16:cli as cli
 FROM quay.io/multi-arch/yq:3.3.0 as yq3
 FROM quay.io/multi-arch/yq:4.30.5 as yq4
 
-FROM quay.io/centos/centos:stream
+FROM quay.io/centos/centos:stream9
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/mock-nss.sh /bin/mock-nss.sh
 COPY --from=builder /go/src/github.com/openshift/installer/images/libvirt/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
@@ -22,7 +22,7 @@ RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
     genisoimage \
     gettext \
-    google-cloud-sdk-365.0.1 \
+    google-cloud-sdk \
     libvirt-client \
     libvirt-libs \
     nss_wrapper \
