@@ -137,6 +137,12 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to create internal load balancer address: %w", err)
 	}
 
+	// The firewall for masters, aka control-plane, is created by CAPG
+	// Create the ones needed for worker to master communication
+	if err = createFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
+		return fmt.Errorf("failed to add firewall rules: %w", err)
+	}
+
 	if in.InstallConfig.Config.GCP.UserProvisionedDNS != gcptypes.UserProvisionedDNSEnabled {
 		// Get the network from the GCP Cluster. The network is used to create the private managed zone.
 		if gcpCluster.Status.Network.SelfLink == nil {
