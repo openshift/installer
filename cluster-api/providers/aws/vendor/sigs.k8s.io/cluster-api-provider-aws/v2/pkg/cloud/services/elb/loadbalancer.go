@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/hash"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
@@ -283,7 +284,6 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBa
 	}
 	input := &elbv2.CreateLoadBalancerInput{
 		Name:           aws.String(spec.Name),
-		Subnets:        aws.StringSlice(spec.SubnetIDs),
 		Tags:           converters.MapToV2Tags(spec.Tags),
 		Scheme:         aws.String(string(spec.Scheme)),
 		SecurityGroups: aws.StringSlice(spec.SecurityGroupIDs),
@@ -292,6 +292,31 @@ func (s *Service) createLB(spec *infrav1.LoadBalancer, lbSpec *infrav1.AWSLoadBa
 
 	if s.scope.VPC().IsIPv6Enabled() {
 		input.IpAddressType = aws.String("dualstack")
+	}
+
+	// Creating Load Balancer with BYO IP
+	// TODO(mtulio): will we support CLB?
+	if spec.Scheme == infrav1.ELBSchemeInternetFacing {
+		if len(input.SubnetMappings) == 0 && s.scope.VPC().PublicIpv4Pool != nil {
+			netsvc := network.NewService(s.scope)
+			eips, err := netsvc.GetOrAllocateAddresses(len(spec.SubnetIDs), fmt.Sprintf("lb-%s", spec.Name))
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to allocate EIP from Custom Public IPv4 Pool: %v", spec)
+			}
+			if len(eips) != len(spec.SubnetIDs) {
+				return nil, errors.Errorf("allocated EIPs (%d) missmatch with the subnet count (%d)", len(eips), len(spec.SubnetIDs))
+			}
+			for cnt, sb := range spec.SubnetIDs {
+				input.SubnetMappings = append(input.SubnetMappings, &elbv2.SubnetMapping{
+					SubnetId:     aws.String(sb),
+					AllocationId: aws.String(eips[cnt]),
+				})
+			}
+		} else {
+			input.Subnets = aws.StringSlice(spec.SubnetIDs)
+		}
+	} else {
+		input.Subnets = aws.StringSlice(spec.SubnetIDs)
 	}
 
 	out, err := s.ELBV2Client.CreateLoadBalancer(input)

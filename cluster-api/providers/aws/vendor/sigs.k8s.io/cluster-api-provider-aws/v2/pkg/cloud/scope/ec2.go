@@ -54,4 +54,27 @@ type EC2Scope interface {
 
 	// ImageLookupBaseOS returns the base operating system name to use when looking up AMIs
 	ImageLookupBaseOS() string
+
+	// TMP/Optional from Network to ensure interface
+
+	// Bucket returns the cluster bucket.
+	Bucket() *infrav1.S3Bucket
+
+	// CNIIngressRules returns the CNI spec ingress rules.
+	CNIIngressRules() infrav1.CNIIngressRules
+
+	// GetNatGatewaysIPs gets the Nat Gateways Public IPs.
+	GetNatGatewaysIPs() []string
+
+	// SecondaryCidrBlock returns the optional secondary CIDR block to use for pod IPs
+	SecondaryCidrBlock() *string
+
+	// SetNatGatewaysIPs sets the Nat Gateways Public IPs.
+	SetNatGatewaysIPs(ips []string)
+
+	// SetSubnets updates the clusters subnets.
+	SetSubnets(subnets infrav1.Subnets)
+
+	// TagUnmanagedNetworkResources returns is tagging unmanaged network resources is set.
+	TagUnmanagedNetworkResources() bool
 }

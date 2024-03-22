@@ -353,6 +353,20 @@ type VPCSpec struct {
 	// PublicIpv4Pool defines the Public IPv4 Pool to be used for VPC resources created
 	// in public subnets.
 	PublicIpv4Pool *string `json:"publicIpv4Pool,omitempty"`
+
+	// QUESTION(mtulio): do we need this for safe reasons?
+	// PublicIpv4PoolFallBackOrder defines the fallbacl when the Public IPv4 Pool has been exhausted,
+	// no more IPv4 address available in the pool.
+	//
+	// When amazon-provided it tries to create in the specified
+	// pool, and if it is exhausted or failed, it will fallback to Amazon-provided IP address.
+	//
+	// When 'none' it will not use any fallback strategy and will fail to provision when the fallback
+	// is trigeredin public subnets.
+	//
+	// +optional
+	// +kubebuilder:validation:Enum:=amazon-provided;none
+	PublicIpv4PoolFallBackOrder *string `json:"publicIpv4PoolFallbackOrder,omitempty"`
 }
 
 // String returns a string representation of the VPC.
