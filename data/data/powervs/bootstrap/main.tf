@@ -63,5 +63,5 @@ module "iaas" {
   #
   cluster_id            = var.cluster_id
   resource_group        = var.powervs_resource_group
-  service_instance_name = var.powervs_service_instance_name
+  service_instance_guid = var.service_instance_guid
 }

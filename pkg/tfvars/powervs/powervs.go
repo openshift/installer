@@ -41,7 +41,7 @@ type config struct {
 	EnableSNAT             bool   `json:"powervs_enable_snat"`
 	AttachedTransitGateway string `json:"powervs_attached_transit_gateway"`
 	TGConnectionVPCID      string `json:"powervs_tg_connection_vpc_id"`
-	ServiceInstanceName    string `json:"powervs_service_instance_name"`
+	ServiceInstanceGUID    string `json:"powervs_service_instance_guid"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -67,7 +67,7 @@ type TFVarsSources struct {
 	EnableSNAT             bool
 	AttachedTransitGateway string
 	TGConnectionVPCID      string
-	ServiceInstanceName    string
+	ServiceInstanceGUID    string
 }
 
 // TFVars generates Power VS-specific Terraform variables launching the cluster.
@@ -124,7 +124,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		EnableSNAT:             sources.EnableSNAT,
 		AttachedTransitGateway: sources.AttachedTransitGateway,
 		TGConnectionVPCID:      sources.TGConnectionVPCID,
-		ServiceInstanceName:    sources.ServiceInstanceName,
+		ServiceInstanceGUID:    sources.ServiceInstanceGUID,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

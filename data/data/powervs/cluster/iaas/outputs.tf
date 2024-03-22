@@ -1,14 +1,9 @@
-output "si_name" {
+output "service_instance_guid" {
   depends_on = [resource.time_sleep.wait_for_workspace]
-  value      = var.service_instance_name == "" ? one(resource.ibm_resource_instance.created_service_instance[*].name) : one(data.ibm_resource_instance.existing_service_instance[*].name)
+  value = var.service_instance_guid == "" ? one(data.ibm_pi_workspace.created_workspace[*].id) : one(data.ibm_pi_workspace.existing_workspace[*].id)
 }
 
-output "si_guid" {
+output "pi_workspace_crn" {
   depends_on = [resource.time_sleep.wait_for_workspace]
-  value      = var.service_instance_name == "" ? one(resource.ibm_resource_instance.created_service_instance[*].guid) : one(data.ibm_resource_instance.existing_service_instance[*].guid)
-}
-
-output "si_crn" {
-  depends_on = [resource.time_sleep.wait_for_workspace]
-  value      = var.service_instance_name == "" ? one(resource.ibm_resource_instance.created_service_instance[*].crn) : one(data.ibm_resource_instance.existing_service_instance[*].crn)
+  value = var.service_instance_guid == "" ? one(data.ibm_pi_workspace.created_workspace[*].pi_workspace_details.crn) : one(data.ibm_pi_workspace.existing_workspace[*].pi_workspace_details.crn)
 }
