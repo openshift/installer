@@ -15,8 +15,10 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	"github.com/openshift/installer/pkg/types"
@@ -24,11 +26,18 @@ import (
 
 // BaseIso generates the base ISO file for the image
 type BaseIso struct {
-	File *asset.File
+	File         *asset.File
+	streamGetter CoreOSBuildFetcher
+	ocRelease    Release
 }
+
+// CoreOSBuildFetcher will be to used to switch the source of the coreos metadata.
+type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
 
 var (
 	baseIsoFilename = ""
+	// DefaultCoreOSStreamGetter uses the pinned metadata.
+	DefaultCoreOSStreamGetter = rhcos.FetchCoreOSBuild
 )
 
 var _ asset.WritableAsset = (*BaseIso)(nil)
@@ -38,26 +47,12 @@ func (i *BaseIso) Name() string {
 	return "BaseIso Image"
 }
 
-// getIsoFile is a pluggable function that gets the base ISO file
-type getIsoFile func(archName string) (string, error)
-
-type getIso struct {
-	getter getIsoFile
-}
-
-func newGetIso(getter getIsoFile) *getIso {
-	return &getIso{getter: getter}
-}
-
-// GetIsoPluggable defines the method to use get the baseIso file
-var GetIsoPluggable = downloadIso
-
-func getMetalArtifact(archName string) (stream.PlatformArtifacts, error) {
+func (i *BaseIso) getMetalArtifact(archName string) (stream.PlatformArtifacts, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
 	// Get the ISO to use from rhcos.json
-	st, err := rhcos.FetchCoreOSBuild(ctx)
+	st, err := i.streamGetter(ctx)
 	if err != nil {
 		return stream.PlatformArtifacts{}, err
 	}
@@ -76,8 +71,8 @@ func getMetalArtifact(archName string) (stream.PlatformArtifacts, error) {
 }
 
 // Download the ISO using the URL in rhcos.json.
-func downloadIso(archName string) (string, error) {
-	metal, err := getMetalArtifact(archName)
+func (i *BaseIso) downloadIso(archName string) (string, error) {
+	metal, err := i.getMetalArtifact(archName)
 	if err != nil {
 		return "", err
 	}
@@ -99,7 +94,7 @@ func downloadIso(archName string) (string, error) {
 
 // Fetch RootFS URL using the rhcos.json.
 func (i *BaseIso) getRootFSURL(archName string) (string, error) {
-	metal, err := getMetalArtifact(archName)
+	metal, err := i.getMetalArtifact(archName)
 	if err != nil {
 		return "", err
 	}
@@ -115,6 +110,8 @@ func (i *BaseIso) getRootFSURL(archName string) (string, error) {
 // Dependencies returns dependencies used by the asset.
 func (i *BaseIso) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&manifests.AgentManifests{},
 		&agent.OptionalInstallConfig{},
 		&mirror.RegistriesConf{},
@@ -132,7 +129,7 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) 
 	}
 
 	// Get pinned version from installer
-	metal, err := getMetalArtifact(archName)
+	metal, err := i.getMetalArtifact(archName)
 	if err != nil {
 		logrus.Warnf("unable to determine base ISO version: %s", err.Error())
 		return
@@ -146,11 +143,6 @@ func (i *BaseIso) checkReleasePayloadBaseISOVersion(r Release, archName string) 
 
 // Generate the baseIso
 func (i *BaseIso) Generate(dependencies asset.Parents) error {
-
-	// TODO - if image registry location is defined in InstallConfig,
-	// ic := &agent.OptionalInstallConfig{}
-	// p.Get(ic)
-
 	var err error
 	var baseIsoFileName string
 
@@ -158,6 +150,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
 		baseIsoFileName, err = cache.DownloadImageFile(urlOverride, cache.AgentApplicationName)
 	} else {
+		i.setStreamGetter(dependencies)
 		baseIsoFileName, err = i.retrieveBaseIso(dependencies)
 	}
 
@@ -171,12 +164,43 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 	return errors.Wrap(err, "failed to get base ISO image")
 }
 
+func (i *BaseIso) setStreamGetter(dependencies asset.Parents) {
+	if i.streamGetter != nil {
+		return
+	}
+
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
+	dependencies.Get(agentWorkflow, clusterInfo)
+
+	i.streamGetter = DefaultCoreOSStreamGetter
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		i.streamGetter = func(ctx context.Context) (*stream.Stream, error) {
+			return clusterInfo.OSImage, nil
+		}
+	}
+}
+
+func (i *BaseIso) getRelease(agentManifests *manifests.AgentManifests, registriesConf *mirror.RegistriesConf) Release {
+	if i.ocRelease != nil {
+		return i.ocRelease
+	}
+
+	releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
+	pullSecret := agentManifests.GetPullSecretData()
+
+	i.ocRelease = NewRelease(
+		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
+		releaseImage, pullSecret, registriesConf.MirrorConfig, i.streamGetter)
+
+	return i.ocRelease
+}
+
 func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 	// use the GetIso function to get the BaseIso from the release payload
 	agentManifests := &manifests.AgentManifests{}
-	dependencies.Get(agentManifests)
-	var baseIsoFileName string
-	var err error
+	registriesConf := &mirror.RegistriesConf{}
+	dependencies.Get(agentManifests, registriesConf)
 
 	// Default iso archName to x86_64.
 	archName := arch.RpmArch(types.ArchitectureAMD64)
@@ -186,18 +210,11 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 		if agentManifests.InfraEnv.Spec.CpuArchitecture != "" {
 			archName = agentManifests.InfraEnv.Spec.CpuArchitecture
 		}
-		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
-		pullSecret := agentManifests.GetPullSecretData()
-		registriesConf := &mirror.RegistriesConf{}
-		dependencies.Get(agentManifests, registriesConf)
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
-		ocRelease := NewRelease(
-			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
-			releaseImage, pullSecret, registriesConf.MirrorConfig)
-
+		ocRelease := i.getRelease(agentManifests, registriesConf)
 		logrus.Info("Extracting base ISO from release payload")
-		baseIsoFileName, err = ocRelease.GetBaseIso(archName)
+		baseIsoFileName, err := ocRelease.GetBaseIso(archName)
 		if err == nil {
 			i.checkReleasePayloadBaseISOVersion(ocRelease, archName)
 
@@ -216,8 +233,7 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 	}
 
 	logrus.Info("Downloading base ISO")
-	isoGetter := newGetIso(GetIsoPluggable)
-	return isoGetter.getter(archName)
+	return i.downloadIso(archName)
 }
 
 // Files returns the files generated by the asset.

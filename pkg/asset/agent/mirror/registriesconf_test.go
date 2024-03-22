@@ -11,6 +11,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
@@ -27,6 +29,8 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "missing-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{},
 				&releaseimage.Image{},
 			},
@@ -35,6 +39,8 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "default",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					AssetBase: installconfig.AssetBase{
@@ -54,6 +60,8 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "invalid-config-image-content-source-does-not-match-releaseImage",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					AssetBase: installconfig.AssetBase{
@@ -87,6 +95,8 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "valid-image-content-sources",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					AssetBase: installconfig.AssetBase{
@@ -137,6 +147,8 @@ func TestRegistriesConf_Generate(t *testing.T) {
 		{
 			name: "image-digest-sources",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{
 					Supplied: true,
 					AssetBase: installconfig.AssetBase{
@@ -164,6 +176,59 @@ func TestRegistriesConf_Generate(t *testing.T) {
 				&releaseimage.Image{
 					PullSpec: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
 				},
+			},
+			expectedConfig: `unqualified-search-registries = []
+
+[[registry]]
+  location = "registry.ci.openshift.org/ocp/release"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+
+[[registry]]
+  location = "quay.io/openshift-release-dev/ocp-v4.0-art-dev"
+  mirror-by-digest-only = true
+  prefix = ""
+
+  [[registry.mirror]]
+    location = "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+`,
+		},
+		{
+			name: "add-nodes command - missing-config",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: defaultRegistriesConf,
+		},
+		{
+			name: "add-nodes command - valid image sources",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release:4.11.0-0.ci-2022-05-16-202609",
+					ImageDigestSources: []types.ImageDigestSource{
+						{
+							Source: "registry.ci.openshift.org/ocp/release",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+						{
+							Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+							Mirrors: []string{
+								"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
+							},
+						},
+					},
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
 			},
 			expectedConfig: `unqualified-search-registries = []
 

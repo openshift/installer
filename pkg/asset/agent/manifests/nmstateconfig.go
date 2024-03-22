@@ -21,7 +21,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 	agenttype "github.com/openshift/installer/pkg/types/agent"
 )
@@ -63,6 +65,8 @@ func (*NMStateConfig) Name() string {
 // the asset.
 func (*NMStateConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&agentconfig.AgentHosts{},
 		&agent.OptionalInstallConfig{},
 	}
@@ -70,21 +74,36 @@ func (*NMStateConfig) Dependencies() []asset.Asset {
 
 // Generate generates the NMStateConfig manifest.
 func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
-
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	agentHosts := &agentconfig.AgentHosts{}
 	installConfig := &agent.OptionalInstallConfig{}
-	dependencies.Get(agentHosts, installConfig)
+	dependencies.Get(agentHosts, installConfig, agentWorkflow, clusterInfo)
 
 	staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 	nmStateConfigs := []*aiv1beta1.NMStateConfig{}
 	var data string
 	var isNetworkConfigAvailable bool
+	var clusterName, clusterNamespace string
 
 	if len(agentHosts.Hosts) == 0 {
 		return nil
 	}
-	if err := validateHostCount(installConfig.Config, agentHosts); err != nil {
-		return err
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		if err := validateHostCount(installConfig.Config, agentHosts); err != nil {
+			return err
+		}
+		clusterName = installConfig.ClusterName()
+		clusterNamespace = installConfig.ClusterNamespace()
+
+	case workflow.AgentWorkflowTypeAddNodes:
+		clusterName = clusterInfo.ClusterName
+		clusterNamespace = clusterInfo.Namespace
+
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
 	for i, host := range agentHosts.Hosts {
@@ -97,9 +116,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 					APIVersion: "agent-install.openshift.io/v1beta1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf(getNMStateConfigName(installConfig)+"-%d", i),
-					Namespace: getObjectMetaNamespace(installConfig),
-					Labels:    getNMStateConfigLabels(installConfig),
+					Name:      fmt.Sprintf("%s-%d", clusterName, i),
+					Namespace: clusterNamespace,
+					Labels:    getNMStateConfigLabels(clusterName),
 				},
 				Spec: aiv1beta1.NMStateConfigSpec{
 					NetConfig: aiv1beta1.NetConfig{

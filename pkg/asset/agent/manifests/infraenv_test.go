@@ -16,7 +16,10 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/types"
 )
 
 func TestInfraEnv_Generate(t *testing.T) {
@@ -30,6 +33,8 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "missing-config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{},
 				&agentconfig.AgentConfig{},
 			},
@@ -38,25 +43,27 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidOptionalInstallConfig(),
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      getInfraEnvName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Name:      getValidOptionalInstallConfig().ClusterName(),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
-						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 				},
 			},
@@ -64,26 +71,28 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "proxy valid configuration",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getProxyValidOptionalInstallConfig(),
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
-						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
+						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+						Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 					},
 				},
 			},
@@ -91,26 +100,28 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "Additional NTP sources",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getProxyValidOptionalInstallConfig(),
 				getValidAgentConfigWithAdditionalNTPSources(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
-					Proxy:            getProxy(getProxyValidOptionalInstallConfig()),
+					Proxy:            getProxy(getProxyValidOptionalInstallConfig().Config.Proxy),
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getProxyValidOptionalInstallConfig()),
+						Name: getPullSecretName(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
-						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig()),
+						MatchLabels: getNMStateConfigLabels(getProxyValidOptionalInstallConfig().ClusterName()),
 					},
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+						Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					AdditionalNTPSources: getValidAgentConfigWithAdditionalNTPSources().Config.AdditionalNTPSources,
 				},
@@ -119,27 +130,70 @@ func TestInfraEnv_Generate(t *testing.T) {
 		{
 			name: "AdditionalTrustBundle",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAdditionalTrustBundleValidOptionalInstallConfig(),
 				getValidAgentConfig(),
 			},
 			expectedConfig: &aiv1beta1.InfraEnv{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getProxyValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getProxyValidOptionalInstallConfig()),
+					Namespace: getProxyValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: aiv1beta1.InfraEnvSpec{
 					ClusterRef: &aiv1beta1.ClusterReference{
 						Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 					},
 					SSHAuthorizedKey: strings.Trim(testSSHKey, "|\n\t"),
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					NMStateConfigLabelSelector: metav1.LabelSelector{
-						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						MatchLabels: getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					AdditionalTrustBundle: getAdditionalTrustBundleValidOptionalInstallConfig().Config.AdditionalTrustBundle,
+				},
+			},
+		},
+		{
+			name: "add-nodes command",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					ClusterName:  "agent-cluster",
+					Namespace:    "agent-ns",
+					UserCaBundle: "user-ca-bundle",
+					Proxy: &types.Proxy{
+						HTTPProxy: "proxy",
+					},
+					Architecture: "arm64",
+				},
+				&agent.OptionalInstallConfig{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: &aiv1beta1.InfraEnv{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "agent-cluster",
+					Namespace: "agent-ns",
+				},
+				Spec: aiv1beta1.InfraEnvSpec{
+					ClusterRef: &aiv1beta1.ClusterReference{
+						Name:      "agent-cluster",
+						Namespace: "agent-ns",
+					},
+					SSHAuthorizedKey: "",
+					PullSecretRef: &corev1.LocalObjectReference{
+						Name: getPullSecretName("agent-cluster"),
+					},
+					NMStateConfigLabelSelector: metav1.LabelSelector{
+						MatchLabels: getNMStateConfigLabels("agent-cluster"),
+					},
+					Proxy: &aiv1beta1.Proxy{
+						HTTPProxy: "proxy",
+					},
+					AdditionalTrustBundle: "user-ca-bundle",
+					CpuArchitecture:       "aarch64",
 				},
 			},
 		},

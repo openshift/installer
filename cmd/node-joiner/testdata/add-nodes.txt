@@ -1,0 +1,134 @@
+# Verify that the add-nodes command generates correctly the ISO image
+
+exec node-joiner add-nodes --kubeconfig=$WORK/kubeconfig --log-level=debug --dir=$WORK
+exists $WORK/agent-addnodes.x86_64.iso
+
+-- nodes-config.yaml --
+hosts:
+    - hostname: extra-worker-0
+      interfaces:
+        - name: eth0
+          macAddress: 00:f4:3d:a0:0e:2b
+
+# The following files setup the minimum set of resources in the cluster 
+# requested by the node-joiner to succeed
+
+-- setup/0010_clusterversion.yaml --
+apiVersion: config.openshift.io/v1
+kind: ClusterVersion
+metadata:
+  name: version
+spec:
+  clusterID: c37c9544-4320-4380-9d8b-0753a4d9ea57
+status:
+  availableUpdates: null
+  observedGeneration: 2
+  versionHash: NC4xNi4wLWxvY2FsaG9zdAo=
+  desired:
+    image: registry.ci.openshift.org/origin/release:4.16
+    version: 4.16.0
+  history:
+  - completionTime: "2024-03-18T09:49:38Z"
+    image: registry.ci.openshift.org/origin/release:4.16
+    startedTime: "2024-03-18T09:11:55Z"
+    state: Completed
+    verified: false
+    version: 4.16.0
+
+-- setup/0010_clusterproxy.yaml --
+apiVersion: config.openshift.io/v1
+kind: Proxy
+metadata:
+  name: cluster
+spec:
+  trustedCA:
+    name: ""
+status: {}
+
+-- setup/0001_openshift-config-ns.yaml --
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-config
+
+-- setup/0020_pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret
+  namespace: openshift-config
+type: kubernetes.io/dockerconfigjson
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }
+
+-- setup/0020_master-0-node.yaml --
+apiVersion: v1
+kind: Node
+metadata:
+  name: master-0
+  labels:
+    node-role.kubernetes.io/master: ""
+status:
+  nodeInfo:
+    architecture: amd64
+
+-- setup/0020_cluster-config-v1-cm.yaml --
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-config-v1
+  namespace: kube-system
+data:
+  install-config: |
+    apiVersion: v1
+    metadata:
+        name: ostest
+    baseDomain: test.metalkube.org
+    platform:
+        node: {}
+    sshKey: my-sshKey
+
+-- setup/0001_openshift-machine-config-operator-ns.yaml --
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-machine-config-operator
+
+-- setup/0020_coreos-bootimages-cm.yaml --
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coreos-bootimages
+  namespace: openshift-machine-config-operator
+data:
+  stream: |
+      {
+        "stream": "stable",
+        "architectures": {
+          "x86_64": {
+            "artifacts": {
+              "metal": {
+                "release": "39.20231101.3.0",
+                "formats": {
+                  "iso": {
+                    "disk": {
+                      "location": "https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/39.20231101.3.0/x86_64/fedora-coreos-39.20231101.3.0-live.x86_64.iso",
+                      "sha256": "0b09997ca0170a2d8634b5942c9437a18b6d354b020c7e24aa9fe41f1458f33e"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+
+
