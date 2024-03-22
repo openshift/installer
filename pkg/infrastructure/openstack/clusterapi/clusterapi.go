@@ -35,10 +35,11 @@ var _ clusterapi.PreProvider = Provider{}
 // PreProvision tags the VIP ports and creates the security groups that are needed during CAPI provisioning.
 func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	var (
-		infraID        = in.InfraID
-		installConfig  = in.InstallConfig
-		rhcosImage     = string(*in.RhcosImage)
-		manifestsAsset = in.ManifestsAsset
+		infraID          = in.InfraID
+		installConfig    = in.InstallConfig
+		rhcosImage       = string(*in.RhcosImage)
+		manifestsAsset   = in.ManifestsAsset
+		machineManifests = in.MachineManifests
 	)
 
 	if err := preprovision.TagVIPPorts(ctx, installConfig, infraID); err != nil {
@@ -71,8 +72,18 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		}
 	}
 
-	if err := preprovision.ServerGroups(ctx, installConfig, infraID); err != nil {
-		return fmt.Errorf("failed to create server groups: %w", err)
+	{
+		openstackMachines := make([]capo.OpenStackMachine, len(machineManifests))
+		for i := range machineManifests {
+			if m, ok := machineManifests[i].(*capo.OpenStackMachine); ok {
+				openstackMachines[i] = *m
+			} else {
+				fmt.Println("not a CAPO Machine: " + machineManifests[i].GetName())
+			}
+		}
+		if err := preprovision.ServerGroups(ctx, installConfig, openstackMachines); err != nil {
+			return fmt.Errorf("failed to create server groups: %w", err)
+		}
 	}
 
 	return nil

@@ -5,70 +5,81 @@ import (
 	"fmt"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
+	"github.com/gophercloud/gophercloud/pagination"
+	"github.com/sirupsen/logrus"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	tfvars "github.com/openshift/installer/pkg/tfvars/openstack"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
-// ServerGroups uses installconfig information to pre-create server groups
-// referred to in Machines.
-func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig, infraID string) error {
+// ServerGroups creates server groups referenced by name in the Machine
+// manifests if they don't exist already. The newly created server groups have
+// the policy defined in the install-config's machine-pools.
+func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig, machineManifests []capo.OpenStackMachine) error {
+	logrus.Debugf("Creating the server groups")
 	computeClient, err := defaults.NewServiceClient("compute", defaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
 		return fmt.Errorf("failed to build an OpenStack client: %w", err)
 	}
 	computeClient.Microversion = "2.64"
 
-	var serverGroups map[string]openstack.ServerGroupPolicy
+	var masterMP, workerMP *openstack.MachinePool
 	{
-		var openstackWorkerMachinePool *openstack.MachinePool
-		{
-			if installConfig.Config.WorkerMachinePool() != nil && installConfig.Config.WorkerMachinePool().Platform.OpenStack != nil {
-				openstackWorkerMachinePool = installConfig.Config.WorkerMachinePool().Platform.OpenStack
-			} else {
-				openstackWorkerMachinePool = installConfig.Config.Platform.OpenStack.DefaultMachinePlatform
-			}
+		if mp := installConfig.Config.ControlPlane; mp != nil {
+			masterMP = mp.Platform.OpenStack
 		}
-
-		policy := openstack.SGPolicySoftAffinity
-		if p := openstackWorkerMachinePool.ServerGroupPolicy; p.IsSet() {
-			policy = p
-		}
-
-		serverGroups = make(map[string]openstack.ServerGroupPolicy, len(openstackWorkerMachinePool.Zones)+1)
-		for _, zone := range openstackWorkerMachinePool.Zones {
-			if zone == "" {
-				serverGroups["worker"] = policy
-			} else {
-				serverGroups["worker-"+zone] = policy
-			}
+		if mp := installConfig.Config.WorkerMachinePool(); mp != nil {
+			workerMP = mp.Platform.OpenStack
 		}
 	}
 
-	{
-		var openstackMasterMachinePool *openstack.MachinePool
-		if installConfig.Config.ControlPlane != nil && installConfig.Config.ControlPlane.Platform.OpenStack != nil {
-			openstackMasterMachinePool = installConfig.Config.ControlPlane.Platform.OpenStack
+	// serverGroups is the set of server groups to be created.
+	serverGroups := make(map[string]openstack.ServerGroupPolicy, len(machineManifests))
+	for _, machine := range machineManifests {
+		fmt.Println("DEBUG: machine", machine.GetName(), "roles:", machine.GetAnnotations())
+		var policy openstack.ServerGroupPolicy
+		if _, ok := machine.Labels["cluster.x-k8s.io/control-plane"]; ok {
+			policy = tfvars.GetServerGroupPolicy(masterMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		} else {
-			openstackMasterMachinePool = installConfig.Config.Platform.OpenStack.DefaultMachinePlatform
+			policy = tfvars.GetServerGroupPolicy(workerMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		}
 
-		policy := openstack.SGPolicySoftAffinity
-		if p := openstackMasterMachinePool.ServerGroupPolicy; p.IsSet() {
-			policy = p
+		if sgFilter := machine.Spec.ServerGroup; sgFilter != nil {
+			if name := sgFilter.Name; name != "" {
+				if visitedPolicy, ok := serverGroups[name]; ok {
+					if policy != visitedPolicy {
+						return fmt.Errorf("server group %q is referenced with different policies in the install-config machine-pools", name)
+					}
+				} else {
+					serverGroups[name] = policy
+				}
+			}
 		}
-
-		serverGroups["master"] = policy
 	}
 
-	for role, policy := range serverGroups {
-		name := infraID + "-" + role
-		_, err := servergroups.Create(computeClient, servergroups.CreateOpts{
+	// Remove existing server groups from serverGroups.
+	servergroups.List(computeClient, nil).EachPage(func(p pagination.Page) (bool, error) {
+		sgs, err := servergroups.ExtractServerGroups(p)
+		if err != nil {
+			return false, err
+		}
+
+		for i := range sgs {
+			delete(serverGroups, sgs[i].Name)
+		}
+		return true, nil
+	})
+
+	// Create the server groups referenced by name in the Machine manifests, that don't exist already.
+	for name, policy := range serverGroups {
+		logrus.Debugf("Creating server group %q with policy %q", name, policy)
+		if _, err := servergroups.Create(computeClient, servergroups.CreateOpts{
 			Name:   name,
 			Policy: string(policy),
-		}).Extract()
-		if err != nil {
+		}).Extract(); err != nil {
 			return fmt.Errorf("failed to create server group %q: %w", name, err)
 		}
 	}
