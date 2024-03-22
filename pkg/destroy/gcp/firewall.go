@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -11,7 +12,11 @@ import (
 )
 
 func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource, error) {
-	return o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
+	// The firewall rules that the destroyer is searching for here include a
+	// pattern before and after the cluster ID. Use a regular expression that allows
+	// wildcard values before and after the cluster ID.
+	filter := fmt.Sprintf("name eq .*%s.*", o.ClusterID)
+	return o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", filter, nil)
 }
 
 // listFirewallsWithFilter lists firewall rules in the project that satisfy the filter criteria.

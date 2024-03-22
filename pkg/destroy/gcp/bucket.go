@@ -52,7 +52,7 @@ func (o *ClusterUninstaller) listBucketsWithFilter(ctx context.Context, fields s
 }
 
 func (o *ClusterUninstaller) deleteBucket(ctx context.Context, item cloudResource) error {
-	o.Logger.Debugf("Deleting storate bucket %s", item.name)
+	o.Logger.Debugf("Deleting storage bucket %s", item.name)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	err := o.storageSvc.Buckets.Delete(item.name).Context(ctx).Do()

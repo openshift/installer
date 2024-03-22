@@ -36,7 +36,7 @@ func (o *ClusterUninstaller) listCloudControllerBackendServices(ctx context.Cont
 			}
 		}
 		return true
-	})
+	}, gcpRegionalResource)
 }
 
 // listCloudControllerTargetPools returns target pools created by the cloud controller or owned by the cloud controller.
@@ -114,7 +114,7 @@ func (o *ClusterUninstaller) discoverCloudControllerLoadBalancerResources(ctx co
 	o.insertPendingItems("firewall", found)
 
 	// Discover associated forwarding rules: loadBalancerName
-	found, err = o.listForwardingRulesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil)
+	found, err = o.listForwardingRulesWithFilter(ctx, "items(name),nextPageToken", loadBalancerNameFilter, nil, gcpRegionalResource)
 	if err != nil {
 		return err
 	}
