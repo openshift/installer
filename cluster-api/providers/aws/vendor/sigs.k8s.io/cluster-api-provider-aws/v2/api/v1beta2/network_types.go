@@ -349,6 +349,10 @@ type VPCSpec struct {
 	// +optional
 	// +kubebuilder:validation:Enum:=ip-name;resource-name
 	PrivateDNSHostnameTypeOnLaunch *string `json:"privateDnsHostnameTypeOnLaunch,omitempty"`
+
+	// PublicIpv4Pool defines the Public IPv4 Pool to be used for VPC resources created
+	// in public subnets.
+	PublicIpv4Pool *string `json:"publicIpv4Pool,omitempty"`
 }
 
 // String returns a string representation of the VPC.

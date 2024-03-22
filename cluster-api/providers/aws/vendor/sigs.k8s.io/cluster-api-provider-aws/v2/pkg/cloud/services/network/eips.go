@@ -45,30 +45,52 @@ func (s *Service) getOrAllocateAddresses(num int, role string) (eips []string, e
 		}
 	}
 
+	// Allocate address
+	fmt.Println(">>>>>>>>>>>>>>>")
+	fmt.Printf("\n len(eips) < num => len(%d) < %d\n", len(eips), num)
 	for len(eips) < num {
+		// Allocated from Amazon-provided
 		ip, err := s.allocateAddress(role)
 		if err != nil {
 			return nil, err
 		}
 		eips = append(eips, ip)
+		fmt.Printf("\n ip => %s => %v\n", ip, eips)
 	}
 
 	return eips, nil
 }
 
+func (s *Service) publicIpv4PoolHasFreeIPs(num int64) (bool, error) {
+
+	return true, nil
+}
+
 func (s *Service) allocateAddress(role string) (string, error) {
 	tagSpecifications := tags.BuildParamsToTagSpecification(ec2.ResourceTypeElasticIp, s.getEIPTagParams(role))
-	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), &ec2.AllocateAddressInput{
+	allocInput := &ec2.AllocateAddressInput{
 		Domain: aws.String("vpc"),
 		TagSpecifications: []*ec2.TagSpecification{
 			tagSpecifications,
 		},
-	})
+	}
+
+	if s.scope.VPC().PublicIpv4Pool != nil {
+		fmt.Printf("\n s.scope.VPC().PublicIpv4Pool => %v\n", s.scope.VPC().PublicIpv4Pool)
+		// TODO is there IPs available in the pool?
+		if ok, err := s.publicIpv4PoolHasFreeIPs(1); !ok || err != nil {
+			record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP for %q in Public IPv4 Pool %s", role, s.scope.VPC().PublicIpv4Pool)
+			return "", errors.New("failed to allocate Elastic IP from PublicIpv4 Pool")
+		}
+		allocInput.PublicIpv4Pool = s.scope.VPC().PublicIpv4Pool
+	}
+	fmt.Printf("\n allocInput.PublicIpv4Pool => %v\n", allocInput.PublicIpv4Pool)
+
+	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), allocInput)
 	if err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP for %q: %v", role, err)
 		return "", errors.Wrap(err, "failed to allocate Elastic IP")
 	}
-
 	return aws.StringValue(out.AllocationId), nil
 }
 

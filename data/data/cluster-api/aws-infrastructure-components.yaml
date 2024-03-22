@@ -2080,6 +2080,20 @@ spec:
                         description: PublicIpv4Pool defines the Public IPv4 Pool to
                           be used for VPC resources created in public subnets.
                         type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -4552,6 +4566,21 @@ spec:
                                 description: PublicIpv4Pool defines the Public IPv4
                                   Pool to be used for VPC resources created in public
                                   subnets.
+                                type: string
+                              publicIpv4PoolFallbackOrder:
+                                description: "QUESTION(mtulio): do we need this for
+                                  safe reasons? PublicIpv4PoolFallBackOrder defines
+                                  the fallbacl when the Public IPv4 Pool has been
+                                  exhausted, no more IPv4 address available in the
+                                  pool. \n When amazon-provided it tries to create
+                                  in the specified pool, and if it is exhausted or
+                                  failed, it will fallback to Amazon-provided IP address.
+                                  \n When 'none' it will not use any fallback strategy
+                                  and will fail to provision when the fallback is
+                                  trigeredin public subnets."
+                                enum:
+                                - amazon-provided
+                                - none
                                 type: string
                               tags:
                                 additionalProperties:
@@ -9194,6 +9223,20 @@ spec:
                         description: PublicIpv4Pool defines the Public IPv4 Pool to
                           be used for VPC resources created in public subnets.
                         type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -11036,6 +11079,20 @@ spec:
                       publicIpv4Pool:
                         description: PublicIpv4Pool defines the Public IPv4 Pool to
                           be used for VPC resources created in public subnets.
+                        type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
                         type: string
                       tags:
                         additionalProperties:
