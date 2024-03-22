@@ -14,6 +14,9 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	agentconfig "github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types/agent"
 )
@@ -27,8 +30,60 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		expectedError      string
 	}{
 		{
+			name: "add-nodes workflow",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{},
+				getAgentHostsNoHosts(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedConfig:     nil,
+			expectedError:      "",
+		},
+		{
+			name: "add-nodes workflow - agentHosts with some hosts without networkconfig",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+				},
+				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: true,
+			expectedConfig: []*aiv1beta1.NMStateConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ostest-0",
+						Namespace: "cluster0",
+						Labels:    getNMStateConfigLabels("ostest"),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2t0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte(rawNMStateConfigNoIP)),
+						},
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
 			name: "agentHosts does not contain networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsNoHosts(),
 				getValidOptionalInstallConfig(),
 			},
@@ -39,6 +94,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "agentHosts with some hosts without networkconfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -50,9 +107,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-0"),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -72,6 +129,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -83,9 +142,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-0"),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -109,9 +168,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-1"),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -131,9 +190,9 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-2"),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -153,6 +212,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "invalid networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getInValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},

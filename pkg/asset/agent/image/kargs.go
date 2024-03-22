@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 // Kargs is an Asset that generates the additional kernel args.
@@ -18,14 +19,21 @@ type Kargs struct {
 // Dependencies returns the assets on which the Kargs asset depends.
 func (a *Kargs) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
 		&manifests.AgentClusterInstall{},
 	}
 }
 
 // Generate generates the kernel args configurations for the agent ISO image and PXE assets.
 func (a *Kargs) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
 	agentClusterInstall := &manifests.AgentClusterInstall{}
-	dependencies.Get(agentClusterInstall)
+	dependencies.Get(agentClusterInstall, agentWorkflow)
+
+	// Not required for AddNodes workflow
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		return nil
+	}
 
 	// Add kernel args for external oci platform
 	if agentClusterInstall.GetExternalPlatformName() == string(models.PlatformTypeOci) {

@@ -25,7 +25,6 @@ import (
 
 	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 )
 
@@ -58,15 +57,17 @@ type release struct {
 	releaseImage string
 	pullSecret   string
 	mirrorConfig []mirror.RegistriesConfig
+	streamGetter CoreOSBuildFetcher
 }
 
 // NewRelease is used to set up the executor to run oc commands
-func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) Release {
+func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, streamGetter CoreOSBuildFetcher) Release {
 	return &release{
 		config:       config,
 		releaseImage: releaseImage,
 		pullSecret:   pullSecret,
 		mirrorConfig: mirrorConfig,
+		streamGetter: streamGetter,
 	}
 }
 
@@ -245,12 +246,12 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 }
 
 // Get hash from rhcos.json
-func getHashFromInstaller(architecture string) (bool, string) {
+func (r *release) getHashFromInstaller(architecture string) (bool, string) {
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
-	st, err := rhcos.FetchCoreOSBuild(ctx)
+	st, err := r.streamGetter(ctx)
 	if err != nil {
 		return false, ""
 	}
@@ -293,7 +294,7 @@ func (r *release) verifyCacheFile(image, file, architecture string) (bool, error
 	fileSha := h.Sum(nil)
 
 	// Check if the hash of cached file matches hash in rhcos.json
-	found, rhcosSha := getHashFromInstaller(architecture)
+	found, rhcosSha := r.getHashFromInstaller(architecture)
 	if found && matchingHash(fileSha, rhcosSha) {
 		logrus.Debug("Found matching hash in installer metadata")
 		return true, nil
