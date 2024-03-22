@@ -29,7 +29,7 @@ import (
 	_ "github.com/openshift/installer/pkg/destroy/vsphere"
 )
 
-func newDestroyCmd() *cobra.Command {
+func newDestroyCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "destroy",
 		Short: "Destroy part of an OpenShift cluster",
@@ -38,12 +38,12 @@ func newDestroyCmd() *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	cmd.AddCommand(newDestroyBootstrapCmd())
-	cmd.AddCommand(newDestroyClusterCmd())
+	cmd.AddCommand(newDestroyBootstrapCmd(ctx))
+	cmd.AddCommand(newDestroyClusterCmd(ctx))
 	return cmd
 }
 
-func newDestroyClusterCmd() *cobra.Command {
+func newDestroyClusterCmd(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
@@ -51,6 +51,8 @@ func newDestroyClusterCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
+
+			_, _ = handleInterrupt(ctx, exitOnInterrupt)
 
 			err := runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
@@ -115,7 +117,7 @@ func runDestroyCmd(directory string, reportQuota bool) error {
 	return nil
 }
 
-func newDestroyBootstrapCmd() *cobra.Command {
+func newDestroyBootstrapCmd(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap",
 		Short: "Destroy the bootstrap resources",

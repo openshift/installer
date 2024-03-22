@@ -13,7 +13,7 @@ import (
 	timer "github.com/openshift/installer/pkg/metrics/timer"
 )
 
-func newWaitForCmd() *cobra.Command {
+func newWaitForCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wait-for",
 		Short: "Wait for install-time events",

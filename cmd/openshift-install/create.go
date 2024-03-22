@@ -29,7 +29,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientwatch "k8s.io/client-go/tools/watch"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
@@ -47,6 +46,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
+	"github.com/openshift/installer/pkg/clusterapi"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
@@ -69,6 +69,7 @@ const (
 	exitCodeBootstrapFailed
 	exitCodeInstallFailed
 	exitCodeOperatorStabilityFailed
+	exitCodeInterrupt
 
 	// coStabilityThreshold is how long a cluster operator must have Progressing=False
 	// in order to be considered stable. Measured in seconds.
@@ -277,7 +278,7 @@ func newClientError(errorInfo error) *clusterCreateError {
 	}
 }
 
-func newCreateCmd() *cobra.Command {
+func newCreateCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create part of an OpenShift cluster",
@@ -288,14 +289,14 @@ func newCreateCmd() *cobra.Command {
 
 	for _, t := range targets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(ctx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 
 	return cmd
 }
 
-func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
+func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(ctx context.Context, directory string) error {
 		fetcher := assetstore.NewAssetsFetcher(directory)
 		return fetcher.FetchAndPersist(ctx, targets)
@@ -304,13 +305,9 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 	return func(cmd *cobra.Command, args []string) {
 		timer.StartTimer(timer.TotalTimeElapsed)
 
-		// Setup a context that is canceled when the user presses Ctrl+C,
-		// or SIGTERM and SIGINT are received, this allows for a clean shutdown.
-		ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
-		logrus.RegisterExitHandler(cancel)
+		ctx, _ := handleInterrupt(ctx, shutdownCAPISystem)
 
-		// Store the context so it can be used with the
-		// PostRun function.
+		// Store context to be used in PostRun.
 		cmd.SetContext(ctx)
 
 		cleanup := command.SetupFileHook(command.RootOpts.Dir)
@@ -939,4 +936,36 @@ func IsSingleNode() (bool, error) {
 		return *machinePool.Replicas == int64(1), nil
 	}
 	return false, nil
+}
+
+// handleInterrupt returns a new context which will be cancelled with a user interrupt.
+// shutdown is an optional shutdown function that will be executed before the context
+// is cancelled.
+func handleInterrupt(signalCtx context.Context, shutdown func()) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	logrus.RegisterExitHandler(cancel)
+
+	go func() {
+		<-signalCtx.Done()
+		logrus.Warn("Received interrupt signal")
+		if shutdown != nil {
+			shutdown()
+		}
+		cancel()
+	}()
+	return ctx, cancel
+}
+
+func shutdownCAPISystem() {
+	if sys := clusterapi.System(); sys.State() == clusterapi.SystemStateRunning {
+		sys.Teardown()
+	} else {
+		exitOnInterrupt()
+	}
+}
+
+// exitOnInterrupt can be used to exit the SIGINT trap if no
+// shutdown operations are needed upon interrupt.
+func exitOnInterrupt() {
+	logrus.Exit(exitCodeInterrupt)
 }

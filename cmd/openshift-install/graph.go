@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -20,7 +21,7 @@ var (
 	}
 )
 
-func newGraphCmd() *cobra.Command {
+func newGraphCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Outputs the internal dependency graph for installer",

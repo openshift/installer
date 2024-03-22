@@ -34,7 +34,7 @@ import (
 	_ "github.com/openshift/installer/pkg/gather/gcp"
 )
 
-func newGatherCmd() *cobra.Command {
+func newGatherCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gather",
 		Short: "Gather debugging data for a given installation failure",

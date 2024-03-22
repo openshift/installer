@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -17,7 +18,7 @@ var (
 	}
 )
 
-func newAnalyzeCmd() *cobra.Command {
+func newAnalyzeCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "analyze",
 		Short: "Analyze debugging data for a given installation failure",

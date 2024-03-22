@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -39,7 +40,7 @@ For examples of loading/evaluating the completions see:
       openshift-install completion zsh > "${fpath[1]}/_openshift-install"`
 )
 
-func newCompletionCmd() *cobra.Command {
+func newCompletionCmd(ctx context.Context) *cobra.Command {
 	completionCmd := &cobra.Command{
 		Use:   "completion",
 		Short: "Outputs shell completions for the openshift-install command",
