@@ -14,6 +14,12 @@ import (
 )
 
 func main() {
+	if err := nodeJoiner(); err != nil {
+		logrus.Fatal(err)
+	}
+}
+
+func nodeJoiner() error {
 	nodesAddCmd := &cobra.Command{
 		Use:   "add-nodes",
 		Short: "Generates an ISO that could be used to boot the configured nodes to let them join an existing cluster",
@@ -48,9 +54,7 @@ func main() {
 
 	rootCmd.AddCommand(nodesAddCmd)
 	rootCmd.AddCommand(nodesMonitorCmd)
-	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatal(err)
-	}
+	return rootCmd.Execute()
 }
 
 func runRootCmd(cmd *cobra.Command, args []string) {
