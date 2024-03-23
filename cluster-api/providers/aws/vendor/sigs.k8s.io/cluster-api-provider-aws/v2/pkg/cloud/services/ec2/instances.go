@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/network"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -238,6 +239,12 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PrivateDNSName = scope.AWSMachine.Spec.PrivateDNSName
 
+	isPublic := false
+	if scope.AWSMachine.Spec.PublicIP != nil && *scope.AWSMachine.Spec.PublicIP {
+		input.AssociatePublicIpAddress = scope.AWSMachine.Spec.PublicIP
+		isPublic = true
+	}
+
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -253,6 +260,19 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 	// Set the providerID and instanceID as soon as we create an instance so that we keep it in case of errors afterward
 	scope.SetProviderID(out.ID, out.AvailabilityZone)
 	scope.SetInstanceID(out.ID)
+
+	// Attaching EIPs to instance when BYO IP
+	// TODO(mtulio): evaluate if there are any better approach to BYOIP when creating instance, instead
+	// after/attaching.
+	// One Idea would be create an ENI and EIP, then inform the ENI to RunInstance parameters,
+	// this could be more complex as it will add a new resource to manage.
+	if isPublic && s.scope.VPC().PublicIpv4Pool != nil {
+		netsvc := network.NewService(s.scope)
+		err := netsvc.GetAndAssociateAddressesToInstance(1, fmt.Sprintf("ec2-%s", out.ID), out.ID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to allocate EIP from Custom Public IPv4 Pool: %v", s.scope.VPC().PublicIpv4Pool)
+		}
+	}
 
 	if len(input.NetworkInterfaces) > 0 {
 		for _, id := range input.NetworkInterfaces {
@@ -541,11 +561,18 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 		input.NetworkInterfaces = netInterfaces
 	} else {
-		input.SubnetId = aws.String(i.SubnetID)
-
-		if len(i.SecurityGroupIDs) > 0 {
-			input.SecurityGroupIds = aws.StringSlice(i.SecurityGroupIDs)
+		iface := &ec2.InstanceNetworkInterfaceSpecification{
+			DeviceIndex: aws.Int64(int64(0)),
+			SubnetId:    aws.String(i.SubnetID),
 		}
+		if i.AssociatePublicIpAddress != nil && *i.AssociatePublicIpAddress {
+			iface.AssociatePublicIpAddress = i.AssociatePublicIpAddress
+		}
+		if len(i.SecurityGroupIDs) > 0 {
+			iface.Groups = aws.StringSlice(i.SecurityGroupIDs)
+		}
+		input.NetworkInterfaces = append(input.NetworkInterfaces, iface)
+
 	}
 
 	if i.IAMProfile != "" {

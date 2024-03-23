@@ -32,6 +32,28 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
 )
 
+func (s *Service) GetAndAssociateAddressesToInstance(num int, role string, instance string) (err error) {
+	eips, err := s.getOrAllocateAddresses(num, role)
+	if err != nil {
+		record.Warnf(s.scope.InfraCluster(), "FailedAssociateEIP", "Failed to get Elastic IP for %q: %v", role, err)
+		return err
+	}
+	_, err = s.EC2Client.AssociateAddressWithContext(context.TODO(), &ec2.AssociateAddressInput{
+		InstanceId:   aws.String(instance),
+		AllocationId: aws.String(eips[0]),
+	})
+	if err != nil {
+		record.Warnf(s.scope.InfraCluster(), "FailedAssociateEIP", "Failed to allocate Elastic IP for %q: %v", role, err)
+		return errors.Wrapf(err, "failed to associate Elastic IP %s to instance %s", eips[0], instance)
+	}
+	return nil
+
+}
+
+func (s *Service) GetOrAllocateAddresses(num int, role string) (eips []string, err error) {
+	return s.getOrAllocateAddresses(num, role)
+}
+
 func (s *Service) getOrAllocateAddresses(num int, role string) (eips []string, err error) {
 	out, err := s.describeAddresses(role)
 	if err != nil {
@@ -39,36 +61,79 @@ func (s *Service) getOrAllocateAddresses(num int, role string) (eips []string, e
 		return nil, errors.Wrap(err, "failed to query addresses")
 	}
 
+	// Reuse existing unallocated addreses with the same role.
 	for _, address := range out.Addresses {
 		if address.AssociationId == nil {
 			eips = append(eips, aws.StringValue(address.AllocationId))
 		}
 	}
 
+	fmt.Printf("\n %s: len(eips) < num => len(%d) < %d\n", role, len(eips), num)
 	for len(eips) < num {
+		// Allocated from Amazon-provided
 		ip, err := s.allocateAddress(role)
 		if err != nil {
 			return nil, err
 		}
 		eips = append(eips, ip)
+		fmt.Printf("\n ip => %s => %v\n", ip, eips)
 	}
 
 	return eips, nil
 }
 
+func (s *Service) publicIpv4PoolHasFreeIPs(want int64) (bool, error) {
+	pools, err := s.EC2Client.DescribePublicIpv4Pools(&ec2.DescribePublicIpv4PoolsInput{
+		PoolIds: []*string{s.scope.VPC().PublicIpv4Pool},
+	})
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to describe elastic IPs %q", err)
+	}
+	if len(pools.PublicIpv4Pools) == 0 || len(pools.PublicIpv4Pools) > 1 {
+		return false, errors.Wrapf(err, "unexpected number of Public IPv4 Pools. Want 1, got %d", len(pools.PublicIpv4Pools))
+	}
+
+	if aws.Int64Value(pools.PublicIpv4Pools[0].TotalAvailableAddressCount) < want {
+		return false, nil
+	}
+	fmt.Printf("\n POOL Have %d IPs available\n", aws.Int64Value(pools.PublicIpv4Pools[0].TotalAvailableAddressCount))
+	s.scope.Debug("public IPv4 pool has %d IPs available", "eip", aws.Int64Value(pools.PublicIpv4Pools[0].TotalAvailableAddressCount))
+	return true, nil
+}
+
 func (s *Service) allocateAddress(role string) (string, error) {
 	tagSpecifications := tags.BuildParamsToTagSpecification(ec2.ResourceTypeElasticIp, s.getEIPTagParams(role))
-	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), &ec2.AllocateAddressInput{
+	allocInput := &ec2.AllocateAddressInput{
 		Domain: aws.String("vpc"),
 		TagSpecifications: []*ec2.TagSpecification{
 			tagSpecifications,
 		},
-	})
+	}
+
+	if s.scope.VPC().PublicIpv4Pool != nil {
+		fmt.Printf("\n s.scope.VPC().PublicIpv4Pool => %v", *s.scope.VPC().PublicIpv4Pool)
+		fmt.Printf("\n s.scope.VPC().PublicIpv4PoolFallBackOrder => %v\n", s.scope.VPC().PublicIpv4PoolFallBackOrder)
+		if s.scope.VPC().PublicIpv4PoolFallBackOrder != nil {
+			fmt.Printf("\n s.scope.VPC().PublicIpv4PoolFallBackOrder => %v\n", *s.scope.VPC().PublicIpv4PoolFallBackOrder)
+		}
+		ok, err := s.publicIpv4PoolHasFreeIPs(1)
+		if err != nil {
+			record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP for %q in Public IPv4 Pool %s", role, s.scope.VPC().PublicIpv4Pool)
+			return "", errors.New("failed to allocate Elastic IP from PublicIpv4 Pool")
+		}
+		if !ok && s.scope.VPC().PublicIpv4PoolFallBackOrder != nil && *s.scope.VPC().PublicIpv4PoolFallBackOrder == "none" {
+			record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIPFromBYOIP", "Failed to allocate Elastic IP for %q in Public IPv4 Pool %s and fallback isnt enabled//", role, s.scope.VPC().PublicIpv4Pool)
+			return "", fmt.Errorf("failed to allocate Elastic IP from PublicIpv4 Pool and use fallback with strategy %s", *s.scope.VPC().PublicIpv4PoolFallBackOrder)
+		}
+		allocInput.PublicIpv4Pool = s.scope.VPC().PublicIpv4Pool
+	}
+	fmt.Printf("\n allocInput.PublicIpv4Pool => %v\n", allocInput.PublicIpv4Pool)
+
+	out, err := s.EC2Client.AllocateAddressWithContext(context.TODO(), allocInput)
 	if err != nil {
 		record.Warnf(s.scope.InfraCluster(), "FailedAllocateEIP", "Failed to allocate Elastic IP for %q: %v", role, err)
 		return "", errors.Wrap(err, "failed to allocate Elastic IP")
 	}
-
 	return aws.StringValue(out.AllocationId), nil
 }
 

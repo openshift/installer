@@ -2076,6 +2076,24 @@ spec:
                         - ip-name
                         - resource-name
                         type: string
+                      publicIpv4Pool:
+                        description: PublicIpv4Pool defines the Public IPv4 Pool to
+                          be used for VPC resources created in public subnets.
+                        type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
+                        type: string
                       tags:
                         additionalProperties:
                           type: string
@@ -4543,6 +4561,26 @@ spec:
                                 enum:
                                 - ip-name
                                 - resource-name
+                                type: string
+                              publicIpv4Pool:
+                                description: PublicIpv4Pool defines the Public IPv4
+                                  Pool to be used for VPC resources created in public
+                                  subnets.
+                                type: string
+                              publicIpv4PoolFallbackOrder:
+                                description: "QUESTION(mtulio): do we need this for
+                                  safe reasons? PublicIpv4PoolFallBackOrder defines
+                                  the fallbacl when the Public IPv4 Pool has been
+                                  exhausted, no more IPv4 address available in the
+                                  pool. \n When amazon-provided it tries to create
+                                  in the specified pool, and if it is exhausted or
+                                  failed, it will fallback to Amazon-provided IP address.
+                                  \n When 'none' it will not use any fallback strategy
+                                  and will fail to provision when the fallback is
+                                  trigeredin public subnets."
+                                enum:
+                                - amazon-provided
+                                - none
                                 type: string
                               tags:
                                 additionalProperties:
@@ -7159,6 +7197,10 @@ spec:
                   public IP. Precedence for this setting is as follows: 1. This field
                   if set 2. Cluster/flavor setting 3. Subnet default'
                 type: boolean
+              publicIpv4Pool:
+                description: PublicIpv4Pool defines the Public IPv4 Pool to be used
+                  for VPC resources created in public subnets.
+                type: string
               rootVolume:
                 description: RootVolume encapsulates the configuration options for
                   the root volume
@@ -8246,6 +8288,10 @@ spec:
                           1. This field if set 2. Cluster/flavor setting 3. Subnet
                           default'
                         type: boolean
+                      publicIpv4Pool:
+                        description: PublicIpv4Pool defines the Public IPv4 Pool to
+                          be used for VPC resources created in public subnets.
+                        type: string
                       rootVolume:
                         description: RootVolume encapsulates the configuration options
                           for the root volume
@@ -9172,6 +9218,24 @@ spec:
                         enum:
                         - ip-name
                         - resource-name
+                        type: string
+                      publicIpv4Pool:
+                        description: PublicIpv4Pool defines the Public IPv4 Pool to
+                          be used for VPC resources created in public subnets.
+                        type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
                         type: string
                       tags:
                         additionalProperties:
@@ -11011,6 +11075,24 @@ spec:
                         enum:
                         - ip-name
                         - resource-name
+                        type: string
+                      publicIpv4Pool:
+                        description: PublicIpv4Pool defines the Public IPv4 Pool to
+                          be used for VPC resources created in public subnets.
+                        type: string
+                      publicIpv4PoolFallbackOrder:
+                        description: "QUESTION(mtulio): do we need this for safe reasons?
+                          PublicIpv4PoolFallBackOrder defines the fallbacl when the
+                          Public IPv4 Pool has been exhausted, no more IPv4 address
+                          available in the pool. \n When amazon-provided it tries
+                          to create in the specified pool, and if it is exhausted
+                          or failed, it will fallback to Amazon-provided IP address.
+                          \n When 'none' it will not use any fallback strategy and
+                          will fail to provision when the fallback is trigeredin public
+                          subnets."
+                        enum:
+                        - amazon-provided
+                        - none
                         type: string
                       tags:
                         additionalProperties:
@@ -14448,20 +14530,15 @@ spec:
                 description: AdditionalTags are user-defined tags to be added on the
                   AWS resources associated with the control plane.
                 type: object
-              autoscaling:
-                description: Autoscaling specifies auto scaling behaviour for the
-                  MachinePools.
-                properties:
-                  maxReplicas:
-                    minimum: 1
-                    type: integer
-                  minReplicas:
-                    minimum: 1
-                    type: integer
-                type: object
+              auditLogRoleARN:
+                description: AuditLogRoleARN defines the role that is used to forward
+                  audit logs to AWS CloudWatch. If not set, audit log forwarding is
+                  disabled.
+                type: string
               availabilityZones:
-                description: AWS AvailabilityZones of the worker nodes should match
-                  the AvailabilityZones of the Subnets.
+                description: AvailabilityZones describe AWS AvailabilityZones of the
+                  worker nodes. should match the AvailabilityZones of the provided
+                  Subnets. a machinepool will be created for each availabilityZone.
                 items:
                   type: string
                 type: array
@@ -14503,6 +14580,46 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              defaultMachinePoolSpec:
+                description: "DefaultMachinePoolSpec defines the configuration for
+                  the default machinepool(s) provisioned as part of the cluster creation.
+                  One MachinePool will be created with this configuration per AvailabilityZone.
+                  Those default machinepools are required for openshift cluster operators
+                  to work properly. As these machinepool not created using ROSAMachinePool
+                  CR, they will not be visible/managed by ROSA CAPI provider. `rosa
+                  list machinepools -c <rosaClusterName>` can be used to view those
+                  machinepools. \n This field will be removed in the future once the
+                  current limitation is resolved."
+                properties:
+                  autoscaling:
+                    description: Autoscaling specifies auto scaling behaviour for
+                      this MachinePool.
+                    properties:
+                      maxReplicas:
+                        minimum: 1
+                        type: integer
+                      minReplicas:
+                        minimum: 1
+                        type: integer
+                    type: object
+                  instanceType:
+                    description: The instance type to use, for example `r5.xlarge`.
+                      Instance type ref; https://aws.amazon.com/ec2/instance-types/
+                    type: string
+                type: object
+              domainPrefix:
+                description: DomainPrefix is an optional prefix added to the cluster's
+                  domain name. It will be used when generating a sub-domain for the
+                  cluster on openshiftapps domain. It must be valid DNS-1035 label
+                  consisting of lower case alphanumeric characters or '-', start with
+                  an alphabetic character end with an alphanumeric character and have
+                  a max length of 15 characters.
+                maxLength: 15
+                pattern: ^[a-z]([-a-z0-9]*[a-z0-9])?$
+                type: string
+                x-kubernetes-validations:
+                - message: domainPrefix is immutable
+                  rule: self == oldSelf
               endpointAccess:
                 default: Public
                 description: EndpointAccess specifies the publishing scope of cluster
@@ -14511,8 +14628,8 @@ spec:
                 - Public
                 - Private
                 type: string
-              etcdEncryptionKMSArn:
-                description: EtcdEncryptionKMSArn is the ARN of the KMS key used to
+              etcdEncryptionKMSARN:
+                description: EtcdEncryptionKMSARN is the ARN of the KMS key used to
                   encrypt etcd. The key itself needs to be created out-of-band by
                   the user and tagged with `red-hat:true`.
                 type: string
@@ -14537,12 +14654,8 @@ spec:
                 - name
                 type: object
               installerRoleARN:
-                description: 'TODO: these are to satisfy ocm sdk. Explore how to drop
-                  them.'
-                type: string
-              instanceType:
-                description: The instance type to use, for example `r5.xlarge`. Instance
-                  type ref; https://aws.amazon.com/ec2/instance-types/
+                description: InstallerRoleARN is an AWS IAM role that OpenShift Cluster
+                  Manager will assume to create the cluster..
                 type: string
               network:
                 description: Network config for the ROSA HCP cluster.
@@ -14578,6 +14691,13 @@ spec:
               oidcID:
                 description: The ID of the OpenID Connect Provider.
                 type: string
+              provisionShardID:
+                description: ProvisionShardID defines the shard where rosa control
+                  plane components will be hosted.
+                type: string
+                x-kubernetes-validations:
+                - message: provisionShardID is immutable
+                  rule: self == oldSelf
               region:
                 description: The AWS Region the cluster lives in.
                 type: string
@@ -14738,8 +14858,8 @@ spec:
                 description: Cluster name must be valid DNS-1035 label, so it must
                   consist of lower case alphanumeric characters or '-', start with
                   an alphabetic character, end with an alphanumeric character and
-                  have a max length of 15 characters.
-                maxLength: 15
+                  have a max length of 54 characters.
+                maxLength: 54
                 pattern: ^[a-z]([-a-z0-9]*[a-z0-9])?$
                 type: string
                 x-kubernetes-validations:
@@ -14753,11 +14873,15 @@ spec:
                   type: string
                 type: array
               supportRoleARN:
+                description: SupportRoleARN is an AWS IAM role used by Red Hat SREs
+                  to enable access to the cluster account in order to provide support.
                 type: string
               version:
                 description: OpenShift semantic version, for example "4.14.5".
                 type: string
               workerRoleARN:
+                description: WorkerRoleARN is an AWS IAM role that will be attached
+                  to worker instances.
                 type: string
             required:
             - availabilityZones
@@ -14922,6 +15046,12 @@ spec:
                 items:
                   type: string
                 type: array
+              additionalTags:
+                additionalProperties:
+                  type: string
+                description: AdditionalTags are user-defined tags to be added on the
+                  underlying EC2 instances associated with this machine pool.
+                type: object
               autoRepair:
                 default: false
                 description: AutoRepair specifies whether health checks should be
@@ -14951,6 +15081,15 @@ spec:
                   type: string
                 description: Labels specifies labels for the Kubernetes node objects
                 type: object
+              nodeDrainGracePeriod:
+                description: "NodeDrainGracePeriod is grace period for how long Pod
+                  Disruption Budget-protected workloads will be respected during upgrades.
+                  After this grace period, any workloads protected by Pod Disruption
+                  Budgets that have not been successfully drained from a node will
+                  be forcibly evicted. \n Valid values are from 0 to 1 week(10080m|168h)
+                  . 0 or empty value means that the MachinePool can be drained without
+                  any time limitation."
+                type: string
               nodePoolName:
                 description: NodePoolName specifies the name of the nodepool in Rosa
                   must be a valid DNS-1035 label, so it must consist of lower case
@@ -15701,7 +15840,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.4.0
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:latest
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

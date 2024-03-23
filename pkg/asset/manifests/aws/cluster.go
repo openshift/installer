@@ -255,6 +255,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 
+	if installConfig.Config.Platform.AWS.PublicIpv4Pool != "" {
+		awsCluster.Spec.NetworkSpec.VPC.PublicIpv4Pool = ptr.To(installConfig.Config.Platform.AWS.PublicIpv4Pool)
+		awsCluster.Spec.NetworkSpec.VPC.PublicIpv4PoolFallBackOrder = ptr.To("amazon-provided")
+	}
+	fmt.Printf("\n>>>>> %v => %v\n", installConfig.Config.Platform.AWS.PublicIpv4Pool, awsCluster.Spec.NetworkSpec.VPC.PublicIpv4Pool)
+
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: awsCluster,
 		File:   asset.File{Filename: "02_infra-cluster.yaml"},
