@@ -79,7 +79,7 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) 
 		_, err := service.Projects.ServiceAccounts.Get(sa.Name).Do()
 		if err == nil {
 			logrus.Debugf("Service account created for %s", accountID)
-			return accountID, nil
+			return sa.Email, nil
 		}
 		time.Sleep(retryTime)
 	}
@@ -89,40 +89,61 @@ func CreateServiceAccount(ctx context.Context, infraID, projectID, role string) 
 
 // AddServiceAccountRoles adds predefined roles for service account.
 func AddServiceAccountRoles(ctx context.Context, projectID, serviceAccountID string, roles []string) error {
-	policy, err := getProjectIAMPolicy(ctx, projectID)
+	// Get cloudresourcemanager service
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	ssn, err := gcp.GetSession(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+	service, err := resourcemanager.NewService(ctx, option.WithCredentials(ssn.Credentials))
+	if err != nil {
+		return fmt.Errorf("failed to create resourcemanager service: %w", err)
+	}
+
+	policy, err := getPolicy(ctx, service, projectID)
 	if err != nil {
 		return err
 	}
 
+	member := fmt.Sprintf("serviceAccount:%s", serviceAccountID)
 	for _, role := range roles {
-		err = addMemberToRole(policy, role, serviceAccountID)
+		err = addMemberToRole(policy, role, member)
 		if err != nil {
-			return fmt.Errorf("failed to add role %s to %s: %w", role, serviceAccountID, err)
+			return fmt.Errorf("failed to add role %s to %s: %w", role, member, err)
 		}
+	}
+
+	err = setPolicy(ctx, service, projectID, policy)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func getProjectIAMPolicy(ctx context.Context, projectID string) (*resourcemanager.Policy, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
-	defer cancel()
-	req := &resourcemanager.GetIamPolicyRequest{}
-
-	ssn, err := gcp.GetSession(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-	service, err := resourcemanager.NewService(ctx, option.WithCredentials(ssn.Credentials))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create resourcemanager service: %w", err)
-	}
-
-	policy, err := service.Projects.GetIamPolicy(projectID, req).Context(ctx).Do()
+// getPolicy gets the project's IAM policy.
+func getPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string) (*resourcemanager.Policy, error) {
+	request := &resourcemanager.GetIamPolicyRequest{}
+	policy, err := crmService.Projects.GetIamPolicy(projectID, request).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch project IAM policy: %w", err)
 	}
+
 	return policy, nil
+}
+
+// setPolicy sets the project's IAM policy.
+func setPolicy(ctx context.Context, crmService *resourcemanager.Service, projectID string, policy *resourcemanager.Policy) error {
+	request := &resourcemanager.SetIamPolicyRequest{}
+	request.Policy = policy
+	_, err := crmService.Projects.SetIamPolicy(projectID, request).Context(ctx).Do()
+	if err != nil {
+		return fmt.Errorf("failed to set project IAM policy: %w", err)
+	}
+
+	return nil
 }
 
 // addMemberToRole adds a member to a role binding.
