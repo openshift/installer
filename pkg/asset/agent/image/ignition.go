@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
@@ -135,8 +136,20 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if infraEnv.Spec.CpuArchitecture != "" {
 		archName = infraEnv.Spec.CpuArchitecture
 	}
-
-	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
+	// Examine the release payload to see if its multi
+	releaseArch, err := agentcommon.DetermineReleaseImageArch(agentManifests.GetPullSecretData(), agentManifests.ClusterImageSet.Spec.ReleaseImage)
+	if err != nil {
+		logrus.Warnf("Unable to validate the release image architecture, using infraEnv.Spec.CpuArchitecture for the release image arch")
+		releaseArch = archName
+	} else {
+		releaseArch = arch.RpmArch(releaseArch)
+		logrus.Debugf("Found Release Image Architecture: %s", releaseArch)
+	}
+	releaseArchs := []string{releaseArch}
+	if releaseArch == "multi" {
+		releaseArchs = []string{arch.RpmArch(types.ArchitectureARM64), arch.RpmArch(types.ArchitectureAMD64), arch.RpmArch(types.ArchitecturePPC64LE), arch.RpmArch(types.ArchitectureS390X)}
+	}
+	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, releaseArch, releaseArchs)
 	if err != nil {
 		return err
 	}

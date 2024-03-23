@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"github.com/sirupsen/logrus"
+
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -55,4 +57,26 @@ func IsSupportedPlatform(platform hiveext.PlatformType) bool {
 		}
 	}
 	return false
+}
+
+// DetermineReleaseImageArch returns the arch of the release image.
+func DetermineReleaseImageArch(pullSecret, pullSpec string) (string, error) {
+	templateFilter := "-o=go-template={{if and .metadata.metadata (index . \"metadata\" \"metadata\" \"release.openshift.io/architecture\")}}{{index . \"metadata\" \"metadata\" \"release.openshift.io/architecture\"}}{{else}}{{.config.architecture}}{{end}}"
+
+	var getReleaseArch = []string{
+		"oc",
+		"adm",
+		"release",
+		"info",
+		pullSpec,
+		templateFilter,
+	}
+
+	releaseArch, err := ExecuteOC(pullSecret, getReleaseArch)
+	if err != nil {
+		logrus.Errorf("Release Image arch could not be found: %s", err)
+		return "", err
+	}
+	logrus.Debugf("Release Image arch is: %s", releaseArch)
+	return releaseArch, nil
 }

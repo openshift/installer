@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	operatorv1alpha1 "github.com/openshift/api/operator/v1alpha1"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/rhcos/cache"
@@ -34,19 +35,19 @@ const (
 	coreOsFileName       = "/coreos/coreos-%s.iso"
 	coreOsSha256FileName = "/coreos/coreos-%s.iso.sha256"
 	coreOsStreamFileName = "/coreos/coreos-stream.json"
-	//OcDefaultTries is the number of times to execute the oc command on failues
+	// OcDefaultTries is the number of times to execute the oc command on failures.
 	OcDefaultTries = 5
-	// OcDefaultRetryDelay is the time between retries
+	// OcDefaultRetryDelay is the time between retries.
 	OcDefaultRetryDelay = time.Second * 5
 )
 
-// Config is used to set up the retries for extracting the base ISO
+// Config is used to set up the retries for extracting the base ISO.
 type Config struct {
 	MaxTries   uint
 	RetryDelay time.Duration
 }
 
-// Release is the interface to use the oc command to the get image info
+// Release is the interface to use the oc command to the get image info.
 type Release interface {
 	GetBaseIso(architecture string) (string, error)
 	GetBaseIsoVersion(architecture string) (string, error)
@@ -60,7 +61,7 @@ type release struct {
 	mirrorConfig []mirror.RegistriesConfig
 }
 
-// NewRelease is used to set up the executor to run oc commands
+// NewRelease is used to set up the executor to run oc commands.
 func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) Release {
 	return &release{
 		config:       config,
@@ -69,13 +70,6 @@ func NewRelease(config Config, releaseImage string, pullSecret string, mirrorCon
 		mirrorConfig: mirrorConfig,
 	}
 }
-
-const (
-	templateGetImage             = "oc adm release info --image-for=%s --filter-by-os=linux/%s --insecure=%t %s"
-	templateGetImageWithIcsp     = "oc adm release info --image-for=%s --filter-by-os=linux/%s --insecure=%t --icsp-file=%s %s"
-	templateImageExtract         = "oc image extract --path %s:%s --filter-by-os=linux/%s --confirm %s"
-	templateImageExtractWithIcsp = "oc image extract --path %s:%s --filter-by-os=linux/%s --confirm --icsp-file=%s %s"
-)
 
 // ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
 func (r *release) ExtractFile(image string, filename string, architecture string) ([]string, error) {
@@ -171,7 +165,6 @@ func (r *release) GetBaseIsoVersion(architecture string) (string, error) {
 func (r *release) getImageFromRelease(imageName string, architecture string) (string, error) {
 	// This requires the 'oc' command so make sure its available
 	_, err := exec.LookPath("oc")
-	var cmd string
 	if err != nil {
 		if len(r.mirrorConfig) > 0 {
 			logrus.Warning("Unable to validate mirror config because \"oc\" command is not available")
@@ -182,7 +175,19 @@ func (r *release) getImageFromRelease(imageName string, architecture string) (st
 	}
 
 	archName := arch.GoArch(architecture)
+	imagefor := "--image-for=" + imageName
+	filterbyos := "--filter-by-os=linux/" + archName
+	insecure := "--insecure=true"
 
+	var cmd = []string{
+		"oc",
+		"adm",
+		"release",
+		"info",
+		imagefor,
+		filterbyos,
+		insecure,
+	}
 	if len(r.mirrorConfig) > 0 {
 		logrus.Debugf("Using mirror configuration")
 		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
@@ -190,13 +195,12 @@ func (r *release) getImageFromRelease(imageName string, architecture string) (st
 			return "", err
 		}
 		defer removeIcspFile(icspFile)
-		cmd = fmt.Sprintf(templateGetImageWithIcsp, imageName, archName, true, icspFile, r.releaseImage)
-	} else {
-		cmd = fmt.Sprintf(templateGetImage, imageName, archName, true, r.releaseImage)
+		icspfile := "--icsp-file=" + icspFile
+		cmd = append(cmd, icspfile)
 	}
-
+	cmd = append(cmd, r.releaseImage)
 	logrus.Debugf("Fetching image from OCP release (%s)", cmd)
-	image, err := execute(r.pullSecret, cmd)
+	image, err := agent.ExecuteOC(r.pullSecret, cmd)
 	if err != nil {
 		if strings.Contains(err.Error(), "unknown flag: --icsp-file") {
 			logrus.Warning("Using older version of \"oc\" that does not support mirroring")
@@ -208,26 +212,36 @@ func (r *release) getImageFromRelease(imageName string, architecture string) (st
 }
 
 func (r *release) extractFileFromImage(image, file, cacheDir string, architecture string) ([]string, error) {
-	var cmd string
 	archName := arch.GoArch(architecture)
+	extractpath := "--path=" + file + ":" + cacheDir
+	filterbyos := "--filter-by-os=linux/" + archName
+
+	var cmd = []string{
+		"oc",
+		"image",
+		"extract",
+		extractpath,
+		filterbyos,
+		"--confirm",
+	}
+
 	if len(r.mirrorConfig) > 0 {
 		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
 		if err != nil {
 			return nil, err
 		}
 		defer removeIcspFile(icspFile)
-		cmd = fmt.Sprintf(templateImageExtractWithIcsp, file, cacheDir, archName, icspFile, image)
-	} else {
-		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, archName, image)
+		icspfile := "--icsp-file=" + icspFile
+		cmd = append(cmd, icspfile)
 	}
 	path := filepath.Join(cacheDir, path.Base(file))
 	// Remove file if it exists
 	if err := removeCacheFile(path); err != nil {
 		return nil, err
 	}
-
+	cmd = append(cmd, image)
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
-	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.pullSecret, cmd)
+	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, agent.ExecuteOC, r.pullSecret, cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +258,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 	return matches, nil
 }
 
-// Get hash from rhcos.json
+// Get hash from rhcos.json.
 func getHashFromInstaller(architecture string) (bool, string) {
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -277,7 +291,7 @@ func matchingHash(imageSha []byte, sha string) bool {
 	return false
 }
 
-// Check if there is a different base ISO in the release payload
+// Check if there is a different base ISO in the release payload.
 func (r *release) verifyCacheFile(image, file, architecture string) (bool, error) {
 	// Get hash of cached file
 	f, err := os.Open(file)
@@ -343,44 +357,7 @@ func removeCacheFile(path string) error {
 	return nil
 }
 
-func execute(pullSecret, command string) (string, error) {
-	ps, err := os.CreateTemp("", "registry-config")
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		ps.Close()
-		os.Remove(ps.Name())
-	}()
-	_, err = ps.Write([]byte(pullSecret))
-	if err != nil {
-		return "", err
-	}
-	// flush the buffer to ensure the file can be read
-	ps.Close()
-	executeCommand := command[:] + " --registry-config=" + ps.Name()
-	args := strings.Split(executeCommand, " ")
-
-	var stdoutBytes, stderrBytes bytes.Buffer
-	cmd := exec.Command(args[0], args[1:]...) //nolint:gosec
-	cmd.Stdout = &stdoutBytes
-	cmd.Stderr = &stderrBytes
-
-	err = cmd.Run()
-	if err == nil {
-		return strings.TrimSpace(stdoutBytes.String()), nil
-	}
-
-	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) {
-		err = fmt.Errorf("command '%s' exited with non-zero exit code %d: %s\n%s", executeCommand, exitErr.ExitCode(), stdoutBytes.String(), stderrBytes.String())
-	} else {
-		err = fmt.Errorf("command '%s' failed: %w", executeCommand, err)
-	}
-	return "", err
-}
-
-// Create a temporary file containing the ImageContentPolicySources
+// Create a temporary file containing the ImageContentPolicySources.
 func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (string, error) {
 	contents, err := getIcspContents(mirrorConfig)
 	if err != nil {
@@ -406,7 +383,7 @@ func getIcspFileFromRegistriesConfig(mirrorConfig []mirror.RegistriesConfig) (st
 	return icspFile.Name(), nil
 }
 
-// Convert the data in registries.conf into ICSP format
+// Convert the data in registries.conf into ICSP format.
 func getIcspContents(mirrorConfig []mirror.RegistriesConfig) ([]byte, error) {
 	icsp := operatorv1alpha1.ImageContentSourcePolicy{
 		TypeMeta: metav1.TypeMeta{

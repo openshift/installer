@@ -65,7 +65,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	haveMirrorConfig := true
 	publicContainerRegistries := "quay.io,registry.ci.openshift.org"
 
-	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
+	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64", []string{"86_64"})
 	assert.NoError(t, err)
 
 	arch := "x86_64"
