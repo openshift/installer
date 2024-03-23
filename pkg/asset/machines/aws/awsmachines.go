@@ -85,6 +85,10 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					Encrypted:     ptr.To(true),
 					EncryptionKey: mpool.KMSKeyARN,
 				},
+				InstanceMetadataOptions: &capa.InstanceMetadataOptions{
+					HTTPTokens:   capa.HTTPTokensState(mpool.EC2Metadata.Authentication),
+					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
+				},
 			},
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
