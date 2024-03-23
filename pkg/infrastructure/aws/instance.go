@@ -36,6 +36,7 @@ type instanceInputOptions struct {
 	instanceProfileARN string
 	volumeType         string
 	metadataAuth       string
+	partitionDNSSuffix string
 	volumeSize         int64
 	volumeIOPS         int64
 	isEncrypted        bool

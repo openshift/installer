@@ -26,7 +26,7 @@ type controlPlaneOutput struct {
 
 func createControlPlaneResources(ctx context.Context, logger logrus.FieldLogger, ec2Client ec2iface.EC2API, iamClient iamiface.IAMAPI, elbClient elbv2iface.ELBV2API, input *controlPlaneInputOptions) (*controlPlaneOutput, error) {
 	profileName := fmt.Sprintf("%s-master", input.infraID)
-	instanceProfile, err := createControlPlaneInstanceProfile(ctx, logger, iamClient, profileName, input.iamRole, input.tags)
+	instanceProfile, err := createControlPlaneInstanceProfile(ctx, logger, iamClient, profileName, input.iamRole, input.partitionDNSSuffix, input.tags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create control plane instance profile: %w", err)
 	}
@@ -51,22 +51,22 @@ func createControlPlaneResources(ctx context.Context, logger logrus.FieldLogger,
 	return &controlPlaneOutput{controlPlaneIPs: instanceIPs}, nil
 }
 
-func createControlPlaneInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, roleName string, tags map[string]string) (*iam.InstanceProfile, error) {
-	const (
-		assumeRolePolicy = `{
+func createControlPlaneInstanceProfile(ctx context.Context, logger logrus.FieldLogger, client iamiface.IAMAPI, name string, roleName string, partitionDNSSuffix string, tags map[string]string) (*iam.InstanceProfile, error) {
+	assumeRolePolicy := fmt.Sprintf(`{
     "Version": "2012-10-17",
     "Statement": [
         {
             "Action": "sts:AssumeRole",
             "Principal": {
-                "Service": "ec2.amazonaws.com"
+                "Service": "ec2.%s"
             },
             "Effect": "Allow",
             "Sid": ""
         }
     ]
-}`
-		policy = `{
+}`, partitionDNSSuffix)
+
+	const policy = `{
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -115,7 +115,6 @@ func createControlPlaneInstanceProfile(ctx context.Context, logger logrus.FieldL
     }
   ]
 }`
-	)
 
 	profileInput := &instanceProfileOptions{
 		namePrefix:       name,
