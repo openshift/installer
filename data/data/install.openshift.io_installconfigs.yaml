@@ -2280,6 +2280,14 @@ spec:
                       \n If this field is not set explicitly, it defaults to \"Classic\".
                       \ This default is subject to change over time."
                     type: string
+                  networkLoadBalancer:
+                    description: networkLoadBalancerParameters holds configuration
+                      parameters for an AWS network load balancer. Present only if
+                      type is NLB.
+                    properties:
+                      eip-allocations:
+                        type: string
+                    type: object
                   preserveBootstrapIgnition:
                     description: PreserveBootstrapIgnition is an optional field that
                       can be used to make the S3 deletion optional during bootstrap
