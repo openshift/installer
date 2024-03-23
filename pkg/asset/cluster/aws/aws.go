@@ -20,11 +20,11 @@ import (
 func Metadata(clusterID, infraID string, config *types.InstallConfig) *awstypes.Metadata {
 	return &awstypes.Metadata{
 		Region: config.Platform.AWS.Region,
-		Identifier: []map[string]string{{
-			fmt.Sprintf("kubernetes.io/cluster/%s", infraID): "owned",
-		}, {
-			"openshiftClusterID": clusterID,
-		}},
+		Identifier: []map[string]string{
+			{fmt.Sprintf("kubernetes.io/cluster/%s", infraID): "owned"},
+			{"openshiftClusterID": clusterID},
+			{fmt.Sprintf("sigs.k8s.io/cluster-api-provider-aws/cluster/%s", infraID): "owned"},
+		},
 		ServiceEndpoints: config.AWS.ServiceEndpoints,
 		ClusterDomain:    config.ClusterDomain(),
 		HostedZoneRole:   config.AWS.HostedZoneRole,
