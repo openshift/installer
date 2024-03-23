@@ -1,6 +1,6 @@
 apiVersion: apiextensions.k8s.io/v1 # Hack because controller-gen complains if we don't have this
 name: "[Custom] ControllerConfig"
-crd: 0000_80_controllerconfig-CustomNoUpgrade.crd.yaml
+crd: 0000_80_machine-config_01_controllerconfigs-CustomNoUpgrade.crd.yaml
 tests:
   onCreate:
   - name: Should be able to create a ControllerConfig for vSphere with external load balancer

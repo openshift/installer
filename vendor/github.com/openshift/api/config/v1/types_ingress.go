@@ -13,6 +13,11 @@ import (
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=ingresses,scope=Cluster
+// +kubebuilder:subresource:status
 type Ingress struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -146,7 +151,21 @@ type AWSIngressSpec struct {
 	// +kubebuilder:validation:Enum:=NLB;Classic
 	// +kubebuilder:validation:Required
 	Type AWSLBType `json:"type,omitempty"`
+
+	// networkLoadBalancerParameters holds configuration parameters for an AWS
+	// network load balancer. Present only if type is NLB.
+	//
+	// +optional
+	NetworkLoadBalancerParameters *AWSNetworkLoadBalancerParameters `json:"networkLoadBalancer,omitempty"`
 }
+
+// AWSNetworkLoadBalancerParameters holds configuration parameters for an
+// AWS Network load balancer.
+type AWSNetworkLoadBalancerParameters struct {
+	EIPAllocations EIPAllocations `json:"eip-allocations,omitempty"`
+}
+
+type EIPAllocations string
 
 type AWSLBType string
 
