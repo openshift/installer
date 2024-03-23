@@ -8,8 +8,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/infrastructure"
-	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws"
 	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
+	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws/sdk"
 	azureinfra "github.com/openshift/installer/pkg/infrastructure/azure"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
