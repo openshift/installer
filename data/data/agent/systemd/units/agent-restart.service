@@ -1,0 +1,16 @@
+[Service]
+Type=simple
+Restart=always
+RestartSec=3
+StartLimitInterval=0
+TimeoutStartSec=3000
+EnvironmentFile=/etc/assisted/rendezvous-host.env
+ExecStart=/usr/local/bin/restart-agent.sh
+
+[Unit]
+Description=Assisted Installer Agent Restart Check
+Wants=agent.service
+After=agent.service
+
+[Install]
+WantedBy=multi-user.target

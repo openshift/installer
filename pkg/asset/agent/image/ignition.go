@@ -267,6 +267,7 @@ func getDefaultEnabledServices() []string {
 		"agent-register-infraenv.service",
 		"agent-register-cluster.service",
 		"agent.service",
+		"agent-restart.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
 		"assisted-service.service",
