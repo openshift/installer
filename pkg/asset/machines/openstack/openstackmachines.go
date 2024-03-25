@@ -18,7 +18,7 @@ import (
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role string) ([]*asset.RuntimeFile, error) {
+func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role string, trunkSupport bool) ([]*asset.RuntimeFile, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -27,10 +27,6 @@ func GenerateMachines(clusterID string, config *types.InstallConfig, pool *types
 	}
 
 	mpool := pool.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(config.Platform.OpenStack.Cloud, "trunk", nil)
-	if err != nil {
-		return nil, err
-	}
 
 	total := int64(1)
 	if role == "master" && pool.Replicas != nil {

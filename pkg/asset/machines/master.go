@@ -310,9 +310,16 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 		imageName, _ := rhcosutils.GenerateOpenStackImageName(string(*rhcosImage), clusterID.InfraID)
 
-		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName)
+		trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
+			ic.Platform.OpenStack.Cloud,
+			"trunk",
+		)
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return fmt.Errorf("failed to check for trunk support: %w", err)
+		}
+		machines, controlPlaneMachineSet, err = openstack.Machines(clusterID.InfraID, ic, &pool, imageName, "master", masterUserDataSecretName, trunkSupport)
+		if err != nil {
+			return fmt.Errorf("failed to create master machine objects: %w", err)
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case azuretypes.Name:

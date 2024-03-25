@@ -4,7 +4,6 @@ package openstack
 import (
 	"fmt"
 
-	"github.com/gophercloud/utils/openstack/clientconfig"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -24,19 +23,14 @@ const maxInt32 int64 = int64(^uint32(0)) >> 1
 // availability zones, Storage availability zones and Root volume types), when
 // more than one is specified, values of identical index are grouped in the
 // same MachineSet.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, clientOpts *clientconfig.ClientOpts) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, trunkSupport bool) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
-	platform := config.Platform.OpenStack
 	mpool := pool.Platform.OpenStack
-	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk", clientOpts)
-	if err != nil {
-		return nil, err
-	}
 
 	failureDomains := failureDomainsFromSpec(*mpool)
 	numberOfFailureDomains := int64(len(failureDomains))
@@ -60,7 +54,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 		providerSpec, err := generateProviderSpec(
 			clusterID,
-			platform,
+			config.Platform.OpenStack,
 			mpool,
 			osImage,
 			role,
