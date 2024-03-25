@@ -1,6 +1,12 @@
 package types
 
-import configv1 "github.com/openshift/api/config/v1"
+import (
+	"os"
+
+	"github.com/sirupsen/logrus"
+
+	configv1 "github.com/openshift/api/config/v1"
+)
 
 // StringsToIPs is used to convert list of strings to list of IP addresses.
 func StringsToIPs(ips []string) []configv1.IP {
@@ -31,4 +37,16 @@ func MachineNetworksToCIDRs(nets []MachineNetworkEntry) []configv1.CIDR {
 	}
 
 	return res
+}
+
+// GetClusterProfileName utility method to retrieve the cluster profile setting.
+func GetClusterProfileName() configv1.ClusterProfileName {
+	// Get cluster profile for new FeatureGate access.  Blank is no longer an option, so default to
+	// SelfManaged.
+	clusterProfile := configv1.SelfManaged
+	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
+		logrus.Warnf("Found override for Cluster Profile: %q", cp)
+		clusterProfile = configv1.ClusterProfileName(cp)
+	}
+	return clusterProfile
 }

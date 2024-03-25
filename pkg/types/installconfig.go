@@ -547,7 +547,7 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, c.FeatureSet, customFS)
+	fg := featuregates.FeatureGateFromFeatureSets(configv1.AllFeatureSets()[GetClusterProfileName()], c.FeatureSet, customFS)
 
 	return fg
 }
