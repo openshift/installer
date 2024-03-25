@@ -83,6 +83,11 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	err = a.appendKargs(agentArtifacts.Kargs)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
