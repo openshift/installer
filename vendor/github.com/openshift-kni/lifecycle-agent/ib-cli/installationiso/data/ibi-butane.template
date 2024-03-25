@@ -1,0 +1,46 @@
+variant: fcos
+version: 1.5.0
+{{if .SshPublicKey}}
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - {{.SshPublicKey}}
+{{end}}
+storage:
+  files:
+    - path: {{.AuthFilePath}}
+      mode: 0400
+      overwrite: true
+      contents:
+        local: {{.BackupSecret}}
+    - path: {{.PullSecretPath}}
+      mode: 0400
+      overwrite: true
+      contents:
+        local: {{.PullSecret}}
+    - path: {{.IBIConfigurationPath}}
+      mode: 0400
+      overwrite: true
+      contents:
+        local: {{.IBIConfiguration}}
+    - path: /usr/local/bin/install-rhcos-and-restore-seed.sh
+      mode: 0755
+      overwrite: true
+      contents:
+        local: {{.InstallSeedScript}}
+systemd:
+  units:
+    - name: install-rhcos-and-restore-seed.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=SNO Image Based Installation
+        [Service]
+        Environment=SEED_IMAGE={{.SeedImage}}
+        Environment=IBI_CONFIGURATION_FILE={{.IBIConfigurationPath}}
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/local/bin/install-rhcos-and-restore-seed.sh
+        [Install]
+        WantedBy=multi-user.target

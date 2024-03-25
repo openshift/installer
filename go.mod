@@ -65,6 +65,7 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.3.3-0.20240416171357-98239ba02cb2
 	github.com/nutanix-cloud-native/prism-go-client v0.3.4
 	github.com/onsi/gomega v1.33.0
+	github.com/openshift-kni/lifecycle-agent v0.0.0-20240513085322-3592ad014a92
 	github.com/openshift/api v0.0.0-20240514123321-944467d2cc3b
 	github.com/openshift/assisted-image-service v0.0.0-20240506123319-82517255ca17
 	github.com/openshift/assisted-service/api v0.0.0
@@ -96,11 +97,11 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.34.2
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.23.0
 	golang.org/x/oauth2 v0.19.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.19.0
-	golang.org/x/term v0.19.0
+	golang.org/x/sys v0.20.0
+	golang.org/x/term v0.20.0
 	google.golang.org/api v0.176.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240314234333-6e1732d8331c
 	google.golang.org/grpc v1.63.2
@@ -109,7 +110,7 @@ require (
 	k8s.io/api v0.29.3
 	k8s.io/apiextensions-apiserver v0.29.3
 	k8s.io/apimachinery v0.29.3
-	k8s.io/client-go v0.29.3
+	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
@@ -239,6 +240,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
 	github.com/openshift/machine-api-operator v0.2.1-0.20230929171041-2cc7fcf262f3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/otiai10/copy v1.14.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -247,6 +249,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/samber/lo v1.39.0 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
@@ -260,12 +263,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
+	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -319,3 +323,5 @@ replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 replace google.golang.org/api => google.golang.org/api v0.157.0
 
 replace sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0
+
+replace k8s.io/client-go => k8s.io/client-go v0.29.3
