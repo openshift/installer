@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	mapov1alpha1 "github.com/openshift/api/machine/v1alpha1"
+	mapov1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
@@ -73,15 +75,22 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	}
 
 	{
-		openstackMachines := make([]capo.OpenStackMachine, len(machineManifests))
+		capiMachines := make([]capo.OpenStackMachine, 0, len(machineManifests))
+		mapoWorkerProviderSpecs := make([]mapov1alpha1.OpenstackProviderSpec, 0, len(machineManifests))
 		for i := range machineManifests {
 			if m, ok := machineManifests[i].(*capo.OpenStackMachine); ok {
-				openstackMachines[i] = *m
-			} else {
-				fmt.Println("not a CAPO Machine: " + machineManifests[i].GetName())
+				fmt.Println("MYDEBUG: CAPO Machine: " + machineManifests[i].GetName())
+				capiMachines = append(capiMachines, *m)
+			} else if ms, ok := machineManifests[i].(*mapov1beta1.MachineSet); ok {
+				if m, ok := ms.Spec.Template.Spec.ProviderSpec.Value.Object.(*mapov1alpha1.OpenstackProviderSpec); ok {
+					fmt.Println("MYDEBUG: MAPO MachineSet with OSP spec: " + ms.GetName())
+					mapoWorkerProviderSpecs = append(mapoWorkerProviderSpecs, *m)
+				} else {
+					fmt.Println("MYDEBUG: MAPO MachineSet with the wrong spec: " + ms.GetName())
+				}
 			}
 		}
-		if err := preprovision.ServerGroups(ctx, installConfig, openstackMachines); err != nil {
+		if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, mapoWorkerProviderSpecs); err != nil {
 			return fmt.Errorf("failed to create server groups: %w", err)
 		}
 	}

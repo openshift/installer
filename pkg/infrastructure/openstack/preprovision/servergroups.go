@@ -6,6 +6,7 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/servergroups"
 	"github.com/gophercloud/gophercloud/pagination"
+	mapov1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/sirupsen/logrus"
 	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 
@@ -18,7 +19,7 @@ import (
 // ServerGroups creates server groups referenced by name in the Machine
 // manifests if they don't exist already. The newly created server groups have
 // the policy defined in the install-config's machine-pools.
-func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig, machineManifests []capo.OpenStackMachine) error {
+func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig, capiMachines []capo.OpenStackMachine, mapoWorkerProviderSpecs []mapov1alpha1.OpenstackProviderSpec) error {
 	logrus.Debugf("Creating the server groups")
 	computeClient, err := defaults.NewServiceClient("compute", defaults.DefaultClientOpts(installConfig.Config.Platform.OpenStack.Cloud))
 	if err != nil {
@@ -37,13 +38,14 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 	}
 
 	// serverGroups is the set of server groups to be created.
-	serverGroups := make(map[string]openstack.ServerGroupPolicy, len(machineManifests))
-	for _, machine := range machineManifests {
-		fmt.Println("DEBUG: machine", machine.GetName(), "roles:", machine.GetAnnotations())
+	serverGroups := make(map[string]openstack.ServerGroupPolicy, len(capiMachines)+len(mapoWorkerProviderSpecs))
+	for _, machine := range capiMachines {
 		var policy openstack.ServerGroupPolicy
 		if _, ok := machine.Labels["cluster.x-k8s.io/control-plane"]; ok {
+			fmt.Println("MYDEBUG: machine", machine.GetName(), "identifies as MASTER")
 			policy = tfvars.GetServerGroupPolicy(masterMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		} else {
+			fmt.Println("MYDEBUG: machine", machine.GetName(), "identifies as WORKER")
 			policy = tfvars.GetServerGroupPolicy(workerMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		}
 
@@ -56,6 +58,23 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 				} else {
 					serverGroups[name] = policy
 				}
+			}
+		}
+	}
+	for _, providerSpec := range mapoWorkerProviderSpecs {
+		var policy openstack.ServerGroupPolicy
+		if role := providerSpec.Labels["machine.openshift.io/cluster-api-machine-role"]; role == "worker" {
+			fmt.Println("MYDEBUG: machine", providerSpec.GetName(), "identifies as MASTER")
+			policy = tfvars.GetServerGroupPolicy(masterMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
+		}
+
+		if name := providerSpec.ServerGroupName; name != "" {
+			if visitedPolicy, ok := serverGroups[name]; ok {
+				if policy != visitedPolicy {
+					return fmt.Errorf("server group %q is referenced with different policies in the install-config machine-pools", name)
+				}
+			} else {
+				serverGroups[name] = policy
 			}
 		}
 	}
