@@ -7,13 +7,22 @@ import (
 )
 
 // SetMachinePoolDefaults sets the defaults for the machine pool.
-func SetMachinePoolDefaults(p *types.MachinePool, platform string) {
+func SetMachinePoolDefaults(p *types.MachinePool, ic *types.InstallConfig) {
 	defaultReplicaCount := int64(3)
-	if platform == libvirt.Name {
+	if ic.Platform.Name() == libvirt.Name {
 		defaultReplicaCount = 1
 	}
 	if p.Name == types.MachinePoolEdgeRoleName {
 		defaultReplicaCount = 0
+	}
+	if p.Name == types.MachinePoolComputeRoleName && ic.Platform.BareMetal != nil {
+		mastersCount := int64(0)
+		for _, h := range ic.Platform.BareMetal.Hosts {
+			if h.IsMaster() {
+				mastersCount++
+			}
+		}
+		defaultReplicaCount = int64(len(ic.Platform.BareMetal.Hosts)) - mastersCount
 	}
 	if p.Replicas == nil {
 		p.Replicas = &defaultReplicaCount
@@ -38,7 +47,7 @@ func hasEdgePoolConfig(pools []types.MachinePool) bool {
 }
 
 // CreateEdgeMachinePoolDefaults create the edge compute pool when it is not already defined.
-func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform string, replicas int64) *types.MachinePool {
+func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, ic *types.InstallConfig, replicas int64) *types.MachinePool {
 	if hasEdgePoolConfig(pools) {
 		return nil
 	}
@@ -46,6 +55,6 @@ func CreateEdgeMachinePoolDefaults(pools []types.MachinePool, platform string, r
 		Name:     types.MachinePoolEdgeRoleName,
 		Replicas: &replicas,
 	}
-	SetMachinePoolDefaults(pool, platform)
+	SetMachinePoolDefaults(pool, ic)
 	return pool
 }
