@@ -1,6 +1,0 @@
-[json_rpc]
-auth_type = http_basic
-username = {{.PlatformData.BareMetal.IronicUsername}}
-password = {{.PlatformData.BareMetal.IronicPassword}}
-http_basic_username = {{.PlatformData.BareMetal.IronicUsername}}
-http_basic_password = {{.PlatformData.BareMetal.IronicPassword}}

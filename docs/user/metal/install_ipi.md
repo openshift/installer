@@ -315,7 +315,6 @@ may also view the logs of the individual containers:
   - `podman logs dnsmasq`
   - `podman logs image-customization`
   - `podman logs ironic`
-  - `podman logs ironic-inspector`
   - `podman logs ironic-ramdisk-logs`
   - `podman logs httpd`
 
