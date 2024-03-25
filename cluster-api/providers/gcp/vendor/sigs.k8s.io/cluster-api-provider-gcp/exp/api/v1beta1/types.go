@@ -16,7 +16,11 @@ limitations under the License.
 
 package v1beta1
 
-import "cloud.google.com/go/container/apiv1/containerpb"
+import (
+	"strings"
+
+	"cloud.google.com/go/container/apiv1/containerpb"
+)
 
 // TaintEffect is the effect for a Kubernetes taint.
 type TaintEffect string
@@ -62,4 +66,81 @@ func ConvertToSdkTaint(taints Taints) []*containerpb.NodeTaint {
 		})
 	}
 	return res
+}
+
+// convertToSdkLocationPolicy converts node pool autoscaling location policy to a value that is used by GCP SDK.
+func convertToSdkLocationPolicy(locationPolicy ManagedNodePoolLocationPolicy) containerpb.NodePoolAutoscaling_LocationPolicy {
+	switch locationPolicy {
+	case ManagedNodePoolLocationPolicyBalanced:
+		return containerpb.NodePoolAutoscaling_BALANCED
+	case ManagedNodePoolLocationPolicyAny:
+		return containerpb.NodePoolAutoscaling_ANY
+	}
+	return containerpb.NodePoolAutoscaling_LOCATION_POLICY_UNSPECIFIED
+}
+
+// ConvertToSdkAutoscaling converts node pool autoscaling config to a value that is used by GCP SDK.
+func ConvertToSdkAutoscaling(autoscaling *NodePoolAutoScaling) *containerpb.NodePoolAutoscaling {
+	sdkAutoscaling := containerpb.NodePoolAutoscaling{
+		Enabled:           true, // enable autoscaling by default
+		TotalMinNodeCount: 0,
+		TotalMaxNodeCount: 1,
+		LocationPolicy:    convertToSdkLocationPolicy(ManagedNodePoolLocationPolicyBalanced),
+	}
+	if autoscaling != nil {
+		// set fields
+		if autoscaling.MinCount != nil {
+			sdkAutoscaling.TotalMinNodeCount = *autoscaling.MinCount
+		}
+		if autoscaling.MaxCount != nil {
+			sdkAutoscaling.TotalMaxNodeCount = *autoscaling.MaxCount
+		}
+		if autoscaling.LocationPolicy != nil {
+			sdkAutoscaling.LocationPolicy = convertToSdkLocationPolicy(*autoscaling.LocationPolicy)
+		}
+		if autoscaling.EnableAutoscaling != nil {
+			if !*autoscaling.EnableAutoscaling {
+				sdkAutoscaling = containerpb.NodePoolAutoscaling{
+					Enabled: false,
+				}
+			}
+		}
+	}
+
+	return &sdkAutoscaling
+}
+
+// ConvertFromSdkNodeVersion converts GCP SDK node version to k8s version.
+func ConvertFromSdkNodeVersion(sdkNodeVersion string) string {
+	// For example, the node version returned from GCP SDK can be 1.27.2-gke.2100, we want to convert it to 1.27.2
+	return strings.Replace(strings.Split(sdkNodeVersion, "-")[0], "v", "", 1)
+}
+
+// ConvertToSdkCgroupMode converts GCP SDK node version to k8s version.
+func ConvertToSdkCgroupMode(cgroupMode ManagedNodePoolCgroupMode) containerpb.LinuxNodeConfig_CgroupMode {
+	switch cgroupMode {
+	case 1:
+		return containerpb.LinuxNodeConfig_CGROUP_MODE_V1
+	case 2:
+		return containerpb.LinuxNodeConfig_CGROUP_MODE_V2
+	}
+	return containerpb.LinuxNodeConfig_CGROUP_MODE_UNSPECIFIED
+}
+
+// ConvertToSdkLinuxNodeConfig converts GCP SDK node version to k8s version.
+func ConvertToSdkLinuxNodeConfig(linuxNodeConfig *LinuxNodeConfig) *containerpb.LinuxNodeConfig {
+	sdkLinuxNodeConfig := containerpb.LinuxNodeConfig{}
+	if linuxNodeConfig != nil {
+		if linuxNodeConfig.Sysctls != nil {
+			sdkSysctl := make(map[string]string)
+			for _, sysctl := range linuxNodeConfig.Sysctls {
+				sdkSysctl[sysctl.Parameter] = sysctl.Value
+			}
+			sdkLinuxNodeConfig.Sysctls = sdkSysctl
+		}
+		if linuxNodeConfig.CgroupMode != nil {
+			sdkLinuxNodeConfig.CgroupMode = ConvertToSdkCgroupMode(*linuxNodeConfig.CgroupMode)
+		}
+	}
+	return &sdkLinuxNodeConfig
 }

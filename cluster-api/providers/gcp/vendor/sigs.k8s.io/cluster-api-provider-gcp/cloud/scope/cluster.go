@@ -24,7 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -112,7 +112,7 @@ func (s *ClusterScope) Namespace() string {
 
 // NetworkName returns the cluster network unique identifier.
 func (s *ClusterScope) NetworkName() string {
-	return pointer.StringDeref(s.GCPCluster.Spec.Network.Name, "default")
+	return ptr.Deref(s.GCPCluster.Spec.Network.Name, "default")
 }
 
 // NetworkLink returns the partial URL for the network.
@@ -130,12 +130,21 @@ func (s *ClusterScope) AdditionalLabels() infrav1.Labels {
 	return s.GCPCluster.Spec.AdditionalLabels
 }
 
+// ResourceManagerTags returns ResourceManagerTags from the scope's GCPCluster. The returned value will never be nil.
+func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
+	if len(s.GCPCluster.Spec.ResourceManagerTags) == 0 {
+		s.GCPCluster.Spec.ResourceManagerTags = infrav1.ResourceManagerTags{}
+	}
+
+	return s.GCPCluster.Spec.ResourceManagerTags.DeepCopy()
+}
+
 // ControlPlaneEndpoint returns the cluster control-plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
 	endpoint := s.GCPCluster.Spec.ControlPlaneEndpoint
 	endpoint.Port = 443
 	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		endpoint.Port = pointer.Int32Deref(c.APIServerPort, 443)
+		endpoint.Port = ptr.Deref(c.APIServerPort, 443)
 	}
 	return endpoint
 }
@@ -170,7 +179,7 @@ func (s *ClusterScope) SetControlPlaneEndpoint(endpoint clusterv1.APIEndpoint) {
 
 // NetworkSpec returns google compute network spec.
 func (s *ClusterScope) NetworkSpec() *compute.Network {
-	createSubnet := pointer.BoolDeref(s.GCPCluster.Spec.Network.AutoCreateSubnetworks, true)
+	createSubnet := ptr.Deref(s.GCPCluster.Spec.Network.AutoCreateSubnetworks, true)
 	network := &compute.Network{
 		Name:                  s.NetworkName(),
 		Description:           infrav1.ClusterTagKey(s.Name()),
@@ -203,19 +212,19 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 	subnets := []*compute.Subnetwork{}
 	for _, subnetwork := range s.GCPCluster.Spec.Network.Subnets {
 		secondaryIPRanges := []*compute.SubnetworkSecondaryRange{}
-		for _, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
-			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{IpCidrRange: secondaryCidrBlock})
+		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
+			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{RangeName: rangeName, IpCidrRange: secondaryCidrBlock})
 		}
 		subnets = append(subnets, &compute.Subnetwork{
 			Name:                  subnetwork.Name,
 			Region:                subnetwork.Region,
-			EnableFlowLogs:        pointer.BoolDeref(subnetwork.EnableFlowLogs, false),
-			PrivateIpGoogleAccess: pointer.BoolDeref(subnetwork.PrivateGoogleAccess, false),
+			EnableFlowLogs:        ptr.Deref(subnetwork.EnableFlowLogs, false),
+			PrivateIpGoogleAccess: ptr.Deref(subnetwork.PrivateGoogleAccess, false),
 			IpCidrRange:           subnetwork.CidrBlock,
 			SecondaryIpRanges:     secondaryIPRanges,
-			Description:           pointer.StringDeref(subnetwork.Description, infrav1.ClusterTagKey(s.Name())),
+			Description:           ptr.Deref(subnetwork.Description, infrav1.ClusterTagKey(s.Name())),
 			Network:               s.NetworkLink(),
-			Purpose:               pointer.StringDeref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
+			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
 		})
 	}
@@ -299,7 +308,7 @@ func (s *ClusterScope) BackendServiceSpec() *compute.BackendService {
 func (s *ClusterScope) ForwardingRuleSpec() *compute.ForwardingRule {
 	port := int32(443)
 	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		port = pointer.Int32Deref(c.APIServerPort, 443)
+		port = ptr.Deref(c.APIServerPort, 443)
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
 	return &compute.ForwardingRule{
@@ -329,7 +338,7 @@ func (s *ClusterScope) HealthCheckSpec() *compute.HealthCheck {
 
 // InstanceGroupSpec returns google compute instance-group spec.
 func (s *ClusterScope) InstanceGroupSpec(zone string) *compute.InstanceGroup {
-	port := pointer.Int32Deref(s.GCPCluster.Spec.Network.LoadBalancerBackendPort, 6443)
+	port := ptr.Deref(s.GCPCluster.Spec.Network.LoadBalancerBackendPort, 6443)
 	return &compute.InstanceGroup{
 		Name: fmt.Sprintf("%s-%s-%s", s.Name(), infrav1.APIServerRoleTagValue, zone),
 		NamedPorts: []*compute.NamedPort{

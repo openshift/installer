@@ -21,7 +21,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/gcperrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,10 +42,10 @@ func (s *Service) Reconcile(ctx context.Context) error {
 			return err
 		}
 
-		s.scope.Network().Router = pointer.String(router.SelfLink)
+		s.scope.Network().Router = ptr.To[string](router.SelfLink)
 	}
 
-	s.scope.Network().SelfLink = pointer.String(network.SelfLink)
+	s.scope.Network().SelfLink = ptr.To[string](network.SelfLink)
 	return nil
 }
 

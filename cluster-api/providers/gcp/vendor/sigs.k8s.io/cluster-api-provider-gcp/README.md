@@ -14,6 +14,10 @@ Kubernetes-native declarative infrastructure for GCP.
 
 The [Cluster API](https://github.com/kubernetes-sigs/cluster-api) brings declarative Kubernetes-style APIs to cluster creation, configuration and management. The API itself is shared across multiple cloud providers allowing for true Google Cloud hybrid deployments of Kubernetes.
 
+## Documentation
+
+Please see our [book](https://cluster-api-gcp.sigs.k8s.io/) for in-depth documentation.
+
 ## Quick Start
 
 Checkout our [Cluster API Quick Start] to create your first Kubernetes cluster
@@ -49,10 +53,6 @@ Each version of Cluster API for Google Cloud will attempt to support at least tw
 **NOTE:** As the versioning for this project is tied to the versioning of Cluster API, future modifications to this policy may be made to more closely align with other providers in the Cluster API ecosystem. 
 
 ----
-
-## Documentation
-
-Presently, our docs can be found [here](https://github.com/kubernetes-sigs/cluster-api-provider-gcp/tree/main/docs).
 
 ## Getting Involved and Contributing
 

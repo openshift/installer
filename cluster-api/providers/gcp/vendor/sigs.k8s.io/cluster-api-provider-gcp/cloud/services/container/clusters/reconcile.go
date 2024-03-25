@@ -19,6 +19,7 @@ package clusters
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
@@ -94,7 +95,7 @@ func (s *Service) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	log.V(2).Info("gke cluster found", "status", cluster.Status)
-	s.scope.GCPManagedControlPlane.Status.CurrentVersion = cluster.CurrentMasterVersion
+	s.scope.GCPManagedControlPlane.Status.CurrentVersion = convertToSdkMasterVersion(cluster.CurrentMasterVersion)
 
 	switch cluster.Status {
 	case containerpb.Cluster_PROVISIONING:
@@ -262,10 +263,10 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 		MasterAuthorizedNetworksConfig: convertToSdkMasterAuthorizedNetworksConfig(s.scope.GCPManagedControlPlane.Spec.MasterAuthorizedNetworksConfig),
 	}
 	if s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
-		cluster.InitialClusterVersion = *s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion
+		cluster.InitialClusterVersion = convertToSdkMasterVersion(*s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion)
 	}
 	if !s.scope.IsAutopilotCluster() {
-		cluster.NodePools = scope.ConvertToSdkNodePools(nodePools, machinePools, isRegional)
+		cluster.NodePools = scope.ConvertToSdkNodePools(nodePools, machinePools, isRegional, cluster.Name)
 	}
 
 	createClusterRequest := &containerpb.CreateClusterRequest{
@@ -277,6 +278,17 @@ func (s *Service) createCluster(ctx context.Context, log *logr.Logger) error {
 	_, err := s.scope.ManagedControlPlaneClient().CreateCluster(ctx, createClusterRequest)
 	if err != nil {
 		log.Error(err, "Error creating GKE cluster", "name", s.scope.ClusterName())
+		return err
+	}
+
+	err = shared.ResourceTagBinding(
+		ctx,
+		s.scope.TagBindingsClient(),
+		s.scope.GCPManagedCluster.Spec,
+		s.scope.ClusterName(),
+	)
+	if err != nil {
+		log.Error(err, "Error binding tags to cluster resources", "name", s.scope.ClusterName())
 		return err
 	}
 
@@ -322,6 +334,11 @@ func convertToSdkReleaseChannel(channel *infrav1exp.ReleaseChannel) containerpb.
 	}
 }
 
+func convertToSdkMasterVersion(masterVersion string) string {
+	// For example, the master version returned from GCP SDK can be 1.27.2-gke.2100, we want to convert it to 1.27.2
+	return strings.Replace(strings.Split(masterVersion, "-")[0], "v", "", 1)
+}
+
 // convertToSdkMasterAuthorizedNetworksConfig converts the MasterAuthorizedNetworksConfig defined in CRs to the SDK version.
 func convertToSdkMasterAuthorizedNetworksConfig(config *infrav1exp.MasterAuthorizedNetworksConfig) *containerpb.MasterAuthorizedNetworksConfig {
 	// if config is nil, it means that the user wants to disable the feature.
@@ -365,11 +382,12 @@ func (s *Service) checkDiffAndPrepareUpdate(existingCluster *containerpb.Cluster
 	}
 	// Master version
 	if s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion != nil {
-		desiredMasterVersion := *s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion
-		if desiredMasterVersion != existingCluster.InitialClusterVersion {
+		desiredMasterVersion := convertToSdkMasterVersion(*s.scope.GCPManagedControlPlane.Spec.ControlPlaneVersion)
+		existingClusterMasterVersion := convertToSdkMasterVersion(existingCluster.CurrentMasterVersion)
+		if desiredMasterVersion != existingClusterMasterVersion {
 			needUpdate = true
 			clusterUpdate.DesiredMasterVersion = desiredMasterVersion
-			log.V(2).Info("Master version update required", "current", existingCluster.InitialClusterVersion, "desired", desiredMasterVersion)
+			log.V(2).Info("Master version update required", "current", existingClusterMasterVersion, "desired", desiredMasterVersion)
 		}
 	}
 

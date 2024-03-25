@@ -54,6 +54,12 @@ type GCPClusterSpec struct {
 	// +optional
 	AdditionalLabels Labels `json:"additionalLabels,omitempty"`
 
+	// ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+	// by the GCP provider. GCP supports a maximum of 50 tags per resource.
+	// +maxItems=50
+	// +optional
+	ResourceManagerTags ResourceManagerTags `json:"resourceManagerTags,omitempty"`
+
 	// CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
 	// supplied then the credentials of the controller will be used.
 	// +optional

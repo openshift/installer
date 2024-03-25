@@ -21,7 +21,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 	"google.golang.org/api/compute/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/gcperrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -152,7 +152,7 @@ func (s *Service) createOrGetHealthCheck(ctx context.Context) (*compute.HealthCh
 		}
 	}
 
-	s.scope.Network().APIServerHealthCheck = pointer.String(healthcheck.SelfLink)
+	s.scope.Network().APIServerHealthCheck = ptr.To[string](healthcheck.SelfLink)
 	return healthcheck, nil
 }
 
@@ -197,7 +197,7 @@ func (s *Service) createOrGetBackendService(ctx context.Context, instancegroups 
 		}
 	}
 
-	s.scope.Network().APIServerBackendService = pointer.String(backendsvc.SelfLink)
+	s.scope.Network().APIServerBackendService = ptr.To[string](backendsvc.SelfLink)
 	return backendsvc, nil
 }
 
@@ -224,7 +224,7 @@ func (s *Service) createOrGetTargetTCPProxy(ctx context.Context, service *comput
 		}
 	}
 
-	s.scope.Network().APIServerTargetProxy = pointer.String(target.SelfLink)
+	s.scope.Network().APIServerTargetProxy = ptr.To[string](target.SelfLink)
 	return target, nil
 }
 
@@ -251,7 +251,7 @@ func (s *Service) createOrGetAddress(ctx context.Context) (*compute.Address, err
 		}
 	}
 
-	s.scope.Network().APIServerAddress = pointer.String(addr.SelfLink)
+	s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
 	endpoint := s.scope.ControlPlaneEndpoint()
 	endpoint.Host = addr.Address
 	s.scope.SetControlPlaneEndpoint(endpoint)
@@ -284,7 +284,7 @@ func (s *Service) createForwardingRule(ctx context.Context, target *compute.Targ
 		}
 	}
 
-	s.scope.Network().APIServerForwardingRule = pointer.String(forwarding.SelfLink)
+	s.scope.Network().APIServerForwardingRule = ptr.To[string](forwarding.SelfLink)
 	return nil
 }
 

@@ -26,6 +26,7 @@ import (
 
 	container "cloud.google.com/go/container/apiv1"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
+	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/pkg/errors"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -43,6 +44,7 @@ const (
 type ManagedControlPlaneScopeParams struct {
 	CredentialsClient      *credentials.IamCredentialsClient
 	ManagedClusterClient   *container.ClusterManagerClient
+	TagBindingsClient      *resourcemanager.TagBindingsClient
 	Client                 client.Client
 	Cluster                *clusterv1.Cluster
 	GCPManagedCluster      *infrav1exp.GCPManagedCluster
@@ -74,6 +76,13 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		}
 		params.ManagedClusterClient = managedClusterClient
 	}
+	if params.TagBindingsClient == nil {
+		tagBindingsClient, err := newTagBindingsClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client, params.GCPManagedCluster.Spec.Region)
+		if err != nil {
+			return nil, errors.Errorf("failed to create gcp tag bindings client: %v", err)
+		}
+		params.TagBindingsClient = tagBindingsClient
+	}
 	if params.CredentialsClient == nil {
 		var credentialsClient *credentials.IamCredentialsClient
 		credentialsClient, err = newIamCredentialsClient(ctx, params.GCPManagedCluster.Spec.CredentialsRef, params.Client)
@@ -94,6 +103,7 @@ func NewManagedControlPlaneScope(ctx context.Context, params ManagedControlPlane
 		GCPManagedCluster:      params.GCPManagedCluster,
 		GCPManagedControlPlane: params.GCPManagedControlPlane,
 		mcClient:               params.ManagedClusterClient,
+		tagBindingsClient:      params.TagBindingsClient,
 		credentialsClient:      params.CredentialsClient,
 		credential:             credential,
 		patchHelper:            helper,
@@ -109,6 +119,7 @@ type ManagedControlPlaneScope struct {
 	GCPManagedCluster      *infrav1exp.GCPManagedCluster
 	GCPManagedControlPlane *infrav1exp.GCPManagedControlPlane
 	mcClient               *container.ClusterManagerClient
+	tagBindingsClient      *resourcemanager.TagBindingsClient
 	credentialsClient      *credentials.IamCredentialsClient
 	credential             *Credential
 
@@ -132,6 +143,7 @@ func (s *ManagedControlPlaneScope) PatchObject() error {
 // Close closes the current scope persisting the managed control plane configuration and status.
 func (s *ManagedControlPlaneScope) Close() error {
 	s.mcClient.Close()
+	s.tagBindingsClient.Close()
 	s.credentialsClient.Close()
 	return s.PatchObject()
 }
@@ -149,6 +161,11 @@ func (s *ManagedControlPlaneScope) Client() client.Client {
 // ManagedControlPlaneClient returns a client used to interact with GKE.
 func (s *ManagedControlPlaneScope) ManagedControlPlaneClient() *container.ClusterManagerClient {
 	return s.mcClient
+}
+
+// TagBindingsClient returns a client used to interact with resource manager tags.
+func (s *ManagedControlPlaneScope) TagBindingsClient() *resourcemanager.TagBindingsClient {
+	return s.tagBindingsClient
 }
 
 // CredentialsClient returns a client used to interact with IAM.

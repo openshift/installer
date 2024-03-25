@@ -31,12 +31,12 @@ import (
 	"google.golang.org/api/compute/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/providerid"
+	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/noderefutil"
 	capierrors "sigs.k8s.io/cluster-api/errors"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -147,12 +147,12 @@ func (m *MachineScope) Role() string {
 
 // GetInstanceID returns the GCPMachine instance id by parsing Spec.ProviderID.
 func (m *MachineScope) GetInstanceID() *string {
-	parsed, err := noderefutil.NewProviderID(m.GetProviderID()) //nolint: staticcheck
+	parsed, err := NewProviderID(m.GetProviderID())
 	if err != nil {
 		return nil
 	}
 
-	return pointer.String(parsed.ID()) //nolint: staticcheck
+	return ptr.To[string](parsed.ID())
 }
 
 // GetProviderID returns the GCPMachine providerID from the spec.
@@ -171,7 +171,7 @@ func (m *MachineScope) GetProviderID() string {
 // SetProviderID sets the GCPMachine providerID in spec.
 func (m *MachineScope) SetProviderID() {
 	providerID, _ := providerid.New(m.ClusterGetter.Project(), m.Zone(), m.Name())
-	m.GCPMachine.Spec.ProviderID = pointer.String(providerID.String())
+	m.GCPMachine.Spec.ProviderID = ptr.To[string](providerID.String())
 }
 
 // GetInstanceStatus returns the GCPMachine instance status.
@@ -191,7 +191,7 @@ func (m *MachineScope) SetReady() {
 
 // SetFailureMessage sets the GCPMachine status failure message.
 func (m *MachineScope) SetFailureMessage(v error) {
-	m.GCPMachine.Status.FailureMessage = pointer.String(v.Error())
+	m.GCPMachine.Status.FailureMessage = ptr.To[string](v.Error())
 }
 
 // SetFailureReason sets the GCPMachine status failure reason.
@@ -235,15 +235,37 @@ func (m *MachineScope) InstanceImageSpec() *compute.AttachedDisk {
 		diskType = *t
 	}
 
-	return &compute.AttachedDisk{
+	disk := &compute.AttachedDisk{
 		AutoDelete: true,
 		Boot:       true,
 		InitializeParams: &compute.AttachedDiskInitializeParams{
-			DiskSizeGb:  m.GCPMachine.Spec.RootDeviceSize,
-			DiskType:    path.Join("zones", m.Zone(), "diskTypes", string(diskType)),
-			SourceImage: sourceImage,
+			DiskSizeGb:          m.GCPMachine.Spec.RootDeviceSize,
+			DiskType:            path.Join("zones", m.Zone(), "diskTypes", string(diskType)),
+			ResourceManagerTags: shared.ResourceTagConvert(context.TODO(), m.GCPMachine.Spec.ResourceManagerTags),
+			SourceImage:         sourceImage,
 		},
 	}
+
+	if m.GCPMachine.Spec.RootDiskEncryptionKey != nil {
+		if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerManagedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey != nil {
+			disk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
+				KmsKeyName: m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey.KMSKeyName,
+			}
+			if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+				disk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+			}
+		} else if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerSuppliedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey != nil {
+			disk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
+				RawKey:          string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RawKey),
+				RsaEncryptedKey: string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RSAEncryptedKey),
+			}
+			if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+				disk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+			}
+		}
+	}
+
+	return disk
 }
 
 // InstanceAdditionalDiskSpec returns compute instance additional attched-disk spec.
@@ -253,8 +275,9 @@ func (m *MachineScope) InstanceAdditionalDiskSpec() []*compute.AttachedDisk {
 		additionalDisk := &compute.AttachedDisk{
 			AutoDelete: true,
 			InitializeParams: &compute.AttachedDiskInitializeParams{
-				DiskSizeGb: pointer.Int64Deref(disk.Size, 30),
-				DiskType:   path.Join("zones", m.Zone(), "diskTypes", string(*disk.DeviceType)),
+				DiskSizeGb:          ptr.Deref(disk.Size, 30),
+				DiskType:            path.Join("zones", m.Zone(), "diskTypes", string(*disk.DeviceType)),
+				ResourceManagerTags: shared.ResourceTagConvert(context.TODO(), m.GCPMachine.Spec.ResourceManagerTags),
 			},
 		}
 		if strings.HasSuffix(additionalDisk.InitializeParams.DiskType, string(infrav1.LocalSsdDiskType)) {
@@ -267,6 +290,25 @@ func (m *MachineScope) InstanceAdditionalDiskSpec() []*compute.AttachedDisk {
 			// https://cloud.google.com/compute/docs/disks/local-ssd#choose_an_interface
 			additionalDisk.Interface = "NVME"
 		}
+		if disk.EncryptionKey != nil {
+			if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerManagedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey != nil {
+				additionalDisk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
+					KmsKeyName: m.GCPMachine.Spec.RootDiskEncryptionKey.ManagedKey.KMSKeyName,
+				}
+				if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+				}
+			} else if m.GCPMachine.Spec.RootDiskEncryptionKey.KeyType == infrav1.CustomerSuppliedKey && m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey != nil {
+				additionalDisk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
+					RawKey:          string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RawKey),
+					RsaEncryptedKey: string(m.GCPMachine.Spec.RootDiskEncryptionKey.SuppliedKey.RSAEncryptedKey),
+				}
+				if m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount != nil {
+					additionalDisk.DiskEncryptionKey.KmsKeyServiceAccount = *m.GCPMachine.Spec.RootDiskEncryptionKey.KMSKeyServiceAccount
+				}
+			}
+		}
+
 		additionalDisks = append(additionalDisks, additionalDisk)
 	}
 
@@ -338,10 +380,13 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 				m.ClusterGetter.Name(),
 			),
 		},
+		Params: &compute.InstanceParams{
+			ResourceManagerTags: shared.ResourceTagConvert(context.TODO(), m.ResourceManagerTags()),
+		},
 		Labels: infrav1.Build(infrav1.BuildParams{
 			ClusterName: m.ClusterGetter.Name(),
 			Lifecycle:   infrav1.ResourceLifecycleOwned,
-			Role:        pointer.String(m.Role()),
+			Role:        ptr.To[string](m.Role()),
 			// TODO(vincepri): Check what needs to be added for the cloud provider label.
 			Additional: m.ClusterGetter.AdditionalLabels().AddLabels(m.GCPMachine.Spec.AdditionalLabels),
 		}),
@@ -427,4 +472,17 @@ func (m *MachineScope) PatchObject() error {
 // Close closes the current scope persisting the cluster configuration and status.
 func (m *MachineScope) Close() error {
 	return m.PatchObject()
+}
+
+// ResourceManagerTags merges ResourceManagerTags from the scope's GCPCluster and GCPMachine. If the same key is present in both,
+// the value from GCPMachine takes precedence. The returned ResourceManagerTags will never be nil.
+func (m *MachineScope) ResourceManagerTags() infrav1.ResourceManagerTags {
+	tags := infrav1.ResourceManagerTags{}
+
+	// Start with the cluster-wide tags...
+	tags.Merge(m.ClusterGetter.ResourceManagerTags())
+	// ... and merge in the Machine's
+	tags.Merge(m.GCPMachine.Spec.ResourceManagerTags)
+
+	return tags
 }

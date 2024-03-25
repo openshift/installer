@@ -26,7 +26,7 @@ import (
 	"google.golang.org/api/compute/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/gcperrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -136,7 +136,7 @@ func (s *Service) createOrGetInstance(ctx context.Context) (*compute.Instance, e
 	instanceKey := meta.ZonalKey(instanceName, s.scope.Zone())
 	instanceSpec.Metadata.Items = append(instanceSpec.Metadata.Items, &compute.MetadataItems{
 		Key:   "user-data",
-		Value: pointer.String(bootstrapData),
+		Value: ptr.To[string](bootstrapData),
 	})
 
 	log.V(2).Info("Looking for instance", "name", instanceName, "zone", s.scope.Zone())

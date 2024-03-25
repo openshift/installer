@@ -24,6 +24,7 @@ import (
 	computerest "cloud.google.com/go/compute/apiv1"
 	container "cloud.google.com/go/container/apiv1"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
+	resourcemanager "cloud.google.com/go/resourcemanager/apiv3"
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
@@ -142,4 +143,20 @@ func newInstanceGroupManagerClient(ctx context.Context, credentialsRef *infrav1.
 	}
 
 	return instanceGroupManagersClient, nil
+}
+
+func newTagBindingsClient(ctx context.Context, credentialsRef *infrav1.ObjectReference, crClient client.Client, location string) (*resourcemanager.TagBindingsClient, error) {
+	opts, err := defaultClientOptions(ctx, credentialsRef, crClient)
+	endpoint := fmt.Sprintf("%s-cloudresourcemanager.googleapis.com:443", location)
+	opts = append(opts, option.WithEndpoint(endpoint))
+	if err != nil {
+		return nil, fmt.Errorf("getting default gcp client options: %w", err)
+	}
+
+	client, err := resourcemanager.NewTagBindingsClient(ctx, opts...)
+	if err != nil {
+		return nil, errors.Errorf("failed to create gcp tag binding client: %v", err)
+	}
+
+	return client, nil
 }

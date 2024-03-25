@@ -8,7 +8,8 @@
       "go.sum",
       "api",
       "cloud",
-      "controllers"
+      "controllers",
+      "exp"
     ],
     "label": "CAPG"
   }

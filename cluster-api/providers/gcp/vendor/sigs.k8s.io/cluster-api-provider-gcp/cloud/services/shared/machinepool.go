@@ -34,8 +34,14 @@ func ManagedMachinePoolPreflightCheck(managedPool *infrav1exp.GCPManagedMachineP
 	}
 
 	if IsRegional(location) {
-		if *machinePool.Spec.Replicas%cloud.DefaultNumRegionsPerZone != 0 {
-			return fmt.Errorf("a machine pool (%s) in a regional cluster must have replicas with a multiple of %d", machinePool.Name, cloud.DefaultNumRegionsPerZone)
+		var numRegionsPerZone int32
+		if len(managedPool.Spec.NodeLocations) != 0 {
+			numRegionsPerZone = int32(len(managedPool.Spec.NodeLocations))
+		} else {
+			numRegionsPerZone = cloud.DefaultNumRegionsPerZone
+		}
+		if *machinePool.Spec.Replicas%numRegionsPerZone != 0 {
+			return fmt.Errorf("a machine pool (%s) in a regional cluster with %d regions, must have replicas with a multiple of %d", machinePool.Name, numRegionsPerZone, numRegionsPerZone)
 		}
 	}
 
