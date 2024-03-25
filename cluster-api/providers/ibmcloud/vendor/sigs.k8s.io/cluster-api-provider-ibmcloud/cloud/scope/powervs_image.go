@@ -28,7 +28,7 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -80,7 +80,7 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 	scope.IBMPowerVSImage = params.IBMPowerVSImage
 
 	if params.Logger == (logr.Logger{}) {
-		params.Logger = klogr.New()
+		params.Logger = textlogger.NewLogger(textlogger.NewConfig())
 	}
 	scope.Logger = params.Logger
 
@@ -91,17 +91,18 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 	}
 	scope.patchHelper = helper
 
-	rc, err := resourcecontroller.NewService(resourcecontroller.ServiceOptions{})
-	if err != nil {
-		return nil, err
+	// Create Resource Controller client.
+	var serviceOption resourcecontroller.ServiceOptions
+	// Fetch the resource controller endpoint.
+	rcEndpoint := endpoints.FetchEndpoints(string(endpoints.RC), params.ServiceEndpoint)
+	if rcEndpoint != "" {
+		serviceOption.URL = rcEndpoint
+		params.Logger.V(3).Info("Overriding the default resource controller endpoint", "ResourceControllerEndpoint", rcEndpoint)
 	}
 
-	// Fetch the resource controller endpoint.
-	if rcEndpoint := endpoints.FetchRCEndpoint(params.ServiceEndpoint); rcEndpoint != "" {
-		if err := rc.SetServiceURL(rcEndpoint); err != nil {
-			return nil, fmt.Errorf("failed to set resource controller endpoint: %w", err)
-		}
-		scope.Logger.V(3).Info("Overriding the default resource controller endpoint")
+	rc, err := resourcecontroller.NewService(serviceOption)
+	if err != nil {
+		return nil, err
 	}
 
 	var serviceInstanceID string

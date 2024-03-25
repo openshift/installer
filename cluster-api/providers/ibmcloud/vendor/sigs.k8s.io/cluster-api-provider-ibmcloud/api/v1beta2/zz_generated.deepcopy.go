@@ -1414,6 +1414,11 @@ func (in *VPCLoadBalancerSpec) DeepCopyInto(out *VPCLoadBalancerSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.Public != nil {
+		in, out := &in.Public, &out.Public
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AdditionalListeners != nil {
 		in, out := &in.AdditionalListeners, &out.AdditionalListeners
 		*out = make([]AdditionalListenerSpec, len(*in))

@@ -22,7 +22,7 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils"
@@ -92,8 +92,8 @@ func (s *Service) GetServiceInstance(id, name string) (*resourcecontrollerv2.Res
 	var serviceInstancesList []resourcecontrollerv2.ResourceInstance
 	f := func(start string) (bool, string, error) {
 		listServiceInstanceOptions := &resourcecontrollerv2.ListResourceInstancesOptions{
-			ResourceID:     pointer.String(PowerVSResourceID),
-			ResourcePlanID: pointer.String(PowerVSResourcePlanID),
+			ResourceID:     ptr.To(PowerVSResourceID),
+			ResourcePlanID: ptr.To(PowerVSResourcePlanID),
 		}
 		if id != "" {
 			listServiceInstanceOptions.GUID = &id
@@ -143,8 +143,8 @@ func (s *Service) GetInstanceByName(name, resourceID, planID string) (*resourcec
 	f := func(start string) (bool, string, error) {
 		listServiceInstanceOptions := &resourcecontrollerv2.ListResourceInstancesOptions{
 			Name:           &name,
-			ResourceID:     pointer.String(resourceID),
-			ResourcePlanID: pointer.String(planID),
+			ResourceID:     ptr.To(resourceID),
+			ResourcePlanID: ptr.To(planID),
 		}
 		if start != "" {
 			listServiceInstanceOptions.Start = &start
@@ -192,11 +192,13 @@ func NewService(options ServiceOptions) (*Service, error) {
 	if options.ResourceControllerV2Options == nil {
 		options.ResourceControllerV2Options = &resourcecontrollerv2.ResourceControllerV2Options{}
 	}
-	auth, err := authenticator.GetAuthenticator()
-	if err != nil {
-		return nil, err
+	if options.Authenticator == nil {
+		auth, err := authenticator.GetAuthenticator()
+		if err != nil {
+			return nil, err
+		}
+		options.Authenticator = auth
 	}
-	options.Authenticator = auth
 	service, err := resourcecontrollerv2.NewResourceControllerV2(options.ResourceControllerV2Options)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,6 @@ package core
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -60,7 +59,8 @@ func IsNil(object interface{}) bool {
 // ValidateNotNil returns the specified error if 'object' is nil, nil otherwise.
 func ValidateNotNil(object interface{}, errorMsg string) error {
 	if IsNil(object) {
-		return errors.New(errorMsg)
+		err := fmt.Errorf(errorMsg)
+		return SDKErrorf(err, "", "obj-is-nil", getComponentInfo())
 	}
 	return nil
 }
@@ -70,6 +70,7 @@ func ValidateNotNil(object interface{}, errorMsg string) error {
 func ValidateStruct(param interface{}, paramName string) error {
 	err := ValidateNotNil(param, paramName+" cannot be nil")
 	if err != nil {
+		err = RepurposeSDKProblem(err, "struct-is-nil")
 		return err
 	}
 
@@ -77,9 +78,10 @@ func ValidateStruct(param interface{}, paramName string) error {
 	if err != nil {
 		// If there were validation errors then return an error containing the field errors
 		if fieldErrors, ok := err.(validator.ValidationErrors); ok {
-			return fmt.Errorf("%s failed validation:\n%s", paramName, fieldErrors.Error())
+			err = fmt.Errorf("%s failed validation:\n%s", paramName, fieldErrors.Error())
+			return SDKErrorf(err, "", "struct-validation-errors", getComponentInfo())
 		}
-		return err
+		return SDKErrorf(err, "", "struct-validate-unknown-error", getComponentInfo())
 	}
 
 	return nil
@@ -206,6 +208,7 @@ func ConvertSlice(slice interface{}) (s []string, err error) {
 
 	if IsNil(slice) {
 		err = fmt.Errorf(ERRORMSG_NIL_SLICE)
+		err = SDKErrorf(err, "", "nil-slice", getComponentInfo())
 		return
 	}
 
@@ -221,6 +224,7 @@ func ConvertSlice(slice interface{}) (s []string, err error) {
 	// If it's not a slice, just return an error
 	if !inputIsSlice {
 		err = fmt.Errorf(ERRORMSG_PARAM_NOT_SLICE)
+		err = SDKErrorf(err, "", "param-not-slice", getComponentInfo())
 		return
 	} else if reflect.ValueOf(slice).Len() == 0 {
 		s = []string{}
@@ -230,6 +234,7 @@ func ConvertSlice(slice interface{}) (s []string, err error) {
 	jsonBuffer, err := json.Marshal(slice)
 	if err != nil {
 		err = fmt.Errorf(ERRORMSG_MARSHAL_SLICE, err.Error())
+		err = SDKErrorf(err, "", "slice-marshal-error", getComponentInfo())
 		return
 	}
 
@@ -258,7 +263,8 @@ func ConvertSlice(slice interface{}) (s []string, err error) {
 		return
 	}
 
-	return nil, fmt.Errorf(ERRORMSG_CONVERT_SLICE)
+	err = fmt.Errorf(ERRORMSG_CONVERT_SLICE)
+	return nil, SDKErrorf(err, "", "cant-convert-slice", getComponentInfo())
 }
 
 // SliceContains returns true iff "contains" is an element of "slice"
@@ -280,11 +286,13 @@ func GetQueryParam(urlStr *string, param string) (value *string, err error) {
 
 	urlObj, err := url.Parse(*urlStr)
 	if err != nil {
+		err = SDKErrorf(err, "", "url-parse-error", getComponentInfo())
 		return
 	}
 
 	query, err := url.ParseQuery(urlObj.RawQuery)
 	if err != nil {
+		err = SDKErrorf(err, "", "url-parse-query-error", getComponentInfo())
 		return
 	}
 
@@ -302,12 +310,18 @@ func GetQueryParam(urlStr *string, param string) (value *string, err error) {
 // converted to an int64 value, or nil if not found.
 func GetQueryParamAsInt(urlStr *string, param string) (value *int64, err error) {
 	strValue, err := GetQueryParam(urlStr, param)
-	if err != nil || strValue == nil {
+	if err != nil {
+		err = RepurposeSDKProblem(err, "get-query-error")
+		return
+	}
+
+	if strValue == nil {
 		return
 	}
 
 	intValue, err := strconv.ParseInt(*strValue, 10, 64)
 	if err != nil {
+		err = SDKErrorf(err, "", "parse-int-query-error", getComponentInfo())
 		return nil, err
 	}
 

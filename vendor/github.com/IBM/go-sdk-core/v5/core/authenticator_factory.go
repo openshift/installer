@@ -63,7 +63,12 @@ func GetAuthenticatorFromEnvironment(credentialKey string) (authenticator Authen
 	} else if strings.EqualFold(authType, AUTHTYPE_NOAUTH) {
 		authenticator, err = NewNoAuthAuthenticator()
 	} else {
-		err = fmt.Errorf(ERRORMSG_AUTHTYPE_UNKNOWN, authType)
+		err = SDKErrorf(
+			nil,
+			fmt.Sprintf(ERRORMSG_AUTHTYPE_UNKNOWN, authType),
+			"unknown-auth-type",
+			getComponentInfo(),
+		)
 	}
 
 	return
