@@ -11,13 +11,6 @@ import (
 	agentpkg "github.com/openshift/installer/pkg/agent"
 )
 
-const (
-	exitCodeInstallConfigError = iota + 3
-	exitCodeInfrastructureFailed
-	exitCodeBootstrapFailed
-	exitCodeInstallFailed
-)
-
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
 func NewWaitForCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -44,7 +37,7 @@ func handleBootstrapError(cluster *agentpkg.Cluster, err error) {
 	logrus.Info("Use the following commands to gather logs from the cluster")
 	logrus.Info("openshift-install gather bootstrap --help")
 	logrus.Error(errors.Wrap(err, "Bootstrap failed to complete: "))
-	logrus.Exit(exitCodeBootstrapFailed)
+	logrus.Exit(command.ExitCodeBootstrapFailed)
 }
 
 func newWaitForBootstrapCompleteCmd() *cobra.Command {
@@ -65,7 +58,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			ctx := context.Background()
 			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
+				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
@@ -93,25 +86,24 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			ctx := context.Background()
 			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
-				logrus.Exit(exitCodeBootstrapFailed)
+				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
 				handleBootstrapError(cluster, err)
 			}
 
-			if err = agentpkg.WaitForInstallComplete(cluster); err != nil {
-				logrus.Error(err)
-				err2 := cluster.API.OpenShift.LogClusterOperatorConditions()
-				if err2 != nil {
+			config := cluster.API.Kube.Config
+
+			err = command.WaitForInstallComplete(ctx, config, command.RootOpts.Dir)
+			if err != nil {
+				if err2 := command.LogClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)
 				}
-				logrus.Error(`Cluster initialization failed because one or more operators are not functioning properly.
-				The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
-				https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html`)
-				logrus.Exit(exitCodeInstallFailed)
+				command.LogTroubleshootingLink()
+				logrus.Error(err)
+				logrus.Exit(command.ExitCodeInstallFailed)
 			}
-			cluster.PrintInstallationComplete()
 		},
 	}
 }

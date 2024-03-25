@@ -16,7 +16,7 @@ import (
 type ClusterKubeAPIClient struct {
 	Client     *kubernetes.Clientset
 	ctx        context.Context
-	config     *rest.Config
+	Config     *rest.Config
 	configPath string
 }
 
@@ -37,7 +37,7 @@ func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKube
 
 	kubeClient.Client = kubeclient
 	kubeClient.ctx = ctx
-	kubeClient.config = kubeconfig
+	kubeClient.Config = kubeconfig
 	kubeClient.configPath = kubeconfigpath
 
 	return kubeClient, nil
