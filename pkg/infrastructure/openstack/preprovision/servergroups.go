@@ -46,6 +46,9 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 			policy = tfvars.GetServerGroupPolicy(masterMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		} else {
 			fmt.Println("MYDEBUG: machine", machine.GetName(), "identifies as WORKER")
+			// This IF branch is never executed as long as
+			// Installer only generates CAPI manifests for masters
+			// and bootstrap
 			policy = tfvars.GetServerGroupPolicy(workerMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
 		}
 
@@ -64,8 +67,10 @@ func ServerGroups(_ context.Context, installConfig *installconfig.InstallConfig,
 	for _, providerSpec := range mapoWorkerProviderSpecs {
 		var policy openstack.ServerGroupPolicy
 		if role := providerSpec.Labels["machine.openshift.io/cluster-api-machine-role"]; role == "worker" {
-			fmt.Println("MYDEBUG: machine", providerSpec.GetName(), "identifies as MASTER")
+			fmt.Println("MYDEBUG: machine", providerSpec.GetName(), "identifies as WORKER")
 			policy = tfvars.GetServerGroupPolicy(masterMP, installConfig.Config.OpenStack.DefaultMachinePlatform)
+		} else {
+			fmt.Println("MYDEBUG: providerSpec", providerSpec.GetName(), "has role:", role)
 		}
 
 		if name := providerSpec.ServerGroupName; name != "" {

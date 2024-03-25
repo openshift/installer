@@ -88,6 +88,8 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 				} else {
 					fmt.Println("MYDEBUG: MAPO MachineSet with the wrong spec: " + ms.GetName())
 				}
+			} else {
+				fmt.Println("MYDEBUG: unknown machine manifest", machineManifests[i].GetName())
 			}
 		}
 		if err := preprovision.ServerGroups(ctx, installConfig, capiMachines, mapoWorkerProviderSpecs); err != nil {
