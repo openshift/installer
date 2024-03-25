@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/nutanix"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
@@ -28,6 +30,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -85,6 +88,10 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: namespace, File: asset.File{Filename: "000_capi-namespace.yaml"}})
 
 	cluster := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "Cluster",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
@@ -125,6 +132,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to generate OpenStack manifests")
 		}
+	case nutanixtypes.Name:
+		var err error
+		out, err = nutanix.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate Nutanix manifests")
+		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)
 	}
@@ -154,6 +167,16 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 	}
 
 	asset.SortManifestFiles(c.FileList)
+
+	// for debug
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		e1 := capiutils.PersistFiles(c.FileList, "debug")
+		if e1 != nil {
+			logrus.Errorf("failed to persist cluster-api cluster manifests. %v", e1)
+			return fmt.Errorf("failed to persist cluster-api cluster manifests. %v", e1)
+		}
+	}
+
 	return nil
 }
 

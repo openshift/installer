@@ -25,6 +25,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+
+	//"github.com/openshift/installer/pkg/asset/machines/nutanix"
+	nutanixcapi "github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
 	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
@@ -37,6 +40,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -370,6 +374,22 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
+	case nutanixtypes.Name:
+		mpool := defaultNutanixMachinePoolPlatform()
+		mpool.NumCPUs = 8
+		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Nutanix)
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+			return errors.Wrap(err, "failed to generate Cluster API machine manifests for control-plane")
+		}
+		pool.Platform.Nutanix = &mpool
+		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
+
+		c.FileList, err = nutanixcapi.GenerateMachines(clusterID.InfraID, ic, &pool, templateName, "master")
+		if err != nil {
+			return fmt.Errorf("unable to generate CAPI machines for Nutanix %w", err)
+		}
+
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
@@ -427,6 +447,16 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		m.Filename = filepath.Join(capiutils.ManifestDir, m.Filename)
 	}
 	asset.SortManifestFiles(c.FileList)
+
+	// for debug
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		e1 := capiutils.PersistFiles(c.FileList, "debug")
+		if e1 != nil {
+			logrus.Errorf("failed to persist cluster-api machine manifests. %v", e1)
+			return fmt.Errorf("failed to persist cluster-api machine manifests. %v", e1)
+		}
+	}
+
 	return nil
 }
 

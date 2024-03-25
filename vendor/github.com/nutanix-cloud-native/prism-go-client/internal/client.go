@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -18,6 +18,7 @@ import (
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	"github.com/hashicorp/go-cleanhttp"
 	"go.uber.org/zap"
 
 	"github.com/nutanix-cloud-native/prism-go-client"
@@ -62,7 +63,8 @@ type Client struct {
 	// error message, incase httpClient is in error state
 	ErrorMsg string
 
-	logger *logr.Logger
+	logger   *logr.Logger
+	certpool *x509.CertPool
 }
 
 type ClientOption func(*Client) error
@@ -79,6 +81,25 @@ func WithLogger(logger *logr.Logger) ClientOption {
 func WithCredentials(credentials *prismgoclient.Credentials) ClientOption {
 	return func(c *Client) error {
 		c.credentials = credentials
+		if c.credentials.Insecure {
+			transport, ok := c.httpClient.Transport.(*http.Transport)
+			if !ok {
+				return fmt.Errorf("transport is not of type http.Transport: %T", c.httpClient.Transport)
+			}
+			transport.TLSClientConfig.InsecureSkipVerify = true
+		}
+		if c.credentials.ProxyURL != "" {
+			c.logger.V(1).Info("Using proxy:", "proxy", c.credentials.ProxyURL)
+			proxy, err := url.Parse(c.credentials.ProxyURL)
+			if err != nil {
+				return fmt.Errorf("error parsing proxy url: %s", err)
+			}
+			transport, ok := c.httpClient.Transport.(*http.Transport)
+			if !ok {
+				return fmt.Errorf("transport is not of type http.Transport: %T", c.httpClient.Transport)
+			}
+			transport.Proxy = http.ProxyURL(proxy)
+		}
 		return nil
 	}
 }
@@ -129,25 +150,57 @@ func WithAbsolutePath(absolutePath string) ClientOption {
 	}
 }
 
+// WithCertificate adds the certificate to the certificate pool in tls config
+func WithCertificate(cert *x509.Certificate) ClientOption {
+	return func(c *Client) error {
+		if cert == nil {
+			return fmt.Errorf("certificate is nil")
+		}
+		c.certpool.AddCert(cert)
+		return nil
+	}
+}
+
+// WithRoundTripper overrides the transport for the httpClient
+// Overriding transport is useful for testing against API Mocks
+// This is not recommended for production use
+func WithRoundTripper(transport http.RoundTripper) ClientOption {
+	return func(c *Client) error {
+		c.httpClient.Transport = transport
+		return nil
+	}
+}
+
 // NewClient returns a wrapper around http/https (as per isHTTP flag) httpClient with additions of proxy & session_auth if given
 func NewClient(opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		httpClient: http.DefaultClient,
+		httpClient: cleanhttp.DefaultClient(),
 	}
+
+	certPool, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system cert pool: %s", err)
+	}
+	c.certpool = certPool
+
+	c.httpClient.Transport = http.DefaultTransport
+	c.httpClient.Transport.(*http.Transport).TLSClientConfig = &tls.Config{}
+	c.httpClient.Transport.(*http.Transport).TLSClientConfig.RootCAs = c.certpool
+
+	// If the user does not specify a logger, then we'll use zap for a default one
+	// If the user specified a logger, then we'll use that logger
+	zapLog, err := zap.NewProduction()
+	if err != nil {
+		return nil, err
+	}
+
+	logger := zapr.NewLogger(zapLog)
+	c.logger = &logger
+
 	for _, opt := range opts {
 		if err := opt(c); err != nil {
 			return nil, err
 		}
-	}
-
-	// If the user does not specify a logger, then we'll use zap for a default one
-	if c.logger == nil {
-		zapLog, err := zap.NewProduction()
-		if err != nil {
-			return nil, err
-		}
-		logger := zapr.NewLogger(zapLog)
-		c.logger = &logger
 	}
 
 	if c.UserAgent == "" {
@@ -165,22 +218,6 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 			return nil, err
 		}
 	}
-
-	transCfg := &http.Transport{
-		// to skip/unskip SSL certificate validation
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: c.credentials.Insecure,
-		},
-	}
-	if c.credentials.ProxyURL != "" {
-		c.logger.V(1).Info("Using proxy:", "proxy", c.credentials.ProxyURL)
-		proxy, err := url.Parse(c.credentials.ProxyURL)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing proxy url: %s", err)
-		}
-		transCfg.Proxy = http.ProxyURL(proxy)
-	}
-	c.httpClient.Transport = transCfg
 
 	if c.credentials.SessionAuth {
 		c.logger.V(1).Info("Using session_auth")
@@ -583,12 +620,12 @@ func CheckResponse(r *http.Response) error {
 		return fmt.Errorf("invalid Nutanix credentials")
 	}
 
-	buf, err := ioutil.ReadAll(r.Body)
+	buf, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
 
-	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdr2 := io.NopCloser(bytes.NewBuffer(buf))
 
 	r.Body = rdr2
 	// if has entities -> return nil

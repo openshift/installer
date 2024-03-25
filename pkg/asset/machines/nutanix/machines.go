@@ -47,7 +47,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if len(failureDomains) > 0 {
 			failureDomain = failureDomains[idx%int64(len(failureDomains))]
 		}
-		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret, failureDomain)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, failureDomain)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create provider: %w", err)
 		}
@@ -140,7 +140,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string, failureDomain *nutanix.FailureDomain) (*machinev1.NutanixMachineProviderConfig, error) {
+func provider(platform *nutanix.Platform, mpool *nutanix.MachinePool, osImage string, userDataSecret string, failureDomain *nutanix.FailureDomain) (*machinev1.NutanixMachineProviderConfig, error) {
 	// cluster
 	peUUID := platform.PrismElements[0].UUID
 	if failureDomain != nil {

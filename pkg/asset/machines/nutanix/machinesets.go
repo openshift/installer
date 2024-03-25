@@ -76,7 +76,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			name = fmt.Sprintf("%s-%v", name, idx)
 		}
 
-		provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret, failureDomain)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, failureDomain)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create provider: %w", err)
 		}
