@@ -109,7 +109,7 @@ require (
 	k8s.io/api v0.29.3
 	k8s.io/apiextensions-apiserver v0.29.3
 	k8s.io/apimachinery v0.29.3
-	k8s.io/client-go v0.29.3
+	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
@@ -319,3 +319,5 @@ replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 replace google.golang.org/api => google.golang.org/api v0.157.0
 
 replace sigs.k8s.io/cluster-api-provider-openstack => github.com/openshift/cluster-api-provider-openstack v0.9.1-0.20240426092531-c42a4659d6c0
+
+replace k8s.io/client-go => k8s.io/client-go v0.29.3
