@@ -25,9 +25,11 @@ func newAgentCmd(ctx context.Context) *cobra.Command {
 		},
 	}
 
+	ctx, _ = handleInterrupt(ctx, exitOnInterrupt)
+
 	agentCmd.AddCommand(newAgentCreateCmd(ctx))
-	agentCmd.AddCommand(agent.NewWaitForCmd())
-	agentCmd.AddCommand(newAgentGraphCmd())
+	agentCmd.AddCommand(agent.NewWaitForCmd(ctx))
+	agentCmd.AddCommand(newAgentGraphCmd(ctx))
 	return agentCmd
 }
 
@@ -136,14 +138,14 @@ func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func newAgentGraphCmd() *cobra.Command {
+func newAgentGraphCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Outputs the internal dependency graph for the agent-based installer",
 		Long:  "",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGraphCmd(cmd, args, agentTargets)
+			return runGraphCmd(ctx, cmd, args, agentTargets)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")

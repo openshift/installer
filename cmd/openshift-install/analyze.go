@@ -27,6 +27,8 @@ func newAnalyzeCmd(ctx context.Context) *cobra.Command {
 This command helps users to analyze the reasons for an installation that failed while bootstrapping.`,
 		Args: cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
+			_, _ = handleInterrupt(ctx, exitOnInterrupt)
+
 			gatherBundle := analyzeOpts.gatherBundle
 			if gatherBundle == "" {
 				var err error

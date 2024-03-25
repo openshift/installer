@@ -177,7 +177,7 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	//
 	timer.StartTimer("Bootstrap Complete")
 	if err := waitForBootstrapComplete(ctx, config); err != nil {
-		bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
+		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
 		if gatherErr != nil {
 			logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 		}
@@ -944,7 +944,6 @@ func IsSingleNode() (bool, error) {
 func handleInterrupt(signalCtx context.Context, shutdown func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(context.Background())
 	logrus.RegisterExitHandler(cancel)
-
 	go func() {
 		<-signalCtx.Done()
 		logrus.Warn("Received interrupt signal")
@@ -964,8 +963,8 @@ func shutdownCAPISystem() {
 	}
 }
 
-// exitOnInterrupt can be used to exit the SIGINT trap if no
-// shutdown operations are needed upon interrupt.
+// exitOnInterrupt exits immediately with the interrupt exit code.
+// It should be used if no shutdown operations are needed upon user interrupt.
 func exitOnInterrupt() {
 	logrus.Exit(exitCodeInterrupt)
 }

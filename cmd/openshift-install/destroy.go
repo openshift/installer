@@ -52,9 +52,7 @@ func newDestroyClusterCmd(ctx context.Context) *cobra.Command {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			_, _ = handleInterrupt(ctx, exitOnInterrupt)
-
-			err := runDestroyCmd(command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
+			err := runDestroyCmd(ctx, command.RootOpts.Dir, os.Getenv("OPENSHIFT_INSTALL_REPORT_QUOTA_FOOTPRINT") == "true")
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -63,12 +61,19 @@ func newDestroyClusterCmd(ctx context.Context) *cobra.Command {
 	}
 }
 
-func runDestroyCmd(directory string, reportQuota bool) error {
+func runDestroyCmd(ctx context.Context, directory string, reportQuota bool) error {
 	timer.StartTimer(timer.TotalTimeElapsed)
 	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
+
+	// Destroy cluster does not need shutdown procedures,
+	// so just exit on user interrupt.
+	// TODO: if the destroyer interface is extended to
+	// accept a context, use this one.
+	_, _ = handleInterrupt(ctx, exitOnInterrupt)
+
 	quota, err := destroyer.Run()
 	if err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
@@ -126,8 +131,10 @@ func newDestroyBootstrapCmd(ctx context.Context) *cobra.Command {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
+			ctx, _ = handleInterrupt(ctx, exitOnInterrupt)
+
 			timer.StartTimer(timer.TotalTimeElapsed)
-			err := bootstrap.Destroy(context.TODO(), command.RootOpts.Dir)
+			err := bootstrap.Destroy(ctx, command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}
