@@ -17,7 +17,6 @@ limitations under the License.
 package cos
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -92,36 +91,28 @@ func (s *Service) PutPublicAccessBlock(input *s3.PutPublicAccessBlockInput) (*s3
 }
 
 // NewService returns a new service for the IBM Cloud Resource Controller api client.
-// TODO(karthik-k-n): pass location as a part of options.
-func NewService(options ServiceOptions, location, apikey, serviceInstance string) (*Service, error) {
+func NewService(options ServiceOptions, apikey, serviceInstance string) (*Service, error) {
 	if options.Options == nil {
 		options.Options = &cosSession.Options{}
 	}
-	serviceEndpoint := fmt.Sprintf("s3.%s.%s", location, cosURLDomain)
-	// TODO(karthik-k-n): handle URL
-	options.Config = aws.Config{
-		Endpoint: &serviceEndpoint,
-		Region:   &location,
-		HTTPClient: &http.Client{
-			Transport: &http.Transport{
-				Proxy: func(req *http.Request) (*url.URL, error) {
-					return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
-				},
-				DialContext: (&net.Dialer{
-					Timeout:   30 * time.Second,
-					KeepAlive: 30 * time.Second,
-					DualStack: true,
-				}).DialContext,
-				ForceAttemptHTTP2:     true,
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
+	options.Config.S3ForcePathStyle = aws.Bool(true)
+	options.Config.HTTPClient = &http.Client{
+		Transport: &http.Transport{
+			Proxy: func(req *http.Request) (*url.URL, error) {
+				return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
 			},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
 		},
-		S3ForcePathStyle: aws.Bool(true),
 	}
-
 	options.Config.Credentials = ibmiam.NewStaticCredentials(aws.NewConfig(), iamEndpoint, apikey, serviceInstance)
 
 	sess, err := cosSession.NewSessionWithOptions(*options.Options)

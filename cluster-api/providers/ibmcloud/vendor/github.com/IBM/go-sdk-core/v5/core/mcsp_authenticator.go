@@ -15,7 +15,6 @@ package core
 // limitations under the License.
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -111,7 +110,7 @@ func (builder *MCSPAuthenticatorBuilder) Build() (*MCSPAuthenticator, error) {
 	// Make sure the config is valid.
 	err := builder.MCSPAuthenticator.Validate()
 	if err != nil {
-		return nil, err
+		return nil, RepurposeSDKProblem(err, "validation-failed")
 	}
 
 	return &builder.MCSPAuthenticator, nil
@@ -140,7 +139,8 @@ func (authenticator *MCSPAuthenticator) client() *http.Client {
 // newMCSPAuthenticatorFromMap constructs a new MCSPAuthenticator instance from a map.
 func newMCSPAuthenticatorFromMap(properties map[string]string) (authenticator *MCSPAuthenticator, err error) {
 	if properties == nil {
-		return nil, fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
+		err = fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
+		return nil, SDKErrorf(err, "", "missing-props", getComponentInfo())
 	}
 
 	disableSSL, err := strconv.ParseBool(properties[PROPNAME_AUTH_DISABLE_SSL])
@@ -167,7 +167,7 @@ func (*MCSPAuthenticator) AuthenticationType() string {
 func (authenticator *MCSPAuthenticator) Authenticate(request *http.Request) error {
 	token, err := authenticator.GetToken()
 	if err != nil {
-		return err
+		return RepurposeSDKProblem(err, "get-token-fail")
 	}
 
 	request.Header.Set("Authorization", "Bearer "+token)
@@ -198,11 +198,13 @@ func (authenticator *MCSPAuthenticator) setTokenData(tokenData *mcspTokenData) {
 func (authenticator *MCSPAuthenticator) Validate() error {
 
 	if authenticator.ApiKey == "" {
-		return fmt.Errorf(ERRORMSG_PROP_MISSING, "ApiKey")
+		err := fmt.Errorf(ERRORMSG_PROP_MISSING, "ApiKey")
+		return SDKErrorf(err, "", "missing-api-key", getComponentInfo())
 	}
 
 	if authenticator.URL == "" {
-		return fmt.Errorf(ERRORMSG_PROP_MISSING, "URL")
+		err := fmt.Errorf(ERRORMSG_PROP_MISSING, "URL")
+		return SDKErrorf(err, "", "missing-url", getComponentInfo())
 	}
 
 	return nil
@@ -216,7 +218,7 @@ func (authenticator *MCSPAuthenticator) GetToken() (string, error) {
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()
 		if err != nil {
-			return "", err
+			return "", RepurposeSDKProblem(err, "request-token-fail")
 		}
 	} else if authenticator.getTokenData().needsRefresh() {
 		// If refresh needed, kick off a go routine in the background to get a new token.
@@ -226,7 +228,8 @@ func (authenticator *MCSPAuthenticator) GetToken() (string, error) {
 
 	// return an error if the access token is not valid or was not fetched
 	if authenticator.getTokenData() == nil || authenticator.getTokenData().AccessToken == "" {
-		return "", fmt.Errorf("Error while trying to get access token")
+		err := fmt.Errorf("Error while trying to get access token")
+		return "", SDKErrorf(err, "", "no-token", getComponentInfo())
 	}
 
 	return authenticator.getTokenData().AccessToken, nil
@@ -271,6 +274,7 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 	builder := NewRequestBuilder(POST)
 	_, err := builder.ResolveRequestURL(authenticator.URL, mcspAuthOperationPath, nil)
 	if err != nil {
+		err = RepurposeSDKProblem(err, "url-resolve-error")
 		return nil, err
 	}
 
@@ -286,7 +290,7 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 
 	req, err := builder.Build()
 	if err != nil {
-		return nil, err
+		return nil, RepurposeSDKProblem(err, "request-build-error")
 	}
 
 	// If debug is enabled, then dump the request.
@@ -302,6 +306,7 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 	GetLogger().Debug("Invoking MCSP 'get token' operation: %s", builder.URL)
 	resp, err := authenticator.client().Do(req)
 	if err != nil {
+		err = SDKErrorf(err, "", "request-error", getComponentInfo())
 		return nil, err
 	}
 	GetLogger().Debug("Returned from MCSP 'get token' operation, received status code %d", resp.StatusCode)
@@ -317,22 +322,23 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		buff := new(bytes.Buffer)
-		_, _ = buff.ReadFrom(resp.Body)
+		detailedResponse, err := processErrorResponse(resp)
+		authError := authenticationErrorf(err, detailedResponse, "get_token", authenticator.getComponentInfo())
 
-		// Create a DetailedResponse to be included in the error below.
-		detailedResponse := &DetailedResponse{
-			StatusCode: resp.StatusCode,
-			Headers:    resp.Header,
-			RawResult:  buff.Bytes(),
+		// The err Summary is typically the message computed for the HTTPError instance in
+		// processErrorResponse(). If the response body is non-JSON, the message will be generic
+		// text based on the status code but authenticators have always used the stringified
+		// RawResult, so update that here for compatilibility.
+		errorMsg := err.Summary
+		if detailedResponse.RawResult != nil {
+			// RawResult is only populated if the response body is
+			// non-JSON and we couldn't extract a message.
+			errorMsg = string(detailedResponse.RawResult)
 		}
 
-		errorMsg := string(detailedResponse.RawResult)
-		if errorMsg == "" {
-			errorMsg =
-				fmt.Sprintf("unexpected status code %d received from MCSP token server %s", detailedResponse.StatusCode, builder.URL)
-		}
-		return nil, NewAuthenticationError(detailedResponse, fmt.Errorf(errorMsg))
+		authError.Summary = errorMsg
+
+		return nil, authError
 	}
 
 	tokenResponse := &MCSPTokenServerResponse{}
@@ -340,6 +346,10 @@ func (authenticator *MCSPAuthenticator) RequestToken() (*MCSPTokenServerResponse
 	defer resp.Body.Close() // #nosec G307
 
 	return tokenResponse, nil
+}
+
+func (authenticator *MCSPAuthenticator) getComponentInfo() *ProblemComponent {
+	return NewProblemComponent("mscp_token_server", "1.0")
 }
 
 // MCSPTokenServerResponse : This struct models a response received from the token server.
@@ -360,7 +370,8 @@ type mcspTokenData struct {
 // MCSPTokenServerResponse instance.
 func newMCSPTokenData(tokenResponse *MCSPTokenServerResponse) (*mcspTokenData, error) {
 	if tokenResponse == nil || tokenResponse.Token == "" {
-		return nil, fmt.Errorf("Error while trying to parse access token!")
+		err := fmt.Errorf("Error while trying to parse access token!")
+		return nil, SDKErrorf(err, "", "token-parse", getComponentInfo())
 	}
 
 	// Need to crack open the access token (a JWT) to get the expiration and issued-at times

@@ -361,6 +361,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 
 		powervsMachines, err := powervs.GenerateMachines(
 			clusterID.InfraID,
+			ic,
 			&pool,
 			"master",
 		)

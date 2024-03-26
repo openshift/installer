@@ -85,6 +85,10 @@ func validIBMCloudPlatform() *ibmcloud.Platform {
 	}
 }
 
+func validSSHKey() string {
+	return "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD1+D0ns3LYRPeFK2nqOtVKBGueBQGdBLre5A+afvjaIj/QgtJuwv3rb6Uso8GMPbFlj693/b9BcV0TGxa5lC8cAGKrpxKUPvZ0WLRFLMP5HKBFf6+N4SQR9NKi7Liw8Km1GW9l+s/gMFz/ypANTg8PqvR4yglW+6jJEuKdCy/q14s9kEn4czifBzqiBw60gUiDdWbawl8yF+TxiqeKTCfw4HTeY6j1vui0ROuN2XAWgdH999rNAr1QY8BPMTjQJ5X7jeFgagq7u+snXgWycoDsn4fZP1XL91nQXLdZZgJ3T/qtjUbQt4wUuiqCu4cyN8KRoFQBtX9X7TKU8aH/Kkf+t67zS/SE0ZgvCkNr+iaqYVyHpmBoLh3AaWUYJ2bQ7fx9FvEGLcDYNkwqBED6VwuqB7nw+zGYVouGLs+2UKjfc+A1BOP0Q/2ACEkt1u5iLA+dfEC5nMMThIMNgXpjpsYLsGDKV+e9fEzrTphYtYs/XKaYlG634kGMk7wdgsHoTL0= localhost"
+}
+
 func validPowerVSPlatform() *powervs.Platform {
 	return &powervs.Platform{
 		Zone: "dal10",
@@ -1089,6 +1093,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid powervs platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.SSHKey = validSSHKey()
 				c.Platform = types.Platform{
 					PowerVS: validPowerVSPlatform(),
 				}
@@ -1099,6 +1104,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "valid powervs platform manual credential mod",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.SSHKey = validSSHKey()
 				c.Platform = types.Platform{
 					PowerVS: validPowerVSPlatform(),
 				}
@@ -1110,6 +1116,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid powervs platform mint credential mod",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.SSHKey = validSSHKey()
 				c.Platform = types.Platform{
 					PowerVS: validPowerVSPlatform(),
 				}
@@ -1122,6 +1129,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid powervs platform",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
+				c.SSHKey = validSSHKey()
 				c.Platform = types.Platform{
 					PowerVS: &powervs.Platform{},
 				}

@@ -15,7 +15,6 @@ package core
 // limitations under the License.
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -74,21 +73,24 @@ var cp4dNeedsRefreshMutex sync.Mutex
 // the NewCloudPakForDataAuthenticatorUsingPassword() function
 func NewCloudPakForDataAuthenticator(url string, username string, password string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return NewCloudPakForDataAuthenticatorUsingPassword(url, username, password, disableSSLVerification, headers)
+	auth, err := NewCloudPakForDataAuthenticatorUsingPassword(url, username, password, disableSSLVerification, headers)
+	return auth, RepurposeSDKProblem(err, "new-auth-fail")
 }
 
 // NewCloudPakForDataAuthenticatorUsingPassword constructs a new CloudPakForDataAuthenticator
 // instance from a username/password pair.
 func NewCloudPakForDataAuthenticatorUsingPassword(url string, username string, password string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return newAuthenticator(url, username, password, "", disableSSLVerification, headers)
+	auth, err := newAuthenticator(url, username, password, "", disableSSLVerification, headers)
+	return auth, RepurposeSDKProblem(err, "new-auth-password-fail")
 }
 
 // NewCloudPakForDataAuthenticatorUsingAPIKey constructs a new CloudPakForDataAuthenticator
 // instance from a username/apikey pair.
 func NewCloudPakForDataAuthenticatorUsingAPIKey(url string, username string, apikey string,
 	disableSSLVerification bool, headers map[string]string) (*CloudPakForDataAuthenticator, error) {
-	return newAuthenticator(url, username, "", apikey, disableSSLVerification, headers)
+	auth, err := newAuthenticator(url, username, "", apikey, disableSSLVerification, headers)
+	return auth, RepurposeSDKProblem(err, "new-auth-apikey-fail")
 }
 
 func newAuthenticator(url string, username string, password string, apikey string,
@@ -115,7 +117,8 @@ func newAuthenticator(url string, username string, password string, apikey strin
 // newCloudPakForDataAuthenticatorFromMap : Constructs a new CloudPakForDataAuthenticator instance from a map.
 func newCloudPakForDataAuthenticatorFromMap(properties map[string]string) (*CloudPakForDataAuthenticator, error) {
 	if properties == nil {
-		return nil, fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
+		err := fmt.Errorf(ERRORMSG_PROPS_MAP_NIL)
+		return nil, SDKErrorf(err, "", "missing-props", getComponentInfo())
 	}
 
 	disableSSL, err := strconv.ParseBool(properties[PROPNAME_AUTH_DISABLE_SSL])
@@ -140,17 +143,20 @@ func (*CloudPakForDataAuthenticator) AuthenticationType() string {
 func (authenticator *CloudPakForDataAuthenticator) Validate() error {
 
 	if authenticator.Username == "" {
-		return fmt.Errorf(ERRORMSG_PROP_MISSING, "Username")
+		err := fmt.Errorf(ERRORMSG_PROP_MISSING, "Username")
+		return SDKErrorf(err, "", "no-user", getComponentInfo())
 	}
 
 	// The user should specify exactly one of APIKey or Password.
 	if (authenticator.APIKey == "" && authenticator.Password == "") ||
 		(authenticator.APIKey != "" && authenticator.Password != "") {
-		return fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "APIKey", "Password")
+		err := fmt.Errorf(ERRORMSG_EXCLUSIVE_PROPS_ERROR, "APIKey", "Password")
+		return SDKErrorf(err, "", "exc-props", getComponentInfo())
 	}
 
 	if authenticator.URL == "" {
-		return fmt.Errorf(ERRORMSG_PROP_MISSING, "URL")
+		err := fmt.Errorf(ERRORMSG_PROP_MISSING, "URL")
+		return SDKErrorf(err, "", "no-url", getComponentInfo())
 	}
 
 	return nil
@@ -185,7 +191,7 @@ func (authenticator *CloudPakForDataAuthenticator) client() *http.Client {
 func (authenticator *CloudPakForDataAuthenticator) Authenticate(request *http.Request) error {
 	token, err := authenticator.GetToken()
 	if err != nil {
-		return err
+		return RepurposeSDKProblem(err, "get-token-fail")
 	}
 
 	request.Header.Set("Authorization", fmt.Sprintf(`Bearer %s`, token))
@@ -216,7 +222,7 @@ func (authenticator *CloudPakForDataAuthenticator) GetToken() (string, error) {
 		// synchronously request the token
 		err := authenticator.synchronizedRequestToken()
 		if err != nil {
-			return "", err
+			return "", RepurposeSDKProblem(err, "request-token-fail")
 		}
 	} else if authenticator.getTokenData().needsRefresh() {
 		// If refresh needed, kick off a go routine in the background to get a new token
@@ -226,7 +232,8 @@ func (authenticator *CloudPakForDataAuthenticator) GetToken() (string, error) {
 
 	// return an error if the access token is not valid or was not fetched
 	if authenticator.getTokenData() == nil || authenticator.getTokenData().AccessToken == "" {
-		return "", fmt.Errorf("Error while trying to get access token")
+		err := fmt.Errorf("Error while trying to get access token")
+		return "", SDKErrorf(err, "", "no-token", getComponentInfo())
 	}
 
 	return authenticator.getTokenData().AccessToken, nil
@@ -325,6 +332,7 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 	GetLogger().Debug("Invoking CP4D token service operation: %s", builder.URL)
 	resp, err := authenticator.client().Do(req)
 	if err != nil {
+		err = SDKErrorf(err, "", "cp4d-request-error", getComponentInfo())
 		return
 	}
 	GetLogger().Debug("Returned from CP4D token service operation, received status code %d", resp.StatusCode)
@@ -340,17 +348,22 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		buff := new(bytes.Buffer)
-		_, _ = buff.ReadFrom(resp.Body)
+		detailedResponse, responseError := processErrorResponse(resp)
+		err = authenticationErrorf(responseError, detailedResponse, "authorize", authenticator.getComponentInfo())
 
-		// Create a DetailedResponse to be included in the error below.
-		detailedResponse := &DetailedResponse{
-			StatusCode: resp.StatusCode,
-			Headers:    resp.Header,
-			RawResult:  buff.Bytes(),
+		// The err Summary is typically the message computed for the HTTPError instance in
+		// processErrorResponse(). If the response body is non-JSON, the message will be generic
+		// text based on the status code but authenticators have always used the stringified
+		// RawResult, so update that here for compatilibility.
+		errorMsg := responseError.Summary
+		if detailedResponse.RawResult != nil {
+			// RawResult is only populated if the response body is
+			// non-JSON and we couldn't extract a message.
+			errorMsg = string(detailedResponse.RawResult)
 		}
 
-		err = NewAuthenticationError(detailedResponse, fmt.Errorf(buff.String()))
+		err.(*AuthenticationError).Summary = errorMsg
+
 		return
 	}
 
@@ -359,11 +372,16 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 	defer resp.Body.Close() // #nosec G307
 	if err != nil {
 		err = fmt.Errorf(ERRORMSG_UNMARSHAL_AUTH_RESPONSE, err.Error())
+		err = SDKErrorf(err, "", "cp4d-res-unmarshal-error", getComponentInfo())
 		tokenResponse = nil
 		return
 	}
 
 	return
+}
+
+func (authenticator *CloudPakForDataAuthenticator) getComponentInfo() *ProblemComponent {
+	return NewProblemComponent("cp4d_token_service", "v1")
 }
 
 // cp4dTokenServerResponse is a struct that models a response received from the token server.

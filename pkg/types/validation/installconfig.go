@@ -921,7 +921,12 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 		})
 	}
 	if platform.PowerVS != nil {
-		validate(powervs.Name, platform.PowerVS, func(f *field.Path) field.ErrorList { return powervsvalidation.ValidatePlatform(platform.PowerVS, f) })
+		if c.SSHKey == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("sshKey"), "sshKey is required"))
+		}
+		validate(powervs.Name, platform.PowerVS, func(f *field.Path) field.ErrorList {
+			return powervsvalidation.ValidatePlatform(platform.PowerVS, f)
+		})
 	}
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList {

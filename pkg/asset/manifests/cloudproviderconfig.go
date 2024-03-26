@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	ibmcloudmachines "github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	nutanixmanifests "github.com/openshift/installer/pkg/asset/manifests/nutanix"
@@ -255,7 +256,21 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 
 		if len(vpcSubnets) == 0 {
-			vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
+			if capiutils.IsEnabled(installConfig) {
+				// The PowerVS CAPI provider generates three subnets.  One for
+				// each of the endpoint.
+				// @TODO the provider should export a function which gives us
+				// an array
+				for i := 1; i <= 3; i++ {
+					vpcSubnets = append(vpcSubnets,
+						fmt.Sprintf("%s-vpcsubnet-%s-%d",
+							clusterID.InfraID,
+							vpcRegion,
+							i))
+				}
+			} else {
+				vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
+			}
 		}
 
 		var (

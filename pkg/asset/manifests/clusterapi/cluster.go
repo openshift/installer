@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
+	"github.com/openshift/installer/pkg/asset/manifests/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/asset/openshiftinstall"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -28,6 +30,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -121,6 +124,13 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = openstack.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate OpenStack manifests")
+		}
+	case powervstypes.Name:
+		var err error
+		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
+		out, err = powervs.GenerateClusterAssets(installConfig, clusterID, osImage[0], osImage[1])
+		if err != nil {
+			return fmt.Errorf("failed to generate PowerVS manifests %w", err)
 		}
 	default:
 		return fmt.Errorf("unsupported platform %q", platform)

@@ -121,6 +121,10 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.
 		return field.Invalid(field.NewPath("spec.zone"), r.Spec.Zone, "value of zone is empty")
 	}
 
+	if r.Spec.VPC == nil {
+		return field.Invalid(field.NewPath("spec.vpc"), r.Spec.VPC, "value of VPC is empty")
+	}
+
 	if r.Spec.VPC.Region == nil {
 		return field.Invalid(field.NewPath("spec.vpc.region"), r.Spec.VPC.Region, "value of VPC region is empty")
 	}

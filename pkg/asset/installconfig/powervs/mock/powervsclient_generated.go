@@ -39,6 +39,48 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// AddSecurityGroupRule mocks base method.
+func (m *MockAPI) AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSecurityGroupRule", ctx, securityGroupID, rule)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddSecurityGroupRule indicates an expected call of AddSecurityGroupRule.
+func (mr *MockAPIMockRecorder) AddSecurityGroupRule(ctx, securityGroupID, rule interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSecurityGroupRule", reflect.TypeOf((*MockAPI)(nil).AddSecurityGroupRule), ctx, securityGroupID, rule)
+}
+
+// CreateDNSRecord mocks base method.
+func (m *MockAPI) CreateDNSRecord(ctx context.Context, crnstr, baseDomain, hostname, cname string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDNSRecord", ctx, crnstr, baseDomain, hostname, cname)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateDNSRecord indicates an expected call of CreateDNSRecord.
+func (mr *MockAPIMockRecorder) CreateDNSRecord(ctx, crnstr, baseDomain, hostname, cname interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDNSRecord", reflect.TypeOf((*MockAPI)(nil).CreateDNSRecord), ctx, crnstr, baseDomain, hostname, cname)
+}
+
+// CreateSSHKey mocks base method.
+func (m *MockAPI) CreateSSHKey(ctx context.Context, serviceInstance, zone, sshKeyName, sshKey string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSSHKey", ctx, serviceInstance, zone, sshKeyName, sshKey)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateSSHKey indicates an expected call of CreateSSHKey.
+func (mr *MockAPIMockRecorder) CreateSSHKey(ctx, serviceInstance, zone, sshKeyName, sshKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSSHKey", reflect.TypeOf((*MockAPI)(nil).CreateSSHKey), ctx, serviceInstance, zone, sshKeyName, sshKey)
+}
+
 // GetAPIKey mocks base method.
 func (m *MockAPI) GetAPIKey() string {
 	m.ctrl.T.Helper()
@@ -246,6 +288,21 @@ func (m *MockAPI) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.Re
 func (mr *MockAPIMockRecorder) ListResourceGroups(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListResourceGroups", reflect.TypeOf((*MockAPI)(nil).ListResourceGroups), ctx)
+}
+
+// ListSecurityGroupRules mocks base method.
+func (m *MockAPI) ListSecurityGroupRules(ctx context.Context, securityGroupID string) (*vpcv1.SecurityGroupRuleCollection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSecurityGroupRules", ctx, securityGroupID)
+	ret0, _ := ret[0].(*vpcv1.SecurityGroupRuleCollection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSecurityGroupRules indicates an expected call of ListSecurityGroupRules.
+func (mr *MockAPIMockRecorder) ListSecurityGroupRules(ctx, securityGroupID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSecurityGroupRules", reflect.TypeOf((*MockAPI)(nil).ListSecurityGroupRules), ctx, securityGroupID)
 }
 
 // ListServiceInstances mocks base method.

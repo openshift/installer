@@ -1,18 +1,17 @@
 # See the OWNERS docs: https://git.k8s.io/community/contributors/guide/owners.md
 
 approvers:
-- gyliu513
-- jichenjc
 - mkumatag
+- Prajyot-Parab
 
 reviewers:
-- gyliu513
-- jichenjc
 - mkumatag
-- relyt0925
 - spzala
-- wentao-zh
 - Prajyot-Parab
+- Amulyam24
+- Karthik-K-N
 
 emeritus_approvers:
 - xunpan
+- gyliu513
+- jichenjc

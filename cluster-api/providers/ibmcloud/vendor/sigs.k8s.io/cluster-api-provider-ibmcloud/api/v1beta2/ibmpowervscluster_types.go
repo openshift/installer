@@ -112,11 +112,12 @@ type IBMPowerVSClusterSpec struct {
 	TransitGateway *TransitGateway `json:"transitGateway,omitempty"`
 
 	// loadBalancers is optional configuration for configuring loadbalancers to control plane or data plane nodes.
-	// when omitted system will create a public loadbalancer with name CLUSTER_NAME-loadbalancer.
+	// when omitted system will create a default public loadbalancer with name CLUSTER_NAME-loadbalancer.
 	// when specified a vpc loadbalancer will be created and controlPlaneEndpoint will be set with associated hostname of loadbalancer.
 	// ControlPlaneEndpoint will be set with associated hostname of public loadbalancer.
 	// when LoadBalancers[].ID is set, its expected that there exist a loadbalancer with ID or else system will give error.
 	// when LoadBalancers[].Name is set, system will first check for loadbalancer with Name, if not exist system will create new loadbalancer.
+	// For each loadbalancer a default backed pool and front listener will be configured with port 6443.
 	// +optional
 	LoadBalancers []VPCLoadBalancerSpec `json:"loadBalancers,omitempty"`
 
