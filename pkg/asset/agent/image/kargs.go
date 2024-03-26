@@ -33,7 +33,8 @@ func (a *Kargs) Generate(dependencies asset.Parents) error {
 		a.consoleArgs = " console=ttyS0"
 	}
 
-	a.fips = agentClusterInstall.FIPSEnabled()
+	// a.fips = agentClusterInstall.FIPSEnabled()
+	a.fips = false
 
 	return nil
 }

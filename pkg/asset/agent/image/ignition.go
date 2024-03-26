@@ -68,6 +68,7 @@ type agentTemplateData struct {
 	Proxy                     *v1beta1.Proxy
 	ConfigImageFiles          string
 	ImageTypeISO              string
+	WorkflowType              string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -89,6 +90,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&agentconfig.AgentHosts{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+		&manifests.KubeConfigFile{},
 	}
 }
 
@@ -98,7 +100,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests)
+	kubeConfig := &manifests.KubeConfigFile{}
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, kubeConfig)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -123,9 +126,15 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
+	agentWorkflowType := "addnodes"
+
 	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentHostsAsset.Hosts, agentManifests.NMStateConfigs)
 	if err != nil {
 		return err
+	}
+
+	if agentWorkflowType == "addnodes" {
+		nodeZeroIP = "127.0.0.1"
 	}
 
 	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
@@ -171,15 +180,21 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
-	clusterName := fmt.Sprintf("%s.%s",
-		agentManifests.ClusterDeployment.Spec.ClusterName,
-		agentManifests.ClusterDeployment.Spec.BaseDomain)
+	var clusterName string
+
+	if kubeConfig.Config != nil {
+		clusterName = kubeConfig.Config.Clusters[0].Name
+	} else {
+		clusterName = fmt.Sprintf("%s.%s",
+			agentManifests.ClusterDeployment.Spec.ClusterName,
+			agentManifests.ClusterDeployment.Spec.BaseDomain)
+	}
 
 	imageTypeISO := "full-iso"
-	platform := agentManifests.AgentClusterInstall.Spec.PlatformType
-	if platform == hiveext.ExternalPlatformType {
-		imageTypeISO = "minimal-iso"
-	}
+	// platform := agentManifests.AgentClusterInstall.Spec.PlatformType
+	// if platform == hiveext.ExternalPlatformType {
+	// 	imageTypeISO = "minimal-iso"
+	// }
 
 	agentTemplateData := getTemplateData(
 		clusterName,
@@ -193,16 +208,24 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		infraEnvID,
 		osImage,
 		infraEnv.Spec.Proxy,
-		imageTypeISO)
+		imageTypeISO,
+		agentConfigAsset.Config,
+		agentWorkflowType)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
 		return err
 	}
 
+	apiVipDnsname := ""
+	if kubeConfig.Config != nil {
+		url, _ := url.Parse(kubeConfig.Config.Clusters[0].Cluster.Server)
+		apiVipDnsname = url.Hostname()
+	}
+
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP, apiVipDnsname))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -231,7 +254,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	enabledServices := getDefaultEnabledServices()
+	enabledServices := getDefaultEnabledServices(agentWorkflowType)
 	// Enable pre-network-manager-config.service only when there are network configs defined
 	if len(agentManifests.StaticNetworkConfigs) != 0 {
 		enabledServices = append(enabledServices, "pre-network-manager-config.service")
@@ -260,12 +283,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getDefaultEnabledServices() []string {
-	return []string{
+func getDefaultEnabledServices(workflowType string) []string {
+	enabledServices := []string{
 		"agent-interactive-console.service",
 		"agent-interactive-console-serial@.service",
 		"agent-register-infraenv.service",
-		"agent-register-cluster.service",
 		"agent.service",
 		"assisted-service-db.service",
 		"assisted-service-pod.service",
@@ -277,6 +299,16 @@ func getDefaultEnabledServices() []string {
 		"set-hostname.service",
 		"start-cluster-installation.service",
 	}
+
+	if workflowType == "install" {
+		enabledServices = append(enabledServices, "agent-register-cluster.service")
+	}
+
+	if workflowType == "addnodes" {
+		enabledServices = append(enabledServices, "agent-import-cluster.service")
+	}
+
+	return enabledServices
 }
 
 func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err error) {
@@ -309,12 +341,26 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
-	imageTypeISO string) *agentTemplateData {
+	imageTypeISO string,
+	agentConfig *agent.Config,
+	workflowType string) *agentTemplateData {
+
+	cpAgents := 0
+	wrkAgents := 0
+
+	if agentClusterInstall != nil {
+		cpAgents = agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
+		wrkAgents = agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
+	} else {
+		// Let's assume they are all workers
+		wrkAgents = len(agentConfig.Hosts)
+	}
+
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
-		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ControlPlaneAgents:        cpAgents,
+		WorkerAgents:              wrkAgents,
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              releaseImage,
 		ReleaseImageMirror:        releaseImageMirror,
@@ -325,10 +371,11 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
+		WorkflowType:              workflowType,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP, apiVipDnsname string) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -343,7 +390,8 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
 	return fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String())
+API_VIP_DNSNAME=%s
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), apiVipDnsname)
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {
