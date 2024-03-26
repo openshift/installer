@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 GOCMD=go
 GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
+GOINSTALL=$(GOCMD) install
 GOTOOL=$(GOCMD) tool
 EXPORT_RESULT?=false # for CI please set EXPORT_RESULT to true
 # Image URL to use all building/pushing image targets
@@ -16,7 +16,8 @@ IMG_TAG := latest
 endif
 
 ifeq (${LOCAL_PROVIDER_VERSION},latest)
-LOCAL_PROVIDER_VERSION := v0.0.0
+# Change this versions after release when required here and in e2e config (test/e2e/config/nutanix.yaml)
+LOCAL_PROVIDER_VERSION := v1.3.99
 endif
 
 # PLATFORMS is a list of platforms to build for.
@@ -53,7 +54,8 @@ export PATH := $(abspath $(TOOLS_BIN_DIR)):$(PATH)
 # CNI paths for e2e tests
 CNI_PATH_CALICO ?= "${E2E_DIR}/data/cni/calico/calico.yaml"
 CNI_PATH_FLANNEL ?= "${E2E_DIR}/data/cni/flannel/flannel.yaml" # From https://github.com/flannel-io/flannel/blob/master/Documentation/kube-flannel.yml
-CNI_PATH_CILIUM ?= "${E2E_DIR}/data/cni/cilium/cilium.yaml" # helm template cilium cilium/cilium --version 1.13.0 -n kube-system --set hubble.enabled=false | sed 's/${BIN_PATH}/$BIN_PATH/g'
+CNI_PATH_CILIUM ?= "${E2E_DIR}/data/cni/cilium/cilium.yaml" # helm template cilium cilium/cilium --version 1.13.0 -n kube-system --set hubble.enabled=false --set cni.chainingMode=portmap  --set sessionAffinity=true | sed 's/${BIN_PATH}/$BIN_PATH/g'
+CNI_PATH_CILIUM_NO_KUBEPROXY ?= "${E2E_DIR}/data/cni/cilium/cilium-no-kubeproxy.yaml" # helm template cilium cilium/cilium --version 1.13.0 -n kube-system --set hubble.enabled=false --set cni.chainingMode=portmap  --set sessionAffinity=true --set kubeProxyReplacement=strict | sed 's/${BIN_PATH}/$BIN_PATH/g'
 
 #
 # Binaries.
@@ -79,7 +81,7 @@ SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-CONTROLLER_GEN_VER := v0.8.0
+CONTROLLER_GEN_VER := v0.14.0
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER))
 CONTROLLER_GEN_PKG := sigs.k8s.io/controller-tools/cmd/controller-gen
@@ -117,10 +119,15 @@ CONVERSION_VERIFIER := $(abspath $(TOOLS_BIN_DIR)/$(CONVERSION_VERIFIER_BIN))
 TILT_PREPARE_BIN := tilt-prepare
 TILT_PREPARE := $(abspath $(TOOLS_BIN_DIR)/$(TILT_PREPARE_BIN))
 
-GOLANGCI_LINT_VER := v1.44.0
+GOLANGCI_LINT_VER := v1.55.2
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN))
-GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint
+
+# Install clusterctl that corresponds to the cluster-api go mod version
+CLUSTERCTL_VER := $(shell go list -m sigs.k8s.io/cluster-api | cut -d" " -f2)
+CLUSTERCTL_RELEASE_URL := https://github.com/kubernetes-sigs/cluster-api/releases/download/$(CLUSTERCTL_VER)/clusterctl-$(shell go env GOOS)-$(shell go env GOARCH)
+CLUSTERCTL_BIN := clusterctl
+CLUSTERCTL := $(abspath $(TOOLS_BIN_DIR)/$(CLUSTERCTL_BIN))
 
 # CRD_OPTIONS define options to add to the CONTROLLER_GEN
 CRD_OPTIONS ?= "crd:crdVersions=v1"
@@ -130,6 +137,21 @@ ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
+endif
+
+# Get latest git hash
+GIT_COMMIT_HASH=$(shell git rev-parse HEAD)
+
+# Get the local image registry required for clusterctl upgrade tests
+LOCAL_IMAGE_REGISTRY ?= localhost:5000
+
+ifeq (${MAKECMDGOALS},test-e2e-clusterctl-upgrade)
+	IMG_TAG=e2e-${GIT_COMMIT_HASH}
+	IMG_REPO=${LOCAL_IMAGE_REGISTRY}/controller
+endif
+
+ifeq (${MAKECMDGOALS},docker-build-e2e)
+	IMG_TAG=e2e-${GIT_COMMIT_HASH}
 endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -150,6 +172,7 @@ ifneq ($(LABEL_FILTERS),)
 endif
 JUNIT_REPORT_FILE ?= "junit.e2e_suite.1.xml"
 GINKGO_SKIP ?= "clusterctl-Upgrade"
+GINKGO_FOCUS ?= ""
 GINKGO_NODES  ?= 1
 E2E_CONF_FILE  ?= ${E2E_DIR}/config/nutanix.yaml
 ARTIFACTS ?= ${REPO_ROOT}/_artifacts
@@ -160,6 +183,11 @@ FLAVOR ?= e2e
 
 TEST_NAMESPACE=capx-test-ns
 TEST_CLUSTER_NAME=mycluster
+
+# set ginkgo focus flags, if any
+ifneq ($(strip $(GINKGO_FOCUS)),)
+_FOCUS_ARGS := $(foreach arg,$(strip $(GINKGO_FOCUS)),--focus="$(arg)")
+endif
 
 # to set multiple ginkgo skip flags, if any
 ifneq ($(strip $(GINKGO_SKIP)),)
@@ -189,7 +217,7 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN_BIN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: release-manifests
@@ -200,7 +228,7 @@ release-manifests: manifests cluster-templates
 	cp $(REPO_ROOT)/metadata.yaml $(RELEASE_DIR)/metadata.yaml
 
 .PHONY: generate
-generate: controller-gen conversion-gen ## Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject method implementations and API conversion implementations.
+generate: $(CONTROLLER_GEN_BIN) $(CONVERSION_GEN_BIN) ## Generate code containing DeepCopy, DeepCopyInto, DeepCopyObject method implementations and API conversion implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 	$(CONVERSION_GEN) \
@@ -228,7 +256,8 @@ kind-delete: ## Delete the kind cluster
 
 .PHONY: build
 build: generate fmt ## Build manager binary.
-	go build -o bin/manager main.go
+	echo "Git commit hash: ${GIT_COMMIT_HASH}"
+	go build -ldflags "-X main.gitCommitHash=${GIT_COMMIT_HASH}" -o bin/manager main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -236,7 +265,8 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: $(KO) ## Build docker image with the manager.
-	KO_DOCKER_REPO=ko.local $(KO) build -B --platform=${PLATFORMS} -t ${IMG_TAG} -L .
+	echo "Git commit hash: ${GIT_COMMIT_HASH}"
+	KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" $(KO) build -B --platform=${PLATFORMS} -t ${IMG_TAG} -L .
 
 .PHONY: docker-push
 docker-push: $(KO) ## Push docker image with the manager.
@@ -264,9 +294,9 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: manifests kustomize docker-push-kind ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	clusterctl delete --infrastructure nutanix:${LOCAL_PROVIDER_VERSION} --include-crd || true
-	clusterctl init --infrastructure nutanix:${LOCAL_PROVIDER_VERSION} -v 9
+deploy: manifests kustomize docker-push-kind $(CLUSTERCTL) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	$(CLUSTERCTL) delete --infrastructure nutanix:${LOCAL_PROVIDER_VERSION} --include-crd || true
+	$(CLUSTERCTL) init --infrastructure nutanix:${LOCAL_PROVIDER_VERSION} -v 9
 	# cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	# $(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -277,7 +307,10 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 ##@ Templates
 
 .PHONY: cluster-e2e-templates
-cluster-e2e-templates: $(KUSTOMIZE) cluster-e2e-templates-v1beta1 cluster-e2e-templates-v1alpha4 ## Generate cluster templates for all versions
+cluster-e2e-templates: $(KUSTOMIZE) cluster-e2e-templates-v1beta1 cluster-e2e-templates-v1alpha4 cluster-e2e-templates-v124 ## Generate cluster templates for all versions
+
+cluster-e2e-templates-v124: $(KUSTOMIZE) ## Generate cluster templates for CAPX v1.2.4
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1.2.4/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1.2.4/cluster-template.yaml
 
 cluster-e2e-templates-v1alpha4: $(KUSTOMIZE) ## Generate cluster templates for v1alpha4
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1alpha4/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1alpha4/cluster-template.yaml
@@ -289,59 +322,77 @@ cluster-e2e-templates-v1beta1: $(KUSTOMIZE) ## Generate cluster templates for v1
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-additional-categories --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-additional-categories.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-no-nmt --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-no-nmt.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-project --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-project.yaml
-	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-ccm --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-ccm.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-upgrades --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-upgrades.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-md-remediation --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-md-remediation.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-remediation --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-remediation.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-scale-in --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-scale-in.yaml
 	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-csi --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-csi.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-failure-domains --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-failure-domains.yaml
+
+cluster-e2e-templates-no-kubeproxy: $(KUSTOMIZE) ##Generate cluster templates without kubeproxy
+	# v1alpha4
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1alpha4/no-kubeproxy/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1alpha4/cluster-template.yaml
+
+	# v1beta1
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-no-secret --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-no-secret.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-no-nutanix-cluster --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-no-nutanix-cluster.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-additional-categories --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-additional-categories.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-no-nmt --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-no-nmt.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-project --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-project.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-upgrades --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-upgrades.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-md-remediation --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-md-remediation.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-kcp-remediation --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-remediation.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-kcp-scale-in --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-kcp-scale-in.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-csi --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-csi.yaml
+	$(KUSTOMIZE) build $(NUTANIX_E2E_TEMPLATES)/v1beta1/no-kubeproxy/cluster-template-failure-domains --load-restrictor LoadRestrictionsNone > $(NUTANIX_E2E_TEMPLATES)/v1beta1/cluster-template-failure-domains.yaml
 
 cluster-templates: $(KUSTOMIZE) ## Generate cluster templates for all flavors
 	$(KUSTOMIZE) build $(TEMPLATES_DIR)/base > $(TEMPLATES_DIR)/cluster-template.yaml
 	$(KUSTOMIZE) build $(TEMPLATES_DIR)/csi > $(TEMPLATES_DIR)/cluster-template-csi.yaml
-	$(KUSTOMIZE) build $(TEMPLATES_DIR)/ccm > $(TEMPLATES_DIR)/cluster-template-ccm.yaml
 
 ##@ Testing
 
 .PHONY: docker-build-e2e
 docker-build-e2e: $(KO) ## Build docker image with the manager with e2e tag.
-	KO_DOCKER_REPO=ko.local $(KO) build -B --platform=${PLATFORMS_E2E} -t e2e -L .
-	docker tag ko.local/cluster-api-provider-nutanix:e2e ${IMG_REPO}:e2e
+	echo "Git commit hash: ${GIT_COMMIT_HASH}"
+	KO_DOCKER_REPO=ko.local GOFLAGS="-ldflags=-X=main.gitCommitHash=${GIT_COMMIT_HASH}" $(KO) build -B --platform=${PLATFORMS_E2E} -t ${IMG_TAG} -L .
+	docker tag ko.local/cluster-api-provider-nutanix:${IMG_TAG} ${IMG_REPO}:e2e
 
 .PHONY: prepare-local-clusterctl
-prepare-local-clusterctl: manifests kustomize cluster-templates ## Prepare overide file for local clusterctl.
+prepare-local-clusterctl: manifests kustomize cluster-templates envsubst ## Prepare overide file for local clusterctl.
 	mkdir -p ~/.cluster-api/overrides/infrastructure-nutanix/${LOCAL_PROVIDER_VERSION}
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > ~/.cluster-api/overrides/infrastructure-nutanix/${LOCAL_PROVIDER_VERSION}/infrastructure-components.yaml
 	cp ./metadata.yaml ~/.cluster-api/overrides/infrastructure-nutanix/${LOCAL_PROVIDER_VERSION}/
 	cp ./templates/cluster-template*.yaml ~/.cluster-api/overrides/infrastructure-nutanix/${LOCAL_PROVIDER_VERSION}/
-	cp ./clusterctl.yaml ~/.cluster-api/clusterctl.yaml
+	env LOCAL_PROVIDER_VERSION=$(LOCAL_PROVIDER_VERSION) \
+		$(ENVSUBST) -no-unset -no-empty -no-digit < ./clusterctl.yaml > ~/.cluster-api/clusterctl.yaml
 
 .PHONY: unit-test
 unit-test: setup-envtest ## Run unit tests.
 ifeq ($(EXPORT_RESULT), true)
-	GO111MODULE=off $(GOGET) -u github.com/jstemmer/go-junit-report
+	$(GOINSTALL) github.com/jstemmer/go-junit-report/v2@latest
 	$(eval OUTPUT_OPTIONS = | go-junit-report -set-exit-code > junit-report.xml)
 endif
 	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) ./... $(OUTPUT_OPTIONS)
 
 .PHONY: coverage
 coverage: setup-envtest ## Run the tests of the project and export the coverage
-	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION)  --arch=amd64 -p path)" $(GOTEST) -cover -covermode=count -coverprofile=profile.cov ./...
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use $(ENVTEST_K8S_VERSION) --arch=amd64 -p path)" $(GOTEST) -cover -covermode=count -coverprofile=profile.cov -coverpkg=./... ./...
 	$(GOTOOL) cover -func profile.cov
 ifeq ($(EXPORT_RESULT), true)
-	GO111MODULE=off $(GOGET) -u github.com/AlekSi/gocov-xml
-	GO111MODULE=off $(GOGET) -u github.com/axw/gocov/gocov
+	$(GOINSTALL) github.com/AlekSi/gocov-xml@latest
+	$(GOINSTALL) github.com/axw/gocov/gocov@latest
 	gocov convert profile.cov | gocov-xml > coverage.xml
 endif
 
 .PHONY: test-clusterctl-create
-test-clusterctl-create: ## Run the tests using clusterctl
-	which clusterctl
-	clusterctl version
-	clusterctl config repositories | grep nutanix
-	clusterctl generate cluster ${TEST_CLUSTER_NAME} -i nutanix:${LOCAL_PROVIDER_VERSION} --list-variables -v 10
-	clusterctl generate cluster ${TEST_CLUSTER_NAME} -i nutanix:${LOCAL_PROVIDER_VERSION} --target-namespace ${TEST_NAMESPACE}  -v 10 > ./cluster.yaml
+test-clusterctl-create: $(CLUSTERCTL) ## Run the tests using clusterctl
+	$(CLUSTERCTL) version
+	$(CLUSTERCTL) config repositories | grep nutanix
+	$(CLUSTERCTL) generate cluster ${TEST_CLUSTER_NAME} -i nutanix:${LOCAL_PROVIDER_VERSION} --list-variables -v 10
+	$(CLUSTERCTL) generate cluster ${TEST_CLUSTER_NAME} -i nutanix:${LOCAL_PROVIDER_VERSION} --target-namespace ${TEST_NAMESPACE}  -v 10 > ./cluster.yaml
 	kubectl create ns $(TEST_NAMESPACE) || true
 	kubectl apply -f ./cluster.yaml -n $(TEST_NAMESPACE)
 
@@ -376,6 +427,28 @@ test-e2e: docker-build-e2e $(GINKGO_BIN) cluster-e2e-templates cluster-templates
 		--tags=e2e \
 		--label-filter=$(LABEL_FILTER_ARGS) \
 		$(_SKIP_ARGS) \
+		$(_FOCUS_ARGS) \
+		--nodes=$(GINKGO_NODES) \
+		--no-color=$(GINKGO_NOCOLOR) \
+		--output-dir="$(ARTIFACTS)" \
+		--junit-report=${JUNIT_REPORT_FILE} \
+		--timeout="24h" \
+		--always-emit-ginkgo-writer \
+		$(GINKGO_ARGS) ./test/e2e -- \
+		-e2e.artifacts-folder="$(ARTIFACTS)" \
+		-e2e.config="$(E2E_CONF_FILE)" \
+		-e2e.skip-resource-cleanup=$(SKIP_RESOURCE_CLEANUP) \
+		-e2e.use-existing-cluster=$(USE_EXISTING_CLUSTER)
+
+.PHONY: test-e2e-no-kubeproxy
+test-e2e-no-kubeproxy: docker-build-e2e $(GINKGO_BIN) cluster-e2e-templates-no-kubeproxy cluster-templates ## Run the end-to-end tests without kubeproxy
+	mkdir -p $(ARTIFACTS)
+	NUTANIX_LOG_LEVEL=debug $(GINKGO) -v \
+		--trace \
+		--progress \
+		--tags=e2e \
+		--label-filter=$(LABEL_FILTER_ARGS) \
+		$(_SKIP_ARGS) \
 		--nodes=$(GINKGO_NODES) \
 		--no-color=$(GINKGO_NOCOLOR) \
 		--output-dir="$(ARTIFACTS)" \
@@ -402,7 +475,6 @@ list-e2e: docker-build-e2e $(GINKGO_BIN) cluster-e2e-templates cluster-templates
 test-e2e-calico:
 	CNI=$(CNI_PATH_CALICO) $(MAKE) test-e2e
 
-
 .PHONY: test-e2e-flannel
 test-e2e-flannel:
 	CNI=$(CNI_PATH_FLANNEL) $(MAKE) test-e2e
@@ -411,9 +483,19 @@ test-e2e-flannel:
 test-e2e-cilium:
 	CNI=$(CNI_PATH_CILIUM) $(MAKE) test-e2e
 
-.PHONY: test-e2e-all-cni
-test-e2e-all-cni: test-e2e test-e2e-calico test-e2e-flannel test-e2e-cilium
+.PHONY: test-e2e-cilium-no-kubeproxy
+test-e2e-cilium-no-kubeproxy:
+	CNI=$(CNI_PATH_CILIUM_NO_KUBEPROXY) $(MAKE) test-e2e-no-kubeproxy
 
+.PHONY: test-e2e-all-cni
+test-e2e-all-cni: test-e2e test-e2e-calico test-e2e-flannel test-e2e-cilium test-e2e-cilium-no-kubeproxy
+
+.PHONY: test-e2e-clusterctl-upgrade
+test-e2e-clusterctl-upgrade: docker-build-e2e $(GINKGO_BIN) cluster-e2e-templates cluster-templates ## Run the end-to-end tests
+	echo "Image tag for E2E test is ${IMG_TAG}"
+	docker tag ko.local/cluster-api-provider-nutanix:${IMG_TAG} ${IMG_REPO}:${IMG_TAG}
+	docker push ${IMG_REPO}:${IMG_TAG}
+	GINKGO_SKIP="" GIT_COMMIT="${GIT_COMMIT_HASH}" $(MAKE) test-e2e-calico
 
 ## --------------------------------------
 ## Hack / Tools
@@ -451,6 +533,9 @@ $(TILT_PREPARE_BIN): $(TILT_PREPARE) ## Build a local copy of tilt-prepare.
 
 .PHONY: $(GOLANGCI_LINT_BIN)
 $(GOLANGCI_LINT_BIN): $(GOLANGCI_LINT) ## Build a local copy of golangci-lint
+
+.PHONY: $(CLUSTERCTL_BIN)
+$(CLUSTERCTL_BIN): $(CLUSTERCTL) ## Build a local copy of clusterctl
 
 $(GINKGO): # Build ginkgo from tools folder.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(GINKGO_PKG) $(GINKGO_BIN) $(GINGKO_VER)
@@ -500,8 +585,14 @@ $(TILT_PREPARE): $(TOOLS_DIR)/go.mod # Build tilt-prepare from tools folder.
 $(KPROMO):
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(KPROMO_PKG) $(KPROMO_BIN) ${KPROMO_VER}
 
-$(GOLANGCI_LINT): # Build golangci-lint from tools folder
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(GOLANGCI_LINT_PKG) $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
+$(GOLANGCI_LINT): # building golanci-lint from source is not recommended, so we are using the install script
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_VER)
+
+$(CLUSTERCTL):
+# We don't install clusterctl using the go toolchain, because the upstream Makefile
+# is required to build clusterctl correctly. See https://github.com/kubernetes-sigs/cluster-api/issues/3706
+	curl -sSfL -o $(CLUSTERCTL) $(CLUSTERCTL_RELEASE_URL)
+	chmod u+x $(CLUSTERCTL)
 
 ## --------------------------------------
 ## Lint / Verify
@@ -509,15 +600,27 @@ $(GOLANGCI_LINT): # Build golangci-lint from tools folder
 
 ##@ Lint and Verify
 
+GOLANGCI_LINT_EXTRA_ARGS := --enable gofumpt --build-tags e2e
+
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Lint the codebase
 	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
-	cd $(TEST_DIR); $(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
-	cd $(TOOLS_DIR); $(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
-	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
+	GOLANGCI_LINT_EXTRA_ARGS="$(GOLANGCI_LINT_EXTRA_ARGS) --fix" $(MAKE) lint
+
+# Make any new verify task a dependency of this target
+.PHONY: verify ## Run all verify targets
+verify: verify-manifests
+
+# Adapted from https://github.com/kubernetes-sigs/cluster-api/blob/f15e8769a2135429911ce6d8f7124b853c0444a1/Makefile#L651-L656
+.PHONY: verify-manifests
+verify-manifests: manifests  ## Verify generated manifests are up to date
+	@if !(git diff --quiet HEAD); then \
+		git diff; \
+		echo "generated manifests are out of date in the repository, run make manifests, and commit"; exit 1; \
+	fi
 
 ## --------------------------------------
 ## Clean

@@ -10,8 +10,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -44,14 +43,19 @@ spec:
         description: NutanixCluster is the Schema for the nutanixclusters API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -59,9 +63,9 @@ spec:
             description: NutanixClusterSpec defines the desired state of NutanixCluster
             properties:
               controlPlaneEndpoint:
-                description: ControlPlaneEndpoint represents the endpoint used to
-                  communicate with the control plane. host can be either DNS name
-                  or ip address
+                description: |-
+                  ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
+                  host can be either DNS name or ip address
                 properties:
                   host:
                     description: The hostname on which the API server is serving.
@@ -74,19 +78,103 @@ spec:
                 - host
                 - port
                 type: object
+              failureDomains:
+                description: |-
+                  failureDomains configures failure domains information for the Nutanix platform.
+                  When set, the failure domains defined here may be used to spread Machines across
+                  prism element clusters to improve fault tolerance of the cluster.
+                items:
+                  description: NutanixFailureDomain configures failure domain information
+                    for Nutanix.
+                  properties:
+                    cluster:
+                      description: |-
+                        cluster is to identify the cluster (the Prism Element under management of the Prism Central),
+                        in which the Machine's VM will be created. The cluster identifier (uuid or name) can be obtained
+                        from the Prism Central console or using the prism_central API.
+                      properties:
+                        name:
+                          description: name is the resource name in the PC
+                          type: string
+                        type:
+                          description: Type is the identifier type to use for this
+                            resource.
+                          enum:
+                          - uuid
+                          - name
+                          type: string
+                        uuid:
+                          description: uuid is the UUID of the resource in the PC.
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    controlPlane:
+                      description: indicates if a failure domain is suited for control
+                        plane nodes
+                      type: boolean
+                    name:
+                      description: |-
+                        name defines the unique name of a failure domain.
+                        Name is required and must be at most 64 characters in length.
+                        It must consist of only lower case alphanumeric characters and hyphens (-).
+                        It must start and end with an alphanumeric character.
+                        This value is arbitrary and is used to identify the failure domain within the platform.
+                      maxLength: 64
+                      minLength: 1
+                      pattern: '[a-z0-9]([-a-z0-9]*[a-z0-9])?'
+                      type: string
+                    subnets:
+                      description: |-
+                        subnets holds a list of identifiers (one or more) of the cluster's network subnets
+                        for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
+                        obtained from the Prism Central console or using the prism_central API.
+                      items:
+                        description: NutanixResourceIdentifier holds the identity
+                          of a Nutanix PC resource (cluster, image, subnet, etc.)
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      minItems: 1
+                      type: array
+                      x-kubernetes-list-map-keys:
+                      - type
+                      x-kubernetes-list-type: map
+                  required:
+                  - cluster
+                  - name
+                  - subnets
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               prismCentral:
-                description: prismCentral holds the endpoint address and port to access
-                  the Nutanix Prism Central. When a cluster-wide proxy is installed,
-                  by default, this endpoint will be accessed via the proxy. Should
-                  you wish for communication with this endpoint not to be proxied,
-                  please add the endpoint to the proxy spec.noProxy list.
+                description: |-
+                  prismCentral holds the endpoint address and port to access the Nutanix Prism Central.
+                  When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy.
+                  Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the
+                  proxy spec.noProxy list.
                 properties:
                   additionalTrustBundle:
-                    description: AdditionalTrustBundle is a PEM encoded x509 cert
-                      for the RootCA that was used to create the certificate for a
-                      Prism Central that uses certificates that were issued by a non-publicly
-                      trusted RootCA. The trust bundle is added to the cert pool used
-                      to authenticate the TLS connection to the Prism Central.
+                    description: |-
+                      AdditionalTrustBundle is a PEM encoded x509 cert for the RootCA that was used to create the certificate
+                      for a Prism Central that uses certificates that were issued by a non-publicly trusted RootCA. The trust
+                      bundle is added to the cert pool used to authenticate the TLS connection to the Prism Central.
                     properties:
                       data:
                         description: Data of the trust bundle if Kind is String.
@@ -107,6 +195,10 @@ spec:
                     - kind
                     type: object
                   address:
+                    anyOf:
+                    - format: hostname
+                    - format: ipv4
+                    - format: ipv6
                     description: address is the endpoint address (DNS name or IP address)
                       of the Nutanix Prism Central or Element (cluster)
                     maxLength: 256
@@ -158,37 +250,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - status
@@ -197,9 +289,9 @@ spec:
                 type: array
               failureDomains:
                 additionalProperties:
-                  description: FailureDomainSpec is the Schema for Cluster API failure
-                    domains. It allows controllers to understand how many failure
-                    domains a cluster can optionally span across.
+                  description: |-
+                    FailureDomainSpec is the Schema for Cluster API failure domains.
+                    It allows controllers to understand how many failure domains a cluster can optionally span across.
                   properties:
                     attributes:
                       additionalProperties:
@@ -243,14 +335,19 @@ spec:
         description: NutanixCluster is the Schema for the nutanixclusters API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -258,9 +355,9 @@ spec:
             description: NutanixClusterSpec defines the desired state of NutanixCluster
             properties:
               controlPlaneEndpoint:
-                description: ControlPlaneEndpoint represents the endpoint used to
-                  communicate with the control plane. host can be either DNS name
-                  or ip address
+                description: |-
+                  ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
+                  host can be either DNS name or ip address
                 properties:
                   host:
                     description: The hostname on which the API server is serving.
@@ -273,19 +370,103 @@ spec:
                 - host
                 - port
                 type: object
+              failureDomains:
+                description: |-
+                  failureDomains configures failure domains information for the Nutanix platform.
+                  When set, the failure domains defined here may be used to spread Machines across
+                  prism element clusters to improve fault tolerance of the cluster.
+                items:
+                  description: NutanixFailureDomain configures failure domain information
+                    for Nutanix.
+                  properties:
+                    cluster:
+                      description: |-
+                        cluster is to identify the cluster (the Prism Element under management of the Prism Central),
+                        in which the Machine's VM will be created. The cluster identifier (uuid or name) can be obtained
+                        from the Prism Central console or using the prism_central API.
+                      properties:
+                        name:
+                          description: name is the resource name in the PC
+                          type: string
+                        type:
+                          description: Type is the identifier type to use for this
+                            resource.
+                          enum:
+                          - uuid
+                          - name
+                          type: string
+                        uuid:
+                          description: uuid is the UUID of the resource in the PC.
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    controlPlane:
+                      description: indicates if a failure domain is suited for control
+                        plane nodes
+                      type: boolean
+                    name:
+                      description: |-
+                        name defines the unique name of a failure domain.
+                        Name is required and must be at most 64 characters in length.
+                        It must consist of only lower case alphanumeric characters and hyphens (-).
+                        It must start and end with an alphanumeric character.
+                        This value is arbitrary and is used to identify the failure domain within the platform.
+                      maxLength: 64
+                      minLength: 1
+                      pattern: '[a-z0-9]([-a-z0-9]*[a-z0-9])?'
+                      type: string
+                    subnets:
+                      description: |-
+                        subnets holds a list of identifiers (one or more) of the cluster's network subnets
+                        for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
+                        obtained from the Prism Central console or using the prism_central API.
+                      items:
+                        description: NutanixResourceIdentifier holds the identity
+                          of a Nutanix PC resource (cluster, image, subnet, etc.)
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      minItems: 1
+                      type: array
+                      x-kubernetes-list-map-keys:
+                      - type
+                      x-kubernetes-list-type: map
+                  required:
+                  - cluster
+                  - name
+                  - subnets
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               prismCentral:
-                description: prismCentral holds the endpoint address and port to access
-                  the Nutanix Prism Central. When a cluster-wide proxy is installed,
-                  by default, this endpoint will be accessed via the proxy. Should
-                  you wish for communication with this endpoint not to be proxied,
-                  please add the endpoint to the proxy spec.noProxy list.
+                description: |-
+                  prismCentral holds the endpoint address and port to access the Nutanix Prism Central.
+                  When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy.
+                  Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the
+                  proxy spec.noProxy list.
                 properties:
                   additionalTrustBundle:
-                    description: AdditionalTrustBundle is a PEM encoded x509 cert
-                      for the RootCA that was used to create the certificate for a
-                      Prism Central that uses certificates that were issued by a non-publicly
-                      trusted RootCA. The trust bundle is added to the cert pool used
-                      to authenticate the TLS connection to the Prism Central.
+                    description: |-
+                      AdditionalTrustBundle is a PEM encoded x509 cert for the RootCA that was used to create the certificate
+                      for a Prism Central that uses certificates that were issued by a non-publicly trusted RootCA. The trust
+                      bundle is added to the cert pool used to authenticate the TLS connection to the Prism Central.
                     properties:
                       data:
                         description: Data of the trust bundle if Kind is String.
@@ -306,6 +487,10 @@ spec:
                     - kind
                     type: object
                   address:
+                    anyOf:
+                    - format: hostname
+                    - format: ipv4
+                    - format: ipv6
                     description: address is the endpoint address (DNS name or IP address)
                       of the Nutanix Prism Central or Element (cluster)
                     maxLength: 256
@@ -357,37 +542,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -397,9 +582,9 @@ spec:
                 type: array
               failureDomains:
                 additionalProperties:
-                  description: FailureDomainSpec is the Schema for Cluster API failure
-                    domains. It allows controllers to understand how many failure
-                    domains a cluster can optionally span across.
+                  description: |-
+                    FailureDomainSpec is the Schema for Cluster API failure domains.
+                    It allows controllers to understand how many failure domains a cluster can optionally span across.
                   properties:
                     attributes:
                       additionalProperties:
@@ -428,19 +613,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -471,24 +649,25 @@ spec:
       jsonPath: .spec.providerID
       name: ProviderID
       type: string
-    - description: Corresponding workload cluster node
-      jsonPath: .status.nodeRef.name
-      name: NodeRef
-      type: string
     name: v1alpha4
     schema:
       openAPIV3Schema:
         description: NutanixMachine is the Schema for the nutanixmachines API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -517,47 +696,57 @@ spec:
                 - uefi
                 type: string
               bootstrapRef:
-                description: BootstrapRef is a reference to a bootstrap provider-specific
-                  resource that holds configuration details.
+                description: |-
+                  BootstrapRef is a reference to a bootstrap provider-specific resource
+                  that holds configuration details.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               cluster:
-                description: cluster is to identify the cluster (the Prism Element
-                  under management of the Prism Central), in which the Machine's VM
-                  will be created. The cluster identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the prism_central API.
+                description: |-
+                  cluster is to identify the cluster (the Prism Element under management
+                  of the Prism Central), in which the Machine's VM will be created.
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -575,9 +764,10 @@ spec:
                 - type
                 type: object
               image:
-                description: image is to identify the rhcos image uploaded to the
-                  Prism Central (PC) The image identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the prism_central API.
+                description: |-
+                  image is to identify the rhcos image uploaded to the Prism Central (PC)
+                  The image identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -598,8 +788,9 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
-                description: memorySize is the memory size (in Quantity format) of
-                  the VM The minimum memorySize is 2Gi bytes
+                description: |-
+                  memorySize is the memory size (in Quantity format) of the VM
+                  The minimum memorySize is 2Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               project:
@@ -623,10 +814,10 @@ spec:
               providerID:
                 type: string
               subnet:
-                description: subnet is to identify the cluster's network subnet to
-                  use for the Machine's VM The cluster identifier (uuid or name) can
-                  be obtained from the Prism Central console or using the prism_central
-                  API.
+                description: |-
+                  subnet is to identify the cluster's network subnet to use for the Machine's VM
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 items:
                   description: NutanixResourceIdentifier holds the identity of a Nutanix
                     PC resource (cluster, image, subnet, etc.)
@@ -646,14 +837,14 @@ spec:
                   required:
                   - type
                   type: object
-                minItems: 1
                 type: array
               systemDiskSize:
                 anyOf:
                 - type: integer
                 - type: string
-                description: systemDiskSize is size (in Quantity format) of the system
-                  disk of the VM The minimum systemDiskSize is 20Gi bytes
+                description: |-
+                  systemDiskSize is size (in Quantity format) of the system disk of the VM
+                  The minimum systemDiskSize is 20Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               vcpuSockets:
@@ -668,11 +859,9 @@ spec:
                 minimum: 1
                 type: integer
             required:
-            - cluster
             - image
             - memorySize
             - providerID
-            - subnet
             - systemDiskSize
             - vcpuSockets
             - vcpusPerSocket
@@ -681,9 +870,9 @@ spec:
             description: NutanixMachineStatus defines the observed state of NutanixMachine
             properties:
               addresses:
-                description: Addresses contains the Nutanix VM associated addresses.
-                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS,
-                  InternalDNS
+                description: |-
+                  Addresses contains the Nutanix VM associated addresses.
+                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS, InternalDNS
                 items:
                   description: MachineAddress contains information for the node's
                     address.
@@ -707,37 +896,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - status
@@ -751,42 +940,51 @@ spec:
                 description: Will be set in case of failure of Machine instance
                 type: string
               nodeRef:
-                description: NodeRef is a reference to the corresponding workload
-                  cluster Node if it exists.
+                description: |-
+                  NodeRef is a reference to the corresponding workload cluster Node if it exists.
+                  Deprecated: Do not use. Will be removed in a future release.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
@@ -812,24 +1010,25 @@ spec:
       jsonPath: .spec.providerID
       name: ProviderID
       type: string
-    - description: Corresponding workload cluster node
-      jsonPath: .status.nodeRef.name
-      name: NodeRef
-      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
         description: NutanixMachine is the Schema for the nutanixmachines API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -858,47 +1057,57 @@ spec:
                 - uefi
                 type: string
               bootstrapRef:
-                description: BootstrapRef is a reference to a bootstrap provider-specific
-                  resource that holds configuration details.
+                description: |-
+                  BootstrapRef is a reference to a bootstrap provider-specific resource
+                  that holds configuration details.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               cluster:
-                description: cluster is to identify the cluster (the Prism Element
-                  under management of the Prism Central), in which the Machine's VM
-                  will be created. The cluster identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the prism_central API.
+                description: |-
+                  cluster is to identify the cluster (the Prism Element under management
+                  of the Prism Central), in which the Machine's VM will be created.
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -937,9 +1146,10 @@ spec:
                   type: object
                 type: array
               image:
-                description: image is to identify the rhcos image uploaded to the
-                  Prism Central (PC) The image identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the prism_central API.
+                description: |-
+                  image is to identify the rhcos image uploaded to the Prism Central (PC)
+                  The image identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -960,8 +1170,9 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
-                description: memorySize is the memory size (in Quantity format) of
-                  the VM The minimum memorySize is 2Gi bytes
+                description: |-
+                  memorySize is the memory size (in Quantity format) of the VM
+                  The minimum memorySize is 2Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               project:
@@ -985,10 +1196,10 @@ spec:
               providerID:
                 type: string
               subnet:
-                description: subnet is to identify the cluster's network subnet to
-                  use for the Machine's VM The cluster identifier (uuid or name) can
-                  be obtained from the Prism Central console or using the prism_central
-                  API.
+                description: |-
+                  subnet is to identify the cluster's network subnet to use for the Machine's VM
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 items:
                   description: NutanixResourceIdentifier holds the identity of a Nutanix
                     PC resource (cluster, image, subnet, etc.)
@@ -1008,14 +1219,14 @@ spec:
                   required:
                   - type
                   type: object
-                minItems: 1
                 type: array
               systemDiskSize:
                 anyOf:
                 - type: integer
                 - type: string
-                description: systemDiskSize is size (in Quantity format) of the system
-                  disk of the VM The minimum systemDiskSize is 20Gi bytes
+                description: |-
+                  systemDiskSize is size (in Quantity format) of the system disk of the VM
+                  The minimum systemDiskSize is 20Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               vcpuSockets:
@@ -1030,11 +1241,9 @@ spec:
                 minimum: 1
                 type: integer
             required:
-            - cluster
             - image
             - memorySize
             - providerID
-            - subnet
             - systemDiskSize
             - vcpuSockets
             - vcpusPerSocket
@@ -1043,9 +1252,9 @@ spec:
             description: NutanixMachineStatus defines the observed state of NutanixMachine
             properties:
               addresses:
-                description: Addresses contains the Nutanix VM associated addresses.
-                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS,
-                  InternalDNS
+                description: |-
+                  Addresses contains the Nutanix VM associated addresses.
+                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS, InternalDNS
                 items:
                   description: MachineAddress contains information for the node's
                     address.
@@ -1069,37 +1278,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -1114,42 +1323,51 @@ spec:
                 description: Will be set in case of failure of Machine instance
                 type: string
               nodeRef:
-                description: NodeRef is a reference to the corresponding workload
-                  cluster Node if it exists.
+                description: |-
+                  NodeRef is a reference to the corresponding workload cluster Node if it exists.
+                  Deprecated: Do not use. Will be removed in a future release.
                 properties:
                   apiVersion:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
+                      TODO: this design is not final and this field is subject to change in the future.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
@@ -1162,19 +1380,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.14.0
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
     cluster.x-k8s.io/v1beta1: v1beta1
@@ -1199,14 +1410,19 @@ spec:
           API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1218,24 +1434,27 @@ spec:
                   to create a NutanixMachine from a template
                 properties:
                   metadata:
-                    description: 'Standard object metadata. Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    description: |-
+                      Standard object metadata.
+                      Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
                     properties:
                       annotations:
                         additionalProperties:
                           type: string
-                        description: 'Annotations is an unstructured key value map
-                          stored with a resource that may be set by external tools
-                          to store and retrieve arbitrary metadata. They are not queryable
-                          and should be preserved when modifying objects. More info:
-                          http://kubernetes.io/docs/user-guide/annotations'
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
                         type: object
                       labels:
                         additionalProperties:
                           type: string
-                        description: 'Map of string keys and values that can be used
-                          to organize and categorize (scope and select) objects. May
-                          match selectors of replication controllers and services.
-                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
                         type: object
                     type: object
                   spec:
@@ -1264,48 +1483,56 @@ spec:
                         - uefi
                         type: string
                       bootstrapRef:
-                        description: BootstrapRef is a reference to a bootstrap provider-specific
-                          resource that holds configuration details.
+                        description: |-
+                          BootstrapRef is a reference to a bootstrap provider-specific resource
+                          that holds configuration details.
                         properties:
                           apiVersion:
                             description: API version of the referent.
                             type: string
                           fieldPath:
-                            description: 'If referring to a piece of an object instead
-                              of an entire object, this string should contain a valid
-                              JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                              For example, if the object reference is to a container
-                              within a pod, this would take on a value like: "spec.containers{name}"
-                              (where "name" refers to the name of the container that
-                              triggered the event) or if no container name is specified
-                              "spec.containers[2]" (container with index 2 in this
-                              pod). This syntax is chosen only to have some well-defined
-                              way of referencing a part of an object. TODO: this design
-                              is not final and this field is subject to change in
-                              the future.'
+                            description: |-
+                              If referring to a piece of an object instead of an entire object, this string
+                              should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                              For example, if the object reference is to a container within a pod, this would take on a value like:
+                              "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                              the event) or if no container name is specified "spec.containers[2]" (container with
+                              index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                              referencing a part of an object.
+                              TODO: this design is not final and this field is subject to change in the future.
                             type: string
                           kind:
-                            description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                            description: |-
+                              Kind of the referent.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                             type: string
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                            description: |-
+                              Name of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                             type: string
                           namespace:
-                            description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                            description: |-
+                              Namespace of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                             type: string
                           resourceVersion:
-                            description: 'Specific resourceVersion to which this reference
-                              is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                            description: |-
+                              Specific resourceVersion to which this reference is made, if any.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                             type: string
                           uid:
-                            description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                            description: |-
+                              UID of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                             type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       cluster:
-                        description: cluster is to identify the cluster (the Prism
-                          Element under management of the Prism Central), in which
-                          the Machine's VM will be created. The cluster identifier
-                          (uuid or name) can be obtained from the Prism Central console
+                        description: |-
+                          cluster is to identify the cluster (the Prism Element under management
+                          of the Prism Central), in which the Machine's VM will be created.
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
                           or using the prism_central API.
                         properties:
                           name:
@@ -1325,10 +1552,10 @@ spec:
                         - type
                         type: object
                       image:
-                        description: image is to identify the rhcos image uploaded
-                          to the Prism Central (PC) The image identifier (uuid or
-                          name) can be obtained from the Prism Central console or
-                          using the prism_central API.
+                        description: |-
+                          image is to identify the rhcos image uploaded to the Prism Central (PC)
+                          The image identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
                         properties:
                           name:
                             description: name is the resource name in the PC
@@ -1350,8 +1577,9 @@ spec:
                         anyOf:
                         - type: integer
                         - type: string
-                        description: memorySize is the memory size (in Quantity format)
-                          of the VM The minimum memorySize is 2Gi bytes
+                        description: |-
+                          memorySize is the memory size (in Quantity format) of the VM
+                          The minimum memorySize is 2Gi bytes
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       project:
@@ -1377,9 +1605,9 @@ spec:
                       providerID:
                         type: string
                       subnet:
-                        description: subnet is to identify the cluster's network subnet
-                          to use for the Machine's VM The cluster identifier (uuid
-                          or name) can be obtained from the Prism Central console
+                        description: |-
+                          subnet is to identify the cluster's network subnet to use for the Machine's VM
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
                           or using the prism_central API.
                         items:
                           description: NutanixResourceIdentifier holds the identity
@@ -1402,15 +1630,14 @@ spec:
                           required:
                           - type
                           type: object
-                        minItems: 1
                         type: array
                       systemDiskSize:
                         anyOf:
                         - type: integer
                         - type: string
-                        description: systemDiskSize is size (in Quantity format) of
-                          the system disk of the VM The minimum systemDiskSize is
-                          20Gi bytes
+                        description: |-
+                          systemDiskSize is size (in Quantity format) of the system disk of the VM
+                          The minimum systemDiskSize is 20Gi bytes
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       vcpuSockets:
@@ -1426,11 +1653,9 @@ spec:
                         minimum: 1
                         type: integer
                     required:
-                    - cluster
                     - image
                     - memorySize
                     - providerID
-                    - subnet
                     - systemDiskSize
                     - vcpuSockets
                     - vcpusPerSocket
@@ -1451,14 +1676,19 @@ spec:
           API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -1470,24 +1700,27 @@ spec:
                   to create a NutanixMachine from a template
                 properties:
                   metadata:
-                    description: 'Standard object metadata. Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    description: |-
+                      Standard object metadata.
+                      Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
                     properties:
                       annotations:
                         additionalProperties:
                           type: string
-                        description: 'Annotations is an unstructured key value map
-                          stored with a resource that may be set by external tools
-                          to store and retrieve arbitrary metadata. They are not queryable
-                          and should be preserved when modifying objects. More info:
-                          http://kubernetes.io/docs/user-guide/annotations'
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
                         type: object
                       labels:
                         additionalProperties:
                           type: string
-                        description: 'Map of string keys and values that can be used
-                          to organize and categorize (scope and select) objects. May
-                          match selectors of replication controllers and services.
-                          More info: http://kubernetes.io/docs/user-guide/labels'
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
                         type: object
                     type: object
                   spec:
@@ -1516,48 +1749,56 @@ spec:
                         - uefi
                         type: string
                       bootstrapRef:
-                        description: BootstrapRef is a reference to a bootstrap provider-specific
-                          resource that holds configuration details.
+                        description: |-
+                          BootstrapRef is a reference to a bootstrap provider-specific resource
+                          that holds configuration details.
                         properties:
                           apiVersion:
                             description: API version of the referent.
                             type: string
                           fieldPath:
-                            description: 'If referring to a piece of an object instead
-                              of an entire object, this string should contain a valid
-                              JSON/Go field access statement, such as desiredState.manifest.containers[2].
-                              For example, if the object reference is to a container
-                              within a pod, this would take on a value like: "spec.containers{name}"
-                              (where "name" refers to the name of the container that
-                              triggered the event) or if no container name is specified
-                              "spec.containers[2]" (container with index 2 in this
-                              pod). This syntax is chosen only to have some well-defined
-                              way of referencing a part of an object. TODO: this design
-                              is not final and this field is subject to change in
-                              the future.'
+                            description: |-
+                              If referring to a piece of an object instead of an entire object, this string
+                              should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                              For example, if the object reference is to a container within a pod, this would take on a value like:
+                              "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                              the event) or if no container name is specified "spec.containers[2]" (container with
+                              index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                              referencing a part of an object.
+                              TODO: this design is not final and this field is subject to change in the future.
                             type: string
                           kind:
-                            description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                            description: |-
+                              Kind of the referent.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                             type: string
                           name:
-                            description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                            description: |-
+                              Name of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                             type: string
                           namespace:
-                            description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                            description: |-
+                              Namespace of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                             type: string
                           resourceVersion:
-                            description: 'Specific resourceVersion to which this reference
-                              is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                            description: |-
+                              Specific resourceVersion to which this reference is made, if any.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                             type: string
                           uid:
-                            description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                            description: |-
+                              UID of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                             type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       cluster:
-                        description: cluster is to identify the cluster (the Prism
-                          Element under management of the Prism Central), in which
-                          the Machine's VM will be created. The cluster identifier
-                          (uuid or name) can be obtained from the Prism Central console
+                        description: |-
+                          cluster is to identify the cluster (the Prism Element under management
+                          of the Prism Central), in which the Machine's VM will be created.
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
                           or using the prism_central API.
                         properties:
                           name:
@@ -1600,10 +1841,10 @@ spec:
                           type: object
                         type: array
                       image:
-                        description: image is to identify the rhcos image uploaded
-                          to the Prism Central (PC) The image identifier (uuid or
-                          name) can be obtained from the Prism Central console or
-                          using the prism_central API.
+                        description: |-
+                          image is to identify the rhcos image uploaded to the Prism Central (PC)
+                          The image identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
                         properties:
                           name:
                             description: name is the resource name in the PC
@@ -1625,8 +1866,9 @@ spec:
                         anyOf:
                         - type: integer
                         - type: string
-                        description: memorySize is the memory size (in Quantity format)
-                          of the VM The minimum memorySize is 2Gi bytes
+                        description: |-
+                          memorySize is the memory size (in Quantity format) of the VM
+                          The minimum memorySize is 2Gi bytes
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       project:
@@ -1652,9 +1894,9 @@ spec:
                       providerID:
                         type: string
                       subnet:
-                        description: subnet is to identify the cluster's network subnet
-                          to use for the Machine's VM The cluster identifier (uuid
-                          or name) can be obtained from the Prism Central console
+                        description: |-
+                          subnet is to identify the cluster's network subnet to use for the Machine's VM
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
                           or using the prism_central API.
                         items:
                           description: NutanixResourceIdentifier holds the identity
@@ -1677,15 +1919,14 @@ spec:
                           required:
                           - type
                           type: object
-                        minItems: 1
                         type: array
                       systemDiskSize:
                         anyOf:
                         - type: integer
                         - type: string
-                        description: systemDiskSize is size (in Quantity format) of
-                          the system disk of the VM The minimum systemDiskSize is
-                          20Gi bytes
+                        description: |-
+                          systemDiskSize is size (in Quantity format) of the system disk of the VM
+                          The minimum systemDiskSize is 20Gi bytes
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                       vcpuSockets:
@@ -1701,11 +1942,9 @@ spec:
                         minimum: 1
                         type: integer
                     required:
-                    - cluster
                     - image
                     - memorySize
                     - providerID
-                    - subnet
                     - systemDiskSize
                     - vcpuSockets
                     - vcpusPerSocket
@@ -1719,12 +1958,6 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -1777,7 +2010,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-nutanix
   name: capx-manager-role
@@ -2117,7 +2349,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/nutanix-cloud-native/cluster-api-provider-nutanix/controller:v1.2.4
+        image: ghcr.io/nutanix-cloud-native/cluster-api-provider-nutanix/controller:v1.3.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -2132,13 +2364,6 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
-        resources:
-          limits:
-            cpu: 40m
-            memory: 60Mi
-          requests:
-            cpu: 30m
-            memory: 50Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

@@ -1,9 +1,16 @@
 package capiutils
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	v1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -28,4 +35,20 @@ func IsEnabled(installConfig *installconfig.InstallConfig) bool {
 // from the cluster ID and machine type.
 func GenerateBoostrapMachineName(infraID string) string {
 	return infraID + "-bootstrap"
+}
+
+// PersistFiles writes the input files to local disk.
+func PersistFiles(fileList []*asset.RuntimeFile, subdir string) error {
+	dir := command.RootOpts.Dir
+	for _, f := range fileList {
+		path := filepath.Join(dir, subdir, f.Filename)
+		logrus.Debugf("persist cluster-api manifest file: %s", path)
+		if err := os.MkdirAll(filepath.Dir(path), 0750); err != nil {
+			return fmt.Errorf("failed to create dir %s. %w", path, err)
+		}
+		if err := os.WriteFile(path, f.Data, 0o640); err != nil { //nolint:gosec // no sensitive info
+			return fmt.Errorf("failed to write file %s. %w", path, err)
+		}
+	}
+	return nil
 }
