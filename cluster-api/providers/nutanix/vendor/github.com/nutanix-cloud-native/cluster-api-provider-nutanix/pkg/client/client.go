@@ -43,6 +43,9 @@ const (
 	capxNamespaceKey    = "POD_NAMESPACE"
 )
 
+var ErrPrismAddressNotSet = fmt.Errorf("cannot get credentials if Prism Address is not set")
+var ErrPrismPortNotSet = fmt.Errorf("cannot get credentials if Prism Port is not set")
+
 type NutanixClientHelper struct {
 	secretInformer    coreinformers.SecretInformer
 	configMapInformer coreinformers.ConfigMapInformer
@@ -64,14 +67,15 @@ func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nuta
 	prismCentralInfo := nutanixCluster.Spec.PrismCentral
 	if prismCentralInfo != nil {
 		if prismCentralInfo.Address == "" {
-			return nil, fmt.Errorf("cannot get credentials if Prism Address is not set")
+			return nil, ErrPrismAddressNotSet
 		}
 		if prismCentralInfo.Port == 0 {
-			return nil, fmt.Errorf("cannot get credentials if Prism Port is not set")
+			return nil, ErrPrismPortNotSet
 		}
-		credentialRef := prismCentralInfo.CredentialRef
-		if credentialRef == nil {
-			return nil, fmt.Errorf("credentialRef must be set on prismCentral attribute for cluster %s in namespace %s", nutanixCluster.Name, nutanixCluster.Namespace)
+		credentialRef, err := GetCredentialRefForCluster(nutanixCluster)
+		if err != nil {
+			//nolint:wrapcheck // error is alredy wrapped
+			return nil, err
 		}
 		// If namespace is empty, use the cluster namespace
 		if credentialRef.Namespace == "" {
@@ -94,7 +98,7 @@ func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nuta
 	// Add env provider for CAPX manager
 	npe, err := n.getManagerNutanixPrismEndpoint()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create prism endpoint: %w", err)
 	}
 	// If namespaces is not set, set it to the namespace of the CAPX manager
 	if npe.CredentialRef.Namespace == "" {
@@ -115,7 +119,6 @@ func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nuta
 		*npe,
 		n.secretInformer,
 		n.configMapInformer))
-
 	// init env with providers
 	env := environment.NewEnvironment(
 		providers...,
@@ -123,7 +126,7 @@ func (n *NutanixClientHelper) GetClientFromEnvironment(ctx context.Context, nuta
 	// fetch endpoint details
 	me, err := env.GetManagementEndpoint(envTypes.Topology{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get management endpoint object: %w", err)
 	}
 	creds := prismgoclient.Credentials{
 		URL:      me.Address.Host,
@@ -155,15 +158,14 @@ func (n *NutanixClientHelper) GetClient(cred prismgoclient.Credentials, addition
 	}
 	cli, err := nutanixClientV3.NewV3Client(cred, clientOpts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create new nutanix client: %w", err)
 	}
 
 	// Check if the client is working
 	_, err = cli.V3.GetCurrentLoggedInUser(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get current logged in user with client: %w", err)
 	}
-
 	return cli, nil
 }
 
@@ -171,10 +173,10 @@ func (n *NutanixClientHelper) getManagerNutanixPrismEndpoint() (*credentialTypes
 	npe := &credentialTypes.NutanixPrismEndpoint{}
 	config, err := n.readEndpointConfig()
 	if err != nil {
-		return npe, err
+		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 	if err = json.Unmarshal(config, npe); err != nil {
-		return npe, err
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 	if npe.CredentialRef == nil {
 		return nil, fmt.Errorf("credentialRef must be set on CAPX manager")
@@ -196,16 +198,16 @@ func GetCredentialRefForCluster(nutanixCluster *infrav1.NutanixCluster) (*creden
 	if nutanixCluster == nil {
 		return nil, fmt.Errorf("cannot get credential reference if nutanix cluster object is nil")
 	}
-	prismCentralinfo := nutanixCluster.Spec.PrismCentral
-	if prismCentralinfo == nil {
+	prismCentralInfo := nutanixCluster.Spec.PrismCentral
+	if prismCentralInfo == nil {
 		return nil, nil
 	}
-	if prismCentralinfo.CredentialRef == nil {
+	if prismCentralInfo.CredentialRef == nil {
 		return nil, fmt.Errorf("credentialRef must be set on prismCentral attribute for cluster %s in namespace %s", nutanixCluster.Name, nutanixCluster.Namespace)
 	}
-	if prismCentralinfo.CredentialRef.Kind != credentialTypes.SecretKind {
+	if prismCentralInfo.CredentialRef.Kind != credentialTypes.SecretKind {
 		return nil, nil
 	}
 
-	return prismCentralinfo.CredentialRef, nil
+	return prismCentralInfo.CredentialRef, nil
 }

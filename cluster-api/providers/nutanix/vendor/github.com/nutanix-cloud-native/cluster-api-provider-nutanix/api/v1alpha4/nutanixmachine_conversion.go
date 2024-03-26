@@ -47,6 +47,8 @@ func (dst *NutanixMachineList) ConvertFrom(srcRaw conversion.Hub) error { // nol
 }
 
 // Convert_v1alpha4_NutanixMachineSpec_To_v1beta1_NutanixMachineSpec converts NutanixMachineSpec in NutanixMachineResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1alpha4_NutanixMachineSpec_To_v1beta1_NutanixMachineSpec(in *NutanixMachineSpec, out *infrav1beta1.NutanixMachineSpec, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -54,6 +56,8 @@ func Convert_v1alpha4_NutanixMachineSpec_To_v1beta1_NutanixMachineSpec(in *Nutan
 }
 
 // Convert_v1beta1_NutanixMachineSpec_To_v1alpha4_NutanixMachineSpec converts NutanixMachineSpec in NutanixMachineResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1beta1_NutanixMachineSpec_To_v1alpha4_NutanixMachineSpec(in *infrav1beta1.NutanixMachineSpec, out *NutanixMachineSpec, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380
@@ -61,6 +65,8 @@ func Convert_v1beta1_NutanixMachineSpec_To_v1alpha4_NutanixMachineSpec(in *infra
 }
 
 // Convert_v1alpha4_NutanixMachineStatus_To_v1beta1_NutanixMachineStatus converts NutanixMachineStatus in NutanixMachineResource from v1alpha4 to v1beta1 version.
+//
+//nolint:all
 func Convert_v1alpha4_NutanixMachineStatus_To_v1beta1_NutanixMachineStatus(in *NutanixMachineStatus, out *infrav1beta1.NutanixMachineStatus, s apiconversion.Scope) error {
 	// Wrapping the conversion function to avoid compilation errors due to compileErrorOnMissingConversion()
 	// Ref: https://github.com/kubernetes/kubernetes/issues/98380

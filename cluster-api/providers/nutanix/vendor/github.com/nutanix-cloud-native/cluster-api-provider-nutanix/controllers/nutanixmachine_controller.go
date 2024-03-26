@@ -373,10 +373,6 @@ func (r *NutanixMachineReconciler) reconcileNormal(rctx *nctx.MachineContext) (r
 		}
 		log.Info(fmt.Sprintf("The NutanixMachine is ready, providerID: %s", rctx.NutanixMachine.Spec.ProviderID))
 
-		if rctx.NutanixMachine.Status.NodeRef == nil {
-			return r.reconcileNode(rctx)
-		}
-
 		return reconcile.Result{}, nil
 	}
 
@@ -445,76 +441,15 @@ func (r *NutanixMachineReconciler) reconcileNormal(rctx *nctx.MachineContext) (r
 	return reconcile.Result{}, nil
 }
 
-// reconcileNode makes sure the NutanixMachine corresponding workload cluster node
-// is ready and set its spec.providerID
-func (r *NutanixMachineReconciler) reconcileNode(rctx *nctx.MachineContext) (reconcile.Result, error) {
-	log := ctrl.LoggerFrom(rctx.Context)
-	log.V(1).Info("Reconcile the workload cluster node to set its spec.providerID")
-
-	clusterKey := apitypes.NamespacedName{
-		Namespace: rctx.Cluster.Namespace,
-		Name:      rctx.Cluster.Name,
-	}
-	remoteClient, err := nctx.GetRemoteClient(rctx.Context, r.Client, clusterKey)
-	if err != nil {
-		if r.isGetRemoteClientConnectionError(err) {
-			log.Info(fmt.Sprintf("Controlplane endpoint not yet responding. Requeuing: %v", err))
-			return reconcile.Result{Requeue: true}, nil
-		}
-		log.Info(fmt.Sprintf("Failed to get the client to access remote workload cluster %s. %v", rctx.Cluster.Name, err))
-		return reconcile.Result{}, err
-	}
-
-	// Retrieve the remote node
-	nodeName := rctx.Machine.Name
-	node := &corev1.Node{}
-	nodeKey := apitypes.NamespacedName{
-		Namespace: "",
-		Name:      nodeName,
-	}
-
-	if err := remoteClient.Get(rctx.Context, nodeKey, node); err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info(fmt.Sprintf("workload node %s not yet ready. Requeuing", nodeName))
-			return reconcile.Result{Requeue: true}, nil
-		} else {
-			log.Error(err, fmt.Sprintf("failed to retrieve the remote workload cluster node %s", nodeName))
-			return reconcile.Result{}, err
-		}
-	}
-
-	// Set the NutanixMachine Status.NodeRef
-	if rctx.NutanixMachine.Status.NodeRef == nil {
-		rctx.NutanixMachine.Status.NodeRef = &corev1.ObjectReference{
-			Kind:       node.Kind,
-			APIVersion: node.APIVersion,
-			Name:       node.Name,
-			UID:        node.UID,
-		}
-		log.V(1).Info(fmt.Sprintf("Set NutanixMachine's status.nodeRef: %v", *rctx.NutanixMachine.Status.NodeRef))
-	}
-
-	// Update the node's Spec.ProviderID
-	patchHelper, err := patch.NewHelper(node, remoteClient)
-	if err != nil {
-		log.Error(err, fmt.Sprintf("failed to create patchHelper for the workload cluster node %s", nodeName))
-		return reconcile.Result{}, err
-	}
-
-	node.Spec.ProviderID = rctx.NutanixMachine.Spec.ProviderID
-	err = patchHelper.Patch(rctx.Context, node)
-	if err != nil {
-		log.Error(err, fmt.Sprintf("failed to patch the remote workload cluster node %s's spec.providerID", nodeName))
-		return reconcile.Result{}, err
-	}
-	log.Info(fmt.Sprintf("Patched the workload node %s spec.providerID: %s", nodeName, node.Spec.ProviderID))
-
-	return reconcile.Result{}, nil
-}
-
 func (r *NutanixMachineReconciler) validateMachineConfig(rctx *nctx.MachineContext) error {
-	if len(rctx.NutanixMachine.Spec.Subnets) == 0 {
-		return fmt.Errorf("atleast one subnet is needed to create the VM %s", rctx.NutanixMachine.Name)
+	if rctx.Machine.Spec.FailureDomain == nil {
+		if len(rctx.NutanixMachine.Spec.Subnets) == 0 {
+			return fmt.Errorf("atleast one subnet is needed to create the VM %s if no failure domain is set", rctx.NutanixMachine.Name)
+		}
+		if (rctx.NutanixMachine.Spec.Cluster.Name == nil || *rctx.NutanixMachine.Spec.Cluster.Name == "") &&
+			(rctx.NutanixMachine.Spec.Cluster.UUID == nil || *rctx.NutanixMachine.Spec.Cluster.UUID == "") {
+			return fmt.Errorf("cluster name or uuid are required to create the VM %s if no failure domain is set", rctx.NutanixMachine.Name)
+		}
 	}
 
 	diskSize := rctx.NutanixMachine.Spec.SystemDiskSize
@@ -576,19 +511,10 @@ func (r *NutanixMachineReconciler) getOrCreateVM(rctx *nctx.MachineContext) (*nu
 		return nil, err
 	}
 
-	// Get PE UUID
-	peUUID, err := GetPEUUID(ctx, nc, rctx.NutanixMachine.Spec.Cluster.Name, rctx.NutanixMachine.Spec.Cluster.UUID)
+	peUUID, subnetUUIDs, err := r.GetSubnetAndPEUUIDs(rctx)
 	if err != nil {
-		errorMsg := fmt.Errorf("failed to get the Prism Element Cluster UUID to create the VM %s. %v", vmName, err)
-		rctx.SetFailureStatus(capierrors.CreateMachineError, errorMsg)
-		return nil, err
-	}
-
-	// Get Subnet UUIDs
-	subnetUUIDs, err := GetSubnetUUIDList(ctx, nc, rctx.NutanixMachine.Spec.Subnets, peUUID)
-	if err != nil {
-		errorMsg := fmt.Errorf("failed to get the subnet UUIDs to create the VM %s. %v", vmName, err)
-		rctx.SetFailureStatus(capierrors.CreateMachineError, errorMsg)
+		log.Error(err, fmt.Sprintf("failed to get the config for VM %s.", vmName))
+		rctx.SetFailureStatus(capierrors.CreateMachineError, err)
 		return nil, err
 	}
 
@@ -740,7 +666,7 @@ func (r *NutanixMachineReconciler) getOrCreateVM(rctx *nctx.MachineContext) (*nu
 		return nil, errorMsg
 	}
 	log.Info(fmt.Sprintf("Waiting for task %s to get completed for VM %s", lastTaskUUID, rctx.NutanixMachine.Name))
-	err = nutanixClient.WaitForTaskCompletion(ctx, nc, lastTaskUUID)
+	err = nutanixClient.WaitForTaskToSucceed(ctx, nc, lastTaskUUID)
 	if err != nil {
 		errorMsg := fmt.Errorf("error occurred while waiting for task %s to start: %v", lastTaskUUID, err)
 		rctx.SetFailureStatus(capierrors.CreateMachineError, errorMsg)
@@ -905,4 +831,47 @@ func (r *NutanixMachineReconciler) isGetRemoteClientConnectionError(err error) b
 	// Check if error contains connection refused message. This can occur during provisioning when Kubernetes API is not available yet.
 	const expectedErrString = "connect: connection refused"
 	return strings.Contains(err.Error(), expectedErrString)
+}
+
+func (r *NutanixMachineReconciler) GetSubnetAndPEUUIDs(rctx *nctx.MachineContext) (string, []string, error) {
+	if rctx == nil {
+		return "", nil, fmt.Errorf("cannot create machine config if machine context is nil")
+	}
+	log := ctrl.LoggerFrom(rctx.Context)
+	if rctx.Machine.Spec.FailureDomain == nil || *rctx.Machine.Spec.FailureDomain == "" {
+		log.V(1).Info("no failure domain found on machine. Directly searching for Prism Element cluster")
+		if rctx.NutanixMachine.Spec.Cluster.Name == nil && rctx.NutanixMachine.Spec.Cluster.UUID == nil {
+			return "", nil, fmt.Errorf("cluster name or uuid must be passed if failure domain is not configured")
+		}
+		if len(rctx.NutanixMachine.Spec.Subnets) == 0 {
+			return "", nil, fmt.Errorf("subnets must be passed if failure domain is not configured")
+		}
+		peUUID, err := GetPEUUID(rctx.Context, rctx.NutanixClient, rctx.NutanixMachine.Spec.Cluster.Name, rctx.NutanixMachine.Spec.Cluster.UUID)
+		if err != nil {
+			return "", nil, err
+		}
+		subnetUUIDs, err := GetSubnetUUIDList(rctx.Context, rctx.NutanixClient, rctx.NutanixMachine.Spec.Subnets, peUUID)
+		if err != nil {
+			return "", nil, err
+		}
+		return peUUID, subnetUUIDs, nil
+	}
+
+	log.V(1).Info("failure domain config found. Ignoring cluster config on machine object (if any)")
+
+	failureDomainName := *rctx.Machine.Spec.FailureDomain
+	failureDomain, err := GetFailureDomain(failureDomainName, rctx.NutanixCluster)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to find failure domain %s", failureDomainName)
+	}
+	peUUID, err := GetPEUUID(rctx.Context, rctx.NutanixClient, failureDomain.Cluster.Name, failureDomain.Cluster.UUID)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to find prism element uuid for failure domain %s", failureDomainName)
+	}
+	subnetUUIDs, err := GetSubnetUUIDList(rctx.Context, rctx.NutanixClient, failureDomain.Subnets, peUUID)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to find subnet uuids for failure domain %s", failureDomainName)
+	}
+
+	return peUUID, subnetUUIDs, nil
 }
