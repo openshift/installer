@@ -27,6 +27,7 @@ type Metadata struct {
 	computeSubnets      map[string]Subnet
 	controlPlaneSubnets map[string]Subnet
 	dnsInstance         *DNSInstance
+	publishStrategy     types.PublishingStrategy
 	serviceEndpoints    []configv1.IBMCloudServiceEndpoint
 
 	mutex       sync.Mutex
@@ -46,6 +47,7 @@ func NewMetadata(config *types.InstallConfig) *Metadata {
 		BaseDomain:              config.BaseDomain,
 		ComputeSubnetNames:      config.Platform.IBMCloud.ComputeSubnets,
 		ControlPlaneSubnetNames: config.Platform.IBMCloud.ControlPlaneSubnets,
+		publishStrategy:         config.Publish,
 		Region:                  config.Platform.IBMCloud.Region,
 		serviceEndpoints:        config.Platform.IBMCloud.ServiceEndpoints,
 	}
@@ -79,7 +81,8 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if m.cisInstanceCRN == "" {
+	// Only attempt to find the CIS instance if using ExternalPublishingStrategy and we have not collected it already
+	if m.publishStrategy == types.ExternalPublishingStrategy && m.cisInstanceCRN == "" {
 		client, err := m.Client()
 		if err != nil {
 			return "", err
@@ -111,8 +114,9 @@ func (m *Metadata) DNSInstance(ctx context.Context) (*DNSInstance, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	// Prevent multiple attempts to retrieve (set) the dnsInstance if it hasn't been set (multiple threads reach mutex concurrently)
-	if m.dnsInstance == nil {
+	// Only attempt to find the DNS Services instance if using InternalPublishingStrategy and also
+	// prevent multiple attempts to retrieve (set) the dnsInstance if it hasn't been set (multiple threads reach mutex concurrently)
+	if m.publishStrategy == types.InternalPublishingStrategy && m.dnsInstance == nil {
 		client, err := m.Client()
 		if err != nil {
 			return nil, err
