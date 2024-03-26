@@ -21,6 +21,7 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -86,7 +87,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso")
+	privateKey := "-----BEGIN EC PUBLIC KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PUBLIC KEY-----\n"
+	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n"
+
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -100,6 +104,8 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
 	assert.Equal(t, proxy, templateData.Proxy)
+	assert.Equal(t, privateKey, templateData.PrivateKeyPEM)
+	assert.Equal(t, publicKey, templateData.PublicKeyPEM)
 }
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
@@ -657,6 +663,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&gencrypto.AuthConfig{},
 	}
 }
 

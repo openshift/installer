@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -68,6 +69,8 @@ type agentTemplateData struct {
 	Proxy                     *v1beta1.Proxy
 	ConfigImageFiles          string
 	ImageTypeISO              string
+	PublicKeyPEM              string
+	PrivateKeyPEM             string
 }
 
 // Name returns the human-friendly name of the asset.
@@ -89,6 +92,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&agentconfig.AgentHosts{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
@@ -98,7 +102,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests)
+	keyPairAsset := &gencrypto.AuthConfig{}
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -193,7 +198,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		infraEnvID,
 		osImage,
 		infraEnv.Spec.Proxy,
-		imageTypeISO)
+		imageTypeISO,
+		keyPairAsset.PrivateKey,
+		keyPairAsset.PublicKey,
+	)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -309,7 +317,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
-	imageTypeISO string) *agentTemplateData {
+	imageTypeISO, privateKey, publicKey string) *agentTemplateData {
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
@@ -325,6 +333,8 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 		ImageTypeISO:              imageTypeISO,
+		PrivateKeyPEM:             privateKey,
+		PublicKeyPEM:              publicKey,
 	}
 }
 
