@@ -38,6 +38,7 @@ type MachinePool struct {
 	// AdditionalSecurityGroupIDs contains IDs of additional security groups for machines, where each ID
 	// is presented in the format sg-xxxx.
 	//
+	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	AdditionalSecurityGroupIDs []string `json:"additionalSecurityGroupIDs,omitempty"`
 }

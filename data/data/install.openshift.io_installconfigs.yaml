@@ -143,6 +143,7 @@ spec:
                             is presented in the format sg-xxxx.
                           items:
                             type: string
+                          maxItems: 10
                           type: array
                         amiID:
                           description: AMIID is the AMI that should be used to boot
@@ -1057,6 +1058,7 @@ spec:
                           in the format sg-xxxx.
                         items:
                           type: string
+                        maxItems: 10
                         type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
@@ -2174,6 +2176,7 @@ spec:
                           in the format sg-xxxx.
                         items:
                           type: string
+                        maxItems: 10
                         type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
