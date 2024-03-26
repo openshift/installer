@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -12,7 +13,7 @@ import (
 // AssetsFetcher it's used to retrieve and resolve a specified set of assets.
 type AssetsFetcher interface {
 	// Fetchs and persists all the writable assets from the configured assets store.
-	FetchAndPersist(assets []asset.WritableAsset) error
+	FetchAndPersist(context.Context, []asset.WritableAsset) error
 }
 
 type fetcher struct {
@@ -36,14 +37,14 @@ func asFileWriter(a asset.WritableAsset) asset.FileWriter {
 }
 
 // Fetchs all the writable assets from the configured assets store.
-func (f *fetcher) FetchAndPersist(assets []asset.WritableAsset) error {
+func (f *fetcher) FetchAndPersist(ctx context.Context, assets []asset.WritableAsset) error {
 	assetStore, err := NewStore(f.storeDir)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}
 
 	for _, a := range assets {
-		err := assetStore.Fetch(a, assets...)
+		err := assetStore.Fetch(ctx, a, assets...)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 		}

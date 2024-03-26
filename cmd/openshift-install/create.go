@@ -46,6 +46,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
+	"github.com/openshift/installer/pkg/clusterapi"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
@@ -68,6 +69,7 @@ const (
 	exitCodeBootstrapFailed
 	exitCodeInstallFailed
 	exitCodeOperatorStabilityFailed
+	exitCodeInterrupt
 
 	// coStabilityThreshold is how long a cluster operator must have Progressing=False
 	// in order to be considered stable. Measured in seconds.
@@ -127,12 +129,11 @@ var (
 			Short: "Create an OpenShift cluster",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
-			PostRun: func(_ *cobra.Command, _ []string) {
-				// Setup a context that is canceled when the user presses Ctrl+C,
-				// or SIGTERM and SIGINT are received, this allows for a clean shutdown.
-				ctx, cancel := context.WithCancel(context.TODO())
-				defer cancel()
-				logrus.RegisterExitHandler(cancel)
+			PostRun: func(cmd *cobra.Command, _ []string) {
+
+				// Get the top-level context used when setting up the
+				// command and fetching assets.
+				ctx := cmd.Context()
 
 				exitCode, err := clusterCreatePostRun(ctx)
 				if err != nil {
@@ -176,7 +177,7 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	//
 	timer.StartTimer("Bootstrap Complete")
 	if err := waitForBootstrapComplete(ctx, config); err != nil {
-		bundlePath, gatherErr := runGatherBootstrapCmd(command.RootOpts.Dir)
+		bundlePath, gatherErr := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
 		if gatherErr != nil {
 			logrus.Error("Attempted to gather debug logs after installation failure: ", gatherErr)
 		}
@@ -277,7 +278,7 @@ func newClientError(errorInfo error) *clusterCreateError {
 	}
 }
 
-func newCreateCmd() *cobra.Command {
+func newCreateCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create part of an OpenShift cluster",
@@ -288,28 +289,33 @@ func newCreateCmd() *cobra.Command {
 
 	for _, t := range targets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(ctx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 
 	return cmd
 }
 
-func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
-	runner := func(directory string) error {
+func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
+	runner := func(ctx context.Context, directory string) error {
 		fetcher := assetstore.NewAssetsFetcher(directory)
-		return fetcher.FetchAndPersist(targets)
+		return fetcher.FetchAndPersist(ctx, targets)
 	}
 
 	return func(cmd *cobra.Command, args []string) {
 		timer.StartTimer(timer.TotalTimeElapsed)
+
+		ctx, _ := handleInterrupt(ctx, shutdownCAPISystem)
+
+		// Store context to be used in PostRun.
+		cmd.SetContext(ctx)
 
 		cleanup := command.SetupFileHook(command.RootOpts.Dir)
 		defer cleanup()
 
 		cluster.InstallDir = command.RootOpts.Dir
 
-		err := runner(command.RootOpts.Dir)
+		err := runner(ctx, command.RootOpts.Dir)
 		if err != nil {
 			if strings.Contains(err.Error(), asset.InstallConfigError) {
 				logrus.Error(err)
@@ -863,7 +869,7 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 
 	// Ensure that the install is expecting the user to provision their own DNS solution.
 	installConfig := &installconfig.InstallConfig{}
-	if err := assetStore.Fetch(installConfig); err != nil {
+	if err := assetStore.Fetch(context.TODO(), installConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
@@ -876,7 +882,7 @@ func handleUnreachableAPIServer(config *rest.Config) error {
 	}
 
 	lbConfig := &lbconfig.Config{}
-	if err := assetStore.Fetch(lbConfig); err != nil {
+	if err := assetStore.Fetch(context.TODO(), lbConfig); err != nil {
 		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
 	}
 
@@ -930,4 +936,35 @@ func IsSingleNode() (bool, error) {
 		return *machinePool.Replicas == int64(1), nil
 	}
 	return false, nil
+}
+
+// handleInterrupt returns a new context which will be cancelled with a user interrupt.
+// shutdown is an optional shutdown function that will be executed before the context
+// is cancelled.
+func handleInterrupt(signalCtx context.Context, shutdown func()) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+	logrus.RegisterExitHandler(cancel)
+	go func() {
+		<-signalCtx.Done()
+		logrus.Warn("Received interrupt signal")
+		if shutdown != nil {
+			shutdown()
+		}
+		cancel()
+	}()
+	return ctx, cancel
+}
+
+func shutdownCAPISystem() {
+	if sys := clusterapi.System(); sys.State() == clusterapi.SystemStateRunning {
+		sys.Teardown()
+	} else {
+		exitOnInterrupt()
+	}
+}
+
+// exitOnInterrupt exits immediately with the interrupt exit code.
+// It should be used if no shutdown operations are needed upon user interrupt.
+func exitOnInterrupt() {
+	logrus.Exit(exitCodeInterrupt)
 }

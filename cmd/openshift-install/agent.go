@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/cmd/openshift-install/agent"
@@ -14,7 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/password"
 )
 
-func newAgentCmd() *cobra.Command {
+func newAgentCmd(ctx context.Context) *cobra.Command {
 	agentCmd := &cobra.Command{
 		Use:   "agent",
 		Short: "Commands for supporting cluster installation using agent installer",
@@ -23,9 +25,11 @@ func newAgentCmd() *cobra.Command {
 		},
 	}
 
-	agentCmd.AddCommand(newAgentCreateCmd())
-	agentCmd.AddCommand(agent.NewWaitForCmd())
-	agentCmd.AddCommand(newAgentGraphCmd())
+	ctx, _ = handleInterrupt(ctx, exitOnInterrupt)
+
+	agentCmd.AddCommand(newAgentCreateCmd(ctx))
+	agentCmd.AddCommand(agent.NewWaitForCmd(ctx))
+	agentCmd.AddCommand(newAgentGraphCmd(ctx))
 	return agentCmd
 }
 
@@ -115,7 +119,7 @@ var (
 	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
 )
 
-func newAgentCreateCmd() *cobra.Command {
+func newAgentCreateCmd(ctx context.Context) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -127,21 +131,21 @@ func newAgentCreateCmd() *cobra.Command {
 
 	for _, t := range agentTargets {
 		t.command.Args = cobra.ExactArgs(0)
-		t.command.Run = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(ctx, t.assets...)
 		cmd.AddCommand(t.command)
 	}
 
 	return cmd
 }
 
-func newAgentGraphCmd() *cobra.Command {
+func newAgentGraphCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Outputs the internal dependency graph for the agent-based installer",
 		Long:  "",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGraphCmd(cmd, args, agentTargets)
+			return runGraphCmd(ctx, cmd, args, agentTargets)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")

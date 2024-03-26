@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -20,21 +21,23 @@ var (
 	}
 )
 
-func newGraphCmd() *cobra.Command {
+func newGraphCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Outputs the internal dependency graph for installer",
 		Long:  "",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGraphCmd(cmd, args, targets)
+			return runGraphCmd(ctx, cmd, args, targets)
 		},
 	}
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")
 	return cmd
 }
 
-func runGraphCmd(cmd *cobra.Command, args []string, cmdTargets []target) error {
+func runGraphCmd(ctx context.Context, cmd *cobra.Command, args []string, cmdTargets []target) error {
+	_, _ = handleInterrupt(ctx, exitOnInterrupt)
+
 	g := gographviz.NewGraph()
 	g.SetName("G")
 	g.SetDir(true)

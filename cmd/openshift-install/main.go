@@ -12,6 +12,7 @@ import (
 	terminal "golang.org/x/term"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 )
@@ -36,18 +37,21 @@ func main() {
 func installerMain() {
 	rootCmd := newRootCmd()
 
+	// Trap user interrupts for graceful shutdown.
+	ctx := signals.SetupSignalHandler()
+
 	for _, subCmd := range []*cobra.Command{
-		newCreateCmd(),
-		newDestroyCmd(),
-		newWaitForCmd(),
-		newGatherCmd(),
-		newAnalyzeCmd(),
-		newVersionCmd(),
-		newGraphCmd(),
-		newCoreOSCmd(),
-		newCompletionCmd(),
-		newExplainCmd(),
-		newAgentCmd(),
+		newCreateCmd(ctx),
+		newDestroyCmd(ctx),
+		newWaitForCmd(ctx),
+		newGatherCmd(ctx),
+		newAnalyzeCmd(ctx),
+		newVersionCmd(ctx),
+		newGraphCmd(ctx),
+		newCoreOSCmd(ctx),
+		newCompletionCmd(ctx),
+		newExplainCmd(ctx),
+		newAgentCmd(ctx),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}

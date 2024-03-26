@@ -19,7 +19,7 @@ const (
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
-func NewWaitForCmd() *cobra.Command {
+func NewWaitForCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wait-for",
 		Short: "Wait for install-time events",
@@ -29,8 +29,8 @@ func NewWaitForCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(newWaitForBootstrapCompleteCmd())
-	cmd.AddCommand(newWaitForInstallCompleteCmd())
+	cmd.AddCommand(newWaitForBootstrapCompleteCmd(ctx))
+	cmd.AddCommand(newWaitForInstallCompleteCmd(ctx))
 	return cmd
 }
 
@@ -47,7 +47,7 @@ func handleBootstrapError(cluster *agentpkg.Cluster, err error) {
 	logrus.Exit(exitCodeBootstrapFailed)
 }
 
-func newWaitForBootstrapCompleteCmd() *cobra.Command {
+func newWaitForBootstrapCompleteCmd(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap-complete",
 		Short: "Wait until the cluster bootstrap is complete",
@@ -62,7 +62,6 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 				logrus.Fatal("No cluster installation directory found")
 			}
 
-			ctx := context.Background()
 			cluster, err := agentpkg.NewCluster(ctx, assetDir)
 			if err != nil {
 				logrus.Exit(exitCodeBootstrapFailed)
@@ -75,7 +74,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 	}
 }
 
-func newWaitForInstallCompleteCmd() *cobra.Command {
+func newWaitForInstallCompleteCmd(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "install-complete",
 		Short: "Wait until the cluster installation is complete",

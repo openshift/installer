@@ -36,7 +36,7 @@ func InitializeProvider(stages []Stage) infrastructure.Provider {
 
 // Provision implements pkg/infrastructure/provider.Provision. Provision iterates
 // through each of the stages and applies the Terraform config for the stage.
-func (p *Provider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+func (p *Provider) Provision(_ context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	tfVars := &tfvars.TerraformVariables{}
 	parents.Get(tfVars)
 	vars := tfVars.Files()

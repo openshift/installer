@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
-func newVersionCmd() *cobra.Command {
+func newVersionCmd(_ context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",

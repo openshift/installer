@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -100,7 +101,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			}
 
 			for _, a := range tc.targets {
-				if err := assetStore.Fetch(a, tc.targets...); err != nil {
+				if err := assetStore.Fetch(context.TODO(), a, tc.targets...); err != nil {
 					t.Fatalf("failed to fetch %q: %v", a.Name(), err)
 				}
 
@@ -125,7 +126,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			for _, a := range tc.targets {
 				name := a.Name()
 				newAsset := reflect.New(reflect.TypeOf(a).Elem()).Interface().(asset.WritableAsset)
-				if err := newAssetStore.Fetch(newAsset, tc.targets...); err != nil {
+				if err := newAssetStore.Fetch(context.TODO(), newAsset, tc.targets...); err != nil {
 					t.Fatalf("failed to fetch %q in new store: %v", a.Name(), err)
 				}
 				assetState := newAssetStore.assets[reflect.TypeOf(a)]
