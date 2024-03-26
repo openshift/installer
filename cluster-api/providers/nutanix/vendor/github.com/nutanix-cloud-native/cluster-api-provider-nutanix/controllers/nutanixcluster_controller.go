@@ -256,6 +256,12 @@ func (r *NutanixClusterReconciler) reconcileNormal(rctx *nctx.ClusterContext) (r
 		ctrlutil.AddFinalizer(rctx.NutanixCluster, infrav1.NutanixClusterFinalizer)
 	}
 
+	// Reconciling failure domains before Ready check to allow failure domains to be modified
+	if err := r.reconcileFailureDomains(rctx); err != nil {
+		log.Error(err, "failed to reconcile failure domains for cluster")
+		return reconcile.Result{}, err
+	}
+
 	if rctx.NutanixCluster.Status.Ready {
 		log.Info("NutanixCluster is already in ready status.")
 		return reconcile.Result{}, nil
@@ -270,6 +276,25 @@ func (r *NutanixClusterReconciler) reconcileNormal(rctx *nctx.ClusterContext) (r
 
 	rctx.NutanixCluster.Status.Ready = true
 	return reconcile.Result{}, nil
+}
+
+func (r *NutanixClusterReconciler) reconcileFailureDomains(rctx *nctx.ClusterContext) error {
+	log := ctrl.LoggerFrom(rctx.Context)
+	if len(rctx.NutanixCluster.Spec.FailureDomains) == 0 {
+		log.V(1).Info("no failure domains defined on cluster")
+		conditions.MarkTrue(rctx.NutanixCluster, infrav1.NoFailureDomainsReconciled)
+		return nil
+	}
+	log.V(1).Info("Reconciling failure domains for cluster")
+	// If failure domains is nil on status object, first create empty slice
+	if rctx.NutanixCluster.Status.FailureDomains == nil {
+		rctx.NutanixCluster.Status.FailureDomains = make(capiv1.FailureDomains, 0)
+	}
+	for _, fd := range rctx.NutanixCluster.Spec.FailureDomains {
+		rctx.NutanixCluster.Status.FailureDomains[fd.Name] = capiv1.FailureDomainSpec{ControlPlane: fd.ControlPlane}
+	}
+	conditions.MarkTrue(rctx.NutanixCluster, infrav1.FailureDomainsReconciled)
+	return nil
 }
 
 func (r *NutanixClusterReconciler) reconcileCategories(rctx *nctx.ClusterContext) error {
@@ -308,9 +333,11 @@ func (r *NutanixClusterReconciler) reconcileCredentialRefDelete(ctx context.Cont
 	log := ctrl.LoggerFrom(ctx)
 	credentialRef, err := nutanixClient.GetCredentialRefForCluster(nutanixCluster)
 	if err != nil {
+		log.Error(err, fmt.Sprintf("error occurred while getting credential ref for cluster %s", nutanixCluster.Name))
 		return err
 	}
 	if credentialRef == nil {
+		log.V(1).Info(fmt.Sprintf("Credential ref is nil for cluster %s. Ignoring since object must be deleted", nutanixCluster.Name))
 		return nil
 	}
 	log.V(1).Info(fmt.Sprintf("Credential ref is kind Secret for cluster %s. Continue with deletion of secret", nutanixCluster.Name))
@@ -321,6 +348,10 @@ func (r *NutanixClusterReconciler) reconcileCredentialRefDelete(ctx context.Cont
 	}
 	err = r.Client.Get(ctx, secretKey, secret)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.V(1).Info(fmt.Sprintf("Secret %s in namespace %s for cluster %s not found. Ignoring since object must be deleted", secret.Name, secret.Namespace, nutanixCluster.Name))
+			return nil
+		}
 		return err
 	}
 	ctrlutil.RemoveFinalizer(secret, infrav1.NutanixClusterCredentialFinalizer)
@@ -328,10 +359,14 @@ func (r *NutanixClusterReconciler) reconcileCredentialRefDelete(ctx context.Cont
 	if err := r.Client.Update(ctx, secret); err != nil {
 		return err
 	}
-	log.Info(fmt.Sprintf("removing secret %s in namespace %s for cluster %s", secret.Name, secret.Namespace, nutanixCluster.Name))
-	if err := r.Client.Delete(ctx, secret); err != nil {
-		return err
+
+	if secret.DeletionTimestamp.IsZero() {
+		log.Info(fmt.Sprintf("removing secret %s in namespace %s for cluster %s", secret.Name, secret.Namespace, nutanixCluster.Name))
+		if err := r.Client.Delete(ctx, secret); err != nil && !errors.IsNotFound(err) {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -356,16 +391,21 @@ func (r *NutanixClusterReconciler) reconcileCredentialRef(ctx context.Context, n
 		log.Error(errorMsg, "error occurred fetching cluster")
 		return errorMsg
 	}
+	// Check if ownerRef is already set on nutanixCluster object
 	if !capiutil.IsOwnedByObject(secret, nutanixCluster) {
-		if len(secret.GetOwnerReferences()) > 0 {
-			return fmt.Errorf("secret for cluster %s already has other owners set", nutanixCluster.Name)
+		// Check if another nutanixCluster already has set ownerRef. Secret can only be owned by one nutanixCluster object
+		if capiutil.HasOwner(secret.OwnerReferences, infrav1.GroupVersion.String(), []string{
+			nutanixCluster.Kind,
+		}) {
+			return fmt.Errorf("secret %s already owned by another nutanixCluster object", secret.Name)
 		}
-		secret.SetOwnerReferences([]metav1.OwnerReference{{
+		// Set nutanixCluster ownerRef on the secret
+		secret.OwnerReferences = capiutil.EnsureOwnerRef(secret.OwnerReferences, metav1.OwnerReference{
 			APIVersion: infrav1.GroupVersion.String(),
 			Kind:       nutanixCluster.Kind,
 			UID:        nutanixCluster.UID,
 			Name:       nutanixCluster.Name,
-		}})
+		})
 	}
 	if !ctrlutil.ContainsFinalizer(secret, infrav1.NutanixClusterCredentialFinalizer) {
 		ctrlutil.AddFinalizer(secret, infrav1.NutanixClusterCredentialFinalizer)
