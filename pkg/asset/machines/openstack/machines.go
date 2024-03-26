@@ -7,6 +7,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -375,8 +376,13 @@ func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFa
 
 // CheckNetworkExtensionAvailability interrogates the OpenStack API to validate
 // the availability of a given Neutron extension.
-func CheckNetworkExtensionAvailability(cloud, alias string) (bool, error) {
-	opts := openstackdefaults.DefaultClientOpts(cloud)
+// The `opts` parameter is provided for external consumers needing to configure
+// the client e.g. with custom certs. If unspecified (nil), a default client is
+// built based on the specified `cloud`.
+func CheckNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
+	if opts == nil {
+		opts = openstackdefaults.DefaultClientOpts(cloud)
+	}
 	conn, err := openstackdefaults.NewServiceClient("network", opts)
 	if err != nil {
 		return false, err

@@ -587,6 +587,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			trunkSupport, err := openstack.CheckNetworkExtensionAvailability(
 				ic.Platform.OpenStack.Cloud,
 				"trunk",
+				nil,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to check for trunk support: %w", err)
