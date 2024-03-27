@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	azsku "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/network/mgmt/network"
 	azres "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/resources"
 	azsubs "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/resources/mgmt/subscriptions"
@@ -25,9 +24,9 @@ type API interface {
 	GetControlPlaneSubnet(ctx context.Context, resourceGroupName, virtualNetwork, subnet string) (*aznetwork.Subnet, error)
 	ListLocations(ctx context.Context) (*[]azsubs.Location, error)
 	GetResourcesProvider(ctx context.Context, resourceProviderNamespace string) (*azres.Provider, error)
-	GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error)
+	GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error)
 	GetVirtualMachineFamily(ctx context.Context, name, region string) (string, error)
-	GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error)
+	GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error)
 	GetGroup(ctx context.Context, groupName string) (*azres.Group, error)
 	ListResourceIDsByGroup(ctx context.Context, groupName string) ([]string, error)
 	GetStorageEndpointSuffix(ctx context.Context) (string, error)
@@ -170,20 +169,19 @@ func (c *Client) getProvidersClient(ctx context.Context) (azres.ProvidersClient,
 }
 
 // GetDiskSkus returns all the disk SKU pages for a given region.
-func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azsku.ResourceSku, error) {
-	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+func (c *Client) GetDiskSkus(ctx context.Context, region string) ([]azenc.ResourceSku, error) {
+	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
-
 	// See https://issues.redhat.com/browse/OCPBUGS-29469 before changing this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
-	var sku []azsku.ResourceSku
-
+	var sku []azenc.ResourceSku
+	filter := fmt.Sprintf("location eq '%s'", region)
 	// This has to be initialized outside the `for` because we need access to
 	// `err`. If initialized in the loop and the API call fails right away,
 	// `page.NotDone()` will return `false` and we'll never check for the error
-	skuPage, err := client.List(ctx)
+	skuPage, err := client.List(ctx, filter, "false")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list SKUs: %w", err)
 	}
@@ -245,18 +243,19 @@ func (c *Client) ListResourceIDsByGroup(ctx context.Context, groupName string) (
 }
 
 // GetVirtualMachineSku retrieves the resource SKU of a specified virtual machine SKU in the specified region.
-func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azsku.ResourceSku, error) {
-	client := azsku.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
+func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) (*azenc.ResourceSku, error) {
+	client := azenc.NewResourceSkusClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, c.ssn.Credentials.SubscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 
 	// See https://issues.redhat.com/browse/OCPBUGS-29469 before chaging this timeout
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
+	filter := fmt.Sprintf("location eq '%s'", region)
 	// This has to be initialized outside the `for` because we need access to
 	// `err`. If initialized in the loop and the API call fails right away,
 	// `page.NotDone()` will return `false` and we'll never check for the error
-	page, err := client.List(ctx)
+	page, err := client.List(ctx, filter, "false")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list SKUs: %w", err)
 	}
