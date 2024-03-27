@@ -491,6 +491,8 @@ func ValidateProvisioning(p *baremetal.Platform, n *types.Networking, fldPath *f
 
 	allErrs = append(allErrs, ValidateProvisioningNetworking(p, n, fldPath)...)
 
+	allErrs = append(allErrs, validateProvisioningBootstrapNetworking(p, fldPath)...)
+
 	return allErrs
 }
 
@@ -585,6 +587,13 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 	}
 
 	allErrs = append(allErrs, validateHostsBMCOnly(p.Hosts, fldPath)...)
+
+	return allErrs
+}
+
+// validateProvisioningBootstrapNetworking checks that provisioning network requirements specified is valid for the bootstrap VM.
+func validateProvisioningBootstrapNetworking(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
 
 	for _, validator := range dynamicProvisioningValidators {
 		allErrs = append(allErrs, validator(p, fldPath)...)
