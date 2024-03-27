@@ -14,6 +14,8 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types/agent"
 )
@@ -29,6 +31,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "agentHosts does not contain networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsNoHosts(),
 				getValidOptionalInstallConfig(),
 			},
@@ -39,6 +43,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "agentHosts with some hosts without networkconfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -51,8 +57,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -72,6 +78,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "valid config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},
@@ -84,8 +92,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -110,8 +118,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -132,8 +140,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
-						Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
-						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig()),
+						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
+						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
 					Spec: aiv1beta1.NMStateConfigSpec{
 						Interfaces: []*aiv1beta1.Interface{
@@ -153,6 +161,8 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		{
 			name: "invalid networkConfig",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getInValidAgentHostsConfig(),
 				getValidOptionalInstallConfig(),
 			},

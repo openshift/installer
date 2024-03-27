@@ -2,24 +2,44 @@ package joiner
 
 import (
 	"context"
-	"net/url"
+	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/yaml"
 
+	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // ClusterInfo it's an asset used to retrieve config info
-// from an already existing cluster.
+// from an already existing cluster. A number of different resources
+// are inspected to extract the required configuration.
 type ClusterInfo struct {
-	ClusterID  string
-	APIDNSName string
-	PullSecret string
+	Client          kubernetes.Interface
+	OpenshiftClient configclient.Interface
+
+	ClusterID                     string
+	ClusterName                   string
+	Version                       string
+	ReleaseImage                  string
+	APIDNSName                    string
+	PullSecret                    string
+	Namespace                     string
+	UserCaBundle                  string
+	Proxy                         *types.Proxy
+	Architecture                  string
+	ImageDigestSources            []types.ImageDigestSource
+	DeprecatedImageContentSources []types.ImageContentSource
+	PlatformType                  hiveext.PlatformType
+	SSHKey                        string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -48,78 +68,157 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 		return nil
 	}
 
-	config, err := ci.getRestConfig(addNodesConfig.Params.Kubeconfig)
+	err := ci.initClients(addNodesConfig.Params.Kubeconfig)
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveClusterData()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveProxy()
 	if err != nil {
 		return err
 	}
 
-	err = ci.retrieveClusterID(config)
+	err = ci.retrievePullSecret()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveUserTrustBundle()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveArchitecture()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveInstallConfigData()
 	if err != nil {
 		return err
 	}
 
-	err = ci.retrieveAPIDNSName(config)
-	if err != nil {
-		return err
-	}
-
-	err = ci.retrievePullSecret(config)
-	if err != nil {
-		return err
-	}
+	ci.Namespace = "cluster0"
 
 	return nil
 }
 
-func (ci *ClusterInfo) getRestConfig(kubeconfig string) (*rest.Config, error) {
+func (ci *ClusterInfo) initClients(kubeconfig string) error {
+	if ci.Client != nil && ci.OpenshiftClient != nil {
+		return nil
+	}
+
 	var err error
 	var config *rest.Config
-
 	if kubeconfig != "" {
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	} else {
 		config, err = rest.InClusterConfig()
 	}
-
-	return config, err
-}
-
-func (ci *ClusterInfo) retrieveClusterID(config *rest.Config) error {
-	clientset, err := configclient.NewForConfig(config)
 	if err != nil {
 		return err
 	}
 
-	cv, err := clientset.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
+	openshiftClient, err := configclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.OpenshiftClient = openshiftClient
+
+	k8sclientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.Client = k8sclientset
+
+	return err
+}
+
+func (ci *ClusterInfo) retrieveClusterData() error {
+	cv, err := ci.OpenshiftClient.ConfigV1().ClusterVersions().Get(context.Background(), "version", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	ci.ClusterID = string(cv.Spec.ClusterID)
+	ci.ReleaseImage = cv.Status.History[0].Image
+	ci.Version = cv.Status.History[0].Version
 
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveAPIDNSName(config *rest.Config) error {
-	parsedURL, err := url.Parse(config.Host)
+func (ci *ClusterInfo) retrieveProxy() error {
+	proxy, err := ci.OpenshiftClient.ConfigV1().Proxies().Get(context.Background(), "cluster", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
+	ci.Proxy = &types.Proxy{
+		HTTPProxy:  proxy.Spec.HTTPProxy,
+		HTTPSProxy: proxy.Spec.HTTPSProxy,
+		NoProxy:    proxy.Spec.NoProxy,
+	}
 
-	ci.APIDNSName = parsedURL.Hostname()
 	return nil
 }
 
-func (ci *ClusterInfo) retrievePullSecret(config *rest.Config) error {
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	pullSecret, err := clientset.CoreV1().Secrets("openshift-config").Get(context.Background(), "pull-secret", metav1.GetOptions{})
+func (ci *ClusterInfo) retrievePullSecret() error {
+	pullSecret, err := ci.Client.CoreV1().Secrets("openshift-config").Get(context.Background(), "pull-secret", metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	ci.PullSecret = string(pullSecret.Data[".dockerconfigjson"])
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveUserTrustBundle() error {
+	userCaBundle, err := ci.Client.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	ci.UserCaBundle = userCaBundle.Data["ca-bundle.crt"]
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveArchitecture() error {
+	nodes, err := ci.Client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
+		LabelSelector: "node-role.kubernetes.io/master",
+	})
+	if err != nil {
+		return err
+	}
+	ci.Architecture = nodes.Items[0].Status.NodeInfo.Architecture
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveInstallConfigData() error {
+	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "cluster-config-v1", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	data, ok := clusterConfig.Data["install-config"]
+	if !ok {
+		return fmt.Errorf("cannot find install-config data")
+	}
+
+	installConfig := types.InstallConfig{}
+	if err = yaml.Unmarshal([]byte(data), &installConfig); err != nil {
+		return err
+	}
+
+	ci.ImageDigestSources = installConfig.ImageDigestSources
+	ci.DeprecatedImageContentSources = installConfig.DeprecatedImageContentSources
+	ci.PlatformType = agent.HivePlatformType(installConfig.Platform)
+	ci.SSHKey = installConfig.SSHKey
+	ci.ClusterName = installConfig.ObjectMeta.Name
+	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
 
 	return nil
 }

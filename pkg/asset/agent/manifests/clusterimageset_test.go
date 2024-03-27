@@ -14,6 +14,8 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 )
@@ -31,6 +33,8 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "missing install config should still generate a ClusterImageSet with empty namespace",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				&agent.OptionalInstallConfig{},
 				&releaseimage.Image{
 					PullSpec: currentRelease,
@@ -48,6 +52,8 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "invalid ClusterImageSet configuration",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{},
 			},
@@ -56,6 +62,8 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		{
 			name: "valid configuration",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				&joiner.ClusterInfo{},
 				getValidOptionalInstallConfig(),
 				&releaseimage.Image{
 					PullSpec: currentRelease,
@@ -64,10 +72,32 @@ func TestClusterImageSet_Generate(t *testing.T) {
 			expectedConfig: &hivev1.ClusterImageSet{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "openshift-was not built correctly",
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: hivev1.ClusterImageSetSpec{
 					ReleaseImage: currentRelease,
+				},
+			},
+		},
+		{
+			name: "add-nodes command",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Version:      "4.16.0",
+					ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:foo",
+					Namespace:    "agent-cluster",
+				},
+				&agent.OptionalInstallConfig{},
+				&releaseimage.Image{},
+			},
+			expectedConfig: &hivev1.ClusterImageSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "openshift-4.16.0",
+					Namespace: "agent-cluster",
+				},
+				Spec: hivev1.ClusterImageSetSpec{
+					ReleaseImage: "registry.ci.openshift.org/ocp/release@sha256:foo",
 				},
 			},
 		},
@@ -184,6 +214,13 @@ spec:
 						Filename: clusterImageSetFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
+				)
+			fileFetcher.EXPECT().FetchByName(".agentworkflow").
+				Return(
+					&asset.File{
+						Filename: ".agentworkflow",
+						Data:     []byte("install")},
+					nil,
 				)
 
 			asset := &ClusterImageSet{}

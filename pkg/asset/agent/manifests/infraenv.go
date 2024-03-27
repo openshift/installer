@@ -16,6 +16,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -40,6 +42,8 @@ func (*InfraEnv) Name() string {
 // the asset.
 func (*InfraEnv) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&agent.OptionalInstallConfig{},
 		&agentconfig.AgentConfig{},
 	}
@@ -47,61 +51,74 @@ func (*InfraEnv) Dependencies() []asset.Asset {
 
 // Generate generates the InfraEnv manifest.
 func (i *InfraEnv) Generate(dependencies asset.Parents) error {
-
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	installConfig := &agent.OptionalInstallConfig{}
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(installConfig, agentConfig)
+	dependencies.Get(installConfig, agentConfig, agentWorkflow, clusterInfo)
 
-	if installConfig.Config != nil {
-		infraEnv := &aiv1beta1.InfraEnv{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      getInfraEnvName(installConfig),
-				Namespace: getObjectMetaNamespace(installConfig),
-			},
-			Spec: aiv1beta1.InfraEnvSpec{
-				ClusterRef: &aiv1beta1.ClusterReference{
-					Name:      getClusterDeploymentName(installConfig),
-					Namespace: getObjectMetaNamespace(installConfig),
-				},
-				SSHAuthorizedKey: strings.Trim(installConfig.Config.SSHKey, "|\n\t"),
-				PullSecretRef: &corev1.LocalObjectReference{
-					Name: getPullSecretName(installConfig),
-				},
-				NMStateConfigLabelSelector: metav1.LabelSelector{
-					MatchLabels: getNMStateConfigLabels(installConfig),
-				},
-			},
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		if installConfig.Config != nil {
+			err := i.generateManifest(installConfig.ClusterName(), installConfig.ClusterNamespace(), installConfig.Config.SSHKey, installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy, string(installConfig.Config.ControlPlane.Architecture))
+			if err != nil {
+				return err
+			}
+
+			if agentConfig.Config != nil {
+				i.Config.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
+			}
+
 		}
 
-		// Use installConfig.Config.ControlPlane.Architecture to determine cpuarchitecture for infraEnv.Spec.CpuArchiteture.
-		// installConfig.Config.ControlPlance.Architecture uses go/Debian cpuarchitecture values (amd64, arm64) so we must convert to rpmArch because infraEnv.Spec.CpuArchitecture expects x86_64 or aarch64.
-		if installConfig.Config.ControlPlane.Architecture != "" {
-			infraEnv.Spec.CpuArchitecture = arch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
-		}
-		if installConfig.Config.Proxy != nil {
-			infraEnv.Spec.Proxy = getProxy(installConfig)
-		}
-		if atb := installConfig.Config.AdditionalTrustBundle; atb != "" {
-			infraEnv.Spec.AdditionalTrustBundle = atb
-		}
-
-		if agentConfig.Config != nil {
-			infraEnv.Spec.AdditionalNTPSources = agentConfig.Config.AdditionalNTPSources
-		}
-		i.Config = infraEnv
-
-		infraEnvData, err := yaml.Marshal(infraEnv)
+	case workflow.AgentWorkflowTypeAddNodes:
+		err := i.generateManifest(clusterInfo.ClusterName, clusterInfo.Namespace, clusterInfo.SSHKey, clusterInfo.UserCaBundle, clusterInfo.Proxy, clusterInfo.Architecture)
 		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent installer infraEnv")
+			return err
 		}
 
-		i.File = &asset.File{
-			Filename: infraEnvFilename,
-			Data:     infraEnvData,
-		}
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
 	return i.finish()
+}
+
+func (i *InfraEnv) generateManifest(clusterName, clusterNamespace, sshKey, additionalTrustBundle string, proxy *types.Proxy, architecture string) error {
+	infraEnv := &aiv1beta1.InfraEnv{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: clusterNamespace,
+		},
+		Spec: aiv1beta1.InfraEnvSpec{
+			ClusterRef: &aiv1beta1.ClusterReference{
+				Name:      clusterName,
+				Namespace: clusterNamespace,
+			},
+			SSHAuthorizedKey: strings.Trim(sshKey, "|\n\t"),
+			PullSecretRef: &corev1.LocalObjectReference{
+				Name: getPullSecretName(clusterName),
+			},
+			NMStateConfigLabelSelector: metav1.LabelSelector{
+				MatchLabels: getNMStateConfigLabels(clusterName),
+			},
+		},
+	}
+
+	// Input values (amd64, arm64) must be converted to rpmArch because infraEnv.Spec.CpuArchitecture expects x86_64 or aarch64.
+	if architecture != "" {
+		infraEnv.Spec.CpuArchitecture = arch.RpmArch(architecture)
+	}
+	if additionalTrustBundle != "" {
+		infraEnv.Spec.AdditionalTrustBundle = additionalTrustBundle
+	}
+	if proxy != nil {
+		infraEnv.Spec.Proxy = getProxy(proxy)
+	}
+
+	i.Config = infraEnv
+
+	return nil
 }
 
 // Files returns the files generated by the asset.
@@ -143,6 +160,16 @@ func (i *InfraEnv) finish() error {
 
 	if i.Config == nil {
 		return errors.New("missing configuration or manifest file")
+	}
+
+	infraEnvData, err := yaml.Marshal(i.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent installer infraEnv")
+	}
+
+	i.File = &asset.File{
+		Filename: infraEnvFilename,
+		Data:     infraEnvData,
 	}
 
 	// Throw an error if CpuArchitecture isn't x86_64, aarch64, ppc64le, s390x, or ""

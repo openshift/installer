@@ -13,6 +13,7 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	agentAsset "github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
@@ -49,6 +50,7 @@ func (a *AgentHosts) Name() string {
 // Dependencies returns all of the dependencies directly needed the asset.
 func (a *AgentHosts) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
 		&agentAsset.OptionalInstallConfig{},
 		&AgentConfig{},
 	}
@@ -56,9 +58,16 @@ func (a *AgentHosts) Dependencies() []asset.Asset {
 
 // Generate generates the Hosts data.
 func (a *AgentHosts) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
 	agentConfig := &AgentConfig{}
 	installConfig := &agentAsset.OptionalInstallConfig{}
-	dependencies.Get(agentConfig, installConfig)
+	dependencies.Get(agentConfig, installConfig, agentWorkflow)
+
+	// Temporary skip in case of add nodes workflow. To be addressed
+	// by AGENT-874
+	if agentWorkflow.Workflow == workflow.AgentWorkflowTypeAddNodes {
+		return nil
+	}
 
 	if agentConfig.Config != nil {
 		a.RendezvousIP = agentConfig.Config.RendezvousIP

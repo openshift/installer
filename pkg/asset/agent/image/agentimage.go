@@ -14,7 +14,9 @@ import (
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 )
 
 const (
@@ -39,6 +41,8 @@ var _ asset.WritableAsset = (*AgentImage)(nil)
 // Dependencies returns the assets on which the Bootstrap asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
 		&AgentArtifacts{},
 		&manifests.AgentManifests{},
 		&BaseIso{},
@@ -47,10 +51,23 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 
 // Generate generates the image file for to ISO asset.
 func (a *AgentImage) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
 	agentArtifacts := &AgentArtifacts{}
 	agentManifests := &manifests.AgentManifests{}
 	baseIso := &BaseIso{}
-	dependencies.Get(agentArtifacts, agentManifests, baseIso)
+	dependencies.Get(agentArtifacts, agentManifests, baseIso, agentWorkflow, clusterInfo)
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
+
+	case workflow.AgentWorkflowTypeAddNodes:
+		a.platform = clusterInfo.PlatformType
+
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
+	}
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
@@ -64,7 +81,6 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	}
 	a.volumeID = volumeID
 
-	a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
 	if a.platform == hiveext.ExternalPlatformType {
 		// when the bootArtifactsBaseURL is specified, construct the custom rootfs URL
 		if a.bootArtifactsBaseURL != "" {

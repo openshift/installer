@@ -15,6 +15,7 @@ import (
 	hivev1agent "github.com/openshift/hive/apis/hive/v1/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
 )
 
@@ -29,6 +30,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "missing config",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				&agent.OptionalInstallConfig{},
 			},
 			expectedError: "missing configuration or manifest file",
@@ -36,6 +38,7 @@ func TestClusterDeployment_Generate(t *testing.T) {
 		{
 			name: "valid configurations",
 			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 				getValidOptionalInstallConfig(),
 			},
 			expectedConfig: &hivev1.ClusterDeployment{
@@ -45,13 +48,13 @@ func TestClusterDeployment_Generate(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      getClusterDeploymentName(getValidOptionalInstallConfig()),
-					Namespace: getObjectMetaNamespace(getValidOptionalInstallConfig()),
+					Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 				},
 				Spec: hivev1.ClusterDeploymentSpec{
 					ClusterName: getClusterDeploymentName(getValidOptionalInstallConfig()),
 					BaseDomain:  "testing.com",
 					PullSecretRef: &corev1.LocalObjectReference{
-						Name: getPullSecretName(getValidOptionalInstallConfig()),
+						Name: getPullSecretName(getValidOptionalInstallConfig().ClusterName()),
 					},
 					ClusterInstallRef: &hivev1.ClusterInstallLocalReference{
 						Group:   "extensions.hive.openshift.io",
