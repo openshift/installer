@@ -335,6 +335,21 @@ func (mr *MockAPIMockRecorder) ServiceInstanceGUIDToName(ctx, id interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceGUIDToName", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceGUIDToName), ctx, id)
 }
 
+// ServiceInstanceNameToGUID mocks base method.
+func (m *MockAPI) ServiceInstanceNameToGUID(ctx context.Context, name string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceInstanceNameToGUID", ctx, name)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceInstanceNameToGUID indicates an expected call of ServiceInstanceNameToGUID.
+func (mr *MockAPIMockRecorder) ServiceInstanceNameToGUID(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceNameToGUID", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceNameToGUID), ctx, name)
+}
+
 // SetVPCServiceURLForRegion mocks base method.
 func (m *MockAPI) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
 	m.ctrl.T.Helper()

@@ -50,7 +50,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	network = fmt.Sprintf("%s-network", clusterID.InfraID)
 
 	if installConfig.Config.PowerVS.ServiceInstanceGUID == "" {
-		serviceName := fmt.Sprintf("%s-iaas", clusterID.InfraID)
+		serviceName := fmt.Sprintf("%s-power-iaas", clusterID.InfraID)
 
 		service = capibm.IBMPowerVSResourceReference{
 			Name: &serviceName,
@@ -177,11 +177,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capibm.IBMPowerVSImageSpec{
-			ClusterName:       clusterID.InfraID,
-			ServiceInstanceID: installConfig.Config.PowerVS.ServiceInstanceGUID,
-			Bucket:            &bucket,
-			Object:            &object,
-			Region:            &vpcRegion,
+			ClusterName:     clusterID.InfraID,
+			ServiceInstance: &service,
+			Bucket:          &bucket,
+			Object:          &object,
+			Region:          &vpcRegion,
 		},
 	}
 

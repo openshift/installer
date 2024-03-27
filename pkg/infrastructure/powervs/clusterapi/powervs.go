@@ -294,6 +294,8 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		refServiceInstance *capibm.IBMPowerVSResourceReference
 		sshKeyName         string
 		err                error
+		instanceID         *string
+		fieldType          string
 	)
 
 	// SAD: client in the Metadata struct is lowercase and therefore private
@@ -332,59 +334,44 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		logrus.Debugf("PostProvision: CreateSSHKey: si id = %s, key = %s",
 			*refServiceInstance.ID,
 			in.InstallConfig.Config.SSHKey)
-
-		backoff := wait.Backoff{
-			Duration: 15 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			err2 := client.CreateSSHKey(ctx,
-				*refServiceInstance.ID,
-				*powerVSMachine.Status.Zone,
-				sshKeyName,
-				in.InstallConfig.Config.SSHKey)
-			if err2 == nil {
-				return true, nil
-			}
-			return false, err2
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add SSH key for the workers(ID): %w", err)
-		}
+		instanceID = refServiceInstance.ID
+		fieldType = "ID"
 	case refServiceInstance.Name != nil:
 		logrus.Debugf("PostProvision: CreateSSHKey: si name = %s, key = %s",
 			*refServiceInstance.Name,
 			in.InstallConfig.Config.SSHKey)
-
-		vpc, err := client.GetVPCByName(ctx, *refServiceInstance.Name)
+		guid, err := client.ServiceInstanceNameToGUID(ctx, *refServiceInstance.Name)
 		if err != nil {
-			return fmt.Errorf("failed to find id for VPC name %s: %w",
+			return fmt.Errorf("failed to find id for ServiceInstance name %s: %w",
 				*refServiceInstance.Name,
 				err)
 		}
-
-		backoff := wait.Backoff{
-			Duration: 15 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			err2 := client.CreateSSHKey(ctx,
-				*vpc.ID,
-				*powerVSMachine.Status.Zone,
-				sshKeyName,
-				in.InstallConfig.Config.SSHKey)
-			if err2 == nil {
-				return true, nil
-			}
-			return false, err2
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add SSH key for the workers(Name): %w", err)
-		}
+		logrus.Debugf("PostProvision: CreateSSHKey: guid = %s", guid)
+		instanceID = ptr.To(guid)
+		fieldType = "Name"
 	default:
 		return fmt.Errorf("could not handle powerVSMachine.Spec.ServiceInstance")
+	}
+
+	backoff := wait.Backoff{
+		Duration: 15 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32,
+	}
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		err2 := client.CreateSSHKey(ctx,
+			*instanceID,
+			*powerVSMachine.Status.Zone,
+			sshKeyName,
+			in.InstallConfig.Config.SSHKey)
+		if err2 == nil {
+			return true, nil
+		}
+		return false, err2
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add SSH key for the workers(%s): %w", fieldType, err)
 	}
 
 	return nil
