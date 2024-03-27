@@ -147,6 +147,11 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create CAPA tags from UserTags: %w", err)
 		}
 
+		ignition, err := aws.CapaIgnitionWithCertBundleAndProxy(installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to generation CAPA ignition: %w", err)
+		}
+
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
 			Role:     "master",
@@ -154,6 +159,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			Subnets:  subnets,
 			Tags:     tags,
 			PublicIP: false,
+			Ignition: ignition,
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
@@ -170,6 +176,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			Pool:     &pool,
 			Tags:     tags,
 			PublicIP: installConfig.Config.Publish == types.ExternalPublishingStrategy,
+			Ignition: ignition,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create bootstrap machine object: %w", err)
