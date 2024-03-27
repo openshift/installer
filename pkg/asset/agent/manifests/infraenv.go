@@ -54,6 +54,10 @@ func (i *InfraEnv) Generate(dependencies asset.Parents) error {
 
 	if installConfig.Config != nil {
 		infraEnv := &aiv1beta1.InfraEnv{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "InfraEnv",
+				APIVersion: aiv1beta1.GroupVersion.String(),
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      getInfraEnvName(installConfig),
 				Namespace: getObjectMetaNamespace(installConfig),
