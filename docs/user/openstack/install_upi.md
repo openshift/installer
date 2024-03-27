@@ -352,6 +352,13 @@ if inventory.get("os_subnet6"):
     data["networking"]["clusterNetwork"].append({"cidr": inventory["cluster_network6_cidr"], "hostPrefix": inventory["cluster_network6_prefix"]})
     data["networking"]["serviceNetwork"].append(inventory["service_subnet6_range"])
     ctrl_plane_port["fixedIPs"].append({"subnet": {"name": inventory["os_subnet6"]}})
+    if inventory.get("ipv6_primary"):
+        machine_net.reverse()
+        api_vips.reverse()
+        ingress_vips.reverse()
+        data["networking"]["clusterNetwork"].reverse()
+        data["networking"]["serviceNetwork"].reverse()
+        ctrl_plane_port["fixedIPs"].reverse()
 data["networking"]["machineNetwork"] = machine_net
 data["platform"]["openstack"]["apiVIPs"] = api_vips
 data["platform"]["openstack"]["ingressVIPs"] = ingress_vips
