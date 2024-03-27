@@ -196,12 +196,14 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 	}
 
 	// reconcile COSInstance
-	clusterScope.Info("Reconciling COSInstance")
-	if err := clusterScope.ReconcileCOSInstance(); err != nil {
-		conditions.MarkFalse(powerVSCluster, infrav1beta2.COSInstanceReadyCondition, infrav1beta2.COSInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
-		return reconcile.Result{}, err
+	if clusterScope.IBMPowerVSCluster.Spec.Ignition != nil {
+		clusterScope.Info("Reconciling COSInstance")
+		if err := clusterScope.ReconcileCOSInstance(); err != nil {
+			conditions.MarkFalse(powerVSCluster, infrav1beta2.COSInstanceReadyCondition, infrav1beta2.COSInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+			return reconcile.Result{}, err
+		}
+		conditions.MarkTrue(powerVSCluster, infrav1beta2.COSInstanceReadyCondition)
 	}
-	conditions.MarkTrue(powerVSCluster, infrav1beta2.COSInstanceReadyCondition)
 
 	// update cluster object with loadbalancer host
 	loadBalancer := clusterScope.PublicLoadBalancer()
@@ -274,9 +276,11 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete Power VS service instance"))
 	}
 
-	clusterScope.Info("Deleting COS service instance")
-	if err := clusterScope.DeleteCOSInstance(); err != nil {
-		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete COS instance"))
+	if clusterScope.IBMPowerVSCluster.Spec.Ignition != nil {
+		clusterScope.Info("Deleting COS service instance")
+		if err := clusterScope.DeleteCOSInstance(); err != nil {
+			allErrs = append(allErrs, errors.Wrapf(err, "failed to delete COS instance"))
+		}
 	}
 
 	if len(allErrs) > 0 {

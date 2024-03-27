@@ -133,23 +133,5 @@ func (r *IBMPowerVSCluster) validateIBMPowerVSClusterCreateInfraPrereq() *field.
 		return field.Invalid(field.NewPath("spec.resourceGroup"), r.Spec.ResourceGroup, "value of resource group is empty")
 	}
 
-	if r.Spec.Ignition == nil {
-		return nil
-	}
-
-	// TODO(Phase 1): If ignition is set and these resources are not set, auto create them.
-	// If ignition is set, make sure to check that CosInstanceName, BucketName and region is set
-	if r.Spec.CosInstance == nil {
-		return field.Invalid(field.NewPath("spec.cosInstance"), r.Spec.CosInstance, "ignition is set but value of cosInstance is empty")
-	}
-	if r.Spec.CosInstance.Name == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.name"), r.Spec.CosInstance, "ignition is set but value of cosInstance name is empty")
-	}
-	if r.Spec.CosInstance.BucketName == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.bucketName"), r.Spec.CosInstance, "ignition is set but value of bucketName is empty")
-	}
-	if r.Spec.CosInstance.BucketRegion == "" {
-		return field.Invalid(field.NewPath("spec.cosInstance.bucketRegion"), r.Spec.CosInstance, "ignition is set but value of bucketRegion is empty")
-	}
 	return nil
 }

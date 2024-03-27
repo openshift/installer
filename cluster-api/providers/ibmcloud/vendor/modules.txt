@@ -96,12 +96,12 @@ github.com/IBM/ibm-cos-sdk-go/service/s3
 ## explicit; go 1.19
 github.com/IBM/networking-go-sdk/common
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
-# github.com/IBM/platform-services-go-sdk v0.61.3
+# github.com/IBM/platform-services-go-sdk v0.62.0
 ## explicit; go 1.20
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.49.1
+# github.com/IBM/vpc-go-sdk v0.50.0
 ## explicit; go 1.18
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
@@ -1070,7 +1070,7 @@ sigs.k8s.io/cluster-api/util/flags
 sigs.k8s.io/cluster-api/util/labels
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
