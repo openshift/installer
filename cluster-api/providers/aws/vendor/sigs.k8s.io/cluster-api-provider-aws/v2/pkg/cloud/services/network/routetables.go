@@ -61,7 +61,10 @@ func (s *Service) reconcileRouteTables() error {
 		sn := &subnets[i]
 		// We need to compile the minimum routes for this subnet first, so we can compare it or create them.
 		var routes []*ec2.Route
-		if sn.IsPublic {
+		// Gather routes to public subnets.
+		// Public subnets on Wavelength zone infrastructure requires Carrier Gateway to
+		// route intenet traffic from/to the carrier infrastructure.
+		if sn.IsPublic && !sn.IsEdgeWavelength() {
 			if s.scope.VPC().InternetGatewayID == nil {
 				return errors.Errorf("failed to create routing tables: internet gateway for %q is nil", s.scope.VPC().ID)
 			}
@@ -69,11 +72,27 @@ func (s *Service) reconcileRouteTables() error {
 			if sn.IsIPv6 {
 				routes = append(routes, s.getGatewayPublicIPv6Route())
 			}
+		} else if sn.IsPublic && sn.IsEdgeWavelength() {
+			if s.scope.VPC().CarrierGatewayID == nil {
+				return errors.Errorf("failed to create carrier routing table: carrier gateway for %q is nil", s.scope.VPC().ID)
+			}
+			routes = append(routes, s.getCarrierGatewayPublicIPv4Route())
+			// TODO(mtulio): IS IPv6 supported in Carrier Gateway/Wavelength infra?
+			if sn.IsIPv6 {
+				routes = append(routes, s.getCarrierGatewayPublicIPv6Route())
+			}
 		} else {
-			natGatewayID, err := s.getNatGatewayForSubnet(sn)
+			var natGatewayID string
+			// private subnets in the edge zones (Local or Wavelength zones)
+			if sn.IsEdge() {
+				natGatewayID, err = s.findNatGatewayForEdgeSubnet(sn)
+			} else {
+				natGatewayID, err = s.getNatGatewayForSubnet(sn)
+			}
 			if err != nil {
 				return err
 			}
+
 			routes = append(routes, s.getNatGatewayPrivateRoute(natGatewayID))
 			if sn.IsIPv6 {
 				if !s.scope.VPC().IsIPv6Enabled() {
@@ -354,6 +373,20 @@ func (s *Service) getGatewayPublicIPv6Route() *ec2.Route {
 	return &ec2.Route{
 		DestinationIpv6CidrBlock: aws.String(services.AnyIPv6CidrBlock),
 		GatewayId:                aws.String(*s.scope.VPC().InternetGatewayID),
+	}
+}
+
+func (s *Service) getCarrierGatewayPublicIPv4Route() *ec2.Route {
+	return &ec2.Route{
+		DestinationCidrBlock: aws.String(services.AnyIPv4CidrBlock),
+		CarrierGatewayId:     aws.String(*s.scope.VPC().CarrierGatewayID),
+	}
+}
+
+func (s *Service) getCarrierGatewayPublicIPv6Route() *ec2.Route {
+	return &ec2.Route{
+		DestinationCidrBlock: aws.String(services.AnyIPv6CidrBlock),
+		CarrierGatewayId:     aws.String(*s.scope.VPC().CarrierGatewayID),
 	}
 }
 
