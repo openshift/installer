@@ -1,6 +1,3 @@
-//go:build baremetal
-// +build baremetal
-
 package baremetal
 
 import (

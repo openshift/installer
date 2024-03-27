@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -418,21 +419,22 @@ func TestValidateProvisioning(t *testing.T) {
 	}))
 	defer imagesServer.Close()
 
-	interfaceValidator := func(p *baremetal.Platform, fldPath *field.Path) field.ErrorList {
-		errorList := field.ErrorList{}
+	origInterfaceValidator := interfaceValidator
+	t.Cleanup(func() {
+		interfaceValidator = origInterfaceValidator
+	})
+	interfaceValidator = func(libvirtURI string) (func(string) error, error) {
+		return func(interfaceName string) error {
+			interfaceNames := []string{"br0", "br1"}
+			for _, foundInterface := range interfaceNames {
+				if foundInterface == interfaceName {
+					return nil
+				}
+			}
 
-		if p.ExternalBridge != "br0" {
-			errorList = append(errorList, field.Invalid(fldPath.Child("externalBridge"), p.ExternalBridge,
-				"invalid external bridge"))
-		}
-		if p.ProvisioningBridge != "br1" {
-			errorList = append(errorList, field.Invalid(fldPath.Child("provisioningBridge"), p.ProvisioningBridge,
-				"invalid provisioning bridge"))
-		}
-
-		return errorList
+			return fmt.Errorf("could not find interface %q, valid interfaces are %s", interfaceName, strings.Join(interfaceNames, ", "))
+		}, nil
 	}
-	dynamicProvisioningValidators = append(dynamicProvisioningValidators, interfaceValidator)
 
 	cases := []struct {
 		name     string
@@ -524,7 +526,7 @@ func TestValidateProvisioning(t *testing.T) {
 			name: "invalid_extbridge",
 			platform: platform().
 				ExternalBridge("noexist").build(),
-			expected: "Invalid value: \"noexist\": invalid external bridge",
+			expected: "Invalid value: \"noexist\": could not find interface \"noexist\", valid interfaces are br0, br1",
 		},
 		{
 			name:     "valid_extbridge_mac",
@@ -534,7 +536,7 @@ func TestValidateProvisioning(t *testing.T) {
 			name: "invalid_provbridge",
 			platform: platform().
 				ProvisioningBridge("noexist").build(),
-			expected: "Invalid value: \"noexist\": invalid provisioning bridge",
+			expected: "Invalid value: \"noexist\": could not find interface \"noexist\", valid interfaces are br0, br1",
 		},
 		{
 			name:     "valid_provbridge_mac",
