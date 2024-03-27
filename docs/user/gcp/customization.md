@@ -53,11 +53,12 @@ metadata:
   name: example-cluster
 platform:
   gcp:
-    project: example-project
+    projectID: example-project
     region: us-east1
-    osDisk:
-      diskType: pd-ssd
-      diskSizeGB: 120
+    defaultMachinePlatform:
+        osDisk:
+          diskType: pd-ssd
+          diskSizeGB: 120
 pullSecret: '{"auths": ...}'
 sshKey: ssh-ed25519 AAAA...
 ```
@@ -137,12 +138,15 @@ An example GCP install config enabling [GCP's nested virtualization license][gcp
 ```yaml
 apiVersion: v1
 baseDomain: example.com
+metadata:
+  name: example-cluster
 platform:
   gcp:
     projectID: example-project
     region: us-east1
     licenses:
     - https://compute.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx
+pullSecret: '{"auths": ...}'
 ```
 
 [machine-type]: https://cloud.google.com/compute/docs/machine-types
