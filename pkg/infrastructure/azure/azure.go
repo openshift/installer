@@ -21,6 +21,7 @@ import (
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos"
@@ -508,7 +509,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	blobIgnitionContainer := createBlobContainerOutput.BlobContainer
 	logrus.Debugf("BlobIgnitionContainer.ID=%s", *blobIgnitionContainer.ID)
 
-	_, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
+	sasURL, err := CreateBlockBlob(ctx, &CreateBlockBlobInput{
 		StorageURL:         p.StorageURL,
 		BlobURL:            blobURL,
 		StorageAccountName: p.StorageAccountName,
@@ -519,8 +520,10 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	if err != nil {
 		return nil, err
 	}
+	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sasURL, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
+	}
 
-	// XXX access it as SAS
-
-	return []byte{}, nil
+	return ignShim, nil
 }
