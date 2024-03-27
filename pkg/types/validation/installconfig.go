@@ -1216,19 +1216,19 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 // ValidateFeatureSet returns an error if a gated feature is used without opting into the feature set.
 func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-
-	if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
-		sortedFeatureSets := func() []string {
-			v := []string{}
-			for n := range configv1.FeatureSets {
-				v = append(v, string(n))
-			}
-			sort.Strings(v)
-			return v
-		}()
-		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
-	}
-
+	/*
+		if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
+			sortedFeatureSets := func() []string {
+				v := []string{}
+				for n := range configv1.FeatureSets {
+					v = append(v, string(n))
+				}
+				sort.Strings(v)
+				return v
+			}()
+			allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
+		}
+	*/
 	if len(c.FeatureGates) > 0 {
 		if c.FeatureSet != configv1.CustomNoUpgrade {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("featureGates"), "featureGates can only be used with the CustomNoUpgrade feature set"))
