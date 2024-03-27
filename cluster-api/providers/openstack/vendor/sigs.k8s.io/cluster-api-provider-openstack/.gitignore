@@ -173,9 +173,17 @@ sshuttle.pid
 
 # Book
 docs/book/book/
+!docs/book/gen-crd-api-reference-docs/config.json
 
 # venv
 .venv
 
 # Development container files (https://containers.dev/)
 .devcontainer
+
+# CAPO doesn't use vendorings
+vendor/
+
+# Ignore go workspaces
+go.work
+go.work.sum

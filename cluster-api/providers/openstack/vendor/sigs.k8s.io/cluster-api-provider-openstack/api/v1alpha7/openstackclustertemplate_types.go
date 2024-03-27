@@ -30,9 +30,10 @@ type OpenStackClusterTemplateSpec struct {
 	Template OpenStackClusterTemplateResource `json:"template"`
 }
 
-//+kubebuilder:object:root=true
-// +kubebuilder:storageversion
-//+kubebuilder:resource:path=openstackclustertemplates,scope=Namespaced,categories=cluster-api,shortName=osct
+// +genclient
+// +genclient:Namespaced
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=openstackclustertemplates,scope=Namespaced,categories=cluster-api,shortName=osct
 
 // OpenStackClusterTemplate is the Schema for the openstackclustertemplates API.
 type OpenStackClusterTemplate struct {

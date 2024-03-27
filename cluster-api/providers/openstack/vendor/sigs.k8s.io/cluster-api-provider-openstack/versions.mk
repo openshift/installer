@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MDBOOK_VERSION := v0.4.5
-GOLANG_VERSION := 1.19.6
+MDBOOK_VERSION := v0.4.35
 PLANTUML_VERSION := 1.2022.6
 GH_VERSION := 1.2.0

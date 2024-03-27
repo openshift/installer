@@ -14,6 +14,7 @@ import (
 	"github.com/gophercloud/utils/gnocchi"
 	"github.com/gophercloud/utils/internal"
 
+	"github.com/hashicorp/go-uuid"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -644,6 +645,12 @@ func v3auth(cloud *Cloud, opts *ClientOpts) (*gophercloud.AuthOptions, error) {
 		}
 	}
 
+	if cloud.AuthInfo.SystemScope == "" {
+		if v := env.Getenv(envPrefix + "SYSTEM_SCOPE"); v != "" {
+			cloud.AuthInfo.SystemScope = v
+		}
+	}
+
 	// Build a scope and try to do it correctly.
 	// https://github.com/openstack/os-client-config/blob/master/os_client_config/config.py#L595
 	scope := new(gophercloud.AuthScope)
@@ -659,6 +666,9 @@ func v3auth(cloud *Cloud, opts *ClientOpts) (*gophercloud.AuthOptions, error) {
 				scope.DomainID = cloud.AuthInfo.DomainID
 			} else if cloud.AuthInfo.DomainName != "" {
 				scope.DomainName = cloud.AuthInfo.DomainName
+			}
+			if cloud.AuthInfo.SystemScope != "" {
+				scope.System = true
 			}
 		} else {
 			// If Domain* is set, but UserDomain* or ProjectDomain* aren't,
@@ -875,6 +885,10 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 	}
 
 	switch service {
+	case "baremetal":
+		return openstack.NewBareMetalV1(pClient, eo)
+	case "baremetal-introspection":
+		return openstack.NewBareMetalIntrospectionV1(pClient, eo)
 	case "clustering":
 		return openstack.NewClusteringV1(pClient, eo)
 	case "compute":
@@ -905,14 +919,24 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		}
 	case "image":
 		return openstack.NewImageServiceV2(pClient, eo)
+	case "key-manager":
+		return openstack.NewKeyManagerV1(pClient, eo)
 	case "load-balancer":
 		return openstack.NewLoadBalancerV2(pClient, eo)
+	case "messaging":
+		clientID, err := uuid.GenerateUUID()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate UUID: %w", err)
+		}
+		return openstack.NewMessagingV2(pClient, clientID, eo)
 	case "network":
 		return openstack.NewNetworkV2(pClient, eo)
 	case "object-store":
 		return openstack.NewObjectStorageV1(pClient, eo)
 	case "orchestration":
 		return openstack.NewOrchestrationV1(pClient, eo)
+	case "placement":
+		return openstack.NewPlacementV1(pClient, eo)
 	case "sharev2":
 		return openstack.NewSharedFileSystemV2(pClient, eo)
 	case "volume":
@@ -931,6 +955,8 @@ func NewServiceClient(service string, opts *ClientOpts) (*gophercloud.ServiceCli
 		default:
 			return nil, fmt.Errorf("invalid volume API version")
 		}
+	case "workflowv2":
+		return openstack.NewWorkflowV2(pClient, eo)
 	}
 
 	return nil, fmt.Errorf("unable to create a service client for %s", service)

@@ -2113,6 +2113,8 @@ github.com/sebdah/goldie v1.0.0/go.mod h1:jXP4hmWywNEwZzhMuv2ccnqTSFpuq8iyQhtQdk
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/sergi/go-diff v1.3.1 h1:xkr+Oxo4BOQKmkn/B9eMK0g5Kg/983T9DqqPHwYqD+8=
 github.com/sergi/go-diff v1.3.1/go.mod h1:aMJSSKb2lpPvRNec0+w3fl7LP9IOFzdc9Pa4NFbPK1I=
+github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20240327221400-3ab8f28c386c h1:ifB2AHBFZKxBHry5mLmStvtmFPmRKknsnZXfhUy63rE=
+github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20240327221400-3ab8f28c386c/go.mod h1:DHnyu7LjP8SCVkLesVU4xweQolJV0h1/OYr3REUQYXQ=
 github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 h1:bUGsEnyNbVPw06Bs80sCeARAlK8lhwqGyi6UT8ymuGk=
 github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749/go.mod h1:ZY1cvUeJuFPAdZ/B6v7RHavJWZn2YPVFQ1OSXhCGOkg=
 github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd h1:ug7PpSOB5RBPK1Kg6qskGBoP3Vnj/aNYFTznWvlkGo0=
@@ -2959,8 +2961,6 @@ sigs.k8s.io/cluster-api-provider-gcp v1.6.0 h1:I/Fxzoh1RyHp/n7Do5nJlJgYoMuQ2SVzl
 sigs.k8s.io/cluster-api-provider-gcp v1.6.0/go.mod h1:gcrcNrKveBcUdW5FOWDA5yK77Ibz09jUHlzXEoTV/fw=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247 h1:XUd5ZfsZRiL9xiH5U1AdIfjjt9mW10bsiAUGk6fokkQ=
 sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247/go.mod h1:Zo/3APj8Ji0SsAYv7wnaUr4ulL3dlyoyGF9SXFRkMbM=
-sigs.k8s.io/cluster-api-provider-openstack v0.9.0 h1:ScwZIfT1kI88+qMzeO7ppMP9DvEzrfLHuYPg2p1mcho=
-sigs.k8s.io/cluster-api-provider-openstack v0.9.0/go.mod h1:ecR9lx4XbOr3Gg2CGNgM3wguuV6l31Nd5rUccE+xjKs=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0 h1:tMGgDmUr2Q4/INM0cn1jZyxPxYGe8wWrk9l+8hrwPSw=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0/go.mod h1:sovPL5JCGYBZdDiAKJNg2RTYp6SF+eLXhAqfUUf6mSY=
 sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce h1:zQZV2UuXjQgWF4m/fZRgvA/5lm9jqWl7cfxoNMMl4yA=

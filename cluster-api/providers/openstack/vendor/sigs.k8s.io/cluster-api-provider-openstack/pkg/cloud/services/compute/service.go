@@ -25,7 +25,7 @@ import (
 )
 
 type Service struct {
-	scope              scope.Scope
+	scope              *scope.WithLogger
 	_computeClient     clients.ComputeClient
 	_volumeClient      clients.VolumeClient
 	_imageClient       clients.ImageClient
@@ -33,7 +33,7 @@ type Service struct {
 }
 
 // NewService returns an instance of the compute service.
-func NewService(scope scope.Scope) (*Service, error) {
+func NewService(scope *scope.WithLogger) (*Service, error) {
 	return &Service{
 		scope: scope,
 	}, nil

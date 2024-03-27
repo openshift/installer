@@ -24,13 +24,14 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
 	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/filterconvert"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/names"
 )
 
-func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, clusterName string) error {
+func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, clusterResourceName string) error {
 	if openStackCluster.Status.Network == nil || openStackCluster.Status.Network.ID == "" {
 		s.scope.Logger().V(3).Info("No need to reconcile router since no network exists")
 		return nil
@@ -44,12 +45,12 @@ func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, cl
 		return nil
 	}
 
-	s.scope.Logger().Info("Reconciling router", "cluster", clusterName)
-	routerName := getRouterName(clusterName)
+	s.scope.Logger().Info("Reconciling router", "cluster", clusterResourceName)
+	routerName := getRouterName(clusterResourceName)
 	routerListOpts := routers.ListOpts{Name: routerName}
 	existingRouter := false
 	if openStackCluster.Spec.Router != nil {
-		routerListOpts = openStackCluster.Spec.Router.ToListOpt()
+		routerListOpts = filterconvert.RouterFilterToListOpts(openStackCluster.Spec.Router)
 		existingRouter = true
 	}
 
@@ -64,7 +65,7 @@ func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, cl
 
 	if router.ID == "" {
 		var err error
-		createdRouter, err := s.createRouter(openStackCluster, clusterName, routerName)
+		createdRouter, err := s.createRouter(openStackCluster, clusterResourceName, routerName)
 		if err != nil {
 			return err
 		}
@@ -124,9 +125,9 @@ func (s *Service) ReconcileRouter(openStackCluster *infrav1.OpenStackCluster, cl
 	return nil
 }
 
-func (s *Service) createRouter(openStackCluster *infrav1.OpenStackCluster, clusterName, name string) (*routers.Router, error) {
+func (s *Service) createRouter(openStackCluster *infrav1.OpenStackCluster, clusterResourceName, name string) (*routers.Router, error) {
 	opts := routers.CreateOpts{
-		Description: names.GetDescription(clusterName),
+		Description: names.GetDescription(clusterResourceName),
 		Name:        name,
 	}
 	// only set the GatewayInfo right now when no externalIPs
@@ -191,12 +192,12 @@ func (s *Service) setRouterExternalIPs(openStackCluster *infrav1.OpenStackCluste
 	return nil
 }
 
-func (s *Service) DeleteRouter(openStackCluster *infrav1.OpenStackCluster, clusterName string) error {
-	routerName := getRouterName(clusterName)
+func (s *Service) DeleteRouter(openStackCluster *infrav1.OpenStackCluster, clusterResourceName string) error {
+	routerName := getRouterName(clusterResourceName)
 	listOpts := routers.ListOpts{Name: routerName}
 	existingRouter := false
 	if openStackCluster.Spec.Router != nil {
-		listOpts = openStackCluster.Spec.Router.ToListOpt()
+		listOpts = filterconvert.RouterFilterToListOpts(openStackCluster.Spec.Router)
 		existingRouter = true
 	}
 
@@ -205,7 +206,7 @@ func (s *Service) DeleteRouter(openStackCluster *infrav1.OpenStackCluster, clust
 		return err
 	}
 
-	subnetName := getSubnetName(clusterName)
+	subnetName := getSubnetName(clusterResourceName)
 	subnet, err := s.getSubnetByName(subnetName)
 	if err != nil {
 		return err
@@ -284,6 +285,6 @@ func (s *Service) getSubnetByName(subnetName string) (subnets.Subnet, error) {
 	return subnets.Subnet{}, fmt.Errorf("found %d subnets with the name %s, which should not happen", len(subnetList), subnetName)
 }
 
-func getRouterName(clusterName string) string {
-	return fmt.Sprintf("%s-cluster-%s", networkPrefix, clusterName)
+func getRouterName(clusterResourceName string) string {
+	return fmt.Sprintf("%s-cluster-%s", networkPrefix, clusterResourceName)
 }

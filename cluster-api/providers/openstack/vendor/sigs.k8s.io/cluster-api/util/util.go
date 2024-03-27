@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -465,56 +465,6 @@ func (k KubeAwareAPIVersions) Len() int      { return len(k) }
 func (k KubeAwareAPIVersions) Swap(i, j int) { k[i], k[j] = k[j], k[i] }
 func (k KubeAwareAPIVersions) Less(i, j int) bool {
 	return k8sversion.CompareKubeAwareVersionStrings(k[i], k[j]) < 0
-}
-
-// ClusterToObjectsMapper returns a mapper function that gets a cluster and lists all objects for the object passed in
-// and returns a list of requests.
-// NB: The objects are required to have `clusterv1.ClusterNameLabel` applied.
-//
-// Deprecated: This function is deprecated and will be removed in a future release, use ClusterToTypedObjectsMapper instead.
-// The problem with this function is that it uses UnstructuredList to retrieve objects, with the default client configuration
-// this will lead to uncached List calls, which is a major performance issue.
-func ClusterToObjectsMapper(c client.Client, ro client.ObjectList, scheme *runtime.Scheme) (handler.MapFunc, error) {
-	gvk, err := apiutil.GVKForObject(ro, scheme)
-	if err != nil {
-		return nil, err
-	}
-
-	isNamespaced, err := isAPINamespaced(gvk, c.RESTMapper())
-	if err != nil {
-		return nil, err
-	}
-
-	return func(ctx context.Context, o client.Object) []ctrl.Request {
-		cluster, ok := o.(*clusterv1.Cluster)
-		if !ok {
-			return nil
-		}
-
-		listOpts := []client.ListOption{
-			client.MatchingLabels{
-				clusterv1.ClusterNameLabel: cluster.Name,
-			},
-		}
-
-		if isNamespaced {
-			listOpts = append(listOpts, client.InNamespace(cluster.Namespace))
-		}
-
-		list := &unstructured.UnstructuredList{}
-		list.SetGroupVersionKind(gvk)
-		if err := c.List(ctx, list, listOpts...); err != nil {
-			return nil
-		}
-
-		results := []ctrl.Request{}
-		for _, obj := range list.Items {
-			results = append(results, ctrl.Request{
-				NamespacedName: client.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetName()},
-			})
-		}
-		return results
-	}, nil
 }
 
 // ClusterToTypedObjectsMapper returns a mapper function that gets a cluster and lists all objects for the object passed in
