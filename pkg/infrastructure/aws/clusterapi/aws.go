@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 	capa "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	k8sClient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,6 +32,16 @@ func (*Provider) Name() string { return awstypes.Name }
 func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInput) error {
 	if err := createIAMRoles(ctx, in.InfraID, in.InstallConfig); err != nil {
 		return fmt.Errorf("failed to create IAM roles: %w", err)
+	}
+
+	amiID, err := copyAMIToRegion(ctx, in.InstallConfig, in.InfraID, string(*in.RhcosImage))
+	if err != nil {
+		return fmt.Errorf("failed to copy AMI: %w", err)
+	}
+	for i := range in.MachineManifests {
+		if awsMachine, ok := in.MachineManifests[i].(*capa.AWSMachine); ok {
+			awsMachine.Spec.AMI = capa.AMIReference{ID: ptr.To(amiID)}
+		}
 	}
 	return nil
 }
