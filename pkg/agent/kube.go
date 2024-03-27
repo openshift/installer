@@ -2,12 +2,15 @@ package agent
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	certificatesv1 "k8s.io/api/certificates/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	certificatesClient "k8s.io/client-go/kubernetes/typed/certificates/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -15,17 +18,17 @@ import (
 // ClusterKubeAPIClient is a kube client to interact with the cluster that agent installer is installing.
 type ClusterKubeAPIClient struct {
 	Client     *kubernetes.Clientset
+	csrClient  certificatesClient.CertificateSigningRequestInterface
 	ctx        context.Context
 	config     *rest.Config
 	configPath string
 }
 
 // NewClusterKubeAPIClient Create a new kube client to interact with the cluster under install.
-func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKubeAPIClient, error) {
+func NewClusterKubeAPIClient(ctx context.Context, kubeconfigPath string) (*ClusterKubeAPIClient, error) {
 	kubeClient := &ClusterKubeAPIClient{}
 
-	kubeconfigpath := filepath.Join(assetDir, "auth", "kubeconfig")
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "error loading kubeconfig from assets")
 	}
@@ -35,10 +38,13 @@ func NewClusterKubeAPIClient(ctx context.Context, assetDir string) (*ClusterKube
 		return nil, errors.Wrap(err, "creating a Kubernetes client from assets failed")
 	}
 
+	csrClient := kubeclient.CertificatesV1().CertificateSigningRequests()
+
 	kubeClient.Client = kubeclient
+	kubeClient.csrClient = csrClient
 	kubeClient.ctx = ctx
 	kubeClient.config = kubeconfig
-	kubeClient.configPath = kubeconfigpath
+	kubeClient.configPath = kubeconfigPath
 
 	return kubeClient, nil
 }
@@ -80,4 +86,20 @@ func (kube *ClusterKubeAPIClient) IsBootstrapConfigMapComplete() (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (kube *ClusterKubeAPIClient) ListNodes() (*corev1.NodeList, error) {
+	nodeList, err := kube.Client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return &corev1.NodeList{}, err
+	}
+	return nodeList, nil
+}
+
+func (kube *ClusterKubeAPIClient) ListCSRs() (*certificatesv1.CertificateSigningRequestList, error) {
+	csrs, err := kube.csrClient.List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return csrs, nil
 }
