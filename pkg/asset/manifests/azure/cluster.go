@@ -37,13 +37,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		File:   asset.File{Filename: "00_azure-namespace.yaml"},
 	})
 
+	resourceGroup := fmt.Sprintf("%s-rg", clusterID.InfraID)
+	if installConfig.Config.Azure.ResourceGroupName != "" {
+		resourceGroup = installConfig.Config.Azure.ResourceGroupName
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capz.AzureClusterSpec{
-			ResourceGroup: fmt.Sprintf("%s-rg", clusterID.InfraID),
+			ResourceGroup: resourceGroup,
 			AzureClusterClassSpec: capz.AzureClusterClassSpec{
 				SubscriptionID:   session.Credentials.SubscriptionID,
 				Location:         installConfig.Config.Azure.Region,
