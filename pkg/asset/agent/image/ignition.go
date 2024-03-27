@@ -467,6 +467,12 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 			baseWithoutExt := strings.TrimSuffix(base, ext)
 			baseFileName := filepath.Join(extraManifestPath, baseWithoutExt)
 			fileName := fmt.Sprintf("%s-%d%s", baseFileName, n, ext)
+			if baseFileName == "/etc/assisted/extra-manifests/openshift-install-manifests" {
+				// Allow the openshift-install-manifests ConfigMap to be overridden.
+				// This ConfigMap contains INSTALL_INVOKER which can be used
+				// to change the behavior of assisted-installer-controller.
+				fileName = fmt.Sprintf("%s%s", baseFileName, ext)
+			}
 
 			extraFile := ignition.FileFromBytes(fileName, user, mode, m)
 			config.Storage.Files = append(config.Storage.Files, extraFile)
