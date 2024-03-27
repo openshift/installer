@@ -1,0 +1,126 @@
+{
+  "$id": "https://raw.githubusercontent.com/openshift/installer/master/docs/user/gcp/installconfig.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "definitions": {
+    "GCPMachinePool": {
+      "additionalProperties": false,
+      "description": "GCP-specific properties to the OpenShift machine-pool.",
+      "properties": {
+        "osDisk": {
+          "additionalProperties": false,
+          "properties": {
+            "diskSizeGB": {
+              "description": "The size of the disk in gigabytes (GB)",
+              "maximum": 65536,
+              "minimum": 16,
+              "type": "integer"
+            },
+            "diskType": {
+              "default": "pd-ssd",
+              "description": "The type of disk (allowed values are: pd-ssd, and pd-standard. Default: pd-ssd).",
+              "enum": [
+                "pd-ssd",
+                "pd-standard"
+              ],
+              "type": "string"
+            },
+            "encryptionKey": {
+              "additionalProperties": false,
+              "properties": {
+                "kmsKey": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyRing": {
+                      "description": "The name of the KMS Key Ring which the KMS Key belongs to.",
+                      "type": "string"
+                    },
+                    "location": {
+                      "description": "The GCP location in which the Key Ring exists.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "The name of the customer managed encryption key to be used for the disk encryption.",
+                      "type": "string"
+                    },
+                    "projectID": {
+                      "description": "The ID of the Project in which the KMS Key Ring exists. Defaults to the VM ProjectID if not set.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "keyRing",
+                    "location"
+                  ],
+                  "type": "object"
+                },
+                "kmsKeyServiceAccount": {
+                  "description": "The service account being used for the encryption request for the given KMS key. If absent, the Compute Engine default service account is used.",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "description": "The GCP machine type.",
+          "type": "string"
+        },
+        "zones": {
+          "description": "The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone. If compute zones contains at least one value, rootVolume.zones must also contain at least one value. Indeed, when a machine is created with a compute availability zone and a storage root volume with no specified rootVolume.availabilityZone, CAPO will use the compute AZ for the volume AZ. This can be problematic if the AZ doesn't exist in Cinder, therefore we enforce that rootVolume.zones to be set if zones is set.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "GCPPlatform": {
+      "additionalProperties": false,
+      "description": "GCP-specific properties to the OpenShift platform.",
+      "properties": {
+        "computeSubnet": {
+          "description": "The name of an existing GCP subnet which should be used by the cluster nodes.",
+          "type": "string"
+        },
+        "controlPlaneSubnet": {
+          "description": "The name of an existing GCP subnet which should be used by the cluster control plane.",
+          "type": "string"
+        },
+        "defaultMachinePlatform": {
+          "$ref": "#/definitions/GCPMachinePool",
+          "description": "Default GCP-specific machine pool properties which apply to machine pools that do not define their own GCP-specific properties."
+        },
+        "licenses": {
+          "description": "A list of license URLs (https) that should be applied to the compute images (as defined in the API). The use of this property in combination with any mechanism that results in using pre-built images (such as the current OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE) is forbidden. Also, note that use of these URLs will force the installer to copy the source image before being used. An example of this license is the one that enables nested virtualization. A full list of available licenses can be retrieved using the license API.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "network": {
+          "description": "The name of an existing GCP VPC where the cluster infrastructure should be provisioned.",
+          "type": "string"
+        },
+        "projectID": {
+          "description": "The project where the cluster should be created.",
+          "type": "string"
+        },
+        "region": {
+          "description": "The GCP region where the cluster should be created.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "projectID",
+        "region"
+      ],
+      "type": "object"
+    }
+  },
+  "description": "GCP configuration of an Installer configuration for an OpenShift cluster.",
+  "title": "GCP properties of OpenShift install-config.yaml",
+  "type": "object"
+}
