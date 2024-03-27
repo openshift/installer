@@ -160,6 +160,16 @@ foreach ($fd in $fds)
         New-TagAssignment -Entity $folder -Tag $tag > $null
     }
 
+    # Create resource pool for all future VMs
+    Write-Output "Checking for resource pool in failure domain $($fd.datacenter)/$($fd.cluster)"
+    $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fd.cluster)) -ErrorAction continue 2>$null
+
+    if (-Not $?) {
+        Write-Output "Creating resource pool $($metadata.infraID) in datacenter $($fd.datacenter)"
+        $rp = New-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fd.cluster))
+        New-TagAssignment -Entity $rp -Tag $tag > $null
+    }
+
     # If the rhcos virtual machine already exists
     Write-Output "Checking for vm template in failure domain $($fd.datacenter)/$($fd.cluster)"
     $template = Get-VM -Name $vm_template -Location $fd.datacenter -ErrorAction continue
@@ -215,7 +225,7 @@ if ($jobs.count -gt 0)
 Write-Output "Creating LB"
 
 # Data needed for LB VM creation
-$rp = Get-Cluster -Name $fds[0].cluster -Server $vcenter
+$rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($fds[0].cluster)) -Server $vcenter
 $datastoreInfo = Get-Datastore -Name $fds[0].datastore -Server $vcenter -Location $fds[0].datacenter
 $folder = Get-Folder -Name $metadata.infraID -Location $fds[0].datacenter
 $template = Get-VM -Name $vm_template -Location $fds[0].datacenter
@@ -250,7 +260,7 @@ foreach ($key in $vmHash.virtualmachines.Keys) {
         $name = "$($metadata.infraID)-$($key)"
         Write-Output "Creating $($name)"
 
-        $rp = Get-Cluster -Name $node.cluster -Server $node.server
+        $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $vcenter
         ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
         $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
 
