@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	google "golang.org/x/oauth2/google"
-	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	sets "k8s.io/apimachinery/pkg/util/sets"
@@ -144,6 +144,21 @@ func (mr *MockAPIMockRecorder) GetMachineTypeWithZones(ctx, project, region, mac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineTypeWithZones", reflect.TypeOf((*MockAPI)(nil).GetMachineTypeWithZones), ctx, project, region, machineType)
 }
 
+// GetNamespacedTagValue mocks base method.
+func (m *MockAPI) GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespacedTagValue", ctx, tagNamespacedName)
+	ret0, _ := ret[0].(*cloudresourcemanager.TagValue)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNamespacedTagValue indicates an expected call of GetNamespacedTagValue.
+func (mr *MockAPIMockRecorder) GetNamespacedTagValue(ctx, tagNamespacedName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespacedTagValue", reflect.TypeOf((*MockAPI)(nil).GetNamespacedTagValue), ctx, tagNamespacedName)
+}
+
 // GetNetwork mocks base method.
 func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
 	m.ctrl.T.Helper()
@@ -187,6 +202,21 @@ func (m *MockAPI) GetProjectPermissions(ctx context.Context, project string, per
 func (mr *MockAPIMockRecorder) GetProjectPermissions(ctx, project, permissions interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectPermissions", reflect.TypeOf((*MockAPI)(nil).GetProjectPermissions), ctx, project, permissions)
+}
+
+// GetProjectTags mocks base method.
+func (m *MockAPI) GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectTags", ctx, projectID)
+	ret0, _ := ret[0].(sets.Set[string])
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectTags indicates an expected call of GetProjectTags.
+func (mr *MockAPIMockRecorder) GetProjectTags(ctx, projectID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectTags", reflect.TypeOf((*MockAPI)(nil).GetProjectTags), ctx, projectID)
 }
 
 // GetProjects mocks base method.
