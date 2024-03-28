@@ -15,7 +15,7 @@ Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
 $metadata = Get-Content -Path ./metadata.json | ConvertFrom-Json
 
 # Get tag for all resources we created
-$tagCategory = Get-TagCategory -Name "pwsh-upi-$($metadata.infraID)"
+$tagCategory = Get-TagCategory -Name "openshift-$($metadata.infraID)"
 $tag = Get-Tag -Category $tagCategory -Name "$($metadata.infraID)"
 
 # Clean up all VMs

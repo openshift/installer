@@ -245,6 +245,10 @@ $vmHash = ConvertFrom-Json -InputObject $virtualmachines -AsHashtable
 
 Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete 0
 
+New-OpenshiftVMs "bootstrap"
+New-OpenshiftVMs "master"
+New-OpenshiftVMs "worker"
+<#
 $jobs = @()
 $vmStep = (100 / $vmHash.virtualmachines.Count)
 $vmCount = 1
@@ -321,7 +325,7 @@ Wait-Job -Job $jobs
 foreach ($job in $jobs) {
     Receive-Job -Job $job
 }
-
+#>
 Write-Progress -id 222 -Activity "Completed virtual machines" -PercentComplete 100 -Completed
 
 ## This is nice to have to clear screen when doing things manually.  Maybe i'll
