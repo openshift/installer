@@ -70,10 +70,18 @@ func (s *Service) reconcileRouteTables() error {
 				routes = append(routes, s.getGatewayPublicIPv6Route())
 			}
 		} else {
-			natGatewayID, err := s.getNatGatewayForSubnet(sn)
+			var natGatewayID string
+			// Direct gateway in edge zones (Local or Wavelength) are not supported, private subnets are associated
+			// to private route table with Nat Gateways in the Parent Zone or first zone available.
+			if sn.IsEdge() {
+				natGatewayID, err = s.findNatGatewayForEdgeSubnet(sn)
+			} else {
+				natGatewayID, err = s.getNatGatewayForSubnet(sn)
+			}
 			if err != nil {
 				return err
 			}
+
 			routes = append(routes, s.getNatGatewayPrivateRoute(natGatewayID))
 			if sn.IsIPv6 {
 				if !s.scope.VPC().IsIPv6Enabled() {

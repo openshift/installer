@@ -1935,6 +1935,11 @@ spec:
                             to determine routes for private subnets in the same AZ
                             as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: ParentZoneName defines a parent zone name for
+                            the zone that the subnet is created, when applied. Available
+                            only in zone types local-zone or wavelength-zone.
+                          type: string
                         resourceID:
                           description: ResourceID is the subnet identifier from AWS,
                             READ ONLY. This field is populated when the provider manages
@@ -1950,6 +1955,33 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: "ZoneName defines a zone name for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone."
+                          type: string
+                        zoneType:
+                          description: "ZoneType defines a zone type for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone. \n Zone types local-zone or wavelength-zone
+                            is not selected to automatically create control plane
+                            or compute nodes. \n When local-zone, the public subnets
+                            will be associated to the public route table, the private
+                            subnets will try to create a NAT Gateway, when supported,
+                            otherwise the subnet will be associated to the private
+                            route table in the region (preferred parent zone, zone
+                            type availability-zone in the region, or first available).
+                            \n When wavelength-zone, the public subnets will be associated
+                            to the  carrier route table, created altogether the Carrier
+                            Gateway when public subnets in AWS Wavelength Zone is
+                            defined. The private subnets will try to create a NAT
+                            Gateway, when supported, otherwise the subnet will be
+                            associated to the private route table in the region (preferred
+                            parent zone, zone type availability-zone in the region,
+                            or first available)."
+                          type: string
                       required:
                       - id
                       type: object
@@ -4396,6 +4428,12 @@ spec:
                                     routes for private subnets in the same AZ as the
                                     public subnet.
                                   type: string
+                                parentZoneName:
+                                  description: ParentZoneName defines a parent zone
+                                    name for the zone that the subnet is created,
+                                    when applied. Available only in zone types local-zone
+                                    or wavelength-zone.
+                                  type: string
                                 resourceID:
                                   description: ResourceID is the subnet identifier
                                     from AWS, READ ONLY. This field is populated when
@@ -4411,6 +4449,36 @@ spec:
                                   description: Tags is a collection of tags describing
                                     the resource.
                                   type: object
+                                zoneName:
+                                  description: "ZoneName defines a zone name for this
+                                    subnet If you're already set AvailabilityZone,
+                                    it will take precendence. \n The valid values
+                                    are availability-zone, local-zone , and wavelength-zone."
+                                  type: string
+                                zoneType:
+                                  description: "ZoneType defines a zone type for this
+                                    subnet If you're already set AvailabilityZone,
+                                    it will take precendence. \n The valid values
+                                    are availability-zone, local-zone , and wavelength-zone.
+                                    \n Zone types local-zone or wavelength-zone is
+                                    not selected to automatically create control plane
+                                    or compute nodes. \n When local-zone, the public
+                                    subnets will be associated to the public route
+                                    table, the private subnets will try to create
+                                    a NAT Gateway, when supported, otherwise the subnet
+                                    will be associated to the private route table
+                                    in the region (preferred parent zone, zone type
+                                    availability-zone in the region, or first available).
+                                    \n When wavelength-zone, the public subnets will
+                                    be associated to the  carrier route table, created
+                                    altogether the Carrier Gateway when public subnets
+                                    in AWS Wavelength Zone is defined. The private
+                                    subnets will try to create a NAT Gateway, when
+                                    supported, otherwise the subnet will be associated
+                                    to the private route table in the region (preferred
+                                    parent zone, zone type availability-zone in the
+                                    region, or first available)."
+                                  type: string
                               required:
                               - id
                               type: object
@@ -6909,40 +6977,6 @@ spec:
                 description: Ignition defined options related to the bootstrapping
                   systems where Ignition is used.
                 properties:
-                  proxy:
-                    description: Proxy defines proxy settings for Ignition. Only valid
-                      for Ignition versions 3.1 and above.
-                    properties:
-                      httpProxy:
-                        description: HTTPProxy is the HTTP proxy to use for Ignition.
-                          A single URL that specifies the proxy server to use for
-                          HTTP and HTTPS requests, unless overridden by the HTTPSProxy
-                          or NoProxy options.
-                        type: string
-                      httpsProxy:
-                        description: HTTPSProxy is the HTTPS proxy to use for Ignition.
-                          A single URL that specifies the proxy server to use for
-                          HTTPS requests, unless overridden by the NoProxy option.
-                        type: string
-                      noProxy:
-                        description: "NoProxy is the list of domains to not proxy
-                          for Ignition. Specifies a list of strings to hosts that
-                          should be excluded from proxying. \n Each value is represented
-                          by: - An IP address prefix (1.2.3.4) - An IP address prefix
-                          in CIDR notation (1.2.3.4/8) - A domain name - A domain
-                          name matches that name and all subdomains - A domain name
-                          with a leading . matches subdomains only - A special DNS
-                          label (*), indicates that no proxying should be done \n
-                          An IP address prefix and domain name can also include a
-                          literal port number (1.2.3.4:80)."
-                        items:
-                          description: IgnitionNoProxy defines the list of domains
-                            to not proxy for Ignition.
-                          maxLength: 2048
-                          type: string
-                        maxItems: 64
-                        type: array
-                    type: object
                   storageType:
                     default: ClusterObjectStore
                     description: "StorageType defines how to store the boostrap user
@@ -6965,24 +6999,6 @@ spec:
                     - ClusterObjectStore
                     - UnencryptedUserData
                     type: string
-                  tls:
-                    description: TLS defines TLS settings for Ignition. Only valid
-                      for Ignition versions 3.1 and above.
-                    properties:
-                      certificateAuthorities:
-                        description: CASources defines the list of certificate authorities
-                          to use for Ignition. The value is the certificate bundle
-                          (in PEM format). The bundle can contain multiple concatenated
-                          certificates. Supported schemes are http, https, tftp, s3,
-                          arn, gs, and `data` (RFC 2397) URL scheme.
-                        items:
-                          description: IgnitionCASource defines the source of the
-                            certificate authority to use for Ignition.
-                          maxLength: 65536
-                          type: string
-                        maxItems: 64
-                        type: array
-                    type: object
                   version:
                     default: "2.3"
                     description: Version defines which version of Ignition will be
@@ -7980,42 +7996,6 @@ spec:
                         description: Ignition defined options related to the bootstrapping
                           systems where Ignition is used.
                         properties:
-                          proxy:
-                            description: Proxy defines proxy settings for Ignition.
-                              Only valid for Ignition versions 3.1 and above.
-                            properties:
-                              httpProxy:
-                                description: HTTPProxy is the HTTP proxy to use for
-                                  Ignition. A single URL that specifies the proxy
-                                  server to use for HTTP and HTTPS requests, unless
-                                  overridden by the HTTPSProxy or NoProxy options.
-                                type: string
-                              httpsProxy:
-                                description: HTTPSProxy is the HTTPS proxy to use
-                                  for Ignition. A single URL that specifies the proxy
-                                  server to use for HTTPS requests, unless overridden
-                                  by the NoProxy option.
-                                type: string
-                              noProxy:
-                                description: "NoProxy is the list of domains to not
-                                  proxy for Ignition. Specifies a list of strings
-                                  to hosts that should be excluded from proxying.
-                                  \n Each value is represented by: - An IP address
-                                  prefix (1.2.3.4) - An IP address prefix in CIDR
-                                  notation (1.2.3.4/8) - A domain name - A domain
-                                  name matches that name and all subdomains - A domain
-                                  name with a leading . matches subdomains only -
-                                  A special DNS label (*), indicates that no proxying
-                                  should be done \n An IP address prefix and domain
-                                  name can also include a literal port number (1.2.3.4:80)."
-                                items:
-                                  description: IgnitionNoProxy defines the list of
-                                    domains to not proxy for Ignition.
-                                  maxLength: 2048
-                                  type: string
-                                maxItems: 64
-                                type: array
-                            type: object
                           storageType:
                             default: ClusterObjectStore
                             description: "StorageType defines how to store the boostrap
@@ -8040,25 +8020,6 @@ spec:
                             - ClusterObjectStore
                             - UnencryptedUserData
                             type: string
-                          tls:
-                            description: TLS defines TLS settings for Ignition. Only
-                              valid for Ignition versions 3.1 and above.
-                            properties:
-                              certificateAuthorities:
-                                description: CASources defines the list of certificate
-                                  authorities to use for Ignition. The value is the
-                                  certificate bundle (in PEM format). The bundle can
-                                  contain multiple concatenated certificates. Supported
-                                  schemes are http, https, tftp, s3, arn, gs, and
-                                  `data` (RFC 2397) URL scheme.
-                                items:
-                                  description: IgnitionCASource defines the source
-                                    of the certificate authority to use for Ignition.
-                                  maxLength: 65536
-                                  type: string
-                                maxItems: 64
-                                type: array
-                            type: object
                           version:
                             default: "2.3"
                             description: Version defines which version of Ignition
@@ -9032,6 +8993,11 @@ spec:
                             to determine routes for private subnets in the same AZ
                             as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: ParentZoneName defines a parent zone name for
+                            the zone that the subnet is created, when applied. Available
+                            only in zone types local-zone or wavelength-zone.
+                          type: string
                         resourceID:
                           description: ResourceID is the subnet identifier from AWS,
                             READ ONLY. This field is populated when the provider manages
@@ -9047,6 +9013,33 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: "ZoneName defines a zone name for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone."
+                          type: string
+                        zoneType:
+                          description: "ZoneType defines a zone type for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone. \n Zone types local-zone or wavelength-zone
+                            is not selected to automatically create control plane
+                            or compute nodes. \n When local-zone, the public subnets
+                            will be associated to the public route table, the private
+                            subnets will try to create a NAT Gateway, when supported,
+                            otherwise the subnet will be associated to the private
+                            route table in the region (preferred parent zone, zone
+                            type availability-zone in the region, or first available).
+                            \n When wavelength-zone, the public subnets will be associated
+                            to the  carrier route table, created altogether the Carrier
+                            Gateway when public subnets in AWS Wavelength Zone is
+                            defined. The private subnets will try to create a NAT
+                            Gateway, when supported, otherwise the subnet will be
+                            associated to the private route table in the region (preferred
+                            parent zone, zone type availability-zone in the region,
+                            or first available)."
+                          type: string
                       required:
                       - id
                       type: object
@@ -10871,6 +10864,11 @@ spec:
                             to determine routes for private subnets in the same AZ
                             as the public subnet.
                           type: string
+                        parentZoneName:
+                          description: ParentZoneName defines a parent zone name for
+                            the zone that the subnet is created, when applied. Available
+                            only in zone types local-zone or wavelength-zone.
+                          type: string
                         resourceID:
                           description: ResourceID is the subnet identifier from AWS,
                             READ ONLY. This field is populated when the provider manages
@@ -10886,6 +10884,33 @@ spec:
                           description: Tags is a collection of tags describing the
                             resource.
                           type: object
+                        zoneName:
+                          description: "ZoneName defines a zone name for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone."
+                          type: string
+                        zoneType:
+                          description: "ZoneType defines a zone type for this subnet
+                            If you're already set AvailabilityZone, it will take precendence.
+                            \n The valid values are availability-zone, local-zone
+                            , and wavelength-zone. \n Zone types local-zone or wavelength-zone
+                            is not selected to automatically create control plane
+                            or compute nodes. \n When local-zone, the public subnets
+                            will be associated to the public route table, the private
+                            subnets will try to create a NAT Gateway, when supported,
+                            otherwise the subnet will be associated to the private
+                            route table in the region (preferred parent zone, zone
+                            type availability-zone in the region, or first available).
+                            \n When wavelength-zone, the public subnets will be associated
+                            to the  carrier route table, created altogether the Carrier
+                            Gateway when public subnets in AWS Wavelength Zone is
+                            defined. The private subnets will try to create a NAT
+                            Gateway, when supported, otherwise the subnet will be
+                            associated to the private route table in the region (preferred
+                            parent zone, zone type availability-zone in the region,
+                            or first available)."
+                          type: string
                       required:
                       - id
                       type: object

@@ -177,6 +177,38 @@ func (s *Service) reconcileSubnets() error {
 		return errors.New("expected at least 1 subnet but got 0")
 	}
 
+	// Reconciling the zone attributes for the subnet
+	zoneNames := make([]string, 0, len(subnets))
+	for i := range subnets {
+		if subnets[i].ZoneType == nil {
+			zoneNames = append(zoneNames, subnets[i].AvailabilityZone)
+		}
+	}
+	zonesMap := make(map[string]*ec2.AvailabilityZone, len(zoneNames))
+
+	if len(zoneNames) > 0 {
+		out, err := s.EC2Client.DescribeAvailabilityZonesWithContext(context.TODO(), &ec2.DescribeAvailabilityZonesInput{
+			ZoneNames: aws.StringSlice(zoneNames),
+		})
+		if err != nil {
+			record.Eventf(s.scope.InfraCluster(), "FailedDescribeAvailableZones", "Failed getting available zones: %v", err)
+			return errors.Wrap(err, "failed to describe availability zones")
+		}
+
+		for _, zone := range out.AvailabilityZones {
+			if _, ok := zonesMap[aws.StringValue(zone.ZoneName)]; !ok {
+				zonesMap[aws.StringValue(zone.ZoneName)] = zone
+			}
+		}
+		for i := range subnets {
+			sub := &subnets[i]
+			// sync required fields
+			sub.ZoneType = zonesMap[sub.AvailabilityZone].ZoneType
+			sub.ZoneName = zonesMap[sub.AvailabilityZone].ZoneName
+			sub.ParentZoneName = zonesMap[sub.AvailabilityZone].ParentZoneName
+		}
+	}
+
 	// When the VPC is managed by CAPA, we need to create the subnets.
 	if !unmanagedVPC {
 		// Check that we need at least 1 private and 1 public subnet after we have updated the metadata

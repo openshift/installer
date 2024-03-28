@@ -341,3 +341,39 @@ func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error)
 
 	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.GetResourceID(), azGateways)
 }
+
+func (s *Service) findNatGatewayForEdgeSubnet(sn *infrav1.SubnetSpec) (string, error) {
+	if sn.IsPublic {
+		return "", errors.Errorf("cannot find NAT gateway for a public subnet, got id %q", sn.GetResourceID())
+	}
+
+	// Check if public edge subnet in the edge zone has nat gateway
+	azGateways := make(map[string][]string)
+	for _, psn := range s.scope.Subnets().FilterPublic() {
+		if psn.NatGatewayID == nil {
+			continue
+		}
+		azGateways[psn.AvailabilityZone] = append(azGateways[psn.AvailabilityZone], *psn.NatGatewayID)
+	}
+
+	if gws, ok := azGateways[sn.AvailabilityZone]; ok && len(gws) > 0 {
+		return gws[0], nil
+	}
+
+	// Check if the parent zone public subnet has nat gateway
+	if sn.ParentZoneName != nil {
+		if gws, ok := azGateways[aws.StringValue(sn.ParentZoneName)]; ok && len(gws) > 0 {
+			return gws[0], nil
+		}
+	}
+
+	// Get the first public subnet's nat gateway available
+	for zone, gws := range azGateways {
+		if len(gws[0]) > 0 {
+			s.scope.Debug(fmt.Sprintf("Assigning route table ID %s to zone %s from zone %s\n", gws[0], sn.AvailabilityZone, zone))
+			return gws[0], nil
+		}
+	}
+
+	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.GetResourceID(), azGateways)
+}
