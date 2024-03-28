@@ -1,6 +1,7 @@
 package image
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -37,6 +38,15 @@ type AgentImage struct {
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
+
+// IgnInfo is a struct to store details of the igninfo.
+type IgnInfo struct {
+	File   string `json:"file"`
+	Length int64  `json:"length"`
+	Offset int64  `json:"offset"`
+}
+
+var ignInfo IgnInfo
 
 // Dependencies returns the assets on which the Bootstrap asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
@@ -97,6 +107,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	logrus.Debugf("Updating the ignition data in the image file")
 	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
 	if err != nil {
 		return err
@@ -110,7 +121,25 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
+// Fetching the ignition details from igninfo.json file.
+func (a *AgentImage) fetchIgnitionInfo(ignInfoJSONPath string) error {
+	ignInfoJSONData, err := os.ReadFile(ignInfoJSONPath)
+	if err != nil {
+		logrus.Warnf("Failed to read json %s", ignInfoJSONPath)
+		return err
+	}
+	if err := json.Unmarshal(ignInfoJSONData, &ignInfo); err != nil {
+		logrus.Warnf("Failed to umarshal json: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+// Update the ignition image file with the ignition data.
 func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
+
+	// Saving the ignition buffer into archive
 	ca := NewCpioArchive()
 	err := ca.StoreBytes("config.ign", ignition, 0o644)
 	if err != nil {
@@ -121,24 +150,52 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
-	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
-	fi, err := os.Stat(ignitionImgPath)
-	if err != nil {
-		return err
+	// Gathering the ignition image details
+	var (
+		ignImagePath                 string
+		ignStartOffset, ignMaxLength int64
+	)
+	ignInfoJSONPath := filepath.Join(a.tmpPath, "coreos", "igninfo.json")
+	if _, err := os.Stat(ignInfoJSONPath); err == nil {
+		// Fetching the ignition details from the igninfo file
+		err = a.fetchIgnitionInfo(ignInfoJSONPath)
+		if err != nil {
+			return err
+		}
+		ignImagePath = filepath.Join(a.tmpPath, ignInfo.File)
+		ignStartOffset = ignInfo.Offset
+		ignMaxLength = ignInfo.Length
+	} else {
+		// Defaulting the ignition image path if no info file is found
+		ignImagePath = filepath.Join(a.tmpPath, "images", "ignition.img")
+		ignStartOffset = 0
+		fileInfo, err := os.Stat(ignImagePath)
+		if err != nil {
+			return err
+		}
+		ignMaxLength = int64(fileInfo.Size())
+
 	}
 
-	// Verify that the current compressed ignition archive does not exceed the
-	// embed area (usually 256 Kb)
-	if len(ignitionBuff) > int(fi.Size()) {
-		return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fi.Size())
+	// Verify that the compressed ignition buffer archive does not exceed the embed area (usually 256 Kb)
+	if int64(len(ignitionBuff)) > ignMaxLength {
+		return fmt.Errorf("Ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), ignMaxLength)
 	}
 
-	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
+	// Open the image file with permissions to seek and write the ignition content
+	ignitionImg, err := os.OpenFile(ignImagePath, os.O_RDWR, 0644)
 	if err != nil {
 		return err
 	}
 	defer ignitionImg.Close()
 
+	// Adjusting the ignition image file to the offset of ignition content (in case of cdboot.img)
+	_, err = ignitionImg.Seek(ignStartOffset, io.SeekStart)
+	if err != nil {
+		return err
+	}
+
+	// Write the ignition content into the image file
 	_, err = ignitionImg.Write(ignitionBuff)
 	if err != nil {
 		return err
