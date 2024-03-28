@@ -1,9 +1,10 @@
 package gcp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
+	"time"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
+	gcpbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/providers"
@@ -118,20 +120,21 @@ func extractGCPLBConfig(s stages.SplitStage, directory string, terraformDir stri
 		return "", err
 	}
 
-	// Update the ignition bootstrap variable to include the lbconfig.
-	tfvarData["ignition_bootstrap"] = string(ignitionOutput)
+	clusterID, ok := tfvarData["cluster_id"]
+	if !ok {
+		return "", fmt.Errorf("failed to read cluster id from tfvars")
+	}
 
-	// Convert the bootstrap data and write the data back to a file. This will overwrite the original tfvars file.
-	jsonBootstrap, err := json.Marshal(tfvarData)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*1)
+	defer cancel()
+
+	bucketName := gcpbootstrap.GetBootstrapStorageName(clusterID.(string))
+	bucketHandle, err := gcpbootstrap.CreateBucketHandle(ctx, bucketName)
 	if err != nil {
-		return "", fmt.Errorf("failed to convert bootstrap ignition to bytes: %w", err)
+		return "", fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
 	}
-	tfvarsFile.Data = jsonBootstrap
-
-	// update the value on disk to match
-	if err := os.WriteFile(fmt.Sprintf("%s/%s", directory, tfvarsFile.Filename), jsonBootstrap, 0o600); err != nil {
-		return "", fmt.Errorf("failed to rewrite %s: %w", tfvarsFile.Filename, err)
+	if err := gcpbootstrap.FillBucket(context.Background(), bucketHandle, string(ignitionOutput)); err != nil {
+		return "", fmt.Errorf("failed to fill gcp bucket with updated boostrap ignition contents: %w", err)
 	}
-
 	return "", nil
 }

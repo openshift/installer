@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -29,7 +27,6 @@ type config struct {
 	Auth                      `json:",inline"`
 	Region                    string            `json:"gcp_region,omitempty"`
 	BootstrapInstanceType     string            `json:"gcp_bootstrap_instance_type,omitempty"`
-	CreateBootstrapSA         bool              `json:"gcp_create_bootstrap_sa"`
 	CreateFirewallRules       bool              `json:"gcp_create_firewall_rules"`
 	MasterInstanceType        string            `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones   []string          `json:"gcp_master_availability_zones"`
@@ -52,6 +49,7 @@ type config struct {
 	ExtraLabels               map[string]string `json:"gcp_extra_labels,omitempty"`
 	UserProvisionedDNS        bool              `json:"gcp_user_provisioned_dns,omitempty"`
 	ExtraTags                 map[string]string `json:"gcp_extra_tags,omitempty"`
+	IgnitionShim              string            `json:"gcp_ignition_shim,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -67,6 +65,7 @@ type TFVarsSources struct {
 	InfrastructureName  string
 	UserProvisionedDNS  bool
 	UserTags            map[string]string
+	IgnitionShim        string
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -109,6 +108,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ExtraLabels:               labels,
 		UserProvisionedDNS:        sources.UserProvisionedDNS,
 		ExtraTags:                 sources.UserTags,
+		IgnitionShim:              sources.IgnitionShim,
 	}
 
 	if masterConfig.Disks[0].EncryptionKey != nil {
@@ -123,17 +123,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		}
 	}
 	cfg.InstanceServiceAccount = instanceServiceAccount
-
-	serviceAccount := make(map[string]interface{})
-
-	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); len(cfg.Auth.ServiceAccount) > 0 && err != nil {
-		return nil, errors.Wrapf(err, "unmarshaling service account")
-	}
-
-	// A private key is needed to sign the URL for bootstrap ignition.
-	// If there is no key in the credentials, we need to generate a new SA.
-	_, foundKey := serviceAccount["private_key"]
-	cfg.CreateBootstrapSA = !foundKey
 
 	return json.MarshalIndent(cfg, "", "  ")
 }
