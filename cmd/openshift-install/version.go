@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -33,6 +34,14 @@ func runVersionCmd(cmd *cobra.Command, args []string) error {
 	if image, err := releaseimage.Default(); err == nil {
 		fmt.Printf("release image %s\n", image)
 	}
-	fmt.Printf("release architecture %s\n", version.DefaultArch())
+	releaseArch, err := version.ReleaseArchitecture()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("release architecture %s\n", releaseArch)
+	if strings.Contains(releaseArch, "multi") || strings.Contains(releaseArch, "unknown") {
+		fmt.Printf("default architecture %s\n", version.DefaultArch())
+	}
+
 	return nil
 }
