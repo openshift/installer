@@ -55,6 +55,9 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+// gitCommitHash is the git commit hash of the code that is running.
+var gitCommitHash string
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -80,6 +83,7 @@ func main() {
 		probeAddr               string
 		maxConcurrentReconciles int
 	)
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -90,6 +94,7 @@ func main() {
 		"max-concurrent-reconciles",
 		defaultMaxConcurrentReconciles,
 		"The maximum number of allowed, concurrent reconciles.")
+
 	opts := zap.Options{
 		TimeEncoder: zapcore.RFC3339TimeEncoder,
 	}
@@ -97,6 +102,7 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	setupLog.Info("Initializing Nutanix Cluster API Infrastructure Provider", "Git Hash", gitCommitHash)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -107,11 +113,11 @@ func main() {
 		LeaderElectionID:       "f265110d.cluster.x-k8s.io",
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "unable to create manager")
 		os.Exit(1)
 	}
 
-	// Setup the context that's going to be used in controllers and for the manager.
+	// Set up the context that's going to be used in controllers and for the manager.
 	ctx := ctrl.SetupSignalHandler()
 
 	// Create a secret informer for the Nutanix client
@@ -173,7 +179,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting CAPX Controller Manager")
 	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

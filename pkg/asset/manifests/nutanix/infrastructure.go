@@ -27,7 +27,7 @@ func GetInfrastructureNutanixPlatformSpec(ic *installconfig.InstallConfig) (*con
 		if err != nil {
 			return nil, fmt.Errorf("unable to connect to Prism Central %s: %w", nutanixPlatform.PrismCentral.Endpoint.Address, err)
 		}
-		pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
+		pe, err := nc.V3.GetCluster(context.TODO(), nutanixPlatform.PrismElements[0].UUID)
 		if err != nil {
 			return nil, fmt.Errorf("fail to find the Prism Element (cluster) with uuid %s: %w", nutanixPlatform.PrismElements[0].UUID, err)
 		}

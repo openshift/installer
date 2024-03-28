@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -162,7 +163,7 @@ func isTaskFinished(clientV3 nutanixclientv3.Service, taskUUID string) (bool, er
 }
 
 func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, error) {
-	v, err := clientV3.GetTask(taskUUID)
+	v, err := clientV3.GetTask(context.TODO(), taskUUID)
 
 	if err != nil {
 		return "", err
