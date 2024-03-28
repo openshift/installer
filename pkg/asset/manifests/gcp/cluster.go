@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -104,14 +105,16 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: capiutils.Namespace,
 		},
 		Spec: capg.GCPClusterSpec{
-			Project: installConfig.Config.GCP.ProjectID,
-			Region:  installConfig.Config.GCP.Region,
+			Project:              installConfig.Config.GCP.ProjectID,
+			Region:               installConfig.Config.GCP.Region,
+			ControlPlaneEndpoint: clusterv1.APIEndpoint{Port: 6443},
 			Network: capg.NetworkSpec{
 				// TODO: Need a network project for installs where the network resources will exist in another
 				// project such as shared vpc installs
-				Name:                  ptr.To(networkName),
-				Subnets:               subnets,
-				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
+				Name:                    ptr.To(networkName),
+				Subnets:                 subnets,
+				AutoCreateSubnetworks:   ptr.To(autoCreateSubnets),
+				LoadBalancerBackendPort: ptr.To(int32(6443)),
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),

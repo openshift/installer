@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -88,7 +89,11 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
 		},
-		Spec: clusterv1.ClusterSpec{},
+		Spec: clusterv1.ClusterSpec{
+			ClusterNetwork: &clusterv1.ClusterNetwork{
+				APIServerPort: to.Int32Ptr(6443),
+			},
+		},
 	}
 	cluster.SetGroupVersionKind(clusterv1.GroupVersion.WithKind("Cluster"))
 	c.FileList = append(c.FileList, &asset.RuntimeFile{Object: cluster, File: asset.File{Filename: "01_capi-cluster.yaml"}})
