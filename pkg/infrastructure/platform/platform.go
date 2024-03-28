@@ -11,6 +11,7 @@ import (
 	awscapi "github.com/openshift/installer/pkg/infrastructure/aws/clusterapi"
 	awsinfra "github.com/openshift/installer/pkg/infrastructure/aws/sdk"
 	azureinfra "github.com/openshift/installer/pkg/infrastructure/azure"
+	baremetalinfra "github.com/openshift/installer/pkg/infrastructure/baremetal"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
 	ibmcloudcapi "github.com/openshift/installer/pkg/infrastructure/ibmcloud/clusterapi"
@@ -20,7 +21,6 @@ import (
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/terraform/stages/aws"
 	"github.com/openshift/installer/pkg/terraform/stages/azure"
-	"github.com/openshift/installer/pkg/terraform/stages/baremetal"
 	"github.com/openshift/installer/pkg/terraform/stages/gcp"
 	"github.com/openshift/installer/pkg/terraform/stages/ibmcloud"
 	"github.com/openshift/installer/pkg/terraform/stages/libvirt"
@@ -64,7 +64,7 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case azuretypes.StackTerraformName:
 		return terraform.InitializeProvider(azure.StackPlatformStages), nil
 	case baremetaltypes.Name:
-		return terraform.InitializeProvider(baremetal.PlatformStages), nil
+		return baremetalinfra.InitializeProvider(), nil
 	case gcptypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
 			return clusterapi.InitializeProvider(gcpcapi.Provider{}), nil
