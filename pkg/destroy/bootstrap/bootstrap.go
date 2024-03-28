@@ -69,7 +69,14 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		}
 	}
 
-	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
+	// Get cluster profile for new FeatureGate access.  Blank is no longer an option, so default to
+	// SelfManaged.
+	clusterProfile := configv1.SelfManaged
+	if cp := os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_CLUSTER_PROFILE"); cp != "" {
+		logrus.Warnf("Found override for Cluster Profile: %q", cp)
+		clusterProfile = configv1.ClusterProfileName(cp)
+	}
+	fg := featuregates.FeatureGateFromFeatureSets(configv1.AllFeatureSets()[clusterProfile], metadata.FeatureSet, metadata.CustomFeatureSet)
 
 	provider, err := infra.ProviderForPlatform(platform, fg)
 	if err != nil {
