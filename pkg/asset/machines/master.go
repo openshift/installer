@@ -708,14 +708,12 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	if err != nil {
 		return true, err
 	}
-	logrus.Infof("Loaded %v ip claims.", len(fileList))
 	m.IPClaimFiles = fileList
 
 	fileList, err = f.FetchByPattern(filepath.Join(directory, masterIPAddressFileNamePattern))
 	if err != nil {
 		return true, err
 	}
-	logrus.Infof("Loaded %v ip addresses.", len(fileList))
 	m.IPAddrFiles = fileList
 
 	return true, nil
