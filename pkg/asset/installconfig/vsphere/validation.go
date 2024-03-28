@@ -285,9 +285,13 @@ func validateESXiVersion(validationCtx *validationContext, clusterPath string, v
 	for _, h := range hosts {
 		var esxiHostVersion *version.Version
 		var mh mo.HostSystem
-		err := h.Properties(context.TODO(), h.Reference(), []string{"config.product"}, &mh)
+		err := h.Properties(context.TODO(), h.Reference(), []string{"config.product", "runtime"}, &mh)
 		if err != nil {
 			return append(allErrs, field.InternalError(vSphereFldPath, err))
+		}
+
+		if mh.Runtime.InMaintenanceMode || mh.Runtime.ConnectionState == vim25types.HostSystemConnectionStateDisconnected || mh.Runtime.ConnectionState == vim25types.HostSystemConnectionStateNotResponding {
+			continue
 		}
 
 		if mh.Config != nil {
