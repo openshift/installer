@@ -52,6 +52,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	baremetalutils "github.com/openshift/installer/pkg/utils/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
@@ -433,6 +434,17 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 			return newAPIError(lastErr)
 		}
 		return newAPIError(err)
+	}
+
+	// baremetal: monitor control plane bootstrapping progress
+	if assetStore, err := assetstore.NewStore(command.RootOpts.Dir); err == nil {
+		if installConfig, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
+			if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
+				if err := baremetalutils.WaitForBaremetalBootstrapControlPlane(ctx, config); err != nil {
+					return newBootstrapError(err)
+				}
+			}
+		}
 	}
 
 	if err := waitForBootstrapConfigMap(ctx, client); err != nil {
