@@ -148,7 +148,7 @@ stringData:
 		{
 			name:          "empty",
 			data:          "",
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-string-data",
@@ -158,7 +158,7 @@ kind: Secret
 metadata:
   name: pull-secret
   namespace: cluster-0`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret is empty",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret is empty",
 		},
 		{
 			name: "missing-secret-key",
@@ -170,7 +170,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson:`,
-			expectedError: "invalid PullSecret configuration: StringData: Required value: the pull secret does not contain any data",
+			expectedError: "invalid PullSecret configuration: Data: Required value: the pull secret does not contain any data",
 		},
 		{
 			name: "bad-secret-format",
@@ -182,7 +182,7 @@ metadata:
   namespace: cluster-0
 stringData:
   .dockerconfigjson: 'foo'`,
-			expectedError: "invalid PullSecret configuration: StringData: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
+			expectedError: "invalid PullSecret configuration: Data: Invalid value: \"foo\": invalid character 'o' in literal false (expecting 'a')",
 		},
 		{
 			name:       "file-not-found",
