@@ -100,6 +100,9 @@ type Platform struct {
 
 	// CustomerManagedKey has the keys needed to encrypt the storage account.
 	CustomerManagedKey *CustomerManagedKey `json:"customerManagedKey,omitempty"`
+
+	// ManagedBy sets the managedBy field in the azure resource group.
+	ManagedBy string `json:"managedBy,omitempty"`
 }
 
 // KeyVault defines an Azure Key Vault.
