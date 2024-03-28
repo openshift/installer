@@ -23,6 +23,8 @@ COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshif
 
 COPY --from=govc /govc /bin/govc
 
+# RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo | tee /etc/yum.repos.d/microsoft.repo
+
 RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
     sh -c 'echo -e "[packages-microsoft-com-prod]\nname=packages-microsoft-com-prod\nbaseurl=https://packages.microsoft.com/rhel/8/prod\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" >/etc/yum.repos.d/microsoft-prod.repo' && \
     sh -c 'echo -e "[google-cloud-cli]\nname=Google Cloud CLI\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg\n       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-sdk.repo'
@@ -37,6 +39,7 @@ RUN yum update -y && \
       unzip \
       openssh-clients \
       openssl \
+      powershell \
       python3-pyOpenSSL \
       python2-pyyaml \
       python3-pyyaml \
@@ -90,6 +93,11 @@ RUN mkdir /output && HOME=/output && \
     rm -f $HOME/.curlrc && \
     ibmcloud version && \
     ibmcloud plugin list
+
+# Install VMware plugin for powershell.  Create settings directory /output/.local/share/VMware/PowerCLI
+RUN pwsh -Command 'Install-Module VMware.PowerCLI -Force -Scope AllUsers' && \
+    pwsh -Command 'Install-Module -Name EPS -RequiredVersion 1.0 -Force -Scope AllUsers' && \
+    mkdir -p /output/.local/share/VMware/PowerCLI && chmod -R 777 /output/.local
 
 RUN chown 1000:1000 /output && chmod -R g=u "/output/.bluemix/"
 USER 1000:1000
