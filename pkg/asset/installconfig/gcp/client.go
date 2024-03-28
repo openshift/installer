@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	googleoauth "golang.org/x/oauth2/google"
-	"google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
@@ -20,7 +20,12 @@ import (
 
 //go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
 
-const defaultTimeout = 2 * time.Minute
+const (
+	defaultTimeout = 2 * time.Minute
+
+	// projectNameFmt is the format string for project resource name.
+	projectNameFmt = "projects/%s"
+)
 
 var (
 	// RequiredBasePermissions is the list of permissions required for an installation.
@@ -48,6 +53,8 @@ type API interface {
 	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
 	GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error)
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
+	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
+	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
 }
 
 // Client makes calls to the GCP API.
@@ -317,9 +324,9 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 		return nil, err
 	}
 
-	req := svc.Projects.List()
+	req := svc.Projects.Search()
 	projects := make(map[string]string)
-	if err := req.Pages(ctx, func(page *cloudresourcemanager.ListProjectsResponse) error {
+	if err := req.Pages(ctx, func(page *cloudresourcemanager.SearchProjectsResponse) error {
 		for _, project := range page.Projects {
 			projects[project.ProjectId] = project.Name
 		}
@@ -340,7 +347,7 @@ func (c *Client) GetProjectByID(ctx context.Context, project string) (*cloudreso
 		return nil, err
 	}
 
-	return svc.Projects.Get(project).Context(ctx).Do()
+	return svc.Projects.Get(fmt.Sprintf(projectNameFmt, project)).Context(ctx).Do()
 }
 
 // GetRegions gets the regions that are valid for the project. An error is returned when unsuccessful
@@ -485,7 +492,7 @@ func (c *Client) getPermissions(ctx context.Context, project string, permissions
 
 	projectsService := cloudresourcemanager.NewProjectsService(service)
 	rb := &cloudresourcemanager.TestIamPermissionsRequest{Permissions: permissions}
-	response, err := projectsService.TestIamPermissions(project, rb).Context(ctx).Do()
+	response, err := projectsService.TestIamPermissions(fmt.Sprintf(projectNameFmt, project), rb).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get Iam permissions")
 	}
@@ -512,4 +519,49 @@ func (c *Client) ValidateServiceAccountHasPermissions(ctx context.Context, proje
 		return false, err
 	}
 	return validPermissions.Len() == len(permissions), nil
+}
+
+// GetProjectTags returns the list of effective tags attached to the provided project resource.
+func (c *Client) GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error) {
+	const (
+		// projectParentPathFmt is the format string for parent path of a project resource.
+		projectParentPathFmt = "//cloudresourcemanager.googleapis.com/projects/%s"
+	)
+
+	service, err := c.getCloudResourceService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
+	}
+
+	effectiveTags := sets.New[string]()
+	effectiveTagsService := cloudresourcemanager.NewEffectiveTagsService(service)
+	effectiveTagsRequest := effectiveTagsService.List().
+		Context(ctx).
+		Parent(fmt.Sprintf(projectParentPathFmt, projectID))
+
+	if err := effectiveTagsRequest.Pages(ctx, func(page *cloudresourcemanager.ListEffectiveTagsResponse) error {
+		for _, effectiveTag := range page.EffectiveTags {
+			effectiveTags.Insert(effectiveTag.NamespacedTagValue)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return effectiveTags, nil
+}
+
+// GetNamespacedTagValue returns the Tag Value metadata fetched using the tag's NamespacedName.
+func (c *Client) GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error) {
+	service, err := c.getCloudResourceService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
+	}
+
+	tagValuesService := cloudresourcemanager.NewTagValuesService(service)
+
+	return tagValuesService.GetNamespaced().
+		Context(ctx).
+		Name(tagNamespacedName).
+		Do()
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
