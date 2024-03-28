@@ -28,6 +28,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to split CIDR into subnets")
 	}
+	privateDNSZoneName := installConfig.Config.ClusterDomain()
 
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
@@ -55,6 +56,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 			},
 			NetworkSpec: capz.NetworkSpec{
+				NetworkClassSpec: capz.NetworkClassSpec{
+					PrivateDNSZoneName: privateDNSZoneName,
+				},
 				Vnet: capz.VnetSpec{
 					ID: installConfig.Config.Azure.VirtualNetwork,
 					VnetClassSpec: capz.VnetClassSpec{
@@ -81,6 +85,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 								subnets[1].String(),
 							},
 						},
+					},
+				},
+				APIServerLB: capz.LoadBalancerSpec{
+					Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					BackendPool: capz.BackendPool{
+						Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					},
+					LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
+						Type: capz.Internal,
 					},
 				},
 			},
@@ -126,7 +139,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	id.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureClusterIdentity"))
 	manifests = append(manifests, &asset.RuntimeFile{
 		Object: id,
-		File:   asset.File{Filename: "01_aws-cluster-controller-identity-default.yaml"},
+		File:   asset.File{Filename: "01_azure-cluster-controller-identity-default.yaml"},
 	})
 
 	return &capiutils.GenerateClusterAssetsOutput{
