@@ -199,3 +199,92 @@ function New-VMNetworkConfig {
 "@
     return ConvertFrom-Json -InputObject $network
 }
+
+function New-OpenshiftVMs {
+    param(
+        $NodeType
+    )
+
+    Write-Output "Creating $($NodeType) VMs"
+
+    $jobs = @()
+    $vmStep = (100 / $vmHash.virtualmachines.Count)
+    $vmCount = 1
+    foreach ($key in $vmHash.virtualmachines.Keys) {
+        $node = $vmHash.virtualmachines[$key]
+
+        if ($NodeType -ne $node.type) {
+            continue
+        }
+
+        $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ScriptBlock {
+            param($key,$node,$vm_template,$metadata,$tag)
+            . .\variables.ps1
+            . .\upi-functions.ps1
+            Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+
+            $name = "$($metadata.infraID)-$($key)"
+            Write-Output "Creating $($name)"
+
+            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $vcenter
+            ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
+            $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter
+
+            # Pull network config for each node
+            if ($node.type -eq "master") {
+                $numCPU = $control_plane_num_cpus
+                $memory = $control_plane_memory
+            } elseif ($node.type -eq "worker") {
+                $numCPU = $compute_num_cpus
+                $memory = $compute_memory
+            } else {
+                # should only be bootstrap
+                $numCPU = $control_plane_num_cpus
+                $memory = $control_plane_memory
+            }
+            $ip = $node.ip
+            $network = New-VMNetworkConfig -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
+
+            # Get the content of the ignition file per machine type (bootstrap, master, worker)
+            $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
+            $ignition = [Convert]::ToBase64String($bytes)
+
+            # Get correct template / folder
+            $folder = Get-Folder -Name $metadata.infraID -Location $node.datacenter
+            $template = Get-VM -Name $vm_template -Location $($node.datacenter)
+
+            # Clone the virtual machine from the imported template
+            #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
+            $vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -NumCPU $numCPU -MemoryMB $memory
+
+            # Assign tag so we can later clean up
+            # New-TagAssignment -Entity $vm -Tag $tag
+            # New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $ignition -confirm:$false -Force > $null
+            # New-AdvancedSetting -Entity $vm -name "guestinfo.hostname" -value $name -Confirm:$false -Force > $null
+
+            if ($node.type -eq "master" -And $delayVMStart) {
+                # To give bootstrap some time to start, lets wait 2 minutes
+                Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
+                    Start-Sleep -Seconds 90
+                    $input | Start-VM
+                }
+            } elseif ($node.type -eq "worker" -And $delayVMStart) {
+                # Workers are not needed right away, gotta wait till masters
+                # have started machine-server.  wait 7 minutes to start.
+                Start-ThreadJob -ThrottleLimit 5 -InputObject $vm {
+                    Start-Sleep -Seconds 600
+                    $input | Start-VM
+                }
+            }
+            else {
+                $vm | Start-VM
+            }
+        } -ArgumentList @($key,$node,$vm_template,$metadata,$tag)
+        Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete ($vmStep * $vmCount)
+        $vmCount++
+    }
+    Wait-Job -Job $jobs
+    foreach ($job in $jobs) {
+        Receive-Job -Job $job
+    }
+}
