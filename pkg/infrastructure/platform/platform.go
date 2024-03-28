@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	gcpcapi "github.com/openshift/installer/pkg/infrastructure/gcp/clusterapi"
 	ibmcloudcapi "github.com/openshift/installer/pkg/infrastructure/ibmcloud/clusterapi"
+	nutanixcapi "github.com/openshift/installer/pkg/infrastructure/nutanix/clusterapi"
 	openstackcapi "github.com/openshift/installer/pkg/infrastructure/openstack/clusterapi"
 	powervscapi "github.com/openshift/installer/pkg/infrastructure/powervs/clusterapi"
 	vspherecapi "github.com/openshift/installer/pkg/infrastructure/vsphere/clusterapi"
@@ -78,6 +79,9 @@ func ProviderForPlatform(platform string, fg featuregates.FeatureGate) (infrastr
 	case libvirttypes.Name:
 		return terraform.InitializeProvider(libvirt.PlatformStages), nil
 	case nutanixtypes.Name:
+		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {
+			return clusterapi.InitializeProvider(nutanixcapi.Provider{}), nil
+		}
 		return terraform.InitializeProvider(nutanix.PlatformStages), nil
 	case powervstypes.Name:
 		if fg.Enabled(configv1.FeatureGateClusterAPIInstall) {

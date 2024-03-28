@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"fmt"
 
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
@@ -136,7 +137,7 @@ func (p *MachinePool) ValidateConfig(platform *Platform) error {
 			} else {
 				projectName := *p.Project.Name
 				filter := fmt.Sprintf("name==%s", projectName)
-				res, err := nc.V3.ListProject(&nutanixclientv3.DSMetadata{
+				res, err := nc.V3.ListProject(context.TODO(), &nutanixclientv3.DSMetadata{
 					Filter: &filter,
 				})
 				switch {
@@ -158,7 +159,7 @@ func (p *MachinePool) ValidateConfig(platform *Platform) error {
 			if p.Project.UUID == nil || *p.Project.UUID == "" {
 				errList = append(errList, field.Required(fldPath.Child("project", "uuid"), "missing projct uuid"))
 			} else {
-				if _, err = nc.V3.GetProject(*p.Project.UUID); err != nil {
+				if _, err = nc.V3.GetProject(context.TODO(), *p.Project.UUID); err != nil {
 					errMsg = fmt.Sprintf("failed to get the project with uuid %s. error: %v", *p.Project.UUID, err)
 					errList = append(errList, field.Invalid(fldPath.Child("project", "uuid"), *p.Project.UUID, errMsg))
 				}
@@ -172,7 +173,7 @@ func (p *MachinePool) ValidateConfig(platform *Platform) error {
 	// validate categories if configured
 	if len(p.Categories) > 0 {
 		for _, category := range p.Categories {
-			if _, err = nc.V3.GetCategoryValue(category.Key, category.Value); err != nil {
+			if _, err = nc.V3.GetCategoryValue(context.TODO(), category.Key, category.Value); err != nil {
 				errMsg = fmt.Sprintf("Failed to find the category with key %q and value %q. error: %v", category.Key, category.Value, err)
 				errList = append(errList, field.Invalid(fldPath.Child("categories"), category, errMsg))
 			}
