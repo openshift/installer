@@ -33,12 +33,12 @@ cred, err := azidentity.NewDefaultAzureCredential(nil)
 
 For more information on authentication, please see the documentation for `azidentity` at [pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity).
 
-## Clients
+## Client Factory
 
-Azure Storage modules consist of one or more clients.  A client groups a set of related APIs, providing access to its functionality within the specified subscription.  Create one or more clients to access the APIs you require using your credential.
+Azure Storage module consists of one or more clients. We provide a client factory which could be used to create any client in this module.
 
 ```go
-client, err := armstorage.NewFileSharesClient(<subscription ID>, cred, nil)
+clientFactory, err := armstorage.NewClientFactory(<subscription ID>, cred, nil)
 ```
 
 You can use `ClientOptions` in package `github.com/Azure/azure-sdk-for-go/sdk/azcore/arm` to set endpoint to connect with public and sovereign clouds as well as Azure Stack. For more information, please see the documentation for `azcore` at [pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azcore](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azcore).
@@ -49,12 +49,28 @@ options := arm.ClientOptions {
         Cloud: cloud.AzureChina,
     },
 }
-client, err := armstorage.NewFileSharesClient(<subscription ID>, cred, &options)
+clientFactory, err := armstorage.NewClientFactory(<subscription ID>, cred, &options)
 ```
+
+## Clients
+
+A client groups a set of related APIs, providing access to its functionality.  Create one or more clients to access the APIs you require using client factory.
+
+```go
+client := clientFactory.NewAccountsClient()
+```
+
+## Fakes
+
+The fake package contains types used for constructing in-memory fake servers used in unit tests.
+This allows writing tests to cover various success/error conditions without the need for connecting to a live service.
+
+Please see https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/samples/fakes for details and examples on how to use fakes.
 
 ## More sample code
 
 - [Blob](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/storage/blob)
+- [Creating a Fake](https://github.com/Azure/azure-sdk-for-go/blob/main/sdk/resourcemanager/storage/armstorage/fake_example_test.go)
 - [File](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/storage/file)
 - [Management Policy](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/storage/managementpolicy)
 - [Queue](https://aka.ms/azsdk/go/mgmt/samples?path=sdk/resourcemanager/storage/queue)
