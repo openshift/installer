@@ -408,7 +408,12 @@ func (m *PowerVSMachineScope) createIgnitionData(data []byte) (string, error) {
 	key := m.bootstrapDataKey()
 	m.Info("bootstrap data key", "key", key)
 
-	bucket := m.IBMPowerVSCluster.Spec.CosInstance.BucketName
+	bucket := m.bucketName()
+	region := m.bucketRegion()
+	if region == "" {
+		return "", fmt.Errorf("failed to determine cos bucket region, both bucket region and vpc region not set")
+	}
+
 	if _, err := cosClient.PutObject(&s3.PutObjectInput{
 		Body:   aws.ReadSeekCloser(bytes.NewReader(data)),
 		Bucket: aws.String(bucket),
@@ -418,8 +423,7 @@ func (m *PowerVSMachineScope) createIgnitionData(data []byte) (string, error) {
 		return "", fmt.Errorf("putting object to cos bucket %w", err)
 	}
 
-	bucketRegion := m.IBMPowerVSCluster.Spec.CosInstance.BucketRegion
-	objHost := fmt.Sprintf("%s.s3.%s.%s", bucket, bucketRegion, cosURLDomain)
+	objHost := fmt.Sprintf("%s.s3.%s.%s", bucket, region, cosURLDomain)
 	objectURL := &url.URL{
 		Scheme: "https",
 		Host:   objHost,
@@ -538,7 +542,7 @@ func (m *PowerVSMachineScope) DeleteMachineIgnition() error {
 		return fmt.Errorf("failed to create cosClient %w", err)
 	}
 
-	bucket := m.IBMPowerVSCluster.Spec.CosInstance.BucketName
+	bucket := m.bucketName()
 	objs, _ := cosClient.ListObjects(&s3.ListObjectsInput{
 		Bucket: aws.String(bucket),
 	})
@@ -561,10 +565,13 @@ func (m *PowerVSMachineScope) DeleteMachineIgnition() error {
 
 // createCOSClient creates a new cosClient from the supplied parameters.
 func (m *PowerVSMachineScope) createCOSClient() (*cos.Service, error) {
+	var cosInstanceName string
 	if m.IBMPowerVSCluster.Spec.CosInstance == nil || m.IBMPowerVSCluster.Spec.CosInstance.Name == "" {
-		return nil, fmt.Errorf("cannot create cos client cos instance name is not set")
+		cosInstanceName = fmt.Sprintf("%s-%s", m.IBMPowerVSCluster.GetName(), "cosinstance")
+	} else {
+		cosInstanceName = m.IBMPowerVSCluster.Spec.CosInstance.Name
 	}
-	cosInstanceName := m.IBMPowerVSCluster.Spec.CosInstance.Name
+
 	serviceInstance, err := m.ResourceClient.GetInstanceByName(cosInstanceName, resourcecontroller.CosResourceID, resourcecontroller.CosResourcePlanID)
 	if err != nil {
 		m.Error(err, "failed to get cos service instance", "name", cosInstanceName)
@@ -589,14 +596,9 @@ func (m *PowerVSMachineScope) createCOSClient() (*cos.Service, error) {
 		fmt.Printf("ibmcloud api key is not provided, set %s environmental variable", "IBMCLOUD_API_KEY")
 	}
 
-	region := m.IBMPowerVSCluster.Spec.CosInstance.BucketRegion
-	// if the bucket region is not set, use vpc region
+	region := m.bucketRegion()
 	if region == "" {
-		vpcDetails := m.IBMPowerVSCluster.Spec.VPC
-		if vpcDetails == nil || vpcDetails.Region == nil {
-			return nil, fmt.Errorf("failed to determine cos bucket region, both buckeet region and vpc region not set")
-		}
-		region = *vpcDetails.Region
+		return nil, fmt.Errorf("failed to determine cos bucket region, both bucket region and vpc region not set")
 	}
 
 	serviceEndpoint := fmt.Sprintf("s3.%s.%s", region, cosURLDomain)
@@ -1073,4 +1075,25 @@ func (m *PowerVSMachineScope) APIServerPort() int32 {
 		return *m.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	return infrav1beta2.DefaultAPIServerPort
+}
+
+// TODO: reuse getServiceName function instead.
+func (m *PowerVSMachineScope) bucketName() string {
+	if m.IBMPowerVSCluster.Spec.CosInstance != nil && m.IBMPowerVSCluster.Spec.CosInstance.BucketName != "" {
+		return m.IBMPowerVSCluster.Spec.CosInstance.BucketName
+	}
+	return fmt.Sprintf("%s-%s", m.IBMPowerVSCluster.GetName(), "cosbucket")
+}
+
+// TODO: duplicate function, optimize it.
+func (m *PowerVSMachineScope) bucketRegion() string {
+	if m.IBMPowerVSCluster.Spec.CosInstance != nil && m.IBMPowerVSCluster.Spec.CosInstance.BucketRegion != "" {
+		return m.IBMPowerVSCluster.Spec.CosInstance.BucketRegion
+	}
+	// if the bucket region is not set, use vpc region
+	vpcDetails := m.IBMPowerVSCluster.Spec.VPC
+	if vpcDetails != nil && vpcDetails.Region != nil {
+		return *vpcDetails.Region
+	}
+	return ""
 }

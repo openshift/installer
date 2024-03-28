@@ -4,15 +4,15 @@ go 1.21
 
 toolchain go1.21.4
 
-require sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247
+require sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e
 
 require (
 	github.com/IBM-Cloud/power-go-client v1.6.0 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.16.3 // indirect
 	github.com/IBM/ibm-cos-sdk-go v1.10.2 // indirect
 	github.com/IBM/networking-go-sdk v0.45.0 // indirect
-	github.com/IBM/platform-services-go-sdk v0.61.3 // indirect
-	github.com/IBM/vpc-go-sdk v0.49.1 // indirect
+	github.com/IBM/platform-services-go-sdk v0.62.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.50.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect

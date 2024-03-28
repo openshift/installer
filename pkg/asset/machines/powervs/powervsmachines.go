@@ -42,7 +42,7 @@ func GenerateMachines(clusterID string, ic *types.InstallConfig, pool *types.Mac
 	image = fmt.Sprintf("rhcos-%s", clusterID)
 
 	if ic.PowerVS.ServiceInstanceGUID == "" {
-		serviceName := fmt.Sprintf("%s-iaas", clusterID)
+		serviceName := fmt.Sprintf("%s-power-iaas", clusterID)
 
 		service = capibm.IBMPowerVSResourceReference{
 			Name: &serviceName,

@@ -109,6 +109,8 @@ func NewPowerVSImageScope(params PowerVSImageScopeParams) (scope *PowerVSImageSc
 	spec := params.IBMPowerVSImage.Spec
 	if spec.ServiceInstanceID != "" {
 		serviceInstanceID = spec.ServiceInstanceID
+	} else if params.IBMPowerVSImage.Spec.ServiceInstance != nil && params.IBMPowerVSImage.Spec.ServiceInstance.ID != nil {
+		serviceInstanceID = *params.IBMPowerVSImage.Spec.ServiceInstance.ID
 	} else {
 		name := fmt.Sprintf("%s-%s", params.IBMPowerVSImage.Spec.ClusterName, "serviceInstance")
 		if params.IBMPowerVSImage.Spec.ServiceInstance != nil && params.IBMPowerVSImage.Spec.ServiceInstance.Name != nil {

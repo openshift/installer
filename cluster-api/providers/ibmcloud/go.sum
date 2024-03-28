@@ -6,10 +6,10 @@ github.com/IBM/ibm-cos-sdk-go v1.10.2 h1:IlG7ruBNp10u03FIYvY1qeLoNNHAAAdpFP8h+Wm
 github.com/IBM/ibm-cos-sdk-go v1.10.2/go.mod h1:h+IwNGkLJWCUOyCM9tj2rBCIf1tsckfe+DrJwzHx2PI=
 github.com/IBM/networking-go-sdk v0.45.0 h1:tYgDhVDpgKvELNY7tcodbZ4ny9fatpEWM6PwtQcDe20=
 github.com/IBM/networking-go-sdk v0.45.0/go.mod h1:NnJPA1e5GWr5opJe+5Hs6e1G6RcBIFz64TrkZsdnSp8=
-github.com/IBM/platform-services-go-sdk v0.61.3 h1:Us2fDckodXFI3NA67BerMVFKEai0MOL2vMqzut6qiik=
-github.com/IBM/platform-services-go-sdk v0.61.3/go.mod h1:fd7gUOmsuQYhYLTZVLL+posObT/ISxVV+6JzsfDs5qE=
-github.com/IBM/vpc-go-sdk v0.49.1 h1:VIkZ8iJMBHqBulUXcPtN0ifxsa0xwlBtaLslU2V9HsY=
-github.com/IBM/vpc-go-sdk v0.49.1/go.mod h1:iBg9UJY1y/XpkweyP6YH7G6guzKPV8BYDoBMTdPupH4=
+github.com/IBM/platform-services-go-sdk v0.62.0 h1:IA7kerhjqHHCSirXsLveX6Bk6DnUOA7Z9zaMqLZ5iBY=
+github.com/IBM/platform-services-go-sdk v0.62.0/go.mod h1:fd7gUOmsuQYhYLTZVLL+posObT/ISxVV+6JzsfDs5qE=
+github.com/IBM/vpc-go-sdk v0.50.0 h1:+vnXYK0FXFXYqaS/5/X1XEqH0bbRotkzkerRk21ZEjE=
+github.com/IBM/vpc-go-sdk v0.50.0/go.mod h1:iBg9UJY1y/XpkweyP6YH7G6guzKPV8BYDoBMTdPupH4=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
@@ -427,8 +427,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0 h1:TgtAeesdhpm2S
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.28.0/go.mod h1:VHVDI/KrK4fjnV61bE2g3sA7tiETLn8sooImelsCx3Y=
 sigs.k8s.io/cluster-api v1.6.2 h1:ruUi4q/9jXFuI+hmnDjo9izHgrBk4bjfQXLKx678PQE=
 sigs.k8s.io/cluster-api v1.6.2/go.mod h1:Anm4cA6R/AIP6KdIuVje8CdFc/TdGl+382bi5oPawRc=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247 h1:XUd5ZfsZRiL9xiH5U1AdIfjjt9mW10bsiAUGk6fokkQ=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247/go.mod h1:Zo/3APj8Ji0SsAYv7wnaUr4ulL3dlyoyGF9SXFRkMbM=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e h1:HZO/r9l4B3DMoj1y5/j1AaQX41DaFMBdt//jGH1L1Aw=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
 sigs.k8s.io/controller-runtime v0.17.2 h1:FwHwD1CTUemg0pW2otk7/U5/i5m2ymzvOXdbeGOUvw0=
 sigs.k8s.io/controller-runtime v0.17.2/go.mod h1:+MngTvIQQQhfXtwfdGw/UOQ/aIaqsYywfCINOtwMO/s=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=

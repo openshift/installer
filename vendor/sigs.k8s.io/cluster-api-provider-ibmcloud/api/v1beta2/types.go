@@ -136,6 +136,8 @@ var (
 	ResourceTypeSubnet = ResourceType("subnet")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
 	ResourceTypeCOSInstance = ResourceType("cosInstance")
+	// ResourceTypeCOSBucket is IBM COS bucket resource.
+	ResourceTypeCOSBucket = ResourceType("cosBucket")
 	// ResourceTypeResourceGroup is IBM Resource Group.
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
 )

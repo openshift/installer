@@ -1250,10 +1250,10 @@ github.com/IBM/keyprotect-go-client v0.12.2 h1:Cjxcqin9Pl0xz3MnxdiVd4v/eIa79xL3h
 github.com/IBM/keyprotect-go-client v0.12.2/go.mod h1:yr8h2noNgU8vcbs+vhqoXp3Lmv73PI0zAc6VMgFvWwM=
 github.com/IBM/networking-go-sdk v0.45.0 h1:tYgDhVDpgKvELNY7tcodbZ4ny9fatpEWM6PwtQcDe20=
 github.com/IBM/networking-go-sdk v0.45.0/go.mod h1:NnJPA1e5GWr5opJe+5Hs6e1G6RcBIFz64TrkZsdnSp8=
-github.com/IBM/platform-services-go-sdk v0.61.3 h1:Us2fDckodXFI3NA67BerMVFKEai0MOL2vMqzut6qiik=
-github.com/IBM/platform-services-go-sdk v0.61.3/go.mod h1:fd7gUOmsuQYhYLTZVLL+posObT/ISxVV+6JzsfDs5qE=
-github.com/IBM/vpc-go-sdk v0.49.1 h1:VIkZ8iJMBHqBulUXcPtN0ifxsa0xwlBtaLslU2V9HsY=
-github.com/IBM/vpc-go-sdk v0.49.1/go.mod h1:iBg9UJY1y/XpkweyP6YH7G6guzKPV8BYDoBMTdPupH4=
+github.com/IBM/platform-services-go-sdk v0.62.0 h1:IA7kerhjqHHCSirXsLveX6Bk6DnUOA7Z9zaMqLZ5iBY=
+github.com/IBM/platform-services-go-sdk v0.62.0/go.mod h1:fd7gUOmsuQYhYLTZVLL+posObT/ISxVV+6JzsfDs5qE=
+github.com/IBM/vpc-go-sdk v0.50.0 h1:+vnXYK0FXFXYqaS/5/X1XEqH0bbRotkzkerRk21ZEjE=
+github.com/IBM/vpc-go-sdk v0.50.0/go.mod h1:iBg9UJY1y/XpkweyP6YH7G6guzKPV8BYDoBMTdPupH4=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
@@ -2957,8 +2957,8 @@ sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9 h1:
 sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9/go.mod h1:N9VMyIYoaif6jVMIk9Ptf0GWRXXgZmQ7Wnmo5fUsVVA=
 sigs.k8s.io/cluster-api-provider-gcp v1.6.0 h1:I/Fxzoh1RyHp/n7Do5nJlJgYoMuQ2SVzlz4TJhIc7qk=
 sigs.k8s.io/cluster-api-provider-gcp v1.6.0/go.mod h1:gcrcNrKveBcUdW5FOWDA5yK77Ibz09jUHlzXEoTV/fw=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247 h1:XUd5ZfsZRiL9xiH5U1AdIfjjt9mW10bsiAUGk6fokkQ=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240325184642-34a293918247/go.mod h1:Zo/3APj8Ji0SsAYv7wnaUr4ulL3dlyoyGF9SXFRkMbM=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e h1:HZO/r9l4B3DMoj1y5/j1AaQX41DaFMBdt//jGH1L1Aw=
+sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240327041652-384c1894c61e/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
 sigs.k8s.io/cluster-api-provider-openstack v0.9.0 h1:ScwZIfT1kI88+qMzeO7ppMP9DvEzrfLHuYPg2p1mcho=
 sigs.k8s.io/cluster-api-provider-openstack v0.9.0/go.mod h1:ecR9lx4XbOr3Gg2CGNgM3wguuV6l31Nd5rUccE+xjKs=
 sigs.k8s.io/cluster-api-provider-vsphere v1.9.0 h1:tMGgDmUr2Q4/INM0cn1jZyxPxYGe8wWrk9l+8hrwPSw=
