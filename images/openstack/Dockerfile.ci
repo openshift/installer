@@ -3,6 +3,8 @@
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers as providers
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+# FIPS support is offered via the baremetal-installer image
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .

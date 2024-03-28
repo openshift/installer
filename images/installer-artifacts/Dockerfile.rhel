@@ -3,7 +3,10 @@
 
 FROM registry.ci.openshift.org/ocp/4.16:installer-terraform-providers AS providers
 
+# FIPS support is offered via the baremetal-installer image
+
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS macbuilder
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -11,6 +14,7 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwi
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS macarmbuilder
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -18,6 +22,7 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/darwi
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS linuxbuilder
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
@@ -25,6 +30,7 @@ COPY --from=providers /go/src/github.com/openshift/installer/terraform/bin/linux
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS linuxarmbuilder
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
