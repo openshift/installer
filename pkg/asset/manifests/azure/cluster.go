@@ -55,12 +55,24 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				},
 			},
 			NetworkSpec: capz.NetworkSpec{
+				NetworkClassSpec: capz.NetworkClassSpec{
+					PrivateDNSZoneName: installConfig.Config.ClusterDomain(),
+				},
 				Vnet: capz.VnetSpec{
 					ID: installConfig.Config.Azure.VirtualNetwork,
 					VnetClassSpec: capz.VnetClassSpec{
 						CIDRBlocks: []string{
 							mainCIDR.String(),
 						},
+					},
+				},
+				APIServerLB: capz.LoadBalancerSpec{
+					Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					BackendPool: capz.BackendPool{
+						Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+					},
+					LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
+						Type: capz.Internal,
 					},
 				},
 				Subnets: capz.Subnets{
