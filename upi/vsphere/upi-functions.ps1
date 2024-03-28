@@ -60,6 +60,7 @@ function New-OpenShiftVM {
     $vm | Get-NetworkAdapter | Set-NetworkAdapter -Portgroup $pg -confirm:$false > $null
 
     # Assign advanced settings
+    New-AdvancedSetting -Entity $vm -name "disk.enableUUID" -value "TRUE" -confirm:$false -Force > $null
     New-AdvancedSetting -Entity $vm -name "stealclock.enable" -value "TRUE" -confirm:$false -Force > $null
     New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
     New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $IgnitionData -confirm:$false -Force > $null
