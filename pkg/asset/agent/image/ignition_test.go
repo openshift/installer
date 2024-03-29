@@ -22,8 +22,10 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types/agent"
@@ -90,7 +92,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	privateKey := "-----BEGIN EC PUBLIC KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PUBLIC KEY-----\n"
 	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -593,6 +595,9 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	assert.NoError(t, err)
 
 	return []asset.Asset{
+		&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+		&joiner.ClusterInfo{},
+		&joiner.AddNodesConfig{},
 		&manifests.AgentManifests{
 			InfraEnv: &aiv1beta1.InfraEnv{
 				Spec: aiv1beta1.InfraEnvSpec{

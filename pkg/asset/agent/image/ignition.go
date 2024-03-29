@@ -24,8 +24,10 @@ import (
 	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
+	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
+	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
@@ -81,6 +83,9 @@ func (a *Ignition) Name() string {
 // Dependencies returns the assets on which the Ignition asset depends.
 func (a *Ignition) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&workflow.AgentWorkflow{},
+		&joiner.ClusterInfo{},
+		&joiner.AddNodesConfig{},
 		&manifests.AgentManifests{},
 		&manifests.ExtraManifests{},
 		&tls.KubeAPIServerLBSignerCertKey{},
@@ -98,12 +103,15 @@ func (a *Ignition) Dependencies() []asset.Asset {
 
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
+	agentWorkflow := &workflow.AgentWorkflow{}
+	clusterInfo := &joiner.ClusterInfo{}
+	addNodesConfig := &joiner.AddNodesConfig{}
 	agentManifests := &manifests.AgentManifests{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
 	keyPairAsset := &gencrypto.AuthConfig{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, keyPairAsset, agentWorkflow, clusterInfo, addNodesConfig)
 
 	pwd := &password.KubeadminPassword{}
 	dependencies.Get(pwd)
@@ -128,14 +136,42 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentHostsAsset.Hosts, agentManifests.NMStateConfigs)
-	if err != nil {
-		return err
+	clusterName := ""
+	imageTypeISO := "full-iso"
+	numMasters := 0
+	numWorkers := 0
+
+	switch agentWorkflow.Workflow {
+	case workflow.AgentWorkflowTypeInstall:
+		// Set rendezvous IP.
+		nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentHostsAsset.Hosts, agentManifests.NMStateConfigs)
+		if err != nil {
+			return err
+		}
+		a.RendezvousIP = nodeZeroIP
+		logrus.Infof("The rendezvous host IP (node0 IP) is %s", a.RendezvousIP)
+		// Define cluster name and image type.
+		clusterName = fmt.Sprintf("%s.%s", agentManifests.ClusterDeployment.Spec.ClusterName, agentManifests.ClusterDeployment.Spec.BaseDomain)
+		if agentManifests.AgentClusterInstall.Spec.PlatformType == hiveext.ExternalPlatformType {
+			imageTypeISO = "minimal-iso"
+		}
+		// Fetch the required number of master and worker nodes.
+		numMasters = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents
+		numWorkers = agentManifests.AgentClusterInstall.Spec.ProvisionRequirements.WorkerAgents
+
+	case workflow.AgentWorkflowTypeAddNodes:
+		// In the add-nodes workflow, every node will act independently from the others.
+		a.RendezvousIP = "127.0.0.1"
+		// Reuse the existing cluster name.
+		clusterName = clusterInfo.ClusterName
+		// Fetch the required number of master and worker nodes.
+		numMasters = 0
+		numWorkers = len(addNodesConfig.Config.Hosts)
+
+	default:
+		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
 	}
 
-	logrus.Infof("The rendezvous host IP (node0 IP) is %s", nodeZeroIP)
-
-	a.RendezvousIP = nodeZeroIP
 	// Default to x86_64
 	archName := arch.RpmArch(types.ArchitectureAMD64)
 	if infraEnv.Spec.CpuArchitecture != "" {
@@ -176,16 +212,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
-	clusterName := fmt.Sprintf("%s.%s",
-		agentManifests.ClusterDeployment.Spec.ClusterName,
-		agentManifests.ClusterDeployment.Spec.BaseDomain)
-
-	imageTypeISO := "full-iso"
-	platform := agentManifests.AgentClusterInstall.Spec.PlatformType
-	if platform == hiveext.ExternalPlatformType {
-		imageTypeISO = "minimal-iso"
-	}
-
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
@@ -194,7 +220,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		releaseImageMirror,
 		len(registriesConfig.MirrorConfig) > 0,
 		publicContainerRegistries,
-		agentManifests.AgentClusterInstall,
+		numMasters, numWorkers,
 		infraEnvID,
 		osImage,
 		infraEnv.Spec.Proxy,
@@ -210,7 +236,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -313,7 +339,7 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
-	agentClusterInstall *hiveext.AgentClusterInstall,
+	numMasters int, numWorkers int,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy,
@@ -321,8 +347,8 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
-		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
-		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
+		ControlPlaneAgents:        numMasters,
+		WorkerAgents:              numWorkers,
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              releaseImage,
 		ReleaseImageMirror:        releaseImageMirror,
