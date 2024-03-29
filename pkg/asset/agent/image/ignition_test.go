@@ -112,9 +112,9 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	nodeZeroIP := "2001:db8::dead:beef"
-	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP)
+	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t,
-		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\n",
+		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nWORKFLOW_TYPE=install\n",
 		rendezvousHostEnv)
 }
 

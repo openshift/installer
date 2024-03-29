@@ -262,7 +262,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
 		"root", 0644,
-		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP))
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, a.RendezvousIP, agentWorkflow.Workflow))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
@@ -390,7 +390,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	}
 }
 
-func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string, workflowType workflow.AgentWorkflowType) string {
 	serviceBaseURL := url.URL{
 		Scheme: serviceProtocol,
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -405,7 +405,8 @@ func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
 	return fmt.Sprintf(`NODE_ZERO_IP=%s
 SERVICE_BASE_URL=%s
 IMAGE_SERVICE_BASE_URL=%s
-`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String())
+WORKFLOW_TYPE=%s
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String(), workflowType)
 }
 
 func getAddNodesEnv(clusterInfo joiner.ClusterInfo) string {
