@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/infrastructure/openstack/preprovision"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
 	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
+	"github.com/openshift/installer/pkg/types"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/featuregates"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
@@ -69,7 +70,14 @@ func Destroy(ctx context.Context, dir string) (err error) {
 		}
 	}
 
-	fg := featuregates.FeatureGateFromFeatureSets(configv1.FeatureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
+	// Get cluster profile for new FeatureGate access.  Blank is no longer an option, so default to
+	// SelfManaged.
+	clusterProfile := types.GetClusterProfileName()
+	featureSets, ok := configv1.AllFeatureSets()[clusterProfile]
+	if !ok {
+		return fmt.Errorf("no feature sets for cluster profile %q", clusterProfile)
+	}
+	fg := featuregates.FeatureGateFromFeatureSets(featureSets, metadata.FeatureSet, metadata.CustomFeatureSet)
 
 	provider, err := infra.ProviderForPlatform(platform, fg)
 	if err != nil {
