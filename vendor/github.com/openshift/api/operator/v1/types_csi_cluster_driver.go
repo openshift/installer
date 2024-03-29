@@ -16,6 +16,11 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=clustercsidrivers,scope=Cluster
+// +kubebuilder:subresource:status
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/701
+// +openshift:file-pattern=0000_90_cluster_csi_driver_01_configMARKERS.crd.yaml
 
 // ClusterCSIDriver object allows management and configuration of a CSI driver operator
 // installed by default in OpenShift. Name of the object must be name of the CSI driver
@@ -284,7 +289,6 @@ type ClusterCSIDriverStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:object:root=true
 
 // ClusterCSIDriverList contains a list of ClusterCSIDriver
 //

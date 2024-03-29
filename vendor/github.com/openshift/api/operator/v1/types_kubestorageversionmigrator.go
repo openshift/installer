@@ -7,6 +7,11 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=kubestorageversionmigrators,scope=Cluster
+// +kubebuilder:subresource:status
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/503
+// +openshift:file-pattern=0000_40_kube-storage-version-migrator-operator_00_configMARKERS.crd.yaml
 
 // KubeStorageVersionMigrator provides information to configure an operator to manage kube-storage-version-migrator.
 //
