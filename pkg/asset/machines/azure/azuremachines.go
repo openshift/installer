@@ -24,7 +24,7 @@ const (
 )
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
-func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, subnet string, resourceGroup string) ([]*asset.RuntimeFile, error) {
+func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDataSecret string, clusterID string, role string, capabilities map[string]string, useImageGallery bool, userTags map[string]string, hyperVGen string, subnet string, resourceGroup string, subscriptionID string) ([]*asset.RuntimeFile, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != azure.Name {
 		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
@@ -47,6 +47,8 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 
 	var image *capz.Image
 	osImage := mpool.OSImage
+	galleryName := strings.ReplaceAll(clusterID, "-", "_")
+
 	switch {
 	case osImage.Publisher != "":
 		image = &capz.Image{
@@ -61,7 +63,6 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		}
 	case useImageGallery:
 		// image gallery names cannot have dashes
-		galleryName := strings.ReplaceAll(clusterID, "-", "_")
 		id := clusterID
 		if hyperVGen == "V2" {
 			id += genV2Suffix
@@ -69,7 +70,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", resourceGroup, galleryName, id)
 		image = &capz.Image{ID: &imageID}
 	default:
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", resourceGroup, clusterID)
+		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", subscriptionID, resourceGroup, galleryName, clusterID)
 		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
 			imageID += genV2Suffix
 		}
@@ -120,11 +121,11 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 				VMSize:                 mpool.InstanceType,
 				FailureDomain:          ptr.To(zone),
 				Image:                  image,
-				OSDisk:                 osDisk,
+				OSDisk:                 osDisk, // required
 				AdditionalTags:         tags,
 				AdditionalCapabilities: additionalCapabilities,
 				AllocatePublicIP:       false,
-				SecurityProfile:        securityProfile,
+				EnableIPForwarding:     false,
 			},
 		}
 		azureMachine.SetGroupVersionKind(capz.GroupVersion.WithKind("AzureMachine"))
