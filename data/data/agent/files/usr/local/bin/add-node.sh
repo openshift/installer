@@ -38,11 +38,10 @@ printf '\nHost %s is ready for installation\n' "${HOST_ID}" 1>&2
 clear_issue "${status_issue}"
 
 # Add the current host to the cluster
-res=$(curl -X POST -s -S "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install")
-code=$(echo "$res" | jq -r '.code')
-message=$(echo "$res" | jq -r '.message')
-if [[ $res = "200" ]]; then 
-    printf "\nHost installation started\n" 1>&2
+res=$(curl -X POST -s -S -w "%{http_code}\\n" -o /dev/null "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts/${HOST_ID}/actions/install")
+if [[ $res = "202" ]]; then 
+    printf '\nHost installation started\n' 1>&2
 else
-    printf '\nHost installation failed: %s\n' "${message}" 1>&2
+    printf '\nHost installation failed\n' 1>&2
+    exit 1
 fi

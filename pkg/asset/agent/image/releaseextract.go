@@ -61,7 +61,7 @@ type release struct {
 	streamGetter CoreOSBuildFetcher
 }
 
-// NewRelease is used to set up the executor to run oc commands
+// NewRelease is used to set up the executor to run oc commands.
 func NewRelease(config Config, releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig, streamGetter CoreOSBuildFetcher) Release {
 	return &release{
 		config:       config,
@@ -259,7 +259,7 @@ func (r *release) extractFileFromImage(image, file, cacheDir string, architectur
 	return matches, nil
 }
 
-// Get hash from rhcos.json
+// Get hash from rhcos.json.
 func (r *release) getHashFromInstaller(architecture string) (bool, string) {
 	// Get hash from metadata in the installer
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
