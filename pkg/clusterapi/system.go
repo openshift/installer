@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -71,6 +72,8 @@ type system struct {
 	wg           sync.WaitGroup
 	teardownOnce sync.Once
 	cancel       context.CancelFunc
+
+	logWriter *io.PipeWriter
 }
 
 // Run launches the cluster-api system.
@@ -259,6 +262,9 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 		return fmt.Errorf("unsupported platform %q", platform)
 	}
 
+	// We only show controller logs if the log level is DEBUG or above
+	c.logWriter = logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
+
 	// Run the controllers.
 	for _, ct := range controllers {
 		if err := c.runController(ctx, ct); err != nil {
@@ -328,6 +334,8 @@ func (c *system) Teardown() {
 		case <-time.After(60 * time.Second):
 			logrus.Warn("Timed out waiting for local Cluster API system to shut down")
 		}
+
+		c.logWriter.Close()
 	})
 }
 
@@ -492,7 +500,7 @@ func (c *system) runController(ctx context.Context, ct *controller) error {
 
 	// Run the controller and store its state.
 	logrus.Infof("Running process: %s with args %v", ct.Name, ct.Args)
-	if err := pr.Start(ctx, os.Stdout, os.Stderr); err != nil {
+	if err := pr.Start(ctx, c.logWriter, c.logWriter); err != nil {
 		return fmt.Errorf("failed to start controller %q: %w", ct.Name, err)
 	}
 	ct.state = pr
