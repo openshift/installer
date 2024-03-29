@@ -3,6 +3,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     api-approved.openshift.io: https://github.com/openshift/api/pull/1453
+    api.openshift.io/merged-by-featuregates: "true"
     include.release.openshift.io/ibm-cloud-managed: "true"
     include.release.openshift.io/self-managed-high-availability: "true"
     include.release.openshift.io/single-node-developer: "true"
@@ -13,6 +14,7 @@ spec:
   group: machineconfiguration.openshift.io
   names:
     kind: MachineConfigPool
+    listKind: MachineConfigPoolList
     plural: machineconfigpools
     shortNames:
     - mcp
@@ -33,8 +35,8 @@ spec:
       jsonPath: .status.conditions[?(@.type=="Updating")].status
       name: Updating
       type: string
-    - description: When progress is blocked on updating one or more nodes, or the
-        pool configuration is failing.
+    - description: When progress is blocked on updating one or more nodes or the pool
+        configuration is failing.
       jsonPath: .status.conditions[?(@.type=="Degraded")].status
       name: Degraded
       type: string
