@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	gcp "github.com/openshift/installer/pkg/types/gcp"
 	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	sets "k8s.io/apimachinery/pkg/util/sets"
 )
@@ -65,19 +64,4 @@ func (m *MockTagManager) GetProjectTags(ctx context.Context, projectID string) (
 func (mr *MockTagManagerMockRecorder) GetProjectTags(ctx, projectID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectTags", reflect.TypeOf((*MockTagManager)(nil).GetProjectTags), ctx, projectID)
-}
-
-// GetUserTags mocks base method.
-func (m *MockTagManager) GetUserTags(ctx context.Context, projectID string, userTags []gcp.UserTag) (map[string]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserTags", ctx, projectID, userTags)
-	ret0, _ := ret[0].(map[string]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserTags indicates an expected call of GetUserTags.
-func (mr *MockTagManagerMockRecorder) GetUserTags(ctx, projectID, userTags interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTags", reflect.TypeOf((*MockTagManager)(nil).GetUserTags), ctx, projectID, userTags)
 }
