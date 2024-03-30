@@ -17,6 +17,7 @@ type Region struct {
 	COSRegion   string
 	Zones       []string
 	SysTypes    []string
+	VPCZones    []string
 }
 
 // Regions holds the regions for IBM Power VS, and descriptions used during the survey.
@@ -27,6 +28,7 @@ var Regions = map[string]Region{
 		COSRegion:   "us-south",
 		Zones:       []string{"dal10", "dal12"},
 		SysTypes:    []string{"s922", "e980"},
+		VPCZones:    []string{"us-south-1", "us-south-2", "us-south-3"},
 	},
 	"eu-de": {
 		Description: "Frankfurt, Germany",
@@ -34,6 +36,7 @@ var Regions = map[string]Region{
 		COSRegion:   "eu-de",
 		Zones:       []string{"eu-de-1", "eu-de-2"},
 		SysTypes:    []string{"s922", "e980"},
+		VPCZones:    []string{"eu-de-2", "eu-de-3"},
 	},
 	"mad": {
 		Description: "Madrid, Spain",
@@ -41,6 +44,7 @@ var Regions = map[string]Region{
 		COSRegion:   "eu-de", // @HACK - PowerVS says COS not supported in this region
 		Zones:       []string{"mad02", "mad04"},
 		SysTypes:    []string{"s1022"},
+		VPCZones:    []string{"eu-es-1", "eu-es-2"},
 	},
 	"sao": {
 		Description: "São Paulo, Brazil",
@@ -48,6 +52,7 @@ var Regions = map[string]Region{
 		COSRegion:   "br-sao",
 		Zones:       []string{"sao04"},
 		SysTypes:    []string{"s922", "e980"},
+		VPCZones:    []string{"br-sao-1", "br-sao-2"},
 	},
 	"wdc": {
 		Description: "Washington DC, USA",
@@ -55,6 +60,7 @@ var Regions = map[string]Region{
 		COSRegion:   "us-east",
 		Zones:       []string{"wdc06", "wdc07"},
 		SysTypes:    []string{"s922", "e980"},
+		VPCZones:    []string{"us-east-1", "us-east-2", "us-east-3"},
 	},
 }
 
@@ -141,6 +147,15 @@ func AllKnownSysTypes() sets.Set[string] {
 		sysTypes.Insert(region.SysTypes...)
 	}
 	return sysTypes
+}
+
+// AvailableVPCZones returns the known VPC zones for a specified region.
+func AvailableVPCZones(region string) ([]string, error) {
+	knownRegion, ok := Regions[region]
+	if !ok {
+		return nil, fmt.Errorf("unknown region name provided")
+	}
+	return knownRegion.VPCZones, nil
 }
 
 // COSRegionForVPCRegion returns the corresponding COS region for the given VPC region.

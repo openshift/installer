@@ -257,16 +257,18 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 
 		if len(vpcSubnets) == 0 {
 			if capiutils.IsEnabled(installConfig) {
+				vpcZones, err := powervstypes.AvailableVPCZones(installConfig.Config.PowerVS.Region)
+				if err != nil {
+					return err
+				}
+
 				// The PowerVS CAPI provider generates three subnets.  One for
 				// each of the endpoint.
 				// @TODO the provider should export a function which gives us
 				// an array
-				for i := 1; i <= 3; i++ {
+				for _, zone := range vpcZones {
 					vpcSubnets = append(vpcSubnets,
-						fmt.Sprintf("%s-vpcsubnet-%s-%d",
-							clusterID.InfraID,
-							vpcRegion,
-							i))
+						fmt.Sprintf("%s-vpcsubnet-%s", clusterID.InfraID, zone))
 				}
 			} else {
 				vpcSubnets = append(vpcSubnets, fmt.Sprintf("vpc-subnet-%s", clusterID.InfraID))
