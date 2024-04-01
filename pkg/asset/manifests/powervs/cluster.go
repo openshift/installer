@@ -25,6 +25,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		vpcRegion          string
 		transitGatewayName string
 		cosName            string
+		cosRegion          string
 		imageName          string
 		bucketName         string
 		err                error
@@ -40,6 +41,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		logrus.Debugf("GenerateClusterAssets: vpcRegion = %v", vpcRegion)
 		logrus.Debugf("GenerateClusterAssets: transitGatewayName = %v", transitGatewayName)
 		logrus.Debugf("GenerateClusterAssets: cosName = %v", cosName)
+		logrus.Debugf("GenerateClusterAssets: cosRegion = %v", cosRegion)
 		logrus.Debugf("GenerateClusterAssets: imageName = %v", imageName)
 		logrus.Debugf("GenerateClusterAssets: bucketName = %v", bucketName)
 		logrus.Debugf("GenerateClusterAssets: powerVSCluster.Spec.ControlPlaneEndpoint.Host = %v", powerVSCluster.Spec.ControlPlaneEndpoint.Host)
@@ -76,6 +78,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	transitGatewayName = fmt.Sprintf("%s-tg", clusterID.InfraID)
 
 	cosName = fmt.Sprintf("%s-cos", clusterID.InfraID)
+
+	if cosRegion, err = powervstypes.COSRegionForPowerVSRegion(installConfig.Config.PowerVS.Region); err != nil {
+		return nil, fmt.Errorf("unable to derive cosRegion from region: %s %w", installConfig.Config.PowerVS.Region, err)
+	}
 
 	imageName = fmt.Sprintf("rhcos-%s", clusterID.InfraID)
 
@@ -140,7 +146,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			CosInstance: &capibm.CosInstance{
 				Name:         cosName,
 				BucketName:   bucketName,
-				BucketRegion: vpcRegion,
+				BucketRegion: cosRegion,
 			},
 			Ignition: &capibm.Ignition{
 				Version: "3.4",
@@ -181,7 +187,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			ServiceInstance: &service,
 			Bucket:          &bucket,
 			Object:          &object,
-			Region:          &vpcRegion,
+			Region:          &cosRegion,
 		},
 	}
 
