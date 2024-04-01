@@ -17,7 +17,19 @@ import (
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
-const masterRole = "master"
+const (
+	masterRole = "master"
+
+	kmsKeyNameFmt = "projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s"
+)
+
+func generateDiskEncryptionKeyLink(kmsKey *gcptypes.KMSKeyReference, projectID string) string {
+	if kmsKey.ProjectID != "" {
+		projectID = kmsKey.ProjectID
+	}
+
+	return fmt.Sprintf(kmsKeyNameFmt, projectID, kmsKey.Location, kmsKey.KeyRing, kmsKey.Name)
+}
 
 // GenerateMachines returns manifests and runtime objects to provision control plane nodes using CAPI.
 func GenerateMachines(installConfig *installconfig.InstallConfig, infraID string, pool *types.MachinePool, imageName string) ([]*asset.RuntimeFile, error) {
@@ -159,6 +171,17 @@ func createGCPMachine(name string, installConfig *installconfig.InstallConfig, i
 		}
 	}
 	gcpMachine.Spec.ServiceAccount = serviceAccount
+
+	if mpool.OSDisk.EncryptionKey != nil {
+		encryptionKey := &capg.CustomerEncryptionKey{
+			KeyType:              capg.CustomerManagedKey,
+			KMSKeyServiceAccount: ptr.To(mpool.OSDisk.EncryptionKey.KMSKeyServiceAccount),
+			ManagedKey: &capg.ManagedKey{
+				KMSKeyName: generateDiskEncryptionKeyLink(mpool.OSDisk.EncryptionKey.KMSKey, installConfig.Config.GCP.ProjectID),
+			},
+		}
+		gcpMachine.Spec.RootDiskEncryptionKey = encryptionKey
+	}
 
 	return gcpMachine
 }
