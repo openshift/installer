@@ -11,63 +11,6 @@ provider "google" {
   region      = var.gcp_region
 }
 
-resource "google_storage_bucket" "ignition" {
-  name                        = "${var.cluster_id}-bootstrap-ignition"
-  location                    = var.gcp_region
-  uniform_bucket_level_access = true
-  labels                      = var.gcp_extra_labels
-}
-
-resource "google_tags_location_tag_binding" "user_tag_binding_bucket" {
-  for_each = var.gcp_extra_tags
-
-  parent = format("//storage.googleapis.com/projects/_/buckets/%s",
-    google_storage_bucket.ignition.name,
-  )
-  tag_value = each.value
-  location  = var.gcp_region
-
-  depends_on = [google_storage_bucket.ignition]
-}
-
-resource "google_storage_bucket_object" "ignition" {
-  bucket  = google_storage_bucket.ignition.name
-  name    = "bootstrap.ign"
-  content = var.ignition_bootstrap
-}
-
-resource "google_service_account" "bootstrap-node-sa" {
-  count        = var.gcp_create_bootstrap_sa ? 1 : 0
-  account_id   = "${var.cluster_id}-b"
-  display_name = "${var.cluster_id}-bootstrap-node"
-  description  = local.description
-}
-
-resource "google_service_account_key" "bootstrap" {
-  count              = var.gcp_create_bootstrap_sa ? 1 : 0
-  service_account_id = google_service_account.bootstrap-node-sa[0].name
-}
-
-resource "google_project_iam_member" "bootstrap-storage-admin" {
-  count   = var.gcp_create_bootstrap_sa ? 1 : 0
-  project = var.gcp_project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.bootstrap-node-sa[0].email}"
-}
-
-data "google_storage_object_signed_url" "ignition_url" {
-  bucket      = google_storage_bucket.ignition.name
-  path        = "bootstrap.ign"
-  duration    = "1h"
-  credentials = var.gcp_create_bootstrap_sa ? base64decode(google_service_account_key.bootstrap[0].private_key) : null
-}
-
-data "ignition_config" "redirect" {
-  replace {
-    source = data.google_storage_object_signed_url.ignition_url.signed_url
-  }
-}
-
 resource "google_compute_address" "bootstrap" {
   name        = "${var.cluster_id}-bootstrap-ip"
   description = local.description
@@ -144,7 +87,7 @@ resource "google_compute_instance" "bootstrap" {
   }
 
   metadata = {
-    user-data = data.ignition_config.redirect.rendered
+    user-data = var.gcp_ignition_shim
   }
 
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]
