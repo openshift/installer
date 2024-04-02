@@ -11,6 +11,7 @@ import (
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 	capibm "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
@@ -53,12 +54,12 @@ func leftInContext(ctx context.Context) time.Duration {
 func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) error {
 	var (
 		client      *powervsconfig.Client
+		vpcRegion   string
 		instanceCRN string
 		rules       *vpcv1.SecurityGroupRuleCollection
 		rule        *vpcv1.SecurityGroupRulePrototype
-		found       = false
-		ports       = [...]int64{22, 10258, 22623}
-		port        int64
+		wantedPorts = sets.New[int64](22, 10258, 22623)
+		foundPorts  = sets.Set[int64]{}
 		err         error
 	)
 
@@ -79,6 +80,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	}
 	logrus.Debugf("InfraReady: powerVSCluster = %+v", powerVSCluster)
 	logrus.Debugf("InfraReady: powerVSCluster.Status = %+v", powerVSCluster.Status)
+	if powerVSCluster.Status.VPC == nil || powerVSCluster.Status.VPC.ID == nil {
+		return fmt.Errorf("vpc is empty in InfraReady?")
+	}
+	logrus.Debugf("InfraReady: powerVSCluster.Status.VPC.ID = %s", *powerVSCluster.Status.VPC.ID)
 
 	// Get the image from the provider
 	key = crclient.ObjectKey{
@@ -99,6 +104,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		return fmt.Errorf("failed to get NewClient in InfraReady: %w", err)
 	}
 	logrus.Debugf("InfraReady: NewClient returns %+v", client)
+
+	// We need to set the region we will eventually query inside
+	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion
+	if vpcRegion == "" {
+		vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(in.InstallConfig.Config.Platform.PowerVS.Region)
+		if err != nil {
+			return fmt.Errorf("failed to get VPC region (%s) in InfraReady: %w", vpcRegion, err)
+		}
+	}
+	logrus.Debugf("InfraReady: vpcRegion = %s", vpcRegion)
+	if err = client.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
+		return fmt.Errorf("failed to set the VPC service region (%s) in InfraReady: %w", vpcRegion, err)
+	}
 
 	// Step 1.
 	// Create DNS records for the two load balancers
@@ -177,7 +195,7 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	}
 
 	// Step 2.
-	// See if port 6443 is already allowed.
+	// See which ports are already allowed.
 	rules, err = client.ListSecurityGroupRules(ctx, *powerVSCluster.Status.VPC.ID)
 	if err != nil {
 		return fmt.Errorf("failed to list security group rules: %w", err)
@@ -197,17 +215,19 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 				*securityGroupRule.PortMin,
 				*securityGroupRule.PortMax)
 			if *securityGroupRule.Direction == "inbound" &&
-				*securityGroupRule.Protocol == "tcp" &&
-				*securityGroupRule.PortMin == 6443 {
-				found = true
+				*securityGroupRule.Protocol == "tcp" {
+				foundPorts.Insert(*securityGroupRule.PortMin)
 			}
 		case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
 		}
 	}
+	logrus.Debugf("InfraReady: foundPorts = %+v", foundPorts)
+	logrus.Debugf("InfraReady: wantedPorts = %+v", wantedPorts)
+	logrus.Debugf("InfraReady: wantedPorts.Difference(foundPorts) = %+v", wantedPorts.Difference(foundPorts))
 
 	// Step 3.
 	// Add to security group rules
-	for _, port = range ports {
+	for port := range wantedPorts.Difference(foundPorts) {
 		rule = &vpcv1.SecurityGroupRulePrototype{
 			Direction: ptr.To("inbound"),
 			Protocol:  ptr.To("tcp"),
@@ -234,35 +254,8 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
 		}
 	}
-	if !found {
-		port = 6443
-		rule = &vpcv1.SecurityGroupRulePrototype{
-			Direction: ptr.To("inbound"),
-			Protocol:  ptr.To("tcp"),
-			PortMin:   ptr.To(port),
-			PortMax:   ptr.To(port),
-		}
 
-		backoff := wait.Backoff{
-			Duration: 15 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			logrus.Debugf("InfraReady: Adding port %d to security group rule to %v",
-				port,
-				*powerVSCluster.Status.VPC.ID)
-			err2 := client.AddSecurityGroupRule(ctx, *powerVSCluster.Status.VPC.ID, rule)
-			if err == nil {
-				return true, nil
-			}
-			return false, err2
-		})
-		if err != nil {
-			return fmt.Errorf("failed to add security group rule for port %d: %w", port, err)
-		}
-	}
-
+	// Allow ping so we can debug
 	rule = &vpcv1.SecurityGroupRulePrototype{
 		Direction: ptr.To("inbound"),
 		Protocol:  ptr.To("icmp"),
