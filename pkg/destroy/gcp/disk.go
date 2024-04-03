@@ -8,6 +8,7 @@ import (
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
 
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -35,7 +36,7 @@ func (o *ClusterUninstaller) storageIDFilter() string {
 }
 
 func (o *ClusterUninstaller) storageLabelFilter() string {
-	return fmt.Sprintf("labels.kubernetes-io-cluster-%s = \"owned\"", o.formatClusterIDForStorage())
+	return fmt.Sprintf("labels.%s = \"owned\"", fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.formatClusterIDForStorage()))
 }
 
 // storageLabelOrClusterIDFilter will perform the search for resources with the ClusterID, but

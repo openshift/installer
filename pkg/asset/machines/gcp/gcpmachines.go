@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -197,7 +198,7 @@ func getLabelsFromInstallConfig(installConfig *installconfig.InstallConfig, infr
 		userLabels[label.Key] = label.Value
 	}
 	// add OCP default label
-	userLabels[fmt.Sprintf("kubernetes-io-cluster-%s", infraID)] = "owned"
+	userLabels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, infraID)] = "owned"
 
 	return userLabels
 }
