@@ -273,6 +273,8 @@ func defaultWorkerSGIngressRules(workerSGID *string, masterSGID *string, cidrBlo
 	return []*ec2.IpPermission{
 		// worker icmp
 		createSGRule(workerSGID, "icmp", cidrBlocks, nil, -1, -1, false, nil),
+		// worker ssh
+		createSGRule(workerSGID, "tcp", cidrBlocks, nil, 22, 22, false, nil),
 		// worker vxlan
 		createSGRule(workerSGID, "udp", nil, nil, 4789, 4789, true, nil),
 		// worker geneve
