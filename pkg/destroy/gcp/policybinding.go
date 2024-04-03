@@ -2,12 +2,18 @@ package gcp
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"k8s.io/apimachinery/pkg/util/sets"
+)
+
+const (
+	// projectNameFmt is the format string for project resource name.
+	projectNameFmt = "projects/%s"
 )
 
 func (o *ClusterUninstaller) getProjectIAMPolicy(ctx context.Context) (*resourcemanager.Policy, error) {
@@ -15,7 +21,7 @@ func (o *ClusterUninstaller) getProjectIAMPolicy(ctx context.Context) (*resource
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req := &resourcemanager.GetIamPolicyRequest{}
-	policy, err := o.rmSvc.Projects.GetIamPolicy(o.ProjectID, req).Context(ctx).Do()
+	policy, err := o.rmSvc.Projects.GetIamPolicy(fmt.Sprintf(projectNameFmt, o.ProjectID), req).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to fetch project IAM policy")
 	}
@@ -27,7 +33,7 @@ func (o *ClusterUninstaller) setProjectIAMPolicy(ctx context.Context, policy *re
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req := &resourcemanager.SetIamPolicyRequest{Policy: policy}
-	_, err := o.rmSvc.Projects.SetIamPolicy(o.ProjectID, req).Context(ctx).Do()
+	_, err := o.rmSvc.Projects.SetIamPolicy(fmt.Sprintf(projectNameFmt, o.ProjectID), req).Context(ctx).Do()
 	if err != nil {
 		return errors.Wrapf(err, "failed to set project IAM policy")
 	}
