@@ -104,10 +104,10 @@ require (
 	google.golang.org/grpc v1.62.1
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.2
-	k8s.io/apiextensions-apiserver v0.29.2
-	k8s.io/apimachinery v0.29.2
-	k8s.io/client-go v0.29.2
+	k8s.io/api v0.29.3
+	k8s.io/apiextensions-apiserver v0.29.3
+	k8s.io/apimachinery v0.29.3
+	k8s.io/client-go v0.29.3
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
@@ -281,8 +281,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/gorm v1.24.5 // indirect
 	k8s.io/cli-runtime v0.29.2 // indirect
-	k8s.io/cluster-bootstrap v0.29.2 // indirect
-	k8s.io/component-base v0.29.2 // indirect
+	k8s.io/cluster-bootstrap v0.29.3 // indirect
+	k8s.io/component-base v0.29.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20240126223410-2919ad4fcfec // indirect
 	k8s.io/kubectl v0.29.1 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -348,3 +348,6 @@ replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+// Use CAPO master, with a carry patch that reverts it to Go v1.21
+replace sigs.k8s.io/cluster-api-provider-openstack => github.com/shiftstack/cluster-api-provider-openstack v0.0.0-20240416092524-876913a889d9

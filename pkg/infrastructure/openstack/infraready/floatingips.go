@@ -7,7 +7,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/attributestags"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
-	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7"
+	capo "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"

@@ -14,19 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha7
-
-import (
-	"sigs.k8s.io/controller-runtime/pkg/builder"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-)
-
-// log is for logging in this package.
-var _ = logf.Log.WithName("openstackmachinelist-resource")
-
-func (r *OpenStackMachineList) SetupWebhookWithManager(mgr manager.Manager) error {
-	return builder.WebhookManagedBy(mgr).
-		For(r).
-		Complete()
-}
+// Package v1beta1 contains API Schema definitions for the infrastructure v1beta1 API group.
+// +kubebuilder:object:generate=true
+// +groupName=infrastructure.cluster.x-k8s.io
+package v1beta1
