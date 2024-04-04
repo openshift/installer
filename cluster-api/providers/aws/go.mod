@@ -2,7 +2,7 @@ module openshift/installer/cluster-api/providers/aws
 
 go 1.21
 
-require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.1-0.20240306201835-baf8d59ff495
+require sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240408095607-ad71a542f8b4
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
@@ -74,8 +74,8 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/openshift-online/ocm-common v0.0.0-20240129111424-ff8c6c11d909 // indirect
-	github.com/openshift-online/ocm-sdk-go v0.1.404 // indirect
-	github.com/openshift/rosa v1.2.35-rc1.0.20240229115423-42874686e22d // indirect
+	github.com/openshift-online/ocm-sdk-go v0.1.409 // indirect
+	github.com/openshift/rosa v1.2.35-rc1.0.20240301152457-ad986cecd364 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
@@ -118,7 +118,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	google.golang.org/grpc v1.59.0 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
