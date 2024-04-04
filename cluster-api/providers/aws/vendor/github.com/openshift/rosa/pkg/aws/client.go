@@ -77,6 +77,9 @@ const (
 	Inline        = "inline"
 	Attached      = "attached"
 
+	LocalZone      = "local-zone"
+	WavelengthZone = "wavelength-zone"
+
 	govPartition = "aws-us-gov"
 
 	awsMaxFilterLength = 200
@@ -111,6 +114,7 @@ type Client interface {
 	ValidateSCP(*string, map[string]*cmv1.AWSSTSPolicy) (bool, error)
 	ListSubnets(subnetIds ...string) ([]*ec2.Subnet, error)
 	GetSubnetAvailabilityZone(subnetID string) (string, error)
+	GetAvailabilityZoneType(availabilityZoneName string) (string, error)
 	GetVPCSubnets(subnetID string) ([]*ec2.Subnet, error)
 	GetVPCPrivateSubnets(subnetID string) ([]*ec2.Subnet, error)
 	FilterVPCsPrivateSubnets(subnets []*ec2.Subnet) ([]*ec2.Subnet, error)
@@ -1034,7 +1038,19 @@ func (c *awsClient) IsLocalAvailabilityZone(availabilityZoneName string) (bool, 
 		return false, fmt.Errorf("Failed to find availability zone '%s'", availabilityZoneName)
 	}
 
-	return aws.StringValue(availabilityZones.AvailabilityZones[0].ZoneType) == "local-zone", nil
+	return aws.StringValue(availabilityZones.AvailabilityZones[0].ZoneType) == LocalZone, nil
+}
+
+func (c *awsClient) GetAvailabilityZoneType(availabilityZoneName string) (string, error) {
+	availabilityZones, err := c.ec2Client.DescribeAvailabilityZones(
+		&ec2.DescribeAvailabilityZonesInput{ZoneNames: []*string{aws.String(availabilityZoneName)}})
+	if err != nil {
+		return "", err
+	}
+	if len(availabilityZones.AvailabilityZones) < 1 {
+		return "", fmt.Errorf("Failed to find availability zone '%s'", availabilityZoneName)
+	}
+	return aws.StringValue(availabilityZones.AvailabilityZones[0].ZoneType), nil
 }
 
 func (c *awsClient) DetachRolePolicies(roleName string) error {

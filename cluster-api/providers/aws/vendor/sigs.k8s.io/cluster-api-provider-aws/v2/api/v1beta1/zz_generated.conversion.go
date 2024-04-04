@@ -2028,6 +2028,7 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	out.VolumeIDs = *(*[]string)(unsafe.Pointer(&in.VolumeIDs))
 	// WARNING: in.InstanceMetadataOptions requires manual conversion: does not exist in peer-type
 	// WARNING: in.PrivateDNSName requires manual conversion: does not exist in peer-type
+	// WARNING: in.PublicIPOnLaunch requires manual conversion: does not exist in peer-type
 	return nil
 }
 

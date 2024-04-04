@@ -516,7 +516,7 @@ func (b *TransportWrapperBuilder) Build(ctx context.Context) (result *TransportW
 			registered, ok := err.(prometheus.AlreadyRegisteredError)
 			if ok {
 				tokenCountMetric = registered.ExistingCollector.(*prometheus.CounterVec)
-				err = nil
+				err = nil //nolint:all
 			} else {
 				return
 			}

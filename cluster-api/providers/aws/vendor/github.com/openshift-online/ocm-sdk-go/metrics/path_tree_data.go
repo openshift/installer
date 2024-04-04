@@ -211,6 +211,11 @@ var pathTreeData = `{
             },
             "credentials": null,
             "delete_protection": null,
+            "external_auth_config": {
+              "external_auths": {
+                "-": null
+              }
+            },
             "external_configuration": {
               "labels": {
                 "-": null

@@ -33,6 +33,7 @@ type ReservedResource struct {
 	createdAt                 time.Time
 	resourceName              string
 	resourceType              string
+	scope                     string
 	updatedAt                 time.Time
 	byoc                      bool
 }
@@ -194,10 +195,29 @@ func (o *ReservedResource) GetResourceType() (value string, ok bool) {
 	return
 }
 
+// Scope returns the value of the 'scope' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *ReservedResource) Scope() string {
+	if o != nil && o.bitmap_&256 != 0 {
+		return o.scope
+	}
+	return ""
+}
+
+// GetScope returns the value of the 'scope' attribute and
+// a flag indicating if the attribute has a value.
+func (o *ReservedResource) GetScope() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&256 != 0
+	if ok {
+		value = o.scope
+	}
+	return
+}
+
 // UpdatedAt returns the value of the 'updated_at' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *ReservedResource) UpdatedAt() time.Time {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&512 != 0 {
 		return o.updatedAt
 	}
 	return time.Time{}
@@ -206,7 +226,7 @@ func (o *ReservedResource) UpdatedAt() time.Time {
 // GetUpdatedAt returns the value of the 'updated_at' attribute and
 // a flag indicating if the attribute has a value.
 func (o *ReservedResource) GetUpdatedAt() (value time.Time, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&512 != 0
 	if ok {
 		value = o.updatedAt
 	}

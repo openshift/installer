@@ -38,7 +38,7 @@ func (o *DNS) Empty() bool {
 // Base DNS domain of the cluster.
 //
 // During the installation of the cluster it is necessary to create multiple DNS records.
-// They will be created as sub-domains of this domain. For example, if the name of the
+// They will be created as sub-domains of this domain. For example, if the domain_prefix of the
 // cluster is `mycluster` and the base domain is `example.com` then the following DNS
 // records will be created:
 //
@@ -92,7 +92,7 @@ func (o *DNS) BaseDomain() string {
 // Base DNS domain of the cluster.
 //
 // During the installation of the cluster it is necessary to create multiple DNS records.
-// They will be created as sub-domains of this domain. For example, if the name of the
+// They will be created as sub-domains of this domain. For example, if the domain_prefix of the
 // cluster is `mycluster` and the base domain is `example.com` then the following DNS
 // records will be created:
 //

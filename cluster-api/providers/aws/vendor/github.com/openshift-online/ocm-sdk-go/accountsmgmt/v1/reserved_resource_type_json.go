@@ -120,6 +120,15 @@ func writeReservedResource(object *ReservedResource, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("scope")
+		stream.WriteString(object.scope)
+		count++
+	}
+	present_ = object.bitmap_&512 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("updated_at")
 		stream.WriteString((object.updatedAt).Format(time.RFC3339))
 	}
@@ -184,6 +193,10 @@ func readReservedResource(iterator *jsoniter.Iterator) *ReservedResource {
 			value := iterator.ReadString()
 			object.resourceType = value
 			object.bitmap_ |= 128
+		case "scope":
+			value := iterator.ReadString()
+			object.scope = value
+			object.bitmap_ |= 256
 		case "updated_at":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -191,7 +204,7 @@ func readReservedResource(iterator *jsoniter.Iterator) *ReservedResource {
 				iterator.ReportError("", err.Error())
 			}
 			object.updatedAt = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 512
 		default:
 			iterator.ReadAny()
 		}

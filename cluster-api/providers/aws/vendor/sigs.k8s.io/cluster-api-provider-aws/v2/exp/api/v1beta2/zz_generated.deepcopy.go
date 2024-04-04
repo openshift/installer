@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta2
 
 import (
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apiv1beta2 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api/api/v1beta1"
@@ -1095,6 +1096,13 @@ func (in *RosaMachinePoolSpec) DeepCopyInto(out *RosaMachinePoolSpec) {
 		*out = make([]RosaTaint, len(*in))
 		copy(*out, *in)
 	}
+	if in.AdditionalTags != nil {
+		in, out := &in.AdditionalTags, &out.AdditionalTags
+		*out = make(apiv1beta2.Tags, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Autoscaling != nil {
 		in, out := &in.Autoscaling, &out.Autoscaling
 		*out = new(RosaMachinePoolAutoScaling)
@@ -1114,6 +1122,11 @@ func (in *RosaMachinePoolSpec) DeepCopyInto(out *RosaMachinePoolSpec) {
 		in, out := &in.ProviderIDList, &out.ProviderIDList
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.NodeDrainGracePeriod != nil {
+		in, out := &in.NodeDrainGracePeriod, &out.NodeDrainGracePeriod
+		*out = new(v1.Duration)
+		**out = **in
 	}
 }
 

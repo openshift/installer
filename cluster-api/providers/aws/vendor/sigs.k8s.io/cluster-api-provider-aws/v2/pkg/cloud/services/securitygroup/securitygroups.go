@@ -660,10 +660,15 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 		rulesToApply := customIngressRules.Difference(kubeletRules)
 		return append(kubeletRules, rulesToApply...), nil
 	case infrav1.SecurityGroupLB:
+		rules := infrav1.IngressRules{}
+		allowedNLBTraffic := false
 		// We hand this group off to the in-cluster cloud provider, so these rules aren't used
 		// Except if the load balancer type is NLB, and we have an AWS Cluster in which case we
 		// need to open port 6443 to the NLB traffic and health check inside the VPC.
-		if s.scope.ControlPlaneLoadBalancer() != nil && s.scope.ControlPlaneLoadBalancer().LoadBalancerType == infrav1.LoadBalancerTypeNLB {
+		for _, lb := range s.scope.ControlPlaneLoadBalancers() {
+			if lb == nil || lb.LoadBalancerType != infrav1.LoadBalancerTypeNLB {
+				continue
+			}
 			var (
 				ipv4CidrBlocks []string
 				ipv6CidrBlocks []string
@@ -673,25 +678,26 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 			if s.scope.VPC().IsIPv6Enabled() {
 				ipv6CidrBlocks = []string{s.scope.VPC().IPv6.CidrBlock}
 			}
-			if s.scope.ControlPlaneLoadBalancer().PreserveClientIP {
+			if lb.PreserveClientIP {
 				ipv4CidrBlocks = []string{services.AnyIPv4CidrBlock}
 				if s.scope.VPC().IsIPv6Enabled() {
 					ipv6CidrBlocks = []string{services.AnyIPv6CidrBlock}
 				}
 			}
 
-			rules := infrav1.IngressRules{
-				{
+			if !allowedNLBTraffic {
+				rules = append(rules, infrav1.IngressRule{
 					Description:    "Allow NLB traffic to the control plane instances.",
 					Protocol:       infrav1.SecurityGroupProtocolTCP,
 					FromPort:       int64(s.scope.APIServerPort()),
 					ToPort:         int64(s.scope.APIServerPort()),
 					CidrBlocks:     ipv4CidrBlocks,
 					IPv6CidrBlocks: ipv6CidrBlocks,
-				},
+				})
+				allowedNLBTraffic = true
 			}
 
-			for _, ln := range s.scope.ControlPlaneLoadBalancer().AdditionalListeners {
+			for _, ln := range lb.AdditionalListeners {
 				rules = append(rules, infrav1.IngressRule{
 					Description:    fmt.Sprintf("Allow NLB traffic to the control plane instances on port %d.", ln.Port),
 					Protocol:       infrav1.SecurityGroupProtocolTCP,
@@ -701,10 +707,8 @@ func (s *Service) getSecurityGroupIngressRules(role infrav1.SecurityGroupRole) (
 					IPv6CidrBlocks: ipv6CidrBlocks,
 				})
 			}
-
-			return rules, nil
 		}
-		return infrav1.IngressRules{}, nil
+		return rules, nil
 	}
 
 	return nil, errors.Errorf("Cannot determine ingress rules for unknown security group role %q", role)
@@ -915,8 +919,14 @@ func (s *Service) getIngressRulesToAllowKubeletToAccessTheControlPlaneLB() infra
 // getControlPlaneLBIngressRules returns the ingress rules for the control plane LB.
 // We allow all traffic when no other rules are defined.
 func (s *Service) getControlPlaneLBIngressRules() infrav1.IngressRules {
-	if s.scope.ControlPlaneLoadBalancer() != nil && len(s.scope.ControlPlaneLoadBalancer().IngressRules) > 0 {
-		return s.scope.ControlPlaneLoadBalancer().IngressRules
+	ingressRules := infrav1.IngressRules{}
+	for _, lb := range s.scope.ControlPlaneLoadBalancers() {
+		if lb != nil && len(lb.IngressRules) > 0 {
+			ingressRules = append(ingressRules, lb.IngressRules...)
+		}
+	}
+	if len(ingressRules) > 0 {
+		return ingressRules
 	}
 
 	// If no custom ingress rules have been defined we allow all traffic so that the MC can access the WC API

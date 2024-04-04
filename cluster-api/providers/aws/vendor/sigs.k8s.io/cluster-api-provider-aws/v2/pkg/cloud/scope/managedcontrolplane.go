@@ -430,6 +430,11 @@ func (s *ManagedControlPlaneScope) ControlPlaneLoadBalancer() *infrav1.AWSLoadBa
 	return nil
 }
 
+// ControlPlaneLoadBalancers returns the AWSLoadBalancerSpecs.
+func (s *ManagedControlPlaneScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec {
+	return nil
+}
+
 // Partition returns the cluster partition.
 func (s *ManagedControlPlaneScope) Partition() string {
 	if s.ControlPlane.Spec.Partition == "" {

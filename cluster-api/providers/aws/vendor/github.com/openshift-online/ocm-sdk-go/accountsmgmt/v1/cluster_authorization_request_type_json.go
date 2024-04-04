@@ -175,6 +175,15 @@ func writeClusterAuthorizationRequest(object *ClusterAuthorizationRequest, strea
 		}
 		stream.WriteObjectField("resources")
 		writeReservedResourceList(object.resources, stream)
+		count++
+	}
+	present_ = object.bitmap_&32768 != 0
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("scope")
+		stream.WriteString(object.scope)
 	}
 	stream.WriteObjectEnd()
 }
@@ -260,6 +269,10 @@ func readClusterAuthorizationRequest(iterator *jsoniter.Iterator) *ClusterAuthor
 			value := readReservedResourceList(iterator)
 			object.resources = value
 			object.bitmap_ |= 16384
+		case "scope":
+			value := iterator.ReadString()
+			object.scope = value
+			object.bitmap_ |= 32768
 		default:
 			iterator.ReadAny()
 		}
