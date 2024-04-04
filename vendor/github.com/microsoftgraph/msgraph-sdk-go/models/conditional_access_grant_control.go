@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ConditionalAccessGrantControl int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ConditionalAccessGrantControl) String() string {
     return []string{"block", "mfa", "compliantDevice", "domainJoinedDevice", "approvedApplication", "compliantApplication", "passwordChange", "unknownFutureValue"}[i]
 }
-func ParseConditionalAccessGrantControl(v string) (interface{}, error) {
+func ParseConditionalAccessGrantControl(v string) (any, error) {
     result := BLOCK_CONDITIONALACCESSGRANTCONTROL
     switch v {
         case "block":

@@ -2,29 +2,20 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OfferShiftRequest 
 type OfferShiftRequest struct {
     ScheduleChangeRequest
-    // The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
-    recipientActionDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Custom message sent by recipient of the offer shift request.
-    recipientActionMessage *string
-    // User ID of the recipient of the offer shift request.
-    recipientUserId *string
-    // User ID of the sender of the offer shift request.
-    senderShiftId *string
 }
 // NewOfferShiftRequest instantiates a new OfferShiftRequest and sets the default values.
 func NewOfferShiftRequest()(*OfferShiftRequest) {
     m := &OfferShiftRequest{
         ScheduleChangeRequest: *NewScheduleChangeRequest(),
     }
-    odataTypeValue := "#microsoft.graph.offerShiftRequest";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.offerShiftRequest"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOfferShiftRequestFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -52,27 +43,91 @@ func CreateOfferShiftRequestFromDiscriminatorValue(parseNode i878a80d2330e89d268
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OfferShiftRequest) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.ScheduleChangeRequest.GetFieldDeserializers()
-    res["recipientActionDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetRecipientActionDateTime)
-    res["recipientActionMessage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRecipientActionMessage)
-    res["recipientUserId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRecipientUserId)
-    res["senderShiftId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSenderShiftId)
+    res["recipientActionDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecipientActionDateTime(val)
+        }
+        return nil
+    }
+    res["recipientActionMessage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecipientActionMessage(val)
+        }
+        return nil
+    }
+    res["recipientUserId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecipientUserId(val)
+        }
+        return nil
+    }
+    res["senderShiftId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSenderShiftId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetRecipientActionDateTime gets the recipientActionDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
 func (m *OfferShiftRequest) GetRecipientActionDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.recipientActionDateTime
+    val, err := m.GetBackingStore().Get("recipientActionDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetRecipientActionMessage gets the recipientActionMessage property value. Custom message sent by recipient of the offer shift request.
 func (m *OfferShiftRequest) GetRecipientActionMessage()(*string) {
-    return m.recipientActionMessage
+    val, err := m.GetBackingStore().Get("recipientActionMessage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRecipientUserId gets the recipientUserId property value. User ID of the recipient of the offer shift request.
 func (m *OfferShiftRequest) GetRecipientUserId()(*string) {
-    return m.recipientUserId
+    val, err := m.GetBackingStore().Get("recipientUserId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSenderShiftId gets the senderShiftId property value. User ID of the sender of the offer shift request.
 func (m *OfferShiftRequest) GetSenderShiftId()(*string) {
-    return m.senderShiftId
+    val, err := m.GetBackingStore().Get("senderShiftId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OfferShiftRequest) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -102,17 +157,42 @@ func (m *OfferShiftRequest) Serialize(writer i878a80d2330e89d26896388a3f487eef27
 }
 // SetRecipientActionDateTime sets the recipientActionDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z
 func (m *OfferShiftRequest) SetRecipientActionDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.recipientActionDateTime = value
+    err := m.GetBackingStore().Set("recipientActionDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecipientActionMessage sets the recipientActionMessage property value. Custom message sent by recipient of the offer shift request.
 func (m *OfferShiftRequest) SetRecipientActionMessage(value *string)() {
-    m.recipientActionMessage = value
+    err := m.GetBackingStore().Set("recipientActionMessage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecipientUserId sets the recipientUserId property value. User ID of the recipient of the offer shift request.
 func (m *OfferShiftRequest) SetRecipientUserId(value *string)() {
-    m.recipientUserId = value
+    err := m.GetBackingStore().Set("recipientUserId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSenderShiftId sets the senderShiftId property value. User ID of the sender of the offer shift request.
 func (m *OfferShiftRequest) SetSenderShiftId(value *string)() {
-    m.senderShiftId = value
+    err := m.GetBackingStore().Set("senderShiftId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OfferShiftRequestable 
+type OfferShiftRequestable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    ScheduleChangeRequestable
+    GetRecipientActionDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetRecipientActionMessage()(*string)
+    GetRecipientUserId()(*string)
+    GetSenderShiftId()(*string)
+    SetRecipientActionDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetRecipientActionMessage(value *string)()
+    SetRecipientUserId(value *string)()
+    SetSenderShiftId(value *string)()
 }

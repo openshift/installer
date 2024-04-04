@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the onenotePatchContent method.
+// 
 type OnenotePatchActionType int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i OnenotePatchActionType) String() string {
     return []string{"Replace", "Append", "Delete", "Insert", "Prepend"}[i]
 }
-func ParseOnenotePatchActionType(v string) (interface{}, error) {
+func ParseOnenotePatchActionType(v string) (any, error) {
     result := REPLACE_ONENOTEPATCHACTIONTYPE
     switch v {
         case "Replace":

@@ -1,55 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // BookingService represents a particular service offered by a booking business.
 type BookingService struct {
     Entity
-    // Additional information that is sent to the customer when an appointment is confirmed.
-    additionalInformation *string
-    // Contains the set of custom questions associated with a particular service.
-    customQuestions []BookingQuestionAssignmentable
-    // The default length of the service, represented in numbers of days, hours, minutes, and seconds. For example, P11D23H59M59.999999999999S.
-    defaultDuration *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration
-    // The default physical location for the service.
-    defaultLocation Locationable
-    // The default monetary price for the service.
-    defaultPrice *float64
-    // Represents the type of pricing of a booking service.
-    defaultPriceType *BookingPriceType
-    // The default set of reminders for an appointment of this service. The value of this property is available only when reading this bookingService by its ID.
-    defaultReminders []BookingReminderable
-    // A text description for the service.
-    description *string
-    // A service name.
-    displayName *string
-    // The isAnonymousJoinEnabled property
-    isAnonymousJoinEnabled *bool
-    // True means this service is not available to customers for booking.
-    isHiddenFromCustomers *bool
-    // True indicates that the appointments for the service will be held online. Default value is false.
-    isLocationOnline *bool
-    // The languageTag property
-    languageTag *string
-    // The maximum number of customers allowed in a service. If maximumAttendeesCount of the service is greater than 1, pass valid customer IDs while creating or updating an appointment. To create a customer, use the Create bookingCustomer operation.
-    maximumAttendeesCount *int32
-    // Additional information about this service.
-    notes *string
-    // The time to buffer after an appointment for this service ends, and before the next customer appointment can be booked.
-    postBuffer *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration
-    // The time to buffer before an appointment for this service can start.
-    preBuffer *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration
-    // The set of policies that determine how appointments for this type of service should be created and managed.
-    schedulingPolicy BookingSchedulingPolicyable
-    // True indicates SMS notifications can be sent to the customers for the appointment of the service. Default value is false.
-    smsNotificationsEnabled *bool
-    // Represents those staff members who provide this service.
-    staffMemberIds []string
-    // The URL a customer uses to access the service.
-    webUrl *string
 }
 // NewBookingService instantiates a new bookingService and sets the default values.
 func NewBookingService()(*BookingService) {
@@ -64,113 +21,461 @@ func CreateBookingServiceFromDiscriminatorValue(parseNode i878a80d2330e89d268963
 }
 // GetAdditionalInformation gets the additionalInformation property value. Additional information that is sent to the customer when an appointment is confirmed.
 func (m *BookingService) GetAdditionalInformation()(*string) {
-    return m.additionalInformation
+    val, err := m.GetBackingStore().Get("additionalInformation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCustomQuestions gets the customQuestions property value. Contains the set of custom questions associated with a particular service.
 func (m *BookingService) GetCustomQuestions()([]BookingQuestionAssignmentable) {
-    return m.customQuestions
+    val, err := m.GetBackingStore().Get("customQuestions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]BookingQuestionAssignmentable)
+    }
+    return nil
 }
 // GetDefaultDuration gets the defaultDuration property value. The default length of the service, represented in numbers of days, hours, minutes, and seconds. For example, P11D23H59M59.999999999999S.
 func (m *BookingService) GetDefaultDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration) {
-    return m.defaultDuration
+    val, err := m.GetBackingStore().Get("defaultDuration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    }
+    return nil
 }
 // GetDefaultLocation gets the defaultLocation property value. The default physical location for the service.
 func (m *BookingService) GetDefaultLocation()(Locationable) {
-    return m.defaultLocation
+    val, err := m.GetBackingStore().Get("defaultLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Locationable)
+    }
+    return nil
 }
 // GetDefaultPrice gets the defaultPrice property value. The default monetary price for the service.
 func (m *BookingService) GetDefaultPrice()(*float64) {
-    return m.defaultPrice
+    val, err := m.GetBackingStore().Get("defaultPrice")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetDefaultPriceType gets the defaultPriceType property value. Represents the type of pricing of a booking service.
 func (m *BookingService) GetDefaultPriceType()(*BookingPriceType) {
-    return m.defaultPriceType
+    val, err := m.GetBackingStore().Get("defaultPriceType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*BookingPriceType)
+    }
+    return nil
 }
 // GetDefaultReminders gets the defaultReminders property value. The default set of reminders for an appointment of this service. The value of this property is available only when reading this bookingService by its ID.
 func (m *BookingService) GetDefaultReminders()([]BookingReminderable) {
-    return m.defaultReminders
+    val, err := m.GetBackingStore().Get("defaultReminders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]BookingReminderable)
+    }
+    return nil
 }
 // GetDescription gets the description property value. A text description for the service.
 func (m *BookingService) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. A service name.
 func (m *BookingService) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *BookingService) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["additionalInformation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAdditionalInformation)
-    res["customQuestions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateBookingQuestionAssignmentFromDiscriminatorValue , m.SetCustomQuestions)
-    res["defaultDuration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetISODurationValue(m.SetDefaultDuration)
-    res["defaultLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateLocationFromDiscriminatorValue , m.SetDefaultLocation)
-    res["defaultPrice"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetDefaultPrice)
-    res["defaultPriceType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseBookingPriceType , m.SetDefaultPriceType)
-    res["defaultReminders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateBookingReminderFromDiscriminatorValue , m.SetDefaultReminders)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["isAnonymousJoinEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsAnonymousJoinEnabled)
-    res["isHiddenFromCustomers"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsHiddenFromCustomers)
-    res["isLocationOnline"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsLocationOnline)
-    res["languageTag"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetLanguageTag)
-    res["maximumAttendeesCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMaximumAttendeesCount)
-    res["notes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetNotes)
-    res["postBuffer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetISODurationValue(m.SetPostBuffer)
-    res["preBuffer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetISODurationValue(m.SetPreBuffer)
-    res["schedulingPolicy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateBookingSchedulingPolicyFromDiscriminatorValue , m.SetSchedulingPolicy)
-    res["smsNotificationsEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetSmsNotificationsEnabled)
-    res["staffMemberIds"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetStaffMemberIds)
-    res["webUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWebUrl)
+    res["additionalInformation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAdditionalInformation(val)
+        }
+        return nil
+    }
+    res["customQuestions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateBookingQuestionAssignmentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]BookingQuestionAssignmentable, len(val))
+            for i, v := range val {
+                res[i] = v.(BookingQuestionAssignmentable)
+            }
+            m.SetCustomQuestions(res)
+        }
+        return nil
+    }
+    res["defaultDuration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetISODurationValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefaultDuration(val)
+        }
+        return nil
+    }
+    res["defaultLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateLocationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefaultLocation(val.(Locationable))
+        }
+        return nil
+    }
+    res["defaultPrice"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefaultPrice(val)
+        }
+        return nil
+    }
+    res["defaultPriceType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseBookingPriceType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefaultPriceType(val.(*BookingPriceType))
+        }
+        return nil
+    }
+    res["defaultReminders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateBookingReminderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]BookingReminderable, len(val))
+            for i, v := range val {
+                res[i] = v.(BookingReminderable)
+            }
+            m.SetDefaultReminders(res)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["isAnonymousJoinEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAnonymousJoinEnabled(val)
+        }
+        return nil
+    }
+    res["isHiddenFromCustomers"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsHiddenFromCustomers(val)
+        }
+        return nil
+    }
+    res["isLocationOnline"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsLocationOnline(val)
+        }
+        return nil
+    }
+    res["languageTag"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLanguageTag(val)
+        }
+        return nil
+    }
+    res["maximumAttendeesCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMaximumAttendeesCount(val)
+        }
+        return nil
+    }
+    res["notes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNotes(val)
+        }
+        return nil
+    }
+    res["postBuffer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetISODurationValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPostBuffer(val)
+        }
+        return nil
+    }
+    res["preBuffer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetISODurationValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreBuffer(val)
+        }
+        return nil
+    }
+    res["schedulingPolicy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateBookingSchedulingPolicyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSchedulingPolicy(val.(BookingSchedulingPolicyable))
+        }
+        return nil
+    }
+    res["smsNotificationsEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSmsNotificationsEnabled(val)
+        }
+        return nil
+    }
+    res["staffMemberIds"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetStaffMemberIds(res)
+        }
+        return nil
+    }
+    res["webUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWebUrl(val)
+        }
+        return nil
+    }
     return res
 }
-// GetIsAnonymousJoinEnabled gets the isAnonymousJoinEnabled property value. The isAnonymousJoinEnabled property
+// GetIsAnonymousJoinEnabled gets the isAnonymousJoinEnabled property value. True if the URL to join the appointment anonymously (anonymousJoinWebUrl) will be generated for the appointment booked for this service.
 func (m *BookingService) GetIsAnonymousJoinEnabled()(*bool) {
-    return m.isAnonymousJoinEnabled
+    val, err := m.GetBackingStore().Get("isAnonymousJoinEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsHiddenFromCustomers gets the isHiddenFromCustomers property value. True means this service is not available to customers for booking.
 func (m *BookingService) GetIsHiddenFromCustomers()(*bool) {
-    return m.isHiddenFromCustomers
+    val, err := m.GetBackingStore().Get("isHiddenFromCustomers")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsLocationOnline gets the isLocationOnline property value. True indicates that the appointments for the service will be held online. Default value is false.
 func (m *BookingService) GetIsLocationOnline()(*bool) {
-    return m.isLocationOnline
+    val, err := m.GetBackingStore().Get("isLocationOnline")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
-// GetLanguageTag gets the languageTag property value. The languageTag property
+// GetLanguageTag gets the languageTag property value. The language of the self-service booking page.
 func (m *BookingService) GetLanguageTag()(*string) {
-    return m.languageTag
+    val, err := m.GetBackingStore().Get("languageTag")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMaximumAttendeesCount gets the maximumAttendeesCount property value. The maximum number of customers allowed in a service. If maximumAttendeesCount of the service is greater than 1, pass valid customer IDs while creating or updating an appointment. To create a customer, use the Create bookingCustomer operation.
 func (m *BookingService) GetMaximumAttendeesCount()(*int32) {
-    return m.maximumAttendeesCount
+    val, err := m.GetBackingStore().Get("maximumAttendeesCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetNotes gets the notes property value. Additional information about this service.
 func (m *BookingService) GetNotes()(*string) {
-    return m.notes
+    val, err := m.GetBackingStore().Get("notes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPostBuffer gets the postBuffer property value. The time to buffer after an appointment for this service ends, and before the next customer appointment can be booked.
 func (m *BookingService) GetPostBuffer()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration) {
-    return m.postBuffer
+    val, err := m.GetBackingStore().Get("postBuffer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    }
+    return nil
 }
 // GetPreBuffer gets the preBuffer property value. The time to buffer before an appointment for this service can start.
 func (m *BookingService) GetPreBuffer()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration) {
-    return m.preBuffer
+    val, err := m.GetBackingStore().Get("preBuffer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    }
+    return nil
 }
 // GetSchedulingPolicy gets the schedulingPolicy property value. The set of policies that determine how appointments for this type of service should be created and managed.
 func (m *BookingService) GetSchedulingPolicy()(BookingSchedulingPolicyable) {
-    return m.schedulingPolicy
+    val, err := m.GetBackingStore().Get("schedulingPolicy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(BookingSchedulingPolicyable)
+    }
+    return nil
 }
 // GetSmsNotificationsEnabled gets the smsNotificationsEnabled property value. True indicates SMS notifications can be sent to the customers for the appointment of the service. Default value is false.
 func (m *BookingService) GetSmsNotificationsEnabled()(*bool) {
-    return m.smsNotificationsEnabled
+    val, err := m.GetBackingStore().Get("smsNotificationsEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetStaffMemberIds gets the staffMemberIds property value. Represents those staff members who provide this service.
 func (m *BookingService) GetStaffMemberIds()([]string) {
-    return m.staffMemberIds
+    val, err := m.GetBackingStore().Get("staffMemberIds")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetWebUrl gets the webUrl property value. The URL a customer uses to access the service.
 func (m *BookingService) GetWebUrl()(*string) {
-    return m.webUrl
+    val, err := m.GetBackingStore().Get("webUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *BookingService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -185,7 +490,10 @@ func (m *BookingService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a
         }
     }
     if m.GetCustomQuestions() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetCustomQuestions())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetCustomQuestions()))
+        for i, v := range m.GetCustomQuestions() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("customQuestions", cast)
         if err != nil {
             return err
@@ -217,7 +525,10 @@ func (m *BookingService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a
         }
     }
     if m.GetDefaultReminders() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetDefaultReminders())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetDefaultReminders()))
+        for i, v := range m.GetDefaultReminders() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("defaultReminders", cast)
         if err != nil {
             return err
@@ -305,85 +616,195 @@ func (m *BookingService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a
 }
 // SetAdditionalInformation sets the additionalInformation property value. Additional information that is sent to the customer when an appointment is confirmed.
 func (m *BookingService) SetAdditionalInformation(value *string)() {
-    m.additionalInformation = value
+    err := m.GetBackingStore().Set("additionalInformation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCustomQuestions sets the customQuestions property value. Contains the set of custom questions associated with a particular service.
 func (m *BookingService) SetCustomQuestions(value []BookingQuestionAssignmentable)() {
-    m.customQuestions = value
+    err := m.GetBackingStore().Set("customQuestions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultDuration sets the defaultDuration property value. The default length of the service, represented in numbers of days, hours, minutes, and seconds. For example, P11D23H59M59.999999999999S.
 func (m *BookingService) SetDefaultDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)() {
-    m.defaultDuration = value
+    err := m.GetBackingStore().Set("defaultDuration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultLocation sets the defaultLocation property value. The default physical location for the service.
 func (m *BookingService) SetDefaultLocation(value Locationable)() {
-    m.defaultLocation = value
+    err := m.GetBackingStore().Set("defaultLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultPrice sets the defaultPrice property value. The default monetary price for the service.
 func (m *BookingService) SetDefaultPrice(value *float64)() {
-    m.defaultPrice = value
+    err := m.GetBackingStore().Set("defaultPrice", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultPriceType sets the defaultPriceType property value. Represents the type of pricing of a booking service.
 func (m *BookingService) SetDefaultPriceType(value *BookingPriceType)() {
-    m.defaultPriceType = value
+    err := m.GetBackingStore().Set("defaultPriceType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultReminders sets the defaultReminders property value. The default set of reminders for an appointment of this service. The value of this property is available only when reading this bookingService by its ID.
 func (m *BookingService) SetDefaultReminders(value []BookingReminderable)() {
-    m.defaultReminders = value
+    err := m.GetBackingStore().Set("defaultReminders", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. A text description for the service.
 func (m *BookingService) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. A service name.
 func (m *BookingService) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetIsAnonymousJoinEnabled sets the isAnonymousJoinEnabled property value. The isAnonymousJoinEnabled property
+// SetIsAnonymousJoinEnabled sets the isAnonymousJoinEnabled property value. True if the URL to join the appointment anonymously (anonymousJoinWebUrl) will be generated for the appointment booked for this service.
 func (m *BookingService) SetIsAnonymousJoinEnabled(value *bool)() {
-    m.isAnonymousJoinEnabled = value
+    err := m.GetBackingStore().Set("isAnonymousJoinEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsHiddenFromCustomers sets the isHiddenFromCustomers property value. True means this service is not available to customers for booking.
 func (m *BookingService) SetIsHiddenFromCustomers(value *bool)() {
-    m.isHiddenFromCustomers = value
+    err := m.GetBackingStore().Set("isHiddenFromCustomers", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsLocationOnline sets the isLocationOnline property value. True indicates that the appointments for the service will be held online. Default value is false.
 func (m *BookingService) SetIsLocationOnline(value *bool)() {
-    m.isLocationOnline = value
+    err := m.GetBackingStore().Set("isLocationOnline", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetLanguageTag sets the languageTag property value. The languageTag property
+// SetLanguageTag sets the languageTag property value. The language of the self-service booking page.
 func (m *BookingService) SetLanguageTag(value *string)() {
-    m.languageTag = value
+    err := m.GetBackingStore().Set("languageTag", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMaximumAttendeesCount sets the maximumAttendeesCount property value. The maximum number of customers allowed in a service. If maximumAttendeesCount of the service is greater than 1, pass valid customer IDs while creating or updating an appointment. To create a customer, use the Create bookingCustomer operation.
 func (m *BookingService) SetMaximumAttendeesCount(value *int32)() {
-    m.maximumAttendeesCount = value
+    err := m.GetBackingStore().Set("maximumAttendeesCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNotes sets the notes property value. Additional information about this service.
 func (m *BookingService) SetNotes(value *string)() {
-    m.notes = value
+    err := m.GetBackingStore().Set("notes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPostBuffer sets the postBuffer property value. The time to buffer after an appointment for this service ends, and before the next customer appointment can be booked.
 func (m *BookingService) SetPostBuffer(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)() {
-    m.postBuffer = value
+    err := m.GetBackingStore().Set("postBuffer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreBuffer sets the preBuffer property value. The time to buffer before an appointment for this service can start.
 func (m *BookingService) SetPreBuffer(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)() {
-    m.preBuffer = value
+    err := m.GetBackingStore().Set("preBuffer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSchedulingPolicy sets the schedulingPolicy property value. The set of policies that determine how appointments for this type of service should be created and managed.
 func (m *BookingService) SetSchedulingPolicy(value BookingSchedulingPolicyable)() {
-    m.schedulingPolicy = value
+    err := m.GetBackingStore().Set("schedulingPolicy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSmsNotificationsEnabled sets the smsNotificationsEnabled property value. True indicates SMS notifications can be sent to the customers for the appointment of the service. Default value is false.
 func (m *BookingService) SetSmsNotificationsEnabled(value *bool)() {
-    m.smsNotificationsEnabled = value
+    err := m.GetBackingStore().Set("smsNotificationsEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStaffMemberIds sets the staffMemberIds property value. Represents those staff members who provide this service.
 func (m *BookingService) SetStaffMemberIds(value []string)() {
-    m.staffMemberIds = value
+    err := m.GetBackingStore().Set("staffMemberIds", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWebUrl sets the webUrl property value. The URL a customer uses to access the service.
 func (m *BookingService) SetWebUrl(value *string)() {
-    m.webUrl = value
+    err := m.GetBackingStore().Set("webUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// BookingServiceable 
+type BookingServiceable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAdditionalInformation()(*string)
+    GetCustomQuestions()([]BookingQuestionAssignmentable)
+    GetDefaultDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    GetDefaultLocation()(Locationable)
+    GetDefaultPrice()(*float64)
+    GetDefaultPriceType()(*BookingPriceType)
+    GetDefaultReminders()([]BookingReminderable)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetIsAnonymousJoinEnabled()(*bool)
+    GetIsHiddenFromCustomers()(*bool)
+    GetIsLocationOnline()(*bool)
+    GetLanguageTag()(*string)
+    GetMaximumAttendeesCount()(*int32)
+    GetNotes()(*string)
+    GetPostBuffer()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    GetPreBuffer()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    GetSchedulingPolicy()(BookingSchedulingPolicyable)
+    GetSmsNotificationsEnabled()(*bool)
+    GetStaffMemberIds()([]string)
+    GetWebUrl()(*string)
+    SetAdditionalInformation(value *string)()
+    SetCustomQuestions(value []BookingQuestionAssignmentable)()
+    SetDefaultDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)()
+    SetDefaultLocation(value Locationable)()
+    SetDefaultPrice(value *float64)()
+    SetDefaultPriceType(value *BookingPriceType)()
+    SetDefaultReminders(value []BookingReminderable)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetIsAnonymousJoinEnabled(value *bool)()
+    SetIsHiddenFromCustomers(value *bool)()
+    SetIsLocationOnline(value *bool)()
+    SetLanguageTag(value *string)()
+    SetMaximumAttendeesCount(value *int32)()
+    SetNotes(value *string)()
+    SetPostBuffer(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)()
+    SetPreBuffer(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)()
+    SetSchedulingPolicy(value BookingSchedulingPolicyable)()
+    SetSmsNotificationsEnabled(value *bool)()
+    SetStaffMemberIds(value []string)()
+    SetWebUrl(value *string)()
 }

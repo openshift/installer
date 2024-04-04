@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible statuses associated with a generated report
 type DeviceManagementReportStatus int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i DeviceManagementReportStatus) String() string {
     return []string{"unknown", "notStarted", "inProgress", "completed", "failed"}[i]
 }
-func ParseDeviceManagementReportStatus(v string) (interface{}, error) {
+func ParseDeviceManagementReportStatus(v string) (any, error) {
     result := UNKNOWN_DEVICEMANAGEMENTREPORTSTATUS
     switch v {
         case "unknown":

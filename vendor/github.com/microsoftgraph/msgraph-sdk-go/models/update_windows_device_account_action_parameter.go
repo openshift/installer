@@ -1,34 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // UpdateWindowsDeviceAccountActionParameter 
 type UpdateWindowsDeviceAccountActionParameter struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Not yet documented
-    calendarSyncEnabled *bool
-    // Not yet documented
-    deviceAccount WindowsDeviceAccountable
-    // Not yet documented
-    deviceAccountEmail *string
-    // Not yet documented
-    exchangeServer *string
-    // The OdataType property
-    odataType *string
-    // Not yet documented
-    passwordRotationEnabled *bool
-    // Not yet documented
-    sessionInitiationProtocalAddress *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewUpdateWindowsDeviceAccountActionParameter instantiates a new updateWindowsDeviceAccountActionParameter and sets the default values.
 func NewUpdateWindowsDeviceAccountActionParameter()(*UpdateWindowsDeviceAccountActionParameter) {
     m := &UpdateWindowsDeviceAccountActionParameter{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateUpdateWindowsDeviceAccountActionParameterFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -36,48 +23,172 @@ func CreateUpdateWindowsDeviceAccountActionParameterFromDiscriminatorValue(parse
     return NewUpdateWindowsDeviceAccountActionParameter(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *UpdateWindowsDeviceAccountActionParameter) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *UpdateWindowsDeviceAccountActionParameter) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *UpdateWindowsDeviceAccountActionParameter) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCalendarSyncEnabled gets the calendarSyncEnabled property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetCalendarSyncEnabled()(*bool) {
-    return m.calendarSyncEnabled
+    val, err := m.GetBackingStore().Get("calendarSyncEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetDeviceAccount gets the deviceAccount property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetDeviceAccount()(WindowsDeviceAccountable) {
-    return m.deviceAccount
+    val, err := m.GetBackingStore().Get("deviceAccount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WindowsDeviceAccountable)
+    }
+    return nil
 }
 // GetDeviceAccountEmail gets the deviceAccountEmail property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetDeviceAccountEmail()(*string) {
-    return m.deviceAccountEmail
+    val, err := m.GetBackingStore().Get("deviceAccountEmail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExchangeServer gets the exchangeServer property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetExchangeServer()(*string) {
-    return m.exchangeServer
+    val, err := m.GetBackingStore().Get("exchangeServer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *UpdateWindowsDeviceAccountActionParameter) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["calendarSyncEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetCalendarSyncEnabled)
-    res["deviceAccount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWindowsDeviceAccountFromDiscriminatorValue , m.SetDeviceAccount)
-    res["deviceAccountEmail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceAccountEmail)
-    res["exchangeServer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetExchangeServer)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["passwordRotationEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetPasswordRotationEnabled)
-    res["sessionInitiationProtocalAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSessionInitiationProtocalAddress)
+    res["calendarSyncEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCalendarSyncEnabled(val)
+        }
+        return nil
+    }
+    res["deviceAccount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWindowsDeviceAccountFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceAccount(val.(WindowsDeviceAccountable))
+        }
+        return nil
+    }
+    res["deviceAccountEmail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceAccountEmail(val)
+        }
+        return nil
+    }
+    res["exchangeServer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExchangeServer(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["passwordRotationEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasswordRotationEnabled(val)
+        }
+        return nil
+    }
+    res["sessionInitiationProtocalAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSessionInitiationProtocalAddress(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *UpdateWindowsDeviceAccountActionParameter) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPasswordRotationEnabled gets the passwordRotationEnabled property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetPasswordRotationEnabled()(*bool) {
-    return m.passwordRotationEnabled
+    val, err := m.GetBackingStore().Get("passwordRotationEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetSessionInitiationProtocalAddress gets the sessionInitiationProtocalAddress property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) GetSessionInitiationProtocalAddress()(*string) {
-    return m.sessionInitiationProtocalAddress
+    val, err := m.GetBackingStore().Get("sessionInitiationProtocalAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *UpdateWindowsDeviceAccountActionParameter) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -132,34 +243,84 @@ func (m *UpdateWindowsDeviceAccountActionParameter) Serialize(writer i878a80d233
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *UpdateWindowsDeviceAccountActionParameter) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *UpdateWindowsDeviceAccountActionParameter) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *UpdateWindowsDeviceAccountActionParameter) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCalendarSyncEnabled sets the calendarSyncEnabled property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetCalendarSyncEnabled(value *bool)() {
-    m.calendarSyncEnabled = value
+    err := m.GetBackingStore().Set("calendarSyncEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceAccount sets the deviceAccount property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetDeviceAccount(value WindowsDeviceAccountable)() {
-    m.deviceAccount = value
+    err := m.GetBackingStore().Set("deviceAccount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceAccountEmail sets the deviceAccountEmail property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetDeviceAccountEmail(value *string)() {
-    m.deviceAccountEmail = value
+    err := m.GetBackingStore().Set("deviceAccountEmail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExchangeServer sets the exchangeServer property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetExchangeServer(value *string)() {
-    m.exchangeServer = value
+    err := m.GetBackingStore().Set("exchangeServer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *UpdateWindowsDeviceAccountActionParameter) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasswordRotationEnabled sets the passwordRotationEnabled property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetPasswordRotationEnabled(value *bool)() {
-    m.passwordRotationEnabled = value
+    err := m.GetBackingStore().Set("passwordRotationEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSessionInitiationProtocalAddress sets the sessionInitiationProtocalAddress property value. Not yet documented
 func (m *UpdateWindowsDeviceAccountActionParameter) SetSessionInitiationProtocalAddress(value *string)() {
-    m.sessionInitiationProtocalAddress = value
+    err := m.GetBackingStore().Set("sessionInitiationProtocalAddress", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// UpdateWindowsDeviceAccountActionParameterable 
+type UpdateWindowsDeviceAccountActionParameterable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCalendarSyncEnabled()(*bool)
+    GetDeviceAccount()(WindowsDeviceAccountable)
+    GetDeviceAccountEmail()(*string)
+    GetExchangeServer()(*string)
+    GetOdataType()(*string)
+    GetPasswordRotationEnabled()(*bool)
+    GetSessionInitiationProtocalAddress()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCalendarSyncEnabled(value *bool)()
+    SetDeviceAccount(value WindowsDeviceAccountable)()
+    SetDeviceAccountEmail(value *string)()
+    SetExchangeServer(value *string)()
+    SetOdataType(value *string)()
+    SetPasswordRotationEnabled(value *bool)()
+    SetSessionInitiationProtocalAddress(value *string)()
 }

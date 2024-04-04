@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PlannerContainerType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i PlannerContainerType) String() string {
     return []string{"group", "unknownFutureValue", "roster"}[i]
 }
-func ParsePlannerContainerType(v string) (interface{}, error) {
+func ParsePlannerContainerType(v string) (any, error) {
     result := GROUP_PLANNERCONTAINERTYPE
     switch v {
         case "group":

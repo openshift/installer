@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrinterFeedOrientation int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i PrinterFeedOrientation) String() string {
     return []string{"longEdgeFirst", "shortEdgeFirst", "unknownFutureValue"}[i]
 }
-func ParsePrinterFeedOrientation(v string) (interface{}, error) {
+func ParsePrinterFeedOrientation(v string) (any, error) {
     result := LONGEDGEFIRST_PRINTERFEEDORIENTATION
     switch v {
         case "longEdgeFirst":

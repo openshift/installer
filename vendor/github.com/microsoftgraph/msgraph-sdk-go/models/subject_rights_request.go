@@ -2,51 +2,14 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SubjectRightsRequest 
 type SubjectRightsRequest struct {
     Entity
-    // Identity that the request is assigned to.
-    assignedTo Identityable
-    // The date and time when the request was closed. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    closedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Identity information for the entity that created the request.
-    createdBy IdentitySetable
-    // The date and time when the request was created. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Information about the data subject.
-    dataSubject DataSubjectable
-    // The type of the data subject. Possible values are: customer, currentEmployee, formerEmployee, prospectiveEmployee, student, teacher, faculty, other, unknownFutureValue.
-    dataSubjectType *DataSubjectType
-    // Description for the request.
-    description *string
-    // The name of the request.
-    displayName *string
-    // Collection of history change events.
-    history []SubjectRightsRequestHistoryable
-    // Insight about the request.
-    insight SubjectRightsRequestDetailable
-    // The date and time when the request is internally due. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    internalDueDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Identity information for the entity that last modified the request.
-    lastModifiedBy IdentitySetable
-    // The date and time when the request was last modified. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // List of notes associcated with the request.
-    notes []AuthoredNoteable
-    // List of regulations that this request will fulfill.
-    regulations []string
-    // Information about the different stages for the request.
-    stages []SubjectRightsRequestStageDetailable
-    // The status of the request.. Possible values are: active, closed, unknownFutureValue.
-    status *SubjectRightsRequestStatus
-    // Information about the Microsoft Teams team that was created for the request.
-    team Teamable
     // The type of the request. Possible values are: export, delete,  access, tagForAction, unknownFutureValue.
-    type_escaped *SubjectRightsRequestType
+    TypeEscaped *SubjectRightsRequestType
 }
 // NewSubjectRightsRequest instantiates a new SubjectRightsRequest and sets the default values.
 func NewSubjectRightsRequest()(*SubjectRightsRequest) {
@@ -61,103 +24,423 @@ func CreateSubjectRightsRequestFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetAssignedTo gets the assignedTo property value. Identity that the request is assigned to.
 func (m *SubjectRightsRequest) GetAssignedTo()(Identityable) {
-    return m.assignedTo
+    val, err := m.GetBackingStore().Get("assignedTo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Identityable)
+    }
+    return nil
 }
 // GetClosedDateTime gets the closedDateTime property value. The date and time when the request was closed. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) GetClosedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.closedDateTime
+    val, err := m.GetBackingStore().Get("closedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetCreatedBy gets the createdBy property value. Identity information for the entity that created the request.
 func (m *SubjectRightsRequest) GetCreatedBy()(IdentitySetable) {
-    return m.createdBy
+    val, err := m.GetBackingStore().Get("createdBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. The date and time when the request was created. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDataSubject gets the dataSubject property value. Information about the data subject.
 func (m *SubjectRightsRequest) GetDataSubject()(DataSubjectable) {
-    return m.dataSubject
+    val, err := m.GetBackingStore().Get("dataSubject")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DataSubjectable)
+    }
+    return nil
 }
 // GetDataSubjectType gets the dataSubjectType property value. The type of the data subject. Possible values are: customer, currentEmployee, formerEmployee, prospectiveEmployee, student, teacher, faculty, other, unknownFutureValue.
 func (m *SubjectRightsRequest) GetDataSubjectType()(*DataSubjectType) {
-    return m.dataSubjectType
+    val, err := m.GetBackingStore().Get("dataSubjectType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*DataSubjectType)
+    }
+    return nil
 }
 // GetDescription gets the description property value. Description for the request.
 func (m *SubjectRightsRequest) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name of the request.
 func (m *SubjectRightsRequest) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SubjectRightsRequest) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["assignedTo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentityFromDiscriminatorValue , m.SetAssignedTo)
-    res["closedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetClosedDateTime)
-    res["createdBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetCreatedBy)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["dataSubject"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDataSubjectFromDiscriminatorValue , m.SetDataSubject)
-    res["dataSubjectType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseDataSubjectType , m.SetDataSubjectType)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["history"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSubjectRightsRequestHistoryFromDiscriminatorValue , m.SetHistory)
-    res["insight"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSubjectRightsRequestDetailFromDiscriminatorValue , m.SetInsight)
-    res["internalDueDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetInternalDueDateTime)
-    res["lastModifiedBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetLastModifiedBy)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["notes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAuthoredNoteFromDiscriminatorValue , m.SetNotes)
-    res["regulations"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetRegulations)
-    res["stages"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSubjectRightsRequestStageDetailFromDiscriminatorValue , m.SetStages)
-    res["status"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseSubjectRightsRequestStatus , m.SetStatus)
-    res["team"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamFromDiscriminatorValue , m.SetTeam)
-    res["type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseSubjectRightsRequestType , m.SetType)
+    res["assignedTo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentityFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAssignedTo(val.(Identityable))
+        }
+        return nil
+    }
+    res["closedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetClosedDateTime(val)
+        }
+        return nil
+    }
+    res["createdBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedBy(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["dataSubject"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDataSubjectFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDataSubject(val.(DataSubjectable))
+        }
+        return nil
+    }
+    res["dataSubjectType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseDataSubjectType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDataSubjectType(val.(*DataSubjectType))
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["history"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSubjectRightsRequestHistoryFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]SubjectRightsRequestHistoryable, len(val))
+            for i, v := range val {
+                res[i] = v.(SubjectRightsRequestHistoryable)
+            }
+            m.SetHistory(res)
+        }
+        return nil
+    }
+    res["insight"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSubjectRightsRequestDetailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInsight(val.(SubjectRightsRequestDetailable))
+        }
+        return nil
+    }
+    res["internalDueDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInternalDueDateTime(val)
+        }
+        return nil
+    }
+    res["lastModifiedBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedBy(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["notes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAuthoredNoteFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AuthoredNoteable, len(val))
+            for i, v := range val {
+                res[i] = v.(AuthoredNoteable)
+            }
+            m.SetNotes(res)
+        }
+        return nil
+    }
+    res["regulations"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetRegulations(res)
+        }
+        return nil
+    }
+    res["stages"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSubjectRightsRequestStageDetailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]SubjectRightsRequestStageDetailable, len(val))
+            for i, v := range val {
+                res[i] = v.(SubjectRightsRequestStageDetailable)
+            }
+            m.SetStages(res)
+        }
+        return nil
+    }
+    res["status"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseSubjectRightsRequestStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStatus(val.(*SubjectRightsRequestStatus))
+        }
+        return nil
+    }
+    res["team"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeam(val.(Teamable))
+        }
+        return nil
+    }
+    res["type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseSubjectRightsRequestType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetType(val.(*SubjectRightsRequestType))
+        }
+        return nil
+    }
     return res
 }
 // GetHistory gets the history property value. Collection of history change events.
 func (m *SubjectRightsRequest) GetHistory()([]SubjectRightsRequestHistoryable) {
-    return m.history
+    val, err := m.GetBackingStore().Get("history")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]SubjectRightsRequestHistoryable)
+    }
+    return nil
 }
 // GetInsight gets the insight property value. Insight about the request.
 func (m *SubjectRightsRequest) GetInsight()(SubjectRightsRequestDetailable) {
-    return m.insight
+    val, err := m.GetBackingStore().Get("insight")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SubjectRightsRequestDetailable)
+    }
+    return nil
 }
 // GetInternalDueDateTime gets the internalDueDateTime property value. The date and time when the request is internally due. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) GetInternalDueDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.internalDueDateTime
+    val, err := m.GetBackingStore().Get("internalDueDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLastModifiedBy gets the lastModifiedBy property value. Identity information for the entity that last modified the request.
 func (m *SubjectRightsRequest) GetLastModifiedBy()(IdentitySetable) {
-    return m.lastModifiedBy
+    val, err := m.GetBackingStore().Get("lastModifiedBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. The date and time when the request was last modified. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetNotes gets the notes property value. List of notes associcated with the request.
 func (m *SubjectRightsRequest) GetNotes()([]AuthoredNoteable) {
-    return m.notes
+    val, err := m.GetBackingStore().Get("notes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AuthoredNoteable)
+    }
+    return nil
 }
 // GetRegulations gets the regulations property value. List of regulations that this request will fulfill.
 func (m *SubjectRightsRequest) GetRegulations()([]string) {
-    return m.regulations
+    val, err := m.GetBackingStore().Get("regulations")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetStages gets the stages property value. Information about the different stages for the request.
 func (m *SubjectRightsRequest) GetStages()([]SubjectRightsRequestStageDetailable) {
-    return m.stages
+    val, err := m.GetBackingStore().Get("stages")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]SubjectRightsRequestStageDetailable)
+    }
+    return nil
 }
 // GetStatus gets the status property value. The status of the request.. Possible values are: active, closed, unknownFutureValue.
 func (m *SubjectRightsRequest) GetStatus()(*SubjectRightsRequestStatus) {
-    return m.status
+    val, err := m.GetBackingStore().Get("status")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*SubjectRightsRequestStatus)
+    }
+    return nil
 }
 // GetTeam gets the team property value. Information about the Microsoft Teams team that was created for the request.
 func (m *SubjectRightsRequest) GetTeam()(Teamable) {
-    return m.team
+    val, err := m.GetBackingStore().Get("team")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Teamable)
+    }
+    return nil
 }
 // GetType gets the type property value. The type of the request. Possible values are: export, delete,  access, tagForAction, unknownFutureValue.
 func (m *SubjectRightsRequest) GetType()(*SubjectRightsRequestType) {
-    return m.type_escaped
+    val, err := m.GetBackingStore().Get("typeEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*SubjectRightsRequestType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SubjectRightsRequest) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -215,7 +498,10 @@ func (m *SubjectRightsRequest) Serialize(writer i878a80d2330e89d26896388a3f487ee
         }
     }
     if m.GetHistory() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetHistory())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetHistory()))
+        for i, v := range m.GetHistory() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("history", cast)
         if err != nil {
             return err
@@ -246,7 +532,10 @@ func (m *SubjectRightsRequest) Serialize(writer i878a80d2330e89d26896388a3f487ee
         }
     }
     if m.GetNotes() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetNotes())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetNotes()))
+        for i, v := range m.GetNotes() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("notes", cast)
         if err != nil {
             return err
@@ -259,7 +548,10 @@ func (m *SubjectRightsRequest) Serialize(writer i878a80d2330e89d26896388a3f487ee
         }
     }
     if m.GetStages() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetStages())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetStages()))
+        for i, v := range m.GetStages() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("stages", cast)
         if err != nil {
             return err
@@ -289,77 +581,177 @@ func (m *SubjectRightsRequest) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetAssignedTo sets the assignedTo property value. Identity that the request is assigned to.
 func (m *SubjectRightsRequest) SetAssignedTo(value Identityable)() {
-    m.assignedTo = value
+    err := m.GetBackingStore().Set("assignedTo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetClosedDateTime sets the closedDateTime property value. The date and time when the request was closed. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) SetClosedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.closedDateTime = value
+    err := m.GetBackingStore().Set("closedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedBy sets the createdBy property value. Identity information for the entity that created the request.
 func (m *SubjectRightsRequest) SetCreatedBy(value IdentitySetable)() {
-    m.createdBy = value
+    err := m.GetBackingStore().Set("createdBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. The date and time when the request was created. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDataSubject sets the dataSubject property value. Information about the data subject.
 func (m *SubjectRightsRequest) SetDataSubject(value DataSubjectable)() {
-    m.dataSubject = value
+    err := m.GetBackingStore().Set("dataSubject", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDataSubjectType sets the dataSubjectType property value. The type of the data subject. Possible values are: customer, currentEmployee, formerEmployee, prospectiveEmployee, student, teacher, faculty, other, unknownFutureValue.
 func (m *SubjectRightsRequest) SetDataSubjectType(value *DataSubjectType)() {
-    m.dataSubjectType = value
+    err := m.GetBackingStore().Set("dataSubjectType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. Description for the request.
 func (m *SubjectRightsRequest) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name of the request.
 func (m *SubjectRightsRequest) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHistory sets the history property value. Collection of history change events.
 func (m *SubjectRightsRequest) SetHistory(value []SubjectRightsRequestHistoryable)() {
-    m.history = value
+    err := m.GetBackingStore().Set("history", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInsight sets the insight property value. Insight about the request.
 func (m *SubjectRightsRequest) SetInsight(value SubjectRightsRequestDetailable)() {
-    m.insight = value
+    err := m.GetBackingStore().Set("insight", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInternalDueDateTime sets the internalDueDateTime property value. The date and time when the request is internally due. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) SetInternalDueDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.internalDueDateTime = value
+    err := m.GetBackingStore().Set("internalDueDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedBy sets the lastModifiedBy property value. Identity information for the entity that last modified the request.
 func (m *SubjectRightsRequest) SetLastModifiedBy(value IdentitySetable)() {
-    m.lastModifiedBy = value
+    err := m.GetBackingStore().Set("lastModifiedBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. The date and time when the request was last modified. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.
 func (m *SubjectRightsRequest) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNotes sets the notes property value. List of notes associcated with the request.
 func (m *SubjectRightsRequest) SetNotes(value []AuthoredNoteable)() {
-    m.notes = value
+    err := m.GetBackingStore().Set("notes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRegulations sets the regulations property value. List of regulations that this request will fulfill.
 func (m *SubjectRightsRequest) SetRegulations(value []string)() {
-    m.regulations = value
+    err := m.GetBackingStore().Set("regulations", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStages sets the stages property value. Information about the different stages for the request.
 func (m *SubjectRightsRequest) SetStages(value []SubjectRightsRequestStageDetailable)() {
-    m.stages = value
+    err := m.GetBackingStore().Set("stages", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStatus sets the status property value. The status of the request.. Possible values are: active, closed, unknownFutureValue.
 func (m *SubjectRightsRequest) SetStatus(value *SubjectRightsRequestStatus)() {
-    m.status = value
+    err := m.GetBackingStore().Set("status", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeam sets the team property value. Information about the Microsoft Teams team that was created for the request.
 func (m *SubjectRightsRequest) SetTeam(value Teamable)() {
-    m.team = value
+    err := m.GetBackingStore().Set("team", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetType sets the type property value. The type of the request. Possible values are: export, delete,  access, tagForAction, unknownFutureValue.
 func (m *SubjectRightsRequest) SetType(value *SubjectRightsRequestType)() {
-    m.type_escaped = value
+    err := m.GetBackingStore().Set("typeEscaped", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SubjectRightsRequestable 
+type SubjectRightsRequestable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAssignedTo()(Identityable)
+    GetClosedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetCreatedBy()(IdentitySetable)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDataSubject()(DataSubjectable)
+    GetDataSubjectType()(*DataSubjectType)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetHistory()([]SubjectRightsRequestHistoryable)
+    GetInsight()(SubjectRightsRequestDetailable)
+    GetInternalDueDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLastModifiedBy()(IdentitySetable)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetNotes()([]AuthoredNoteable)
+    GetRegulations()([]string)
+    GetStages()([]SubjectRightsRequestStageDetailable)
+    GetStatus()(*SubjectRightsRequestStatus)
+    GetTeam()(Teamable)
+    GetType()(*SubjectRightsRequestType)
+    SetAssignedTo(value Identityable)()
+    SetClosedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetCreatedBy(value IdentitySetable)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDataSubject(value DataSubjectable)()
+    SetDataSubjectType(value *DataSubjectType)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetHistory(value []SubjectRightsRequestHistoryable)()
+    SetInsight(value SubjectRightsRequestDetailable)()
+    SetInternalDueDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLastModifiedBy(value IdentitySetable)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetNotes(value []AuthoredNoteable)()
+    SetRegulations(value []string)()
+    SetStages(value []SubjectRightsRequestStageDetailable)()
+    SetStatus(value *SubjectRightsRequestStatus)()
+    SetTeam(value Teamable)()
+    SetType(value *SubjectRightsRequestType)()
 }

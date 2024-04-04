@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type LogonType int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i LogonType) String() string {
     return []string{"unknown", "interactive", "remoteInteractive", "network", "batch", "service", "unknownFutureValue"}[i]
 }
-func ParseLogonType(v string) (interface{}, error) {
+func ParseLogonType(v string) (any, error) {
     result := UNKNOWN_LOGONTYPE
     switch v {
         case "unknown":

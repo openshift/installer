@@ -1,25 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// FeatureRolloutPolicy provides operations to manage the collection of agreement entities.
+// FeatureRolloutPolicy 
 type FeatureRolloutPolicy struct {
     Entity
-    // Nullable. Specifies a list of directoryObjects that feature is enabled for.
-    appliesTo []DirectoryObjectable
-    // A description for this feature rollout policy.
-    description *string
-    // The display name for this  feature rollout policy.
-    displayName *string
-    // The feature property
-    feature *StagedFeatureName
-    // Indicates whether this feature rollout policy should be applied to the entire organization.
-    isAppliedToOrganization *bool
-    // Indicates whether the feature rollout is enabled.
-    isEnabled *bool
 }
 // NewFeatureRolloutPolicy instantiates a new featureRolloutPolicy and sets the default values.
 func NewFeatureRolloutPolicy()(*FeatureRolloutPolicy) {
@@ -34,38 +21,138 @@ func CreateFeatureRolloutPolicyFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetAppliesTo gets the appliesTo property value. Nullable. Specifies a list of directoryObjects that feature is enabled for.
 func (m *FeatureRolloutPolicy) GetAppliesTo()([]DirectoryObjectable) {
-    return m.appliesTo
+    val, err := m.GetBackingStore().Get("appliesTo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DirectoryObjectable)
+    }
+    return nil
 }
 // GetDescription gets the description property value. A description for this feature rollout policy.
 func (m *FeatureRolloutPolicy) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The display name for this  feature rollout policy.
 func (m *FeatureRolloutPolicy) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFeature gets the feature property value. The feature property
 func (m *FeatureRolloutPolicy) GetFeature()(*StagedFeatureName) {
-    return m.feature
+    val, err := m.GetBackingStore().Get("feature")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*StagedFeatureName)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *FeatureRolloutPolicy) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["appliesTo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDirectoryObjectFromDiscriminatorValue , m.SetAppliesTo)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["feature"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseStagedFeatureName , m.SetFeature)
-    res["isAppliedToOrganization"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsAppliedToOrganization)
-    res["isEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsEnabled)
+    res["appliesTo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDirectoryObjectFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DirectoryObjectable, len(val))
+            for i, v := range val {
+                res[i] = v.(DirectoryObjectable)
+            }
+            m.SetAppliesTo(res)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["feature"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseStagedFeatureName)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFeature(val.(*StagedFeatureName))
+        }
+        return nil
+    }
+    res["isAppliedToOrganization"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAppliedToOrganization(val)
+        }
+        return nil
+    }
+    res["isEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsEnabled(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsAppliedToOrganization gets the isAppliedToOrganization property value. Indicates whether this feature rollout policy should be applied to the entire organization.
 func (m *FeatureRolloutPolicy) GetIsAppliedToOrganization()(*bool) {
-    return m.isAppliedToOrganization
+    val, err := m.GetBackingStore().Get("isAppliedToOrganization")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsEnabled gets the isEnabled property value. Indicates whether the feature rollout is enabled.
 func (m *FeatureRolloutPolicy) GetIsEnabled()(*bool) {
-    return m.isEnabled
+    val, err := m.GetBackingStore().Get("isEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *FeatureRolloutPolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -74,7 +161,10 @@ func (m *FeatureRolloutPolicy) Serialize(writer i878a80d2330e89d26896388a3f487ee
         return err
     }
     if m.GetAppliesTo() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAppliesTo())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAppliesTo()))
+        for i, v := range m.GetAppliesTo() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("appliesTo", cast)
         if err != nil {
             return err
@@ -115,25 +205,60 @@ func (m *FeatureRolloutPolicy) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetAppliesTo sets the appliesTo property value. Nullable. Specifies a list of directoryObjects that feature is enabled for.
 func (m *FeatureRolloutPolicy) SetAppliesTo(value []DirectoryObjectable)() {
-    m.appliesTo = value
+    err := m.GetBackingStore().Set("appliesTo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. A description for this feature rollout policy.
 func (m *FeatureRolloutPolicy) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The display name for this  feature rollout policy.
 func (m *FeatureRolloutPolicy) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFeature sets the feature property value. The feature property
 func (m *FeatureRolloutPolicy) SetFeature(value *StagedFeatureName)() {
-    m.feature = value
+    err := m.GetBackingStore().Set("feature", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsAppliedToOrganization sets the isAppliedToOrganization property value. Indicates whether this feature rollout policy should be applied to the entire organization.
 func (m *FeatureRolloutPolicy) SetIsAppliedToOrganization(value *bool)() {
-    m.isAppliedToOrganization = value
+    err := m.GetBackingStore().Set("isAppliedToOrganization", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsEnabled sets the isEnabled property value. Indicates whether the feature rollout is enabled.
 func (m *FeatureRolloutPolicy) SetIsEnabled(value *bool)() {
-    m.isEnabled = value
+    err := m.GetBackingStore().Set("isEnabled", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// FeatureRolloutPolicyable 
+type FeatureRolloutPolicyable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppliesTo()([]DirectoryObjectable)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetFeature()(*StagedFeatureName)
+    GetIsAppliedToOrganization()(*bool)
+    GetIsEnabled()(*bool)
+    SetAppliesTo(value []DirectoryObjectable)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetFeature(value *StagedFeatureName)()
+    SetIsAppliedToOrganization(value *bool)()
+    SetIsEnabled(value *bool)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Allows IT admind to set a predefined default search engine for MDM-Controlled devices
 type WindowsSpotlightEnablementSettings int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i WindowsSpotlightEnablementSettings) String() string {
     return []string{"notConfigured", "disabled", "enabled"}[i]
 }
-func ParseWindowsSpotlightEnablementSettings(v string) (interface{}, error) {
+func ParseWindowsSpotlightEnablementSettings(v string) (any, error) {
     result := NOTCONFIGURED_WINDOWSSPOTLIGHTENABLEMENTSETTINGS
     switch v {
         case "notConfigured":

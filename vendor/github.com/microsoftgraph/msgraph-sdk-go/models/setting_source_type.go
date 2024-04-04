@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SettingSourceType int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i SettingSourceType) String() string {
     return []string{"deviceConfiguration", "deviceIntent"}[i]
 }
-func ParseSettingSourceType(v string) (interface{}, error) {
+func ParseSettingSourceType(v string) (any, error) {
     result := DEVICECONFIGURATION_SETTINGSOURCETYPE
     switch v {
         case "deviceConfiguration":

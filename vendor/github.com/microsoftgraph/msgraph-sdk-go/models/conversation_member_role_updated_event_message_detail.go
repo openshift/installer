@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ConversationMemberRoleUpdatedEventMessageDetail 
 type ConversationMemberRoleUpdatedEventMessageDetail struct {
     EventMessageDetail
-    // Roles for the coversation member user.
-    conversationMemberRoles []string
-    // Identity of the conversation member user.
-    conversationMemberUser TeamworkUserIdentityable
-    // Initiator of the event.
-    initiator IdentitySetable
 }
 // NewConversationMemberRoleUpdatedEventMessageDetail instantiates a new ConversationMemberRoleUpdatedEventMessageDetail and sets the default values.
 func NewConversationMemberRoleUpdatedEventMessageDetail()(*ConversationMemberRoleUpdatedEventMessageDetail) {
     m := &ConversationMemberRoleUpdatedEventMessageDetail{
         EventMessageDetail: *NewEventMessageDetail(),
     }
-    odataTypeValue := "#microsoft.graph.conversationMemberRoleUpdatedEventMessageDetail";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.conversationMemberRoleUpdatedEventMessageDetail"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateConversationMemberRoleUpdatedEventMessageDetailFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,23 +23,75 @@ func CreateConversationMemberRoleUpdatedEventMessageDetailFromDiscriminatorValue
 }
 // GetConversationMemberRoles gets the conversationMemberRoles property value. Roles for the coversation member user.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) GetConversationMemberRoles()([]string) {
-    return m.conversationMemberRoles
+    val, err := m.GetBackingStore().Get("conversationMemberRoles")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetConversationMemberUser gets the conversationMemberUser property value. Identity of the conversation member user.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) GetConversationMemberUser()(TeamworkUserIdentityable) {
-    return m.conversationMemberUser
+    val, err := m.GetBackingStore().Get("conversationMemberUser")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TeamworkUserIdentityable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EventMessageDetail.GetFieldDeserializers()
-    res["conversationMemberRoles"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetConversationMemberRoles)
-    res["conversationMemberUser"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamworkUserIdentityFromDiscriminatorValue , m.SetConversationMemberUser)
-    res["initiator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetInitiator)
+    res["conversationMemberRoles"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetConversationMemberRoles(res)
+        }
+        return nil
+    }
+    res["conversationMemberUser"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamworkUserIdentityFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConversationMemberUser(val.(TeamworkUserIdentityable))
+        }
+        return nil
+    }
+    res["initiator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInitiator(val.(IdentitySetable))
+        }
+        return nil
+    }
     return res
 }
 // GetInitiator gets the initiator property value. Initiator of the event.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) GetInitiator()(IdentitySetable) {
-    return m.initiator
+    val, err := m.GetBackingStore().Get("initiator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -76,13 +121,33 @@ func (m *ConversationMemberRoleUpdatedEventMessageDetail) Serialize(writer i878a
 }
 // SetConversationMemberRoles sets the conversationMemberRoles property value. Roles for the coversation member user.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) SetConversationMemberRoles(value []string)() {
-    m.conversationMemberRoles = value
+    err := m.GetBackingStore().Set("conversationMemberRoles", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetConversationMemberUser sets the conversationMemberUser property value. Identity of the conversation member user.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) SetConversationMemberUser(value TeamworkUserIdentityable)() {
-    m.conversationMemberUser = value
+    err := m.GetBackingStore().Set("conversationMemberUser", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInitiator sets the initiator property value. Initiator of the event.
 func (m *ConversationMemberRoleUpdatedEventMessageDetail) SetInitiator(value IdentitySetable)() {
-    m.initiator = value
+    err := m.GetBackingStore().Set("initiator", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ConversationMemberRoleUpdatedEventMessageDetailable 
+type ConversationMemberRoleUpdatedEventMessageDetailable interface {
+    EventMessageDetailable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetConversationMemberRoles()([]string)
+    GetConversationMemberUser()(TeamworkUserIdentityable)
+    GetInitiator()(IdentitySetable)
+    SetConversationMemberRoles(value []string)()
+    SetConversationMemberUser(value TeamworkUserIdentityable)()
+    SetInitiator(value IdentitySetable)()
 }

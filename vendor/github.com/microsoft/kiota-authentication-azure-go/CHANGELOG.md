@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## [0.6.0] - 2023-01-17
+
+### Changed
+
+- Removes the Microsoft Graph specific default values.
+
 ## [0.5.0] - 2022-09-27
 
 ### Added

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Windows Hello for Business pin usage options
 type WindowsHelloForBusinessPinUsage int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i WindowsHelloForBusinessPinUsage) String() string {
     return []string{"allowed", "required", "disallowed"}[i]
 }
-func ParseWindowsHelloForBusinessPinUsage(v string) (interface{}, error) {
+func ParseWindowsHelloForBusinessPinUsage(v string) (any, error) {
     result := ALLOWED_WINDOWSHELLOFORBUSINESSPINUSAGE
     switch v {
         case "allowed":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values of Cloud Block Level
 type DefenderCloudBlockLevelType int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i DefenderCloudBlockLevelType) String() string {
     return []string{"notConfigured", "high", "highPlus", "zeroTolerance"}[i]
 }
-func ParseDefenderCloudBlockLevelType(v string) (interface{}, error) {
+func ParseDefenderCloudBlockLevelType(v string) (any, error) {
     result := NOTCONFIGURED_DEFENDERCLOUDBLOCKLEVELTYPE
     switch v {
         case "notConfigured":

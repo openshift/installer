@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // WorkbookFunctionResult 
 type WorkbookFunctionResult struct {
     Entity
-    // The error property
-    error *string
-    // The value property
-    value Jsonable
 }
 // NewWorkbookFunctionResult instantiates a new WorkbookFunctionResult and sets the default values.
 func NewWorkbookFunctionResult()(*WorkbookFunctionResult) {
@@ -26,18 +21,50 @@ func CreateWorkbookFunctionResultFromDiscriminatorValue(parseNode i878a80d2330e8
 }
 // GetError gets the error property value. The error property
 func (m *WorkbookFunctionResult) GetError()(*string) {
-    return m.error
+    val, err := m.GetBackingStore().Get("error")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookFunctionResult) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["error"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetError)
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateJsonFromDiscriminatorValue , m.SetValue)
+    res["error"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetError(val)
+        }
+        return nil
+    }
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateJsonFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValue(val.(Jsonable))
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *WorkbookFunctionResult) GetValue()(Jsonable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Jsonable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookFunctionResult) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,9 +88,24 @@ func (m *WorkbookFunctionResult) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetError sets the error property value. The error property
 func (m *WorkbookFunctionResult) SetError(value *string)() {
-    m.error = value
+    err := m.GetBackingStore().Set("error", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValue sets the value property value. The value property
 func (m *WorkbookFunctionResult) SetValue(value Jsonable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookFunctionResultable 
+type WorkbookFunctionResultable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetError()(*string)
+    GetValue()(Jsonable)
+    SetError(value *string)()
+    SetValue(value Jsonable)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PersistentBrowserSessionMode int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i PersistentBrowserSessionMode) String() string {
     return []string{"always", "never"}[i]
 }
-func ParsePersistentBrowserSessionMode(v string) (interface{}, error) {
+func ParsePersistentBrowserSessionMode(v string) (any, error) {
     result := ALWAYS_PERSISTENTBROWSERSESSIONMODE
     switch v {
         case "always":

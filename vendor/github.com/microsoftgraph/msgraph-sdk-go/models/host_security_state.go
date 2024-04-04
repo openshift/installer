@@ -1,40 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // HostSecurityState 
 type HostSecurityState struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Host FQDN (Fully Qualified Domain Name) (for example, machine.company.com).
-    fqdn *string
-    // The isAzureAdJoined property
-    isAzureAdJoined *bool
-    // The isAzureAdRegistered property
-    isAzureAdRegistered *bool
-    // True if the host is domain joined to an on-premises Active Directory domain.
-    isHybridAzureDomainJoined *bool
-    // The local host name, without the DNS domain name.
-    netBiosName *string
-    // The OdataType property
-    odataType *string
-    // Host Operating System. (For example, Windows10, MacOS, RHEL, etc.).
-    os *string
-    // Private (not routable) IPv4 or IPv6 address (see RFC 1918) at the time of the alert.
-    privateIpAddress *string
-    // Publicly routable IPv4 or IPv6 address (see RFC 1918) at time of the alert.
-    publicIpAddress *string
-    // Provider-generated/calculated risk score of the host.  Recommended value range of 0-1, which equates to a percentage.
-    riskScore *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewHostSecurityState instantiates a new hostSecurityState and sets the default values.
 func NewHostSecurityState()(*HostSecurityState) {
     m := &HostSecurityState{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateHostSecurityStateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -42,63 +23,235 @@ func CreateHostSecurityStateFromDiscriminatorValue(parseNode i878a80d2330e89d268
     return NewHostSecurityState(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *HostSecurityState) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *HostSecurityState) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *HostSecurityState) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *HostSecurityState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["fqdn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFqdn)
-    res["isAzureAdJoined"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsAzureAdJoined)
-    res["isAzureAdRegistered"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsAzureAdRegistered)
-    res["isHybridAzureDomainJoined"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsHybridAzureDomainJoined)
-    res["netBiosName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetNetBiosName)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["os"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOs)
-    res["privateIpAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPrivateIpAddress)
-    res["publicIpAddress"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPublicIpAddress)
-    res["riskScore"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetRiskScore)
+    res["fqdn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFqdn(val)
+        }
+        return nil
+    }
+    res["isAzureAdJoined"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAzureAdJoined(val)
+        }
+        return nil
+    }
+    res["isAzureAdRegistered"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAzureAdRegistered(val)
+        }
+        return nil
+    }
+    res["isHybridAzureDomainJoined"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsHybridAzureDomainJoined(val)
+        }
+        return nil
+    }
+    res["netBiosName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNetBiosName(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["os"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOs(val)
+        }
+        return nil
+    }
+    res["privateIpAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPrivateIpAddress(val)
+        }
+        return nil
+    }
+    res["publicIpAddress"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPublicIpAddress(val)
+        }
+        return nil
+    }
+    res["riskScore"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRiskScore(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFqdn gets the fqdn property value. Host FQDN (Fully Qualified Domain Name) (for example, machine.company.com).
 func (m *HostSecurityState) GetFqdn()(*string) {
-    return m.fqdn
+    val, err := m.GetBackingStore().Get("fqdn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIsAzureAdJoined gets the isAzureAdJoined property value. The isAzureAdJoined property
 func (m *HostSecurityState) GetIsAzureAdJoined()(*bool) {
-    return m.isAzureAdJoined
+    val, err := m.GetBackingStore().Get("isAzureAdJoined")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsAzureAdRegistered gets the isAzureAdRegistered property value. The isAzureAdRegistered property
 func (m *HostSecurityState) GetIsAzureAdRegistered()(*bool) {
-    return m.isAzureAdRegistered
+    val, err := m.GetBackingStore().Get("isAzureAdRegistered")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsHybridAzureDomainJoined gets the isHybridAzureDomainJoined property value. True if the host is domain joined to an on-premises Active Directory domain.
 func (m *HostSecurityState) GetIsHybridAzureDomainJoined()(*bool) {
-    return m.isHybridAzureDomainJoined
+    val, err := m.GetBackingStore().Get("isHybridAzureDomainJoined")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetNetBiosName gets the netBiosName property value. The local host name, without the DNS domain name.
 func (m *HostSecurityState) GetNetBiosName()(*string) {
-    return m.netBiosName
+    val, err := m.GetBackingStore().Get("netBiosName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *HostSecurityState) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOs gets the os property value. Host Operating System. (For example, Windows10, MacOS, RHEL, etc.).
 func (m *HostSecurityState) GetOs()(*string) {
-    return m.os
+    val, err := m.GetBackingStore().Get("os")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPrivateIpAddress gets the privateIpAddress property value. Private (not routable) IPv4 or IPv6 address (see RFC 1918) at the time of the alert.
 func (m *HostSecurityState) GetPrivateIpAddress()(*string) {
-    return m.privateIpAddress
+    val, err := m.GetBackingStore().Get("privateIpAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPublicIpAddress gets the publicIpAddress property value. Publicly routable IPv4 or IPv6 address (see RFC 1918) at time of the alert.
 func (m *HostSecurityState) GetPublicIpAddress()(*string) {
-    return m.publicIpAddress
+    val, err := m.GetBackingStore().Get("publicIpAddress")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRiskScore gets the riskScore property value. Provider-generated/calculated risk score of the host.  Recommended value range of 0-1, which equates to a percentage.
 func (m *HostSecurityState) GetRiskScore()(*string) {
-    return m.riskScore
+    val, err := m.GetBackingStore().Get("riskScore")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *HostSecurityState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -171,46 +324,111 @@ func (m *HostSecurityState) Serialize(writer i878a80d2330e89d26896388a3f487eef27
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *HostSecurityState) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *HostSecurityState) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *HostSecurityState) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetFqdn sets the fqdn property value. Host FQDN (Fully Qualified Domain Name) (for example, machine.company.com).
 func (m *HostSecurityState) SetFqdn(value *string)() {
-    m.fqdn = value
+    err := m.GetBackingStore().Set("fqdn", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsAzureAdJoined sets the isAzureAdJoined property value. The isAzureAdJoined property
 func (m *HostSecurityState) SetIsAzureAdJoined(value *bool)() {
-    m.isAzureAdJoined = value
+    err := m.GetBackingStore().Set("isAzureAdJoined", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsAzureAdRegistered sets the isAzureAdRegistered property value. The isAzureAdRegistered property
 func (m *HostSecurityState) SetIsAzureAdRegistered(value *bool)() {
-    m.isAzureAdRegistered = value
+    err := m.GetBackingStore().Set("isAzureAdRegistered", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsHybridAzureDomainJoined sets the isHybridAzureDomainJoined property value. True if the host is domain joined to an on-premises Active Directory domain.
 func (m *HostSecurityState) SetIsHybridAzureDomainJoined(value *bool)() {
-    m.isHybridAzureDomainJoined = value
+    err := m.GetBackingStore().Set("isHybridAzureDomainJoined", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNetBiosName sets the netBiosName property value. The local host name, without the DNS domain name.
 func (m *HostSecurityState) SetNetBiosName(value *string)() {
-    m.netBiosName = value
+    err := m.GetBackingStore().Set("netBiosName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *HostSecurityState) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOs sets the os property value. Host Operating System. (For example, Windows10, MacOS, RHEL, etc.).
 func (m *HostSecurityState) SetOs(value *string)() {
-    m.os = value
+    err := m.GetBackingStore().Set("os", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPrivateIpAddress sets the privateIpAddress property value. Private (not routable) IPv4 or IPv6 address (see RFC 1918) at the time of the alert.
 func (m *HostSecurityState) SetPrivateIpAddress(value *string)() {
-    m.privateIpAddress = value
+    err := m.GetBackingStore().Set("privateIpAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPublicIpAddress sets the publicIpAddress property value. Publicly routable IPv4 or IPv6 address (see RFC 1918) at time of the alert.
 func (m *HostSecurityState) SetPublicIpAddress(value *string)() {
-    m.publicIpAddress = value
+    err := m.GetBackingStore().Set("publicIpAddress", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRiskScore sets the riskScore property value. Provider-generated/calculated risk score of the host.  Recommended value range of 0-1, which equates to a percentage.
 func (m *HostSecurityState) SetRiskScore(value *string)() {
-    m.riskScore = value
+    err := m.GetBackingStore().Set("riskScore", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// HostSecurityStateable 
+type HostSecurityStateable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetFqdn()(*string)
+    GetIsAzureAdJoined()(*bool)
+    GetIsAzureAdRegistered()(*bool)
+    GetIsHybridAzureDomainJoined()(*bool)
+    GetNetBiosName()(*string)
+    GetOdataType()(*string)
+    GetOs()(*string)
+    GetPrivateIpAddress()(*string)
+    GetPublicIpAddress()(*string)
+    GetRiskScore()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetFqdn(value *string)()
+    SetIsAzureAdJoined(value *bool)()
+    SetIsAzureAdRegistered(value *bool)()
+    SetIsHybridAzureDomainJoined(value *bool)()
+    SetNetBiosName(value *string)()
+    SetOdataType(value *string)()
+    SetOs(value *string)()
+    SetPrivateIpAddress(value *string)()
+    SetPublicIpAddress(value *string)()
+    SetRiskScore(value *string)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Windows 10 Edition type.
 type Windows10EditionType int
 
 const (
@@ -35,7 +35,7 @@ const (
 func (i Windows10EditionType) String() string {
     return []string{"windows10Enterprise", "windows10EnterpriseN", "windows10Education", "windows10EducationN", "windows10MobileEnterprise", "windows10HolographicEnterprise", "windows10Professional", "windows10ProfessionalN", "windows10ProfessionalEducation", "windows10ProfessionalEducationN", "windows10ProfessionalWorkstation", "windows10ProfessionalWorkstationN"}[i]
 }
-func ParseWindows10EditionType(v string) (interface{}, error) {
+func ParseWindows10EditionType(v string) (any, error) {
     result := WINDOWS10ENTERPRISE_WINDOWS10EDITIONTYPE
     switch v {
         case "windows10Enterprise":

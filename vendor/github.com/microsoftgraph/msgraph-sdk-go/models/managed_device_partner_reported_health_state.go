@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Available health states for the Device Health API
 type ManagedDevicePartnerReportedHealthState int
 
 const (
@@ -31,7 +31,7 @@ const (
 func (i ManagedDevicePartnerReportedHealthState) String() string {
     return []string{"unknown", "activated", "deactivated", "secured", "lowSeverity", "mediumSeverity", "highSeverity", "unresponsive", "compromised", "misconfigured"}[i]
 }
-func ParseManagedDevicePartnerReportedHealthState(v string) (interface{}, error) {
+func ParseManagedDevicePartnerReportedHealthState(v string) (any, error) {
     result := UNKNOWN_MANAGEDDEVICEPARTNERREPORTEDHEALTHSTATE
     switch v {
         case "unknown":

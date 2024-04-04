@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Supported platform types for policies.
 type PolicyPlatformType int
 
 const (
@@ -27,7 +27,7 @@ const (
 func (i PolicyPlatformType) String() string {
     return []string{"android", "androidForWork", "iOS", "macOS", "windowsPhone81", "windows81AndLater", "windows10AndLater", "all"}[i]
 }
-func ParsePolicyPlatformType(v string) (interface{}, error) {
+func ParsePolicyPlatformType(v string) (any, error) {
     result := ANDROID_POLICYPLATFORMTYPE
     switch v {
         case "android":

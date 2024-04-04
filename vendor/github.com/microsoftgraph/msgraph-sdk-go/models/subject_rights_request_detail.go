@@ -1,36 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // SubjectRightsRequestDetail 
 type SubjectRightsRequestDetail struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Count of items that are excluded from the request.
-    excludedItemCount *int64
-    // Count of items per insight.
-    insightCounts []KeyValuePairable
-    // Count of items found.
-    itemCount *int64
-    // Count of item that need review.
-    itemNeedReview *int64
-    // The OdataType property
-    odataType *string
-    // Count of items per product, such as Exchange, SharePoint, OneDrive, and Teams.
-    productItemCounts []KeyValuePairable
-    // Count of items signed off by the administrator.
-    signedOffItemCount *int64
-    // Total item size in bytes.
-    totalItemSize *int64
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewSubjectRightsRequestDetail instantiates a new subjectRightsRequestDetail and sets the default values.
 func NewSubjectRightsRequestDetail()(*SubjectRightsRequestDetail) {
     m := &SubjectRightsRequestDetail{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateSubjectRightsRequestDetailFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -38,53 +23,201 @@ func CreateSubjectRightsRequestDetailFromDiscriminatorValue(parseNode i878a80d23
     return NewSubjectRightsRequestDetail(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *SubjectRightsRequestDetail) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *SubjectRightsRequestDetail) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *SubjectRightsRequestDetail) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetExcludedItemCount gets the excludedItemCount property value. Count of items that are excluded from the request.
 func (m *SubjectRightsRequestDetail) GetExcludedItemCount()(*int64) {
-    return m.excludedItemCount
+    val, err := m.GetBackingStore().Get("excludedItemCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SubjectRightsRequestDetail) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["excludedItemCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetExcludedItemCount)
-    res["insightCounts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateKeyValuePairFromDiscriminatorValue , m.SetInsightCounts)
-    res["itemCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetItemCount)
-    res["itemNeedReview"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetItemNeedReview)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["productItemCounts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateKeyValuePairFromDiscriminatorValue , m.SetProductItemCounts)
-    res["signedOffItemCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSignedOffItemCount)
-    res["totalItemSize"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetTotalItemSize)
+    res["excludedItemCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExcludedItemCount(val)
+        }
+        return nil
+    }
+    res["insightCounts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateKeyValuePairFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]KeyValuePairable, len(val))
+            for i, v := range val {
+                res[i] = v.(KeyValuePairable)
+            }
+            m.SetInsightCounts(res)
+        }
+        return nil
+    }
+    res["itemCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetItemCount(val)
+        }
+        return nil
+    }
+    res["itemNeedReview"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetItemNeedReview(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["productItemCounts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateKeyValuePairFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]KeyValuePairable, len(val))
+            for i, v := range val {
+                res[i] = v.(KeyValuePairable)
+            }
+            m.SetProductItemCounts(res)
+        }
+        return nil
+    }
+    res["signedOffItemCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSignedOffItemCount(val)
+        }
+        return nil
+    }
+    res["totalItemSize"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTotalItemSize(val)
+        }
+        return nil
+    }
     return res
 }
 // GetInsightCounts gets the insightCounts property value. Count of items per insight.
 func (m *SubjectRightsRequestDetail) GetInsightCounts()([]KeyValuePairable) {
-    return m.insightCounts
+    val, err := m.GetBackingStore().Get("insightCounts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]KeyValuePairable)
+    }
+    return nil
 }
 // GetItemCount gets the itemCount property value. Count of items found.
 func (m *SubjectRightsRequestDetail) GetItemCount()(*int64) {
-    return m.itemCount
+    val, err := m.GetBackingStore().Get("itemCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetItemNeedReview gets the itemNeedReview property value. Count of item that need review.
 func (m *SubjectRightsRequestDetail) GetItemNeedReview()(*int64) {
-    return m.itemNeedReview
+    val, err := m.GetBackingStore().Get("itemNeedReview")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *SubjectRightsRequestDetail) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetProductItemCounts gets the productItemCounts property value. Count of items per product, such as Exchange, SharePoint, OneDrive, and Teams.
 func (m *SubjectRightsRequestDetail) GetProductItemCounts()([]KeyValuePairable) {
-    return m.productItemCounts
+    val, err := m.GetBackingStore().Get("productItemCounts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]KeyValuePairable)
+    }
+    return nil
 }
 // GetSignedOffItemCount gets the signedOffItemCount property value. Count of items signed off by the administrator.
 func (m *SubjectRightsRequestDetail) GetSignedOffItemCount()(*int64) {
-    return m.signedOffItemCount
+    val, err := m.GetBackingStore().Get("signedOffItemCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetTotalItemSize gets the totalItemSize property value. Total item size in bytes.
 func (m *SubjectRightsRequestDetail) GetTotalItemSize()(*int64) {
-    return m.totalItemSize
+    val, err := m.GetBackingStore().Get("totalItemSize")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SubjectRightsRequestDetail) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -95,7 +228,10 @@ func (m *SubjectRightsRequestDetail) Serialize(writer i878a80d2330e89d26896388a3
         }
     }
     if m.GetInsightCounts() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetInsightCounts())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetInsightCounts()))
+        for i, v := range m.GetInsightCounts() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("insightCounts", cast)
         if err != nil {
             return err
@@ -120,7 +256,10 @@ func (m *SubjectRightsRequestDetail) Serialize(writer i878a80d2330e89d26896388a3
         }
     }
     if m.GetProductItemCounts() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetProductItemCounts())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetProductItemCounts()))
+        for i, v := range m.GetProductItemCounts() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("productItemCounts", cast)
         if err != nil {
             return err
@@ -147,38 +286,93 @@ func (m *SubjectRightsRequestDetail) Serialize(writer i878a80d2330e89d26896388a3
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *SubjectRightsRequestDetail) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *SubjectRightsRequestDetail) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *SubjectRightsRequestDetail) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetExcludedItemCount sets the excludedItemCount property value. Count of items that are excluded from the request.
 func (m *SubjectRightsRequestDetail) SetExcludedItemCount(value *int64)() {
-    m.excludedItemCount = value
+    err := m.GetBackingStore().Set("excludedItemCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInsightCounts sets the insightCounts property value. Count of items per insight.
 func (m *SubjectRightsRequestDetail) SetInsightCounts(value []KeyValuePairable)() {
-    m.insightCounts = value
+    err := m.GetBackingStore().Set("insightCounts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetItemCount sets the itemCount property value. Count of items found.
 func (m *SubjectRightsRequestDetail) SetItemCount(value *int64)() {
-    m.itemCount = value
+    err := m.GetBackingStore().Set("itemCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetItemNeedReview sets the itemNeedReview property value. Count of item that need review.
 func (m *SubjectRightsRequestDetail) SetItemNeedReview(value *int64)() {
-    m.itemNeedReview = value
+    err := m.GetBackingStore().Set("itemNeedReview", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *SubjectRightsRequestDetail) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetProductItemCounts sets the productItemCounts property value. Count of items per product, such as Exchange, SharePoint, OneDrive, and Teams.
 func (m *SubjectRightsRequestDetail) SetProductItemCounts(value []KeyValuePairable)() {
-    m.productItemCounts = value
+    err := m.GetBackingStore().Set("productItemCounts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSignedOffItemCount sets the signedOffItemCount property value. Count of items signed off by the administrator.
 func (m *SubjectRightsRequestDetail) SetSignedOffItemCount(value *int64)() {
-    m.signedOffItemCount = value
+    err := m.GetBackingStore().Set("signedOffItemCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTotalItemSize sets the totalItemSize property value. Total item size in bytes.
 func (m *SubjectRightsRequestDetail) SetTotalItemSize(value *int64)() {
-    m.totalItemSize = value
+    err := m.GetBackingStore().Set("totalItemSize", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SubjectRightsRequestDetailable 
+type SubjectRightsRequestDetailable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetExcludedItemCount()(*int64)
+    GetInsightCounts()([]KeyValuePairable)
+    GetItemCount()(*int64)
+    GetItemNeedReview()(*int64)
+    GetOdataType()(*string)
+    GetProductItemCounts()([]KeyValuePairable)
+    GetSignedOffItemCount()(*int64)
+    GetTotalItemSize()(*int64)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetExcludedItemCount(value *int64)()
+    SetInsightCounts(value []KeyValuePairable)()
+    SetItemCount(value *int64)()
+    SetItemNeedReview(value *int64)()
+    SetOdataType(value *string)()
+    SetProductItemCounts(value []KeyValuePairable)()
+    SetSignedOffItemCount(value *int64)()
+    SetTotalItemSize(value *int64)()
 }

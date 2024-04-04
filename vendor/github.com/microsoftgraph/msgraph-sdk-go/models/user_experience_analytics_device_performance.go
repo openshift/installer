@@ -1,53 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // UserExperienceAnalyticsDevicePerformance 
 type UserExperienceAnalyticsDevicePerformance struct {
     Entity
-    // Average (mean) number of Blue Screens per device in the last 30 days. Valid values 0 to 9999999
-    averageBlueScreens *float64
-    // Average (mean) number of Restarts per device in the last 30 days. Valid values 0 to 9999999
-    averageRestarts *float64
-    // Number of Blue Screens in the last 30 days. Valid values 0 to 9999999
-    blueScreenCount *int32
-    // The user experience analytics device boot score.
-    bootScore *int32
-    // The user experience analytics device core boot time in milliseconds.
-    coreBootTimeInMs *int32
-    // The user experience analytics device core login time in milliseconds.
-    coreLoginTimeInMs *int32
-    // User experience analytics summarized device count.
-    deviceCount *int64
-    // The user experience analytics device name.
-    deviceName *string
-    // The diskType property
-    diskType *DiskType
-    // The user experience analytics device group policy boot time in milliseconds.
-    groupPolicyBootTimeInMs *int32
-    // The user experience analytics device group policy login time in milliseconds.
-    groupPolicyLoginTimeInMs *int32
-    // The healthStatus property
-    healthStatus *UserExperienceAnalyticsHealthState
-    // The user experience analytics device login score.
-    loginScore *int32
-    // The user experience analytics device manufacturer.
-    manufacturer *string
-    // The user experience analytics device model.
-    model *string
-    // The user experience analytics model level startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
-    modelStartupPerformanceScore *float64
-    // The user experience analytics device Operating System version.
-    operatingSystemVersion *string
-    // The user experience analytics responsive desktop time in milliseconds.
-    responsiveDesktopTimeInMs *int32
-    // Number of Restarts in the last 30 days. Valid values 0 to 9999999
-    restartCount *int32
-    // The user experience analytics device startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
-    startupPerformanceScore *float64
 }
 // NewUserExperienceAnalyticsDevicePerformance instantiates a new UserExperienceAnalyticsDevicePerformance and sets the default values.
 func NewUserExperienceAnalyticsDevicePerformance()(*UserExperienceAnalyticsDevicePerformance) {
@@ -62,108 +21,428 @@ func CreateUserExperienceAnalyticsDevicePerformanceFromDiscriminatorValue(parseN
 }
 // GetAverageBlueScreens gets the averageBlueScreens property value. Average (mean) number of Blue Screens per device in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) GetAverageBlueScreens()(*float64) {
-    return m.averageBlueScreens
+    val, err := m.GetBackingStore().Get("averageBlueScreens")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetAverageRestarts gets the averageRestarts property value. Average (mean) number of Restarts per device in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) GetAverageRestarts()(*float64) {
-    return m.averageRestarts
+    val, err := m.GetBackingStore().Get("averageRestarts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetBlueScreenCount gets the blueScreenCount property value. Number of Blue Screens in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) GetBlueScreenCount()(*int32) {
-    return m.blueScreenCount
+    val, err := m.GetBackingStore().Get("blueScreenCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetBootScore gets the bootScore property value. The user experience analytics device boot score.
 func (m *UserExperienceAnalyticsDevicePerformance) GetBootScore()(*int32) {
-    return m.bootScore
+    val, err := m.GetBackingStore().Get("bootScore")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetCoreBootTimeInMs gets the coreBootTimeInMs property value. The user experience analytics device core boot time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) GetCoreBootTimeInMs()(*int32) {
-    return m.coreBootTimeInMs
+    val, err := m.GetBackingStore().Get("coreBootTimeInMs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetCoreLoginTimeInMs gets the coreLoginTimeInMs property value. The user experience analytics device core login time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) GetCoreLoginTimeInMs()(*int32) {
-    return m.coreLoginTimeInMs
+    val, err := m.GetBackingStore().Get("coreLoginTimeInMs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetDeviceCount gets the deviceCount property value. User experience analytics summarized device count.
 func (m *UserExperienceAnalyticsDevicePerformance) GetDeviceCount()(*int64) {
-    return m.deviceCount
+    val, err := m.GetBackingStore().Get("deviceCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetDeviceName gets the deviceName property value. The user experience analytics device name.
 func (m *UserExperienceAnalyticsDevicePerformance) GetDeviceName()(*string) {
-    return m.deviceName
+    val, err := m.GetBackingStore().Get("deviceName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDiskType gets the diskType property value. The diskType property
 func (m *UserExperienceAnalyticsDevicePerformance) GetDiskType()(*DiskType) {
-    return m.diskType
+    val, err := m.GetBackingStore().Get("diskType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*DiskType)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *UserExperienceAnalyticsDevicePerformance) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["averageBlueScreens"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageBlueScreens)
-    res["averageRestarts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAverageRestarts)
-    res["blueScreenCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetBlueScreenCount)
-    res["bootScore"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetBootScore)
-    res["coreBootTimeInMs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetCoreBootTimeInMs)
-    res["coreLoginTimeInMs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetCoreLoginTimeInMs)
-    res["deviceCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetDeviceCount)
-    res["deviceName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceName)
-    res["diskType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseDiskType , m.SetDiskType)
-    res["groupPolicyBootTimeInMs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetGroupPolicyBootTimeInMs)
-    res["groupPolicyLoginTimeInMs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetGroupPolicyLoginTimeInMs)
-    res["healthStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseUserExperienceAnalyticsHealthState , m.SetHealthStatus)
-    res["loginScore"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetLoginScore)
-    res["manufacturer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetManufacturer)
-    res["model"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetModel)
-    res["modelStartupPerformanceScore"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetModelStartupPerformanceScore)
-    res["operatingSystemVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOperatingSystemVersion)
-    res["responsiveDesktopTimeInMs"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetResponsiveDesktopTimeInMs)
-    res["restartCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetRestartCount)
-    res["startupPerformanceScore"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetStartupPerformanceScore)
+    res["averageBlueScreens"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageBlueScreens(val)
+        }
+        return nil
+    }
+    res["averageRestarts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAverageRestarts(val)
+        }
+        return nil
+    }
+    res["blueScreenCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBlueScreenCount(val)
+        }
+        return nil
+    }
+    res["bootScore"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootScore(val)
+        }
+        return nil
+    }
+    res["coreBootTimeInMs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCoreBootTimeInMs(val)
+        }
+        return nil
+    }
+    res["coreLoginTimeInMs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCoreLoginTimeInMs(val)
+        }
+        return nil
+    }
+    res["deviceCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceCount(val)
+        }
+        return nil
+    }
+    res["deviceName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceName(val)
+        }
+        return nil
+    }
+    res["diskType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseDiskType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDiskType(val.(*DiskType))
+        }
+        return nil
+    }
+    res["groupPolicyBootTimeInMs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGroupPolicyBootTimeInMs(val)
+        }
+        return nil
+    }
+    res["groupPolicyLoginTimeInMs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGroupPolicyLoginTimeInMs(val)
+        }
+        return nil
+    }
+    res["healthStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseUserExperienceAnalyticsHealthState)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHealthStatus(val.(*UserExperienceAnalyticsHealthState))
+        }
+        return nil
+    }
+    res["loginScore"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLoginScore(val)
+        }
+        return nil
+    }
+    res["manufacturer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManufacturer(val)
+        }
+        return nil
+    }
+    res["model"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetModel(val)
+        }
+        return nil
+    }
+    res["modelStartupPerformanceScore"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetModelStartupPerformanceScore(val)
+        }
+        return nil
+    }
+    res["operatingSystemVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperatingSystemVersion(val)
+        }
+        return nil
+    }
+    res["responsiveDesktopTimeInMs"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResponsiveDesktopTimeInMs(val)
+        }
+        return nil
+    }
+    res["restartCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRestartCount(val)
+        }
+        return nil
+    }
+    res["startupPerformanceScore"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStartupPerformanceScore(val)
+        }
+        return nil
+    }
     return res
 }
 // GetGroupPolicyBootTimeInMs gets the groupPolicyBootTimeInMs property value. The user experience analytics device group policy boot time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) GetGroupPolicyBootTimeInMs()(*int32) {
-    return m.groupPolicyBootTimeInMs
+    val, err := m.GetBackingStore().Get("groupPolicyBootTimeInMs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetGroupPolicyLoginTimeInMs gets the groupPolicyLoginTimeInMs property value. The user experience analytics device group policy login time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) GetGroupPolicyLoginTimeInMs()(*int32) {
-    return m.groupPolicyLoginTimeInMs
+    val, err := m.GetBackingStore().Get("groupPolicyLoginTimeInMs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetHealthStatus gets the healthStatus property value. The healthStatus property
 func (m *UserExperienceAnalyticsDevicePerformance) GetHealthStatus()(*UserExperienceAnalyticsHealthState) {
-    return m.healthStatus
+    val, err := m.GetBackingStore().Get("healthStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*UserExperienceAnalyticsHealthState)
+    }
+    return nil
 }
 // GetLoginScore gets the loginScore property value. The user experience analytics device login score.
 func (m *UserExperienceAnalyticsDevicePerformance) GetLoginScore()(*int32) {
-    return m.loginScore
+    val, err := m.GetBackingStore().Get("loginScore")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetManufacturer gets the manufacturer property value. The user experience analytics device manufacturer.
 func (m *UserExperienceAnalyticsDevicePerformance) GetManufacturer()(*string) {
-    return m.manufacturer
+    val, err := m.GetBackingStore().Get("manufacturer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetModel gets the model property value. The user experience analytics device model.
 func (m *UserExperienceAnalyticsDevicePerformance) GetModel()(*string) {
-    return m.model
+    val, err := m.GetBackingStore().Get("model")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetModelStartupPerformanceScore gets the modelStartupPerformanceScore property value. The user experience analytics model level startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
 func (m *UserExperienceAnalyticsDevicePerformance) GetModelStartupPerformanceScore()(*float64) {
-    return m.modelStartupPerformanceScore
+    val, err := m.GetBackingStore().Get("modelStartupPerformanceScore")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetOperatingSystemVersion gets the operatingSystemVersion property value. The user experience analytics device Operating System version.
 func (m *UserExperienceAnalyticsDevicePerformance) GetOperatingSystemVersion()(*string) {
-    return m.operatingSystemVersion
+    val, err := m.GetBackingStore().Get("operatingSystemVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResponsiveDesktopTimeInMs gets the responsiveDesktopTimeInMs property value. The user experience analytics responsive desktop time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) GetResponsiveDesktopTimeInMs()(*int32) {
-    return m.responsiveDesktopTimeInMs
+    val, err := m.GetBackingStore().Get("responsiveDesktopTimeInMs")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetRestartCount gets the restartCount property value. Number of Restarts in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) GetRestartCount()(*int32) {
-    return m.restartCount
+    val, err := m.GetBackingStore().Get("restartCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetStartupPerformanceScore gets the startupPerformanceScore property value. The user experience analytics device startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
 func (m *UserExperienceAnalyticsDevicePerformance) GetStartupPerformanceScore()(*float64) {
-    return m.startupPerformanceScore
+    val, err := m.GetBackingStore().Get("startupPerformanceScore")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *UserExperienceAnalyticsDevicePerformance) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -297,81 +576,186 @@ func (m *UserExperienceAnalyticsDevicePerformance) Serialize(writer i878a80d2330
 }
 // SetAverageBlueScreens sets the averageBlueScreens property value. Average (mean) number of Blue Screens per device in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) SetAverageBlueScreens(value *float64)() {
-    m.averageBlueScreens = value
+    err := m.GetBackingStore().Set("averageBlueScreens", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAverageRestarts sets the averageRestarts property value. Average (mean) number of Restarts per device in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) SetAverageRestarts(value *float64)() {
-    m.averageRestarts = value
+    err := m.GetBackingStore().Set("averageRestarts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBlueScreenCount sets the blueScreenCount property value. Number of Blue Screens in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) SetBlueScreenCount(value *int32)() {
-    m.blueScreenCount = value
+    err := m.GetBackingStore().Set("blueScreenCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootScore sets the bootScore property value. The user experience analytics device boot score.
 func (m *UserExperienceAnalyticsDevicePerformance) SetBootScore(value *int32)() {
-    m.bootScore = value
+    err := m.GetBackingStore().Set("bootScore", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCoreBootTimeInMs sets the coreBootTimeInMs property value. The user experience analytics device core boot time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) SetCoreBootTimeInMs(value *int32)() {
-    m.coreBootTimeInMs = value
+    err := m.GetBackingStore().Set("coreBootTimeInMs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCoreLoginTimeInMs sets the coreLoginTimeInMs property value. The user experience analytics device core login time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) SetCoreLoginTimeInMs(value *int32)() {
-    m.coreLoginTimeInMs = value
+    err := m.GetBackingStore().Set("coreLoginTimeInMs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceCount sets the deviceCount property value. User experience analytics summarized device count.
 func (m *UserExperienceAnalyticsDevicePerformance) SetDeviceCount(value *int64)() {
-    m.deviceCount = value
+    err := m.GetBackingStore().Set("deviceCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceName sets the deviceName property value. The user experience analytics device name.
 func (m *UserExperienceAnalyticsDevicePerformance) SetDeviceName(value *string)() {
-    m.deviceName = value
+    err := m.GetBackingStore().Set("deviceName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDiskType sets the diskType property value. The diskType property
 func (m *UserExperienceAnalyticsDevicePerformance) SetDiskType(value *DiskType)() {
-    m.diskType = value
+    err := m.GetBackingStore().Set("diskType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGroupPolicyBootTimeInMs sets the groupPolicyBootTimeInMs property value. The user experience analytics device group policy boot time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) SetGroupPolicyBootTimeInMs(value *int32)() {
-    m.groupPolicyBootTimeInMs = value
+    err := m.GetBackingStore().Set("groupPolicyBootTimeInMs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGroupPolicyLoginTimeInMs sets the groupPolicyLoginTimeInMs property value. The user experience analytics device group policy login time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) SetGroupPolicyLoginTimeInMs(value *int32)() {
-    m.groupPolicyLoginTimeInMs = value
+    err := m.GetBackingStore().Set("groupPolicyLoginTimeInMs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHealthStatus sets the healthStatus property value. The healthStatus property
 func (m *UserExperienceAnalyticsDevicePerformance) SetHealthStatus(value *UserExperienceAnalyticsHealthState)() {
-    m.healthStatus = value
+    err := m.GetBackingStore().Set("healthStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLoginScore sets the loginScore property value. The user experience analytics device login score.
 func (m *UserExperienceAnalyticsDevicePerformance) SetLoginScore(value *int32)() {
-    m.loginScore = value
+    err := m.GetBackingStore().Set("loginScore", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManufacturer sets the manufacturer property value. The user experience analytics device manufacturer.
 func (m *UserExperienceAnalyticsDevicePerformance) SetManufacturer(value *string)() {
-    m.manufacturer = value
+    err := m.GetBackingStore().Set("manufacturer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetModel sets the model property value. The user experience analytics device model.
 func (m *UserExperienceAnalyticsDevicePerformance) SetModel(value *string)() {
-    m.model = value
+    err := m.GetBackingStore().Set("model", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetModelStartupPerformanceScore sets the modelStartupPerformanceScore property value. The user experience analytics model level startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
 func (m *UserExperienceAnalyticsDevicePerformance) SetModelStartupPerformanceScore(value *float64)() {
-    m.modelStartupPerformanceScore = value
+    err := m.GetBackingStore().Set("modelStartupPerformanceScore", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperatingSystemVersion sets the operatingSystemVersion property value. The user experience analytics device Operating System version.
 func (m *UserExperienceAnalyticsDevicePerformance) SetOperatingSystemVersion(value *string)() {
-    m.operatingSystemVersion = value
+    err := m.GetBackingStore().Set("operatingSystemVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResponsiveDesktopTimeInMs sets the responsiveDesktopTimeInMs property value. The user experience analytics responsive desktop time in milliseconds.
 func (m *UserExperienceAnalyticsDevicePerformance) SetResponsiveDesktopTimeInMs(value *int32)() {
-    m.responsiveDesktopTimeInMs = value
+    err := m.GetBackingStore().Set("responsiveDesktopTimeInMs", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRestartCount sets the restartCount property value. Number of Restarts in the last 30 days. Valid values 0 to 9999999
 func (m *UserExperienceAnalyticsDevicePerformance) SetRestartCount(value *int32)() {
-    m.restartCount = value
+    err := m.GetBackingStore().Set("restartCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStartupPerformanceScore sets the startupPerformanceScore property value. The user experience analytics device startup performance score. Valid values -1.79769313486232E+308 to 1.79769313486232E+308
 func (m *UserExperienceAnalyticsDevicePerformance) SetStartupPerformanceScore(value *float64)() {
-    m.startupPerformanceScore = value
+    err := m.GetBackingStore().Set("startupPerformanceScore", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// UserExperienceAnalyticsDevicePerformanceable 
+type UserExperienceAnalyticsDevicePerformanceable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAverageBlueScreens()(*float64)
+    GetAverageRestarts()(*float64)
+    GetBlueScreenCount()(*int32)
+    GetBootScore()(*int32)
+    GetCoreBootTimeInMs()(*int32)
+    GetCoreLoginTimeInMs()(*int32)
+    GetDeviceCount()(*int64)
+    GetDeviceName()(*string)
+    GetDiskType()(*DiskType)
+    GetGroupPolicyBootTimeInMs()(*int32)
+    GetGroupPolicyLoginTimeInMs()(*int32)
+    GetHealthStatus()(*UserExperienceAnalyticsHealthState)
+    GetLoginScore()(*int32)
+    GetManufacturer()(*string)
+    GetModel()(*string)
+    GetModelStartupPerformanceScore()(*float64)
+    GetOperatingSystemVersion()(*string)
+    GetResponsiveDesktopTimeInMs()(*int32)
+    GetRestartCount()(*int32)
+    GetStartupPerformanceScore()(*float64)
+    SetAverageBlueScreens(value *float64)()
+    SetAverageRestarts(value *float64)()
+    SetBlueScreenCount(value *int32)()
+    SetBootScore(value *int32)()
+    SetCoreBootTimeInMs(value *int32)()
+    SetCoreLoginTimeInMs(value *int32)()
+    SetDeviceCount(value *int64)()
+    SetDeviceName(value *string)()
+    SetDiskType(value *DiskType)()
+    SetGroupPolicyBootTimeInMs(value *int32)()
+    SetGroupPolicyLoginTimeInMs(value *int32)()
+    SetHealthStatus(value *UserExperienceAnalyticsHealthState)()
+    SetLoginScore(value *int32)()
+    SetManufacturer(value *string)()
+    SetModel(value *string)()
+    SetModelStartupPerformanceScore(value *float64)()
+    SetOperatingSystemVersion(value *string)()
+    SetResponsiveDesktopTimeInMs(value *int32)()
+    SetRestartCount(value *int32)()
+    SetStartupPerformanceScore(value *float64)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SigninFrequencyType int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i SigninFrequencyType) String() string {
     return []string{"days", "hours"}[i]
 }
-func ParseSigninFrequencyType(v string) (interface{}, error) {
+func ParseSigninFrequencyType(v string) (any, error) {
     result := DAYS_SIGNINFREQUENCYTYPE
     switch v {
         case "days":

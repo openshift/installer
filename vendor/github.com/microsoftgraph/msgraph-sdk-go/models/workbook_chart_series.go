@@ -1,19 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// WorkbookChartSeries provides operations to manage the collection of agreement entities.
+// WorkbookChartSeries 
 type WorkbookChartSeries struct {
     Entity
-    // Represents the formatting of a chart series, which includes fill and line formatting. Read-only.
-    format WorkbookChartSeriesFormatable
-    // Represents the name of a series in a chart.
-    name *string
-    // Represents a collection of all points in the series. Read-only.
-    points []WorkbookChartPointable
 }
 // NewWorkbookChartSeries instantiates a new workbookChartSeries and sets the default values.
 func NewWorkbookChartSeries()(*WorkbookChartSeries) {
@@ -29,22 +22,74 @@ func CreateWorkbookChartSeriesFromDiscriminatorValue(parseNode i878a80d2330e89d2
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookChartSeries) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["format"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartSeriesFormatFromDiscriminatorValue , m.SetFormat)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["points"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWorkbookChartPointFromDiscriminatorValue , m.SetPoints)
+    res["format"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartSeriesFormatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFormat(val.(WorkbookChartSeriesFormatable))
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["points"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWorkbookChartPointFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]WorkbookChartPointable, len(val))
+            for i, v := range val {
+                res[i] = v.(WorkbookChartPointable)
+            }
+            m.SetPoints(res)
+        }
+        return nil
+    }
     return res
 }
 // GetFormat gets the format property value. Represents the formatting of a chart series, which includes fill and line formatting. Read-only.
 func (m *WorkbookChartSeries) GetFormat()(WorkbookChartSeriesFormatable) {
-    return m.format
+    val, err := m.GetBackingStore().Get("format")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartSeriesFormatable)
+    }
+    return nil
 }
 // GetName gets the name property value. Represents the name of a series in a chart.
 func (m *WorkbookChartSeries) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPoints gets the points property value. Represents a collection of all points in the series. Read-only.
 func (m *WorkbookChartSeries) GetPoints()([]WorkbookChartPointable) {
-    return m.points
+    val, err := m.GetBackingStore().Get("points")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]WorkbookChartPointable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookChartSeries) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -65,7 +110,10 @@ func (m *WorkbookChartSeries) Serialize(writer i878a80d2330e89d26896388a3f487eef
         }
     }
     if m.GetPoints() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetPoints())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetPoints()))
+        for i, v := range m.GetPoints() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("points", cast)
         if err != nil {
             return err
@@ -75,13 +123,33 @@ func (m *WorkbookChartSeries) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetFormat sets the format property value. Represents the formatting of a chart series, which includes fill and line formatting. Read-only.
 func (m *WorkbookChartSeries) SetFormat(value WorkbookChartSeriesFormatable)() {
-    m.format = value
+    err := m.GetBackingStore().Set("format", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Represents the name of a series in a chart.
 func (m *WorkbookChartSeries) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPoints sets the points property value. Represents a collection of all points in the series. Read-only.
 func (m *WorkbookChartSeries) SetPoints(value []WorkbookChartPointable)() {
-    m.points = value
+    err := m.GetBackingStore().Set("points", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookChartSeriesable 
+type WorkbookChartSeriesable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetFormat()(WorkbookChartSeriesFormatable)
+    GetName()(*string)
+    GetPoints()([]WorkbookChartPointable)
+    SetFormat(value WorkbookChartSeriesFormatable)()
+    SetName(value *string)()
+    SetPoints(value []WorkbookChartPointable)()
 }

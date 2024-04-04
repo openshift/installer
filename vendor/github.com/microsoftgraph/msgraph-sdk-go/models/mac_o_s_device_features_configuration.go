@@ -13,8 +13,8 @@ func NewMacOSDeviceFeaturesConfiguration()(*MacOSDeviceFeaturesConfiguration) {
     m := &MacOSDeviceFeaturesConfiguration{
         AppleDeviceFeaturesConfigurationBase: *NewAppleDeviceFeaturesConfigurationBase(),
     }
-    odataTypeValue := "#microsoft.graph.macOSDeviceFeaturesConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.macOSDeviceFeaturesConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateMacOSDeviceFeaturesConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *MacOSDeviceFeaturesConfiguration) Serialize(writer i878a80d2330e89d2689
         return err
     }
     return nil
+}
+// MacOSDeviceFeaturesConfigurationable 
+type MacOSDeviceFeaturesConfigurationable interface {
+    AppleDeviceFeaturesConfigurationBaseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

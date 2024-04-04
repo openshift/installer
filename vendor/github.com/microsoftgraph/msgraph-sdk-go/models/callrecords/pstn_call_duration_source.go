@@ -2,7 +2,7 @@ package callrecords
 import (
     "errors"
 )
-// Provides operations to call the getPstnCalls method.
+// 
 type PstnCallDurationSource int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i PstnCallDurationSource) String() string {
     return []string{"microsoft", "operator"}[i]
 }
-func ParsePstnCallDurationSource(v string) (interface{}, error) {
+func ParsePstnCallDurationSource(v string) (any, error) {
     result := MICROSOFT_PSTNCALLDURATIONSOURCE
     switch v {
         case "microsoft":

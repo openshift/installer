@@ -2,21 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// MeetingAttendanceReport provides operations to manage the collection of agreement entities.
+// MeetingAttendanceReport 
 type MeetingAttendanceReport struct {
     Entity
-    // List of attendance records of an attendance report. Read-only.
-    attendanceRecords []AttendanceRecordable
-    // UTC time when the meeting ended. Read-only.
-    meetingEndDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // UTC time when the meeting started. Read-only.
-    meetingStartDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Total number of participants. Read-only.
-    totalParticipantCount *int32
 }
 // NewMeetingAttendanceReport instantiates a new meetingAttendanceReport and sets the default values.
 func NewMeetingAttendanceReport()(*MeetingAttendanceReport) {
@@ -31,28 +22,96 @@ func CreateMeetingAttendanceReportFromDiscriminatorValue(parseNode i878a80d2330e
 }
 // GetAttendanceRecords gets the attendanceRecords property value. List of attendance records of an attendance report. Read-only.
 func (m *MeetingAttendanceReport) GetAttendanceRecords()([]AttendanceRecordable) {
-    return m.attendanceRecords
+    val, err := m.GetBackingStore().Get("attendanceRecords")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AttendanceRecordable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MeetingAttendanceReport) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["attendanceRecords"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAttendanceRecordFromDiscriminatorValue , m.SetAttendanceRecords)
-    res["meetingEndDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetMeetingEndDateTime)
-    res["meetingStartDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetMeetingStartDateTime)
-    res["totalParticipantCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetTotalParticipantCount)
+    res["attendanceRecords"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAttendanceRecordFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AttendanceRecordable, len(val))
+            for i, v := range val {
+                res[i] = v.(AttendanceRecordable)
+            }
+            m.SetAttendanceRecords(res)
+        }
+        return nil
+    }
+    res["meetingEndDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMeetingEndDateTime(val)
+        }
+        return nil
+    }
+    res["meetingStartDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMeetingStartDateTime(val)
+        }
+        return nil
+    }
+    res["totalParticipantCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTotalParticipantCount(val)
+        }
+        return nil
+    }
     return res
 }
 // GetMeetingEndDateTime gets the meetingEndDateTime property value. UTC time when the meeting ended. Read-only.
 func (m *MeetingAttendanceReport) GetMeetingEndDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.meetingEndDateTime
+    val, err := m.GetBackingStore().Get("meetingEndDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetMeetingStartDateTime gets the meetingStartDateTime property value. UTC time when the meeting started. Read-only.
 func (m *MeetingAttendanceReport) GetMeetingStartDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.meetingStartDateTime
+    val, err := m.GetBackingStore().Get("meetingStartDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetTotalParticipantCount gets the totalParticipantCount property value. Total number of participants. Read-only.
 func (m *MeetingAttendanceReport) GetTotalParticipantCount()(*int32) {
-    return m.totalParticipantCount
+    val, err := m.GetBackingStore().Get("totalParticipantCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MeetingAttendanceReport) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,7 +120,10 @@ func (m *MeetingAttendanceReport) Serialize(writer i878a80d2330e89d26896388a3f48
         return err
     }
     if m.GetAttendanceRecords() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetAttendanceRecords())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetAttendanceRecords()))
+        for i, v := range m.GetAttendanceRecords() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("attendanceRecords", cast)
         if err != nil {
             return err
@@ -89,17 +151,42 @@ func (m *MeetingAttendanceReport) Serialize(writer i878a80d2330e89d26896388a3f48
 }
 // SetAttendanceRecords sets the attendanceRecords property value. List of attendance records of an attendance report. Read-only.
 func (m *MeetingAttendanceReport) SetAttendanceRecords(value []AttendanceRecordable)() {
-    m.attendanceRecords = value
+    err := m.GetBackingStore().Set("attendanceRecords", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMeetingEndDateTime sets the meetingEndDateTime property value. UTC time when the meeting ended. Read-only.
 func (m *MeetingAttendanceReport) SetMeetingEndDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.meetingEndDateTime = value
+    err := m.GetBackingStore().Set("meetingEndDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMeetingStartDateTime sets the meetingStartDateTime property value. UTC time when the meeting started. Read-only.
 func (m *MeetingAttendanceReport) SetMeetingStartDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.meetingStartDateTime = value
+    err := m.GetBackingStore().Set("meetingStartDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTotalParticipantCount sets the totalParticipantCount property value. Total number of participants. Read-only.
 func (m *MeetingAttendanceReport) SetTotalParticipantCount(value *int32)() {
-    m.totalParticipantCount = value
+    err := m.GetBackingStore().Set("totalParticipantCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MeetingAttendanceReportable 
+type MeetingAttendanceReportable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAttendanceRecords()([]AttendanceRecordable)
+    GetMeetingEndDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetMeetingStartDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetTotalParticipantCount()(*int32)
+    SetAttendanceRecords(value []AttendanceRecordable)()
+    SetMeetingEndDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetMeetingStartDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetTotalParticipantCount(value *int32)()
 }

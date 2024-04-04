@@ -1,23 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // TargetManager 
 type TargetManager struct {
     SubjectSet
-    // Manager level, between 1 and 4. The direct manager is 1.
-    managerLevel *int32
 }
 // NewTargetManager instantiates a new TargetManager and sets the default values.
 func NewTargetManager()(*TargetManager) {
     m := &TargetManager{
         SubjectSet: *NewSubjectSet(),
     }
-    odataTypeValue := "#microsoft.graph.targetManager";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.targetManager"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTargetManagerFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -27,12 +24,28 @@ func CreateTargetManagerFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TargetManager) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.SubjectSet.GetFieldDeserializers()
-    res["managerLevel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetManagerLevel)
+    res["managerLevel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManagerLevel(val)
+        }
+        return nil
+    }
     return res
 }
 // GetManagerLevel gets the managerLevel property value. Manager level, between 1 and 4. The direct manager is 1.
 func (m *TargetManager) GetManagerLevel()(*int32) {
-    return m.managerLevel
+    val, err := m.GetBackingStore().Get("managerLevel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TargetManager) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -50,5 +63,15 @@ func (m *TargetManager) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
 }
 // SetManagerLevel sets the managerLevel property value. Manager level, between 1 and 4. The direct manager is 1.
 func (m *TargetManager) SetManagerLevel(value *int32)() {
-    m.managerLevel = value
+    err := m.GetBackingStore().Set("managerLevel", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TargetManagerable 
+type TargetManagerable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    SubjectSetable
+    GetManagerLevel()(*int32)
+    SetManagerLevel(value *int32)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ConditionalAccessClientApp int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i ConditionalAccessClientApp) String() string {
     return []string{"all", "browser", "mobileAppsAndDesktopClients", "exchangeActiveSync", "easSupported", "other", "unknownFutureValue"}[i]
 }
-func ParseConditionalAccessClientApp(v string) (interface{}, error) {
+func ParseConditionalAccessClientApp(v string) (any, error) {
     result := ALL_CONDITIONALACCESSCLIENTAPP
     switch v {
         case "all":

@@ -13,8 +13,8 @@ func NewInternalSponsors()(*InternalSponsors) {
     m := &InternalSponsors{
         SubjectSet: *NewSubjectSet(),
     }
-    odataTypeValue := "#microsoft.graph.internalSponsors";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.internalSponsors"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateInternalSponsorsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *InternalSponsors) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
         return err
     }
     return nil
+}
+// InternalSponsorsable 
+type InternalSponsorsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    SubjectSetable
 }

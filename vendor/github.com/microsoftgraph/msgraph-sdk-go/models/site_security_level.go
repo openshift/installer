@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for site security level.
 type SiteSecurityLevel int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i SiteSecurityLevel) String() string {
     return []string{"userDefined", "low", "mediumLow", "medium", "mediumHigh", "high"}[i]
 }
-func ParseSiteSecurityLevel(v string) (interface{}, error) {
+func ParseSiteSecurityLevel(v string) (any, error) {
     result := USERDEFINED_SITESECURITYLEVEL
     switch v {
         case "userDefined":

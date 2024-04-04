@@ -81,6 +81,6 @@ func GetDefaultMiddlewares() []Middleware {
 		NewRedirectHandler(),
 		NewCompressionHandler(),
 		NewParametersNameDecodingHandler(),
-		//TODO add additional middlewares
+		NewUserAgentHandler(),
 	}
 }

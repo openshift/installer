@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ConditionalAccessDevicePlatform int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ConditionalAccessDevicePlatform) String() string {
     return []string{"android", "iOS", "windows", "windowsPhone", "macOS", "all", "unknownFutureValue", "linux"}[i]
 }
-func ParseConditionalAccessDevicePlatform(v string) (interface{}, error) {
+func ParseConditionalAccessDevicePlatform(v string) (any, error) {
     result := ANDROID_CONDITIONALACCESSDEVICEPLATFORM
     switch v {
         case "android":

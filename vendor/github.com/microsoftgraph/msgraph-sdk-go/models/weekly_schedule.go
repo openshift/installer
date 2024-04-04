@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for a weekly schedule.
 type WeeklySchedule int
 
 const (
@@ -29,7 +29,7 @@ const (
 func (i WeeklySchedule) String() string {
     return []string{"userDefined", "everyday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"}[i]
 }
-func ParseWeeklySchedule(v string) (interface{}, error) {
+func ParseWeeklySchedule(v string) (any, error) {
     result := USERDEFINED_WEEKLYSCHEDULE
     switch v {
         case "userDefined":

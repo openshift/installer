@@ -10,6 +10,8 @@ package abstractions
 
 import (
 	"context"
+	"github.com/microsoft/kiota-abstractions-go/store"
+
 	s "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
@@ -18,26 +20,28 @@ type ErrorMappings map[string]s.ParsableFactory
 
 // RequestAdapter is the service responsible for translating abstract RequestInformation into native HTTP requests.
 type RequestAdapter interface {
-	// SendAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized response model.
-	SendAsync(context context.Context, requestInfo *RequestInformation, constructor s.ParsableFactory, errorMappings ErrorMappings) (s.Parsable, error)
-	// SendEnumAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized response model.
-	SendEnumAsync(context context.Context, requestInfo *RequestInformation, parser s.EnumFactory, errorMappings ErrorMappings) (interface{}, error)
-	// SendCollectionAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized response model collection.
-	SendCollectionAsync(context context.Context, requestInfo *RequestInformation, constructor s.ParsableFactory, errorMappings ErrorMappings) ([]s.Parsable, error)
-	// SendEnumCollectionAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized response model collection.
-	SendEnumCollectionAsync(context context.Context, requestInfo *RequestInformation, parser s.EnumFactory, errorMappings ErrorMappings) ([]interface{}, error)
-	// SendPrimitiveAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized primitive response model.
-	SendPrimitiveAsync(context context.Context, requestInfo *RequestInformation, typeName string, errorMappings ErrorMappings) (interface{}, error)
-	// SendPrimitiveCollectionAsync executes the HTTP request specified by the given RequestInformation and returns the deserialized primitive response model collection.
-	SendPrimitiveCollectionAsync(context context.Context, requestInfo *RequestInformation, typeName string, errorMappings ErrorMappings) ([]interface{}, error)
-	// SendNoContentAsync executes the HTTP request specified by the given RequestInformation with no return content.
-	SendNoContentAsync(context context.Context, requestInfo *RequestInformation, errorMappings ErrorMappings) error
+	// Send executes the HTTP request specified by the given RequestInformation and returns the deserialized response model.
+	Send(context context.Context, requestInfo *RequestInformation, constructor s.ParsableFactory, errorMappings ErrorMappings) (s.Parsable, error)
+	// SendEnum executes the HTTP request specified by the given RequestInformation and returns the deserialized response model.
+	SendEnum(context context.Context, requestInfo *RequestInformation, parser s.EnumFactory, errorMappings ErrorMappings) (any, error)
+	// SendCollection executes the HTTP request specified by the given RequestInformation and returns the deserialized response model collection.
+	SendCollection(context context.Context, requestInfo *RequestInformation, constructor s.ParsableFactory, errorMappings ErrorMappings) ([]s.Parsable, error)
+	// SendEnumCollection executes the HTTP request specified by the given RequestInformation and returns the deserialized response model collection.
+	SendEnumCollection(context context.Context, requestInfo *RequestInformation, parser s.EnumFactory, errorMappings ErrorMappings) ([]any, error)
+	// SendPrimitive executes the HTTP request specified by the given RequestInformation and returns the deserialized primitive response model.
+	SendPrimitive(context context.Context, requestInfo *RequestInformation, typeName string, errorMappings ErrorMappings) (any, error)
+	// SendPrimitiveCollection executes the HTTP request specified by the given RequestInformation and returns the deserialized primitive response model collection.
+	SendPrimitiveCollection(context context.Context, requestInfo *RequestInformation, typeName string, errorMappings ErrorMappings) ([]any, error)
+	// SendNoContent executes the HTTP request specified by the given RequestInformation with no return content.
+	SendNoContent(context context.Context, requestInfo *RequestInformation, errorMappings ErrorMappings) error
 	// GetSerializationWriterFactory returns the serialization writer factory currently in use for the request adapter service.
 	GetSerializationWriterFactory() s.SerializationWriterFactory
 	// EnableBackingStore enables the backing store proxies for the SerializationWriters and ParseNodes in use.
-	EnableBackingStore()
+	EnableBackingStore(factory store.BackingStoreFactory)
 	// SetBaseUrl sets the base url for every request.
 	SetBaseUrl(baseUrl string)
 	// GetBaseUrl gets the base url for every request.
 	GetBaseUrl() string
+	// ConvertToNativeRequest converts the given RequestInformation into a native HTTP request.
+	ConvertToNativeRequest(context context.Context, requestInfo *RequestInformation) (any, error)
 }

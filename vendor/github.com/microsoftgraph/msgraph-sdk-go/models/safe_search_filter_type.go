@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Specifies what level of safe search (filtering adult content) is required
 type SafeSearchFilterType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i SafeSearchFilterType) String() string {
     return []string{"userDefined", "strict", "moderate"}[i]
 }
-func ParseSafeSearchFilterType(v string) (interface{}, error) {
+func ParseSafeSearchFilterType(v string) (any, error) {
     result := USERDEFINED_SAFESEARCHFILTERTYPE
     switch v {
         case "userDefined":

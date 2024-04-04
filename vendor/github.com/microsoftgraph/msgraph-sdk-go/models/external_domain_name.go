@@ -4,7 +4,7 @@ import (
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// ExternalDomainName provides operations to manage the collection of agreement entities.
+// ExternalDomainName 
 type ExternalDomainName struct {
     Entity
 }
@@ -31,4 +31,9 @@ func (m *ExternalDomainName) Serialize(writer i878a80d2330e89d26896388a3f487eef2
         return err
     }
     return nil
+}
+// ExternalDomainNameable 
+type ExternalDomainNameable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

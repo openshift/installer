@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of chat entities.
+// 
 type ChatMessagePolicyViolationVerdictDetailsTypes int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ChatMessagePolicyViolationVerdictDetailsTypes) String() string {
     return []string{"none", "allowFalsePositiveOverride", "allowOverrideWithoutJustification", "allowOverrideWithJustification"}[i]
 }
-func ParseChatMessagePolicyViolationVerdictDetailsTypes(v string) (interface{}, error) {
+func ParseChatMessagePolicyViolationVerdictDetailsTypes(v string) (any, error) {
     result := NONE_CHATMESSAGEPOLICYVIOLATIONVERDICTDETAILSTYPES
     switch v {
         case "none":

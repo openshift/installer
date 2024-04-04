@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Type of accounts that are allowed to share the PC.
 type SharedPCAllowedAccountType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i SharedPCAllowedAccountType) String() string {
     return []string{"guest", "domain"}[i]
 }
-func ParseSharedPCAllowedAccountType(v string) (interface{}, error) {
+func ParseSharedPCAllowedAccountType(v string) (any, error) {
     result := GUEST_SHAREDPCALLOWEDACCOUNTTYPE
     switch v {
         case "guest":

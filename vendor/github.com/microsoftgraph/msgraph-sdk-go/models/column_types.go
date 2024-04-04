@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ColumnTypes int
 
 const (
@@ -30,7 +30,7 @@ const (
 func (i ColumnTypes) String() string {
     return []string{"note", "text", "choice", "multichoice", "number", "currency", "dateTime", "lookup", "boolean", "user", "url", "calculated", "location", "geolocation", "term", "multiterm", "thumbnail", "approvalStatus", "unknownFutureValue"}[i]
 }
-func ParseColumnTypes(v string) (interface{}, error) {
+func ParseColumnTypes(v string) (any, error) {
     result := NOTE_COLUMNTYPES
     switch v {
         case "note":

@@ -32,3 +32,8 @@ func (m *TeleconferenceDeviceScreenSharingQuality) Serialize(writer i878a80d2330
     }
     return nil
 }
+// TeleconferenceDeviceScreenSharingQualityable 
+type TeleconferenceDeviceScreenSharingQualityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    TeleconferenceDeviceVideoQualityable
+}

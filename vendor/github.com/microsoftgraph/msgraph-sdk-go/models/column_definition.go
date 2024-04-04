@@ -1,77 +1,14 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// ColumnDefinition provides operations to manage the collection of agreement entities.
+// ColumnDefinition 
 type ColumnDefinition struct {
     Entity
-    // This column stores boolean values.
-    boolean BooleanColumnable
-    // This column's data is calculated based on other columns.
-    calculated CalculatedColumnable
-    // This column stores data from a list of choices.
-    choice ChoiceColumnable
-    // For site columns, the name of the group this column belongs to. Helps organize related columns.
-    columnGroup *string
-    // This column stores content approval status.
-    contentApprovalStatus ContentApprovalStatusColumnable
-    // This column stores currency values.
-    currency CurrencyColumnable
-    // This column stores DateTime values.
-    dateTime DateTimeColumnable
-    // The default value for this column.
-    defaultValue DefaultColumnValueable
-    // The user-facing description of the column.
-    description *string
-    // The user-facing name of the column.
-    displayName *string
-    // If true, no two list items may have the same value for this column.
-    enforceUniqueValues *bool
-    // This column stores a geolocation.
-    geolocation GeolocationColumnable
-    // Specifies whether the column is displayed in the user interface.
-    hidden *bool
-    // This column stores hyperlink or picture values.
-    hyperlinkOrPicture HyperlinkOrPictureColumnable
-    // Specifies whether the column values can be used for sorting and searching.
-    indexed *bool
-    // Indicates whether this column can be deleted.
-    isDeletable *bool
-    // Indicates whether values in the column can be reordered. Read-only.
-    isReorderable *bool
-    // Specifies whether the column can be changed.
-    isSealed *bool
-    // This column's data is looked up from another source in the site.
-    lookup LookupColumnable
-    // The API-facing name of the column as it appears in the [fields][] on a [listItem][]. For the user-facing name, see displayName.
-    name *string
-    // This column stores number values.
-    number NumberColumnable
-    // This column stores Person or Group values.
-    personOrGroup PersonOrGroupColumnable
-    // If 'true', changes to this column will be propagated to lists that implement the column.
-    propagateChanges *bool
-    // Specifies whether the column values can be modified.
-    readOnly *bool
-    // Specifies whether the column value isn't optional.
-    required *bool
-    // The source column for the content type column.
-    sourceColumn ColumnDefinitionable
-    // ContentType from which this column is inherited from. Present only in contentTypes columns response. Read-only.
-    sourceContentType ContentTypeInfoable
-    // This column stores taxonomy terms.
-    term TermColumnable
-    // This column stores text values.
-    text TextColumnable
-    // This column stores thumbnail values.
-    thumbnail ThumbnailColumnable
     // For site columns, the type of column. Read-only.
-    type_escaped *ColumnTypes
-    // This column stores validation formula and message for the column.
-    validation ColumnValidationable
+    TypeEscaped *ColumnTypes
 }
 // NewColumnDefinition instantiates a new columnDefinition and sets the default values.
 func NewColumnDefinition()(*ColumnDefinition) {
@@ -86,168 +23,680 @@ func CreateColumnDefinitionFromDiscriminatorValue(parseNode i878a80d2330e89d2689
 }
 // GetBoolean gets the boolean property value. This column stores boolean values.
 func (m *ColumnDefinition) GetBoolean()(BooleanColumnable) {
-    return m.boolean
+    val, err := m.GetBackingStore().Get("boolean")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(BooleanColumnable)
+    }
+    return nil
 }
 // GetCalculated gets the calculated property value. This column's data is calculated based on other columns.
 func (m *ColumnDefinition) GetCalculated()(CalculatedColumnable) {
-    return m.calculated
+    val, err := m.GetBackingStore().Get("calculated")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(CalculatedColumnable)
+    }
+    return nil
 }
 // GetChoice gets the choice property value. This column stores data from a list of choices.
 func (m *ColumnDefinition) GetChoice()(ChoiceColumnable) {
-    return m.choice
+    val, err := m.GetBackingStore().Get("choice")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ChoiceColumnable)
+    }
+    return nil
 }
 // GetColumnGroup gets the columnGroup property value. For site columns, the name of the group this column belongs to. Helps organize related columns.
 func (m *ColumnDefinition) GetColumnGroup()(*string) {
-    return m.columnGroup
+    val, err := m.GetBackingStore().Get("columnGroup")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetContentApprovalStatus gets the contentApprovalStatus property value. This column stores content approval status.
 func (m *ColumnDefinition) GetContentApprovalStatus()(ContentApprovalStatusColumnable) {
-    return m.contentApprovalStatus
+    val, err := m.GetBackingStore().Get("contentApprovalStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ContentApprovalStatusColumnable)
+    }
+    return nil
 }
 // GetCurrency gets the currency property value. This column stores currency values.
 func (m *ColumnDefinition) GetCurrency()(CurrencyColumnable) {
-    return m.currency
+    val, err := m.GetBackingStore().Get("currency")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(CurrencyColumnable)
+    }
+    return nil
 }
 // GetDateTime gets the dateTime property value. This column stores DateTime values.
 func (m *ColumnDefinition) GetDateTime()(DateTimeColumnable) {
-    return m.dateTime
+    val, err := m.GetBackingStore().Get("dateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DateTimeColumnable)
+    }
+    return nil
 }
 // GetDefaultValue gets the defaultValue property value. The default value for this column.
 func (m *ColumnDefinition) GetDefaultValue()(DefaultColumnValueable) {
-    return m.defaultValue
+    val, err := m.GetBackingStore().Get("defaultValue")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DefaultColumnValueable)
+    }
+    return nil
 }
 // GetDescription gets the description property value. The user-facing description of the column.
 func (m *ColumnDefinition) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The user-facing name of the column.
 func (m *ColumnDefinition) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetEnforceUniqueValues gets the enforceUniqueValues property value. If true, no two list items may have the same value for this column.
 func (m *ColumnDefinition) GetEnforceUniqueValues()(*bool) {
-    return m.enforceUniqueValues
+    val, err := m.GetBackingStore().Get("enforceUniqueValues")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ColumnDefinition) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["boolean"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateBooleanColumnFromDiscriminatorValue , m.SetBoolean)
-    res["calculated"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateCalculatedColumnFromDiscriminatorValue , m.SetCalculated)
-    res["choice"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateChoiceColumnFromDiscriminatorValue , m.SetChoice)
-    res["columnGroup"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetColumnGroup)
-    res["contentApprovalStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateContentApprovalStatusColumnFromDiscriminatorValue , m.SetContentApprovalStatus)
-    res["currency"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateCurrencyColumnFromDiscriminatorValue , m.SetCurrency)
-    res["dateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDateTimeColumnFromDiscriminatorValue , m.SetDateTime)
-    res["defaultValue"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDefaultColumnValueFromDiscriminatorValue , m.SetDefaultValue)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["enforceUniqueValues"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetEnforceUniqueValues)
-    res["geolocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateGeolocationColumnFromDiscriminatorValue , m.SetGeolocation)
-    res["hidden"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetHidden)
-    res["hyperlinkOrPicture"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateHyperlinkOrPictureColumnFromDiscriminatorValue , m.SetHyperlinkOrPicture)
-    res["indexed"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIndexed)
-    res["isDeletable"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsDeletable)
-    res["isReorderable"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsReorderable)
-    res["isSealed"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsSealed)
-    res["lookup"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateLookupColumnFromDiscriminatorValue , m.SetLookup)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["number"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateNumberColumnFromDiscriminatorValue , m.SetNumber)
-    res["personOrGroup"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePersonOrGroupColumnFromDiscriminatorValue , m.SetPersonOrGroup)
-    res["propagateChanges"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetPropagateChanges)
-    res["readOnly"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetReadOnly)
-    res["required"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetRequired)
-    res["sourceColumn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateColumnDefinitionFromDiscriminatorValue , m.SetSourceColumn)
-    res["sourceContentType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateContentTypeInfoFromDiscriminatorValue , m.SetSourceContentType)
-    res["term"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTermColumnFromDiscriminatorValue , m.SetTerm)
-    res["text"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTextColumnFromDiscriminatorValue , m.SetText)
-    res["thumbnail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateThumbnailColumnFromDiscriminatorValue , m.SetThumbnail)
-    res["type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseColumnTypes , m.SetType)
-    res["validation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateColumnValidationFromDiscriminatorValue , m.SetValidation)
+    res["boolean"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateBooleanColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBoolean(val.(BooleanColumnable))
+        }
+        return nil
+    }
+    res["calculated"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateCalculatedColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCalculated(val.(CalculatedColumnable))
+        }
+        return nil
+    }
+    res["choice"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateChoiceColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetChoice(val.(ChoiceColumnable))
+        }
+        return nil
+    }
+    res["columnGroup"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColumnGroup(val)
+        }
+        return nil
+    }
+    res["contentApprovalStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateContentApprovalStatusColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentApprovalStatus(val.(ContentApprovalStatusColumnable))
+        }
+        return nil
+    }
+    res["currency"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateCurrencyColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCurrency(val.(CurrencyColumnable))
+        }
+        return nil
+    }
+    res["dateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDateTimeColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDateTime(val.(DateTimeColumnable))
+        }
+        return nil
+    }
+    res["defaultValue"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDefaultColumnValueFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDefaultValue(val.(DefaultColumnValueable))
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["enforceUniqueValues"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEnforceUniqueValues(val)
+        }
+        return nil
+    }
+    res["geolocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateGeolocationColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetGeolocation(val.(GeolocationColumnable))
+        }
+        return nil
+    }
+    res["hidden"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHidden(val)
+        }
+        return nil
+    }
+    res["hyperlinkOrPicture"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateHyperlinkOrPictureColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHyperlinkOrPicture(val.(HyperlinkOrPictureColumnable))
+        }
+        return nil
+    }
+    res["indexed"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIndexed(val)
+        }
+        return nil
+    }
+    res["isDeletable"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsDeletable(val)
+        }
+        return nil
+    }
+    res["isReorderable"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsReorderable(val)
+        }
+        return nil
+    }
+    res["isSealed"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsSealed(val)
+        }
+        return nil
+    }
+    res["lookup"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateLookupColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLookup(val.(LookupColumnable))
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["number"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateNumberColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNumber(val.(NumberColumnable))
+        }
+        return nil
+    }
+    res["personOrGroup"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePersonOrGroupColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPersonOrGroup(val.(PersonOrGroupColumnable))
+        }
+        return nil
+    }
+    res["propagateChanges"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPropagateChanges(val)
+        }
+        return nil
+    }
+    res["readOnly"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReadOnly(val)
+        }
+        return nil
+    }
+    res["required"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRequired(val)
+        }
+        return nil
+    }
+    res["sourceColumn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateColumnDefinitionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSourceColumn(val.(ColumnDefinitionable))
+        }
+        return nil
+    }
+    res["sourceContentType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateContentTypeInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSourceContentType(val.(ContentTypeInfoable))
+        }
+        return nil
+    }
+    res["term"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTermColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTerm(val.(TermColumnable))
+        }
+        return nil
+    }
+    res["text"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTextColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetText(val.(TextColumnable))
+        }
+        return nil
+    }
+    res["thumbnail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateThumbnailColumnFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetThumbnail(val.(ThumbnailColumnable))
+        }
+        return nil
+    }
+    res["type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseColumnTypes)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetType(val.(*ColumnTypes))
+        }
+        return nil
+    }
+    res["validation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateColumnValidationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValidation(val.(ColumnValidationable))
+        }
+        return nil
+    }
     return res
 }
 // GetGeolocation gets the geolocation property value. This column stores a geolocation.
 func (m *ColumnDefinition) GetGeolocation()(GeolocationColumnable) {
-    return m.geolocation
+    val, err := m.GetBackingStore().Get("geolocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(GeolocationColumnable)
+    }
+    return nil
 }
 // GetHidden gets the hidden property value. Specifies whether the column is displayed in the user interface.
 func (m *ColumnDefinition) GetHidden()(*bool) {
-    return m.hidden
+    val, err := m.GetBackingStore().Get("hidden")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetHyperlinkOrPicture gets the hyperlinkOrPicture property value. This column stores hyperlink or picture values.
 func (m *ColumnDefinition) GetHyperlinkOrPicture()(HyperlinkOrPictureColumnable) {
-    return m.hyperlinkOrPicture
+    val, err := m.GetBackingStore().Get("hyperlinkOrPicture")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(HyperlinkOrPictureColumnable)
+    }
+    return nil
 }
 // GetIndexed gets the indexed property value. Specifies whether the column values can be used for sorting and searching.
 func (m *ColumnDefinition) GetIndexed()(*bool) {
-    return m.indexed
+    val, err := m.GetBackingStore().Get("indexed")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsDeletable gets the isDeletable property value. Indicates whether this column can be deleted.
 func (m *ColumnDefinition) GetIsDeletable()(*bool) {
-    return m.isDeletable
+    val, err := m.GetBackingStore().Get("isDeletable")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsReorderable gets the isReorderable property value. Indicates whether values in the column can be reordered. Read-only.
 func (m *ColumnDefinition) GetIsReorderable()(*bool) {
-    return m.isReorderable
+    val, err := m.GetBackingStore().Get("isReorderable")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsSealed gets the isSealed property value. Specifies whether the column can be changed.
 func (m *ColumnDefinition) GetIsSealed()(*bool) {
-    return m.isSealed
+    val, err := m.GetBackingStore().Get("isSealed")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLookup gets the lookup property value. This column's data is looked up from another source in the site.
 func (m *ColumnDefinition) GetLookup()(LookupColumnable) {
-    return m.lookup
+    val, err := m.GetBackingStore().Get("lookup")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(LookupColumnable)
+    }
+    return nil
 }
 // GetName gets the name property value. The API-facing name of the column as it appears in the [fields][] on a [listItem][]. For the user-facing name, see displayName.
 func (m *ColumnDefinition) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetNumber gets the number property value. This column stores number values.
 func (m *ColumnDefinition) GetNumber()(NumberColumnable) {
-    return m.number
+    val, err := m.GetBackingStore().Get("number")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(NumberColumnable)
+    }
+    return nil
 }
 // GetPersonOrGroup gets the personOrGroup property value. This column stores Person or Group values.
 func (m *ColumnDefinition) GetPersonOrGroup()(PersonOrGroupColumnable) {
-    return m.personOrGroup
+    val, err := m.GetBackingStore().Get("personOrGroup")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PersonOrGroupColumnable)
+    }
+    return nil
 }
 // GetPropagateChanges gets the propagateChanges property value. If 'true', changes to this column will be propagated to lists that implement the column.
 func (m *ColumnDefinition) GetPropagateChanges()(*bool) {
-    return m.propagateChanges
+    val, err := m.GetBackingStore().Get("propagateChanges")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetReadOnly gets the readOnly property value. Specifies whether the column values can be modified.
 func (m *ColumnDefinition) GetReadOnly()(*bool) {
-    return m.readOnly
+    val, err := m.GetBackingStore().Get("readOnly")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetRequired gets the required property value. Specifies whether the column value isn't optional.
 func (m *ColumnDefinition) GetRequired()(*bool) {
-    return m.required
+    val, err := m.GetBackingStore().Get("required")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetSourceColumn gets the sourceColumn property value. The source column for the content type column.
 func (m *ColumnDefinition) GetSourceColumn()(ColumnDefinitionable) {
-    return m.sourceColumn
+    val, err := m.GetBackingStore().Get("sourceColumn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ColumnDefinitionable)
+    }
+    return nil
 }
 // GetSourceContentType gets the sourceContentType property value. ContentType from which this column is inherited from. Present only in contentTypes columns response. Read-only.
 func (m *ColumnDefinition) GetSourceContentType()(ContentTypeInfoable) {
-    return m.sourceContentType
+    val, err := m.GetBackingStore().Get("sourceContentType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ContentTypeInfoable)
+    }
+    return nil
 }
 // GetTerm gets the term property value. This column stores taxonomy terms.
 func (m *ColumnDefinition) GetTerm()(TermColumnable) {
-    return m.term
+    val, err := m.GetBackingStore().Get("term")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TermColumnable)
+    }
+    return nil
 }
 // GetText gets the text property value. This column stores text values.
 func (m *ColumnDefinition) GetText()(TextColumnable) {
-    return m.text
+    val, err := m.GetBackingStore().Get("text")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TextColumnable)
+    }
+    return nil
 }
 // GetThumbnail gets the thumbnail property value. This column stores thumbnail values.
 func (m *ColumnDefinition) GetThumbnail()(ThumbnailColumnable) {
-    return m.thumbnail
+    val, err := m.GetBackingStore().Get("thumbnail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ThumbnailColumnable)
+    }
+    return nil
 }
 // GetType gets the type property value. For site columns, the type of column. Read-only.
 func (m *ColumnDefinition) GetType()(*ColumnTypes) {
-    return m.type_escaped
+    val, err := m.GetBackingStore().Get("typeEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ColumnTypes)
+    }
+    return nil
 }
 // GetValidation gets the validation property value. This column stores validation formula and message for the column.
 func (m *ColumnDefinition) GetValidation()(ColumnValidationable) {
-    return m.validation
+    val, err := m.GetBackingStore().Get("validation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ColumnValidationable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ColumnDefinition) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -452,129 +901,294 @@ func (m *ColumnDefinition) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
 }
 // SetBoolean sets the boolean property value. This column stores boolean values.
 func (m *ColumnDefinition) SetBoolean(value BooleanColumnable)() {
-    m.boolean = value
+    err := m.GetBackingStore().Set("boolean", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCalculated sets the calculated property value. This column's data is calculated based on other columns.
 func (m *ColumnDefinition) SetCalculated(value CalculatedColumnable)() {
-    m.calculated = value
+    err := m.GetBackingStore().Set("calculated", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetChoice sets the choice property value. This column stores data from a list of choices.
 func (m *ColumnDefinition) SetChoice(value ChoiceColumnable)() {
-    m.choice = value
+    err := m.GetBackingStore().Set("choice", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetColumnGroup sets the columnGroup property value. For site columns, the name of the group this column belongs to. Helps organize related columns.
 func (m *ColumnDefinition) SetColumnGroup(value *string)() {
-    m.columnGroup = value
+    err := m.GetBackingStore().Set("columnGroup", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentApprovalStatus sets the contentApprovalStatus property value. This column stores content approval status.
 func (m *ColumnDefinition) SetContentApprovalStatus(value ContentApprovalStatusColumnable)() {
-    m.contentApprovalStatus = value
+    err := m.GetBackingStore().Set("contentApprovalStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCurrency sets the currency property value. This column stores currency values.
 func (m *ColumnDefinition) SetCurrency(value CurrencyColumnable)() {
-    m.currency = value
+    err := m.GetBackingStore().Set("currency", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDateTime sets the dateTime property value. This column stores DateTime values.
 func (m *ColumnDefinition) SetDateTime(value DateTimeColumnable)() {
-    m.dateTime = value
+    err := m.GetBackingStore().Set("dateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDefaultValue sets the defaultValue property value. The default value for this column.
 func (m *ColumnDefinition) SetDefaultValue(value DefaultColumnValueable)() {
-    m.defaultValue = value
+    err := m.GetBackingStore().Set("defaultValue", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. The user-facing description of the column.
 func (m *ColumnDefinition) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The user-facing name of the column.
 func (m *ColumnDefinition) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEnforceUniqueValues sets the enforceUniqueValues property value. If true, no two list items may have the same value for this column.
 func (m *ColumnDefinition) SetEnforceUniqueValues(value *bool)() {
-    m.enforceUniqueValues = value
+    err := m.GetBackingStore().Set("enforceUniqueValues", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetGeolocation sets the geolocation property value. This column stores a geolocation.
 func (m *ColumnDefinition) SetGeolocation(value GeolocationColumnable)() {
-    m.geolocation = value
+    err := m.GetBackingStore().Set("geolocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHidden sets the hidden property value. Specifies whether the column is displayed in the user interface.
 func (m *ColumnDefinition) SetHidden(value *bool)() {
-    m.hidden = value
+    err := m.GetBackingStore().Set("hidden", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHyperlinkOrPicture sets the hyperlinkOrPicture property value. This column stores hyperlink or picture values.
 func (m *ColumnDefinition) SetHyperlinkOrPicture(value HyperlinkOrPictureColumnable)() {
-    m.hyperlinkOrPicture = value
+    err := m.GetBackingStore().Set("hyperlinkOrPicture", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIndexed sets the indexed property value. Specifies whether the column values can be used for sorting and searching.
 func (m *ColumnDefinition) SetIndexed(value *bool)() {
-    m.indexed = value
+    err := m.GetBackingStore().Set("indexed", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsDeletable sets the isDeletable property value. Indicates whether this column can be deleted.
 func (m *ColumnDefinition) SetIsDeletable(value *bool)() {
-    m.isDeletable = value
+    err := m.GetBackingStore().Set("isDeletable", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsReorderable sets the isReorderable property value. Indicates whether values in the column can be reordered. Read-only.
 func (m *ColumnDefinition) SetIsReorderable(value *bool)() {
-    m.isReorderable = value
+    err := m.GetBackingStore().Set("isReorderable", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsSealed sets the isSealed property value. Specifies whether the column can be changed.
 func (m *ColumnDefinition) SetIsSealed(value *bool)() {
-    m.isSealed = value
+    err := m.GetBackingStore().Set("isSealed", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLookup sets the lookup property value. This column's data is looked up from another source in the site.
 func (m *ColumnDefinition) SetLookup(value LookupColumnable)() {
-    m.lookup = value
+    err := m.GetBackingStore().Set("lookup", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. The API-facing name of the column as it appears in the [fields][] on a [listItem][]. For the user-facing name, see displayName.
 func (m *ColumnDefinition) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNumber sets the number property value. This column stores number values.
 func (m *ColumnDefinition) SetNumber(value NumberColumnable)() {
-    m.number = value
+    err := m.GetBackingStore().Set("number", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPersonOrGroup sets the personOrGroup property value. This column stores Person or Group values.
 func (m *ColumnDefinition) SetPersonOrGroup(value PersonOrGroupColumnable)() {
-    m.personOrGroup = value
+    err := m.GetBackingStore().Set("personOrGroup", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPropagateChanges sets the propagateChanges property value. If 'true', changes to this column will be propagated to lists that implement the column.
 func (m *ColumnDefinition) SetPropagateChanges(value *bool)() {
-    m.propagateChanges = value
+    err := m.GetBackingStore().Set("propagateChanges", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReadOnly sets the readOnly property value. Specifies whether the column values can be modified.
 func (m *ColumnDefinition) SetReadOnly(value *bool)() {
-    m.readOnly = value
+    err := m.GetBackingStore().Set("readOnly", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRequired sets the required property value. Specifies whether the column value isn't optional.
 func (m *ColumnDefinition) SetRequired(value *bool)() {
-    m.required = value
+    err := m.GetBackingStore().Set("required", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSourceColumn sets the sourceColumn property value. The source column for the content type column.
 func (m *ColumnDefinition) SetSourceColumn(value ColumnDefinitionable)() {
-    m.sourceColumn = value
+    err := m.GetBackingStore().Set("sourceColumn", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSourceContentType sets the sourceContentType property value. ContentType from which this column is inherited from. Present only in contentTypes columns response. Read-only.
 func (m *ColumnDefinition) SetSourceContentType(value ContentTypeInfoable)() {
-    m.sourceContentType = value
+    err := m.GetBackingStore().Set("sourceContentType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTerm sets the term property value. This column stores taxonomy terms.
 func (m *ColumnDefinition) SetTerm(value TermColumnable)() {
-    m.term = value
+    err := m.GetBackingStore().Set("term", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetText sets the text property value. This column stores text values.
 func (m *ColumnDefinition) SetText(value TextColumnable)() {
-    m.text = value
+    err := m.GetBackingStore().Set("text", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetThumbnail sets the thumbnail property value. This column stores thumbnail values.
 func (m *ColumnDefinition) SetThumbnail(value ThumbnailColumnable)() {
-    m.thumbnail = value
+    err := m.GetBackingStore().Set("thumbnail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetType sets the type property value. For site columns, the type of column. Read-only.
 func (m *ColumnDefinition) SetType(value *ColumnTypes)() {
-    m.type_escaped = value
+    err := m.GetBackingStore().Set("typeEscaped", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValidation sets the validation property value. This column stores validation formula and message for the column.
 func (m *ColumnDefinition) SetValidation(value ColumnValidationable)() {
-    m.validation = value
+    err := m.GetBackingStore().Set("validation", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ColumnDefinitionable 
+type ColumnDefinitionable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBoolean()(BooleanColumnable)
+    GetCalculated()(CalculatedColumnable)
+    GetChoice()(ChoiceColumnable)
+    GetColumnGroup()(*string)
+    GetContentApprovalStatus()(ContentApprovalStatusColumnable)
+    GetCurrency()(CurrencyColumnable)
+    GetDateTime()(DateTimeColumnable)
+    GetDefaultValue()(DefaultColumnValueable)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetEnforceUniqueValues()(*bool)
+    GetGeolocation()(GeolocationColumnable)
+    GetHidden()(*bool)
+    GetHyperlinkOrPicture()(HyperlinkOrPictureColumnable)
+    GetIndexed()(*bool)
+    GetIsDeletable()(*bool)
+    GetIsReorderable()(*bool)
+    GetIsSealed()(*bool)
+    GetLookup()(LookupColumnable)
+    GetName()(*string)
+    GetNumber()(NumberColumnable)
+    GetPersonOrGroup()(PersonOrGroupColumnable)
+    GetPropagateChanges()(*bool)
+    GetReadOnly()(*bool)
+    GetRequired()(*bool)
+    GetSourceColumn()(ColumnDefinitionable)
+    GetSourceContentType()(ContentTypeInfoable)
+    GetTerm()(TermColumnable)
+    GetText()(TextColumnable)
+    GetThumbnail()(ThumbnailColumnable)
+    GetType()(*ColumnTypes)
+    GetValidation()(ColumnValidationable)
+    SetBoolean(value BooleanColumnable)()
+    SetCalculated(value CalculatedColumnable)()
+    SetChoice(value ChoiceColumnable)()
+    SetColumnGroup(value *string)()
+    SetContentApprovalStatus(value ContentApprovalStatusColumnable)()
+    SetCurrency(value CurrencyColumnable)()
+    SetDateTime(value DateTimeColumnable)()
+    SetDefaultValue(value DefaultColumnValueable)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetEnforceUniqueValues(value *bool)()
+    SetGeolocation(value GeolocationColumnable)()
+    SetHidden(value *bool)()
+    SetHyperlinkOrPicture(value HyperlinkOrPictureColumnable)()
+    SetIndexed(value *bool)()
+    SetIsDeletable(value *bool)()
+    SetIsReorderable(value *bool)()
+    SetIsSealed(value *bool)()
+    SetLookup(value LookupColumnable)()
+    SetName(value *string)()
+    SetNumber(value NumberColumnable)()
+    SetPersonOrGroup(value PersonOrGroupColumnable)()
+    SetPropagateChanges(value *bool)()
+    SetReadOnly(value *bool)()
+    SetRequired(value *bool)()
+    SetSourceColumn(value ColumnDefinitionable)()
+    SetSourceContentType(value ContentTypeInfoable)()
+    SetTerm(value TermColumnable)()
+    SetText(value TextColumnable)()
+    SetThumbnail(value ThumbnailColumnable)()
+    SetType(value *ColumnTypes)()
+    SetValidation(value ColumnValidationable)()
 }

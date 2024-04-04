@@ -1,33 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Win32LobAppFileSystemRule 
 type Win32LobAppFileSystemRule struct {
     Win32LobAppRule
-    // A value indicating whether to expand environment variables in the 32-bit context on 64-bit systems.
-    check32BitOn64System *bool
-    // The file or folder comparison value.
-    comparisonValue *string
-    // The file or folder name to look up.
-    fileOrFolderName *string
-    // Contains all supported file system detection type.
-    operationType *Win32LobAppFileSystemOperationType
-    // Contains properties for detection operator.
-    operator *Win32LobAppRuleOperator
-    // The file or folder path to look up.
-    path *string
 }
 // NewWin32LobAppFileSystemRule instantiates a new Win32LobAppFileSystemRule and sets the default values.
 func NewWin32LobAppFileSystemRule()(*Win32LobAppFileSystemRule) {
     m := &Win32LobAppFileSystemRule{
         Win32LobAppRule: *NewWin32LobAppRule(),
     }
-    odataTypeValue := "#microsoft.graph.win32LobAppFileSystemRule";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.win32LobAppFileSystemRule"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWin32LobAppFileSystemRuleFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -36,38 +23,134 @@ func CreateWin32LobAppFileSystemRuleFromDiscriminatorValue(parseNode i878a80d233
 }
 // GetCheck32BitOn64System gets the check32BitOn64System property value. A value indicating whether to expand environment variables in the 32-bit context on 64-bit systems.
 func (m *Win32LobAppFileSystemRule) GetCheck32BitOn64System()(*bool) {
-    return m.check32BitOn64System
+    val, err := m.GetBackingStore().Get("check32BitOn64System")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetComparisonValue gets the comparisonValue property value. The file or folder comparison value.
 func (m *Win32LobAppFileSystemRule) GetComparisonValue()(*string) {
-    return m.comparisonValue
+    val, err := m.GetBackingStore().Get("comparisonValue")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Win32LobAppFileSystemRule) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Win32LobAppRule.GetFieldDeserializers()
-    res["check32BitOn64System"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetCheck32BitOn64System)
-    res["comparisonValue"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetComparisonValue)
-    res["fileOrFolderName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetFileOrFolderName)
-    res["operationType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWin32LobAppFileSystemOperationType , m.SetOperationType)
-    res["operator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseWin32LobAppRuleOperator , m.SetOperator)
-    res["path"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPath)
+    res["check32BitOn64System"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCheck32BitOn64System(val)
+        }
+        return nil
+    }
+    res["comparisonValue"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetComparisonValue(val)
+        }
+        return nil
+    }
+    res["fileOrFolderName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFileOrFolderName(val)
+        }
+        return nil
+    }
+    res["operationType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWin32LobAppFileSystemOperationType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperationType(val.(*Win32LobAppFileSystemOperationType))
+        }
+        return nil
+    }
+    res["operator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseWin32LobAppRuleOperator)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperator(val.(*Win32LobAppRuleOperator))
+        }
+        return nil
+    }
+    res["path"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPath(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFileOrFolderName gets the fileOrFolderName property value. The file or folder name to look up.
 func (m *Win32LobAppFileSystemRule) GetFileOrFolderName()(*string) {
-    return m.fileOrFolderName
+    val, err := m.GetBackingStore().Get("fileOrFolderName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperationType gets the operationType property value. Contains all supported file system detection type.
 func (m *Win32LobAppFileSystemRule) GetOperationType()(*Win32LobAppFileSystemOperationType) {
-    return m.operationType
+    val, err := m.GetBackingStore().Get("operationType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*Win32LobAppFileSystemOperationType)
+    }
+    return nil
 }
 // GetOperator gets the operator property value. Contains properties for detection operator.
 func (m *Win32LobAppFileSystemRule) GetOperator()(*Win32LobAppRuleOperator) {
-    return m.operator
+    val, err := m.GetBackingStore().Get("operator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*Win32LobAppRuleOperator)
+    }
+    return nil
 }
 // GetPath gets the path property value. The file or folder path to look up.
 func (m *Win32LobAppFileSystemRule) GetPath()(*string) {
-    return m.path
+    val, err := m.GetBackingStore().Get("path")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Win32LobAppFileSystemRule) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -117,25 +200,60 @@ func (m *Win32LobAppFileSystemRule) Serialize(writer i878a80d2330e89d26896388a3f
 }
 // SetCheck32BitOn64System sets the check32BitOn64System property value. A value indicating whether to expand environment variables in the 32-bit context on 64-bit systems.
 func (m *Win32LobAppFileSystemRule) SetCheck32BitOn64System(value *bool)() {
-    m.check32BitOn64System = value
+    err := m.GetBackingStore().Set("check32BitOn64System", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetComparisonValue sets the comparisonValue property value. The file or folder comparison value.
 func (m *Win32LobAppFileSystemRule) SetComparisonValue(value *string)() {
-    m.comparisonValue = value
+    err := m.GetBackingStore().Set("comparisonValue", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFileOrFolderName sets the fileOrFolderName property value. The file or folder name to look up.
 func (m *Win32LobAppFileSystemRule) SetFileOrFolderName(value *string)() {
-    m.fileOrFolderName = value
+    err := m.GetBackingStore().Set("fileOrFolderName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperationType sets the operationType property value. Contains all supported file system detection type.
 func (m *Win32LobAppFileSystemRule) SetOperationType(value *Win32LobAppFileSystemOperationType)() {
-    m.operationType = value
+    err := m.GetBackingStore().Set("operationType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperator sets the operator property value. Contains properties for detection operator.
 func (m *Win32LobAppFileSystemRule) SetOperator(value *Win32LobAppRuleOperator)() {
-    m.operator = value
+    err := m.GetBackingStore().Set("operator", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPath sets the path property value. The file or folder path to look up.
 func (m *Win32LobAppFileSystemRule) SetPath(value *string)() {
-    m.path = value
+    err := m.GetBackingStore().Set("path", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Win32LobAppFileSystemRuleable 
+type Win32LobAppFileSystemRuleable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    Win32LobAppRuleable
+    GetCheck32BitOn64System()(*bool)
+    GetComparisonValue()(*string)
+    GetFileOrFolderName()(*string)
+    GetOperationType()(*Win32LobAppFileSystemOperationType)
+    GetOperator()(*Win32LobAppRuleOperator)
+    GetPath()(*string)
+    SetCheck32BitOn64System(value *bool)()
+    SetComparisonValue(value *string)()
+    SetFileOrFolderName(value *string)()
+    SetOperationType(value *Win32LobAppFileSystemOperationType)()
+    SetOperator(value *Win32LobAppRuleOperator)()
+    SetPath(value *string)()
 }

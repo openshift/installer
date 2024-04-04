@@ -2,23 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // LocalizedNotificationMessage the text content of a Notification Message Template for the specified locale.
 type LocalizedNotificationMessage struct {
     Entity
-    // Flag to indicate whether or not this is the default locale for language fallback. This flag can only be set. To unset, set this property to true on another Localized Notification Message.
-    isDefault *bool
-    // DateTime the object was last modified.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The Locale for which this message is destined.
-    locale *string
-    // The Message Template content.
-    messageTemplate *string
-    // The Message Template Subject.
-    subject *string
 }
 // NewLocalizedNotificationMessage instantiates a new localizedNotificationMessage and sets the default values.
 func NewLocalizedNotificationMessage()(*LocalizedNotificationMessage) {
@@ -34,32 +23,112 @@ func CreateLocalizedNotificationMessageFromDiscriminatorValue(parseNode i878a80d
 // GetFieldDeserializers the deserialization information for the current model
 func (m *LocalizedNotificationMessage) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["isDefault"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsDefault)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["locale"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetLocale)
-    res["messageTemplate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMessageTemplate)
-    res["subject"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSubject)
+    res["isDefault"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsDefault(val)
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["locale"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLocale(val)
+        }
+        return nil
+    }
+    res["messageTemplate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessageTemplate(val)
+        }
+        return nil
+    }
+    res["subject"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSubject(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsDefault gets the isDefault property value. Flag to indicate whether or not this is the default locale for language fallback. This flag can only be set. To unset, set this property to true on another Localized Notification Message.
 func (m *LocalizedNotificationMessage) GetIsDefault()(*bool) {
-    return m.isDefault
+    val, err := m.GetBackingStore().Get("isDefault")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. DateTime the object was last modified.
 func (m *LocalizedNotificationMessage) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLocale gets the locale property value. The Locale for which this message is destined.
 func (m *LocalizedNotificationMessage) GetLocale()(*string) {
-    return m.locale
+    val, err := m.GetBackingStore().Get("locale")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMessageTemplate gets the messageTemplate property value. The Message Template content.
 func (m *LocalizedNotificationMessage) GetMessageTemplate()(*string) {
-    return m.messageTemplate
+    val, err := m.GetBackingStore().Get("messageTemplate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSubject gets the subject property value. The Message Template Subject.
 func (m *LocalizedNotificationMessage) GetSubject()(*string) {
-    return m.subject
+    val, err := m.GetBackingStore().Get("subject")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *LocalizedNotificationMessage) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -101,21 +170,51 @@ func (m *LocalizedNotificationMessage) Serialize(writer i878a80d2330e89d26896388
 }
 // SetIsDefault sets the isDefault property value. Flag to indicate whether or not this is the default locale for language fallback. This flag can only be set. To unset, set this property to true on another Localized Notification Message.
 func (m *LocalizedNotificationMessage) SetIsDefault(value *bool)() {
-    m.isDefault = value
+    err := m.GetBackingStore().Set("isDefault", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. DateTime the object was last modified.
 func (m *LocalizedNotificationMessage) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLocale sets the locale property value. The Locale for which this message is destined.
 func (m *LocalizedNotificationMessage) SetLocale(value *string)() {
-    m.locale = value
+    err := m.GetBackingStore().Set("locale", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMessageTemplate sets the messageTemplate property value. The Message Template content.
 func (m *LocalizedNotificationMessage) SetMessageTemplate(value *string)() {
-    m.messageTemplate = value
+    err := m.GetBackingStore().Set("messageTemplate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSubject sets the subject property value. The Message Template Subject.
 func (m *LocalizedNotificationMessage) SetSubject(value *string)() {
-    m.subject = value
+    err := m.GetBackingStore().Set("subject", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// LocalizedNotificationMessageable 
+type LocalizedNotificationMessageable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetIsDefault()(*bool)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLocale()(*string)
+    GetMessageTemplate()(*string)
+    GetSubject()(*string)
+    SetIsDefault(value *bool)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLocale(value *string)()
+    SetMessageTemplate(value *string)()
+    SetSubject(value *string)()
 }

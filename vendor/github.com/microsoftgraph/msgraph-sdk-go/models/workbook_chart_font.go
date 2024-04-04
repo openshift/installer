@@ -1,25 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // WorkbookChartFont 
 type WorkbookChartFont struct {
     Entity
-    // Represents the bold status of font.
-    bold *bool
-    // HTML color code representation of the text color. E.g. #FF0000 represents Red.
-    color *string
-    // Represents the italic status of the font.
-    italic *bool
-    // Font name (e.g. 'Calibri')
-    name *string
-    // Size of the font (e.g. 11)
-    size *float64
-    // Type of underline applied to the font. The possible values are: None, Single.
-    underline *string
 }
 // NewWorkbookChartFont instantiates a new workbookChartFont and sets the default values.
 func NewWorkbookChartFont()(*WorkbookChartFont) {
@@ -34,38 +21,134 @@ func CreateWorkbookChartFontFromDiscriminatorValue(parseNode i878a80d2330e89d268
 }
 // GetBold gets the bold property value. Represents the bold status of font.
 func (m *WorkbookChartFont) GetBold()(*bool) {
-    return m.bold
+    val, err := m.GetBackingStore().Get("bold")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetColor gets the color property value. HTML color code representation of the text color. E.g. #FF0000 represents Red.
 func (m *WorkbookChartFont) GetColor()(*string) {
-    return m.color
+    val, err := m.GetBackingStore().Get("color")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookChartFont) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["bold"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetBold)
-    res["color"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetColor)
-    res["italic"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetItalic)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["size"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetSize)
-    res["underline"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUnderline)
+    res["bold"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBold(val)
+        }
+        return nil
+    }
+    res["color"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColor(val)
+        }
+        return nil
+    }
+    res["italic"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetItalic(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["size"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSize(val)
+        }
+        return nil
+    }
+    res["underline"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUnderline(val)
+        }
+        return nil
+    }
     return res
 }
 // GetItalic gets the italic property value. Represents the italic status of the font.
 func (m *WorkbookChartFont) GetItalic()(*bool) {
-    return m.italic
+    val, err := m.GetBackingStore().Get("italic")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetName gets the name property value. Font name (e.g. 'Calibri')
 func (m *WorkbookChartFont) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSize gets the size property value. Size of the font (e.g. 11)
 func (m *WorkbookChartFont) GetSize()(*float64) {
-    return m.size
+    val, err := m.GetBackingStore().Get("size")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetUnderline gets the underline property value. Type of underline applied to the font. The possible values are: None, Single.
 func (m *WorkbookChartFont) GetUnderline()(*string) {
-    return m.underline
+    val, err := m.GetBackingStore().Get("underline")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookChartFont) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -113,25 +196,60 @@ func (m *WorkbookChartFont) Serialize(writer i878a80d2330e89d26896388a3f487eef27
 }
 // SetBold sets the bold property value. Represents the bold status of font.
 func (m *WorkbookChartFont) SetBold(value *bool)() {
-    m.bold = value
+    err := m.GetBackingStore().Set("bold", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetColor sets the color property value. HTML color code representation of the text color. E.g. #FF0000 represents Red.
 func (m *WorkbookChartFont) SetColor(value *string)() {
-    m.color = value
+    err := m.GetBackingStore().Set("color", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetItalic sets the italic property value. Represents the italic status of the font.
 func (m *WorkbookChartFont) SetItalic(value *bool)() {
-    m.italic = value
+    err := m.GetBackingStore().Set("italic", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Font name (e.g. 'Calibri')
 func (m *WorkbookChartFont) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSize sets the size property value. Size of the font (e.g. 11)
 func (m *WorkbookChartFont) SetSize(value *float64)() {
-    m.size = value
+    err := m.GetBackingStore().Set("size", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUnderline sets the underline property value. Type of underline applied to the font. The possible values are: None, Single.
 func (m *WorkbookChartFont) SetUnderline(value *string)() {
-    m.underline = value
+    err := m.GetBackingStore().Set("underline", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookChartFontable 
+type WorkbookChartFontable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBold()(*bool)
+    GetColor()(*string)
+    GetItalic()(*bool)
+    GetName()(*string)
+    GetSize()(*float64)
+    GetUnderline()(*string)
+    SetBold(value *bool)()
+    SetColor(value *string)()
+    SetItalic(value *bool)()
+    SetName(value *string)()
+    SetSize(value *float64)()
+    SetUnderline(value *string)()
 }

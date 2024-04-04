@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ThreatAssessmentContentType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i ThreatAssessmentContentType) String() string {
     return []string{"mail", "url", "file"}[i]
 }
-func ParseThreatAssessmentContentType(v string) (interface{}, error) {
+func ParseThreatAssessmentContentType(v string) (any, error) {
     result := MAIL_THREATASSESSMENTCONTENTTYPE
     switch v {
         case "mail":

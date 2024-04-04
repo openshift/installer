@@ -13,8 +13,8 @@ func NewEducationAssignmentGroupRecipient()(*EducationAssignmentGroupRecipient) 
     m := &EducationAssignmentGroupRecipient{
         EducationAssignmentRecipient: *NewEducationAssignmentRecipient(),
     }
-    odataTypeValue := "#microsoft.graph.educationAssignmentGroupRecipient";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.educationAssignmentGroupRecipient"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateEducationAssignmentGroupRecipientFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *EducationAssignmentGroupRecipient) Serialize(writer i878a80d2330e89d268
         return err
     }
     return nil
+}
+// EducationAssignmentGroupRecipientable 
+type EducationAssignmentGroupRecipientable interface {
+    EducationAssignmentRecipientable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

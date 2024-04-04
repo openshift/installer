@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Partner state of this tenant.
 type MobileThreatPartnerTenantState int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i MobileThreatPartnerTenantState) String() string {
     return []string{"unavailable", "available", "enabled", "unresponsive"}[i]
 }
-func ParseMobileThreatPartnerTenantState(v string) (interface{}, error) {
+func ParseMobileThreatPartnerTenantState(v string) (any, error) {
     result := UNAVAILABLE_MOBILETHREATPARTNERTENANTSTATE
     switch v {
         case "unavailable":

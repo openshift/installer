@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the getRecentNotebooks method.
+// 
 type OnenoteSourceService int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i OnenoteSourceService) String() string {
     return []string{"Unknown", "OneDrive", "OneDriveForBusiness", "OnPremOneDriveForBusiness"}[i]
 }
-func ParseOnenoteSourceService(v string) (interface{}, error) {
+func ParseOnenoteSourceService(v string) (any, error) {
     result := UNKNOWN_ONENOTESOURCESERVICE
     switch v {
         case "Unknown":

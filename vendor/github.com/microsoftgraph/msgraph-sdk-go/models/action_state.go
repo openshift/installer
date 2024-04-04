@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// State of the action on the device
 type ActionState int
 
 const (
@@ -25,7 +25,7 @@ const (
 func (i ActionState) String() string {
     return []string{"none", "pending", "canceled", "active", "done", "failed", "notSupported"}[i]
 }
-func ParseActionState(v string) (interface{}, error) {
+func ParseActionState(v string) (any, error) {
     result := NONE_ACTIONSTATE
     switch v {
         case "none":

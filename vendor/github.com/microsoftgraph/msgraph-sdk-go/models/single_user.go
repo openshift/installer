@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // SingleUser 
 type SingleUser struct {
     SubjectSet
-    // The name of the user in Azure AD. Read only.
-    description *string
-    // The ID of the user in Azure AD.
-    userId *string
 }
 // NewSingleUser instantiates a new SingleUser and sets the default values.
 func NewSingleUser()(*SingleUser) {
     m := &SingleUser{
         SubjectSet: *NewSubjectSet(),
     }
-    odataTypeValue := "#microsoft.graph.singleUser";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.singleUser"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateSingleUserFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,18 +23,50 @@ func CreateSingleUserFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3
 }
 // GetDescription gets the description property value. The name of the user in Azure AD. Read only.
 func (m *SingleUser) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SingleUser) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.SubjectSet.GetFieldDeserializers()
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetUserId gets the userId property value. The ID of the user in Azure AD.
 func (m *SingleUser) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SingleUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -63,9 +90,24 @@ func (m *SingleUser) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c
 }
 // SetDescription sets the description property value. The name of the user in Azure AD. Read only.
 func (m *SingleUser) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserId sets the userId property value. The ID of the user in Azure AD.
 func (m *SingleUser) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SingleUserable 
+type SingleUserable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    SubjectSetable
+    GetDescription()(*string)
+    GetUserId()(*string)
+    SetDescription(value *string)()
+    SetUserId(value *string)()
 }

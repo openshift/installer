@@ -1,30 +1,21 @@
 package odataerrors
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // MainError 
 type MainError struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The code property
-    code *string
-    // The details property
-    details []ErrorDetailsable
-    // The innererror property
-    innererror InnerErrorable
-    // The message property
-    message *string
-    // The target property
-    target *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewMainError instantiates a new MainError and sets the default values.
 func NewMainError()(*MainError) {
     m := &MainError{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateMainErrorFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -32,38 +23,134 @@ func CreateMainErrorFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f
     return NewMainError(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MainError) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *MainError) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *MainError) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCode gets the code property value. The code property
 func (m *MainError) GetCode()(*string) {
-    return m.code
+    val, err := m.GetBackingStore().Get("code")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDetails gets the details property value. The details property
 func (m *MainError) GetDetails()([]ErrorDetailsable) {
-    return m.details
+    val, err := m.GetBackingStore().Get("details")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]ErrorDetailsable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MainError) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["code"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCode)
-    res["details"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateErrorDetailsFromDiscriminatorValue , m.SetDetails)
-    res["innererror"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateInnerErrorFromDiscriminatorValue , m.SetInnererror)
-    res["message"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMessage)
-    res["target"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTarget)
+    res["code"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCode(val)
+        }
+        return nil
+    }
+    res["details"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateErrorDetailsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]ErrorDetailsable, len(val))
+            for i, v := range val {
+                res[i] = v.(ErrorDetailsable)
+            }
+            m.SetDetails(res)
+        }
+        return nil
+    }
+    res["innererror"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateInnerErrorFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInnererror(val.(InnerErrorable))
+        }
+        return nil
+    }
+    res["message"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessage(val)
+        }
+        return nil
+    }
+    res["target"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTarget(val)
+        }
+        return nil
+    }
     return res
 }
 // GetInnererror gets the innererror property value. The innererror property
 func (m *MainError) GetInnererror()(InnerErrorable) {
-    return m.innererror
+    val, err := m.GetBackingStore().Get("innererror")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(InnerErrorable)
+    }
+    return nil
 }
 // GetMessage gets the message property value. The message property
 func (m *MainError) GetMessage()(*string) {
-    return m.message
+    val, err := m.GetBackingStore().Get("message")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTarget gets the target property value. The target property
 func (m *MainError) GetTarget()(*string) {
-    return m.target
+    val, err := m.GetBackingStore().Get("target")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MainError) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -74,7 +161,10 @@ func (m *MainError) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
         }
     }
     if m.GetDetails() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetDetails())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetDetails()))
+        for i, v := range m.GetDetails() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("details", cast)
         if err != nil {
             return err
@@ -107,26 +197,66 @@ func (m *MainError) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MainError) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *MainError) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *MainError) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCode sets the code property value. The code property
 func (m *MainError) SetCode(value *string)() {
-    m.code = value
+    err := m.GetBackingStore().Set("code", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDetails sets the details property value. The details property
 func (m *MainError) SetDetails(value []ErrorDetailsable)() {
-    m.details = value
+    err := m.GetBackingStore().Set("details", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInnererror sets the innererror property value. The innererror property
 func (m *MainError) SetInnererror(value InnerErrorable)() {
-    m.innererror = value
+    err := m.GetBackingStore().Set("innererror", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMessage sets the message property value. The message property
 func (m *MainError) SetMessage(value *string)() {
-    m.message = value
+    err := m.GetBackingStore().Set("message", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTarget sets the target property value. The target property
 func (m *MainError) SetTarget(value *string)() {
-    m.target = value
+    err := m.GetBackingStore().Set("target", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MainErrorable 
+type MainErrorable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCode()(*string)
+    GetDetails()([]ErrorDetailsable)
+    GetInnererror()(InnerErrorable)
+    GetMessage()(*string)
+    GetTarget()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCode(value *string)()
+    SetDetails(value []ErrorDetailsable)()
+    SetInnererror(value InnerErrorable)()
+    SetMessage(value *string)()
+    SetTarget(value *string)()
 }

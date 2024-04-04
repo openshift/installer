@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// App configuration key types.
 type MdmAppConfigKeyType int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i MdmAppConfigKeyType) String() string {
     return []string{"stringType", "integerType", "realType", "booleanType", "tokenType"}[i]
 }
-func ParseMdmAppConfigKeyType(v string) (interface{}, error) {
+func ParseMdmAppConfigKeyType(v string) (any, error) {
     result := STRINGTYPE_MDMAPPCONFIGKEYTYPE
     switch v {
         case "stringType":

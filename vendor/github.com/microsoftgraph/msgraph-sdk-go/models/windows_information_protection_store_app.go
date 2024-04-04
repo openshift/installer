@@ -13,8 +13,8 @@ func NewWindowsInformationProtectionStoreApp()(*WindowsInformationProtectionStor
     m := &WindowsInformationProtectionStoreApp{
         WindowsInformationProtectionApp: *NewWindowsInformationProtectionApp(),
     }
-    odataTypeValue := "#microsoft.graph.windowsInformationProtectionStoreApp";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.windowsInformationProtectionStoreApp"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWindowsInformationProtectionStoreAppFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *WindowsInformationProtectionStoreApp) Serialize(writer i878a80d2330e89d
         return err
     }
     return nil
+}
+// WindowsInformationProtectionStoreAppable 
+type WindowsInformationProtectionStoreAppable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    WindowsInformationProtectionAppable
 }

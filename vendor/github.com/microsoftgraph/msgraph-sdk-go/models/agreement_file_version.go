@@ -4,7 +4,7 @@ import (
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// AgreementFileVersion provides operations to manage the collection of agreement entities.
+// AgreementFileVersion 
 type AgreementFileVersion struct {
     AgreementFileProperties
 }
@@ -31,4 +31,9 @@ func (m *AgreementFileVersion) Serialize(writer i878a80d2330e89d26896388a3f487ee
         return err
     }
     return nil
+}
+// AgreementFileVersionable 
+type AgreementFileVersionable interface {
+    AgreementFilePropertiesable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type EducationUserRole int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i EducationUserRole) String() string {
     return []string{"student", "teacher", "none", "unknownFutureValue"}[i]
 }
-func ParseEducationUserRole(v string) (interface{}, error) {
+func ParseEducationUserRole(v string) (any, error) {
     result := STUDENT_EDUCATIONUSERROLE
     switch v {
         case "student":

@@ -1,33 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// SectionGroup provides operations to manage the collection of agreement entities.
+// SectionGroup 
 type SectionGroup struct {
     OnenoteEntityHierarchyModel
-    // The notebook that contains the section group. Read-only.
-    parentNotebook Notebookable
-    // The section group that contains the section group. Read-only.
-    parentSectionGroup SectionGroupable
-    // The section groups in the section. Read-only. Nullable.
-    sectionGroups []SectionGroupable
-    // The URL for the sectionGroups navigation property, which returns all the section groups in the section group. Read-only.
-    sectionGroupsUrl *string
-    // The sections in the section group. Read-only. Nullable.
-    sections []OnenoteSectionable
-    // The URL for the sections navigation property, which returns all the sections in the section group. Read-only.
-    sectionsUrl *string
 }
 // NewSectionGroup instantiates a new sectionGroup and sets the default values.
 func NewSectionGroup()(*SectionGroup) {
     m := &SectionGroup{
         OnenoteEntityHierarchyModel: *NewOnenoteEntityHierarchyModel(),
     }
-    odataTypeValue := "#microsoft.graph.sectionGroup";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.sectionGroup"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateSectionGroupFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -37,37 +24,141 @@ func CreateSectionGroupFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 // GetFieldDeserializers the deserialization information for the current model
 func (m *SectionGroup) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OnenoteEntityHierarchyModel.GetFieldDeserializers()
-    res["parentNotebook"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateNotebookFromDiscriminatorValue , m.SetParentNotebook)
-    res["parentSectionGroup"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSectionGroupFromDiscriminatorValue , m.SetParentSectionGroup)
-    res["sectionGroups"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSectionGroupFromDiscriminatorValue , m.SetSectionGroups)
-    res["sectionGroupsUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSectionGroupsUrl)
-    res["sections"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateOnenoteSectionFromDiscriminatorValue , m.SetSections)
-    res["sectionsUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSectionsUrl)
+    res["parentNotebook"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateNotebookFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentNotebook(val.(Notebookable))
+        }
+        return nil
+    }
+    res["parentSectionGroup"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSectionGroupFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentSectionGroup(val.(SectionGroupable))
+        }
+        return nil
+    }
+    res["sectionGroups"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSectionGroupFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]SectionGroupable, len(val))
+            for i, v := range val {
+                res[i] = v.(SectionGroupable)
+            }
+            m.SetSectionGroups(res)
+        }
+        return nil
+    }
+    res["sectionGroupsUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSectionGroupsUrl(val)
+        }
+        return nil
+    }
+    res["sections"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateOnenoteSectionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]OnenoteSectionable, len(val))
+            for i, v := range val {
+                res[i] = v.(OnenoteSectionable)
+            }
+            m.SetSections(res)
+        }
+        return nil
+    }
+    res["sectionsUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSectionsUrl(val)
+        }
+        return nil
+    }
     return res
 }
 // GetParentNotebook gets the parentNotebook property value. The notebook that contains the section group. Read-only.
 func (m *SectionGroup) GetParentNotebook()(Notebookable) {
-    return m.parentNotebook
+    val, err := m.GetBackingStore().Get("parentNotebook")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Notebookable)
+    }
+    return nil
 }
 // GetParentSectionGroup gets the parentSectionGroup property value. The section group that contains the section group. Read-only.
 func (m *SectionGroup) GetParentSectionGroup()(SectionGroupable) {
-    return m.parentSectionGroup
+    val, err := m.GetBackingStore().Get("parentSectionGroup")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SectionGroupable)
+    }
+    return nil
 }
 // GetSectionGroups gets the sectionGroups property value. The section groups in the section. Read-only. Nullable.
 func (m *SectionGroup) GetSectionGroups()([]SectionGroupable) {
-    return m.sectionGroups
+    val, err := m.GetBackingStore().Get("sectionGroups")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]SectionGroupable)
+    }
+    return nil
 }
 // GetSectionGroupsUrl gets the sectionGroupsUrl property value. The URL for the sectionGroups navigation property, which returns all the section groups in the section group. Read-only.
 func (m *SectionGroup) GetSectionGroupsUrl()(*string) {
-    return m.sectionGroupsUrl
+    val, err := m.GetBackingStore().Get("sectionGroupsUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSections gets the sections property value. The sections in the section group. Read-only. Nullable.
 func (m *SectionGroup) GetSections()([]OnenoteSectionable) {
-    return m.sections
+    val, err := m.GetBackingStore().Get("sections")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]OnenoteSectionable)
+    }
+    return nil
 }
 // GetSectionsUrl gets the sectionsUrl property value. The URL for the sections navigation property, which returns all the sections in the section group. Read-only.
 func (m *SectionGroup) GetSectionsUrl()(*string) {
-    return m.sectionsUrl
+    val, err := m.GetBackingStore().Get("sectionsUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *SectionGroup) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -88,7 +179,10 @@ func (m *SectionGroup) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         }
     }
     if m.GetSectionGroups() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSectionGroups())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSectionGroups()))
+        for i, v := range m.GetSectionGroups() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("sectionGroups", cast)
         if err != nil {
             return err
@@ -101,7 +195,10 @@ func (m *SectionGroup) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         }
     }
     if m.GetSections() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSections())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSections()))
+        for i, v := range m.GetSections() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("sections", cast)
         if err != nil {
             return err
@@ -117,25 +214,60 @@ func (m *SectionGroup) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetParentNotebook sets the parentNotebook property value. The notebook that contains the section group. Read-only.
 func (m *SectionGroup) SetParentNotebook(value Notebookable)() {
-    m.parentNotebook = value
+    err := m.GetBackingStore().Set("parentNotebook", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentSectionGroup sets the parentSectionGroup property value. The section group that contains the section group. Read-only.
 func (m *SectionGroup) SetParentSectionGroup(value SectionGroupable)() {
-    m.parentSectionGroup = value
+    err := m.GetBackingStore().Set("parentSectionGroup", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSectionGroups sets the sectionGroups property value. The section groups in the section. Read-only. Nullable.
 func (m *SectionGroup) SetSectionGroups(value []SectionGroupable)() {
-    m.sectionGroups = value
+    err := m.GetBackingStore().Set("sectionGroups", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSectionGroupsUrl sets the sectionGroupsUrl property value. The URL for the sectionGroups navigation property, which returns all the section groups in the section group. Read-only.
 func (m *SectionGroup) SetSectionGroupsUrl(value *string)() {
-    m.sectionGroupsUrl = value
+    err := m.GetBackingStore().Set("sectionGroupsUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSections sets the sections property value. The sections in the section group. Read-only. Nullable.
 func (m *SectionGroup) SetSections(value []OnenoteSectionable)() {
-    m.sections = value
+    err := m.GetBackingStore().Set("sections", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSectionsUrl sets the sectionsUrl property value. The URL for the sections navigation property, which returns all the sections in the section group. Read-only.
 func (m *SectionGroup) SetSectionsUrl(value *string)() {
-    m.sectionsUrl = value
+    err := m.GetBackingStore().Set("sectionsUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SectionGroupable 
+type SectionGroupable interface {
+    OnenoteEntityHierarchyModelable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetParentNotebook()(Notebookable)
+    GetParentSectionGroup()(SectionGroupable)
+    GetSectionGroups()([]SectionGroupable)
+    GetSectionGroupsUrl()(*string)
+    GetSections()([]OnenoteSectionable)
+    GetSectionsUrl()(*string)
+    SetParentNotebook(value Notebookable)()
+    SetParentSectionGroup(value SectionGroupable)()
+    SetSectionGroups(value []SectionGroupable)()
+    SetSectionGroupsUrl(value *string)()
+    SetSections(value []OnenoteSectionable)()
+    SetSectionsUrl(value *string)()
 }

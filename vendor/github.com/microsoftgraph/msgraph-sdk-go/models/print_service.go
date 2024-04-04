@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // PrintService 
 type PrintService struct {
     Entity
-    // Endpoints that can be used to access the service. Read-only. Nullable.
-    endpoints []PrintServiceEndpointable
 }
 // NewPrintService instantiates a new PrintService and sets the default values.
 func NewPrintService()(*PrintService) {
@@ -24,12 +21,32 @@ func CreatePrintServiceFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 }
 // GetEndpoints gets the endpoints property value. Endpoints that can be used to access the service. Read-only. Nullable.
 func (m *PrintService) GetEndpoints()([]PrintServiceEndpointable) {
-    return m.endpoints
+    val, err := m.GetBackingStore().Get("endpoints")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]PrintServiceEndpointable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PrintService) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["endpoints"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreatePrintServiceEndpointFromDiscriminatorValue , m.SetEndpoints)
+    res["endpoints"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreatePrintServiceEndpointFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]PrintServiceEndpointable, len(val))
+            for i, v := range val {
+                res[i] = v.(PrintServiceEndpointable)
+            }
+            m.SetEndpoints(res)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -39,7 +56,10 @@ func (m *PrintService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
         return err
     }
     if m.GetEndpoints() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetEndpoints())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetEndpoints()))
+        for i, v := range m.GetEndpoints() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("endpoints", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *PrintService) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetEndpoints sets the endpoints property value. Endpoints that can be used to access the service. Read-only. Nullable.
 func (m *PrintService) SetEndpoints(value []PrintServiceEndpointable)() {
-    m.endpoints = value
+    err := m.GetBackingStore().Set("endpoints", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PrintServiceable 
+type PrintServiceable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetEndpoints()([]PrintServiceEndpointable)
+    SetEndpoints(value []PrintServiceEndpointable)()
 }

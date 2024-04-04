@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the reject method.
+// 
 type RejectReason int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i RejectReason) String() string {
     return []string{"none", "busy", "forbidden", "unknownFutureValue"}[i]
 }
-func ParseRejectReason(v string) (interface{}, error) {
+func ParseRejectReason(v string) (any, error) {
     result := NONE_REJECTREASON
     switch v {
         case "none":

@@ -32,7 +32,7 @@ func (o ObservabilityOptions) GetTracerInstrumentationName() string {
 	return "github.com/microsoft/kiota-authentication-azure-go"
 }
 
-// NewAzureIdentityAccessTokenProvider creates a new instance of the AzureIdentityAccessTokenProvider using "https://graph.microsoft.com/.default" as the default scope.
+// NewAzureIdentityAccessTokenProvider creates a new instance of the AzureIdentityAccessTokenProvider using "<scheme>://<host>/.default" as the default scope.
 func NewAzureIdentityAccessTokenProvider(credential azcore.TokenCredential) (*AzureIdentityAccessTokenProvider, error) {
 	return NewAzureIdentityAccessTokenProviderWithScopes(credential, nil)
 }
@@ -54,15 +54,10 @@ func NewAzureIdentityAccessTokenProviderWithScopesAndValidHostsAndObservabilityO
 	}
 	scopesLen := len(scopes)
 	finalScopes := make([]string, scopesLen)
-	if scopesLen == 0 {
-		finalScopes = append(finalScopes, "https://graph.microsoft.com/.default")
-	} else {
+	if scopesLen > 0 {
 		copy(finalScopes, scopes)
 	}
 	validator := absauth.NewAllowedHostsValidator(validHosts)
-	if len(validHosts) == 0 {
-		validator = absauth.NewAllowedHostsValidator([]string{"graph.microsoft.com", "graph.microsoft.us", "dod-graph.microsoft.us", "graph.microsoft.de", "microsoftgraph.chinacloudapi.cn", "canary.graph.microsoft.com"})
-	}
 	result := &AzureIdentityAccessTokenProvider{
 		credential:            credential,
 		scopes:                finalScopes,
@@ -109,6 +104,9 @@ func (p *AzureIdentityAccessTokenProvider) GetAuthorizationToken(ctx context.Con
 	}
 	span.SetAttributes(attribute.Bool("com.microsoft.kiota.authentication.additional_claims_provided", claims != ""))
 
+	if len(p.scopes) == 0 {
+		p.scopes = append(p.scopes, url.Scheme+"://"+url.Host+"/.default")
+	}
 
 	options := azpolicy.TokenRequestOptions{
 		Scopes: p.scopes,

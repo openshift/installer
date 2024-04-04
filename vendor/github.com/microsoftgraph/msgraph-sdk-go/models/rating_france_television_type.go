@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// TV content rating labels in France
 type RatingFranceTelevisionType int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i RatingFranceTelevisionType) String() string {
     return []string{"allAllowed", "allBlocked", "agesAbove10", "agesAbove12", "agesAbove16", "agesAbove18"}[i]
 }
-func ParseRatingFranceTelevisionType(v string) (interface{}, error) {
+func ParseRatingFranceTelevisionType(v string) (any, error) {
     result := ALLALLOWED_RATINGFRANCETELEVISIONTYPE
     switch v {
         case "allAllowed":

@@ -1,7 +1,6 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
@@ -9,15 +8,15 @@ import (
 type AttendeeBase struct {
     Recipient
     // The type of attendee. The possible values are: required, optional, resource. Currently if the attendee is a person, findMeetingTimes always considers the person is of the Required type.
-    type_escaped *AttendeeType
+    TypeEscaped *AttendeeType
 }
 // NewAttendeeBase instantiates a new AttendeeBase and sets the default values.
 func NewAttendeeBase()(*AttendeeBase) {
     m := &AttendeeBase{
         Recipient: *NewRecipient(),
     }
-    odataTypeValue := "#microsoft.graph.attendeeBase";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.attendeeBase"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateAttendeeBaseFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -45,12 +44,28 @@ func CreateAttendeeBaseFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AttendeeBase) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Recipient.GetFieldDeserializers()
-    res["type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAttendeeType , m.SetType)
+    res["type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAttendeeType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetType(val.(*AttendeeType))
+        }
+        return nil
+    }
     return res
 }
 // GetType gets the type property value. The type of attendee. The possible values are: required, optional, resource. Currently if the attendee is a person, findMeetingTimes always considers the person is of the Required type.
 func (m *AttendeeBase) GetType()(*AttendeeType) {
-    return m.type_escaped
+    val, err := m.GetBackingStore().Get("typeEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AttendeeType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AttendeeBase) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -69,5 +84,15 @@ func (m *AttendeeBase) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetType sets the type property value. The type of attendee. The possible values are: required, optional, resource. Currently if the attendee is a person, findMeetingTimes always considers the person is of the Required type.
 func (m *AttendeeBase) SetType(value *AttendeeType)() {
-    m.type_escaped = value
+    err := m.GetBackingStore().Set("typeEscaped", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AttendeeBaseable 
+type AttendeeBaseable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    Recipientable
+    GetType()(*AttendeeType)
+    SetType(value *AttendeeType)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ThreatExpectedAssessment int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i ThreatExpectedAssessment) String() string {
     return []string{"block", "unblock"}[i]
 }
-func ParseThreatExpectedAssessment(v string) (interface{}, error) {
+func ParseThreatExpectedAssessment(v string) (any, error) {
     result := BLOCK_THREATEXPECTEDASSESSMENT
     switch v {
         case "block":

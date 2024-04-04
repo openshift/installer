@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// ThumbnailSet provides operations to manage the collection of agreement entities.
+// ThumbnailSet 
 type ThumbnailSet struct {
     Entity
-    // A 1920x1920 scaled thumbnail.
-    large Thumbnailable
-    // A 176x176 scaled thumbnail.
-    medium Thumbnailable
-    // A 48x48 cropped thumbnail.
-    small Thumbnailable
-    // A custom thumbnail image or the original image used to generate other thumbnails.
-    source Thumbnailable
 }
 // NewThumbnailSet instantiates a new thumbnailSet and sets the default values.
 func NewThumbnailSet()(*ThumbnailSet) {
@@ -31,27 +22,91 @@ func CreateThumbnailSetFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ThumbnailSet) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["large"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateThumbnailFromDiscriminatorValue , m.SetLarge)
-    res["medium"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateThumbnailFromDiscriminatorValue , m.SetMedium)
-    res["small"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateThumbnailFromDiscriminatorValue , m.SetSmall)
-    res["source"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateThumbnailFromDiscriminatorValue , m.SetSource)
+    res["large"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateThumbnailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLarge(val.(Thumbnailable))
+        }
+        return nil
+    }
+    res["medium"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateThumbnailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMedium(val.(Thumbnailable))
+        }
+        return nil
+    }
+    res["small"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateThumbnailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSmall(val.(Thumbnailable))
+        }
+        return nil
+    }
+    res["source"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateThumbnailFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSource(val.(Thumbnailable))
+        }
+        return nil
+    }
     return res
 }
 // GetLarge gets the large property value. A 1920x1920 scaled thumbnail.
 func (m *ThumbnailSet) GetLarge()(Thumbnailable) {
-    return m.large
+    val, err := m.GetBackingStore().Get("large")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Thumbnailable)
+    }
+    return nil
 }
 // GetMedium gets the medium property value. A 176x176 scaled thumbnail.
 func (m *ThumbnailSet) GetMedium()(Thumbnailable) {
-    return m.medium
+    val, err := m.GetBackingStore().Get("medium")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Thumbnailable)
+    }
+    return nil
 }
 // GetSmall gets the small property value. A 48x48 cropped thumbnail.
 func (m *ThumbnailSet) GetSmall()(Thumbnailable) {
-    return m.small
+    val, err := m.GetBackingStore().Get("small")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Thumbnailable)
+    }
+    return nil
 }
 // GetSource gets the source property value. A custom thumbnail image or the original image used to generate other thumbnails.
 func (m *ThumbnailSet) GetSource()(Thumbnailable) {
-    return m.source
+    val, err := m.GetBackingStore().Get("source")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Thumbnailable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ThumbnailSet) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +142,42 @@ func (m *ThumbnailSet) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetLarge sets the large property value. A 1920x1920 scaled thumbnail.
 func (m *ThumbnailSet) SetLarge(value Thumbnailable)() {
-    m.large = value
+    err := m.GetBackingStore().Set("large", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMedium sets the medium property value. A 176x176 scaled thumbnail.
 func (m *ThumbnailSet) SetMedium(value Thumbnailable)() {
-    m.medium = value
+    err := m.GetBackingStore().Set("medium", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSmall sets the small property value. A 48x48 cropped thumbnail.
 func (m *ThumbnailSet) SetSmall(value Thumbnailable)() {
-    m.small = value
+    err := m.GetBackingStore().Set("small", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSource sets the source property value. A custom thumbnail image or the original image used to generate other thumbnails.
 func (m *ThumbnailSet) SetSource(value Thumbnailable)() {
-    m.source = value
+    err := m.GetBackingStore().Set("source", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ThumbnailSetable 
+type ThumbnailSetable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetLarge()(Thumbnailable)
+    GetMedium()(Thumbnailable)
+    GetSmall()(Thumbnailable)
+    GetSource()(Thumbnailable)
+    SetLarge(value Thumbnailable)()
+    SetMedium(value Thumbnailable)()
+    SetSmall(value Thumbnailable)()
+    SetSource(value Thumbnailable)()
 }

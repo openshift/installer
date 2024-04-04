@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type RoutingMode int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i RoutingMode) String() string {
     return []string{"oneToOne", "multicast", "unknownFutureValue"}[i]
 }
-func ParseRoutingMode(v string) (interface{}, error) {
+func ParseRoutingMode(v string) (any, error) {
     result := ONETOONE_ROUTINGMODE
     switch v {
         case "oneToOne":

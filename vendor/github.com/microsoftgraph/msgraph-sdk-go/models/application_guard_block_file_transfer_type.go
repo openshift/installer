@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for applicationGuardBlockFileTransfer
 type ApplicationGuardBlockFileTransferType int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i ApplicationGuardBlockFileTransferType) String() string {
     return []string{"notConfigured", "blockImageAndTextFile", "blockImageFile", "blockNone", "blockTextFile"}[i]
 }
-func ParseApplicationGuardBlockFileTransferType(v string) (interface{}, error) {
+func ParseApplicationGuardBlockFileTransferType(v string) (any, error) {
     result := NOTCONFIGURED_APPLICATIONGUARDBLOCKFILETRANSFERTYPE
     switch v {
         case "notConfigured":

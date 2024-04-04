@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AppliedConditionalAccessPolicyResult int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i AppliedConditionalAccessPolicyResult) String() string {
     return []string{"success", "failure", "notApplied", "notEnabled", "unknown", "unknownFutureValue"}[i]
 }
-func ParseAppliedConditionalAccessPolicyResult(v string) (interface{}, error) {
+func ParseAppliedConditionalAccessPolicyResult(v string) (any, error) {
     result := SUCCESS_APPLIEDCONDITIONALACCESSPOLICYRESULT
     switch v {
         case "success":

@@ -1,29 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // IosUpdateConfiguration 
 type IosUpdateConfiguration struct {
     DeviceConfiguration
-    // Active Hours End (active hours mean the time window when updates install should not happen)
-    activeHoursEnd *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly
-    // Active Hours Start (active hours mean the time window when updates install should not happen)
-    activeHoursStart *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly
-    // Days in week for which active hours are configured. This collection can contain a maximum of 7 elements.
-    scheduledInstallDays []DayOfWeek
-    // UTC Time Offset indicated in minutes
-    utcTimeOffsetInMinutes *int32
 }
 // NewIosUpdateConfiguration instantiates a new IosUpdateConfiguration and sets the default values.
 func NewIosUpdateConfiguration()(*IosUpdateConfiguration) {
     m := &IosUpdateConfiguration{
         DeviceConfiguration: *NewDeviceConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.iosUpdateConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.iosUpdateConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateIosUpdateConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -32,28 +23,96 @@ func CreateIosUpdateConfigurationFromDiscriminatorValue(parseNode i878a80d2330e8
 }
 // GetActiveHoursEnd gets the activeHoursEnd property value. Active Hours End (active hours mean the time window when updates install should not happen)
 func (m *IosUpdateConfiguration) GetActiveHoursEnd()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly) {
-    return m.activeHoursEnd
+    val, err := m.GetBackingStore().Get("activeHoursEnd")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    }
+    return nil
 }
 // GetActiveHoursStart gets the activeHoursStart property value. Active Hours Start (active hours mean the time window when updates install should not happen)
 func (m *IosUpdateConfiguration) GetActiveHoursStart()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly) {
-    return m.activeHoursStart
+    val, err := m.GetBackingStore().Get("activeHoursStart")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *IosUpdateConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DeviceConfiguration.GetFieldDeserializers()
-    res["activeHoursEnd"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeOnlyValue(m.SetActiveHoursEnd)
-    res["activeHoursStart"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeOnlyValue(m.SetActiveHoursStart)
-    res["scheduledInstallDays"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfEnumValues(ParseDayOfWeek , m.SetScheduledInstallDays)
-    res["utcTimeOffsetInMinutes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetUtcTimeOffsetInMinutes)
+    res["activeHoursEnd"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeOnlyValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetActiveHoursEnd(val)
+        }
+        return nil
+    }
+    res["activeHoursStart"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeOnlyValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetActiveHoursStart(val)
+        }
+        return nil
+    }
+    res["scheduledInstallDays"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfEnumValues(ParseDayOfWeek)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DayOfWeek, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*DayOfWeek))
+            }
+            m.SetScheduledInstallDays(res)
+        }
+        return nil
+    }
+    res["utcTimeOffsetInMinutes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUtcTimeOffsetInMinutes(val)
+        }
+        return nil
+    }
     return res
 }
 // GetScheduledInstallDays gets the scheduledInstallDays property value. Days in week for which active hours are configured. This collection can contain a maximum of 7 elements.
 func (m *IosUpdateConfiguration) GetScheduledInstallDays()([]DayOfWeek) {
-    return m.scheduledInstallDays
+    val, err := m.GetBackingStore().Get("scheduledInstallDays")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DayOfWeek)
+    }
+    return nil
 }
 // GetUtcTimeOffsetInMinutes gets the utcTimeOffsetInMinutes property value. UTC Time Offset indicated in minutes
 func (m *IosUpdateConfiguration) GetUtcTimeOffsetInMinutes()(*int32) {
-    return m.utcTimeOffsetInMinutes
+    val, err := m.GetBackingStore().Get("utcTimeOffsetInMinutes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *IosUpdateConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -89,17 +148,42 @@ func (m *IosUpdateConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetActiveHoursEnd sets the activeHoursEnd property value. Active Hours End (active hours mean the time window when updates install should not happen)
 func (m *IosUpdateConfiguration) SetActiveHoursEnd(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)() {
-    m.activeHoursEnd = value
+    err := m.GetBackingStore().Set("activeHoursEnd", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetActiveHoursStart sets the activeHoursStart property value. Active Hours Start (active hours mean the time window when updates install should not happen)
 func (m *IosUpdateConfiguration) SetActiveHoursStart(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)() {
-    m.activeHoursStart = value
+    err := m.GetBackingStore().Set("activeHoursStart", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScheduledInstallDays sets the scheduledInstallDays property value. Days in week for which active hours are configured. This collection can contain a maximum of 7 elements.
 func (m *IosUpdateConfiguration) SetScheduledInstallDays(value []DayOfWeek)() {
-    m.scheduledInstallDays = value
+    err := m.GetBackingStore().Set("scheduledInstallDays", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUtcTimeOffsetInMinutes sets the utcTimeOffsetInMinutes property value. UTC Time Offset indicated in minutes
 func (m *IosUpdateConfiguration) SetUtcTimeOffsetInMinutes(value *int32)() {
-    m.utcTimeOffsetInMinutes = value
+    err := m.GetBackingStore().Set("utcTimeOffsetInMinutes", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// IosUpdateConfigurationable 
+type IosUpdateConfigurationable interface {
+    DeviceConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetActiveHoursEnd()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    GetActiveHoursStart()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)
+    GetScheduledInstallDays()([]DayOfWeek)
+    GetUtcTimeOffsetInMinutes()(*int32)
+    SetActiveHoursEnd(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)()
+    SetActiveHoursStart(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.TimeOnly)()
+    SetScheduledInstallDays(value []DayOfWeek)()
+    SetUtcTimeOffsetInMinutes(value *int32)()
 }

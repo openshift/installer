@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// UsedInsight provides operations to manage the collection of agreement entities.
+// UsedInsight 
 type UsedInsight struct {
     Entity
-    // Information about when the item was last viewed or modified by the user. Read only.
-    lastUsed UsageDetailsable
-    // Used for navigating to the item that was used. For file attachments, the type is fileAttachment. For linked attachments, the type is driveItem.
-    resource Entityable
-    // Reference properties of the used document, such as the url and type of the document. Read-only
-    resourceReference ResourceReferenceable
-    // Properties that you can use to visualize the document in your experience. Read-only
-    resourceVisualization ResourceVisualizationable
 }
 // NewUsedInsight instantiates a new usedInsight and sets the default values.
 func NewUsedInsight()(*UsedInsight) {
@@ -31,27 +22,91 @@ func CreateUsedInsightFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
 // GetFieldDeserializers the deserialization information for the current model
 func (m *UsedInsight) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["lastUsed"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateUsageDetailsFromDiscriminatorValue , m.SetLastUsed)
-    res["resource"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEntityFromDiscriminatorValue , m.SetResource)
-    res["resourceReference"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateResourceReferenceFromDiscriminatorValue , m.SetResourceReference)
-    res["resourceVisualization"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateResourceVisualizationFromDiscriminatorValue , m.SetResourceVisualization)
+    res["lastUsed"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateUsageDetailsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastUsed(val.(UsageDetailsable))
+        }
+        return nil
+    }
+    res["resource"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEntityFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResource(val.(Entityable))
+        }
+        return nil
+    }
+    res["resourceReference"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateResourceReferenceFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceReference(val.(ResourceReferenceable))
+        }
+        return nil
+    }
+    res["resourceVisualization"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateResourceVisualizationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceVisualization(val.(ResourceVisualizationable))
+        }
+        return nil
+    }
     return res
 }
 // GetLastUsed gets the lastUsed property value. Information about when the item was last viewed or modified by the user. Read only.
 func (m *UsedInsight) GetLastUsed()(UsageDetailsable) {
-    return m.lastUsed
+    val, err := m.GetBackingStore().Get("lastUsed")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(UsageDetailsable)
+    }
+    return nil
 }
 // GetResource gets the resource property value. Used for navigating to the item that was used. For file attachments, the type is fileAttachment. For linked attachments, the type is driveItem.
 func (m *UsedInsight) GetResource()(Entityable) {
-    return m.resource
+    val, err := m.GetBackingStore().Get("resource")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Entityable)
+    }
+    return nil
 }
 // GetResourceReference gets the resourceReference property value. Reference properties of the used document, such as the url and type of the document. Read-only
 func (m *UsedInsight) GetResourceReference()(ResourceReferenceable) {
-    return m.resourceReference
+    val, err := m.GetBackingStore().Get("resourceReference")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ResourceReferenceable)
+    }
+    return nil
 }
 // GetResourceVisualization gets the resourceVisualization property value. Properties that you can use to visualize the document in your experience. Read-only
 func (m *UsedInsight) GetResourceVisualization()(ResourceVisualizationable) {
-    return m.resourceVisualization
+    val, err := m.GetBackingStore().Get("resourceVisualization")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ResourceVisualizationable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *UsedInsight) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -75,17 +130,42 @@ func (m *UsedInsight) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
 }
 // SetLastUsed sets the lastUsed property value. Information about when the item was last viewed or modified by the user. Read only.
 func (m *UsedInsight) SetLastUsed(value UsageDetailsable)() {
-    m.lastUsed = value
+    err := m.GetBackingStore().Set("lastUsed", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResource sets the resource property value. Used for navigating to the item that was used. For file attachments, the type is fileAttachment. For linked attachments, the type is driveItem.
 func (m *UsedInsight) SetResource(value Entityable)() {
-    m.resource = value
+    err := m.GetBackingStore().Set("resource", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceReference sets the resourceReference property value. Reference properties of the used document, such as the url and type of the document. Read-only
 func (m *UsedInsight) SetResourceReference(value ResourceReferenceable)() {
-    m.resourceReference = value
+    err := m.GetBackingStore().Set("resourceReference", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceVisualization sets the resourceVisualization property value. Properties that you can use to visualize the document in your experience. Read-only
 func (m *UsedInsight) SetResourceVisualization(value ResourceVisualizationable)() {
-    m.resourceVisualization = value
+    err := m.GetBackingStore().Set("resourceVisualization", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// UsedInsightable 
+type UsedInsightable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetLastUsed()(UsageDetailsable)
+    GetResource()(Entityable)
+    GetResourceReference()(ResourceReferenceable)
+    GetResourceVisualization()(ResourceVisualizationable)
+    SetLastUsed(value UsageDetailsable)()
+    SetResource(value Entityable)()
+    SetResourceReference(value ResourceReferenceable)()
+    SetResourceVisualization(value ResourceVisualizationable)()
 }

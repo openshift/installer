@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Indicates the operating system / platform of the discovered application.  Some possible values are Windows, iOS, macOS. The default value is unknown (0).
 type DetectedAppPlatformType int
 
 const (
@@ -33,7 +33,7 @@ const (
 func (i DetectedAppPlatformType) String() string {
     return []string{"unknown", "windows", "windowsMobile", "windowsHolographic", "ios", "macOS", "chromeOS", "androidOSP", "androidDeviceAdministrator", "androidWorkProfile", "androidDedicatedAndFullyManaged"}[i]
 }
-func ParseDetectedAppPlatformType(v string) (interface{}, error) {
+func ParseDetectedAppPlatformType(v string) (any, error) {
     result := UNKNOWN_DETECTEDAPPPLATFORMTYPE
     switch v {
         case "unknown":

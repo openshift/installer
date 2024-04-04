@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type CallDirection int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i CallDirection) String() string {
     return []string{"incoming", "outgoing"}[i]
 }
-func ParseCallDirection(v string) (interface{}, error) {
+func ParseCallDirection(v string) (any, error) {
     result := INCOMING_CALLDIRECTION
     switch v {
         case "incoming":

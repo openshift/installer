@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Android Work Profile cross profile data sharing type.
 type AndroidWorkProfileCrossProfileDataSharingType int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i AndroidWorkProfileCrossProfileDataSharingType) String() string {
     return []string{"deviceDefault", "preventAny", "allowPersonalToWork", "noRestrictions"}[i]
 }
-func ParseAndroidWorkProfileCrossProfileDataSharingType(v string) (interface{}, error) {
+func ParseAndroidWorkProfileCrossProfileDataSharingType(v string) (any, error) {
     result := DEVICEDEFAULT_ANDROIDWORKPROFILECROSSPROFILEDATASHARINGTYPE
     switch v {
         case "deviceDefault":

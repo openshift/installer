@@ -1,30 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // PrintMargin 
 type PrintMargin struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The margin in microns from the bottom edge.
-    bottom *int32
-    // The margin in microns from the left edge.
-    left *int32
-    // The OdataType property
-    odataType *string
-    // The margin in microns from the right edge.
-    right *int32
-    // The margin in microns from the top edge.
-    top *int32
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewPrintMargin instantiates a new printMargin and sets the default values.
 func NewPrintMargin()(*PrintMargin) {
     m := &PrintMargin{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreatePrintMarginFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -32,38 +23,130 @@ func CreatePrintMarginFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
     return NewPrintMargin(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PrintMargin) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *PrintMargin) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *PrintMargin) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetBottom gets the bottom property value. The margin in microns from the bottom edge.
 func (m *PrintMargin) GetBottom()(*int32) {
-    return m.bottom
+    val, err := m.GetBackingStore().Get("bottom")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PrintMargin) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["bottom"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetBottom)
-    res["left"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetLeft)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["right"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetRight)
-    res["top"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetTop)
+    res["bottom"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBottom(val)
+        }
+        return nil
+    }
+    res["left"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLeft(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["right"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRight(val)
+        }
+        return nil
+    }
+    res["top"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTop(val)
+        }
+        return nil
+    }
     return res
 }
 // GetLeft gets the left property value. The margin in microns from the left edge.
 func (m *PrintMargin) GetLeft()(*int32) {
-    return m.left
+    val, err := m.GetBackingStore().Get("left")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *PrintMargin) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetRight gets the right property value. The margin in microns from the right edge.
 func (m *PrintMargin) GetRight()(*int32) {
-    return m.right
+    val, err := m.GetBackingStore().Get("right")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetTop gets the top property value. The margin in microns from the top edge.
 func (m *PrintMargin) GetTop()(*int32) {
-    return m.top
+    val, err := m.GetBackingStore().Get("top")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *PrintMargin) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -106,26 +189,66 @@ func (m *PrintMargin) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PrintMargin) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *PrintMargin) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *PrintMargin) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetBottom sets the bottom property value. The margin in microns from the bottom edge.
 func (m *PrintMargin) SetBottom(value *int32)() {
-    m.bottom = value
+    err := m.GetBackingStore().Set("bottom", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLeft sets the left property value. The margin in microns from the left edge.
 func (m *PrintMargin) SetLeft(value *int32)() {
-    m.left = value
+    err := m.GetBackingStore().Set("left", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *PrintMargin) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRight sets the right property value. The margin in microns from the right edge.
 func (m *PrintMargin) SetRight(value *int32)() {
-    m.right = value
+    err := m.GetBackingStore().Set("right", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTop sets the top property value. The margin in microns from the top edge.
 func (m *PrintMargin) SetTop(value *int32)() {
-    m.top = value
+    err := m.GetBackingStore().Set("top", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PrintMarginable 
+type PrintMarginable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetBottom()(*int32)
+    GetLeft()(*int32)
+    GetOdataType()(*string)
+    GetRight()(*int32)
+    GetTop()(*int32)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetBottom(value *int32)()
+    SetLeft(value *int32)()
+    SetOdataType(value *string)()
+    SetRight(value *int32)()
+    SetTop(value *int32)()
 }

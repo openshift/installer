@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type EducationAddToCalendarOptions int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i EducationAddToCalendarOptions) String() string {
     return []string{"none", "studentsAndPublisher", "studentsAndTeamOwners", "unknownFutureValue", "studentsOnly"}[i]
 }
-func ParseEducationAddToCalendarOptions(v string) (interface{}, error) {
+func ParseEducationAddToCalendarOptions(v string) (any, error) {
     result := NONE_EDUCATIONADDTOCALENDAROPTIONS
     switch v {
         case "none":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AlertStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i AlertStatus) String() string {
     return []string{"unknown", "newAlert", "inProgress", "resolved", "dismissed", "unknownFutureValue"}[i]
 }
-func ParseAlertStatus(v string) (interface{}, error) {
+func ParseAlertStatus(v string) (any, error) {
     result := UNKNOWN_ALERTSTATUS
     switch v {
         case "unknown":

@@ -1,25 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// TeamworkTag provides operations to manage the collection of agreement entities.
+// TeamworkTag 
 type TeamworkTag struct {
     Entity
-    // The description of the tag as it will appear to the user in Microsoft Teams.
-    description *string
-    // The name of the tag as it will appear to the user in Microsoft Teams.
-    displayName *string
-    // The number of users assigned to the tag.
-    memberCount *int32
-    // Users assigned to the tag.
-    members []TeamworkTagMemberable
-    // The type of the tag. Default is standard.
-    tagType *TeamworkTagType
-    // ID of the team in which the tag is defined.
-    teamId *string
 }
 // NewTeamworkTag instantiates a new teamworkTag and sets the default values.
 func NewTeamworkTag()(*TeamworkTag) {
@@ -34,38 +21,138 @@ func CreateTeamworkTagFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
 }
 // GetDescription gets the description property value. The description of the tag as it will appear to the user in Microsoft Teams.
 func (m *TeamworkTag) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name of the tag as it will appear to the user in Microsoft Teams.
 func (m *TeamworkTag) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeamworkTag) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["memberCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetMemberCount)
-    res["members"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateTeamworkTagMemberFromDiscriminatorValue , m.SetMembers)
-    res["tagType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseTeamworkTagType , m.SetTagType)
-    res["teamId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTeamId)
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["memberCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMemberCount(val)
+        }
+        return nil
+    }
+    res["members"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateTeamworkTagMemberFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]TeamworkTagMemberable, len(val))
+            for i, v := range val {
+                res[i] = v.(TeamworkTagMemberable)
+            }
+            m.SetMembers(res)
+        }
+        return nil
+    }
+    res["tagType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseTeamworkTagType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTagType(val.(*TeamworkTagType))
+        }
+        return nil
+    }
+    res["teamId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetMemberCount gets the memberCount property value. The number of users assigned to the tag.
 func (m *TeamworkTag) GetMemberCount()(*int32) {
-    return m.memberCount
+    val, err := m.GetBackingStore().Get("memberCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetMembers gets the members property value. Users assigned to the tag.
 func (m *TeamworkTag) GetMembers()([]TeamworkTagMemberable) {
-    return m.members
+    val, err := m.GetBackingStore().Get("members")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]TeamworkTagMemberable)
+    }
+    return nil
 }
 // GetTagType gets the tagType property value. The type of the tag. Default is standard.
 func (m *TeamworkTag) GetTagType()(*TeamworkTagType) {
-    return m.tagType
+    val, err := m.GetBackingStore().Get("tagType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*TeamworkTagType)
+    }
+    return nil
 }
 // GetTeamId gets the teamId property value. ID of the team in which the tag is defined.
 func (m *TeamworkTag) GetTeamId()(*string) {
-    return m.teamId
+    val, err := m.GetBackingStore().Get("teamId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TeamworkTag) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -92,7 +179,10 @@ func (m *TeamworkTag) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
         }
     }
     if m.GetMembers() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetMembers())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetMembers()))
+        for i, v := range m.GetMembers() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("members", cast)
         if err != nil {
             return err
@@ -115,25 +205,60 @@ func (m *TeamworkTag) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
 }
 // SetDescription sets the description property value. The description of the tag as it will appear to the user in Microsoft Teams.
 func (m *TeamworkTag) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name of the tag as it will appear to the user in Microsoft Teams.
 func (m *TeamworkTag) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMemberCount sets the memberCount property value. The number of users assigned to the tag.
 func (m *TeamworkTag) SetMemberCount(value *int32)() {
-    m.memberCount = value
+    err := m.GetBackingStore().Set("memberCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMembers sets the members property value. Users assigned to the tag.
 func (m *TeamworkTag) SetMembers(value []TeamworkTagMemberable)() {
-    m.members = value
+    err := m.GetBackingStore().Set("members", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTagType sets the tagType property value. The type of the tag. Default is standard.
 func (m *TeamworkTag) SetTagType(value *TeamworkTagType)() {
-    m.tagType = value
+    err := m.GetBackingStore().Set("tagType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeamId sets the teamId property value. ID of the team in which the tag is defined.
 func (m *TeamworkTag) SetTeamId(value *string)() {
-    m.teamId = value
+    err := m.GetBackingStore().Set("teamId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeamworkTagable 
+type TeamworkTagable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetMemberCount()(*int32)
+    GetMembers()([]TeamworkTagMemberable)
+    GetTagType()(*TeamworkTagType)
+    GetTeamId()(*string)
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetMemberCount(value *int32)()
+    SetMembers(value []TeamworkTagMemberable)()
+    SetTagType(value *TeamworkTagType)()
+    SetTeamId(value *string)()
 }

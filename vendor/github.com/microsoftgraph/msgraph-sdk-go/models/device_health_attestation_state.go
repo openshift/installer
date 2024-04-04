@@ -2,86 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // DeviceHealthAttestationState 
 type DeviceHealthAttestationState struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // TWhen an Attestation Identity Key (AIK) is present on a device, it indicates that the device has an endorsement key (EK) certificate.
-    attestationIdentityKey *string
-    // On or Off of BitLocker Drive Encryption
-    bitLockerStatus *string
-    // The security version number of the Boot Application
-    bootAppSecurityVersion *string
-    // When bootDebugging is enabled, the device is used in development and testing
-    bootDebugging *string
-    // The security version number of the Boot Application
-    bootManagerSecurityVersion *string
-    // The version of the Boot Manager
-    bootManagerVersion *string
-    // The Boot Revision List that was loaded during initial boot on the attested device
-    bootRevisionListInfo *string
-    // When code integrity is enabled, code execution is restricted to integrity verified code
-    codeIntegrity *string
-    // The version of the Boot Manager
-    codeIntegrityCheckVersion *string
-    // The Code Integrity policy that is controlling the security of the boot environment
-    codeIntegrityPolicy *string
-    // The DHA report version. (Namespace version)
-    contentNamespaceUrl *string
-    // The HealthAttestation state schema version
-    contentVersion *string
-    // DEP Policy defines a set of hardware and software technologies that perform additional checks on memory
-    dataExcutionPolicy *string
-    // The DHA report version. (Namespace version)
-    deviceHealthAttestationStatus *string
-    // ELAM provides protection for the computers in your network when they start up
-    earlyLaunchAntiMalwareDriverProtection *string
-    // This attribute indicates if DHA is supported for the device
-    healthAttestationSupportedStatus *string
-    // This attribute appears if DHA-Service detects an integrity issue
-    healthStatusMismatchInfo *string
-    // The DateTime when device was evaluated or issued to MDM
-    issuedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The Timestamp of the last update.
-    lastUpdateDateTime *string
-    // The OdataType property
-    odataType *string
-    // When operatingSystemKernelDebugging is enabled, the device is used in development and testing
-    operatingSystemKernelDebugging *string
-    // The Operating System Revision List that was loaded during initial boot on the attested device
-    operatingSystemRevListInfo *string
-    // The measurement that is captured in PCR[0]
-    pcr0 *string
-    // Informational attribute that identifies the HASH algorithm that was used by TPM
-    pcrHashAlgorithm *string
-    // The number of times a PC device has hibernated or resumed
-    resetCount *int64
-    // The number of times a PC device has rebooted
-    restartCount *int64
-    // Safe mode is a troubleshooting option for Windows that starts your computer in a limited state
-    safeMode *string
-    // When Secure Boot is enabled, the core components must have the correct cryptographic signatures
-    secureBoot *string
-    // Fingerprint of the Custom Secure Boot Configuration Policy
-    secureBootConfigurationPolicyFingerPrint *string
-    // When test signing is allowed, the device does not enforce signature validation during boot
-    testSigning *string
-    // The security version number of the Boot Application
-    tpmVersion *string
-    // VSM is a container that protects high value assets from a compromised kernel
-    virtualSecureMode *string
-    // Operating system running with limited services that is used to prepare a computer for Windows
-    windowsPE *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewDeviceHealthAttestationState instantiates a new deviceHealthAttestationState and sets the default values.
 func NewDeviceHealthAttestationState()(*DeviceHealthAttestationState) {
     m := &DeviceHealthAttestationState{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateDeviceHealthAttestationStateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -89,178 +24,718 @@ func CreateDeviceHealthAttestationStateFromDiscriminatorValue(parseNode i878a80d
     return NewDeviceHealthAttestationState(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceHealthAttestationState) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *DeviceHealthAttestationState) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAttestationIdentityKey gets the attestationIdentityKey property value. TWhen an Attestation Identity Key (AIK) is present on a device, it indicates that the device has an endorsement key (EK) certificate.
 func (m *DeviceHealthAttestationState) GetAttestationIdentityKey()(*string) {
-    return m.attestationIdentityKey
+    val, err := m.GetBackingStore().Get("attestationIdentityKey")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *DeviceHealthAttestationState) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetBitLockerStatus gets the bitLockerStatus property value. On or Off of BitLocker Drive Encryption
 func (m *DeviceHealthAttestationState) GetBitLockerStatus()(*string) {
-    return m.bitLockerStatus
+    val, err := m.GetBackingStore().Get("bitLockerStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBootAppSecurityVersion gets the bootAppSecurityVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) GetBootAppSecurityVersion()(*string) {
-    return m.bootAppSecurityVersion
+    val, err := m.GetBackingStore().Get("bootAppSecurityVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBootDebugging gets the bootDebugging property value. When bootDebugging is enabled, the device is used in development and testing
 func (m *DeviceHealthAttestationState) GetBootDebugging()(*string) {
-    return m.bootDebugging
+    val, err := m.GetBackingStore().Get("bootDebugging")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBootManagerSecurityVersion gets the bootManagerSecurityVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) GetBootManagerSecurityVersion()(*string) {
-    return m.bootManagerSecurityVersion
+    val, err := m.GetBackingStore().Get("bootManagerSecurityVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBootManagerVersion gets the bootManagerVersion property value. The version of the Boot Manager
 func (m *DeviceHealthAttestationState) GetBootManagerVersion()(*string) {
-    return m.bootManagerVersion
+    val, err := m.GetBackingStore().Get("bootManagerVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetBootRevisionListInfo gets the bootRevisionListInfo property value. The Boot Revision List that was loaded during initial boot on the attested device
 func (m *DeviceHealthAttestationState) GetBootRevisionListInfo()(*string) {
-    return m.bootRevisionListInfo
+    val, err := m.GetBackingStore().Get("bootRevisionListInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCodeIntegrity gets the codeIntegrity property value. When code integrity is enabled, code execution is restricted to integrity verified code
 func (m *DeviceHealthAttestationState) GetCodeIntegrity()(*string) {
-    return m.codeIntegrity
+    val, err := m.GetBackingStore().Get("codeIntegrity")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCodeIntegrityCheckVersion gets the codeIntegrityCheckVersion property value. The version of the Boot Manager
 func (m *DeviceHealthAttestationState) GetCodeIntegrityCheckVersion()(*string) {
-    return m.codeIntegrityCheckVersion
+    val, err := m.GetBackingStore().Get("codeIntegrityCheckVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCodeIntegrityPolicy gets the codeIntegrityPolicy property value. The Code Integrity policy that is controlling the security of the boot environment
 func (m *DeviceHealthAttestationState) GetCodeIntegrityPolicy()(*string) {
-    return m.codeIntegrityPolicy
+    val, err := m.GetBackingStore().Get("codeIntegrityPolicy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetContentNamespaceUrl gets the contentNamespaceUrl property value. The DHA report version. (Namespace version)
 func (m *DeviceHealthAttestationState) GetContentNamespaceUrl()(*string) {
-    return m.contentNamespaceUrl
+    val, err := m.GetBackingStore().Get("contentNamespaceUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetContentVersion gets the contentVersion property value. The HealthAttestation state schema version
 func (m *DeviceHealthAttestationState) GetContentVersion()(*string) {
-    return m.contentVersion
+    val, err := m.GetBackingStore().Get("contentVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDataExcutionPolicy gets the dataExcutionPolicy property value. DEP Policy defines a set of hardware and software technologies that perform additional checks on memory
 func (m *DeviceHealthAttestationState) GetDataExcutionPolicy()(*string) {
-    return m.dataExcutionPolicy
+    val, err := m.GetBackingStore().Get("dataExcutionPolicy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceHealthAttestationStatus gets the deviceHealthAttestationStatus property value. The DHA report version. (Namespace version)
 func (m *DeviceHealthAttestationState) GetDeviceHealthAttestationStatus()(*string) {
-    return m.deviceHealthAttestationStatus
+    val, err := m.GetBackingStore().Get("deviceHealthAttestationStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetEarlyLaunchAntiMalwareDriverProtection gets the earlyLaunchAntiMalwareDriverProtection property value. ELAM provides protection for the computers in your network when they start up
 func (m *DeviceHealthAttestationState) GetEarlyLaunchAntiMalwareDriverProtection()(*string) {
-    return m.earlyLaunchAntiMalwareDriverProtection
+    val, err := m.GetBackingStore().Get("earlyLaunchAntiMalwareDriverProtection")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceHealthAttestationState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["attestationIdentityKey"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAttestationIdentityKey)
-    res["bitLockerStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBitLockerStatus)
-    res["bootAppSecurityVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBootAppSecurityVersion)
-    res["bootDebugging"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBootDebugging)
-    res["bootManagerSecurityVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBootManagerSecurityVersion)
-    res["bootManagerVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBootManagerVersion)
-    res["bootRevisionListInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetBootRevisionListInfo)
-    res["codeIntegrity"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCodeIntegrity)
-    res["codeIntegrityCheckVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCodeIntegrityCheckVersion)
-    res["codeIntegrityPolicy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCodeIntegrityPolicy)
-    res["contentNamespaceUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentNamespaceUrl)
-    res["contentVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentVersion)
-    res["dataExcutionPolicy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDataExcutionPolicy)
-    res["deviceHealthAttestationStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceHealthAttestationStatus)
-    res["earlyLaunchAntiMalwareDriverProtection"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetEarlyLaunchAntiMalwareDriverProtection)
-    res["healthAttestationSupportedStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetHealthAttestationSupportedStatus)
-    res["healthStatusMismatchInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetHealthStatusMismatchInfo)
-    res["issuedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetIssuedDateTime)
-    res["lastUpdateDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetLastUpdateDateTime)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["operatingSystemKernelDebugging"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOperatingSystemKernelDebugging)
-    res["operatingSystemRevListInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOperatingSystemRevListInfo)
-    res["pcr0"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPcr0)
-    res["pcrHashAlgorithm"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPcrHashAlgorithm)
-    res["resetCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetResetCount)
-    res["restartCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetRestartCount)
-    res["safeMode"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSafeMode)
-    res["secureBoot"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSecureBoot)
-    res["secureBootConfigurationPolicyFingerPrint"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSecureBootConfigurationPolicyFingerPrint)
-    res["testSigning"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTestSigning)
-    res["tpmVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTpmVersion)
-    res["virtualSecureMode"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetVirtualSecureMode)
-    res["windowsPE"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWindowsPE)
+    res["attestationIdentityKey"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAttestationIdentityKey(val)
+        }
+        return nil
+    }
+    res["bitLockerStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBitLockerStatus(val)
+        }
+        return nil
+    }
+    res["bootAppSecurityVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootAppSecurityVersion(val)
+        }
+        return nil
+    }
+    res["bootDebugging"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootDebugging(val)
+        }
+        return nil
+    }
+    res["bootManagerSecurityVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootManagerSecurityVersion(val)
+        }
+        return nil
+    }
+    res["bootManagerVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootManagerVersion(val)
+        }
+        return nil
+    }
+    res["bootRevisionListInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBootRevisionListInfo(val)
+        }
+        return nil
+    }
+    res["codeIntegrity"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCodeIntegrity(val)
+        }
+        return nil
+    }
+    res["codeIntegrityCheckVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCodeIntegrityCheckVersion(val)
+        }
+        return nil
+    }
+    res["codeIntegrityPolicy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCodeIntegrityPolicy(val)
+        }
+        return nil
+    }
+    res["contentNamespaceUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentNamespaceUrl(val)
+        }
+        return nil
+    }
+    res["contentVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentVersion(val)
+        }
+        return nil
+    }
+    res["dataExcutionPolicy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDataExcutionPolicy(val)
+        }
+        return nil
+    }
+    res["deviceHealthAttestationStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceHealthAttestationStatus(val)
+        }
+        return nil
+    }
+    res["earlyLaunchAntiMalwareDriverProtection"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEarlyLaunchAntiMalwareDriverProtection(val)
+        }
+        return nil
+    }
+    res["healthAttestationSupportedStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHealthAttestationSupportedStatus(val)
+        }
+        return nil
+    }
+    res["healthStatusMismatchInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHealthStatusMismatchInfo(val)
+        }
+        return nil
+    }
+    res["issuedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIssuedDateTime(val)
+        }
+        return nil
+    }
+    res["lastUpdateDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastUpdateDateTime(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["operatingSystemKernelDebugging"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperatingSystemKernelDebugging(val)
+        }
+        return nil
+    }
+    res["operatingSystemRevListInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperatingSystemRevListInfo(val)
+        }
+        return nil
+    }
+    res["pcr0"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPcr0(val)
+        }
+        return nil
+    }
+    res["pcrHashAlgorithm"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPcrHashAlgorithm(val)
+        }
+        return nil
+    }
+    res["resetCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResetCount(val)
+        }
+        return nil
+    }
+    res["restartCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRestartCount(val)
+        }
+        return nil
+    }
+    res["safeMode"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSafeMode(val)
+        }
+        return nil
+    }
+    res["secureBoot"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSecureBoot(val)
+        }
+        return nil
+    }
+    res["secureBootConfigurationPolicyFingerPrint"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSecureBootConfigurationPolicyFingerPrint(val)
+        }
+        return nil
+    }
+    res["testSigning"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTestSigning(val)
+        }
+        return nil
+    }
+    res["tpmVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTpmVersion(val)
+        }
+        return nil
+    }
+    res["virtualSecureMode"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVirtualSecureMode(val)
+        }
+        return nil
+    }
+    res["windowsPE"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWindowsPE(val)
+        }
+        return nil
+    }
     return res
 }
 // GetHealthAttestationSupportedStatus gets the healthAttestationSupportedStatus property value. This attribute indicates if DHA is supported for the device
 func (m *DeviceHealthAttestationState) GetHealthAttestationSupportedStatus()(*string) {
-    return m.healthAttestationSupportedStatus
+    val, err := m.GetBackingStore().Get("healthAttestationSupportedStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetHealthStatusMismatchInfo gets the healthStatusMismatchInfo property value. This attribute appears if DHA-Service detects an integrity issue
 func (m *DeviceHealthAttestationState) GetHealthStatusMismatchInfo()(*string) {
-    return m.healthStatusMismatchInfo
+    val, err := m.GetBackingStore().Get("healthStatusMismatchInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIssuedDateTime gets the issuedDateTime property value. The DateTime when device was evaluated or issued to MDM
 func (m *DeviceHealthAttestationState) GetIssuedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.issuedDateTime
+    val, err := m.GetBackingStore().Get("issuedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLastUpdateDateTime gets the lastUpdateDateTime property value. The Timestamp of the last update.
 func (m *DeviceHealthAttestationState) GetLastUpdateDateTime()(*string) {
-    return m.lastUpdateDateTime
+    val, err := m.GetBackingStore().Get("lastUpdateDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *DeviceHealthAttestationState) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperatingSystemKernelDebugging gets the operatingSystemKernelDebugging property value. When operatingSystemKernelDebugging is enabled, the device is used in development and testing
 func (m *DeviceHealthAttestationState) GetOperatingSystemKernelDebugging()(*string) {
-    return m.operatingSystemKernelDebugging
+    val, err := m.GetBackingStore().Get("operatingSystemKernelDebugging")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperatingSystemRevListInfo gets the operatingSystemRevListInfo property value. The Operating System Revision List that was loaded during initial boot on the attested device
 func (m *DeviceHealthAttestationState) GetOperatingSystemRevListInfo()(*string) {
-    return m.operatingSystemRevListInfo
+    val, err := m.GetBackingStore().Get("operatingSystemRevListInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPcr0 gets the pcr0 property value. The measurement that is captured in PCR[0]
 func (m *DeviceHealthAttestationState) GetPcr0()(*string) {
-    return m.pcr0
+    val, err := m.GetBackingStore().Get("pcr0")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPcrHashAlgorithm gets the pcrHashAlgorithm property value. Informational attribute that identifies the HASH algorithm that was used by TPM
 func (m *DeviceHealthAttestationState) GetPcrHashAlgorithm()(*string) {
-    return m.pcrHashAlgorithm
+    val, err := m.GetBackingStore().Get("pcrHashAlgorithm")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResetCount gets the resetCount property value. The number of times a PC device has hibernated or resumed
 func (m *DeviceHealthAttestationState) GetResetCount()(*int64) {
-    return m.resetCount
+    val, err := m.GetBackingStore().Get("resetCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetRestartCount gets the restartCount property value. The number of times a PC device has rebooted
 func (m *DeviceHealthAttestationState) GetRestartCount()(*int64) {
-    return m.restartCount
+    val, err := m.GetBackingStore().Get("restartCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetSafeMode gets the safeMode property value. Safe mode is a troubleshooting option for Windows that starts your computer in a limited state
 func (m *DeviceHealthAttestationState) GetSafeMode()(*string) {
-    return m.safeMode
+    val, err := m.GetBackingStore().Get("safeMode")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSecureBoot gets the secureBoot property value. When Secure Boot is enabled, the core components must have the correct cryptographic signatures
 func (m *DeviceHealthAttestationState) GetSecureBoot()(*string) {
-    return m.secureBoot
+    val, err := m.GetBackingStore().Get("secureBoot")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSecureBootConfigurationPolicyFingerPrint gets the secureBootConfigurationPolicyFingerPrint property value. Fingerprint of the Custom Secure Boot Configuration Policy
 func (m *DeviceHealthAttestationState) GetSecureBootConfigurationPolicyFingerPrint()(*string) {
-    return m.secureBootConfigurationPolicyFingerPrint
+    val, err := m.GetBackingStore().Get("secureBootConfigurationPolicyFingerPrint")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTestSigning gets the testSigning property value. When test signing is allowed, the device does not enforce signature validation during boot
 func (m *DeviceHealthAttestationState) GetTestSigning()(*string) {
-    return m.testSigning
+    val, err := m.GetBackingStore().Get("testSigning")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTpmVersion gets the tpmVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) GetTpmVersion()(*string) {
-    return m.tpmVersion
+    val, err := m.GetBackingStore().Get("tpmVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetVirtualSecureMode gets the virtualSecureMode property value. VSM is a container that protects high value assets from a compromised kernel
 func (m *DeviceHealthAttestationState) GetVirtualSecureMode()(*string) {
-    return m.virtualSecureMode
+    val, err := m.GetBackingStore().Get("virtualSecureMode")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWindowsPE gets the windowsPE property value. Operating system running with limited services that is used to prepare a computer for Windows
 func (m *DeviceHealthAttestationState) GetWindowsPE()(*string) {
-    return m.windowsPE
+    val, err := m.GetBackingStore().Get("windowsPE")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceHealthAttestationState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -471,138 +946,318 @@ func (m *DeviceHealthAttestationState) Serialize(writer i878a80d2330e89d26896388
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceHealthAttestationState) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *DeviceHealthAttestationState) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAttestationIdentityKey sets the attestationIdentityKey property value. TWhen an Attestation Identity Key (AIK) is present on a device, it indicates that the device has an endorsement key (EK) certificate.
 func (m *DeviceHealthAttestationState) SetAttestationIdentityKey(value *string)() {
-    m.attestationIdentityKey = value
+    err := m.GetBackingStore().Set("attestationIdentityKey", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *DeviceHealthAttestationState) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetBitLockerStatus sets the bitLockerStatus property value. On or Off of BitLocker Drive Encryption
 func (m *DeviceHealthAttestationState) SetBitLockerStatus(value *string)() {
-    m.bitLockerStatus = value
+    err := m.GetBackingStore().Set("bitLockerStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootAppSecurityVersion sets the bootAppSecurityVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) SetBootAppSecurityVersion(value *string)() {
-    m.bootAppSecurityVersion = value
+    err := m.GetBackingStore().Set("bootAppSecurityVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootDebugging sets the bootDebugging property value. When bootDebugging is enabled, the device is used in development and testing
 func (m *DeviceHealthAttestationState) SetBootDebugging(value *string)() {
-    m.bootDebugging = value
+    err := m.GetBackingStore().Set("bootDebugging", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootManagerSecurityVersion sets the bootManagerSecurityVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) SetBootManagerSecurityVersion(value *string)() {
-    m.bootManagerSecurityVersion = value
+    err := m.GetBackingStore().Set("bootManagerSecurityVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootManagerVersion sets the bootManagerVersion property value. The version of the Boot Manager
 func (m *DeviceHealthAttestationState) SetBootManagerVersion(value *string)() {
-    m.bootManagerVersion = value
+    err := m.GetBackingStore().Set("bootManagerVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetBootRevisionListInfo sets the bootRevisionListInfo property value. The Boot Revision List that was loaded during initial boot on the attested device
 func (m *DeviceHealthAttestationState) SetBootRevisionListInfo(value *string)() {
-    m.bootRevisionListInfo = value
+    err := m.GetBackingStore().Set("bootRevisionListInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCodeIntegrity sets the codeIntegrity property value. When code integrity is enabled, code execution is restricted to integrity verified code
 func (m *DeviceHealthAttestationState) SetCodeIntegrity(value *string)() {
-    m.codeIntegrity = value
+    err := m.GetBackingStore().Set("codeIntegrity", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCodeIntegrityCheckVersion sets the codeIntegrityCheckVersion property value. The version of the Boot Manager
 func (m *DeviceHealthAttestationState) SetCodeIntegrityCheckVersion(value *string)() {
-    m.codeIntegrityCheckVersion = value
+    err := m.GetBackingStore().Set("codeIntegrityCheckVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCodeIntegrityPolicy sets the codeIntegrityPolicy property value. The Code Integrity policy that is controlling the security of the boot environment
 func (m *DeviceHealthAttestationState) SetCodeIntegrityPolicy(value *string)() {
-    m.codeIntegrityPolicy = value
+    err := m.GetBackingStore().Set("codeIntegrityPolicy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentNamespaceUrl sets the contentNamespaceUrl property value. The DHA report version. (Namespace version)
 func (m *DeviceHealthAttestationState) SetContentNamespaceUrl(value *string)() {
-    m.contentNamespaceUrl = value
+    err := m.GetBackingStore().Set("contentNamespaceUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentVersion sets the contentVersion property value. The HealthAttestation state schema version
 func (m *DeviceHealthAttestationState) SetContentVersion(value *string)() {
-    m.contentVersion = value
+    err := m.GetBackingStore().Set("contentVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDataExcutionPolicy sets the dataExcutionPolicy property value. DEP Policy defines a set of hardware and software technologies that perform additional checks on memory
 func (m *DeviceHealthAttestationState) SetDataExcutionPolicy(value *string)() {
-    m.dataExcutionPolicy = value
+    err := m.GetBackingStore().Set("dataExcutionPolicy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceHealthAttestationStatus sets the deviceHealthAttestationStatus property value. The DHA report version. (Namespace version)
 func (m *DeviceHealthAttestationState) SetDeviceHealthAttestationStatus(value *string)() {
-    m.deviceHealthAttestationStatus = value
+    err := m.GetBackingStore().Set("deviceHealthAttestationStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEarlyLaunchAntiMalwareDriverProtection sets the earlyLaunchAntiMalwareDriverProtection property value. ELAM provides protection for the computers in your network when they start up
 func (m *DeviceHealthAttestationState) SetEarlyLaunchAntiMalwareDriverProtection(value *string)() {
-    m.earlyLaunchAntiMalwareDriverProtection = value
+    err := m.GetBackingStore().Set("earlyLaunchAntiMalwareDriverProtection", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHealthAttestationSupportedStatus sets the healthAttestationSupportedStatus property value. This attribute indicates if DHA is supported for the device
 func (m *DeviceHealthAttestationState) SetHealthAttestationSupportedStatus(value *string)() {
-    m.healthAttestationSupportedStatus = value
+    err := m.GetBackingStore().Set("healthAttestationSupportedStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHealthStatusMismatchInfo sets the healthStatusMismatchInfo property value. This attribute appears if DHA-Service detects an integrity issue
 func (m *DeviceHealthAttestationState) SetHealthStatusMismatchInfo(value *string)() {
-    m.healthStatusMismatchInfo = value
+    err := m.GetBackingStore().Set("healthStatusMismatchInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIssuedDateTime sets the issuedDateTime property value. The DateTime when device was evaluated or issued to MDM
 func (m *DeviceHealthAttestationState) SetIssuedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.issuedDateTime = value
+    err := m.GetBackingStore().Set("issuedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastUpdateDateTime sets the lastUpdateDateTime property value. The Timestamp of the last update.
 func (m *DeviceHealthAttestationState) SetLastUpdateDateTime(value *string)() {
-    m.lastUpdateDateTime = value
+    err := m.GetBackingStore().Set("lastUpdateDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *DeviceHealthAttestationState) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperatingSystemKernelDebugging sets the operatingSystemKernelDebugging property value. When operatingSystemKernelDebugging is enabled, the device is used in development and testing
 func (m *DeviceHealthAttestationState) SetOperatingSystemKernelDebugging(value *string)() {
-    m.operatingSystemKernelDebugging = value
+    err := m.GetBackingStore().Set("operatingSystemKernelDebugging", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperatingSystemRevListInfo sets the operatingSystemRevListInfo property value. The Operating System Revision List that was loaded during initial boot on the attested device
 func (m *DeviceHealthAttestationState) SetOperatingSystemRevListInfo(value *string)() {
-    m.operatingSystemRevListInfo = value
+    err := m.GetBackingStore().Set("operatingSystemRevListInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPcr0 sets the pcr0 property value. The measurement that is captured in PCR[0]
 func (m *DeviceHealthAttestationState) SetPcr0(value *string)() {
-    m.pcr0 = value
+    err := m.GetBackingStore().Set("pcr0", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPcrHashAlgorithm sets the pcrHashAlgorithm property value. Informational attribute that identifies the HASH algorithm that was used by TPM
 func (m *DeviceHealthAttestationState) SetPcrHashAlgorithm(value *string)() {
-    m.pcrHashAlgorithm = value
+    err := m.GetBackingStore().Set("pcrHashAlgorithm", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResetCount sets the resetCount property value. The number of times a PC device has hibernated or resumed
 func (m *DeviceHealthAttestationState) SetResetCount(value *int64)() {
-    m.resetCount = value
+    err := m.GetBackingStore().Set("resetCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRestartCount sets the restartCount property value. The number of times a PC device has rebooted
 func (m *DeviceHealthAttestationState) SetRestartCount(value *int64)() {
-    m.restartCount = value
+    err := m.GetBackingStore().Set("restartCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSafeMode sets the safeMode property value. Safe mode is a troubleshooting option for Windows that starts your computer in a limited state
 func (m *DeviceHealthAttestationState) SetSafeMode(value *string)() {
-    m.safeMode = value
+    err := m.GetBackingStore().Set("safeMode", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSecureBoot sets the secureBoot property value. When Secure Boot is enabled, the core components must have the correct cryptographic signatures
 func (m *DeviceHealthAttestationState) SetSecureBoot(value *string)() {
-    m.secureBoot = value
+    err := m.GetBackingStore().Set("secureBoot", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSecureBootConfigurationPolicyFingerPrint sets the secureBootConfigurationPolicyFingerPrint property value. Fingerprint of the Custom Secure Boot Configuration Policy
 func (m *DeviceHealthAttestationState) SetSecureBootConfigurationPolicyFingerPrint(value *string)() {
-    m.secureBootConfigurationPolicyFingerPrint = value
+    err := m.GetBackingStore().Set("secureBootConfigurationPolicyFingerPrint", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTestSigning sets the testSigning property value. When test signing is allowed, the device does not enforce signature validation during boot
 func (m *DeviceHealthAttestationState) SetTestSigning(value *string)() {
-    m.testSigning = value
+    err := m.GetBackingStore().Set("testSigning", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTpmVersion sets the tpmVersion property value. The security version number of the Boot Application
 func (m *DeviceHealthAttestationState) SetTpmVersion(value *string)() {
-    m.tpmVersion = value
+    err := m.GetBackingStore().Set("tpmVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVirtualSecureMode sets the virtualSecureMode property value. VSM is a container that protects high value assets from a compromised kernel
 func (m *DeviceHealthAttestationState) SetVirtualSecureMode(value *string)() {
-    m.virtualSecureMode = value
+    err := m.GetBackingStore().Set("virtualSecureMode", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWindowsPE sets the windowsPE property value. Operating system running with limited services that is used to prepare a computer for Windows
 func (m *DeviceHealthAttestationState) SetWindowsPE(value *string)() {
-    m.windowsPE = value
+    err := m.GetBackingStore().Set("windowsPE", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceHealthAttestationStateable 
+type DeviceHealthAttestationStateable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAttestationIdentityKey()(*string)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetBitLockerStatus()(*string)
+    GetBootAppSecurityVersion()(*string)
+    GetBootDebugging()(*string)
+    GetBootManagerSecurityVersion()(*string)
+    GetBootManagerVersion()(*string)
+    GetBootRevisionListInfo()(*string)
+    GetCodeIntegrity()(*string)
+    GetCodeIntegrityCheckVersion()(*string)
+    GetCodeIntegrityPolicy()(*string)
+    GetContentNamespaceUrl()(*string)
+    GetContentVersion()(*string)
+    GetDataExcutionPolicy()(*string)
+    GetDeviceHealthAttestationStatus()(*string)
+    GetEarlyLaunchAntiMalwareDriverProtection()(*string)
+    GetHealthAttestationSupportedStatus()(*string)
+    GetHealthStatusMismatchInfo()(*string)
+    GetIssuedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLastUpdateDateTime()(*string)
+    GetOdataType()(*string)
+    GetOperatingSystemKernelDebugging()(*string)
+    GetOperatingSystemRevListInfo()(*string)
+    GetPcr0()(*string)
+    GetPcrHashAlgorithm()(*string)
+    GetResetCount()(*int64)
+    GetRestartCount()(*int64)
+    GetSafeMode()(*string)
+    GetSecureBoot()(*string)
+    GetSecureBootConfigurationPolicyFingerPrint()(*string)
+    GetTestSigning()(*string)
+    GetTpmVersion()(*string)
+    GetVirtualSecureMode()(*string)
+    GetWindowsPE()(*string)
+    SetAttestationIdentityKey(value *string)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetBitLockerStatus(value *string)()
+    SetBootAppSecurityVersion(value *string)()
+    SetBootDebugging(value *string)()
+    SetBootManagerSecurityVersion(value *string)()
+    SetBootManagerVersion(value *string)()
+    SetBootRevisionListInfo(value *string)()
+    SetCodeIntegrity(value *string)()
+    SetCodeIntegrityCheckVersion(value *string)()
+    SetCodeIntegrityPolicy(value *string)()
+    SetContentNamespaceUrl(value *string)()
+    SetContentVersion(value *string)()
+    SetDataExcutionPolicy(value *string)()
+    SetDeviceHealthAttestationStatus(value *string)()
+    SetEarlyLaunchAntiMalwareDriverProtection(value *string)()
+    SetHealthAttestationSupportedStatus(value *string)()
+    SetHealthStatusMismatchInfo(value *string)()
+    SetIssuedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLastUpdateDateTime(value *string)()
+    SetOdataType(value *string)()
+    SetOperatingSystemKernelDebugging(value *string)()
+    SetOperatingSystemRevListInfo(value *string)()
+    SetPcr0(value *string)()
+    SetPcrHashAlgorithm(value *string)()
+    SetResetCount(value *int64)()
+    SetRestartCount(value *int64)()
+    SetSafeMode(value *string)()
+    SetSecureBoot(value *string)()
+    SetSecureBootConfigurationPolicyFingerPrint(value *string)()
+    SetTestSigning(value *string)()
+    SetTpmVersion(value *string)()
+    SetVirtualSecureMode(value *string)()
+    SetWindowsPE(value *string)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of authenticationMethodConfiguration entities.
+// 
 type FeatureTargetType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i FeatureTargetType) String() string {
     return []string{"group", "administrativeUnit", "role", "unknownFutureValue"}[i]
 }
-func ParseFeatureTargetType(v string) (interface{}, error) {
+func ParseFeatureTargetType(v string) (any, error) {
     result := GROUP_FEATURETARGETTYPE
     switch v {
         case "group":

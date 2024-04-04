@@ -2,11 +2,11 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type EndpointType int
 
 const (
-    DEFAULT_ESCAPED_ENDPOINTTYPE EndpointType = iota
+    DEFAULTESCAPED_ENDPOINTTYPE EndpointType = iota
     VOICEMAIL_ENDPOINTTYPE
     SKYPEFORBUSINESS_ENDPOINTTYPE
     SKYPEFORBUSINESSVOIPPHONE_ENDPOINTTYPE
@@ -16,11 +16,11 @@ const (
 func (i EndpointType) String() string {
     return []string{"default", "voicemail", "skypeForBusiness", "skypeForBusinessVoipPhone", "unknownFutureValue"}[i]
 }
-func ParseEndpointType(v string) (interface{}, error) {
-    result := DEFAULT_ESCAPED_ENDPOINTTYPE
+func ParseEndpointType(v string) (any, error) {
+    result := DEFAULTESCAPED_ENDPOINTTYPE
     switch v {
         case "default":
-            result = DEFAULT_ESCAPED_ENDPOINTTYPE
+            result = DEFAULTESCAPED_ENDPOINTTYPE
         case "voicemail":
             result = VOICEMAIL_ENDPOINTTYPE
         case "skypeForBusiness":

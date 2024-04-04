@@ -13,8 +13,8 @@ func NewDisableAndDeleteUserApplyAction()(*DisableAndDeleteUserApplyAction) {
     m := &DisableAndDeleteUserApplyAction{
         AccessReviewApplyAction: *NewAccessReviewApplyAction(),
     }
-    odataTypeValue := "#microsoft.graph.disableAndDeleteUserApplyAction";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.disableAndDeleteUserApplyAction"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateDisableAndDeleteUserApplyActionFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *DisableAndDeleteUserApplyAction) Serialize(writer i878a80d2330e89d26896
         return err
     }
     return nil
+}
+// DisableAndDeleteUserApplyActionable 
+type DisableAndDeleteUserApplyActionable interface {
+    AccessReviewApplyActionable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

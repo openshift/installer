@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for pre-release features.
 type PrereleaseFeatures int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i PrereleaseFeatures) String() string {
     return []string{"userDefined", "settingsOnly", "settingsAndExperimentations", "notAllowed"}[i]
 }
-func ParsePrereleaseFeatures(v string) (interface{}, error) {
+func ParsePrereleaseFeatures(v string) (any, error) {
     result := USERDEFINED_PRERELEASEFEATURES
     switch v {
         case "userDefined":

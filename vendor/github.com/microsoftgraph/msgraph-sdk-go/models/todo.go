@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // Todo 
 type Todo struct {
     Entity
-    // The task lists in the users mailbox.
-    lists []TodoTaskListable
 }
 // NewTodo instantiates a new todo and sets the default values.
 func NewTodo()(*Todo) {
@@ -25,12 +22,32 @@ func CreateTodoFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487ee
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Todo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["lists"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateTodoTaskListFromDiscriminatorValue , m.SetLists)
+    res["lists"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateTodoTaskListFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]TodoTaskListable, len(val))
+            for i, v := range val {
+                res[i] = v.(TodoTaskListable)
+            }
+            m.SetLists(res)
+        }
+        return nil
+    }
     return res
 }
 // GetLists gets the lists property value. The task lists in the users mailbox.
 func (m *Todo) GetLists()([]TodoTaskListable) {
-    return m.lists
+    val, err := m.GetBackingStore().Get("lists")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]TodoTaskListable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Todo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *Todo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c49
         return err
     }
     if m.GetLists() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetLists())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetLists()))
+        for i, v := range m.GetLists() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("lists", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *Todo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c49
 }
 // SetLists sets the lists property value. The task lists in the users mailbox.
 func (m *Todo) SetLists(value []TodoTaskListable)() {
-    m.lists = value
+    err := m.GetBackingStore().Set("lists", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Todoable 
+type Todoable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetLists()([]TodoTaskListable)
+    SetLists(value []TodoTaskListable)()
 }

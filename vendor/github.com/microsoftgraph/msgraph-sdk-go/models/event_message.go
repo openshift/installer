@@ -1,41 +1,22 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // EventMessage 
 type EventMessage struct {
     Message
-    // The endDateTime property
-    endDateTime DateTimeTimeZoneable
-    // The event associated with the event message. The assumption for attendees or room resources is that the Calendar Attendant is set to automatically update the calendar with an event when meeting request event messages arrive. Navigation property.  Read-only.
-    event Eventable
-    // The isAllDay property
-    isAllDay *bool
-    // The isDelegated property
-    isDelegated *bool
-    // The isOutOfDate property
-    isOutOfDate *bool
-    // The location property
-    location Locationable
-    // The meetingMessageType property
-    meetingMessageType *MeetingMessageType
-    // The recurrence property
-    recurrence PatternedRecurrenceable
-    // The startDateTime property
-    startDateTime DateTimeTimeZoneable
     // The type property
-    type_escaped *EventType
+    TypeEscaped *EventType
 }
 // NewEventMessage instantiates a new EventMessage and sets the default values.
 func NewEventMessage()(*EventMessage) {
     m := &EventMessage{
         Message: *NewMessage(),
     }
-    odataTypeValue := "#microsoft.graph.eventMessage";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.eventMessage"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateEventMessageFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -64,58 +45,218 @@ func CreateEventMessageFromDiscriminatorValue(parseNode i878a80d2330e89d26896388
 }
 // GetEndDateTime gets the endDateTime property value. The endDateTime property
 func (m *EventMessage) GetEndDateTime()(DateTimeTimeZoneable) {
-    return m.endDateTime
+    val, err := m.GetBackingStore().Get("endDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DateTimeTimeZoneable)
+    }
+    return nil
 }
 // GetEvent gets the event property value. The event associated with the event message. The assumption for attendees or room resources is that the Calendar Attendant is set to automatically update the calendar with an event when meeting request event messages arrive. Navigation property.  Read-only.
 func (m *EventMessage) GetEvent()(Eventable) {
-    return m.event
+    val, err := m.GetBackingStore().Get("event")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Eventable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EventMessage) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Message.GetFieldDeserializers()
-    res["endDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue , m.SetEndDateTime)
-    res["event"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEventFromDiscriminatorValue , m.SetEvent)
-    res["isAllDay"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsAllDay)
-    res["isDelegated"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsDelegated)
-    res["isOutOfDate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsOutOfDate)
-    res["location"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateLocationFromDiscriminatorValue , m.SetLocation)
-    res["meetingMessageType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseMeetingMessageType , m.SetMeetingMessageType)
-    res["recurrence"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePatternedRecurrenceFromDiscriminatorValue , m.SetRecurrence)
-    res["startDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue , m.SetStartDateTime)
-    res["type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseEventType , m.SetType)
+    res["endDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEndDateTime(val.(DateTimeTimeZoneable))
+        }
+        return nil
+    }
+    res["event"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEventFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEvent(val.(Eventable))
+        }
+        return nil
+    }
+    res["isAllDay"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAllDay(val)
+        }
+        return nil
+    }
+    res["isDelegated"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsDelegated(val)
+        }
+        return nil
+    }
+    res["isOutOfDate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsOutOfDate(val)
+        }
+        return nil
+    }
+    res["location"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateLocationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLocation(val.(Locationable))
+        }
+        return nil
+    }
+    res["meetingMessageType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseMeetingMessageType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMeetingMessageType(val.(*MeetingMessageType))
+        }
+        return nil
+    }
+    res["recurrence"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePatternedRecurrenceFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRecurrence(val.(PatternedRecurrenceable))
+        }
+        return nil
+    }
+    res["startDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDateTimeTimeZoneFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetStartDateTime(val.(DateTimeTimeZoneable))
+        }
+        return nil
+    }
+    res["type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseEventType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetType(val.(*EventType))
+        }
+        return nil
+    }
     return res
 }
 // GetIsAllDay gets the isAllDay property value. The isAllDay property
 func (m *EventMessage) GetIsAllDay()(*bool) {
-    return m.isAllDay
+    val, err := m.GetBackingStore().Get("isAllDay")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsDelegated gets the isDelegated property value. The isDelegated property
 func (m *EventMessage) GetIsDelegated()(*bool) {
-    return m.isDelegated
+    val, err := m.GetBackingStore().Get("isDelegated")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsOutOfDate gets the isOutOfDate property value. The isOutOfDate property
 func (m *EventMessage) GetIsOutOfDate()(*bool) {
-    return m.isOutOfDate
+    val, err := m.GetBackingStore().Get("isOutOfDate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLocation gets the location property value. The location property
 func (m *EventMessage) GetLocation()(Locationable) {
-    return m.location
+    val, err := m.GetBackingStore().Get("location")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Locationable)
+    }
+    return nil
 }
 // GetMeetingMessageType gets the meetingMessageType property value. The meetingMessageType property
 func (m *EventMessage) GetMeetingMessageType()(*MeetingMessageType) {
-    return m.meetingMessageType
+    val, err := m.GetBackingStore().Get("meetingMessageType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*MeetingMessageType)
+    }
+    return nil
 }
 // GetRecurrence gets the recurrence property value. The recurrence property
 func (m *EventMessage) GetRecurrence()(PatternedRecurrenceable) {
-    return m.recurrence
+    val, err := m.GetBackingStore().Get("recurrence")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PatternedRecurrenceable)
+    }
+    return nil
 }
 // GetStartDateTime gets the startDateTime property value. The startDateTime property
 func (m *EventMessage) GetStartDateTime()(DateTimeTimeZoneable) {
-    return m.startDateTime
+    val, err := m.GetBackingStore().Get("startDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DateTimeTimeZoneable)
+    }
+    return nil
 }
 // GetType gets the type property value. The type property
 func (m *EventMessage) GetType()(*EventType) {
-    return m.type_escaped
+    val, err := m.GetBackingStore().Get("typeEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*EventType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EventMessage) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -189,41 +330,96 @@ func (m *EventMessage) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e
 }
 // SetEndDateTime sets the endDateTime property value. The endDateTime property
 func (m *EventMessage) SetEndDateTime(value DateTimeTimeZoneable)() {
-    m.endDateTime = value
+    err := m.GetBackingStore().Set("endDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetEvent sets the event property value. The event associated with the event message. The assumption for attendees or room resources is that the Calendar Attendant is set to automatically update the calendar with an event when meeting request event messages arrive. Navigation property.  Read-only.
 func (m *EventMessage) SetEvent(value Eventable)() {
-    m.event = value
+    err := m.GetBackingStore().Set("event", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsAllDay sets the isAllDay property value. The isAllDay property
 func (m *EventMessage) SetIsAllDay(value *bool)() {
-    m.isAllDay = value
+    err := m.GetBackingStore().Set("isAllDay", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsDelegated sets the isDelegated property value. The isDelegated property
 func (m *EventMessage) SetIsDelegated(value *bool)() {
-    m.isDelegated = value
+    err := m.GetBackingStore().Set("isDelegated", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsOutOfDate sets the isOutOfDate property value. The isOutOfDate property
 func (m *EventMessage) SetIsOutOfDate(value *bool)() {
-    m.isOutOfDate = value
+    err := m.GetBackingStore().Set("isOutOfDate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLocation sets the location property value. The location property
 func (m *EventMessage) SetLocation(value Locationable)() {
-    m.location = value
+    err := m.GetBackingStore().Set("location", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMeetingMessageType sets the meetingMessageType property value. The meetingMessageType property
 func (m *EventMessage) SetMeetingMessageType(value *MeetingMessageType)() {
-    m.meetingMessageType = value
+    err := m.GetBackingStore().Set("meetingMessageType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRecurrence sets the recurrence property value. The recurrence property
 func (m *EventMessage) SetRecurrence(value PatternedRecurrenceable)() {
-    m.recurrence = value
+    err := m.GetBackingStore().Set("recurrence", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetStartDateTime sets the startDateTime property value. The startDateTime property
 func (m *EventMessage) SetStartDateTime(value DateTimeTimeZoneable)() {
-    m.startDateTime = value
+    err := m.GetBackingStore().Set("startDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetType sets the type property value. The type property
 func (m *EventMessage) SetType(value *EventType)() {
-    m.type_escaped = value
+    err := m.GetBackingStore().Set("typeEscaped", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EventMessageable 
+type EventMessageable interface {
+    Messageable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetEndDateTime()(DateTimeTimeZoneable)
+    GetEvent()(Eventable)
+    GetIsAllDay()(*bool)
+    GetIsDelegated()(*bool)
+    GetIsOutOfDate()(*bool)
+    GetLocation()(Locationable)
+    GetMeetingMessageType()(*MeetingMessageType)
+    GetRecurrence()(PatternedRecurrenceable)
+    GetStartDateTime()(DateTimeTimeZoneable)
+    GetType()(*EventType)
+    SetEndDateTime(value DateTimeTimeZoneable)()
+    SetEvent(value Eventable)()
+    SetIsAllDay(value *bool)()
+    SetIsDelegated(value *bool)()
+    SetIsOutOfDate(value *bool)()
+    SetLocation(value Locationable)()
+    SetMeetingMessageType(value *MeetingMessageType)()
+    SetRecurrence(value PatternedRecurrenceable)()
+    SetStartDateTime(value DateTimeTimeZoneable)()
+    SetType(value *EventType)()
 }

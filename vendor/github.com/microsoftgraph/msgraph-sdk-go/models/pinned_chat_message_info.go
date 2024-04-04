@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// PinnedChatMessageInfo provides operations to manage the collection of chat entities.
+// PinnedChatMessageInfo 
 type PinnedChatMessageInfo struct {
     Entity
-    // Represents details about the chat message that is pinned.
-    message ChatMessageable
 }
 // NewPinnedChatMessageInfo instantiates a new pinnedChatMessageInfo and sets the default values.
 func NewPinnedChatMessageInfo()(*PinnedChatMessageInfo) {
@@ -25,12 +22,28 @@ func CreatePinnedChatMessageInfoFromDiscriminatorValue(parseNode i878a80d2330e89
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PinnedChatMessageInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["message"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateChatMessageFromDiscriminatorValue , m.SetMessage)
+    res["message"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateChatMessageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessage(val.(ChatMessageable))
+        }
+        return nil
+    }
     return res
 }
 // GetMessage gets the message property value. Represents details about the chat message that is pinned.
 func (m *PinnedChatMessageInfo) GetMessage()(ChatMessageable) {
-    return m.message
+    val, err := m.GetBackingStore().Get("message")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ChatMessageable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *PinnedChatMessageInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -48,5 +61,15 @@ func (m *PinnedChatMessageInfo) Serialize(writer i878a80d2330e89d26896388a3f487e
 }
 // SetMessage sets the message property value. Represents details about the chat message that is pinned.
 func (m *PinnedChatMessageInfo) SetMessage(value ChatMessageable)() {
-    m.message = value
+    err := m.GetBackingStore().Set("message", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PinnedChatMessageInfoable 
+type PinnedChatMessageInfoable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetMessage()(ChatMessageable)
+    SetMessage(value ChatMessageable)()
 }

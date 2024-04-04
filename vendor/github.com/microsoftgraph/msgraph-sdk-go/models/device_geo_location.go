@@ -2,38 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // DeviceGeoLocation device location
 type DeviceGeoLocation struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Altitude, given in meters above sea level
-    altitude *float64
-    // Heading in degrees from true north
-    heading *float64
-    // Accuracy of longitude and latitude in meters
-    horizontalAccuracy *float64
-    // Time at which location was recorded, relative to UTC
-    lastCollectedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Latitude coordinate of the device's location
-    latitude *float64
-    // Longitude coordinate of the device's location
-    longitude *float64
-    // The OdataType property
-    odataType *string
-    // Speed the device is traveling in meters per second
-    speed *float64
-    // Accuracy of altitude in meters
-    verticalAccuracy *float64
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewDeviceGeoLocation instantiates a new deviceGeoLocation and sets the default values.
 func NewDeviceGeoLocation()(*DeviceGeoLocation) {
     m := &DeviceGeoLocation{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateDeviceGeoLocationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -41,58 +24,214 @@ func CreateDeviceGeoLocationFromDiscriminatorValue(parseNode i878a80d2330e89d268
     return NewDeviceGeoLocation(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceGeoLocation) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *DeviceGeoLocation) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAltitude gets the altitude property value. Altitude, given in meters above sea level
 func (m *DeviceGeoLocation) GetAltitude()(*float64) {
-    return m.altitude
+    val, err := m.GetBackingStore().Get("altitude")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *DeviceGeoLocation) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceGeoLocation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["altitude"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetAltitude)
-    res["heading"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetHeading)
-    res["horizontalAccuracy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetHorizontalAccuracy)
-    res["lastCollectedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastCollectedDateTime)
-    res["latitude"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetLatitude)
-    res["longitude"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetLongitude)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["speed"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetSpeed)
-    res["verticalAccuracy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetVerticalAccuracy)
+    res["altitude"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAltitude(val)
+        }
+        return nil
+    }
+    res["heading"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHeading(val)
+        }
+        return nil
+    }
+    res["horizontalAccuracy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHorizontalAccuracy(val)
+        }
+        return nil
+    }
+    res["lastCollectedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastCollectedDateTime(val)
+        }
+        return nil
+    }
+    res["latitude"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLatitude(val)
+        }
+        return nil
+    }
+    res["longitude"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLongitude(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["speed"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSpeed(val)
+        }
+        return nil
+    }
+    res["verticalAccuracy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVerticalAccuracy(val)
+        }
+        return nil
+    }
     return res
 }
 // GetHeading gets the heading property value. Heading in degrees from true north
 func (m *DeviceGeoLocation) GetHeading()(*float64) {
-    return m.heading
+    val, err := m.GetBackingStore().Get("heading")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetHorizontalAccuracy gets the horizontalAccuracy property value. Accuracy of longitude and latitude in meters
 func (m *DeviceGeoLocation) GetHorizontalAccuracy()(*float64) {
-    return m.horizontalAccuracy
+    val, err := m.GetBackingStore().Get("horizontalAccuracy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetLastCollectedDateTime gets the lastCollectedDateTime property value. Time at which location was recorded, relative to UTC
 func (m *DeviceGeoLocation) GetLastCollectedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastCollectedDateTime
+    val, err := m.GetBackingStore().Get("lastCollectedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLatitude gets the latitude property value. Latitude coordinate of the device's location
 func (m *DeviceGeoLocation) GetLatitude()(*float64) {
-    return m.latitude
+    val, err := m.GetBackingStore().Get("latitude")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetLongitude gets the longitude property value. Longitude coordinate of the device's location
 func (m *DeviceGeoLocation) GetLongitude()(*float64) {
-    return m.longitude
+    val, err := m.GetBackingStore().Get("longitude")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *DeviceGeoLocation) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSpeed gets the speed property value. Speed the device is traveling in meters per second
 func (m *DeviceGeoLocation) GetSpeed()(*float64) {
-    return m.speed
+    val, err := m.GetBackingStore().Get("speed")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetVerticalAccuracy gets the verticalAccuracy property value. Accuracy of altitude in meters
 func (m *DeviceGeoLocation) GetVerticalAccuracy()(*float64) {
-    return m.verticalAccuracy
+    val, err := m.GetBackingStore().Get("verticalAccuracy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceGeoLocation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -159,42 +298,102 @@ func (m *DeviceGeoLocation) Serialize(writer i878a80d2330e89d26896388a3f487eef27
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *DeviceGeoLocation) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *DeviceGeoLocation) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAltitude sets the altitude property value. Altitude, given in meters above sea level
 func (m *DeviceGeoLocation) SetAltitude(value *float64)() {
-    m.altitude = value
+    err := m.GetBackingStore().Set("altitude", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *DeviceGeoLocation) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetHeading sets the heading property value. Heading in degrees from true north
 func (m *DeviceGeoLocation) SetHeading(value *float64)() {
-    m.heading = value
+    err := m.GetBackingStore().Set("heading", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHorizontalAccuracy sets the horizontalAccuracy property value. Accuracy of longitude and latitude in meters
 func (m *DeviceGeoLocation) SetHorizontalAccuracy(value *float64)() {
-    m.horizontalAccuracy = value
+    err := m.GetBackingStore().Set("horizontalAccuracy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastCollectedDateTime sets the lastCollectedDateTime property value. Time at which location was recorded, relative to UTC
 func (m *DeviceGeoLocation) SetLastCollectedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastCollectedDateTime = value
+    err := m.GetBackingStore().Set("lastCollectedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLatitude sets the latitude property value. Latitude coordinate of the device's location
 func (m *DeviceGeoLocation) SetLatitude(value *float64)() {
-    m.latitude = value
+    err := m.GetBackingStore().Set("latitude", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLongitude sets the longitude property value. Longitude coordinate of the device's location
 func (m *DeviceGeoLocation) SetLongitude(value *float64)() {
-    m.longitude = value
+    err := m.GetBackingStore().Set("longitude", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *DeviceGeoLocation) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSpeed sets the speed property value. Speed the device is traveling in meters per second
 func (m *DeviceGeoLocation) SetSpeed(value *float64)() {
-    m.speed = value
+    err := m.GetBackingStore().Set("speed", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVerticalAccuracy sets the verticalAccuracy property value. Accuracy of altitude in meters
 func (m *DeviceGeoLocation) SetVerticalAccuracy(value *float64)() {
-    m.verticalAccuracy = value
+    err := m.GetBackingStore().Set("verticalAccuracy", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceGeoLocationable 
+type DeviceGeoLocationable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAltitude()(*float64)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetHeading()(*float64)
+    GetHorizontalAccuracy()(*float64)
+    GetLastCollectedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLatitude()(*float64)
+    GetLongitude()(*float64)
+    GetOdataType()(*string)
+    GetSpeed()(*float64)
+    GetVerticalAccuracy()(*float64)
+    SetAltitude(value *float64)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetHeading(value *float64)()
+    SetHorizontalAccuracy(value *float64)()
+    SetLastCollectedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLatitude(value *float64)()
+    SetLongitude(value *float64)()
+    SetOdataType(value *string)()
+    SetSpeed(value *float64)()
+    SetVerticalAccuracy(value *float64)()
 }

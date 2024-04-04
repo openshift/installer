@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of authenticationMethodConfiguration entities.
+// 
 type Fido2RestrictionEnforcementType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i Fido2RestrictionEnforcementType) String() string {
     return []string{"allow", "block", "unknownFutureValue"}[i]
 }
-func ParseFido2RestrictionEnforcementType(v string) (interface{}, error) {
+func ParseFido2RestrictionEnforcementType(v string) (any, error) {
     result := ALLOW_FIDO2RESTRICTIONENFORCEMENTTYPE
     switch v {
         case "allow":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type FreeBusyStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i FreeBusyStatus) String() string {
     return []string{"unknown", "free", "tentative", "busy", "oof", "workingElsewhere"}[i]
 }
-func ParseFreeBusyStatus(v string) (interface{}, error) {
+func ParseFreeBusyStatus(v string) (any, error) {
     result := UNKNOWN_FREEBUSYSTATUS
     switch v {
         case "unknown":

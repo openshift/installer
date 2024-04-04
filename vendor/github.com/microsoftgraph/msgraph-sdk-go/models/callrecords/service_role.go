@@ -2,7 +2,7 @@ package callrecords
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type ServiceRole int
 
 const (
@@ -33,7 +33,7 @@ const (
 func (i ServiceRole) String() string {
     return []string{"unknown", "customBot", "skypeForBusinessMicrosoftTeamsGateway", "skypeForBusinessAudioVideoMcu", "skypeForBusinessApplicationSharingMcu", "skypeForBusinessCallQueues", "skypeForBusinessAutoAttendant", "mediationServer", "mediationServerCloudConnectorEdition", "exchangeUnifiedMessagingService", "mediaController", "conferencingAnnouncementService", "conferencingAttendant", "audioTeleconferencerController", "skypeForBusinessUnifiedCommunicationApplicationPlatform", "responseGroupServiceAnnouncementService", "gateway", "skypeTranslator", "skypeForBusinessAttendant", "responseGroupService", "voicemail", "unknownFutureValue"}[i]
 }
-func ParseServiceRole(v string) (interface{}, error) {
+func ParseServiceRole(v string) (any, error) {
     result := UNKNOWN_SERVICEROLE
     switch v {
         case "unknown":

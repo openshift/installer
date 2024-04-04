@@ -1,37 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// WorkbookChart provides operations to manage the collection of agreement entities.
+// WorkbookChart 
 type WorkbookChart struct {
     Entity
-    // Represents chart axes. Read-only.
-    axes WorkbookChartAxesable
-    // Represents the datalabels on the chart. Read-only.
-    dataLabels WorkbookChartDataLabelsable
-    // Encapsulates the format properties for the chart area. Read-only.
-    format WorkbookChartAreaFormatable
-    // Represents the height, in points, of the chart object.
-    height *float64
-    // The distance, in points, from the left side of the chart to the worksheet origin.
-    left *float64
-    // Represents the legend for the chart. Read-only.
-    legend WorkbookChartLegendable
-    // Represents the name of a chart object.
-    name *string
-    // Represents either a single series or collection of series in the chart. Read-only.
-    series []WorkbookChartSeriesable
-    // Represents the title of the specified chart, including the text, visibility, position and formating of the title. Read-only.
-    title WorkbookChartTitleable
-    // Represents the distance, in points, from the top edge of the object to the top of row 1 (on a worksheet) or the top of the chart area (on a chart).
-    top *float64
-    // Represents the width, in points, of the chart object.
-    width *float64
-    // The worksheet containing the current chart. Read-only.
-    worksheet WorkbookWorksheetable
 }
 // NewWorkbookChart instantiates a new workbookChart and sets the default values.
 func NewWorkbookChart()(*WorkbookChart) {
@@ -46,68 +21,264 @@ func CreateWorkbookChartFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
 }
 // GetAxes gets the axes property value. Represents chart axes. Read-only.
 func (m *WorkbookChart) GetAxes()(WorkbookChartAxesable) {
-    return m.axes
+    val, err := m.GetBackingStore().Get("axes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartAxesable)
+    }
+    return nil
 }
 // GetDataLabels gets the dataLabels property value. Represents the datalabels on the chart. Read-only.
 func (m *WorkbookChart) GetDataLabels()(WorkbookChartDataLabelsable) {
-    return m.dataLabels
+    val, err := m.GetBackingStore().Get("dataLabels")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartDataLabelsable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WorkbookChart) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["axes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartAxesFromDiscriminatorValue , m.SetAxes)
-    res["dataLabels"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartDataLabelsFromDiscriminatorValue , m.SetDataLabels)
-    res["format"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartAreaFormatFromDiscriminatorValue , m.SetFormat)
-    res["height"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetHeight)
-    res["left"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetLeft)
-    res["legend"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartLegendFromDiscriminatorValue , m.SetLegend)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["series"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateWorkbookChartSeriesFromDiscriminatorValue , m.SetSeries)
-    res["title"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookChartTitleFromDiscriminatorValue , m.SetTitle)
-    res["top"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetTop)
-    res["width"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat64Value(m.SetWidth)
-    res["worksheet"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateWorkbookWorksheetFromDiscriminatorValue , m.SetWorksheet)
+    res["axes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartAxesFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAxes(val.(WorkbookChartAxesable))
+        }
+        return nil
+    }
+    res["dataLabels"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartDataLabelsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDataLabels(val.(WorkbookChartDataLabelsable))
+        }
+        return nil
+    }
+    res["format"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartAreaFormatFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFormat(val.(WorkbookChartAreaFormatable))
+        }
+        return nil
+    }
+    res["height"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHeight(val)
+        }
+        return nil
+    }
+    res["left"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLeft(val)
+        }
+        return nil
+    }
+    res["legend"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartLegendFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLegend(val.(WorkbookChartLegendable))
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["series"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateWorkbookChartSeriesFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]WorkbookChartSeriesable, len(val))
+            for i, v := range val {
+                res[i] = v.(WorkbookChartSeriesable)
+            }
+            m.SetSeries(res)
+        }
+        return nil
+    }
+    res["title"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookChartTitleFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTitle(val.(WorkbookChartTitleable))
+        }
+        return nil
+    }
+    res["top"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTop(val)
+        }
+        return nil
+    }
+    res["width"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWidth(val)
+        }
+        return nil
+    }
+    res["worksheet"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateWorkbookWorksheetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWorksheet(val.(WorkbookWorksheetable))
+        }
+        return nil
+    }
     return res
 }
 // GetFormat gets the format property value. Encapsulates the format properties for the chart area. Read-only.
 func (m *WorkbookChart) GetFormat()(WorkbookChartAreaFormatable) {
-    return m.format
+    val, err := m.GetBackingStore().Get("format")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartAreaFormatable)
+    }
+    return nil
 }
 // GetHeight gets the height property value. Represents the height, in points, of the chart object.
 func (m *WorkbookChart) GetHeight()(*float64) {
-    return m.height
+    val, err := m.GetBackingStore().Get("height")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetLeft gets the left property value. The distance, in points, from the left side of the chart to the worksheet origin.
 func (m *WorkbookChart) GetLeft()(*float64) {
-    return m.left
+    val, err := m.GetBackingStore().Get("left")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetLegend gets the legend property value. Represents the legend for the chart. Read-only.
 func (m *WorkbookChart) GetLegend()(WorkbookChartLegendable) {
-    return m.legend
+    val, err := m.GetBackingStore().Get("legend")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartLegendable)
+    }
+    return nil
 }
 // GetName gets the name property value. Represents the name of a chart object.
 func (m *WorkbookChart) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSeries gets the series property value. Represents either a single series or collection of series in the chart. Read-only.
 func (m *WorkbookChart) GetSeries()([]WorkbookChartSeriesable) {
-    return m.series
+    val, err := m.GetBackingStore().Get("series")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]WorkbookChartSeriesable)
+    }
+    return nil
 }
 // GetTitle gets the title property value. Represents the title of the specified chart, including the text, visibility, position and formating of the title. Read-only.
 func (m *WorkbookChart) GetTitle()(WorkbookChartTitleable) {
-    return m.title
+    val, err := m.GetBackingStore().Get("title")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookChartTitleable)
+    }
+    return nil
 }
 // GetTop gets the top property value. Represents the distance, in points, from the top edge of the object to the top of row 1 (on a worksheet) or the top of the chart area (on a chart).
 func (m *WorkbookChart) GetTop()(*float64) {
-    return m.top
+    val, err := m.GetBackingStore().Get("top")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetWidth gets the width property value. Represents the width, in points, of the chart object.
 func (m *WorkbookChart) GetWidth()(*float64) {
-    return m.width
+    val, err := m.GetBackingStore().Get("width")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float64)
+    }
+    return nil
 }
 // GetWorksheet gets the worksheet property value. The worksheet containing the current chart. Read-only.
 func (m *WorkbookChart) GetWorksheet()(WorkbookWorksheetable) {
-    return m.worksheet
+    val, err := m.GetBackingStore().Get("worksheet")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(WorkbookWorksheetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WorkbookChart) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -158,7 +329,10 @@ func (m *WorkbookChart) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetSeries() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSeries())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSeries()))
+        for i, v := range m.GetSeries() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("series", cast)
         if err != nil {
             return err
@@ -192,49 +366,114 @@ func (m *WorkbookChart) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
 }
 // SetAxes sets the axes property value. Represents chart axes. Read-only.
 func (m *WorkbookChart) SetAxes(value WorkbookChartAxesable)() {
-    m.axes = value
+    err := m.GetBackingStore().Set("axes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDataLabels sets the dataLabels property value. Represents the datalabels on the chart. Read-only.
 func (m *WorkbookChart) SetDataLabels(value WorkbookChartDataLabelsable)() {
-    m.dataLabels = value
+    err := m.GetBackingStore().Set("dataLabels", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFormat sets the format property value. Encapsulates the format properties for the chart area. Read-only.
 func (m *WorkbookChart) SetFormat(value WorkbookChartAreaFormatable)() {
-    m.format = value
+    err := m.GetBackingStore().Set("format", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHeight sets the height property value. Represents the height, in points, of the chart object.
 func (m *WorkbookChart) SetHeight(value *float64)() {
-    m.height = value
+    err := m.GetBackingStore().Set("height", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLeft sets the left property value. The distance, in points, from the left side of the chart to the worksheet origin.
 func (m *WorkbookChart) SetLeft(value *float64)() {
-    m.left = value
+    err := m.GetBackingStore().Set("left", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLegend sets the legend property value. Represents the legend for the chart. Read-only.
 func (m *WorkbookChart) SetLegend(value WorkbookChartLegendable)() {
-    m.legend = value
+    err := m.GetBackingStore().Set("legend", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Represents the name of a chart object.
 func (m *WorkbookChart) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSeries sets the series property value. Represents either a single series or collection of series in the chart. Read-only.
 func (m *WorkbookChart) SetSeries(value []WorkbookChartSeriesable)() {
-    m.series = value
+    err := m.GetBackingStore().Set("series", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTitle sets the title property value. Represents the title of the specified chart, including the text, visibility, position and formating of the title. Read-only.
 func (m *WorkbookChart) SetTitle(value WorkbookChartTitleable)() {
-    m.title = value
+    err := m.GetBackingStore().Set("title", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTop sets the top property value. Represents the distance, in points, from the top edge of the object to the top of row 1 (on a worksheet) or the top of the chart area (on a chart).
 func (m *WorkbookChart) SetTop(value *float64)() {
-    m.top = value
+    err := m.GetBackingStore().Set("top", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWidth sets the width property value. Represents the width, in points, of the chart object.
 func (m *WorkbookChart) SetWidth(value *float64)() {
-    m.width = value
+    err := m.GetBackingStore().Set("width", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWorksheet sets the worksheet property value. The worksheet containing the current chart. Read-only.
 func (m *WorkbookChart) SetWorksheet(value WorkbookWorksheetable)() {
-    m.worksheet = value
+    err := m.GetBackingStore().Set("worksheet", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WorkbookChartable 
+type WorkbookChartable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAxes()(WorkbookChartAxesable)
+    GetDataLabels()(WorkbookChartDataLabelsable)
+    GetFormat()(WorkbookChartAreaFormatable)
+    GetHeight()(*float64)
+    GetLeft()(*float64)
+    GetLegend()(WorkbookChartLegendable)
+    GetName()(*string)
+    GetSeries()([]WorkbookChartSeriesable)
+    GetTitle()(WorkbookChartTitleable)
+    GetTop()(*float64)
+    GetWidth()(*float64)
+    GetWorksheet()(WorkbookWorksheetable)
+    SetAxes(value WorkbookChartAxesable)()
+    SetDataLabels(value WorkbookChartDataLabelsable)()
+    SetFormat(value WorkbookChartAreaFormatable)()
+    SetHeight(value *float64)()
+    SetLeft(value *float64)()
+    SetLegend(value WorkbookChartLegendable)()
+    SetName(value *string)()
+    SetSeries(value []WorkbookChartSeriesable)()
+    SetTitle(value WorkbookChartTitleable)()
+    SetTop(value *float64)()
+    SetWidth(value *float64)()
+    SetWorksheet(value WorkbookWorksheetable)()
 }

@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OAuth2PermissionGrantCollectionResponse 
 type OAuth2PermissionGrantCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []OAuth2PermissionGrantable
 }
 // NewOAuth2PermissionGrantCollectionResponse instantiates a new OAuth2PermissionGrantCollectionResponse and sets the default values.
 func NewOAuth2PermissionGrantCollectionResponse()(*OAuth2PermissionGrantCollectionResponse) {
@@ -25,12 +22,32 @@ func CreateOAuth2PermissionGrantCollectionResponseFromDiscriminatorValue(parseNo
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OAuth2PermissionGrantCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateOAuth2PermissionGrantFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateOAuth2PermissionGrantFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]OAuth2PermissionGrantable, len(val))
+            for i, v := range val {
+                res[i] = v.(OAuth2PermissionGrantable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *OAuth2PermissionGrantCollectionResponse) GetValue()([]OAuth2PermissionGrantable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]OAuth2PermissionGrantable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OAuth2PermissionGrantCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *OAuth2PermissionGrantCollectionResponse) Serialize(writer i878a80d2330e
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *OAuth2PermissionGrantCollectionResponse) Serialize(writer i878a80d2330e
 }
 // SetValue sets the value property value. The value property
 func (m *OAuth2PermissionGrantCollectionResponse) SetValue(value []OAuth2PermissionGrantable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OAuth2PermissionGrantCollectionResponseable 
+type OAuth2PermissionGrantCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]OAuth2PermissionGrantable)
+    SetValue(value []OAuth2PermissionGrantable)()
 }

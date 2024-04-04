@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Device Exchange Access State Reason.
 type DeviceManagementExchangeAccessStateReason int
 
 const (
@@ -43,7 +43,7 @@ const (
 func (i DeviceManagementExchangeAccessStateReason) String() string {
     return []string{"none", "unknown", "exchangeGlobalRule", "exchangeIndividualRule", "exchangeDeviceRule", "exchangeUpgrade", "exchangeMailboxPolicy", "other", "compliant", "notCompliant", "notEnrolled", "unknownLocation", "mfaRequired", "azureADBlockDueToAccessPolicy", "compromisedPassword", "deviceNotKnownWithManagedApp"}[i]
 }
-func ParseDeviceManagementExchangeAccessStateReason(v string) (interface{}, error) {
+func ParseDeviceManagementExchangeAccessStateReason(v string) (any, error) {
     result := NONE_DEVICEMANAGEMENTEXCHANGEACCESSSTATEREASON
     switch v {
         case "none":

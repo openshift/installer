@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type UserPurpose int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i UserPurpose) String() string {
     return []string{"user", "linked", "shared", "room", "equipment", "others", "unknownFutureValue"}[i]
 }
-func ParseUserPurpose(v string) (interface{}, error) {
+func ParseUserPurpose(v string) (any, error) {
     result := USER_USERPURPOSE
     switch v {
         case "user":

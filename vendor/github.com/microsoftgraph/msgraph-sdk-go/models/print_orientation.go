@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrintOrientation int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i PrintOrientation) String() string {
     return []string{"portrait", "landscape", "reverseLandscape", "reversePortrait", "unknownFutureValue"}[i]
 }
-func ParsePrintOrientation(v string) (interface{}, error) {
+func ParsePrintOrientation(v string) (any, error) {
     result := PORTRAIT_PRINTORIENTATION
     switch v {
         case "portrait":

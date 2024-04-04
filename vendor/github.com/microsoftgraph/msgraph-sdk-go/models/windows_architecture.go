@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains properties for Windows architecture.
 type WindowsArchitecture int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i WindowsArchitecture) String() string {
     return []string{"none", "x86", "x64", "arm", "neutral"}[i]
 }
-func ParseWindowsArchitecture(v string) (interface{}, error) {
+func ParseWindowsArchitecture(v string) (any, error) {
     result := NONE_WINDOWSARCHITECTURE
     switch v {
         case "none":

@@ -14,6 +14,7 @@ import (
 
 var NoStructuredDataError = errors.New("text does not support structured data")
 var OnlyOneValue = errors.New("text serialization writer can only write one value")
+var UnsupportedMethodError = errors.New("text does not support current method")
 
 // TextSerializationWriter implements SerializationWriter for JSON.
 type TextSerializationWriter struct {
@@ -249,4 +250,32 @@ func (w *TextSerializationWriter) WriteAnyValue(key string, value interface{}) e
 // Close clears the internal buffer.
 func (w *TextSerializationWriter) Close() error {
 	return nil
+}
+
+func (w *TextSerializationWriter) WriteNullValue(key string) error {
+	return NoStructuredDataError
+}
+
+func (w *TextSerializationWriter) GetOnBeforeSerialization() absser.ParsableAction {
+	return nil
+}
+
+func (w *TextSerializationWriter) SetOnBeforeSerialization(action absser.ParsableAction) error {
+	return UnsupportedMethodError
+}
+
+func (w *TextSerializationWriter) GetOnAfterObjectSerialization() absser.ParsableAction {
+	return nil
+}
+
+func (w *TextSerializationWriter) SetOnAfterObjectSerialization(action absser.ParsableAction) error {
+	return UnsupportedMethodError
+}
+
+func (w *TextSerializationWriter) GetOnStartObjectSerialization() absser.ParsableWriter {
+	return nil
+}
+
+func (w *TextSerializationWriter) SetOnStartObjectSerialization(writer absser.ParsableWriter) error {
+	return UnsupportedMethodError
 }

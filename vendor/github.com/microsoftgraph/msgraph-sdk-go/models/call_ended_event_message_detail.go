@@ -1,31 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // CallEndedEventMessageDetail 
 type CallEndedEventMessageDetail struct {
     EventMessageDetail
-    // Duration of the call.
-    callDuration *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration
-    // Represents the call event type. Possible values are: call, meeting, screenShare, unknownFutureValue.
-    callEventType *TeamworkCallEventType
-    // Unique identifier of the call.
-    callId *string
-    // List of call participants.
-    callParticipants []CallParticipantInfoable
-    // Initiator of the event.
-    initiator IdentitySetable
 }
 // NewCallEndedEventMessageDetail instantiates a new CallEndedEventMessageDetail and sets the default values.
 func NewCallEndedEventMessageDetail()(*CallEndedEventMessageDetail) {
     m := &CallEndedEventMessageDetail{
         EventMessageDetail: *NewEventMessageDetail(),
     }
-    odataTypeValue := "#microsoft.graph.callEndedEventMessageDetail";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.callEndedEventMessageDetail"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateCallEndedEventMessageDetailFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -34,33 +23,117 @@ func CreateCallEndedEventMessageDetailFromDiscriminatorValue(parseNode i878a80d2
 }
 // GetCallDuration gets the callDuration property value. Duration of the call.
 func (m *CallEndedEventMessageDetail) GetCallDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration) {
-    return m.callDuration
+    val, err := m.GetBackingStore().Get("callDuration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    }
+    return nil
 }
 // GetCallEventType gets the callEventType property value. Represents the call event type. Possible values are: call, meeting, screenShare, unknownFutureValue.
 func (m *CallEndedEventMessageDetail) GetCallEventType()(*TeamworkCallEventType) {
-    return m.callEventType
+    val, err := m.GetBackingStore().Get("callEventType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*TeamworkCallEventType)
+    }
+    return nil
 }
 // GetCallId gets the callId property value. Unique identifier of the call.
 func (m *CallEndedEventMessageDetail) GetCallId()(*string) {
-    return m.callId
+    val, err := m.GetBackingStore().Get("callId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCallParticipants gets the callParticipants property value. List of call participants.
 func (m *CallEndedEventMessageDetail) GetCallParticipants()([]CallParticipantInfoable) {
-    return m.callParticipants
+    val, err := m.GetBackingStore().Get("callParticipants")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]CallParticipantInfoable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CallEndedEventMessageDetail) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EventMessageDetail.GetFieldDeserializers()
-    res["callDuration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetISODurationValue(m.SetCallDuration)
-    res["callEventType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseTeamworkCallEventType , m.SetCallEventType)
-    res["callId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCallId)
-    res["callParticipants"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateCallParticipantInfoFromDiscriminatorValue , m.SetCallParticipants)
-    res["initiator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetInitiator)
+    res["callDuration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetISODurationValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallDuration(val)
+        }
+        return nil
+    }
+    res["callEventType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseTeamworkCallEventType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallEventType(val.(*TeamworkCallEventType))
+        }
+        return nil
+    }
+    res["callId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallId(val)
+        }
+        return nil
+    }
+    res["callParticipants"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateCallParticipantInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]CallParticipantInfoable, len(val))
+            for i, v := range val {
+                res[i] = v.(CallParticipantInfoable)
+            }
+            m.SetCallParticipants(res)
+        }
+        return nil
+    }
+    res["initiator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInitiator(val.(IdentitySetable))
+        }
+        return nil
+    }
     return res
 }
 // GetInitiator gets the initiator property value. Initiator of the event.
 func (m *CallEndedEventMessageDetail) GetInitiator()(IdentitySetable) {
-    return m.initiator
+    val, err := m.GetBackingStore().Get("initiator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *CallEndedEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -88,7 +161,10 @@ func (m *CallEndedEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a
         }
     }
     if m.GetCallParticipants() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetCallParticipants())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetCallParticipants()))
+        for i, v := range m.GetCallParticipants() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("callParticipants", cast)
         if err != nil {
             return err
@@ -104,21 +180,51 @@ func (m *CallEndedEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a
 }
 // SetCallDuration sets the callDuration property value. Duration of the call.
 func (m *CallEndedEventMessageDetail) SetCallDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)() {
-    m.callDuration = value
+    err := m.GetBackingStore().Set("callDuration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallEventType sets the callEventType property value. Represents the call event type. Possible values are: call, meeting, screenShare, unknownFutureValue.
 func (m *CallEndedEventMessageDetail) SetCallEventType(value *TeamworkCallEventType)() {
-    m.callEventType = value
+    err := m.GetBackingStore().Set("callEventType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallId sets the callId property value. Unique identifier of the call.
 func (m *CallEndedEventMessageDetail) SetCallId(value *string)() {
-    m.callId = value
+    err := m.GetBackingStore().Set("callId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallParticipants sets the callParticipants property value. List of call participants.
 func (m *CallEndedEventMessageDetail) SetCallParticipants(value []CallParticipantInfoable)() {
-    m.callParticipants = value
+    err := m.GetBackingStore().Set("callParticipants", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInitiator sets the initiator property value. Initiator of the event.
 func (m *CallEndedEventMessageDetail) SetInitiator(value IdentitySetable)() {
-    m.initiator = value
+    err := m.GetBackingStore().Set("initiator", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CallEndedEventMessageDetailable 
+type CallEndedEventMessageDetailable interface {
+    EventMessageDetailable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCallDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    GetCallEventType()(*TeamworkCallEventType)
+    GetCallId()(*string)
+    GetCallParticipants()([]CallParticipantInfoable)
+    GetInitiator()(IdentitySetable)
+    SetCallDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)()
+    SetCallEventType(value *TeamworkCallEventType)()
+    SetCallId(value *string)()
+    SetCallParticipants(value []CallParticipantInfoable)()
+    SetInitiator(value IdentitySetable)()
 }

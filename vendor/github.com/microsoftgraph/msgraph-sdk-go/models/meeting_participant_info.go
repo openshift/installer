@@ -1,28 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // MeetingParticipantInfo 
 type MeetingParticipantInfo struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Identity information of the participant.
-    identity IdentitySetable
-    // The OdataType property
-    odataType *string
-    // Specifies the participant's role in the meeting.  Possible values are attendee, presenter, producer, and unknownFutureValue.
-    role *OnlineMeetingRole
-    // User principal name of the participant.
-    upn *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewMeetingParticipantInfo instantiates a new meetingParticipantInfo and sets the default values.
 func NewMeetingParticipantInfo()(*MeetingParticipantInfo) {
     m := &MeetingParticipantInfo{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateMeetingParticipantInfoFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,33 +23,109 @@ func CreateMeetingParticipantInfoFromDiscriminatorValue(parseNode i878a80d2330e8
     return NewMeetingParticipantInfo(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MeetingParticipantInfo) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *MeetingParticipantInfo) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *MeetingParticipantInfo) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MeetingParticipantInfo) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["identity"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetIdentity)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["role"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseOnlineMeetingRole , m.SetRole)
-    res["upn"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUpn)
+    res["identity"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIdentity(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["role"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseOnlineMeetingRole)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRole(val.(*OnlineMeetingRole))
+        }
+        return nil
+    }
+    res["upn"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUpn(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIdentity gets the identity property value. Identity information of the participant.
 func (m *MeetingParticipantInfo) GetIdentity()(IdentitySetable) {
-    return m.identity
+    val, err := m.GetBackingStore().Get("identity")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *MeetingParticipantInfo) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
-// GetRole gets the role property value. Specifies the participant's role in the meeting.  Possible values are attendee, presenter, producer, and unknownFutureValue.
+// GetRole gets the role property value. Specifies the participant's role in the meeting.
 func (m *MeetingParticipantInfo) GetRole()(*OnlineMeetingRole) {
-    return m.role
+    val, err := m.GetBackingStore().Get("role")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*OnlineMeetingRole)
+    }
+    return nil
 }
 // GetUpn gets the upn property value. User principal name of the participant.
 func (m *MeetingParticipantInfo) GetUpn()(*string) {
-    return m.upn
+    val, err := m.GetBackingStore().Get("upn")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MeetingParticipantInfo) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -94,22 +163,57 @@ func (m *MeetingParticipantInfo) Serialize(writer i878a80d2330e89d26896388a3f487
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MeetingParticipantInfo) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *MeetingParticipantInfo) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *MeetingParticipantInfo) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetIdentity sets the identity property value. Identity information of the participant.
 func (m *MeetingParticipantInfo) SetIdentity(value IdentitySetable)() {
-    m.identity = value
+    err := m.GetBackingStore().Set("identity", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *MeetingParticipantInfo) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetRole sets the role property value. Specifies the participant's role in the meeting.  Possible values are attendee, presenter, producer, and unknownFutureValue.
+// SetRole sets the role property value. Specifies the participant's role in the meeting.
 func (m *MeetingParticipantInfo) SetRole(value *OnlineMeetingRole)() {
-    m.role = value
+    err := m.GetBackingStore().Set("role", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUpn sets the upn property value. User principal name of the participant.
 func (m *MeetingParticipantInfo) SetUpn(value *string)() {
-    m.upn = value
+    err := m.GetBackingStore().Set("upn", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MeetingParticipantInfoable 
+type MeetingParticipantInfoable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetIdentity()(IdentitySetable)
+    GetOdataType()(*string)
+    GetRole()(*OnlineMeetingRole)
+    GetUpn()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetIdentity(value IdentitySetable)()
+    SetOdataType(value *string)()
+    SetRole(value *OnlineMeetingRole)()
+    SetUpn(value *string)()
 }
