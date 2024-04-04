@@ -14,20 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha7
-
-const defaultIdentityRefKind = "Secret"
+package v1beta1
 
 // OpenStackIdentityReference is a reference to an infrastructure
 // provider identity to be used to provision cluster resources.
 type OpenStackIdentityReference struct {
-	// Kind of the identity. Must be supported by the infrastructure
-	// provider and may be either cluster or namespace-scoped.
-	// +kubebuilder:validation:MinLength=1
-	Kind string `json:"kind"`
-
-	// Name of the infrastructure identity to be used.
-	// Must be either a cluster-scoped resource, or namespaced-scoped
-	// resource the same namespace as the resource(s) being provisioned.
+	// Name is the name of a secret in the same namespace as the resource being provisioned.
+	// The secret must contain a key named `clouds.yaml` which contains an OpenStack clouds.yaml file.
+	// The secret may optionally contain a key named `cacert` containing a PEM-encoded CA certificate.
+	// +kubebuilder:validation:Required
 	Name string `json:"name"`
+
+	// CloudName specifies the name of the entry in the clouds.yaml file to use.
+	// +kubebuilder:validation:Required
+	CloudName string `json:"cloudName"`
 }

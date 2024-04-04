@@ -14,20 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha7
+package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/errors"
+
+	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
 )
 
 const (
 	// MachineFinalizer allows ReconcileOpenStackMachine to clean up OpenStack resources associated with OpenStackMachine before
 	// removing it from the apiserver.
-	MachineFinalizer = "openstackmachine.infrastructure.cluster.x-k8s.io"
+	MachineFinalizer        = "openstackmachine.infrastructure.cluster.x-k8s.io"
+	IPClaimMachineFinalizer = "openstackmachine.infrastructure.cluster.x-k8s.io/ip-claim"
 )
 
 // OpenStackMachineSpec defines the desired state of OpenStackMachine.
@@ -35,23 +38,13 @@ type OpenStackMachineSpec struct {
 	// ProviderID is the unique identifier as specified by the cloud provider.
 	ProviderID *string `json:"providerID,omitempty"`
 
-	// InstanceID is the OpenStack instance ID for this machine.
-	InstanceID *string `json:"instanceID,omitempty"`
-
-	// The name of the cloud to use from the clouds secret
-	// +optional
-	CloudName string `json:"cloudName"`
-
 	// The flavor reference for the flavor for your server instance.
 	Flavor string `json:"flavor"`
 
-	// The name of the image to use for your server instance.
-	// If the RootVolume is specified, this will be ignored and use rootVolume directly.
-	Image string `json:"image,omitempty"`
-
-	// The uuid of the image to use for your server instance.
-	// if it's empty, Image name will be used
-	ImageUUID string `json:"imageUUID,omitempty"`
+	// The image to use for your server instance.
+	// If the rootVolume is specified, this will be used when creating the root volume.
+	// +required
+	Image ImageParam `json:"image"`
 
 	// The ssh key to inject in the instance
 	SSHKeyName string `json:"sshKeyName,omitempty"`
@@ -60,23 +53,23 @@ type OpenStackMachineSpec struct {
 	// If not specified a default port will be added for the default cluster network.
 	Ports []PortOpts `json:"ports,omitempty"`
 
-	// The floatingIP which will be associated to the machine, only used for master.
-	// The floatingIP should have been created and haven't been associated.
-	FloatingIP string `json:"floatingIP,omitempty"`
-
 	// The names of the security groups to assign to the instance
-	SecurityGroups []SecurityGroupFilter `json:"securityGroups,omitempty"`
+	SecurityGroups []SecurityGroupParam `json:"securityGroups,omitempty"`
 
 	// Whether the server instance is created on a trunk port or not.
 	Trunk bool `json:"trunk,omitempty"`
 
-	// Machine tags
+	// Tags which will be added to the machine and all dependent resources
+	// which support them. These are in addition to Tags defined on the
+	// cluster.
 	// Requires Nova api 2.52 minimum!
 	// +listType=set
 	Tags []string `json:"tags,omitempty"`
 
 	// Metadata mapping. Allows you to create a map of key value pairs to add to the server instance.
-	ServerMetadata map[string]string `json:"serverMetadata,omitempty"`
+	// +listType=map
+	// +listMapKey=key
+	ServerMetadata []ServerMetadata `json:"serverMetadata,omitempty"`
 
 	// Config Drive support
 	ConfigDrive *bool `json:"configDrive,omitempty"`
@@ -90,12 +83,33 @@ type OpenStackMachineSpec struct {
 	// +optional
 	AdditionalBlockDevices []AdditionalBlockDevice `json:"additionalBlockDevices,omitempty"`
 
-	// The server group to assign the machine to
-	ServerGroupID string `json:"serverGroupID,omitempty"`
+	// The server group to assign the machine to.
+	// +optional
+	ServerGroup *ServerGroupParam `json:"serverGroup,omitempty"`
 
-	// IdentityRef is a reference to a identity to be used when reconciling this cluster
+	// IdentityRef is a reference to a secret holding OpenStack credentials
+	// to be used when reconciling this machine. If not specified, the
+	// credentials specified in the cluster will be used.
 	// +optional
 	IdentityRef *OpenStackIdentityReference `json:"identityRef,omitempty"`
+
+	// floatingIPPoolRef is a reference to a IPPool that will be assigned
+	// to an IPAddressClaim. Once the IPAddressClaim is fulfilled, the FloatingIP
+	// will be assigned to the OpenStackMachine.
+	// +optional
+	FloatingIPPoolRef *corev1.TypedLocalObjectReference `json:"floatingIPPoolRef,omitempty"`
+}
+
+type ServerMetadata struct {
+	// Key is the server metadata key
+	// +kubebuilder:validation:MaxLength:=255
+	// +kubebuilder:validation:Required
+	Key string `json:"key"`
+
+	// Value is the server metadata value
+	// +kubebuilder:validation:MaxLength:=255
+	// +kubebuilder:validation:Required
+	Value string `json:"value"`
 }
 
 // OpenStackMachineStatus defines the observed state of OpenStackMachine.
@@ -104,12 +118,25 @@ type OpenStackMachineStatus struct {
 	// +optional
 	Ready bool `json:"ready"`
 
+	// InstanceID is the OpenStack instance ID for this machine.
+	// +optional
+	InstanceID optional.String `json:"instanceID,omitempty"`
+
 	// Addresses contains the OpenStack instance associated addresses.
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
 	// InstanceState is the state of the OpenStack instance for this machine.
 	// +optional
 	InstanceState *InstanceState `json:"instanceState,omitempty"`
+
+	// Resolved contains parts of the machine spec with all external
+	// references fully resolved.
+	// +optional
+	Resolved *ResolvedMachineSpec `json:"resolved,omitempty"`
+
+	// Resources contains references to OpenStack resources created for the machine.
+	// +optional
+	Resources *MachineResources `json:"resources,omitempty"`
 
 	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
 
@@ -135,6 +162,8 @@ type OpenStackMachineStatus struct {
 	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 }
 
+// +genclient
+// +genclient:Namespaced
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
 // +kubebuilder:resource:path=openstackmachines,scope=Namespaced,categories=cluster-api,shortName=osm
@@ -177,9 +206,9 @@ func (r *OpenStackMachine) SetConditions(conditions clusterv1.Conditions) {
 // SetFailure sets the OpenStackMachine status failure reason and failure message.
 func (r *OpenStackMachine) SetFailure(failureReason errors.MachineStatusError, failureMessage error) {
 	r.Status.FailureReason = &failureReason
-	r.Status.FailureMessage = pointer.String(failureMessage.Error())
+	r.Status.FailureMessage = ptr.To(failureMessage.Error())
 }
 
 func init() {
-	SchemeBuilder.Register(&OpenStackMachine{}, &OpenStackMachineList{})
+	objectTypes = append(objectTypes, &OpenStackMachine{}, &OpenStackMachineList{})
 }

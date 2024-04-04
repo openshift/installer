@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha7
+package v1beta1
 
 import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
@@ -52,4 +52,15 @@ const (
 	LoadBalancerMemberErrorReason = "LoadBalancerMemberError"
 	// FloatingIPErrorReason used when the floating ip could not be created or attached.
 	FloatingIPErrorReason = "FloatingIPError"
+)
+
+const (
+	// FloatingAddressFromPoolReadyCondition reports on the current status of the Floating IPs from ipam pool.
+	FloatingAddressFromPoolReadyCondition clusterv1.ConditionType = "FloatingAddressFromPoolReady"
+	// WaitingForIpamProviderReason used when machine is waiting for ipam provider to be ready before proceeding.
+	FloatingAddressFromPoolWaitingForIpamProviderReason = "WaitingForIPAMProvider"
+	// FloatingAddressFromPoolErrorReason is used when there is an error attaching an IP from the pool to an machine.
+	FloatingAddressFromPoolErrorReason = "FloatingIPError"
+	// UnableToFindFloatingIPNetworkReason is used when the floating ip network is not found.
+	UnableToFindFloatingIPNetworkReason = "UnableToFindFloatingIPNetwork"
 )
