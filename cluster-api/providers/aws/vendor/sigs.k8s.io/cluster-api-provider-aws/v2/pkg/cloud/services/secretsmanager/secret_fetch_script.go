@@ -48,6 +48,8 @@ SECRET_PREFIX="{{.SecretPrefix}}"
 CHUNKS="{{.Chunks}}"
 FILE="/etc/secret-userdata.txt"
 FINAL_INDEX=$((CHUNKS - 1))
+MAX_RETRIES=10
+RETRY_DELAY=10 # in seconds
 
 # Log an error and exit.
 # Args:
@@ -115,6 +117,7 @@ check_aws_command() {
     ;;
   esac
 }
+
 delete_secret_value() {
   local id="${SECRET_PREFIX}-${1}"
   local out
@@ -126,19 +129,27 @@ delete_secret_value() {
     aws secretsmanager ${ENDPOINT} --region ${REGION} delete-secret --force-delete-without-recovery --secret-id "${id}" 2>&1
   )
   local delete_return=$?
-  set -o errexit
-  set -o nounset
-  set -o pipefail
   check_aws_command "SecretsManager::DeleteSecret" "${delete_return}" "${out}"
   if [ ${delete_return} -ne 0 ]; then
-    log::error_exit "Could not delete secret value" 2
+    log::error "Could not delete secret value"
+    return 1
   fi
 }
 
-delete_secrets() {
-  for i in $(seq 0 ${FINAL_INDEX}); do
-    delete_secret_value "$i"
+retry_delete_secret_value() {
+  local retries=0
+  while [ ${retries} -lt ${MAX_RETRIES} ]; do
+    delete_secret_value "$1"
+    local return_code=$?
+    if [ ${return_code} -eq 0 ]; then
+      return 0
+    else
+      ((retries++))
+      log::info "Retrying in ${RETRY_DELAY} seconds..."
+      sleep ${RETRY_DELAY}
+    fi
   done
+  return 1
 }
 
 get_secret_value() {
@@ -159,16 +170,31 @@ get_secret_value() {
   )
   local get_return=$?
   check_aws_command "SecretsManager::GetSecretValue" "${get_return}" "${data}"
+  if [ ${get_return} -ne 0 ]; then
+    log::error "could not get secret value"
+    return 1
+  fi
   set -o errexit
   set -o nounset
   set -o pipefail
-  if [ ${get_return} -ne 0 ]; then
-    log::error "could not get secret value, deleting secret"
-    delete_secrets
-    log::error_exit "could not get secret value, but secret was deleted" 1
-  fi
   log::info "appending data to temporary file ${FILE}.gz"
   echo "${data}" | base64 -d >>${FILE}.gz
+}
+
+retry_get_secret_value() {
+  local retries=0
+  while [ ${retries} -lt ${MAX_RETRIES} ]; do
+    get_secret_value "$1"
+    local return_code=$?
+    if [ ${return_code} -eq 0 ]; then
+      return 0
+    else
+      ((retries++))
+      log::info "Retrying in ${RETRY_DELAY} seconds..."
+      sleep ${RETRY_DELAY}
+    fi
+  done
+  return 1
 }
 
 log::info "aws.cluster.x-k8s.io encrypted cloud-init script $0 started"
@@ -181,10 +207,21 @@ if test -f "${FILE}"; then
 fi
 
 for i in $(seq 0 "${FINAL_INDEX}"); do
-  get_secret_value "$i"
+  retry_get_secret_value "$i"
+  return_code=$?
+  if [ ${return_code} -ne 0 ]; then
+    log::error "Failed to get secret value after ${MAX_RETRIES} attempts"
+  fi
 done
 
-delete_secrets
+for i in $(seq 0 ${FINAL_INDEX}); do
+  retry_delete_secret_value "$i"
+  return_code=$?
+  if [ ${return_code} -ne 0 ]; then
+    log::error "Failed to delete secret value after ${MAX_RETRIES} attempts"
+    log::error_exit "couldn't delete the secret value, exiting" 1
+  fi
+done
 
 log::info "decompressing userdata to ${FILE}"
 gunzip "${FILE}.gz"

@@ -33,6 +33,7 @@ type ReservedResourceBuilder struct {
 	createdAt                 time.Time
 	resourceName              string
 	resourceType              string
+	scope                     string
 	updatedAt                 time.Time
 	byoc                      bool
 }
@@ -105,10 +106,17 @@ func (b *ReservedResourceBuilder) ResourceType(value string) *ReservedResourceBu
 	return b
 }
 
+// Scope sets the value of the 'scope' attribute to the given value.
+func (b *ReservedResourceBuilder) Scope(value string) *ReservedResourceBuilder {
+	b.scope = value
+	b.bitmap_ |= 256
+	return b
+}
+
 // UpdatedAt sets the value of the 'updated_at' attribute to the given value.
 func (b *ReservedResourceBuilder) UpdatedAt(value time.Time) *ReservedResourceBuilder {
 	b.updatedAt = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -126,6 +134,7 @@ func (b *ReservedResourceBuilder) Copy(object *ReservedResource) *ReservedResour
 	b.createdAt = object.createdAt
 	b.resourceName = object.resourceName
 	b.resourceType = object.resourceType
+	b.scope = object.scope
 	b.updatedAt = object.updatedAt
 	return b
 }
@@ -142,6 +151,7 @@ func (b *ReservedResourceBuilder) Build() (object *ReservedResource, err error) 
 	object.createdAt = b.createdAt
 	object.resourceName = b.resourceName
 	object.resourceType = b.resourceType
+	object.scope = b.scope
 	object.updatedAt = b.updatedAt
 	return
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
@@ -272,6 +273,11 @@ func (r *ROSAMachinePoolReconciler) reconcileNormal(ctx context.Context,
 
 	nodePool, err = ocmClient.CreateNodePool(machinePoolScope.ControlPlane.Status.ID, nodePoolSpec)
 	if err != nil {
+		conditions.MarkFalse(rosaMachinePool,
+			expinfrav1.RosaMachinePoolReadyCondition,
+			expinfrav1.RosaMachinePoolReconciliationFailedReason,
+			clusterv1.ConditionSeverityError,
+			"failed to create ROSAMachinePool: %s", err.Error())
 		return ctrl.Result{}, fmt.Errorf("failed to create nodepool: %w", err)
 	}
 
@@ -308,11 +314,7 @@ func (r *ROSAMachinePoolReconciler) reconcileDelete(
 
 func (r *ROSAMachinePoolReconciler) reconcileMachinePoolVersion(machinePoolScope *scope.RosaMachinePoolScope, ocmClient *ocm.Client, nodePool *cmv1.NodePool) error {
 	version := machinePoolScope.RosaMachinePool.Spec.Version
-	if version == "" {
-		version = machinePoolScope.ControlPlane.Spec.Version
-	}
-
-	if version == rosa.RawVersionID(nodePool.Version()) {
+	if version == "" || version == rosa.RawVersionID(nodePool.Version()) {
 		conditions.MarkFalse(machinePoolScope.RosaMachinePool, expinfrav1.RosaMachinePoolUpgradingCondition, "upgraded", clusterv1.ConditionSeverityInfo, "")
 		return nil
 	}
@@ -361,6 +363,7 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 	// zero-out fields that shouldn't be part of the update call.
 	desiredSpec.Version = ""
 	desiredSpec.AdditionalSecurityGroups = nil
+	desiredSpec.AdditionalTags = nil
 
 	npBuilder := nodePoolBuilder(*desiredSpec, machinePoolScope.MachinePool.Spec)
 	nodePoolSpec, err := npBuilder.Build()
@@ -370,6 +373,11 @@ func (r *ROSAMachinePoolReconciler) updateNodePool(machinePoolScope *scope.RosaM
 
 	updatedNodePool, err := ocmClient.UpdateNodePool(machinePoolScope.ControlPlane.Status.ID, nodePoolSpec)
 	if err != nil {
+		conditions.MarkFalse(machinePoolScope.RosaMachinePool,
+			expinfrav1.RosaMachinePoolReadyCondition,
+			expinfrav1.RosaMachinePoolReconciliationFailedReason,
+			clusterv1.ConditionSeverityError,
+			"failed to update ROSAMachinePool: %s", err.Error())
 		return nil, fmt.Errorf("failed to update nodePool: %w", err)
 	}
 
@@ -438,10 +446,18 @@ func nodePoolBuilder(rosaMachinePoolSpec expinfrav1.RosaMachinePoolSpec, machine
 	if rosaMachinePoolSpec.AdditionalSecurityGroups != nil {
 		awsNodePool = awsNodePool.AdditionalSecurityGroupIds(rosaMachinePoolSpec.AdditionalSecurityGroups...)
 	}
+	if rosaMachinePoolSpec.AdditionalTags != nil {
+		awsNodePool = awsNodePool.Tags(rosaMachinePoolSpec.AdditionalTags)
+	}
 	npBuilder.AWSNodePool(awsNodePool)
 
 	if rosaMachinePoolSpec.Version != "" {
 		npBuilder.Version(cmv1.NewVersion().ID(ocm.CreateVersionID(rosaMachinePoolSpec.Version, ocm.DefaultChannelGroup)))
+	}
+
+	if rosaMachinePoolSpec.NodeDrainGracePeriod != nil {
+		valueBuilder := cmv1.NewValue().Value(rosaMachinePoolSpec.NodeDrainGracePeriod.Minutes()).Unit("minutes")
+		npBuilder.NodeDrainGracePeriod(valueBuilder)
 	}
 
 	return npBuilder
@@ -454,6 +470,7 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 		AvailabilityZone:         nodePool.AvailabilityZone(),
 		Subnet:                   nodePool.Subnet(),
 		Labels:                   nodePool.Labels(),
+		AdditionalTags:           nodePool.AWSNodePool().Tags(),
 		AutoRepair:               nodePool.AutoRepair(),
 		InstanceType:             nodePool.AWSNodePool().InstanceType(),
 		TuningConfigs:            nodePool.TuningConfigs(),
@@ -476,6 +493,11 @@ func nodePoolToRosaMachinePoolSpec(nodePool *cmv1.NodePool) expinfrav1.RosaMachi
 			})
 		}
 		spec.Taints = rosaTaints
+	}
+	if nodePool.NodeDrainGracePeriod() != nil {
+		spec.NodeDrainGracePeriod = &metav1.Duration{
+			Duration: time.Minute * time.Duration(nodePool.NodeDrainGracePeriod().Value()),
+		}
 	}
 
 	return spec
@@ -509,7 +531,7 @@ func (r *ROSAMachinePoolReconciler) reconcileProviderIDList(ctx context.Context,
 }
 
 func buildEC2FiltersFromTags(tags map[string]string) []*ec2.Filter {
-	filters := make([]*ec2.Filter, len(tags))
+	filters := make([]*ec2.Filter, len(tags)+1)
 	for key, value := range tags {
 		filters = append(filters, &ec2.Filter{
 			Name: ptr.To(fmt.Sprintf("tag:%s", key)),
@@ -518,6 +540,14 @@ func buildEC2FiltersFromTags(tags map[string]string) []*ec2.Filter {
 			}),
 		})
 	}
+
+	// only list instances that are running or just started
+	filters = append(filters, &ec2.Filter{
+		Name: ptr.To("instance-state-name"),
+		Values: aws.StringSlice([]string{
+			"running", "pending",
+		}),
+	})
 
 	return filters
 }

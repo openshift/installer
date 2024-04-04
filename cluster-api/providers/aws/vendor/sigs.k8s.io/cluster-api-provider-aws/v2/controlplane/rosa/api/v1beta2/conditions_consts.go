@@ -31,6 +31,9 @@ const (
 	// ROSAControlPlaneReconciliationFailedReason used to report failures while reconciling ROSAControlPlane.
 	ROSAControlPlaneReconciliationFailedReason = "ReconciliationFailed"
 
+	// ROSAControlPlaneDeletionFailedReason used to report failures while deleting ROSAControlPlane.
+	ROSAControlPlaneDeletionFailedReason = "DeletionFailed"
+
 	// ROSAControlPlaneInvalidConfigurationReason used to report invalid user input.
 	ROSAControlPlaneInvalidConfigurationReason = "InvalidConfiguration"
 )

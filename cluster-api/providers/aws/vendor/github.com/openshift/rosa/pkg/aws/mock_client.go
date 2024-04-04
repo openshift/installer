@@ -610,6 +610,21 @@ func (mr *MockClientMockRecorder) GetAttachedPolicy(role interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttachedPolicy", reflect.TypeOf((*MockClient)(nil).GetAttachedPolicy), role)
 }
 
+// GetAvailabilityZoneType mocks base method.
+func (m *MockClient) GetAvailabilityZoneType(availabilityZoneName string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvailabilityZoneType", availabilityZoneName)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvailabilityZoneType indicates an expected call of GetAvailabilityZoneType.
+func (mr *MockClientMockRecorder) GetAvailabilityZoneType(availabilityZoneName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailabilityZoneType", reflect.TypeOf((*MockClient)(nil).GetAvailabilityZoneType), availabilityZoneName)
+}
+
 // GetClusterRegionTagForUser mocks base method.
 func (m *MockClient) GetClusterRegionTagForUser(username string) (string, error) {
 	m.ctrl.T.Helper()
