@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	clusterapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -32,6 +33,14 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	mpool := pool.Platform.OpenStack
 
+	// In installer CLI code paths, the replica number is set to 3 by default
+	// when install-config does not have any Compute machine-pool, or when the
+	// Compute machine-pool does not have the `replicas` property.
+	// However, external consumers of this func may not be so kind...
+	if pool.Replicas == nil {
+		pool.Replicas = ptr.To[int64](0)
+	}
+
 	failureDomains := failureDomainsFromSpec(*mpool)
 	numberOfFailureDomains := int64(len(failureDomains))
 
@@ -39,9 +48,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	for idx := range machinesets {
 		var replicaNumber int32
 		{
-			// The replica number is set to 3 by default when install-config does not have
-			// any Compute machine-pool, or when the Compute machine-pool does not have the
-			// `replicas` property. As a consequence, pool.Replicas is never nil
 			replicas := *pool.Replicas / numberOfFailureDomains
 			if int64(idx) < *pool.Replicas%numberOfFailureDomains {
 				replicas++
