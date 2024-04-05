@@ -168,7 +168,15 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	// Create user assigned identity
 	userAssignedIdentityName := fmt.Sprintf("%s-identity", in.InfraID)
-	armmsiClientFactory, err := armmsi.NewClientFactory(subscriptionID, tokenCredential, nil)
+	armmsiClientFactory, err := armmsi.NewClientFactory(
+		subscriptionID,
+		tokenCredential,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create armmsi client: %w", err)
 	}
@@ -328,7 +336,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return err
 	}
 
-	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds, nil)
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, session.TokenCreds,
+		&arm.ClientOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: cloudConfiguration,
+			},
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error creating network client factory: %w", err)
 	}
@@ -393,13 +407,26 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		return fmt.Errorf("error retrieving Azure session: %w", err)
 	}
 	subscriptionID := ssn.Credentials.SubscriptionID
+	cloudConfiguration := ssn.CloudConfig
 
 	if in.InstallConfig.Config.Publish == types.ExternalPublishingStrategy {
-		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds, nil)
+		vmClient, err := armcompute.NewVirtualMachinesClient(subscriptionID, ssn.TokenCreds,
+			&arm.ClientOptions{
+				ClientOptions: policy.ClientOptions{
+					Cloud: cloudConfiguration,
+				},
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("error creating vm client: %w", err)
 		}
-		nicClient, err := armnetwork.NewInterfacesClient(ssn.Credentials.SubscriptionID, ssn.TokenCreds, nil)
+		nicClient, err := armnetwork.NewInterfacesClient(ssn.Credentials.SubscriptionID, ssn.TokenCreds,
+			&arm.ClientOptions{
+				ClientOptions: policy.ClientOptions{
+					Cloud: cloudConfiguration,
+				},
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("error creating nic client: %w", err)
 		}
