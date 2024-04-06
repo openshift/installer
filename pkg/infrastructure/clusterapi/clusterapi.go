@@ -58,6 +58,7 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 //nolint:gocyclo
 func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
 	manifestsAsset := &manifests.Manifests{}
+	workersAsset := &machines.Worker{}
 	capiManifestsAsset := &capimanifests.Cluster{}
 	capiMachinesAsset := &machines.ClusterAPI{}
 	clusterKubeconfigAsset := &kubeconfig.AdminClient{}
@@ -68,6 +69,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 	masterIgnAsset := &machine.Master{}
 	parents.Get(
 		manifestsAsset,
+		workersAsset,
 		capiManifestsAsset,
 		clusterKubeconfigAsset,
 		clusterID,
@@ -110,6 +112,7 @@ func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.F
 			RhcosImage:       rhcosImage,
 			ManifestsAsset:   manifestsAsset,
 			MachineManifests: machineManifests,
+			WorkersAsset:     workersAsset,
 		}
 
 		if err := p.PreProvision(ctx, preProvisionInput); err != nil {
