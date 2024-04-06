@@ -6,6 +6,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 )
@@ -33,6 +34,7 @@ type PreProvisionInput struct {
 	RhcosImage       *rhcos.Image
 	ManifestsAsset   *manifests.Manifests
 	MachineManifests []client.Object
+	WorkersAsset     *machines.Worker
 }
 
 // IgnitionProvider handles preconditions for bootstrap ignition and
