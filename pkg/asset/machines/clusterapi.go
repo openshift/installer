@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	nutanixcapi "github.com/openshift/installer/pkg/asset/machines/nutanix"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/machines/powervs"
@@ -38,6 +39,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
@@ -455,6 +457,42 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		c.FileList, err = nutanixcapi.GenerateMachines(clusterID.InfraID, ic, &pool, templateName, "master")
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for Nutanix %w", err)
+		}
+	case ibmcloudtypes.Name:
+		mpool := defaultIBMCloudMachinePoolPlatform()
+		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.IBMCloud)
+		if len(mpool.Zones) == 0 {
+			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
+			if err != nil {
+				return fmt.Errorf("failed to fetch availability zones: %w", err)
+			}
+			mpool.Zones = azs
+		}
+
+		subnets := make(map[string]string)
+		if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
+			subnetMetas, err := installConfig.IBMCloud.ControlPlaneSubnets(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to collect subnets for machines: %w", err)
+			}
+			for _, subnet := range subnetMetas {
+				subnets[subnet.Zone] = subnet.Name
+			}
+		}
+		imageName := fmt.Sprintf("%s-rhcos", clusterID.InfraID)
+
+		c.FileList, err = ibmcloud.GenerateMachines(
+			ctx,
+			clusterID.InfraID,
+			ic,
+			subnets,
+			&pool,
+			imageName,
+			"master",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to generate IBM Cloud VPC machine manifests: %w", err)
 		}
 	default:
 		// TODO: support other platforms

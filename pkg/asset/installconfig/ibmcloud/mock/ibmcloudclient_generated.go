@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	s3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
 	dnsrecordsv1 "github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -39,6 +40,77 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// CreateCOSBucket mocks base method.
+func (m *MockAPI) CreateCOSBucket(ctx context.Context, cosInstanceID, bucketName, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCOSBucket", ctx, cosInstanceID, bucketName, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateCOSBucket indicates an expected call of CreateCOSBucket.
+func (mr *MockAPIMockRecorder) CreateCOSBucket(ctx, cosInstanceID, bucketName, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSBucket", reflect.TypeOf((*MockAPI)(nil).CreateCOSBucket), ctx, cosInstanceID, bucketName, region)
+}
+
+// CreateCOSInstance mocks base method.
+func (m *MockAPI) CreateCOSInstance(ctx context.Context, cosName, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCOSInstance", ctx, cosName, resourceGroupID)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCOSInstance indicates an expected call of CreateCOSInstance.
+func (mr *MockAPIMockRecorder) CreateCOSInstance(ctx, cosName, resourceGroupID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSInstance", reflect.TypeOf((*MockAPI)(nil).CreateCOSInstance), ctx, cosName, resourceGroupID)
+}
+
+// CreateCOSObject mocks base method.
+func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceData []byte, fileName, cosInstanceID, bucketName, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCOSObject", ctx, sourceData, fileName, cosInstanceID, bucketName, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateCOSObject indicates an expected call of CreateCOSObject.
+func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceData, fileName, cosInstanceID, bucketName, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceData, fileName, cosInstanceID, bucketName, region)
+}
+
+// CreateIAMAuthorizationPolicy mocks base method.
+func (m *MockAPI) CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID string, roles []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateIAMAuthorizationPolicy", tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateIAMAuthorizationPolicy indicates an expected call of CreateIAMAuthorizationPolicy.
+func (mr *MockAPIMockRecorder) CreateIAMAuthorizationPolicy(tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateIAMAuthorizationPolicy", reflect.TypeOf((*MockAPI)(nil).CreateIAMAuthorizationPolicy), tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles)
+}
+
+// CreateResourceGroup mocks base method.
+func (m *MockAPI) CreateResourceGroup(ctx context.Context, rgName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateResourceGroup", ctx, rgName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateResourceGroup indicates an expected call of CreateResourceGroup.
+func (mr *MockAPIMockRecorder) CreateResourceGroup(ctx, rgName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResourceGroup", reflect.TypeOf((*MockAPI)(nil).CreateResourceGroup), ctx, rgName)
 }
 
 // GetAPIKey mocks base method.
@@ -83,6 +155,36 @@ func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcec
 func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCISInstance", reflect.TypeOf((*MockAPI)(nil).GetCISInstance), ctx, crnstr)
+}
+
+// GetCOSBucketByName mocks base method.
+func (m *MockAPI) GetCOSBucketByName(ctx context.Context, cosInstanceID, bucketName, region string) (*s3.Bucket, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCOSBucketByName", ctx, cosInstanceID, bucketName, region)
+	ret0, _ := ret[0].(*s3.Bucket)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCOSBucketByName indicates an expected call of GetCOSBucketByName.
+func (mr *MockAPIMockRecorder) GetCOSBucketByName(ctx, cosInstanceID, bucketName, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSBucketByName", reflect.TypeOf((*MockAPI)(nil).GetCOSBucketByName), ctx, cosInstanceID, bucketName, region)
+}
+
+// GetCOSInstanceByName mocks base method.
+func (m *MockAPI) GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCOSInstanceByName", ctx, cosName)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCOSInstanceByName indicates an expected call of GetCOSInstanceByName.
+func (mr *MockAPIMockRecorder) GetCOSInstanceByName(ctx, cosName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSInstanceByName", reflect.TypeOf((*MockAPI)(nil).GetCOSInstanceByName), ctx, cosName)
 }
 
 // GetDNSInstance mocks base method.

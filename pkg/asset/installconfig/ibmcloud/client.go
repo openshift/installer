@@ -1,6 +1,7 @@
 package ibmcloud
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -10,17 +11,23 @@ import (
 
 	ibmcrn "github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/go-sdk-core/v5/core"
+	cosaws "github.com/IBM/ibm-cos-sdk-go/aws"
+	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
+	cossession "github.com/IBM/ibm-cos-sdk-go/aws/session"
+	ibms3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
 	kpclient "github.com/IBM/keyprotect-go-client"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
+	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
@@ -32,9 +39,16 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
+	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
+	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
+	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
+	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.Bucket, error)
+	GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
 	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
@@ -79,6 +93,10 @@ const (
 
 	// cisServiceID is the Cloud Internet Services' catalog service ID.
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
+	// cosServiceID is the Cloud Object Storage catalog service ID.
+	cosServiceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
+	// cosSerivcePlanID is the Cloud Object Storage catalog Standard service plan ID.
+	cosServicePlanID = "744bfc56-d12c-4866-88d5-dac9139e0e5d"
 	// dnsServiceID is the DNS Services' catalog service ID.
 	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
 
@@ -87,6 +105,8 @@ const (
 	// keyProtectCRNServiceName is the service name within the IBM Cloud CRN for the Key Protect service.
 	keyProtectCRNServiceName = "kms"
 
+	// cosDefaultURLTEmplate is the default URL endpoint template, with region subsitution, for IBM Cloud Object Storage service.
+	cosDefaultURLTemplate = "s3.%s.cloud-object-storage.appdomain.cloud"
 	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
 	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
 	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
@@ -146,6 +166,176 @@ func (c *Client) loadSDKServices() error {
 	return nil
 }
 
+// CreateCOSBucket will create a new COS Bucket in the COS Instance, based on the Instance ID.
+func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	cosClient := c.getCOSClient(cosInstanceID, region)
+	// Setup Location Constraint, for now we always default to the Smart tier
+	locationConstraint := fmt.Sprintf("%s-%s", region, "smart")
+
+	options := &ibms3.CreateBucketInput{
+		Bucket: ptr.To(bucketName),
+		CreateBucketConfiguration: &ibms3.CreateBucketConfiguration{
+			LocationConstraint: ptr.To(locationConstraint),
+		},
+	}
+	if _, err := cosClient.CreateBucketWithContext(localContext, options); err != nil {
+		return fmt.Errorf("failed to create cos bucket: %w", err)
+	}
+	return nil
+}
+
+// CreateCOSInstance will create a new COS Instance and return the ResourceInstance details.
+func (c *Client) CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	createOptions := c.controllerAPI.NewCreateResourceInstanceOptions(cosName, "Global", resourceGroupID, cosServicePlanID)
+
+	instance, _, err := c.controllerAPI.CreateResourceInstanceWithContext(localContext, createOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating new COS instance: %w", err)
+	}
+
+	return instance, nil
+}
+
+// CreateCOSObject will (upload) create a new COS object in the designated COS instance and bucket.
+func (c *Client) CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error {
+	cosClient := c.getCOSClient(cosInstanceID, region)
+
+	options := &ibms3.PutObjectInput{
+		Body:   cosaws.ReadSeekCloser(bytes.NewReader(sourceData)),
+		Bucket: cosaws.String(bucketName),
+		Key:    cosaws.String(fileName),
+	}
+
+	if _, err := cosClient.PutObject(options); err != nil {
+		return fmt.Errorf("failed creating cos object: %w", err)
+	}
+	return nil
+}
+
+// CreateIAMAuthorizationPolicy creates a new IAM Authorization policy for read access to VPC to a COS Instance.
+func (c *Client) CreateIAMAuthorizationPolicy(ctx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error {
+	accountIDKeyPtr := ptr.To("accountId")
+	resourceTypeKeyPtr := ptr.To("resourceType")
+	serviceInstanceKeyPtr := ptr.To("serviceInstance")
+	serviceNameKeyPtr := ptr.To("serviceName")
+	stringEqualsOperatorPtr := ptr.To("stringEquals")
+
+	apiKeyDetails, err := c.GetAuthenticatorAPIKeyDetails(ctx)
+	if err != nil {
+		return fmt.Errorf("failed collecting account ID: %w", err)
+	}
+
+	policyRoles := make([]iampolicymanagementv1.Roles, 0, len(roles))
+
+	for _, role := range roles {
+		policyRoles = append(policyRoles, iampolicymanagementv1.Roles{
+			RoleID: ptr.To(role),
+		})
+	}
+
+	policyControl := &iampolicymanagementv1.Control{
+		Grant: &iampolicymanagementv1.Grant{
+			Roles: policyRoles,
+		},
+	}
+
+	// setup the source service policy details (VPC Custom Image)
+	policySubject := &iampolicymanagementv1.V2PolicySubject{
+		Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{
+			{
+				Key:      serviceNameKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    ptr.To(sourceServiceName),
+			},
+			{
+				Key:      accountIDKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    apiKeyDetails.AccountID,
+			},
+			{
+				Key:      resourceTypeKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    ptr.To(sourceServiceResourceType),
+			},
+		},
+	}
+
+	// setup the target resource policy details (COS)
+	policyResource := &iampolicymanagementv1.V2PolicyResource{
+		Attributes: []iampolicymanagementv1.V2PolicyResourceAttribute{
+			{
+				Key:      serviceNameKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    ptr.To(targetServiceName),
+			},
+			{
+				Key:      accountIDKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    apiKeyDetails.AccountID,
+			},
+			{
+				Key:      serviceInstanceKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    ptr.To(targetServiceInstanceID),
+			},
+		},
+	}
+
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return fmt.Errorf("failed setting up IAM policy management service: %w", err)
+	}
+	iamPolicyManagementServiceOptions := &iampolicymanagementv1.IamPolicyManagementV1Options{
+		Authenticator: authenticator,
+	}
+	if c.iamServiceEndpointOverride != "" {
+		iamPolicyManagementServiceOptions.URL = c.iamServiceEndpointOverride
+	}
+
+	iamPolicyManagementService, err := iampolicymanagementv1.NewIamPolicyManagementV1(iamPolicyManagementServiceOptions)
+	if err != nil {
+		return fmt.Errorf("failed creation IAM policy management service: %w", err)
+	}
+
+	options := iamPolicyManagementService.NewCreateV2PolicyOptions(policyControl, "authorization")
+	options.SetSubject(policySubject)
+	options.SetResource(policyResource)
+
+	if _, _, err = iamPolicyManagementService.CreateV2Policy(options); err != nil {
+		return fmt.Errorf("failed creating IAM authorization policy: %w", err)
+	}
+
+	return nil
+}
+
+// CreateResourceGroup creates a new IBM Cloud Resource Group.
+func (c *Client) CreateResourceGroup(ctx context.Context, rgName string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	// Get the Account ID
+	apiKeyDetails, err := c.GetAuthenticatorAPIKeyDetails(localContext)
+	if err != nil {
+		return fmt.Errorf("failed retrieving account ID: %w", err)
+	}
+
+	createRGOptions := c.managementAPI.NewCreateResourceGroupOptions()
+	createRGOptions.SetName(rgName)
+	createRGOptions.SetAccountID(*apiKeyDetails.AccountID)
+
+	// Create the Resource Group
+	if _, _, err = c.managementAPI.CreateResourceGroupWithContext(localContext, createRGOptions); err != nil {
+		return fmt.Errorf("failed creating new resource group: %w", err)
+	}
+
+	return nil
+}
+
 // GetAPIKey gets the API Key.
 func (c *Client) GetAPIKey() string {
 	return c.apiKey
@@ -196,6 +386,74 @@ func (c *Client) getInstance(ctx context.Context, crnstr string, iType InstanceT
 // GetCISInstance gets a specific Cloud Internet Services by its CRN.
 func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
 	return c.getInstance(ctx, crnstr, CISInstanceType)
+}
+
+// GetCOSBucketByName will get the COS Bucket that matches the name provided.
+func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.Bucket, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID, region)
+
+	options := &ibms3.ListBucketsInput{
+		IBMServiceInstanceId: ptr.To(cosInstanceID),
+	}
+	bucketOutput, err := cosClient.ListBucketsWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed listing buckets: %w", err)
+	}
+
+	for _, bucket := range bucketOutput.Buckets {
+		if *bucket.Name == bucketName {
+			return bucket, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s", bucketName, cosInstanceID)
+}
+
+// getCOSClient returns a new IBM Cloud COS client session.
+func (c *Client) getCOSClient(cosInstanceID string, region string) *ibms3.S3 {
+	config := cosaws.NewConfig()
+
+	// If an IAM service endpoint override was provided, use it to build the auth endpoint for the COS client (default is used for empty string)
+	var authEndpoint string
+	if c.iamServiceEndpointOverride != "" {
+		authEndpoint = fmt.Sprintf("%s/%s", c.iamServiceEndpointOverride, iamTokenPath)
+	}
+
+	// Setup IAM credentials for COS client, passing in the IAM auth endpoint
+	config.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, c.apiKey, cosInstanceID))
+	config.WithEndpoint(fmt.Sprintf(cosDefaultURLTemplate, region))
+
+	// If a COS service endpoint override was specified, set it in the COS config
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, c.serviceEndpoints); overrideURL != "" {
+		config.WithEndpoint(overrideURL)
+	}
+
+	sess := cossession.Must(cossession.NewSession())
+	return ibms3.New(sess, config)
+}
+
+// GetCOSInstanceByName will get the COS Instance (ResourceInstance) that matches the name provided.
+func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	options := c.controllerAPI.NewListResourceInstancesOptions()
+	options.SetResourceID(cosServiceID)
+
+	listResourceInstanceResponse, _, err := c.controllerAPI.ListResourceInstancesWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list cos instances: %w", err)
+	}
+	for _, instance := range listResourceInstanceResponse.Resources {
+		if *instance.Name == cosName {
+			return &instance, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find cos instance %s", cosName)
 }
 
 // GetDNSInstance gets a specific DNS Services instance by its CRN.
