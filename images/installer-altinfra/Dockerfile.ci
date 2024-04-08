@@ -8,6 +8,8 @@
 # not be needed. 
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
+# FIPS support is offered via the baremetal-installer image
+ENV GO_COMPLIANCE_EXCLUDE=".*"
 ARG TAGS="altinfra"
 ARG OPENSHIFT_INSTALL_CLUSTER_API=""
 WORKDIR /go/src/github.com/openshift/installer
