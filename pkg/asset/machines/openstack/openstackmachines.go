@@ -187,7 +187,6 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 		Image:          capo.ImageParam{Filter: &capo.ImageFilter{Name: &osImage}},
 		Ports:          append([]capo.PortOpts{port}, additionalPorts...),
 		SecurityGroups: securityGroups,
-		ServerGroup:    &capo.ServerGroupParam{Filter: &capo.ServerGroupFilter{Name: ptr.To(clusterID + "-" + role)}},
 		ServerMetadata: []capo.ServerMetadata{
 			{
 				Key:   "Name",
@@ -203,6 +202,10 @@ func generateMachineSpec(clusterID string, platform *openstack.Platform, mpool *
 		Tags: []string{
 			fmt.Sprintf("openshiftClusterID=%s", clusterID),
 		},
+	}
+
+	if role != "bootstrap" {
+		spec.ServerGroup = &capo.ServerGroupParam{Filter: &capo.ServerGroupFilter{Name: ptr.To(clusterID + "-" + role)}}
 	}
 
 	if mpool.RootVolume != nil {
