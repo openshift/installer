@@ -1,6 +1,7 @@
 package powervs
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -154,15 +156,30 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}
 
-	// Avoid empty manifest elements
-	logrus.Debugf("GenerateClusterAssets: len(VPCSubnets) = %d", len(installConfig.Config.Platform.PowerVS.VPCSubnets))
-	if len(installConfig.Config.Platform.PowerVS.VPCSubnets) > 0 {
-		powerVSCluster.Spec.VPCSubnets = make([]capibm.Subnet, 0)
-		for i := range installConfig.Config.Platform.PowerVS.VPCSubnets {
-			// We cannot get the string in the loop and add it as it appears duplicated in the generated file
+	// Use a custom resolver if using an Internal publishing strategy
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		dnsServerIP, err := installConfig.PowerVS.GetDNSServerIP(context.TODO(), installConfig.Config.PowerVS.VPCName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
+		}
+
+		powerVSCluster.Spec.DHCPServer = &capibm.DHCPServer{
+			DNSServer: &dnsServerIP,
+		}
+	}
+
+	// If a VPC was specified, pass all subnets in it to cluster API
+	if installConfig.Config.Platform.PowerVS.VPCName != "" {
+		logrus.Debugf("GenerateClusterAssets: VPCName = %s", installConfig.Config.Platform.PowerVS.VPCName)
+		subnets, err := installConfig.PowerVS.GetVPCSubnets(context.TODO(), vpcName)
+		if err != nil {
+			return nil, fmt.Errorf("error getting subnets in specified VPC: %s %w", installConfig.Config.PowerVS.VPCName, err)
+		}
+		for _, subnet := range subnets {
 			powerVSCluster.Spec.VPCSubnets = append(powerVSCluster.Spec.VPCSubnets,
 				capibm.Subnet{
-					ID: &installConfig.Config.Platform.PowerVS.VPCSubnets[i],
+					ID:   subnet.ID,
+					Name: subnet.Name,
 				})
 		}
 		logrus.Debugf("GenerateClusterAssets: subnets = %+v", powerVSCluster.Spec.VPCSubnets)
