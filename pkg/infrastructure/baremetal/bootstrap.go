@@ -9,7 +9,6 @@ import (
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
-
 	"libvirt.org/go/libvirtxml"
 )
 

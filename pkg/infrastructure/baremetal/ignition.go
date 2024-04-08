@@ -18,12 +18,12 @@ type defIgnition struct {
 func (ign *defIgnition) createFile() (string, error) {
 	tempFile, err := os.CreateTemp("", ign.Name)
 	if err != nil {
-		return "", fmt.Errorf("Error creating tmp file: %v", err)
+		return "", fmt.Errorf("error creating tmp file: %w", err)
 	}
 	defer tempFile.Close()
 
 	if _, err := tempFile.WriteString(ign.Content); err != nil {
-		return "", fmt.Errorf("Cannot write Ignition object to temporary " +
+		return "", fmt.Errorf("cannot write Ignition object to temporary " +
 			"ignition file")
 	}
 
@@ -38,7 +38,7 @@ func (ign *defIgnition) CreateAndUpload(client *libvirt.Libvirt) (string, error)
 
 	err = client.StoragePoolRefresh(pool, 0)
 	if err != nil {
-		return "", fmt.Errorf("failed to refresh pool %v", err)
+		return "", fmt.Errorf("failed to refresh pool %w", err)
 	}
 
 	volumeDef := newVolume(ign.Name)
@@ -49,7 +49,7 @@ func (ign *defIgnition) CreateAndUpload(client *libvirt.Libvirt) (string, error)
 	}
 	defer func() {
 		if err = os.Remove(ignFile); err != nil {
-			logrus.Errorf("Error while removing tmp Ignition file: %v", err)
+			logrus.Errorf("error while removing tmp Ignition file: %s", err)
 		}
 	}()
 
@@ -69,17 +69,17 @@ func (ign *defIgnition) CreateAndUpload(client *libvirt.Libvirt) (string, error)
 
 	volumeDefXML, err := xml.Marshal(volumeDef)
 	if err != nil {
-		return "", fmt.Errorf("Error serializing libvirt volume: %s", err)
+		return "", fmt.Errorf("error serializing libvirt volume: %w", err)
 	}
 
 	volume, err := client.StorageVolCreateXML(pool, string(volumeDefXML), 0)
 	if err != nil {
-		return "", fmt.Errorf("Error creating libvirt volume for Ignition %s: %s", ign.Name, err)
+		return "", fmt.Errorf("error creating libvirt volume for Ignition %s: %w", ign.Name, err)
 	}
 
 	err = img.Import(newCopier(client, volume, volumeDef.Capacity.Value), volumeDef)
 	if err != nil {
-		return "", fmt.Errorf("Error while uploading ignition file %s: %s", img.String(), err)
+		return "", fmt.Errorf("error while uploading ignition file %s: %w", img.String(), err)
 	}
 
 	return "", nil

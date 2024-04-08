@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/rhcos/cache"
 )
 
+// Config represents the baremetal platform parts of install config needed for bootstrapping.
 type Config struct {
 	LibvirtURI       string              `json:"libvirt_uri,omitempty"`
 	BootstrapOSImage string              `json:"bootstrap_os_image,omitempty"`

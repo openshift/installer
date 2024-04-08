@@ -7,15 +7,17 @@ import (
 	"path/filepath"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/tfvars"
 	baremetaltfvars "github.com/openshift/installer/pkg/tfvars/baremetal"
-	"github.com/sirupsen/logrus"
 )
 
 const (
 	tfVarsFileName         = "terraform.tfvars.json"
 	tfPlatformVarsFileName = "terraform.platform.auto.tfvars.json"
-	MastersFileName        = ".masters.json"
+	// MastersFileName is the file where we store networking data for the control plane.
+	MastersFileName = ".masters.json"
 )
 
 type bridge struct {
@@ -31,7 +33,7 @@ type baremetalConfig struct {
 	Bridges           []bridge
 }
 
-func GetConfig(dir string) (baremetalConfig, error) {
+func getConfig(dir string) (baremetalConfig, error) {
 	config := baremetalConfig{}
 	clusterConfig := &tfvars.Config{}
 	clusterBaremetalConfig := &baremetaltfvars.Config{}
@@ -78,7 +80,6 @@ func GetConfig(dir string) (baremetalConfig, error) {
 	}
 
 	return config, nil
-
 }
 
 func getMasterAddresses(dir string) ([]string, error) {

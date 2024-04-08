@@ -5,15 +5,16 @@ package baremetal
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
-	"libvirt.org/go/libvirtxml"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"libvirt.org/go/libvirtxml"
 )
 
 type image interface {
@@ -33,7 +34,7 @@ func (i *localImage) String() string {
 
 func isQCOW2Header(buf []byte) (bool, error) {
 	if len(buf) < 8 {
-		return false, fmt.Errorf("Expected header of 8 bytes. Got %d", len(buf))
+		return false, fmt.Errorf("expected header of 8 bytes. Got %d", len(buf))
 	}
 	if buf[0] == 'Q' && buf[1] == 'F' && buf[2] == 'I' && buf[3] == 0xfb && buf[4] == 0x00 && buf[5] == 0x00 && buf[6] == 0x00 && buf[7] == 0x03 {
 		return true, nil
@@ -51,10 +52,10 @@ func (i *localImage) Size() (uint64, error) {
 
 func (i *localImage) IsQCOW2() (bool, error) {
 	file, err := os.Open(i.path)
-	defer file.Close()
 	if err != nil {
-		return false, fmt.Errorf("Error while opening %s: %s", i.path, err)
+		return false, fmt.Errorf("error while opening %s: %w", i.path, err)
 	}
+	defer file.Close()
 	buf := make([]byte, 8)
 	_, err = io.ReadAtLeast(file, buf, 8)
 	if err != nil {
@@ -65,10 +66,10 @@ func (i *localImage) IsQCOW2() (bool, error) {
 
 func (i *localImage) Import(copier func(io.Reader) error, vol libvirtxml.StorageVolume) error {
 	file, err := os.Open(i.path)
-	defer file.Close()
 	if err != nil {
-		return fmt.Errorf("Error while opening %s: %s", i.path, err)
+		return fmt.Errorf("error while opening %s: %w", i.path, err)
 	}
+	defer file.Close()
 
 	fi, err := file.Stat()
 	if err != nil {
@@ -110,7 +111,7 @@ func (i *httpImage) Size() (uint64, error) {
 	if response.StatusCode != 200 {
 		return 0,
 			fmt.Errorf(
-				"Error accessing remote resource: %s - %s",
+				"error accessing remote resource: %s - %s",
 				i.url.String(),
 				response.Status)
 	}
@@ -118,7 +119,7 @@ func (i *httpImage) Size() (uint64, error) {
 	length, err := strconv.Atoi(response.Header.Get("Content-Length"))
 	if err != nil {
 		err = fmt.Errorf(
-			"Error while getting Content-Length of \"%s\": %s - got %s",
+			"error while getting Content-Length of \"%s\": %w - got %s",
 			i.url.String(),
 			err,
 			response.Header.Get("Content-Length"))
@@ -129,7 +130,10 @@ func (i *httpImage) Size() (uint64, error) {
 
 func (i *httpImage) IsQCOW2() (bool, error) {
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", i.url.String(), nil)
+	req, err := http.NewRequest("GET", i.url.String(), nil)
+	if err != nil {
+		return false, err
+	}
 	req.Header.Set("Range", "bytes=0-7")
 	response, err := client.Do(req)
 
@@ -140,7 +144,7 @@ func (i *httpImage) IsQCOW2() (bool, error) {
 
 	if response.StatusCode != 206 {
 		return false, fmt.Errorf(
-			"Can't retrieve partial header of resource to determine file type: %s - %s",
+			"can't retrieve partial header of resource to determine file type: %s - %s",
 			i.url.String(),
 			response.Status)
 	}
@@ -152,7 +156,7 @@ func (i *httpImage) IsQCOW2() (bool, error) {
 
 	if len(header) < 8 {
 		return false, fmt.Errorf(
-			"Can't retrieve read header of resource to determine file type: %s - %d bytes read",
+			"can't retrieve read header of resource to determine file type: %s - %d bytes read",
 			i.url.String(),
 			len(header))
 	}
@@ -170,8 +174,7 @@ func (i *httpImage) Import(copier func(io.Reader) error, vol libvirtxml.StorageV
 	req, err := http.NewRequest("GET", i.url.String(), nil)
 
 	if err != nil {
-		logrus.Printf("[DEBUG:] Error creating new request for source url %s: %s", i.url.String(), err)
-		return fmt.Errorf("Error while downloading %s: %s", i.url.String(), err)
+		return fmt.Errorf("error while downloading %s: %w", i.url.String(), err)
 	}
 
 	if vol.Target.Timestamps != nil && vol.Target.Timestamps.Mtime != "" {
@@ -182,18 +185,21 @@ func (i *httpImage) Import(copier func(io.Reader) error, vol libvirtxml.StorageV
 	for retryCount := 0; retryCount < maxHTTPRetries; retryCount++ {
 		response, err = client.Do(req)
 		if err != nil {
-			return fmt.Errorf("Error while downloading %s: %v", i.url.String(), err)
+			return fmt.Errorf("error while downloading %s: %w", i.url.String(), err)
 		}
 		defer response.Body.Close()
 
-		logrus.Printf("[DEBUG]: url resp status code %s (retry #%d)\n", response.Status, retryCount)
-		if response.StatusCode == http.StatusNotModified {
+		logrus.Debugf("url resp status code %s (retry #%d)\n", response.Status, retryCount)
+
+		switch response.StatusCode {
+		case http.StatusNotModified:
 			return nil
-		} else if response.StatusCode == http.StatusOK {
+		case http.StatusOK:
 			return copier(response.Body)
-		} else if response.StatusCode < 500 {
-			break
-		} else {
+		default:
+			if response.StatusCode < 500 {
+				break
+			}
 			// The problem is not client but server side
 			// retry a few times after a small wait
 			if retryCount < maxHTTPRetries {
@@ -201,32 +207,41 @@ func (i *httpImage) Import(copier func(io.Reader) error, vol libvirtxml.StorageV
 			}
 		}
 	}
-	return fmt.Errorf("Error while downloading %s: %v", i.url.String(), response)
+	return fmt.Errorf("error while downloading %s: %v", i.url.String(), response)
 }
 
 func newImage(source string) (image, error) {
 	url, err := url.Parse(source)
 	if err != nil {
-		return nil, fmt.Errorf("Can't parse source '%s' as url: %s", source, err)
+		return nil, fmt.Errorf("can't parse source '%s' as url: %w", source, err)
 	}
 
 	if strings.HasPrefix(url.Scheme, "http") {
 		return &httpImage{url: url}, nil
-	} else if url.Scheme == "file" || url.Scheme == "" {
-		return &localImage{path: url.Path}, nil
-	} else {
-		return nil, fmt.Errorf("Don't know how to read from '%s': %s", url.String(), err)
 	}
+
+	if url.Scheme == "file" || url.Scheme == "" {
+		return &localImage{path: url.Path}, nil
+	}
+
+	return nil, fmt.Errorf("don't know how to read from '%s': %w", url.String(), err)
 }
 
 func timeFromEpoch(str string) time.Time {
 	var s, ns int
+	var err error
 
 	ts := strings.Split(str, ".")
 	if len(ts) == 2 {
-		ns, _ = strconv.Atoi(ts[1])
+		ns, err = strconv.Atoi(ts[1])
+		if err != nil {
+			ns = 0
+		}
 	}
-	s, _ = strconv.Atoi(ts[0])
+	s, err = strconv.Atoi(ts[0])
+	if err != nil {
+		s = 0
+	}
 
 	return time.Unix(int64(s), int64(ns))
 }
