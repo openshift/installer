@@ -113,6 +113,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
+	libvirt.org/go/libvirtxml v1.10002.0
 	sigs.k8s.io/cluster-api v1.6.3
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240408095607-ad71a542f8b4
 	sigs.k8s.io/cluster-api-provider-azure v1.14.2

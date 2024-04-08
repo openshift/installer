@@ -2095,6 +2095,9 @@ k8s.io/utils/pointer
 k8s.io/utils/ptr
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
+# libvirt.org/go/libvirtxml v1.10002.0
+## explicit; go 1.11
+libvirt.org/go/libvirtxml
 # sigs.k8s.io/cluster-api v1.6.3
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api/api/v1alpha4
