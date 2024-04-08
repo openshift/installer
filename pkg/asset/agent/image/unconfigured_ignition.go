@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -124,7 +125,11 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfo(archName)
+	openshiftVersion, err := version.Version()
+	if err != nil {
+		return err
+	}
+	osImage, err := getOSImagesInfo(archName, openshiftVersion, DefaultCoreOSStreamGetter)
 	if err != nil {
 		return err
 	}

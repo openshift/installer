@@ -2,8 +2,11 @@ package joiner
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/coreos/stream-metadata-go/arch"
+	"github.com/coreos/stream-metadata-go/stream"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +43,8 @@ type ClusterInfo struct {
 	DeprecatedImageContentSources []types.ImageContentSource
 	PlatformType                  hiveext.PlatformType
 	SSHKey                        string
+	OSImage                       *stream.Stream
+	OSImageLocation               string
 }
 
 var _ asset.WritableAsset = (*ClusterInfo)(nil)
@@ -94,6 +99,10 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 		return err
 	}
 	err = ci.retrieveInstallConfigData()
+	if err != nil {
+		return err
+	}
+	err = ci.retrieveOsImage()
 	if err != nil {
 		return err
 	}
@@ -219,6 +228,43 @@ func (ci *ClusterInfo) retrieveInstallConfigData() error {
 	ci.SSHKey = installConfig.SSHKey
 	ci.ClusterName = installConfig.ObjectMeta.Name
 	ci.APIDNSName = fmt.Sprintf("api.%s.%s", ci.ClusterName, installConfig.BaseDomain)
+
+	return nil
+}
+
+func (ci *ClusterInfo) retrieveOsImage() error {
+	clusterConfig, err := ci.Client.CoreV1().ConfigMaps("openshift-machine-config-operator").Get(context.Background(), "coreos-bootimages", metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	data, ok := clusterConfig.Data["stream"]
+	if !ok {
+		return fmt.Errorf("cannot find stream data")
+	}
+
+	var st stream.Stream
+	if err := json.Unmarshal([]byte(data), &st); err != nil {
+		return fmt.Errorf("failed to parse CoreOS stream metadata: %w", err)
+	}
+	ci.OSImage = &st
+
+	clusterArch := arch.RpmArch(ci.Architecture)
+	streamArch, err := st.GetArchitecture(clusterArch)
+	if err != nil {
+		return err
+	}
+	metal, ok := streamArch.Artifacts["metal"]
+	if !ok {
+		return fmt.Errorf("stream data not found for 'metal' artifact")
+	}
+	format, ok := metal.Formats["iso"]
+	if !ok {
+		return fmt.Errorf("no ISO found to download for %s", clusterArch)
+	}
+	ci.OSImageLocation = format.Disk.Location
 
 	return nil
 }

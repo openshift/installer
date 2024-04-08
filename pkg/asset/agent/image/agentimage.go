@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	agentISOFilename    = "agent.%s.iso"
-	iso9660Level1ExtLen = 3
+	agentISOFilename         = "agent.%s.iso"
+	agentAddNodesISOFilename = "agent-addnodes.%s.iso"
+	iso9660Level1ExtLen      = 3
 )
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
@@ -34,6 +35,7 @@ type AgentImage struct {
 	rootFSURL            string
 	bootArtifactsBaseURL string
 	platform             hiveext.PlatformType
+	isoFilename          string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -61,9 +63,11 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
 		a.platform = agentManifests.AgentClusterInstall.Spec.PlatformType
+		a.isoFilename = agentISOFilename
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		a.platform = clusterInfo.PlatformType
+		a.isoFilename = agentAddNodesISOFilename
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -239,7 +243,7 @@ func (a *AgentImage) PersistToFile(directory string) error {
 		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
-	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
+	agentIsoFile := filepath.Join(directory, fmt.Sprintf(a.isoFilename, a.cpuArch))
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)

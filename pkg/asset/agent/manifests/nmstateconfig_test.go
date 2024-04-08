@@ -14,6 +14,7 @@ import (
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
+	agentconfig "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/joiner"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/mock"
@@ -28,6 +29,56 @@ func TestNMStateConfig_Generate(t *testing.T) {
 		expectedConfig     []*aiv1beta1.NMStateConfig
 		expectedError      string
 	}{
+		{
+			name: "add-nodes workflow",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{},
+				getAgentHostsNoHosts(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: false,
+			expectedConfig:     nil,
+			expectedError:      "",
+		},
+		{
+			name: "add-nodes workflow - agentHosts with some hosts without networkconfig",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
+				&joiner.ClusterInfo{
+					Namespace:   "cluster0",
+					ClusterName: "ostest",
+				},
+				getAgentHostsWithSomeHostsWithoutNetworkConfig(),
+				&agentconfig.OptionalInstallConfig{},
+			},
+			requiresNmstatectl: true,
+			expectedConfig: []*aiv1beta1.NMStateConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "NMStateConfig",
+						APIVersion: "agent-install.openshift.io/v1beta1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "ostest-0",
+						Namespace: "cluster0",
+						Labels:    getNMStateConfigLabels("ostest"),
+					},
+					Spec: aiv1beta1.NMStateConfigSpec{
+						Interfaces: []*aiv1beta1.Interface{
+							{
+								Name:       "enp2t0",
+								MacAddress: "98:af:65:a5:8d:02",
+							},
+						},
+						NetConfig: aiv1beta1.NetConfig{
+							Raw: unmarshalJSON([]byte(rawNMStateConfigNoIP)),
+						},
+					},
+				},
+			},
+			expectedError: "",
+		},
 		{
 			name: "agentHosts does not contain networkConfig",
 			dependencies: []asset.Asset{
@@ -56,7 +107,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-0"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
@@ -91,7 +142,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-0"),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-0"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
@@ -117,7 +168,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-1"),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-1"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},
@@ -139,7 +190,7 @@ func TestNMStateConfig_Generate(t *testing.T) {
 						APIVersion: "agent-install.openshift.io/v1beta1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprint(getNMStateConfigName(getValidOptionalInstallConfig()), "-2"),
+						Name:      fmt.Sprint(getValidOptionalInstallConfig().ClusterName(), "-2"),
 						Namespace: getValidOptionalInstallConfig().ClusterNamespace(),
 						Labels:    getNMStateConfigLabels(getValidOptionalInstallConfig().ClusterName()),
 					},

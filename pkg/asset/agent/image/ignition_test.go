@@ -92,7 +92,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	privateKey := "-----BEGIN EC PUBLIC KEY-----\nMFkwEwYHKoAiDHV4tg==\n-----END EC PUBLIC KEY-----\n"
 	publicKey := "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIOSCfDNmx0qe6dncV4tg==\n-----END EC PRIVATE KEY-----\n"
 
-	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, infraEnvID, osImage, proxy, "minimal-iso", privateKey, publicKey, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
@@ -112,9 +112,9 @@ func TestIgnition_getTemplateData(t *testing.T) {
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
 	nodeZeroIP := "2001:db8::dead:beef"
-	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP)
+	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP, workflow.AgentWorkflowTypeInstall)
 	assert.Equal(t,
-		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\n",
+		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\nWORKFLOW_TYPE=install\n",
 		rendezvousHostEnv)
 }
 
@@ -390,6 +390,7 @@ func commonFiles() []string {
 		"/usr/local/bin/issue_status.sh",
 		"/usr/local/bin/load-config-iso.sh",
 		"/etc/udev/rules.d/80-agent-config-image.rules",
+		"/usr/local/bin/add-node.sh",
 	}
 }
 
