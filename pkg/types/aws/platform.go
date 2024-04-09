@@ -102,6 +102,12 @@ type Platform struct {
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
+	// networkLoadBalancerParameters holds configuration parameters for an AWS
+	// network load balancer. Present only if type is NLB.
+	//
+	// +optional
+	NetworkLoadBalancerParameters *configv1.AWSNetworkLoadBalancerParameters `json:"networkLoadBalancer,omitempty"`
+
 	// PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
 	// +optional
 	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`

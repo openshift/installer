@@ -120,16 +120,24 @@ func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, 
 	switch config.Platform.Name() {
 	case aws.Name:
 		lbType := configv1.Classic
+		var eipAllocations []configv1.EIPAllocation
 		if config.AWS.LBType == configv1.NLB {
 			lbType = configv1.NLB
 		}
 		obj.Spec.LoadBalancer = configv1.LoadBalancer{
 			Platform: configv1.IngressPlatformSpec{
 				AWS: &configv1.AWSIngressSpec{
-					Type: lbType,
+					Type:                          lbType,
+					NetworkLoadBalancerParameters: &configv1.AWSNetworkLoadBalancerParameters{},
 				},
 				Type: configv1.AWSPlatformType,
 			},
+		}
+		if config.AWS.LBType == configv1.NLB && config.AWS.NetworkLoadBalancerParameters != nil && len(config.AWS.NetworkLoadBalancerParameters.EIPAllocations) != 0 {
+			eipAllocations = config.AWS.NetworkLoadBalancerParameters.EIPAllocations
+		}
+		if obj.Spec.LoadBalancer.Platform.AWS.NetworkLoadBalancerParameters != nil {
+			obj.Spec.LoadBalancer.Platform.AWS.NetworkLoadBalancerParameters.EIPAllocations = eipAllocations
 		}
 	}
 	return yaml.Marshal(obj)

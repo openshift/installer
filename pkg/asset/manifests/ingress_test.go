@@ -61,6 +61,7 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 		expectedIngressPlacement    configv1.DefaultPlacement
 		expectedIngressAWSLBType    configv1.AWSLBType
 		expectedIngressPlatformType configv1.PlatformType
+		expectedAllocatedEIP        []configv1.EIPAllocation
 	}{
 		{
 			// AWS currently uses a load balancer even on single-node, so the
@@ -106,6 +107,16 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
 			expectedIngressAWSLBType:    configv1.NLB,
 			expectedIngressPlatformType: configv1.AWSPlatformType,
+		},
+		{
+			name:                        "test setting of aws lb type to NLB and allocate EIP",
+			installConfigBuildOptions:   []icOption{icBuild.withLBTypeAndEIPAllocations(configv1.NLB, []configv1.EIPAllocation{"eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>"})},
+			controlPlaneTopology:        configv1.HighlyAvailableTopologyMode,
+			infrastructureTopology:      configv1.HighlyAvailableTopologyMode,
+			expectedIngressPlacement:    configv1.DefaultPlacementWorkers,
+			expectedIngressAWSLBType:    configv1.NLB,
+			expectedIngressPlatformType: configv1.AWSPlatformType,
+			expectedAllocatedEIP:        []configv1.EIPAllocation{"eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>,eipalloc-<redacted>"},
 		},
 		{
 			name:                        "test setting of aws lb type to Classic",
@@ -182,6 +193,9 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 			if len(tc.expectedIngressPlatformType) != 0 {
 				assert.Equal(t, tc.expectedIngressAWSLBType, actualIngress.Spec.LoadBalancer.Platform.AWS.Type)
 				assert.Equal(t, tc.expectedIngressPlatformType, actualIngress.Spec.LoadBalancer.Platform.Type)
+			}
+			if len(tc.expectedAllocatedEIP) != 0 {
+				assert.Equal(t, tc.expectedAllocatedEIP, actualIngress.Spec.LoadBalancer.Platform.AWS.NetworkLoadBalancerParameters.EIPAllocations)
 			}
 		})
 	}

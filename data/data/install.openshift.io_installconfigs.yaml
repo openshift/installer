@@ -2286,6 +2286,16 @@ spec:
                       \n If this field is not set explicitly, it defaults to \"Classic\".
                       \ This default is subject to change over time."
                     type: string
+                  networkLoadBalancer:
+                    description: networkLoadBalancerParameters holds configuration
+                      parameters for an AWS network load balancer. Present only if
+                      type is NLB.
+                    properties:
+                      eip-allocations:
+                        items:
+                          type: string
+                        type: array
+                    type: object
                   preserveBootstrapIgnition:
                     description: PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition
                       instead.
