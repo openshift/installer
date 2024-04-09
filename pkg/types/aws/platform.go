@@ -102,6 +102,12 @@ type Platform struct {
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
+	// networkLoadBalancerParameters holds configuration parameters for an AWS
+	// network load balancer. Present only if type is NLB.
+	//
+	// +optional
+	NetworkLoadBalancerParameters *configv1.AWSNetworkLoadBalancerParameters `json:"networkLoadBalancer,omitempty"`
+
 	// PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional
 	// during bootstrap destroy.
 	// +optional
