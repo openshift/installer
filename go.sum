@@ -1899,6 +1899,8 @@ github.com/microsoftgraph/msgraph-sdk-go v0.59.0 h1:gS/rWZVpQGT3gaR01MWTaH85cISj
 github.com/microsoftgraph/msgraph-sdk-go v0.59.0/go.mod h1:RBrQLknmiglNeL5QarizkazPxs10ONHY/CUtNK9bzkI=
 github.com/microsoftgraph/msgraph-sdk-go-core v0.34.1 h1:tGDR/Je5mnf4Kn01w8/5HyywPL07JonFfe6Ip0w7a08=
 github.com/microsoftgraph/msgraph-sdk-go-core v0.34.1/go.mod h1:28uAIh5Oa9x4yfiKCrjTbG+1hikkf82jEzSKb7gC+Dg=
+github.com/miheer/api v0.0.0-20240710112315-29206896bc26 h1:28l5vw62uon/3kZlGDvY8TvzCooJjVcQFFBydlWRhPM=
+github.com/miheer/api v0.0.0-20240710112315-29206896bc26/go.mod h1:OOh6Qopf21pSzqNVCB5gomomBXb8o5sGKZxG2KNpaXM=
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8/go.mod h1:mC1jAcsrzbxHt8iiaC+zU4b1ylILSosueou12R++wfY=
 github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3/go.mod h1:RagcQ7I8IeTMnF8JTXieKnO4Z6JCsikNEzj0DwauVzE=
 github.com/mitchellh/copystructure v1.2.0/go.mod h1:qLl+cE2AmVv+CoeAwDPye/v+N2HKCj9FbZEVFJRxO9s=
@@ -1973,8 +1975,6 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift/api v0.0.0-20240704102751-33ed71ab039f h1:8qy74aofCvUwCdPafxgdWFsd3oCoMXhjaaCsXaWNCGM=
-github.com/openshift/api v0.0.0-20240704102751-33ed71ab039f/go.mod h1:OOh6Qopf21pSzqNVCB5gomomBXb8o5sGKZxG2KNpaXM=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6 h1:U6ve+dnHlHhAELoxX+rdFOHVhoaYl0l9qtxwYtsO6C0=
 github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6/go.mod h1:o2H5VwQhUD8P6XsK6dRmKpCCJqVvv12KJQZBXmcCXCU=
 github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8 h1:+fZLKbycDo4JeLwPGVSAgf2XPaJGLM341l9ZfrrlxG0=
