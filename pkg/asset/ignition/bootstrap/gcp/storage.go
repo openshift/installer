@@ -76,7 +76,13 @@ func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketH
 }
 
 // CreateSignedURL creates a signed url and correlates the signed url with a storage bucket.
-func CreateSignedURL(handle *storage.BucketHandle, objectName string) (string, error) {
+func CreateSignedURL(clusterID string) (string, error) {
+	bucketName := GetBootstrapStorageName(clusterID)
+	handle, err := CreateBucketHandle(context.Background(), bucketName)
+	if err != nil {
+		return "", fmt.Errorf("creating presigned url, failed to create bucket handle: %w", err)
+	}
+
 	// Signing a URL requires credentials authorized to sign a URL. You can pass
 	// these in through SignedURLOptions with a Google Access ID with
 	// iam.serviceAccounts.signBlob permissions.
@@ -88,26 +94,9 @@ func CreateSignedURL(handle *storage.BucketHandle, objectName string) (string, e
 
 	// The object has not been created yet. This is ok, it is expected to be created after this call.
 	// However, if the object is never created this could cause major issues.
-	url, err := handle.SignedURL(objectName, &opts)
+	url, err := handle.SignedURL(bootstrapIgnitionBucketObjName, &opts)
 	if err != nil {
 		return "", fmt.Errorf("failed to create a signed url: %w", err)
-	}
-
-	return url, nil
-}
-
-// ProvisionBootstrapStorage will provision the required storage bucket and signed url for the bootstrap process.
-func ProvisionBootstrapStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketHandle *storage.BucketHandle, clusterID string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
-	defer cancel()
-
-	if err := CreateStorage(ctx, ic, bucketHandle, clusterID); err != nil {
-		return "", fmt.Errorf("failed to create storage: %w", err)
-	}
-
-	url, err := CreateSignedURL(bucketHandle, bootstrapIgnitionBucketObjName)
-	if err != nil {
-		return "", fmt.Errorf("failed to sign url: %w", err)
 	}
 
 	return url, nil
@@ -127,5 +116,23 @@ func FillBucket(ctx context.Context, bucketHandle *storage.BucketHandle, content
 		return fmt.Errorf("failed to close bucket object writer: %w", err)
 	}
 
+	return nil
+}
+
+// DestroyStorage Destroy the bucket and the bucket objects that are associated with the bucket.
+func DestroyStorage(ctx context.Context, clusterID string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*1)
+	defer cancel()
+
+	client, err := NewStorageClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create storage client: %w", err)
+	}
+	bucketName := GetBootstrapStorageName(clusterID)
+
+	// Deleting a bucket will delete the managed folders and bucket objects.
+	if err := client.Bucket(bucketName).Delete(ctx); err != nil {
+		return fmt.Errorf("failed to delete bucket %s: %w", bucketName, err)
+	}
 	return nil
 }

@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,7 +10,8 @@ import (
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/cluster/metadata"
+	"github.com/openshift/installer/pkg/asset/cluster/tfvars"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/gcp"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
@@ -80,10 +82,10 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed to create bucket handle %s: %w", bucketName, err)
 	}
 
-	url, err := gcp.ProvisionBootstrapStorage(ctx, in.InstallConfig, bucketHandle, in.InfraID)
-	if err != nil {
-		return nil, fmt.Errorf("ignition failed to provision storage: %w", err)
+	if err := gcp.CreateStorage(ctx, in.InstallConfig, bucketHandle, in.InfraID); err != nil {
+		return nil, fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
 	}
+
 	editedIgnitionBytes, err := EditIgnition(ctx, in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap ignition: %w", err)
@@ -98,12 +100,25 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("ignition failed to fill bucket: %w", err)
 	}
 
-	ignShim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(url, in.InstallConfig.Config.AdditionalTrustBundle, in.InstallConfig.Config.Proxy)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
+	for _, file := range in.TFVarsAsset.Files() {
+		if file.Filename == tfvars.TfPlatformVarsFileName {
+			var found bool
+			tfvarsData := make(map[string]interface{})
+			err = json.Unmarshal(file.Data, &tfvarsData)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unmarshal %s to json: %w", tfvars.TfPlatformVarsFileName, err)
+			}
+
+			ignShim, found := tfvarsData["gcp_ignition_shim"].(string)
+			if !found {
+				return nil, fmt.Errorf("failed to find ignition shim")
+			}
+
+			return []byte(ignShim), nil
+		}
 	}
 
-	return ignShim, nil
+	return nil, fmt.Errorf("failed to complete ignition process")
 }
 
 // InfraReady is called once cluster.Status.InfrastructureReady
@@ -160,6 +175,20 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 	}
 
+	return nil
+}
+
+// DestroyBootstrap destroys the temporary bootstrap resources.
+func (p Provider) DestroyBootstrap(dir string) error {
+	logrus.Warnf("Destroying GCP Bootstrap Resources")
+	metadata, err := metadata.Load(dir)
+	if err != nil {
+		return err
+	}
+
+	if err := gcp.DestroyStorage(context.Background(), metadata.ClusterID); err != nil {
+		return fmt.Errorf("failed to destroy storage")
+	}
 	return nil
 }
 

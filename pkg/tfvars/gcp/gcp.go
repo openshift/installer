@@ -50,6 +50,7 @@ type config struct {
 	UserProvisionedDNS        bool              `json:"gcp_user_provisioned_dns,omitempty"`
 	ExtraTags                 map[string]string `json:"gcp_extra_tags,omitempty"`
 	IgnitionShim              string            `json:"gcp_ignition_shim,omitempty"`
+	PresignedURL              string            `json:"gcp_signed_url"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -66,6 +67,7 @@ type TFVarsSources struct {
 	UserProvisionedDNS  bool
 	UserTags            map[string]string
 	IgnitionShim        string
+	PresignedURL        string
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -109,6 +111,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		UserProvisionedDNS:        sources.UserProvisionedDNS,
 		ExtraTags:                 sources.UserTags,
 		IgnitionShim:              sources.IgnitionShim,
+		PresignedURL:              sources.PresignedURL,
 	}
 
 	if masterConfig.Disks[0].EncryptionKey != nil {
