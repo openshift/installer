@@ -2,7 +2,7 @@
 # It builds an image containing openshift-install.
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
-ARG TAGS="libvirt baremetal fipscapable"
+ARG TAGS="baremetal fipscapable"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
