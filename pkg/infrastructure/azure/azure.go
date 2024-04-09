@@ -370,7 +370,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageAccountKeys = storageAccountKeys
 	p.lbBackendAddressPool = lbBap
 
-	if err := createDNSEntries(ctx, in, extLBFQDN); err != nil {
+	if err := createDNSEntries(ctx, in, extLBFQDN, resourceGroupName); err != nil {
 		return fmt.Errorf("error creating DNS records: %w", err)
 	}
 

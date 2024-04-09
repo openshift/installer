@@ -247,7 +247,7 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 		// useImageGallery := installConfig.Azure.CloudName != azuretypes.StackCloud
 		useImageGallery := false
 		masterUserDataSecretName := "master-user-data"
-		resourceGroupName := fmt.Sprintf("%s-rg", clusterID.InfraID)
+		resourceGroupName := installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID)
 
 		azureMachines, err := azure.GenerateMachines(installConfig.Config.Platform.Azure, &pool, masterUserDataSecretName, clusterID.InfraID, "master", capabilities, useImageGallery, installConfig.Config.Platform.Azure.UserTags, hyperVGen, subnet, resourceGroupName, session.Credentials.SubscriptionID)
 		if err != nil {
