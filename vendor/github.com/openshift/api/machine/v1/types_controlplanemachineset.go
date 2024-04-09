@@ -21,7 +21,7 @@ import (
 // +kubebuilder:printcolumn:name="State",type="string",JSONPath=".spec.state",description="ControlPlaneMachineSet state"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="ControlPlaneMachineSet age"
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1112
-// +openshift:file-pattern=0000_10_controlplanemachinesetMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=control-plane-machine-set,operatorOrdering=01
 // +openshift:capability=MachineAPI
 // +kubebuilder:metadata:annotations="exclude.release.openshift.io/internal-openshift-hosted=true"
 // +kubebuilder:metadata:annotations=include.release.openshift.io/self-managed-high-availability=true

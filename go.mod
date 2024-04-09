@@ -344,3 +344,5 @@ replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+replace github.com/openshift/api => github.com/miheer/api v0.0.0-20240401032408-f6536ae6cc5f

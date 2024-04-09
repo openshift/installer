@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=configs,scope=Cluster,categories=coreoperators
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/612
-// +openshift:file-pattern=0000_10_config-operator_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
 
 // Config specifies the behavior of the config operator which is responsible for creating the initial configuration of other components
 // on the cluster.  The operator also handles installation, migration or synchronization of cloud configurations for AWS and Azure cloud based clusters

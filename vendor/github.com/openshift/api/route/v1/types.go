@@ -12,7 +12,6 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=routes,scope=Namespaced
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1228
-// +openshift:file-pattern=routeMARKERS.crd.yaml
 // +kubebuilder:printcolumn:name=Host,JSONPath=.status.ingress[0].host,type=string
 // +kubebuilder:printcolumn:name=Admitted,JSONPath=.status.ingress[0].conditions[?(@.type=="Admitted")].status,type=string
 // +kubebuilder:printcolumn:name=Service,JSONPath=.spec.to.name,type=string

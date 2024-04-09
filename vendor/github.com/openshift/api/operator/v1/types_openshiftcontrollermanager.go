@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=openshiftcontrollermanagers,scope=Cluster,categories=coreoperators
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
-// +openshift:file-pattern=0000_50_cluster-openshift-controller-manager-operator_02_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_50,operatorName=openshift-controller-manager,operatorOrdering=02
 
 // OpenShiftControllerManager provides information to configure an operator to manage openshift-controller-manager.
 //

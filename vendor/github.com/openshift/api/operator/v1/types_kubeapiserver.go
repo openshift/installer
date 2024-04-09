@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=kubeapiservers,scope=Cluster,categories=coreoperators
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
-// +openshift:file-pattern=0000_20_kube-apiserver-operator_01_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_20,operatorName=kube-apiserver,operatorOrdering=01
 
 // KubeAPIServer provides information to configure an operator to manage kube-apiserver.
 //

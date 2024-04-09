@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=storages,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/670
-// +openshift:file-pattern=0000_50_cluster_storage_operator_01_MARKERScrd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_50,operatorName=storage,operatorOrdering=01
 
 // Storage provides a means to configure an operator to manage the cluster storage operator. `cluster` is the canonical name.
 //

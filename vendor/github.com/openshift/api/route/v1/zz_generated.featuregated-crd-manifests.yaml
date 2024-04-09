@@ -6,6 +6,9 @@ routes.route.openshift.io:
   Category: ""
   FeatureGates:
   - ExternalRouteCertificate
+  FilenameOperatorName: ""
+  FilenameOperatorOrdering: ""
+  FilenameRunLevel: ""
   GroupName: route.openshift.io
   HasStatus: true
   KindName: Route
@@ -26,7 +29,6 @@ routes.route.openshift.io:
     type: string
   Scope: Namespaced
   ShortNames: null
-  TargetFilenamePattern: routeMARKERS.crd.yaml
   TopLevelFeatureGates: []
   Version: v1
 

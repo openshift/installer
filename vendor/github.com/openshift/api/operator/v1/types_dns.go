@@ -14,7 +14,7 @@ import (
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
-// +openshift:file-pattern=0000_70_dns-operator_00MARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_70,operatorName=dns,operatorOrdering=00
 
 // DNS manages the CoreDNS component to provide a name resolution service
 // for pods and services in the cluster.

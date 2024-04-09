@@ -12,7 +12,7 @@ import (
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/692
 // +openshift:capability=CloudCredential
-// +openshift:file-pattern=0000_40_cloud-credential-operator_00_configMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_40,operatorName=cloud-credential,operatorOrdering=00
 
 // CloudCredential provides a means to configure an operator to manage CredentialsRequests.
 //

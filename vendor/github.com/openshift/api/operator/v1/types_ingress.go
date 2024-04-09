@@ -17,7 +17,7 @@ import (
 // +kubebuilder:resource:path=ingresscontrollers,scope=Namespaced
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/616
 // +openshift:capability=Ingress
-// +openshift:file-pattern=0000_50_ingress-operator_00-ingresscontrollerMARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_50,operatorName=ingress,operatorOrdering=00
 
 // IngressController describes a managed ingress controller for the cluster. The
 // controller can service OpenShift Route and Kubernetes Ingress resources.
@@ -512,6 +512,8 @@ const (
 
 // AWSLoadBalancerParameters provides configuration settings that are
 // specific to AWS load balancers.
+// +kubebuilder:validation:XValidation:rule="self.type != 'Classic' || !has(self.networkLoadBalancer)",message="Network load balancer parameters are allowed only when load balancer type is NLB."
+// +kubebuilder:validation:XValidation:rule="self.type != 'NLB' || !has(self.classicLoadBalancer)",message="Classic load balancer parameters are allowed only when load balancer type is Classic."
 // +union
 type AWSLoadBalancerParameters struct {
 	// type is the type of AWS load balancer to instantiate for an ingresscontroller.
@@ -634,7 +636,9 @@ type AWSClassicLoadBalancerParameters struct {
 
 // AWSNetworkLoadBalancerParameters holds configuration parameters for an
 // AWS Network load balancer.
+// +openshift:enable:FeatureGate=SetEIPForNLBIngressController
 type AWSNetworkLoadBalancerParameters struct {
+	EIPAllocations []configv1.EIPAllocations `json:"eip-allocations,omitempty"`
 }
 
 // HostNetworkStrategy holds parameters for the HostNetwork endpoint publishing

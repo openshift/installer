@@ -11,7 +11,7 @@ import (
 // +kubebuilder:resource:path=csisnapshotcontrollers,scope=Cluster
 // +kubebuilder:subresource:status
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/562
-// +openshift:file-pattern=0000_80_csi_snapshot_controller_operator_01_MARKERScrd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_80,operatorName=csi-snapshot-controller,operatorOrdering=01
 
 // CSISnapshotController provides a means to configure an operator to manage the CSI snapshots. `cluster` is the canonical name.
 //

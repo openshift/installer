@@ -10,9 +10,8 @@ import (
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=networks,scope=Cluster
 // +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
-// +openshift:file-pattern=0000_70_cluster-network-operator_01MARKERS.crd.yaml
+// +openshift:file-pattern=cvoRunLevel=0000_70,operatorName=network,operatorOrdering=01
 // +kubebuilder:metadata:annotations=include.release.openshift.io/self-managed-high-availability=true
-// +kubebuilder:metadata:annotations=include.release.openshift.io/single-node-developer=true
 
 // Network describes the cluster's desired network configuration. It is
 // consumed by the cluster-network-operator.
