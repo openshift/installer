@@ -11,6 +11,7 @@ import (
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
@@ -280,10 +281,50 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
+func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, key crclient.ObjectKey) (string, error) {
+	powerVSMachine := &capibm.IBMPowerVSMachine{}
+
+	// Get the machine address
+	// Unfortunately https://pkg.go.dev/k8s.io/apimachinery/pkg/util/wait#PollUntilContextCancel
+	// can only return a bool.  It would be nice if it could return a pointer.
+	if err := wait.PollUntilContextCancel(ctx, time.Second*10,
+		false,
+		func(ctx context.Context) (bool, error) {
+			if err := in.Client.Get(ctx, key, powerVSMachine); err != nil {
+				return false, fmt.Errorf("failed to get PowerVS machine in PostProvision: %w", err)
+			}
+
+			for _, address := range powerVSMachine.Status.Addresses {
+				if address.Type == corev1.NodeInternalIP {
+					logrus.Debugf("PostProvision: found %s address %s", key.Name, address.Address)
+					return true, nil
+				}
+			}
+
+			logrus.Debugf("PostProvision: waiting for %s machine", key.Name)
+			return false, nil
+		}); err != nil {
+		return "", err
+	}
+
+	if err := in.Client.Get(ctx, key, powerVSMachine); err != nil {
+		return "", fmt.Errorf("failed to get PowerVS machine in PostProvision: %w", err)
+	}
+
+	for _, address := range powerVSMachine.Status.Addresses {
+		if address.Type == corev1.NodeInternalIP {
+			return address.Address, nil
+		}
+	}
+
+	return "", fmt.Errorf("failed to get machine %s IP address", key.Name)
+}
+
 // PostProvision should be called to add or update PowerVS resources after provisioning has completed.
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	var (
 		client             *powervsconfig.Client
+		ipAddr             string
 		refServiceInstance *capibm.IBMPowerVSResourceReference
 		sshKeyName         string
 		err                error
@@ -300,22 +341,52 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	logrus.Debugf("PostProvision: NewClient returns %+v", client)
 
 	// Step 1.
-	// Create worker ssh key
+	// Wait until bootstrap and master nodes have IP addresses.  This will verify
+	// that the Transit Gateway and DHCP server work correctly before continuing on.
+
+	// Get master IP addresses
+	masterCount := int64(1)
+	if reps := in.InstallConfig.Config.ControlPlane.Replicas; reps != nil {
+		masterCount = *reps
+	}
+	logrus.Debugf("PostProvision: masterCount = %d", masterCount)
+	for i := int64(0); i < masterCount; i++ {
+		key := crclient.ObjectKey{
+			Name:      fmt.Sprintf("%s-master-%d", in.InfraID, i),
+			Namespace: capiutils.Namespace,
+		}
+		if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
+			return err
+		}
+		logrus.Debugf("PostProvision: %s ipAddr = %v", key.Name, ipAddr)
+	}
+
 	// Get the bootstrap machine from the provider
 	key := crclient.ObjectKey{
 		Name:      fmt.Sprintf("%s-bootstrap", in.InfraID),
 		Namespace: capiutils.Namespace,
 	}
 	logrus.Debugf("PostProvision: machine key = %+v", key)
-	powerVSMachine := &capibm.IBMPowerVSMachine{}
 
-	if err = in.Client.Get(ctx, key, powerVSMachine); err != nil {
-		return fmt.Errorf("failed to get PowerVS machine in PostProvision: %w", err)
+	// Find its address
+	if ipAddr, err = findMachineAddress(ctx, in, key); err != nil {
+		return err
+	}
+	logrus.Debugf("PostProvision: ipAddr = %v", ipAddr)
+
+	// Get information about it
+	powerVSMachine := &capibm.IBMPowerVSMachine{}
+	if err := in.Client.Get(ctx, key, powerVSMachine); err != nil {
+		return fmt.Errorf("failed to get PowerVS bootstrap machine in PostProvision: %w", err)
 	}
 	logrus.Debugf("PostProvision: machine = %+v", powerVSMachine)
+
+	// Specifically the Power Virtual Server (PVS)
 	logrus.Debugf("PostProvision: machine.Spec.ServiceInstance = %+v", powerVSMachine.Spec.ServiceInstance)
 	refServiceInstance = powerVSMachine.Spec.ServiceInstance
 
+	// Step 2.
+	// Create worker ssh key in the PVS
 	if in.InstallConfig.Config.SSHKey == "" {
 		return fmt.Errorf("install config's ssh key is empty?")
 	}
