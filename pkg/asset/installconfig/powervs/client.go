@@ -75,6 +75,9 @@ type API interface {
 
 	// SSH
 	CreateSSHKey(ctx context.Context, serviceInstance string, zone string, sshKeyName string, sshKey string) error
+
+	// Load Balancer
+	AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolName string, port int64, ip string) error
 }
 
 // Client makes calls to the PowerVS API.
@@ -1175,6 +1178,111 @@ func (c *Client) CreateSSHKey(ctx context.Context, serviceInstance string, zone 
 	if err != nil {
 		return fmt.Errorf("createSSHKey: failed to create the ssh key %w", err)
 	}
+
+	return nil
+}
+
+// AddIPToLoadBalancerPool adds a server to a load balancer pool for the specified port.
+// @TODO Remove once https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/issues/1679 is fixed.
+func (c *Client) AddIPToLoadBalancerPool(ctx context.Context, lbID string, poolName string, port int64, ip string) error {
+	var (
+		glbOptions    *vpcv1.GetLoadBalancerOptions
+		llbpOptions   *vpcv1.ListLoadBalancerPoolsOptions
+		llbpmOptions  *vpcv1.ListLoadBalancerPoolMembersOptions
+		clbpmOptions  *vpcv1.CreateLoadBalancerPoolMemberOptions
+		lb            *vpcv1.LoadBalancer
+		lbPools       *vpcv1.LoadBalancerPoolCollection
+		lbPool        vpcv1.LoadBalancerPool
+		lbPoolMembers *vpcv1.LoadBalancerPoolMemberCollection
+		lbpmtp        *vpcv1.LoadBalancerPoolMemberTargetPrototypeIP
+		lbpm          *vpcv1.LoadBalancerPoolMember
+		response      *core.DetailedResponse
+		err           error
+	)
+
+	// Make sure the load balancer exists
+	glbOptions = c.vpcAPI.NewGetLoadBalancerOptions(lbID)
+
+	lb, response, err = c.vpcAPI.GetLoadBalancerWithContext(ctx, glbOptions)
+	if err != nil {
+		return fmt.Errorf("failed to get load balancer and the response = %+v, err = %w", response, err)
+	}
+	logrus.Debugf("AddIPToLoadBalancerPool: GLBWC lb = %+v", lb)
+
+	// Query the existing load balancer pools
+	llbpOptions = c.vpcAPI.NewListLoadBalancerPoolsOptions(lbID)
+
+	lbPools, response, err = c.vpcAPI.ListLoadBalancerPoolsWithContext(ctx, llbpOptions)
+	if err != nil {
+		return fmt.Errorf("failed to list the load balancer pools and the response = %+v, err = %w",
+			response,
+			err)
+	}
+
+	// Find the pool with the specified name
+	for _, pool := range lbPools.Pools {
+		logrus.Debugf("AddIPToLoadBalancerPool: pool.ID = %v", *pool.ID)
+		logrus.Debugf("AddIPToLoadBalancerPool: pool.Name = %v", *pool.Name)
+
+		if *pool.Name == poolName {
+			lbPool = pool
+			break
+		}
+	}
+	if lbPool.ID == nil {
+		return fmt.Errorf("could not find loadbalancer pool with name %s", poolName)
+	}
+
+	// Query the load balancer pool members
+	llbpmOptions = c.vpcAPI.NewListLoadBalancerPoolMembersOptions(lbID, *lbPool.ID)
+
+	lbPoolMembers, response, err = c.vpcAPI.ListLoadBalancerPoolMembersWithContext(ctx, llbpmOptions)
+	if err != nil {
+		return fmt.Errorf("failed to list load balancer pool members and the response = %+v, err = %w",
+			response,
+			err)
+	}
+
+	// See if a member already exists with that IP
+	for _, poolMember := range lbPoolMembers.Members {
+		logrus.Debugf("AddIPToLoadBalancerPool: poolMember.ID = %s", *poolMember.ID)
+
+		switch pmt := poolMember.Target.(type) {
+		case *vpcv1.LoadBalancerPoolMemberTarget:
+			logrus.Debugf("AddIPToLoadBalancerPool: pmt.Address = %+v", *pmt.Address)
+			if ip == *pmt.Address {
+				logrus.Debugf("AddIPToLoadBalancerPool: found %s", ip)
+				return nil
+			}
+		case *vpcv1.LoadBalancerPoolMemberTargetIP:
+			logrus.Debugf("AddIPToLoadBalancerPool: pmt.Address = %+v", *pmt.Address)
+			if ip == *pmt.Address {
+				logrus.Debugf("AddIPToLoadBalancerPool: found %s", ip)
+				return nil
+			}
+		case *vpcv1.LoadBalancerPoolMemberTargetInstanceReference:
+			// No IP address, ignore
+		default:
+			logrus.Debugf("AddIPToLoadBalancerPool: unhandled type %T", poolMember.Target)
+		}
+	}
+
+	// Create a new member
+	lbpmtp, err = c.vpcAPI.NewLoadBalancerPoolMemberTargetPrototypeIP(ip)
+	if err != nil {
+		return fmt.Errorf("could not create a new load balancer pool member, err = %w", err)
+	}
+	logrus.Debugf("AddIPToLoadBalancerPool: lbpmtp = %+v", *lbpmtp)
+
+	// Add that member to the pool
+	clbpmOptions = c.vpcAPI.NewCreateLoadBalancerPoolMemberOptions(lbID, *lbPool.ID, port, lbpmtp)
+	logrus.Debugf("AddIPToLoadBalancerPool: clbpmOptions = %+v", clbpmOptions)
+
+	lbpm, response, err = c.vpcAPI.CreateLoadBalancerPoolMemberWithContext(ctx, clbpmOptions)
+	if err != nil {
+		return fmt.Errorf("could not add the load balancer pool member and the response = %+v, err = %w", response, err)
+	}
+	logrus.Debugf("AddIPToLoadBalancerPool: CLBPMWC lbpm = %+v", lbpm)
 
 	return nil
 }
