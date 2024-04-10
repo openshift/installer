@@ -331,9 +331,6 @@ replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
-// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.17.0
-
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
 
