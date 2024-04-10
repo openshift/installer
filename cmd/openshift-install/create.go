@@ -68,6 +68,7 @@ const (
 	exitCodeBootstrapFailed
 	exitCodeInstallFailed
 	exitCodeOperatorStabilityFailed
+	exitCodeInterrupt
 
 	// coStabilityThreshold is how long a cluster operator must have Progressing=False
 	// in order to be considered stable. Measured in seconds.
