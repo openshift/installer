@@ -1095,7 +1095,7 @@ github.com/pkg/xattr
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.17.0 => github.com/prometheus/client_golang v1.17.0
+# github.com/prometheus/client_golang v1.17.0
 ## explicit; go 1.19
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/collectors
@@ -2037,7 +2037,6 @@ sigs.k8s.io/yaml
 # golang.org/x/text => golang.org/x/text v0.3.7
 # gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 # github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
-# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.17.0
 # golang.org/x/net => golang.org/x/net v0.5.0
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
