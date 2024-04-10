@@ -307,6 +307,14 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	}
 
 	logrus.Infof("Cluster API resources have been created. Waiting for cluster to become ready...")
+
+	// If we're skipping bootstrap destroy, shutdown the local control plane.
+	// Otherwise, we will shut it down after bootstrap destroy.
+	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP"); ok && oi != "" {
+		logrus.Warn("OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, shutting down local control plane.")
+		clusterapi.System().Teardown()
+	}
+
 	return fileList, nil
 }
 
