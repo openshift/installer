@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 
@@ -47,7 +47,7 @@ func (a *ClusterID) Generate(_ context.Context, dep asset.Parents) error {
 
 	// add random chars to the end to randomize
 	a.InfraID = generateInfraID(ica.Config.ObjectMeta.Name, maxLen)
-	a.UUID = uuid.New()
+	a.UUID = uuid.NewString()
 	return nil
 }
 

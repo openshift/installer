@@ -1164,9 +1164,6 @@ github.com/opentracing/opentracing-go/log
 # github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
 ## explicit; go 1.15
 github.com/ovirt/go-ovirt
-# github.com/pborman/uuid v1.2.0
-## explicit
-github.com/pborman/uuid
 # github.com/pelletier/go-toml v1.9.5
 ## explicit; go 1.12
 github.com/pelletier/go-toml
