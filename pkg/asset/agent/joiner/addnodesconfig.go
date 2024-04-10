@@ -35,7 +35,8 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Hosts []agent.Host `json:"hosts,omitempty"`
+	Hosts                 []agent.Host `json:"hosts,omitempty"`
+	AdditionalTrustBundle string       `json:"additionalTrustBundle,omitempty"`
 }
 
 // Params is used to store the command line parameters.

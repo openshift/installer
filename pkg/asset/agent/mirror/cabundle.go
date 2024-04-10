@@ -58,7 +58,7 @@ func (i *CaBundle) Generate(dependencies asset.Parents) error {
 		additionalTrustBundle = installConfig.Config.AdditionalTrustBundle
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		additionalTrustBundle = clusterInfo.UserCaBundle
+		additionalTrustBundle = clusterInfo.AdditionalTrustBundle
 
 	default:
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)

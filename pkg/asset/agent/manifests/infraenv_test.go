@@ -161,9 +161,9 @@ func TestInfraEnv_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.ClusterInfo{
-					ClusterName:  "agent-cluster",
-					Namespace:    "agent-ns",
-					UserCaBundle: "user-ca-bundle",
+					ClusterName:           "agent-cluster",
+					Namespace:             "agent-ns",
+					AdditionalTrustBundle: "user-ca-bundle",
 					Proxy: &types.Proxy{
 						HTTPProxy: "proxy",
 					},

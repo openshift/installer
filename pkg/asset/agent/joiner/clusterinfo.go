@@ -36,7 +36,7 @@ type ClusterInfo struct {
 	APIDNSName                    string
 	PullSecret                    string
 	Namespace                     string
-	UserCaBundle                  string
+	AdditionalTrustBundle         string
 	Proxy                         *types.Proxy
 	Architecture                  string
 	ImageDigestSources            []types.ImageDigestSource
@@ -90,10 +90,6 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	err = ci.retrieveUserTrustBundle()
-	if err != nil {
-		return err
-	}
 	err = ci.retrieveArchitecture()
 	if err != nil {
 		return err
@@ -108,6 +104,7 @@ func (ci *ClusterInfo) Generate(dependencies asset.Parents) error {
 	}
 
 	ci.Namespace = "cluster0"
+	ci.AdditionalTrustBundle = addNodesConfig.Config.AdditionalTrustBundle
 
 	return nil
 }
@@ -175,19 +172,6 @@ func (ci *ClusterInfo) retrievePullSecret() error {
 		return err
 	}
 	ci.PullSecret = string(pullSecret.Data[".dockerconfigjson"])
-
-	return nil
-}
-
-func (ci *ClusterInfo) retrieveUserTrustBundle() error {
-	userCaBundle, err := ci.Client.CoreV1().ConfigMaps("openshift-config").Get(context.Background(), "user-ca-bundle", metav1.GetOptions{})
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-	ci.UserCaBundle = userCaBundle.Data["ca-bundle.crt"]
 
 	return nil
 }

@@ -138,7 +138,7 @@ OIUk31HnM/Fj
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeAddNodes},
 				&joiner.ClusterInfo{
 					Namespace: "cluster-0",
-					UserCaBundle: `-----BEGIN CERTIFICATE-----
+					AdditionalTrustBundle: `-----BEGIN CERTIFICATE-----
 MIIDZTCCAk2gAwIBAgIURbA8lR+5xlJZUoOXK66AHFWd3uswDQYJKoZIhvcNAQEL
 BQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UE
 CgwTRGVmYXVsdCBDb21wYW55IEx0ZDAeFw0yMjA3MDgxOTUzMTVaFw0yMjA4MDcx
