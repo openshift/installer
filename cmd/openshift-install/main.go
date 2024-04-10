@@ -44,17 +44,17 @@ func installerMain() {
 	logrus.RegisterExitHandler(shutdown)
 
 	for _, subCmd := range []*cobra.Command{
-		newCreateCmd(),
+		newCreateCmd(ctx),
 		newDestroyCmd(),
 		newWaitForCmd(),
-		newGatherCmd(),
+		newGatherCmd(ctx),
 		newAnalyzeCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 		newCoreOSCmd(),
 		newCompletionCmd(),
 		newExplainCmd(),
-		newAgentCmd(),
+		newAgentCmd(ctx),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}

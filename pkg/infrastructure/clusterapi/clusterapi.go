@@ -56,7 +56,7 @@ func InitializeProvider(platform Provider) infrastructure.Provider {
 // Provision creates cluster resources by applying CAPI manifests to a locally running control plane.
 //
 //nolint:gocyclo
-func (i *InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	manifestsAsset := &manifests.Manifests{}
 	workersAsset := &machines.Worker{}
 	capiManifestsAsset := &capimanifests.Cluster{}
