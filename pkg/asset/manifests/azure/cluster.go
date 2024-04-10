@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -38,6 +39,29 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	})
 
 	resourceGroup := installConfig.Config.Platform.Azure.ClusterResourceGroupName(clusterID.InfraID)
+	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
+	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
+	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
+
+	securityGroup := capz.SecurityGroup{
+		Name: networkSecurityGroup,
+		SecurityGroupClass: capz.SecurityGroupClass{
+			SecurityRules: []capz.SecurityRule{
+				{
+					Name:             "apiserver_in",
+					Protocol:         capz.SecurityGroupProtocolTCP,
+					Direction:        capz.SecurityRuleDirectionInbound,
+					Priority:         101,
+					SourcePorts:      ptr.To("*"),
+					DestinationPorts: ptr.To("6443"),
+					Source:           ptr.To("*"),
+					Destination:      ptr.To("*"),
+					Action:           capz.SecurityRuleActionAllow,
+				},
+			},
+		},
+	}
+
 	azureCluster := &capz.AzureCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -80,21 +104,23 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Subnets: capz.Subnets{
 					{
 						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: "control-plane-subnet",
+							Name: controlPlaneSubnet,
 							Role: capz.SubnetControlPlane,
 							CIDRBlocks: []string{
 								subnets[0].String(),
 							},
 						},
+						SecurityGroup: securityGroup,
 					},
 					{
 						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: "worker-subnet",
+							Name: computeSubnet,
 							Role: capz.SubnetNode,
 							CIDRBlocks: []string{
 								subnets[1].String(),
 							},
 						},
+						SecurityGroup: securityGroup,
 					},
 				},
 			},
