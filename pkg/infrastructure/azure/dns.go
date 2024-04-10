@@ -37,14 +37,13 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN string, resourceGroup string) error {
 	private := in.InstallConfig.Config.Publish == types.InternalPublishingStrategy
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
 	apiExternalName := fmt.Sprintf("api.%s", in.InstallConfig.Config.ObjectMeta.Name)
 
-	resourceGroup := fmt.Sprintf("%s-rg", in.InfraID)
 	if in.InstallConfig.Config.Azure.ResourceGroupName != "" {
 		resourceGroup = in.InstallConfig.Config.Azure.ResourceGroupName
 	}
