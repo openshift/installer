@@ -17,7 +17,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	utilkubeconfig "sigs.k8s.io/cluster-api/util/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
@@ -95,15 +94,6 @@ func (i *InfraProvider) Provision(ctx context.Context, dir string, parents asset
 	for _, m := range capiMachinesAsset.RuntimeFiles() {
 		machineManifests = append(machineManifests, m.Object)
 	}
-
-	// TODO(vincepri): The context should be passed down from the caller,
-	// although today the Asset interface doesn't allow it, refactor once it does.
-	ctx, cancel := context.WithCancel(signals.SetupSignalHandler())
-	go func() {
-		<-ctx.Done()
-		cancel()
-		clusterapi.System().Teardown()
-	}()
 
 	if p, ok := i.impl.(PreProvider); ok {
 		preProvisionInput := PreProvisionInput{
