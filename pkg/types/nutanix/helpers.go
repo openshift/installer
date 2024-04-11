@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,18 +23,25 @@ const (
 	userDataFilePath = "openstack/latest/user_data"
 	sleepTime        = 10 * time.Second
 	timeout          = 5 * time.Minute
+
+	// Category Key format: "kubernetes-io-cluster-<cluster-id>".
+	categoryKeyPrefix = "kubernetes-io-cluster-"
+	// CategoryValueOwned is the category value representing owned by the cluster.
+	CategoryValueOwned = "owned"
+	// CategoryValueShared is the category value representing shared by the cluster.
+	CategoryValueShared = "shared"
 )
 
 type metadataCloudInit struct {
 	UUID string `json:"uuid"`
 }
 
-// BootISOImageName is the image name for Bootstrap node for a given infraID
+// BootISOImageName is the image name for Bootstrap node for a given infraID.
 func BootISOImageName(infraID string) string {
 	return fmt.Sprintf("%s-%s", infraID, isoFile)
 }
 
-// BootISOImagePath is the image path for Bootstrap node for a given infraID and path
+// BootISOImagePath is the image path for Bootstrap node for a given infraID and path.
 func BootISOImagePath(path, infraID string) string {
 	imgName := BootISOImageName(infraID)
 	application := "openshift-installer"
@@ -42,7 +50,7 @@ func BootISOImagePath(path, infraID string) string {
 	return fullISOFile
 }
 
-// CreateBootstrapISO creates a ISO for the bootstrap node
+// CreateBootstrapISO creates a ISO for the bootstrap node.
 func CreateBootstrapISO(infraID, userData string) (string, error) {
 	id := uuid.New()
 	metaObj := &metadataCloudInit{
@@ -113,7 +121,7 @@ func CreateBootstrapISO(infraID, userData string) (string, error) {
 	return fullISOFile, nil
 }
 
-// WaitForTasks is a wrapper for WaitForTask
+// WaitForTasks is a wrapper for WaitForTask.
 func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 	for _, t := range taskUUIDs {
 		err := WaitForTask(clientV3, t)
@@ -124,7 +132,7 @@ func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 	return nil
 }
 
-// WaitForTask waits until a queued task has been finished or timeout has been reached
+// WaitForTask waits until a queued task has been finished or timeout has been reached.
 func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
 	finished := false
 	var err error
@@ -162,7 +170,9 @@ func isTaskFinished(clientV3 nutanixclientv3.Service, taskUUID string) (bool, er
 }
 
 func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, error) {
-	v, err := clientV3.GetTask(taskUUID)
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+	v, err := clientV3.GetTask(ctx, taskUUID)
 
 	if err != nil {
 		return "", err
@@ -174,7 +184,13 @@ func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, e
 	return *v.Status, nil
 }
 
-// RHCOSImageName is the unique image name for a given cluster
+// RHCOSImageName is the unique image name for a given cluster.
 func RHCOSImageName(infraID string) string {
 	return fmt.Sprintf("%s-rhcos", infraID)
+}
+
+// CategoryKey returns the cluster specific category key name.
+func CategoryKey(infraID string) string {
+	categoryKey := fmt.Sprintf("%s%s", categoryKeyPrefix, infraID)
+	return categoryKey
 }

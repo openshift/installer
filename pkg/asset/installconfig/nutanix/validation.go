@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -31,8 +32,10 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 		return field.Required(parentPath, "nutanix validation requires a nutanix platform configuration")
 	}
 
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
 	p := ic.Platform.Nutanix
-	nc, err := nutanixtypes.CreateNutanixClient(context.TODO(),
+	nc, err := nutanixtypes.CreateNutanixClient(ctx,
 		p.PrismCentral.Endpoint.Address,
 		strconv.Itoa(int(p.PrismCentral.Endpoint.Port)),
 		p.PrismCentral.Username,
@@ -43,7 +46,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	// validate whether a prism element with the UUID actually exists
 	for _, pe := range p.PrismElements {
-		_, err = nc.V3.GetCluster(pe.UUID)
+		_, err = nc.V3.GetCluster(ctx, pe.UUID)
 		if err != nil {
 			errList = append(errList, field.Invalid(parentPath.Child("prismElements"), pe.UUID, fmt.Sprintf("the prism element %s's UUID does not correspond to a valid prism element in Prism: %v", pe.Name, err)))
 		}
@@ -51,7 +54,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	// validate whether a subnet with the UUID actually exists
 	for _, subnetUUID := range p.SubnetUUIDs {
-		_, err = nc.V3.GetSubnet(subnetUUID)
+		_, err = nc.V3.GetSubnet(ctx, subnetUUID)
 		if err != nil {
 			errList = append(errList, field.Invalid(parentPath.Child("subnetUUIDs"), subnetUUID, fmt.Sprintf("the subnet UUID does not correspond to a valid subnet in Prism: %v", err)))
 		}
@@ -60,7 +63,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	// validate each FailureDomain configuration
 	for _, fd := range p.FailureDomains {
 		// validate whether the prism element with the UUID exists
-		_, err = nc.V3.GetCluster(fd.PrismElement.UUID)
+		_, err = nc.V3.GetCluster(ctx, fd.PrismElement.UUID)
 		if err != nil {
 			errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "prismElements"), fd.PrismElement.UUID,
 				fmt.Sprintf("the failure domain %s configured prism element UUID does not correspond to a valid prism element in Prism: %v", fd.Name, err)))
@@ -68,7 +71,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 		// validate whether a subnet with the UUID actually exists
 		for _, subnetUUID := range fd.SubnetUUIDs {
-			_, err = nc.V3.GetSubnet(subnetUUID)
+			_, err = nc.V3.GetSubnet(ctx, subnetUUID)
 			if err != nil {
 				errList = append(errList, field.Invalid(parentPath.Child("failureDomains", "subnetUUIDs"), subnetUUID,
 					fmt.Sprintf("the failure domain %s configured subnet UUID does not correspond to a valid subnet in Prism: %v", fd.Name, err)))

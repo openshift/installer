@@ -32,7 +32,10 @@ type clusterUninstaller struct {
 
 // New returns an Nutanix destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
-	v3Client, err := nutanixtypes.CreateNutanixClient(context.TODO(),
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	v3Client, err := nutanixtypes.CreateNutanixClient(ctx,
 		metadata.ClusterPlatformMetadata.Nutanix.PrismCentral,
 		metadata.ClusterPlatformMetadata.Nutanix.Port,
 		metadata.ClusterPlatformMetadata.Nutanix.Username,
@@ -82,8 +85,11 @@ func (o *clusterUninstaller) destroyCluster() (bool, error) {
 }
 
 func cleanupVMs(o *clusterUninstaller) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
 	matchedVirtualMachineList := make([]*nutanixclientv3.VMIntentResource, 0)
-	allVMs, err := o.v3Client.V3.ListAllVM(emptyFilter)
+	allVMs, err := o.v3Client.V3.ListAllVM(ctx, emptyFilter)
 	if err != nil {
 		return err
 	}
@@ -107,7 +113,10 @@ func cleanupVMs(o *clusterUninstaller) error {
 }
 
 func cleanupImages(o *clusterUninstaller) error {
-	allImages, err := o.v3Client.V3.ListAllImage(emptyFilter)
+	ctx, cancel := context.WithTimeout(context.TODO(), 120*time.Second)
+	defer cancel()
+
+	allImages, err := o.v3Client.V3.ListAllImage(ctx, emptyFilter)
 	if err != nil {
 		return err
 	}
@@ -118,7 +127,7 @@ func cleanupImages(o *clusterUninstaller) error {
 			imageName := *image.Spec.Name
 			imageUUID := *image.Metadata.UUID
 			o.logger.Infof("Deleting image %q with UUID %q", imageName, imageUUID)
-			response, err := o.v3Client.V3.DeleteImage(imageUUID)
+			response, err := o.v3Client.V3.DeleteImage(ctx, imageUUID)
 			if err != nil {
 				o.logger.Errorf("Failed to delete image %q: %v", imageUUID, err)
 				imageDeletionFailed = true
@@ -140,8 +149,11 @@ func cleanupImages(o *clusterUninstaller) error {
 }
 
 func cleanupCategories(o *clusterUninstaller) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
 	expCatKey := expectedCategoryKey(o.infraID)
-	key, err := o.v3Client.V3.GetCategoryKey(expCatKey)
+	key, err := o.v3Client.V3.GetCategoryKey(ctx, expCatKey)
 	if err != nil {
 		if strings.Contains(err.Error(), "does not exist") {
 			//Already deleted
@@ -150,7 +162,7 @@ func cleanupCategories(o *clusterUninstaller) error {
 		return err
 	}
 
-	values, err := o.v3Client.V3.ListCategoryValues(*key.Name, &nutanixclientv3.CategoryListMetadata{})
+	values, err := o.v3Client.V3.ListCategoryValues(context.TODO(), *key.Name, &nutanixclientv3.CategoryListMetadata{})
 	if err != nil {
 		return err
 	}
@@ -158,7 +170,7 @@ func cleanupCategories(o *clusterUninstaller) error {
 	categoryDeletionFailed := false
 	for _, value := range values.Entities {
 		o.logger.Infof("Deleting category value : %s", *value.Value)
-		err := o.v3Client.V3.DeleteCategoryValue(expCatKey, *value.Value)
+		err := o.v3Client.V3.DeleteCategoryValue(ctx, expCatKey, *value.Value)
 		if err != nil {
 			o.logger.Errorf("Failed to delete category value %q: %v", *value.Value, err)
 			categoryDeletionFailed = true
@@ -166,7 +178,7 @@ func cleanupCategories(o *clusterUninstaller) error {
 	}
 
 	o.logger.Infof("Deleting category key : %s", expCatKey)
-	err = o.v3Client.V3.DeleteCategoryKey(expCatKey)
+	err = o.v3Client.V3.DeleteCategoryKey(ctx, expCatKey)
 	if err != nil {
 		o.logger.Errorf("Failed to delete category key %q: %v", expCatKey, err)
 		categoryDeletionFailed = true
@@ -180,11 +192,14 @@ func cleanupCategories(o *clusterUninstaller) error {
 }
 
 func deleteVMs(clientV3 nutanixclientv3.Service, vms []*nutanixclientv3.VMIntentResource, l logrus.FieldLogger) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 120*time.Second)
+	defer cancel()
+
 	taskUUIDs := make([]string, 0)
 	vmDeletionFailed := false
 	for _, vm := range vms {
 		l.Infof("Deleting VM %s with ID %s", *vm.Spec.Name, *vm.Metadata.UUID)
-		response, err := clientV3.DeleteVM(*vm.Metadata.UUID)
+		response, err := clientV3.DeleteVM(ctx, *vm.Metadata.UUID)
 		if err != nil {
 			l.Errorf("Failed to delete VM %q: %v", *vm.Metadata.UUID, err)
 			vmDeletionFailed = true

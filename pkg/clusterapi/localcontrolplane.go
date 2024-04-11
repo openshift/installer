@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -45,6 +46,7 @@ func init() {
 	utilruntime.Must(capvv1.AddToScheme(Scheme))
 	utilruntime.Must(capov1.AddToScheme(Scheme))
 	utilruntime.Must(capiv1.AddToScheme(Scheme))
+	utilruntime.Must(capnv1.AddToScheme(Scheme))
 }
 
 // localControlPlane creates a local capi control plane
