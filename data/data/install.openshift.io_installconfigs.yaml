@@ -2271,12 +2271,13 @@ spec:
                     type: string
                   lbType:
                     description: "LBType is an optional field to specify a load balancer
-                      type. \n When this field is specified, the default ingresscontroller
-                      will be created using the specified load-balancer type. \n Following
-                      are the accepted values: \n * \"Classic\": A Classic Load Balancer
-                      that makes routing decisions at either the transport layer (TCP/SSL)
-                      or the application layer (HTTP/HTTPS). See the following for
-                      additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb
+                      type. When this field is specified, all ingresscontrollers (including
+                      the default ingresscontroller) will be created using the specified
+                      load-balancer type by default. \n Following are the accepted
+                      values: \n * \"Classic\": A Classic Load Balancer that makes
+                      routing decisions at either the transport layer (TCP/SSL) or
+                      the application layer (HTTP/HTTPS). See the following for additional
+                      details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#clb
                       \n * \"NLB\": A Network Load Balancer that makes routing decisions
                       at the transport layer (TCP/SSL). See the following for additional
                       details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
