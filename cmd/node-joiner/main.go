@@ -34,7 +34,22 @@ func main() {
 		Use:   "monitor-add-nodes",
 		Short: "Monitors the configured nodes while they are joining an existing cluster",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nodejoiner.NewMonitorAddNodesCommand("")
+			wd, err := os.Getwd()
+			if err != nil {
+				logrus.Fatal(err)
+			}
+
+			kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+			if err != nil {
+				return err
+			}
+
+			ips := args
+			logrus.Infof("Monitoring IPs: %v", ips)
+			if len(ips) == 0 {
+				logrus.Fatal("At least one IP address must be specified")
+			}
+			return nodejoiner.NewMonitorAddNodesCommand(wd, kubeConfig, ips)
 		},
 	}
 
@@ -74,8 +89,9 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 		// Overriding it here allows the same check to be done, but against the
 		// hook's output instead of the logger's output.
 		ForceColors:            terminal.IsTerminal(int(os.Stderr.Fd())),
-		DisableTimestamp:       true,
 		DisableLevelTruncation: true,
+		DisableTimestamp:       false,
+		FullTimestamp:          true,
 		DisableQuote:           true,
 	}))
 
