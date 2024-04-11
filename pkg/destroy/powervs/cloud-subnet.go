@@ -13,18 +13,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const subnetTypeName = "subnet"
+const cloudSubnetTypeName = "cloudSubnet"
 
-// listSubnets lists subnets in the cloud.
-func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
-	o.Logger.Debugf("Listing Subnets")
+// listCloudSubnets lists subnets in the VPC cloud.
+func (o *ClusterUninstaller) listCloudSubnets() (cloudResources, error) {
+	o.Logger.Debugf("Listing virtual Cloud Subnets")
 
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
 	select {
 	case <-ctx.Done():
-		o.Logger.Debugf("listSubnets: case <-ctx.Done()")
+		o.Logger.Debugf("listCloudSubnets: case <-ctx.Done()")
 		return nil, o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -42,27 +42,27 @@ func (o *ClusterUninstaller) listSubnets() (cloudResources, error) {
 	for _, subnet := range subnets.Subnets {
 		if strings.Contains(*subnet.Name, o.InfraID) {
 			foundOne = true
-			o.Logger.Debugf("listSubnets: FOUND: %s, %s", *subnet.ID, *subnet.Name)
+			o.Logger.Debugf("listCloudSubnets: FOUND: %s, %s", *subnet.ID, *subnet.Name)
 			result = append(result, cloudResource{
 				key:      *subnet.ID,
 				name:     *subnet.Name,
 				status:   "",
-				typeName: subnetTypeName,
+				typeName: cloudSubnetTypeName,
 				id:       *subnet.ID,
 			})
 		}
 	}
 	if !foundOne {
-		o.Logger.Debugf("listSubnets: NO matching subnet against: %s", o.InfraID)
+		o.Logger.Debugf("listCloudSubnets: NO matching subnet against: %s", o.InfraID)
 		for _, subnet := range subnets.Subnets {
-			o.Logger.Debugf("listSubnets: subnet: %s", *subnet.Name)
+			o.Logger.Debugf("listCloudSubnets: subnet: %s", *subnet.Name)
 		}
 	}
 
 	return cloudResources{}.insert(result...), nil
 }
 
-func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
+func (o *ClusterUninstaller) deleteCloudSubnet(item cloudResource) error {
 	var getOptions *vpcv1.GetSubnetOptions
 	var response *core.DetailedResponse
 	var err error
@@ -72,7 +72,7 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 
 	select {
 	case <-ctx.Done():
-		o.Logger.Debugf("deleteSubnet: case <-ctx.Done()")
+		o.Logger.Debugf("deleteCloudSubnet: case <-ctx.Done()")
 		return o.Context.Err() // we're cancelled, abort
 	default:
 	}
@@ -87,7 +87,7 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 		return nil
 	}
 	if err != nil && response != nil && response.StatusCode == gohttp.StatusInternalServerError {
-		o.Logger.Infof("deleteSubnet: internal server error")
+		o.Logger.Infof("deleteCloudSubnet: internal server error")
 		return nil
 	}
 
@@ -103,10 +103,10 @@ func (o *ClusterUninstaller) deleteSubnet(item cloudResource) error {
 	return nil
 }
 
-// destroySubnets removes all subnet resources that have a name prefixed
+// destroyCloudSubnets removes all subnet resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroySubnets() error {
-	firstPassList, err := o.listSubnets()
+func (o *ClusterUninstaller) destroyCloudSubnets() error {
+	firstPassList, err := o.listCloudSubnets()
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 		return nil
 	}
 
-	items := o.insertPendingItems(subnetTypeName, firstPassList.list())
+	items := o.insertPendingItems(cloudSubnetTypeName, firstPassList.list())
 
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
@@ -123,7 +123,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
-			o.Logger.Debugf("destroySubnets: case <-ctx.Done()")
+			o.Logger.Debugf("destroyCloudSubnets: case <-ctx.Done()")
 			return o.Context.Err() // we're cancelled, abort
 		default:
 		}
@@ -134,7 +134,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 			Cap:      leftInContext(ctx),
 			Steps:    math.MaxInt32}
 		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			err2 := o.deleteSubnet(item)
+			err2 := o.deleteCloudSubnet(item)
 			if err2 == nil {
 				return true, err2
 			}
@@ -142,15 +142,15 @@ func (o *ClusterUninstaller) destroySubnets() error {
 			return false, err2
 		})
 		if err != nil {
-			o.Logger.Fatal("destroySubnets: ExponentialBackoffWithContext (destroy) returns ", err)
+			o.Logger.Fatal("destroyCloudSubnets: ExponentialBackoffWithContext (destroy) returns ", err)
 		}
 	}
 
-	if items = o.getPendingItems(subnetTypeName); len(items) > 0 {
+	if items = o.getPendingItems(cloudSubnetTypeName); len(items) > 0 {
 		for _, item := range items {
-			o.Logger.Debugf("destroySubnets: found %s in pending items", item.name)
+			o.Logger.Debugf("destroyCloudSubnets: found %s in pending items", item.name)
 		}
-		return fmt.Errorf("destroySubnets: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyCloudSubnets: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{
@@ -159,7 +159,7 @@ func (o *ClusterUninstaller) destroySubnets() error {
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32}
 	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		secondPassList, err2 := o.listSubnets()
+		secondPassList, err2 := o.listCloudSubnets()
 		if err2 != nil {
 			return false, err2
 		}
@@ -168,12 +168,12 @@ func (o *ClusterUninstaller) destroySubnets() error {
 			return true, nil
 		}
 		for _, item := range secondPassList {
-			o.Logger.Debugf("destroySubnets: found %s in second pass", item.name)
+			o.Logger.Debugf("destroyCloudSubnets: found %s in second pass", item.name)
 		}
 		return false, nil
 	})
 	if err != nil {
-		o.Logger.Fatal("destroySubnets: ExponentialBackoffWithContext (list) returns ", err)
+		o.Logger.Fatal("destroyCloudSubnets: ExponentialBackoffWithContext (list) returns ", err)
 	}
 
 	return nil
