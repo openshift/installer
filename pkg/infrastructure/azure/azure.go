@@ -335,6 +335,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		subscriptionID: session.Credentials.SubscriptionID,
 		lbClient:       lbClient,
 		pipClient:      networkClientFactory.NewPublicIPAddressesClient(),
+		tags:           p.Tags,
 	}
 
 	intLoadBalancer, err := updateInternalLoadBalancer(ctx, lbInput)

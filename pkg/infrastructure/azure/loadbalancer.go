@@ -17,6 +17,7 @@ type lbInput struct {
 	subscriptionID string
 	pipClient      *armnetwork.PublicIPAddressesClient
 	lbClient       *armnetwork.LoadBalancersClient
+	tags           map[string]*string
 }
 
 type vmInput struct {
@@ -49,6 +50,7 @@ func createPublicIP(ctx context.Context, in *lbInput) (*armnetwork.PublicIPAddre
 					DomainNameLabel: to.Ptr(in.infraID),
 				},
 			},
+			Tags: in.tags,
 		},
 		nil,
 	)
@@ -129,6 +131,7 @@ func createExternalLoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAdd
 					},
 				},
 			},
+			Tags: in.tags,
 		}, nil)
 
 	if err != nil {
