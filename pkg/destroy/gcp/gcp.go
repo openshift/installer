@@ -10,7 +10,7 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	resourcemanager "google.golang.org/api/cloudresourcemanager/v1"
+	resourcemanager "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -35,10 +36,6 @@ var (
 type resourceScope string
 
 const (
-	// ocpDefaultLabelFmt is the format string for the default label
-	// added to the OpenShift created GCP resources.
-	ocpDefaultLabelFmt = "kubernetes-io-cluster-%s"
-
 	// capgProviderOwnedLabelFmt is the format string for the label
 	// used for resources created by the Cluster API GCP provider.
 	capgProviderOwnedLabelFmt = "capg-cluster-%s"
@@ -255,7 +252,7 @@ func (o *ClusterUninstaller) clusterIDFilter() string {
 
 func (o *ClusterUninstaller) clusterLabelFilter() string {
 	return fmt.Sprintf("(labels.%s = \"owned\") OR (labels.%s = \"owned\")",
-		fmt.Sprintf(ocpDefaultLabelFmt, o.ClusterID), fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID))
+		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, o.ClusterID), fmt.Sprintf(capgProviderOwnedLabelFmt, o.ClusterID))
 }
 
 func (o *ClusterUninstaller) clusterLabelOrClusterIDFilter() string {

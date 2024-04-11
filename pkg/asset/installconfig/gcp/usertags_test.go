@@ -211,16 +211,16 @@ func TestGetUserTags(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	gcpClient := mock.NewMockAPI(mockCtrl)
-	tagMgr := mock.NewMockTagManager(mockCtrl)
+	tagMgr := NewTagManager(gcpClient)
 
 	// Return fake credentials.
 	gcpClient.EXPECT().GetCredentials().Return(&googleoauth.Credentials{JSON: []byte(fakeCreds)}).AnyTimes()
 
 	// Return ["openshift/key1/value1", "openshift/key2/value2"] tags for "test-project" project.
-	tagMgr.EXPECT().GetProjectTags(gomock.Any(), testProject).Return(sets.Insert(sets.New[string](), "openshift/key1/value1", "openshift/key2/value2"), nil).AnyTimes()
+	gcpClient.EXPECT().GetProjectTags(gomock.Any(), testProject).Return(sets.Insert(sets.New[string](), "openshift/key1/value1", "openshift/key2/value2"), nil).AnyTimes()
 
 	// Return error for "fail-project" project.
-	tagMgr.EXPECT().GetProjectTags(gomock.Any(), "fail-project").
+	gcpClient.EXPECT().GetProjectTags(gomock.Any(), "fail-project").
 		Return(
 			nil,
 			fmt.Errorf("failed to fetch tags attached to fail-project: The caller does not have permission")).
@@ -228,7 +228,7 @@ func TestGetUserTags(t *testing.T) {
 
 	// Return ["openshift/key6/value6", "openshift/key7/value7", "openshift/key8/value8",
 	// "openshift/key9/value9", "openshift/key10/value10"] tags for "dup-project" project.
-	tagMgr.EXPECT().GetProjectTags(gomock.Any(), "dup-project").
+	gcpClient.EXPECT().GetProjectTags(gomock.Any(), "dup-project").
 		Return(
 			sets.Insert(sets.New[string](),
 				"openshift/key6/value6",
@@ -239,13 +239,13 @@ func TestGetUserTags(t *testing.T) {
 			), nil).AnyTimes()
 
 	// Return Forbidden error "openshift/key51/value51" tag.
-	tagMgr.EXPECT().GetNamespacedTagValue(gomock.Any(), "openshift/key51/value51").Return(nil, getTestGetNamespacedTagValueForbiddenError("openshift/key51/value51")).AnyTimes()
+	gcpClient.EXPECT().GetNamespacedTagValue(gomock.Any(), "openshift/key51/value51").Return(nil, getTestGetNamespacedTagValueForbiddenError("openshift/key51/value51")).AnyTimes()
 
 	// Return Internal error "openshift/key52/value52" tag.
-	tagMgr.EXPECT().GetNamespacedTagValue(gomock.Any(), "openshift/key52/value52").Return(nil, getTestGetNamespacedTagValueInternalError("openshift/key52/value52")).AnyTimes()
+	gcpClient.EXPECT().GetNamespacedTagValue(gomock.Any(), "openshift/key52/value52").Return(nil, getTestGetNamespacedTagValueInternalError("openshift/key52/value52")).AnyTimes()
 
 	// Return details for the requested tag.
-	tagMgr.EXPECT().GetNamespacedTagValue(gomock.Any(), gomock.Any()).
+	gcpClient.EXPECT().GetNamespacedTagValue(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error) {
 			return getTestNamespacedTagValueResp(tagNamespacedName), nil
 		}).AnyTimes()
@@ -260,7 +260,7 @@ func TestGetUserTags(t *testing.T) {
 			if tc.projectID != "" {
 				projectID = tc.projectID
 			}
-			tags, err := GetUserTags(context.Background(), tagMgr, projectID, tc.userTags)
+			tags, err := tagMgr.GetUserTags(context.Background(), projectID, tc.userTags)
 
 			if (err != nil || tc.expectedError != "") && err.Error() != tc.expectedError {
 				t.Errorf("GetUserTags(): error: got: %v, want: %v", err, tc.expectedError)

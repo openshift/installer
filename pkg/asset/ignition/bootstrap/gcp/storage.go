@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 )
 
 const (
@@ -53,7 +54,7 @@ func CreateBucketHandle(ctx context.Context, bucketName string) (*storage.Bucket
 // the data stored inside the object can be set at a later time.
 func CreateStorage(ctx context.Context, ic *installconfig.InstallConfig, bucketHandle *storage.BucketHandle, clusterID string) error {
 	labels := map[string]string{}
-	labels[fmt.Sprintf("kubernetes-io-cluster-%s", clusterID)] = "owned"
+	labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, clusterID)] = "owned"
 	for _, label := range ic.Config.GCP.UserLabels {
 		labels[label.Key] = label.Value
 	}

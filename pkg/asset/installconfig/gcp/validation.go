@@ -641,5 +641,5 @@ func checkArchitecture(imageArch string, icArch types.Architecture, role string)
 // validateUserTags check for existence and accessibility of user-defined tags and persists
 // validated tags in-memory.
 func validateUserTags(client API, projectID string, userTags []gcp.UserTag) error {
-	return validateAndPersistUserTags(context.Background(), NewTagManager(client), projectID, userTags)
+	return NewTagManager(client).validateAndPersistUserTags(context.Background(), projectID, userTags)
 }

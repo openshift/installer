@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -92,7 +93,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	autoCreateSubnets := false
 
 	labels := map[string]string{}
-	labels[fmt.Sprintf("kubernetes-io-cluster-%s", clusterID.InfraID)] = "owned"
+	labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, clusterID.InfraID)] = "owned"
 	labels[fmt.Sprintf("capg-cluster-%s", clusterID.InfraID)] = "owned"
 	for _, label := range installConfig.Config.GCP.UserLabels {
 		labels[label.Key] = label.Value

@@ -5,15 +5,12 @@ import (
 	"fmt"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types"
 )
 
 const (
 	kmsKeyNameFmt = "projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s"
-
-	// ocpDefaultLabelFmt is the format string for the default label
-	// added to the OpenShift created GCP resources.
-	ocpDefaultLabelFmt = "kubernetes-io-cluster-%s"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -79,7 +76,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	labels := make(map[string]string, len(masterConfig.Labels)+1)
 	// add OCP default label
-	labels[fmt.Sprintf(ocpDefaultLabelFmt, sources.InfrastructureName)] = "owned"
+	labels[fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, sources.InfrastructureName)] = "owned"
 	for k, v := range masterConfig.Labels {
 		labels[k] = v
 	}

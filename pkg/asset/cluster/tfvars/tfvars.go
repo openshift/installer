@@ -554,8 +554,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 		}
 
-		tags, err := gcpconfig.GetUserTags(ctx,
-			gcpconfig.NewTagManager(client),
+		tags, err := gcpconfig.NewTagManager(client).GetUserTags(ctx,
 			installConfig.Config.Platform.GCP.ProjectID,
 			installConfig.Config.Platform.GCP.UserTags)
 		if err != nil {

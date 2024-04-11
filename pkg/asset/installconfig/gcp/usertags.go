@@ -10,14 +10,10 @@ import (
 
 	"github.com/googleapis/gax-go/v2/apierror"
 	"github.com/sirupsen/logrus"
-	tags "google.golang.org/api/cloudresourcemanager/v3"
-	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/types/gcp"
 )
-
-//go:generate mockgen -source=./usertags.go -destination=./mock/usertags_mock.go -package=mock
 
 const (
 	// maxUserTagLimit is the maximum userTags that can be configured as defined in openshift/api.
@@ -39,15 +35,9 @@ type processedUserTags struct {
 	sync.Mutex
 }
 
-// tagManager handles resource tagging.
-type tagManager struct {
+// TagManager handles resource tagging.
+type TagManager struct {
 	client API
-}
-
-// TagManager is the interface that wraps methods for resource tag operations.
-type TagManager interface {
-	GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error)
-	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*tags.TagValue, error)
 }
 
 // newProcessedUserTags is for initializing an instance of processedUserTags.
@@ -100,16 +90,16 @@ func (p *processedUserTags) copy() map[string]string {
 	return t
 }
 
-// NewTagManager creates a tagManager instance.
-func NewTagManager(client API) TagManager {
-	return &tagManager{client: client}
+// NewTagManager creates a TagManager instance.
+func NewTagManager(client API) *TagManager {
+	return &TagManager{client: client}
 }
 
 // GetUserTags returns the processed list of user provided tags if already available,
 // else validates, persists in-memory and returns the processed tags.
-func GetUserTags(ctx context.Context, mgr TagManager, projectID string, userTags []gcp.UserTag) (map[string]string, error) {
+func (t *TagManager) GetUserTags(ctx context.Context, projectID string, userTags []gcp.UserTag) (map[string]string, error) {
 	if !processedTags.isProcessed() {
-		if err := validateAndPersistUserTags(ctx, mgr, projectID, userTags); err != nil {
+		if err := t.validateAndPersistUserTags(ctx, projectID, userTags); err != nil {
 			return nil, err
 		}
 	}
@@ -123,7 +113,7 @@ func GetUserTags(ctx context.Context, mgr TagManager, projectID string, userTags
 // with key of the form `tagKeys/{tag_key_id}` and value of the form
 // `tagValues/{tag_value_id}`. Returns error when fetching a tag fails or when
 // tag already exists on the project resource.
-func validateAndPersistUserTags(ctx context.Context, mgr TagManager, project string, userTags []gcp.UserTag) error {
+func (t *TagManager) validateAndPersistUserTags(ctx context.Context, project string, userTags []gcp.UserTag) error {
 	if len(userTags) == 0 {
 		return nil
 	}
@@ -135,7 +125,7 @@ func validateAndPersistUserTags(ctx context.Context, mgr TagManager, project str
 		return fmt.Errorf("more than %d user tags is not allowed, configured count: %d", maxUserTagLimit, len(userTags))
 	}
 
-	projectTags, err := mgr.GetProjectTags(ctx, project)
+	projectTags, err := t.client.GetProjectTags(ctx, project)
 	if err != nil {
 		return err
 	}
@@ -148,7 +138,7 @@ func validateAndPersistUserTags(ctx context.Context, mgr TagManager, project str
 	nonexistentTags := make([]string, 0)
 	for _, tag := range userTags {
 		name := fmt.Sprintf("%s/%s/%s", tag.ParentID, tag.Key, tag.Value)
-		tagValue, err := mgr.GetNamespacedTagValue(ctx, name)
+		tagValue, err := t.client.GetNamespacedTagValue(ctx, name)
 		if err != nil {
 			// check and return all non-existing tags at once
 			// for user to fix in one go.
@@ -186,61 +176,4 @@ func findDuplicateTags(userTags []gcp.UserTag, parentTags sets.Set[string]) []st
 		}
 	}
 	return dupTags
-}
-
-// getCloudResourceServiceForTags returns the client required for querying resource manager resources.
-func (m *tagManager) getCloudResourceServiceForTags(ctx context.Context) (*tags.Service, error) {
-	svc, err := tags.NewService(ctx, option.WithCredentials(m.client.GetCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
-	}
-	return svc, nil
-}
-
-// GetProjectTags returns the list of effective tags attached to the provided project resource.
-func (m *tagManager) GetProjectTags(ctx context.Context, projectID string) (sets.Set[string], error) {
-	const (
-		// projectParentPathFmt is the format string for parent path of a project resource.
-		projectParentPathFmt = "//cloudresourcemanager.googleapis.com/projects/%s"
-	)
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	service, err := m.getCloudResourceServiceForTags(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
-	}
-
-	effectiveTags := sets.New[string]()
-	effectiveTagsService := tags.NewEffectiveTagsService(service)
-	effectiveTagsRequest := effectiveTagsService.List().Context(ctx).Parent(fmt.Sprintf(projectParentPathFmt, projectID))
-	if err := effectiveTagsRequest.Pages(ctx, func(page *tags.ListEffectiveTagsResponse) error {
-		for _, effectiveTag := range page.EffectiveTags {
-			effectiveTags.Insert(effectiveTag.NamespacedTagValue)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return effectiveTags, nil
-}
-
-// GetNamespacedTagValue returns the Tag Value metadata fetched using the tag's NamespacedName.
-func (m *tagManager) GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*tags.TagValue, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	service, err := m.getCloudResourceServiceForTags(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cloud resource service: %w", err)
-	}
-
-	tagValuesService := tags.NewTagValuesService(service)
-
-	return tagValuesService.GetNamespaced().
-		Context(ctx).
-		Name(tagNamespacedName).
-		Do()
 }

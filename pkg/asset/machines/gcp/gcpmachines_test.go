@@ -14,6 +14,7 @@ import (
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	"github.com/openshift/installer/pkg/types"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -164,7 +165,7 @@ func getBaseGCPMachine() *capg.GCPMachine {
 			Subnet:       &subnet,
 			Image:        &image,
 			AdditionalLabels: capg.Labels{
-				"kubernetes-io-cluster-012345678": "owned",
+				fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, "012345678"): "owned",
 			},
 			RootDeviceSize: 128,
 			RootDeviceType: ptr.To(capg.DiskType(diskType)),
@@ -181,9 +182,9 @@ func getBaseGCPMachine() *capg.GCPMachine {
 func getGCPMachineWithLabels() *capg.GCPMachine {
 	gcpMachine := getBaseGCPMachine()
 	gcpMachine.Spec.AdditionalLabels = capg.Labels{
-		"kubernetes-io-cluster-012345678": "owned",
-		"foo":                             "bar",
-		"id":                              "1234"}
+		fmt.Sprintf(gcpconsts.ClusterIDLabelFmt, "012345678"): "owned",
+		"foo": "bar",
+		"id":  "1234"}
 	return gcpMachine
 }
 
