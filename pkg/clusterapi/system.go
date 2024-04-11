@@ -126,7 +126,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			c.getInfrastructureController(
 				&AWS,
 				[]string{
-					"-v=2",
+					"-v=4",
 					"--metrics-bind-addr=0",
 					"--health-addr={{suggestHealthHostPort}}",
 					"--webhook-port={{.WebhookPort}}",
