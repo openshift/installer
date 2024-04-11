@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
-	gatherssh "github.com/openshift/installer/pkg/gather/ssh"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	gatherssh "github.com/openshift/installer/pkg/gather/ssh"
 )
 
 type addNodeState int
@@ -73,184 +74,169 @@ var stateNameMap = map[int]string{
 	int(Finish):                          "Node is Ready",
 }
 
-type addNodeMonitor struct {
-	nodeIP       string
-	cluster      *Cluster
-	currentState addNodeState
-}
-
-func newAddNodeMonitor(nodeIP string, cluster *Cluster) *addNodeMonitor {
-	mon := addNodeMonitor{
-		nodeIP:       nodeIP,
-		cluster:      cluster,
-		currentState: InitialState,
-	}
-	return &mon
-}
-
 type checkFunction func(nodeMonitor *addNodeMonitor)
 
 type checkFunctions map[int]checkFunction
 
 var defaultChecks = checkFunctions{
 	int(WaitingForInitialBoot): func(mon *addNodeMonitor) {
-		if mon.currentState == InitialState &&
-			!mon.cluster.CanSSHToNodeZero() {
-			mon.currentState = WaitingForInitialBoot
+		if mon.in(InitialState) &&
+			!mon.canSSHToNode() {
+			mon.setState(WaitingForInitialBoot)
 		}
 	},
 	int(NodeBootedAndSSHIsUp): func(mon *addNodeMonitor) {
-		if mon.currentState < NodeBootedAndSSHIsUp &&
-			mon.cluster.CanSSHToNodeZero() {
-			mon.currentState = NodeBootedAndSSHIsUp
+		if mon.before(NodeBootedAndSSHIsUp) &&
+			mon.canSSHToNode() {
+			mon.setState(NodeBootedAndSSHIsUp)
 		}
 	},
 	int(WaitingForAssistedService): func(mon *addNodeMonitor) {
-		if mon.currentState < WaitingForAssistedService &&
-			mon.cluster.sshCommandOutputContains("ls -l /etc/systemd/system/assisted-service.service", "assisted-service.service") {
-			mon.currentState = WaitingForAssistedService
+		if mon.before(WaitingForAssistedService) &&
+			mon.nodeCommandOutputContains("ls -l /etc/systemd/system/assisted-service.service", "assisted-service.service") {
+			mon.setState(WaitingForAssistedService)
 		}
 	},
 	int(AssistedServiceIsUp): func(mon *addNodeMonitor) {
-		if mon.currentState == WaitingForAssistedService &&
-			mon.cluster.sshCommandOutputContains("sudo podman ps -a", "assisted-service") {
-			mon.currentState = AssistedServiceIsUp
+		if mon.in(WaitingForAssistedService) &&
+			mon.nodeCommandOutputContains("sudo podman ps -a", "assisted-service") {
+			mon.setState(AssistedServiceIsUp)
 		}
 	},
 	int(AssistedServiceFailedToStart): func(mon *addNodeMonitor) {
-		if mon.currentState == WaitingForAssistedService &&
-			mon.cluster.sshCommandOutputContains("systemctl status assisted-service", "FAILURE") {
-			mon.currentState = AssistedServiceFailedToStart
+		if mon.in(WaitingForAssistedService) &&
+			mon.nodeCommandOutputContains("systemctl status assisted-service", "FAILURE") {
+			mon.setState(AssistedServiceFailedToStart)
 		}
 	},
 	int(ClusterIsImported): func(mon *addNodeMonitor) {
-		if mon.currentState == AssistedServiceIsUp &&
-			mon.cluster.sshCommandOutputContains("systemctl status agent-import-cluster", "Imported cluster with id:") {
-			mon.currentState = ClusterIsImported
+		if mon.in(AssistedServiceIsUp) &&
+			mon.nodeCommandOutputContains("systemctl status agent-import-cluster", "Imported cluster with id:") {
+			mon.setState(ClusterIsImported)
 		}
 	},
 	int(ClusterImportedFailed): func(mon *addNodeMonitor) {
 		// Can simulate this by attempting to add a node using version 4.15 where
 		// the ABI CLI does not have the importcluster subcommand
-		if mon.currentState == AssistedServiceIsUp &&
-			mon.cluster.sshCommandOutputContains("systemctl status agent-import-cluster", "FAILURE") {
-			mon.currentState = ClusterImportedFailed
+		if mon.in(AssistedServiceIsUp) &&
+			mon.nodeCommandOutputContains("systemctl status agent-import-cluster", "FAILURE") {
+			mon.setState(ClusterImportedFailed)
 		}
 	},
 	int(InfraenvIsRegistered): func(mon *addNodeMonitor) {
-		if mon.currentState == ClusterIsImported &&
-			mon.cluster.sshCommandOutputContains("systemctl status agent-register-infraenv", "Registered infraenv with id:") {
-			mon.currentState = InfraenvIsRegistered
+		if mon.in(ClusterIsImported) &&
+			mon.nodeCommandOutputContains("systemctl status agent-register-infraenv", "Registered infraenv with id:") {
+			mon.setState(InfraenvIsRegistered)
 		}
 	},
 	int(InfraenvRegisterFailed): func(mon *addNodeMonitor) {
-		if mon.currentState == ClusterIsImported &&
-			mon.cluster.sshCommandOutputContains("systemctl status agent-register-infraenv", "FAILURE") {
-			mon.currentState = InfraenvRegisterFailed
+		if mon.in(ClusterIsImported) &&
+			mon.nodeCommandOutputContains("systemctl status agent-register-infraenv", "FAILURE") {
+			mon.setState(InfraenvRegisterFailed)
 		}
 	},
 	int(HostConfigsApplied): func(mon *addNodeMonitor) {
-		if mon.currentState == InfraenvIsRegistered &&
-			mon.cluster.sshCommandOutputContains("systemctl status apply-host-config", "Finished Service") {
-			mon.currentState = HostConfigsApplied
+		if mon.in(InfraenvIsRegistered) &&
+			mon.nodeCommandOutputContains("systemctl status apply-host-config", "Finished Service") {
+			mon.setState(HostConfigsApplied)
 		}
 	},
 	int(HostConfigsApplyFailed): func(mon *addNodeMonitor) {
-		if mon.currentState == InfraenvIsRegistered &&
-			mon.cluster.sshCommandOutputContains("systemctl status apply-host-config", "FAILURE") {
-			mon.currentState = HostConfigsApplyFailed
+		if mon.in(InfraenvIsRegistered) &&
+			mon.nodeCommandOutputContains("systemctl status apply-host-config", "FAILURE") {
+			mon.setState(HostConfigsApplyFailed)
 		}
 	},
 	int(WaitingForHostToBeReady): func(mon *addNodeMonitor) {
-		if mon.currentState == HostConfigsApplied &&
-			mon.cluster.sshCommandOutputContains("sudo podman exec assisted-db psql -d installer -c 'select id, status_info, status from hosts'", "insufficient") {
-			mon.currentState = WaitingForHostToBeReady
+		if mon.in(HostConfigsApplied) &&
+			mon.nodeCommandOutputContains("sudo podman exec assisted-db psql -d installer -c 'select id, status_info, status from hosts'", "insufficient") {
+			mon.setState(WaitingForHostToBeReady)
 		}
 	},
 	int(HostHasErrors): func(mon *addNodeMonitor) {
-		if mon.currentState == WaitingForHostToBeReady &&
-			mon.cluster.sshCommandOutputContains("systemctl status agent-add-node", "FAILURE") {
-			mon.currentState = HostHasErrors
+		if mon.in(WaitingForHostToBeReady) &&
+			mon.nodeCommandOutputContains("systemctl status agent-add-node", "FAILURE") {
+			mon.setState(HostHasErrors)
 		}
 	},
 	int(HostInstallationStarted): func(mon *addNodeMonitor) {
-		if mon.currentState == WaitingForHostToBeReady &&
+		if mon.in(WaitingForHostToBeReady) &&
 			// Or
 			// sudo podman exec assisted-db psql -d installer -c 'select id, status_info, status from hosts'
 			// and status will show "installing"
-			mon.cluster.sshCommandOutputContains("systemctl status agent-add-node", "Host installation started") {
-			mon.currentState = HostInstallationStarted
+			mon.nodeCommandOutputContains("systemctl status agent-add-node", "Host installation started") {
+			mon.setState(HostInstallationStarted)
 		}
 	},
 	int(CoreosInstallerWritingToDisk): func(mon *addNodeMonitor) {
-		if mon.currentState == HostInstallationStarted &&
-			mon.cluster.sshCommandOutputContains("ps -ef | grep coreos-installer", "coreos-installer") {
-			mon.currentState = CoreosInstallerWritingToDisk
+		if mon.in(HostInstallationStarted) &&
+			mon.nodeCommandOutputContains("ps -ef | grep coreos-installer", "coreos-installer") {
+			mon.setState(CoreosInstallerWritingToDisk)
 		}
 	},
 	int(HostPreparingForFirstReboot): func(mon *addNodeMonitor) {
-		if mon.currentState == CoreosInstallerWritingToDisk &&
+		if mon.in(CoreosInstallerWritingToDisk) &&
 			!mon.cluster.CanSSHToNodeZero() {
-			mon.currentState = HostPreparingForFirstReboot
+			mon.setState(HostPreparingForFirstReboot)
 		}
 	},
 	int(AfterFirstReboot): func(mon *addNodeMonitor) {
-		if mon.currentState < AfterFirstReboot &&
-			mon.cluster.sshCommandOutputContains("ps -ef", "ostree") {
-			mon.currentState = AfterFirstReboot
+		if mon.before(AfterFirstReboot) &&
+			mon.nodeCommandOutputContains("ps -ef", "ostree") {
+			mon.setState(AfterFirstReboot)
 		}
 	},
 	int(AfterSecondReboot): func(mon *addNodeMonitor) {
-		if mon.currentState < AfterSecondRebootKubeletIsUp &&
-			mon.cluster.sshCommandOutputContains("ps -ef", "coredns") {
-			mon.currentState = AfterSecondReboot
+		if mon.before(AfterSecondRebootKubeletIsUp) &&
+			mon.nodeCommandOutputContains("ps -ef", "coredns") {
+			mon.setState(AfterSecondReboot)
 		}
 	},
 	int(AfterSecondRebootKubeletIsUp): func(mon *addNodeMonitor) {
-		if mon.currentState >= AfterSecondReboot &&
-			mon.currentState < FirstCSRPendingApproval &&
-			mon.cluster.sshCommandOutputContains("ps -ef", "kubelet") {
-			mon.currentState = AfterSecondRebootKubeletIsUp
+		if mon.onOrAfter(AfterSecondReboot) &&
+			mon.before(FirstCSRPendingApproval) &&
+			mon.nodeCommandOutputContains("ps -ef", "kubelet") {
+			mon.setState(AfterSecondRebootKubeletIsUp)
 		}
 	},
 	int(FirstCSRPendingApproval): func(mon *addNodeMonitor) {
-		if mon.currentState >= AfterSecondReboot &&
-			mon.currentState <= FirstCSRPendingApproval &&
-			mon.cluster.sshCommandOutputContains("sudo KUBECONFIG=/etc/kubernetes/kubeconfig oc get csr | grep Pending", "node-bootstrapper") {
-			mon.currentState = FirstCSRPendingApproval
-			mon.cluster.logCSRsPendingApproval()
+		if mon.onOrAfter(AfterSecondReboot) &&
+			mon.onOrBefore(FirstCSRPendingApproval) &&
+			mon.nodeCommandOutputContains("sudo KUBECONFIG=/etc/kubernetes/kubeconfig oc get csr | grep Pending", "node-bootstrapper") {
+			mon.setState(FirstCSRPendingApproval)
+			mon.logCSRsPendingApproval()
 		}
 	},
 	int(SecondCSRPendingApproval): func(mon *addNodeMonitor) {
-		if mon.currentState >= AfterSecondReboot &&
-			mon.currentState <= SecondCSRPendingApproval &&
-			mon.cluster.sshCommandOutputContains("sudo KUBECONFIG=/etc/kubernetes/kubeconfig oc get csr | grep Pending", "system:node") {
-			mon.currentState = SecondCSRPendingApproval
-			mon.cluster.logCSRsPendingApproval()
+		if mon.onOrAfter(AfterSecondReboot) &&
+			mon.onOrBefore(SecondCSRPendingApproval) &&
+			mon.nodeCommandOutputContains("sudo KUBECONFIG=/etc/kubernetes/kubeconfig oc get csr | grep Pending", "system:node") {
+			mon.setState(SecondCSRPendingApproval)
+			mon.logCSRsPendingApproval()
 		}
 	},
 	int(NodeJoinedClusterStatusNotReady): func(mon *addNodeMonitor) {
-		if mon.currentState == AfterSecondRebootKubeletIsUp ||
-			mon.currentState == SecondCSRPendingApproval {
-			hasJoined, isReady, err := mon.cluster.hasNodeJoinedClusterAndIsReady(mon.nodeIP)
+		if mon.in(AfterSecondRebootKubeletIsUp) ||
+			mon.in(SecondCSRPendingApproval) {
+			hasJoined, isReady, err := mon.nodeHasJoinedClusterAndIsReady()
 			if err != nil {
 				logrus.Debugf("HasNodeJoinedClusterAndIsReady returned err: %v", err)
 			}
 			if hasJoined && !isReady {
-				mon.currentState = NodeJoinedClusterStatusNotReady
+				mon.setState(NodeJoinedClusterStatusNotReady)
 			}
 		}
 	},
 	int(Finish): func(mon *addNodeMonitor) {
-		if mon.currentState == AfterSecondRebootKubeletIsUp ||
-			mon.currentState == SecondCSRPendingApproval ||
-			mon.currentState == NodeJoinedClusterStatusNotReady {
-			hasJoined, isReady, err := mon.cluster.hasNodeJoinedClusterAndIsReady(mon.nodeIP)
+		if mon.in(AfterSecondRebootKubeletIsUp) ||
+			mon.in(SecondCSRPendingApproval) ||
+			mon.in(NodeJoinedClusterStatusNotReady) {
+			hasJoined, isReady, err := mon.nodeHasJoinedClusterAndIsReady()
 			if err != nil {
 				logrus.Debugf("HasNodeJoinedClusterAndIsReady returned err: %v", err)
 			}
 			if hasJoined && isReady {
-				mon.currentState = Finish
+				mon.setState(Finish)
 			}
 		}
 	},
@@ -267,30 +253,30 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 
 	wait.Until(func() {
 		for _, checkFunc := range defaultChecks {
-			currentState := mon.currentState
+			lastState := mon.currentState
 			checkFunc(mon)
-			if int(mon.currentState) != int(currentState) {
-				logrus.Infof("Node %s: %s", nodeIPAddress, stateNameMap[int(mon.currentState)])
+			if !mon.in(lastState) {
+				// log state change
+				logrus.Infof("Node %s: %s", nodeIPAddress, mon.currentStateName())
 			}
 		}
 
-		if mon.currentState == Finish {
+		if mon.in(Finish) {
 			// TODO: There appears to be a bug where the node becomes Ready
 			// before second CSR is approved. Log Pending CSRs for now, so users
 			// are aware there are still some waiting their approval even
 			// though the node status is Ready.
-			mon.cluster.logCSRsPendingApproval()
+			mon.logCSRsPendingApproval()
 			cancel()
 		}
 
-		if mon.currentState == AssistedServiceFailedToStart ||
-			mon.currentState == ClusterImportedFailed ||
-			mon.currentState == InfraenvRegisterFailed ||
-			mon.currentState == HostConfigsApplyFailed ||
-			mon.currentState == HostHasErrors {
+		if mon.in(AssistedServiceFailedToStart) ||
+			mon.in(ClusterImportedFailed) ||
+			mon.in(InfraenvRegisterFailed) ||
+			mon.in(HostConfigsApplyFailed) ||
+			mon.in(HostHasErrors) {
 			cancel()
 		}
-
 	}, 5*time.Second, waitContext.Done())
 
 	waitErr := waitContext.Err()
@@ -306,10 +292,51 @@ func MonitorAddNodes(cluster *Cluster, nodeIPAddress string) error {
 	return nil
 }
 
-// hasNodeJoinedClusterAndIsReady checks if the node specified by nodeIPAddress
-// has joined the cluster and is in Ready state.
-func (c *Cluster) hasNodeJoinedClusterAndIsReady(nodeIPAddress string) (bool, bool, error) {
-	nodes, err := c.API.Kube.ListNodes()
+type addNodeMonitor struct {
+	nodeIPAddress string
+	cluster       *Cluster
+	currentState  addNodeState
+}
+
+func newAddNodeMonitor(nodeIP string, cluster *Cluster) *addNodeMonitor {
+	mon := addNodeMonitor{
+		nodeIPAddress: nodeIP,
+		cluster:       cluster,
+		currentState:  InitialState,
+	}
+	return &mon
+}
+
+func (mon *addNodeMonitor) setState(state addNodeState) {
+	mon.currentState = state
+}
+
+func (mon *addNodeMonitor) in(state addNodeState) bool {
+	return mon.currentState == state
+}
+
+func (mon *addNodeMonitor) before(state addNodeState) bool {
+	return mon.currentState < state
+}
+
+func (mon *addNodeMonitor) onOrBefore(state addNodeState) bool {
+	return mon.currentState <= state
+}
+
+func (mon *addNodeMonitor) onOrAfter(state addNodeState) bool {
+	return mon.currentState >= state
+}
+
+func (mon *addNodeMonitor) currentStateName() string {
+	return stateNameMap[int(mon.currentState)]
+}
+
+func (mon *addNodeMonitor) canSSHToNode() bool {
+	return mon.cluster.CanSSHToNodeZero()
+}
+
+func (mon *addNodeMonitor) nodeHasJoinedClusterAndIsReady() (bool, bool, error) {
+	nodes, err := mon.cluster.API.Kube.ListNodes()
 	if err != nil {
 		logrus.Debugf("error getting node list %v", err)
 		return false, false, nil
@@ -320,7 +347,7 @@ func (c *Cluster) hasNodeJoinedClusterAndIsReady(nodeIPAddress string) (bool, bo
 	for _, node := range nodes.Items {
 		for _, address := range node.Status.Addresses {
 			if address.Type == corev1.NodeInternalIP {
-				if address.Address == nodeIPAddress {
+				if address.Address == mon.nodeIPAddress {
 					joinedNode = node
 					hasJoined = true
 				}
@@ -330,26 +357,26 @@ func (c *Cluster) hasNodeJoinedClusterAndIsReady(nodeIPAddress string) (bool, bo
 
 	isReady := false
 	if hasJoined {
-		logrus.Debugf("Node %v (%s) has joined cluster", nodeIPAddress, joinedNode.Name)
+		logrus.Debugf("Node %v (%s) has joined cluster", mon.nodeIPAddress, joinedNode.Name)
 		for _, cond := range joinedNode.Status.Conditions {
 			if cond.Type == corev1.NodeReady && cond.Status == corev1.ConditionTrue {
 				isReady = true
 			}
 		}
 		if isReady {
-			logrus.Debugf("Node %s (%s) is Ready", nodeIPAddress, joinedNode.Name)
+			logrus.Debugf("Node %s (%s) is Ready", mon.nodeIPAddress, joinedNode.Name)
 		} else {
-			logrus.Debugf("Node %s (%s) is not Ready", nodeIPAddress, joinedNode.Name)
+			logrus.Debugf("Node %s (%s) is not Ready", mon.nodeIPAddress, joinedNode.Name)
 		}
 	} else {
-		logrus.Debugf("Node %s has not joined cluster", nodeIPAddress)
+		logrus.Debugf("Node %s has not joined cluster", mon.nodeIPAddress)
 	}
 
 	return hasJoined, isReady, nil
 }
 
-func (c *Cluster) logCSRsPendingApproval() {
-	csrs, err := c.API.Kube.ListCSRs()
+func (mon *addNodeMonitor) logCSRsPendingApproval() {
+	csrs, err := mon.cluster.API.Kube.ListCSRs()
 	if err != nil {
 		logrus.Debugf("error calling listCSRs(): %v ", err)
 	}
@@ -363,21 +390,21 @@ func (c *Cluster) logCSRsPendingApproval() {
 	}
 }
 
-func (c *Cluster) sshClient() (*ssh.Client, error) {
-	ip := c.API.Rest.NodeZeroIP
+func (mon *addNodeMonitor) sshClient() (*ssh.Client, error) {
+	ip := mon.nodeIPAddress
 	port := 22
 
-	client, err := gatherssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), c.API.Rest.NodeSSHKey)
+	client, err := gatherssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), mon.cluster.API.Rest.NodeSSHKey)
 	if err != nil {
 		logrus.Debugf("Failed to create SSH client to %s: %s", ip, err)
 	}
 	return client, err
 }
 
-func (c *Cluster) sshCommandOutputContains(command, stringToMatchInOutput string) bool {
-	sshClient, err := c.sshClient()
+func (mon *addNodeMonitor) nodeCommandOutputContains(command, stringToMatchInOutput string) bool {
+	sshClient, err := mon.sshClient()
 	if err != nil {
-		logrus.Debugf("Failed to create SSH client to %s: %s", c.API.Rest.NodeZeroIP, err)
+		logrus.Debugf("Failed to create SSH client to %s: %s", mon.nodeIPAddress, err)
 		return false
 	}
 
