@@ -18,6 +18,7 @@ import (
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	gcpic "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	powervsic "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process/addr"
@@ -175,6 +176,21 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			),
 		)
 	case gcp.Name:
+		session, err := gcpic.GetSession(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to create gcp session: %w", err)
+		}
+
+		//nolint:gosec // CAPG only expects a single credentials environment variable
+		gAppCredEnvVar := "GOOGLE_APPLICATION_CREDENTIALS"
+		capgEnvVars := map[string]string{
+			gAppCredEnvVar: session.Path,
+		}
+
+		if v, ok := capgEnvVars[gAppCredEnvVar]; ok {
+			logrus.Infof("setting %q to %s for capg infrastructure controller", gAppCredEnvVar, v)
+		}
+
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&GCP,
@@ -185,10 +201,7 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 					"--webhook-port={{.WebhookPort}}",
 					"--webhook-cert-dir={{.WebhookCertDir}}",
 				},
-				map[string]string{
-					// TODO: Authentication must be handled in a more complex way detailed here: https://issues.redhat.com/browse/CORS-3218
-					"GOOGLE_APPLICATION_CREDENTIALS": filepath.Join(os.Getenv("HOME"), ".gcp", "osServiceAccount.json"),
-				},
+				capgEnvVars,
 			),
 		)
 	case ibmcloud.Name:
