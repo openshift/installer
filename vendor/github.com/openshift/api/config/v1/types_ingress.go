@@ -13,6 +13,11 @@ import (
 //
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/470
+// +openshift:file-pattern=cvoRunLevel=0000_10,operatorName=config-operator,operatorOrdering=01
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=ingresses,scope=Cluster
+// +kubebuilder:subresource:status
 type Ingress struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -125,6 +130,7 @@ type LoadBalancer struct {
 
 // AWSIngressSpec holds the desired state of the Ingress for Amazon Web Services infrastructure provider.
 // This only includes fields that can be modified in the cluster.
+// +kubebuilder:validation:XValidation:rule="self.type != 'Classic' && !has(self.networkLoadBalancer)",message="Network load balancer parameters are allowed only when load balancer type is NLB."
 // +union
 type AWSIngressSpec struct {
 	// type allows user to set a load balancer type.
@@ -146,7 +152,22 @@ type AWSIngressSpec struct {
 	// +kubebuilder:validation:Enum:=NLB;Classic
 	// +kubebuilder:validation:Required
 	Type AWSLBType `json:"type,omitempty"`
+
+	// networkLoadBalancerParameters holds configuration parameters for an AWS
+	// network load balancer. Present only if type is NLB.
+	//
+	// +optional
+	NetworkLoadBalancerParameters *AWSNetworkLoadBalancerParameters `json:"networkLoadBalancer,omitempty"`
 }
+
+// AWSNetworkLoadBalancerParameters holds configuration parameters for an
+// AWS Network load balancer.
+// +openshift:enable:FeatureGate=SetEIPForNLBIngressController
+type AWSNetworkLoadBalancerParameters struct {
+	EIPAllocations []EIPAllocations `json:"eip-allocations,omitempty"`
+}
+
+type EIPAllocations string
 
 type AWSLBType string
 

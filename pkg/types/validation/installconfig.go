@@ -1217,12 +1217,19 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if _, ok := configv1.FeatureSets[c.FeatureSet]; !ok {
+	clusterProfile := types.GetClusterProfileName()
+	featureSets, ok := configv1.AllFeatureSets()[clusterProfile]
+	if !ok {
+		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
+	}
+	if _, ok := featureSets[c.FeatureSet]; c.FeatureSet != configv1.CustomNoUpgrade && !ok {
 		sortedFeatureSets := func() []string {
 			v := []string{}
-			for n := range configv1.FeatureSets {
+			for n := range configv1.AllFeatureSets()[clusterProfile] {
 				v = append(v, string(n))
 			}
+			// Add CustomNoUpgrade since it is not part of features sets for profiles
+			v = append(v, string(configv1.CustomNoUpgrade))
 			sort.Strings(v)
 			return v
 		}()

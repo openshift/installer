@@ -63,7 +63,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.31.1
-	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999
+	github.com/openshift/api v0.0.0-20240313103236-5f1498accd5d
 	github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
@@ -348,3 +348,5 @@ replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
 replace golang.org/x/oauth2 => golang.org/x/oauth2 v0.15.0
 
 replace google.golang.org/api => google.golang.org/api v0.157.0
+
+replace github.com/openshift/api => github.com/miheer/api v0.0.0-20240401032408-f6536ae6cc5f
