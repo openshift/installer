@@ -33,6 +33,7 @@ type ClusterAuthorizationRequestBuilder struct {
 	productCategory   string
 	quotaVersion      string
 	resources         []*ReservedResourceBuilder
+	scope             string
 	byoc              bool
 	disconnected      bool
 	managed           bool
@@ -155,6 +156,13 @@ func (b *ClusterAuthorizationRequestBuilder) Resources(values ...*ReservedResour
 	return b
 }
 
+// Scope sets the value of the 'scope' attribute to the given value.
+func (b *ClusterAuthorizationRequestBuilder) Scope(value string) *ClusterAuthorizationRequestBuilder {
+	b.scope = value
+	b.bitmap_ |= 32768
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *ClusterAuthorizationRequestBuilder) Copy(object *ClusterAuthorizationRequest) *ClusterAuthorizationRequestBuilder {
 	if object == nil {
@@ -183,6 +191,7 @@ func (b *ClusterAuthorizationRequestBuilder) Copy(object *ClusterAuthorizationRe
 	} else {
 		b.resources = nil
 	}
+	b.scope = object.scope
 	return b
 }
 
@@ -213,5 +222,6 @@ func (b *ClusterAuthorizationRequestBuilder) Build() (object *ClusterAuthorizati
 			}
 		}
 	}
+	object.scope = b.scope
 	return
 }

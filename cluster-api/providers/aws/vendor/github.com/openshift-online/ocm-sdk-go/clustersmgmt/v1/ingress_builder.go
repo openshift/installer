@@ -29,6 +29,7 @@ type IngressBuilder struct {
 	dnsName                       string
 	clusterRoutesHostname         string
 	clusterRoutesTlsSecretRef     string
+	componentRoutes               map[string]*ComponentRouteBuilder
 	excludedNamespaces            []string
 	listening                     ListeningMethod
 	loadBalancerType              LoadBalancerFlavor
@@ -89,10 +90,21 @@ func (b *IngressBuilder) ClusterRoutesTlsSecretRef(value string) *IngressBuilder
 	return b
 }
 
+// ComponentRoutes sets the value of the 'component_routes' attribute to the given value.
+func (b *IngressBuilder) ComponentRoutes(value map[string]*ComponentRouteBuilder) *IngressBuilder {
+	b.componentRoutes = value
+	if value != nil {
+		b.bitmap_ |= 64
+	} else {
+		b.bitmap_ &^= 64
+	}
+	return b
+}
+
 // Default sets the value of the 'default' attribute to the given value.
 func (b *IngressBuilder) Default(value bool) *IngressBuilder {
 	b.default_ = value
-	b.bitmap_ |= 64
+	b.bitmap_ |= 128
 	return b
 }
 
@@ -100,7 +112,7 @@ func (b *IngressBuilder) Default(value bool) *IngressBuilder {
 func (b *IngressBuilder) ExcludedNamespaces(values ...string) *IngressBuilder {
 	b.excludedNamespaces = make([]string, len(values))
 	copy(b.excludedNamespaces, values)
-	b.bitmap_ |= 128
+	b.bitmap_ |= 256
 	return b
 }
 
@@ -109,7 +121,7 @@ func (b *IngressBuilder) ExcludedNamespaces(values ...string) *IngressBuilder {
 // Cluster components listening method.
 func (b *IngressBuilder) Listening(value ListeningMethod) *IngressBuilder {
 	b.listening = value
-	b.bitmap_ |= 256
+	b.bitmap_ |= 512
 	return b
 }
 
@@ -118,7 +130,7 @@ func (b *IngressBuilder) Listening(value ListeningMethod) *IngressBuilder {
 // Type of load balancer for AWS cloud provider parameters.
 func (b *IngressBuilder) LoadBalancerType(value LoadBalancerFlavor) *IngressBuilder {
 	b.loadBalancerType = value
-	b.bitmap_ |= 512
+	b.bitmap_ |= 1024
 	return b
 }
 
@@ -127,7 +139,7 @@ func (b *IngressBuilder) LoadBalancerType(value LoadBalancerFlavor) *IngressBuil
 // Type of Namespace Ownership Policy.
 func (b *IngressBuilder) RouteNamespaceOwnershipPolicy(value NamespaceOwnershipPolicy) *IngressBuilder {
 	b.routeNamespaceOwnershipPolicy = value
-	b.bitmap_ |= 1024
+	b.bitmap_ |= 2048
 	return b
 }
 
@@ -135,9 +147,9 @@ func (b *IngressBuilder) RouteNamespaceOwnershipPolicy(value NamespaceOwnershipP
 func (b *IngressBuilder) RouteSelectors(value map[string]string) *IngressBuilder {
 	b.routeSelectors = value
 	if value != nil {
-		b.bitmap_ |= 2048
+		b.bitmap_ |= 4096
 	} else {
-		b.bitmap_ &^= 2048
+		b.bitmap_ &^= 4096
 	}
 	return b
 }
@@ -147,7 +159,7 @@ func (b *IngressBuilder) RouteSelectors(value map[string]string) *IngressBuilder
 // Type of wildcard policy.
 func (b *IngressBuilder) RouteWildcardPolicy(value WildcardPolicy) *IngressBuilder {
 	b.routeWildcardPolicy = value
-	b.bitmap_ |= 4096
+	b.bitmap_ |= 8192
 	return b
 }
 
@@ -162,6 +174,14 @@ func (b *IngressBuilder) Copy(object *Ingress) *IngressBuilder {
 	b.dnsName = object.dnsName
 	b.clusterRoutesHostname = object.clusterRoutesHostname
 	b.clusterRoutesTlsSecretRef = object.clusterRoutesTlsSecretRef
+	if len(object.componentRoutes) > 0 {
+		b.componentRoutes = map[string]*ComponentRouteBuilder{}
+		for k, v := range object.componentRoutes {
+			b.componentRoutes[k] = NewComponentRoute().Copy(v)
+		}
+	} else {
+		b.componentRoutes = nil
+	}
 	b.default_ = object.default_
 	if object.excludedNamespaces != nil {
 		b.excludedNamespaces = make([]string, len(object.excludedNamespaces))
@@ -193,6 +213,15 @@ func (b *IngressBuilder) Build() (object *Ingress, err error) {
 	object.dnsName = b.dnsName
 	object.clusterRoutesHostname = b.clusterRoutesHostname
 	object.clusterRoutesTlsSecretRef = b.clusterRoutesTlsSecretRef
+	if b.componentRoutes != nil {
+		object.componentRoutes = make(map[string]*ComponentRoute)
+		for k, v := range b.componentRoutes {
+			object.componentRoutes[k], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	object.default_ = b.default_
 	if b.excludedNamespaces != nil {
 		object.excludedNamespaces = make([]string, len(b.excludedNamespaces))

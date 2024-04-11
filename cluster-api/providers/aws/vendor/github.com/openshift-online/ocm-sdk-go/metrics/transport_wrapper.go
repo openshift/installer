@@ -160,7 +160,7 @@ func (b *TransportWrapperBuilder) Build() (result *TransportWrapper, err error) 
 		registered, ok := err.(prometheus.AlreadyRegisteredError)
 		if ok {
 			requestCount = registered.ExistingCollector.(*prometheus.CounterVec)
-			err = nil
+			err = nil //nolint:all
 		} else {
 			return
 		}

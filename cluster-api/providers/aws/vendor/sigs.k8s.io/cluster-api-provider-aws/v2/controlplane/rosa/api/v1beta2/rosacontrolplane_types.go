@@ -42,20 +42,33 @@ const (
 type RosaControlPlaneSpec struct { //nolint: maligned
 	// Cluster name must be valid DNS-1035 label, so it must consist of lower case alphanumeric
 	// characters or '-', start with an alphabetic character, end with an alphanumeric character
-	// and have a max length of 15 characters.
+	// and have a max length of 54 characters.
 	//
+	// +immutable
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="rosaClusterName is immutable"
+	// +kubebuilder:validation:MaxLength:=54
+	// +kubebuilder:validation:Pattern:=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
+	RosaClusterName string `json:"rosaClusterName"`
+
+	// DomainPrefix is an optional prefix added to the cluster's domain name. It will be used
+	// when generating a sub-domain for the cluster on openshiftapps domain. It must be valid DNS-1035 label
+	// consisting of lower case alphanumeric characters or '-', start with an alphabetic character
+	// end with an alphanumeric character and have a max length of 15 characters.
+	//
+	// +immutable
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="domainPrefix is immutable"
 	// +kubebuilder:validation:MaxLength:=15
 	// +kubebuilder:validation:Pattern:=`^[a-z]([-a-z0-9]*[a-z0-9])?$`
-	// +immutable
-	RosaClusterName string `json:"rosaClusterName"`
+	// +optional
+	DomainPrefix string `json:"domainPrefix,omitempty"`
 
 	// The Subnet IDs to use when installing the cluster.
 	// SubnetIDs should come in pairs; two per availability zone, one private and one public.
 	Subnets []string `json:"subnets"`
 
-	// AWS AvailabilityZones of the worker nodes
-	// should match the AvailabilityZones of the Subnets.
+	// AvailabilityZones describe AWS AvailabilityZones of the worker nodes.
+	// should match the AvailabilityZones of the provided Subnets.
+	// a machinepool will be created for each availabilityZone.
 	AvailabilityZones []string `json:"availabilityZones"`
 
 	// The AWS Region the cluster lives in.
@@ -70,10 +83,13 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// The ID of the OpenID Connect Provider.
 	OIDCID string `json:"oidcID"`
 
-	// TODO: these are to satisfy ocm sdk. Explore how to drop them.
-	InstallerRoleARN *string `json:"installerRoleARN"`
-	SupportRoleARN   *string `json:"supportRoleARN"`
-	WorkerRoleARN    *string `json:"workerRoleARN"`
+	// InstallerRoleARN is an AWS IAM role that OpenShift Cluster Manager will assume to create the cluster..
+	InstallerRoleARN string `json:"installerRoleARN"`
+	// SupportRoleARN is an AWS IAM role used by Red Hat SREs to enable
+	// access to the cluster account in order to provide support.
+	SupportRoleARN string `json:"supportRoleARN"`
+	// WorkerRoleARN is an AWS IAM role that will be attached to worker instances.
+	WorkerRoleARN string `json:"workerRoleARN"`
 
 	// BillingAccount is an optional AWS account to use for billing the subscription fees for ROSA clusters.
 	// The cost of running each ROSA cluster will be billed to the infrastructure account in which the cluster
@@ -86,18 +102,16 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	BillingAccount string `json:"billingAccount,omitempty"`
 
-	// CredentialsSecretRef references a secret with necessary credentials to connect to the OCM API.
-	// The secret should contain the following data keys:
-	// - ocmToken: eyJhbGciOiJIUzI1NiIsI....
-	// - ocmApiUrl: Optional, defaults to 'https://api.openshift.com'
-	// +optional
-	CredentialsSecretRef *corev1.LocalObjectReference `json:"credentialsSecretRef,omitempty"`
-
-	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
-	// If no identity is specified, the default identity for this controller will be used.
+	// DefaultMachinePoolSpec defines the configuration for the default machinepool(s) provisioned as part of the cluster creation.
+	// One MachinePool will be created with this configuration per AvailabilityZone. Those default machinepools are required for openshift cluster operators
+	// to work properly.
+	// As these machinepool not created using ROSAMachinePool CR, they will not be visible/managed by ROSA CAPI provider.
+	// `rosa list machinepools -c <rosaClusterName>` can be used to view those machinepools.
+	//
+	// This field will be removed in the future once the current limitation is resolved.
 	//
 	// +optional
-	IdentityRef *infrav1.AWSIdentityReference `json:"identityRef,omitempty"`
+	DefaultMachinePoolSpec DefaultMachinePoolSpec `json:"defaultMachinePoolSpec,omitempty"`
 
 	// Network config for the ROSA HCP cluster.
 	// +optional
@@ -111,22 +125,38 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	EndpointAccess RosaEndpointAccessType `json:"endpointAccess,omitempty"`
 
-	// The instance type to use, for example `r5.xlarge`. Instance type ref; https://aws.amazon.com/ec2/instance-types/
-	// +optional
-	InstanceType string `json:"instanceType,omitempty"`
-
-	// Autoscaling specifies auto scaling behaviour for the MachinePools.
-	// +optional
-	Autoscaling *expinfrav1.RosaMachinePoolAutoScaling `json:"autoscaling,omitempty"`
-
 	// AdditionalTags are user-defined tags to be added on the AWS resources associated with the control plane.
 	// +optional
 	AdditionalTags infrav1.Tags `json:"additionalTags,omitempty"`
 
-	// EtcdEncryptionKMSArn is the ARN of the KMS key used to encrypt etcd. The key itself needs to be
+	// EtcdEncryptionKMSARN is the ARN of the KMS key used to encrypt etcd. The key itself needs to be
 	// created out-of-band by the user and tagged with `red-hat:true`.
 	// +optional
-	EtcdEncryptionKMSArn string `json:"etcdEncryptionKMSArn,omitempty"`
+	EtcdEncryptionKMSARN string `json:"etcdEncryptionKMSARN,omitempty"`
+
+	// AuditLogRoleARN defines the role that is used to forward audit logs to AWS CloudWatch.
+	// If not set, audit log forwarding is disabled.
+	// +optional
+	AuditLogRoleARN string `json:"auditLogRoleARN,omitempty"`
+
+	// ProvisionShardID defines the shard where rosa control plane components will be hosted.
+	//
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf", message="provisionShardID is immutable"
+	// +optional
+	ProvisionShardID string `json:"provisionShardID,omitempty"`
+
+	// CredentialsSecretRef references a secret with necessary credentials to connect to the OCM API.
+	// The secret should contain the following data keys:
+	// - ocmToken: eyJhbGciOiJIUzI1NiIsI....
+	// - ocmApiUrl: Optional, defaults to 'https://api.openshift.com'
+	// +optional
+	CredentialsSecretRef *corev1.LocalObjectReference `json:"credentialsSecretRef,omitempty"`
+
+	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
+	// If no identity is specified, the default identity for this controller will be used.
+	//
+	// +optional
+	IdentityRef *infrav1.AWSIdentityReference `json:"identityRef,omitempty"`
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
@@ -160,6 +190,18 @@ type NetworkSpec struct {
 	// +kubebuilder:default=OVNKubernetes
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
+}
+
+// DefaultMachinePoolSpec defines the configuration for the required worker nodes provisioned as part of the cluster creation.
+type DefaultMachinePoolSpec struct {
+	// The instance type to use, for example `r5.xlarge`. Instance type ref; https://aws.amazon.com/ec2/instance-types/
+	// +optional
+	InstanceType string `json:"instanceType,omitempty"`
+
+	// Autoscaling specifies auto scaling behaviour for the default MachinePool. Autoscaling min/max value
+	// must be equal or multiple of the availability zones count.
+	// +optional
+	Autoscaling *expinfrav1.RosaMachinePoolAutoScaling `json:"autoscaling,omitempty"`
 }
 
 // AWSRolesRef contains references to various AWS IAM roles required for operators to make calls against the AWS API.

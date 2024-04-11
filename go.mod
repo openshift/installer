@@ -113,7 +113,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	sigs.k8s.io/cluster-api v1.6.2
-	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.1-0.20240306201835-baf8d59ff495
+	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240408095607-ad71a542f8b4
 	sigs.k8s.io/cluster-api-provider-azure v1.13.0
 	sigs.k8s.io/cluster-api-provider-gcp v1.6.0
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0

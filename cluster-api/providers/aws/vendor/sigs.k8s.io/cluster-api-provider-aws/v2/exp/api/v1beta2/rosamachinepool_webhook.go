@@ -33,6 +33,12 @@ func (r *ROSAMachinePool) ValidateCreate() (warnings admission.Warnings, err err
 		allErrs = append(allErrs, err)
 	}
 
+	if err := r.validateNodeDrainGracePeriod(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -58,7 +64,12 @@ func (r *ROSAMachinePool) ValidateUpdate(old runtime.Object) (warnings admission
 		allErrs = append(allErrs, err)
 	}
 
+	if err := r.validateNodeDrainGracePeriod(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	allErrs = append(allErrs, validateImmutable(oldPool.Spec.AdditionalSecurityGroups, r.Spec.AdditionalSecurityGroups, "additionalSecurityGroups")...)
+	allErrs = append(allErrs, validateImmutable(oldPool.Spec.AdditionalTags, r.Spec.AdditionalTags, "additionalTags")...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -83,6 +94,19 @@ func (r *ROSAMachinePool) validateVersion() *field.Error {
 	_, err := semver.Parse(r.Spec.Version)
 	if err != nil {
 		return field.Invalid(field.NewPath("spec.version"), r.Spec.Version, "must be a valid semantic version")
+	}
+
+	return nil
+}
+
+func (r *ROSAMachinePool) validateNodeDrainGracePeriod() *field.Error {
+	if r.Spec.NodeDrainGracePeriod == nil {
+		return nil
+	}
+
+	if r.Spec.NodeDrainGracePeriod.Minutes() > 10080 {
+		return field.Invalid(field.NewPath("spec.nodeDrainGracePeriod"), r.Spec.NodeDrainGracePeriod,
+			"max supported duration is 1 week (10080m|168h)")
 	}
 
 	return nil

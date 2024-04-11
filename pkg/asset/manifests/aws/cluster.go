@@ -172,23 +172,6 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 	awsCluster.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSCluster"))
 
 	if ic.Config.Publish == types.ExternalPublishingStrategy {
-		// FIXME: CAPA bug. Remove when fixed upstream
-		// The primary and secondary load balancers in CAPA share the same
-		// security group. However, specifying an ingress rule only in the
-		// second LB does not seem to take effect, forcing us to add it to the
-		// primary LB instead.
-		// https://github.com/kubernetes-sigs/cluster-api-provider-aws/issues/4865
-		awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules = append(
-			awsCluster.Spec.ControlPlaneLoadBalancer.IngressRules,
-			capa.IngressRule{
-				Description: "Kubernetes API Server traffic for public access",
-				Protocol:    capa.SecurityGroupProtocolTCP,
-				FromPort:    6443,
-				ToPort:      6443,
-				CidrBlocks:  []string{"0.0.0.0/0"},
-			},
-		)
-
 		awsCluster.Spec.SecondaryControlPlaneLoadBalancer = &capa.AWSLoadBalancerSpec{
 			Name:                   ptr.To(clusterID.InfraID + "-ext"),
 			LoadBalancerType:       capa.LoadBalancerTypeNLB,

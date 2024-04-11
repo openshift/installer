@@ -207,6 +207,16 @@ func (c *ClusterClient) DeleteProtection() *DeleteProtectionClient {
 	)
 }
 
+// ExternalAuthConfig returns the target 'external_auth_config' resource.
+//
+// Reference to the resource that manages the external authentication configuration.
+func (c *ClusterClient) ExternalAuthConfig() *ExternalAuthConfigClient {
+	return NewExternalAuthConfigClient(
+		c.transport,
+		path.Join(c.path, "external_auth_config"),
+	)
+}
+
 // ExternalConfiguration returns the target 'external_configuration' resource.
 //
 // Reference to the resource that manages the external configuration.

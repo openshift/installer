@@ -82,6 +82,7 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 				SSHKeyName:           ptr.To(""),
 				IAMInstanceProfile:   fmt.Sprintf("%s-master-profile", clusterID),
 				Subnet:               subnet,
+				PublicIP:             ptr.To(in.PublicIP),
 				AdditionalTags:       in.Tags,
 				RootVolume: &capa.Volume{
 					Size:          int64(mpool.EC2RootVolume.Size),

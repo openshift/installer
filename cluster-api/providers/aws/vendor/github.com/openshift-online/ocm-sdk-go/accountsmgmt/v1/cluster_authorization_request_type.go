@@ -33,6 +33,7 @@ type ClusterAuthorizationRequest struct {
 	productCategory   string
 	quotaVersion      string
 	resources         []*ReservedResource
+	scope             string
 	byoc              bool
 	disconnected      bool
 	managed           bool
@@ -325,6 +326,25 @@ func (o *ClusterAuthorizationRequest) GetResources() (value []*ReservedResource,
 	ok = o != nil && o.bitmap_&16384 != 0
 	if ok {
 		value = o.resources
+	}
+	return
+}
+
+// Scope returns the value of the 'scope' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *ClusterAuthorizationRequest) Scope() string {
+	if o != nil && o.bitmap_&32768 != 0 {
+		return o.scope
+	}
+	return ""
+}
+
+// GetScope returns the value of the 'scope' attribute and
+// a flag indicating if the attribute has a value.
+func (o *ClusterAuthorizationRequest) GetScope() (value string, ok bool) {
+	ok = o != nil && o.bitmap_&32768 != 0
+	if ok {
+		value = o.scope
 	}
 	return
 }

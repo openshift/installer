@@ -56,7 +56,7 @@ func writeTokenClaimMappings(object *TokenClaimMappings, stream *jsoniter.Stream
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("user_name")
+		stream.WriteObjectField("username")
 		writeUsernameClaim(object.userName, stream)
 	}
 	stream.WriteObjectEnd()
@@ -87,7 +87,7 @@ func readTokenClaimMappings(iterator *jsoniter.Iterator) *TokenClaimMappings {
 			value := readGroupsClaim(iterator)
 			object.groups = value
 			object.bitmap_ |= 1
-		case "user_name":
+		case "username":
 			value := readUsernameClaim(iterator)
 			object.userName = value
 			object.bitmap_ |= 2

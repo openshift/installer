@@ -131,7 +131,16 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		}
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&256 != 0 && object.nodeDrainGracePeriod != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("node_drain_grace_period")
+		writeValue(object.nodeDrainGracePeriod, stream)
+		count++
+	}
+	present_ = object.bitmap_&512 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -140,7 +149,7 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		stream.WriteInt(object.replicas)
 		count++
 	}
-	present_ = object.bitmap_&512 != 0 && object.status != nil
+	present_ = object.bitmap_&1024 != 0 && object.status != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -149,7 +158,7 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		writeNodePoolStatus(object.status, stream)
 		count++
 	}
-	present_ = object.bitmap_&1024 != 0
+	present_ = object.bitmap_&2048 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -158,7 +167,7 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		stream.WriteString(object.subnet)
 		count++
 	}
-	present_ = object.bitmap_&2048 != 0 && object.taints != nil
+	present_ = object.bitmap_&4096 != 0 && object.taints != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -167,7 +176,7 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		writeTaintList(object.taints, stream)
 		count++
 	}
-	present_ = object.bitmap_&4096 != 0 && object.tuningConfigs != nil
+	present_ = object.bitmap_&8192 != 0 && object.tuningConfigs != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -176,7 +185,7 @@ func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 		writeStringList(object.tuningConfigs, stream)
 		count++
 	}
-	present_ = object.bitmap_&8192 != 0 && object.version != nil
+	present_ = object.bitmap_&16384 != 0 && object.version != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -247,30 +256,34 @@ func readNodePool(iterator *jsoniter.Iterator) *NodePool {
 			}
 			object.labels = value
 			object.bitmap_ |= 128
+		case "node_drain_grace_period":
+			value := readValue(iterator)
+			object.nodeDrainGracePeriod = value
+			object.bitmap_ |= 256
 		case "replicas":
 			value := iterator.ReadInt()
 			object.replicas = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 512
 		case "status":
 			value := readNodePoolStatus(iterator)
 			object.status = value
-			object.bitmap_ |= 512
+			object.bitmap_ |= 1024
 		case "subnet":
 			value := iterator.ReadString()
 			object.subnet = value
-			object.bitmap_ |= 1024
+			object.bitmap_ |= 2048
 		case "taints":
 			value := readTaintList(iterator)
 			object.taints = value
-			object.bitmap_ |= 2048
+			object.bitmap_ |= 4096
 		case "tuning_configs":
 			value := readStringList(iterator)
 			object.tuningConfigs = value
-			object.bitmap_ |= 4096
+			object.bitmap_ |= 8192
 		case "version":
 			value := readVersion(iterator)
 			object.version = value
-			object.bitmap_ |= 8192
+			object.bitmap_ |= 16384
 		default:
 			iterator.ReadAny()
 		}

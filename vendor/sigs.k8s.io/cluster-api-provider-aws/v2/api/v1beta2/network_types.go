@@ -27,6 +27,16 @@ const (
 	DefaultAPIServerPort = 6443
 	// DefaultAPIServerPortString defines the API server port as a string for convenience.
 	DefaultAPIServerPortString = "6443"
+	// DefaultAPIServerHealthCheckPath the API server health check path.
+	DefaultAPIServerHealthCheckPath = "/readyz"
+	// DefaultAPIServerHealthCheckIntervalSec the API server health check interval in seconds.
+	DefaultAPIServerHealthCheckIntervalSec = 10
+	// DefaultAPIServerHealthCheckTimeoutSec the API server health check timeout in seconds.
+	DefaultAPIServerHealthCheckTimeoutSec = 5
+	// DefaultAPIServerHealthThresholdCount the API server health check threshold count.
+	DefaultAPIServerHealthThresholdCount = 5
+	// DefaultAPIServerUnhealthThresholdCount the API server unhealthy check threshold count.
+	DefaultAPIServerUnhealthThresholdCount = 3
 )
 
 // NetworkStatus encapsulates AWS networking resources.

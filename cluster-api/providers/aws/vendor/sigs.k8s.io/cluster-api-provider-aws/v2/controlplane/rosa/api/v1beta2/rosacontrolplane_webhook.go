@@ -125,9 +125,9 @@ func (r *ROSAControlPlane) validateNetwork() field.ErrorList {
 }
 
 func (r *ROSAControlPlane) validateEtcdEncryptionKMSArn() *field.Error {
-	err := kmsArnRegexpValidator.ValidateKMSKeyARN(&r.Spec.EtcdEncryptionKMSArn)
+	err := kmsArnRegexpValidator.ValidateKMSKeyARN(&r.Spec.EtcdEncryptionKMSARN)
 	if err != nil {
-		return field.Invalid(field.NewPath("spec.EtcdEncryptionKMSArn"), r.Spec.EtcdEncryptionKMSArn, err.Error())
+		return field.Invalid(field.NewPath("spec.etcdEncryptionKMSARN"), r.Spec.EtcdEncryptionKMSARN, err.Error())
 	}
 
 	return nil

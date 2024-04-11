@@ -214,6 +214,32 @@ func (s *Service) describeVpcRouteTablesBySubnet() (map[string]*ec2.RouteTable, 
 	return res, nil
 }
 
+func (s *Service) deleteRouteTable(rt *ec2.RouteTable) error {
+	for _, as := range rt.Associations {
+		if as.SubnetId == nil {
+			continue
+		}
+
+		if _, err := s.EC2Client.DisassociateRouteTableWithContext(context.TODO(), &ec2.DisassociateRouteTableInput{AssociationId: as.RouteTableAssociationId}); err != nil {
+			record.Warnf(s.scope.InfraCluster(), "FailedDisassociateRouteTable", "Failed to disassociate managed RouteTable %q from Subnet %q: %v", *rt.RouteTableId, *as.SubnetId, err)
+			return errors.Wrapf(err, "failed to disassociate route table %q from subnet %q", *rt.RouteTableId, *as.SubnetId)
+		}
+
+		record.Eventf(s.scope.InfraCluster(), "SuccessfulDisassociateRouteTable", "Disassociated managed RouteTable %q from subnet %q", *rt.RouteTableId, *as.SubnetId)
+		s.scope.Debug("Deleted association between route table and subnet", "route-table-id", *rt.RouteTableId, "subnet-id", *as.SubnetId)
+	}
+
+	if _, err := s.EC2Client.DeleteRouteTableWithContext(context.TODO(), &ec2.DeleteRouteTableInput{RouteTableId: rt.RouteTableId}); err != nil {
+		record.Warnf(s.scope.InfraCluster(), "FailedDeleteRouteTable", "Failed to delete managed RouteTable %q: %v", *rt.RouteTableId, err)
+		return errors.Wrapf(err, "failed to delete route table %q", *rt.RouteTableId)
+	}
+
+	record.Eventf(s.scope.InfraCluster(), "SuccessfulDeleteRouteTable", "Deleted managed RouteTable %q", *rt.RouteTableId)
+	s.scope.Info("Deleted route table", "route-table-id", *rt.RouteTableId)
+
+	return nil
+}
+
 func (s *Service) deleteRouteTables() error {
 	if s.scope.VPC().IsUnmanaged(s.scope.Name()) {
 		s.scope.Trace("Skipping routing tables deletion in unmanaged mode")
@@ -226,27 +252,10 @@ func (s *Service) deleteRouteTables() error {
 	}
 
 	for _, rt := range rts {
-		for _, as := range rt.Associations {
-			if as.SubnetId == nil {
-				continue
-			}
-
-			if _, err := s.EC2Client.DisassociateRouteTableWithContext(context.TODO(), &ec2.DisassociateRouteTableInput{AssociationId: as.RouteTableAssociationId}); err != nil {
-				record.Warnf(s.scope.InfraCluster(), "FailedDisassociateRouteTable", "Failed to disassociate managed RouteTable %q from Subnet %q: %v", *rt.RouteTableId, *as.SubnetId, err)
-				return errors.Wrapf(err, "failed to disassociate route table %q from subnet %q", *rt.RouteTableId, *as.SubnetId)
-			}
-
-			record.Eventf(s.scope.InfraCluster(), "SuccessfulDisassociateRouteTable", "Disassociated managed RouteTable %q from subnet %q", *rt.RouteTableId, *as.SubnetId)
-			s.scope.Debug("Deleted association between route table and subnet", "route-table-id", *rt.RouteTableId, "subnet-id", *as.SubnetId)
+		err := s.deleteRouteTable(rt)
+		if err != nil {
+			return err
 		}
-
-		if _, err := s.EC2Client.DeleteRouteTableWithContext(context.TODO(), &ec2.DeleteRouteTableInput{RouteTableId: rt.RouteTableId}); err != nil {
-			record.Warnf(s.scope.InfraCluster(), "FailedDeleteRouteTable", "Failed to delete managed RouteTable %q: %v", *rt.RouteTableId, err)
-			return errors.Wrapf(err, "failed to delete route table %q", *rt.RouteTableId)
-		}
-
-		record.Eventf(s.scope.InfraCluster(), "SuccessfulDeleteRouteTable", "Deleted managed RouteTable %q", *rt.RouteTableId)
-		s.scope.Info("Deleted route table", "route-table-id", *rt.RouteTableId)
 	}
 	return nil
 }
@@ -302,8 +311,11 @@ func (s *Service) createRouteTableWithRoutes(routes []*ec2.Route, isPublic bool,
 			}
 			return true, nil
 		}, awserrors.RouteTableNotFound, awserrors.NATGatewayNotFound, awserrors.GatewayNotFound); err != nil {
-			// TODO(vincepri): cleanup the route table if this fails.
 			record.Warnf(s.scope.InfraCluster(), "FailedCreateRoute", "Failed to create route %s for RouteTable %q: %v", route.GoString(), *out.RouteTable.RouteTableId, err)
+			errDel := s.deleteRouteTable(out.RouteTable)
+			if errDel != nil {
+				record.Warnf(s.scope.InfraCluster(), "FailedDeleteRouteTable", "Failed to delete managed RouteTable %q: %v", *out.RouteTable.RouteTableId, errDel)
+			}
 			return nil, errors.Wrapf(err, "failed to create route in route table %q: %s", *out.RouteTable.RouteTableId, route.GoString())
 		}
 		record.Eventf(s.scope.InfraCluster(), "SuccessfulCreateRoute", "Created route %s for RouteTable %q", route.GoString(), *out.RouteTable.RouteTableId)

@@ -222,6 +222,14 @@ type Instance struct {
 	// +optional
 	PlacementGroupName string `json:"placementGroupName,omitempty"`
 
+	// PlacementGroupPartition is the partition number within the placement group in which to launch the instance.
+	// This value is only valid if the placement group, referred in `PlacementGroupName`, was created with
+	// strategy set to partition.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=7
+	// +optional
+	PlacementGroupPartition int64 `json:"placementGroupPartition,omitempty"`
+
 	// Tenancy indicates if instance should run on shared or single-tenant hardware.
 	// +optional
 	Tenancy string `json:"tenancy,omitempty"`
@@ -237,6 +245,10 @@ type Instance struct {
 	// PrivateDNSName is the options for the instance hostname.
 	// +optional
 	PrivateDNSName *PrivateDNSName `json:"privateDnsName,omitempty"`
+
+	// PublicIPOnLaunch is the option to associate a public IP on instance launch
+	// +optional
+	PublicIPOnLaunch *bool `json:"publicIPOnLaunch,omitempty"`
 }
 
 // InstanceMetadataState describes the state of InstanceMetadataOptions.HttpEndpoint and InstanceMetadataOptions.InstanceMetadataTags

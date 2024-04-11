@@ -3,11 +3,34 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
-# 0.1.404
+## 0.1.409
+- Update model version v0.0.363
+  - Add `NodeDrainGracePeriod` to the `NodePool` model.
+- Update model version v0.0.362
+  - Changed `UserName` attribute for TokenClaimMappings to `Username`.
+
+## 0.1.408
+- Update model version v0.0.361
+  - Add `Scope` attribute to `ReservedResource`.
+  - Add `Scope` attribute to `ClusterAuthorizationRequest`.
+
+## 0.1.407
+- Update model version v0.0.360
+  - Add `ComponentRoutes` attribute to `Ingress`
+
+## 0.1.406
+- Migrate Keychain `securestore` usage to non-CGO libraries 
+
+## 0.1.405
+- Update model version v0.0.359
+  - Add `ExternalAuthConfig` resource to `Cluster` model.
+  - Add `DomainPrefix` to `Cluster` model.
+
+## 0.1.404
 - Update model version v0.0.357
   - Add `ExternalAuth` to `ExternalAuthConfig` model
 
-# 0.1.403
+## 0.1.403
 - Update model version v0.0.356
   - Reverting change to remove provision shard from cluster
 

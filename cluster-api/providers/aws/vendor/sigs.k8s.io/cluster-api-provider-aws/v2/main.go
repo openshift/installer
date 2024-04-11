@@ -92,20 +92,23 @@ func init() {
 }
 
 var (
-	enableLeaderElection     bool
-	leaderElectionNamespace  string
-	watchNamespace           string
-	watchFilterValue         string
-	profilerAddress          string
-	awsClusterConcurrency    int
-	instanceStateConcurrency int
-	awsMachineConcurrency    int
-	waitInfraPeriod          time.Duration
-	syncPeriod               time.Duration
-	webhookPort              int
-	webhookCertDir           string
-	healthAddr               string
-	serviceEndpoints         string
+	enableLeaderElection        bool
+	leaderElectionLeaseDuration time.Duration
+	leaderElectionRenewDeadline time.Duration
+	leaderElectionRetryPeriod   time.Duration
+	leaderElectionNamespace     string
+	watchNamespace              string
+	watchFilterValue            string
+	profilerAddress             string
+	awsClusterConcurrency       int
+	instanceStateConcurrency    int
+	awsMachineConcurrency       int
+	waitInfraPeriod             time.Duration
+	syncPeriod                  time.Duration
+	webhookPort                 int
+	webhookCertDir              string
+	healthAddr                  string
+	serviceEndpoints            string
 
 	// maxEKSSyncPeriod is the maximum allowed duration for the sync-period flag when using EKS. It is set to 10 minutes
 	// because during resync it will create a new AWS auth token which can a maximum life of 15 minutes and this ensures
@@ -171,6 +174,9 @@ func main() {
 		Scheme:                     scheme,
 		Metrics:                    diagnosticsOpts,
 		LeaderElection:             enableLeaderElection,
+		LeaseDuration:              &leaderElectionLeaseDuration,
+		RenewDeadline:              &leaderElectionRenewDeadline,
+		RetryPeriod:                &leaderElectionRetryPeriod,
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
 		LeaderElectionID:           "controller-leader-elect-capa",
 		LeaderElectionNamespace:    leaderElectionNamespace,
@@ -493,6 +499,27 @@ func initFlags(fs *pflag.FlagSet) {
 		"leader-elect",
 		false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
+	)
+
+	fs.DurationVar(
+		&leaderElectionLeaseDuration,
+		"leader-elect-lease-duration",
+		15*time.Second,
+		"Interval at which non-leader candidates will wait to force acquire leadership (duration string)",
+	)
+
+	fs.DurationVar(
+		&leaderElectionRenewDeadline,
+		"leader-elect-renew-deadline",
+		10*time.Second,
+		"Duration that the leading controller manager will retry refreshing leadership before giving up (duration string)",
+	)
+
+	fs.DurationVar(
+		&leaderElectionRetryPeriod,
+		"leader-elect-retry-period",
+		2*time.Second,
+		"Duration the LeaderElector clients should wait between tries of actions (duration string)",
 	)
 
 	fs.StringVar(

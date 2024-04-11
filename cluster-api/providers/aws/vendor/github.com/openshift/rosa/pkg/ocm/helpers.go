@@ -63,7 +63,8 @@ const (
 	OCMRoleLabel  = "sts_ocm_role"
 	USERRoleLabel = "sts_user_role"
 
-	maxClusterNameLength = 15
+	MaxClusterNameLength         = 54
+	MaxClusterDomainPrefixLength = 15
 
 	HcpProduct        = "hcp"
 	HcpBillingAccount = "hcp-billing"
@@ -75,9 +76,13 @@ var clusterKeyRE = regexp.MustCompile(`^(\w|-)+$`)
 
 var kubernetesLabelRE = regexp.MustCompile(`^[a-z0-9A-Z]+[-_.a-z0-9A-Z/]*$`)
 
-// Cluster names must be valid DNS-1035 labels, so they must consist of lower case alphanumeric
+// Cluster names must be valid DNS-1035 labels, so they must consist of at most 54 lower case alphanumeric
 // characters or '-', start with an alphabetic character, and end with an alphanumeric character
-var clusterNameRE = regexp.MustCompile(`^[a-z]([-a-z0-9]{0,13}[a-z0-9])?$`)
+var clusterNameRE = regexp.MustCompile(`^[a-z]([-a-z0-9]{0,52}[a-z0-9])?$`)
+
+// Cluster domain prefix must be valid DNS-1035 labels, so they must consist of at most 15 lower case alphanumeric
+// characters or '-', start with an alphabetic character, and end with an alphanumeric character
+var clusterDomainPrefixRE = regexp.MustCompile(`^[a-z]([-a-z0-9]{0,13}[a-z0-9])?$`)
 
 var badUsernameRE = regexp.MustCompile(`^(~|\.?\.|.*[:\/%].*)$`)
 
@@ -98,13 +103,30 @@ func ClusterNameValidator(name interface{}) error {
 	if str, ok := name.(string); ok {
 		str := strings.Trim(str, " \t")
 		if !IsValidClusterName(str) {
-			return fmt.Errorf("Cluster name must consist of no more than 15 lowercase " +
-				"alphanumeric characters or '-', start with a letter, and end with an " +
-				"alphanumeric character.")
+			return fmt.Errorf("Cluster name must consist of no more than %d lowercase "+
+				"alphanumeric characters or '-', start with a letter, and end with an "+
+				"alphanumeric character.", MaxClusterNameLength)
 		}
 		return nil
 	}
 	return fmt.Errorf("can only validate strings, got '%v'", name)
+}
+
+func IsValidClusterDomainPrefix(domainPrefix string) bool {
+	return clusterDomainPrefixRE.MatchString(domainPrefix)
+}
+
+func ClusterDomainPrefixValidator(domainPrefix interface{}) error {
+	if str, ok := domainPrefix.(string); ok {
+		str := strings.Trim(str, " \t")
+		if str != "" && !IsValidClusterDomainPrefix(str) {
+			return fmt.Errorf("Cluster domain prefix must consist of no more than %d lowercase "+
+				"alphanumeric characters or '-', start with a letter, and end with an "+
+				"alphanumeric character.", MaxClusterDomainPrefixLength)
+		}
+		return nil
+	}
+	return fmt.Errorf("can only validate strings, got '%v'", domainPrefix)
 }
 
 func ValidateHTTPProxy(val interface{}) error {
