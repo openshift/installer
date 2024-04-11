@@ -1,23 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OmaSettingInteger 
 type OmaSettingInteger struct {
     OmaSetting
-    // Value.
-    value *int32
 }
 // NewOmaSettingInteger instantiates a new OmaSettingInteger and sets the default values.
 func NewOmaSettingInteger()(*OmaSettingInteger) {
     m := &OmaSettingInteger{
         OmaSetting: *NewOmaSetting(),
     }
-    odataTypeValue := "#microsoft.graph.omaSettingInteger";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.omaSettingInteger"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOmaSettingIntegerFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -27,12 +24,28 @@ func CreateOmaSettingIntegerFromDiscriminatorValue(parseNode i878a80d2330e89d268
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OmaSettingInteger) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OmaSetting.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValue(val)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. Value.
 func (m *OmaSettingInteger) GetValue()(*int32) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OmaSettingInteger) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -50,5 +63,15 @@ func (m *OmaSettingInteger) Serialize(writer i878a80d2330e89d26896388a3f487eef27
 }
 // SetValue sets the value property value. Value.
 func (m *OmaSettingInteger) SetValue(value *int32)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OmaSettingIntegerable 
+type OmaSettingIntegerable interface {
+    OmaSettingable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()(*int32)
+    SetValue(value *int32)()
 }

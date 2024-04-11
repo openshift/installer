@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of authenticationMethodConfiguration entities.
+// 
 type MicrosoftAuthenticatorAuthenticationMode int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i MicrosoftAuthenticatorAuthenticationMode) String() string {
     return []string{"deviceBasedPush", "push", "any"}[i]
 }
-func ParseMicrosoftAuthenticatorAuthenticationMode(v string) (interface{}, error) {
+func ParseMicrosoftAuthenticatorAuthenticationMode(v string) (any, error) {
     result := DEVICEBASEDPUSH_MICROSOFTAUTHENTICATORAUTHENTICATIONMODE
     switch v {
         case "deviceBasedPush":

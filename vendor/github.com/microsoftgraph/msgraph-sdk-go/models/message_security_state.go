@@ -2,40 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // MessageSecurityState 
 type MessageSecurityState struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The connectingIP property
-    connectingIP *string
-    // The deliveryAction property
-    deliveryAction *string
-    // The deliveryLocation property
-    deliveryLocation *string
-    // The directionality property
-    directionality *string
-    // The internetMessageId property
-    internetMessageId *string
-    // The messageFingerprint property
-    messageFingerprint *string
-    // The messageReceivedDateTime property
-    messageReceivedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The messageSubject property
-    messageSubject *string
-    // The networkMessageId property
-    networkMessageId *string
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewMessageSecurityState instantiates a new messageSecurityState and sets the default values.
 func NewMessageSecurityState()(*MessageSecurityState) {
     m := &MessageSecurityState{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateMessageSecurityStateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -43,63 +24,235 @@ func CreateMessageSecurityStateFromDiscriminatorValue(parseNode i878a80d2330e89d
     return NewMessageSecurityState(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MessageSecurityState) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *MessageSecurityState) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *MessageSecurityState) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetConnectingIP gets the connectingIP property value. The connectingIP property
 func (m *MessageSecurityState) GetConnectingIP()(*string) {
-    return m.connectingIP
+    val, err := m.GetBackingStore().Get("connectingIP")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeliveryAction gets the deliveryAction property value. The deliveryAction property
 func (m *MessageSecurityState) GetDeliveryAction()(*string) {
-    return m.deliveryAction
+    val, err := m.GetBackingStore().Get("deliveryAction")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeliveryLocation gets the deliveryLocation property value. The deliveryLocation property
 func (m *MessageSecurityState) GetDeliveryLocation()(*string) {
-    return m.deliveryLocation
+    val, err := m.GetBackingStore().Get("deliveryLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDirectionality gets the directionality property value. The directionality property
 func (m *MessageSecurityState) GetDirectionality()(*string) {
-    return m.directionality
+    val, err := m.GetBackingStore().Get("directionality")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MessageSecurityState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["connectingIP"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetConnectingIP)
-    res["deliveryAction"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeliveryAction)
-    res["deliveryLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeliveryLocation)
-    res["directionality"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDirectionality)
-    res["internetMessageId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetInternetMessageId)
-    res["messageFingerprint"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMessageFingerprint)
-    res["messageReceivedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetMessageReceivedDateTime)
-    res["messageSubject"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMessageSubject)
-    res["networkMessageId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetNetworkMessageId)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["connectingIP"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConnectingIP(val)
+        }
+        return nil
+    }
+    res["deliveryAction"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeliveryAction(val)
+        }
+        return nil
+    }
+    res["deliveryLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeliveryLocation(val)
+        }
+        return nil
+    }
+    res["directionality"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDirectionality(val)
+        }
+        return nil
+    }
+    res["internetMessageId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInternetMessageId(val)
+        }
+        return nil
+    }
+    res["messageFingerprint"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessageFingerprint(val)
+        }
+        return nil
+    }
+    res["messageReceivedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessageReceivedDateTime(val)
+        }
+        return nil
+    }
+    res["messageSubject"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMessageSubject(val)
+        }
+        return nil
+    }
+    res["networkMessageId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNetworkMessageId(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetInternetMessageId gets the internetMessageId property value. The internetMessageId property
 func (m *MessageSecurityState) GetInternetMessageId()(*string) {
-    return m.internetMessageId
+    val, err := m.GetBackingStore().Get("internetMessageId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMessageFingerprint gets the messageFingerprint property value. The messageFingerprint property
 func (m *MessageSecurityState) GetMessageFingerprint()(*string) {
-    return m.messageFingerprint
+    val, err := m.GetBackingStore().Get("messageFingerprint")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMessageReceivedDateTime gets the messageReceivedDateTime property value. The messageReceivedDateTime property
 func (m *MessageSecurityState) GetMessageReceivedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.messageReceivedDateTime
+    val, err := m.GetBackingStore().Get("messageReceivedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetMessageSubject gets the messageSubject property value. The messageSubject property
 func (m *MessageSecurityState) GetMessageSubject()(*string) {
-    return m.messageSubject
+    val, err := m.GetBackingStore().Get("messageSubject")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetNetworkMessageId gets the networkMessageId property value. The networkMessageId property
 func (m *MessageSecurityState) GetNetworkMessageId()(*string) {
-    return m.networkMessageId
+    val, err := m.GetBackingStore().Get("networkMessageId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *MessageSecurityState) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MessageSecurityState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -172,46 +325,111 @@ func (m *MessageSecurityState) Serialize(writer i878a80d2330e89d26896388a3f487ee
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *MessageSecurityState) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *MessageSecurityState) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *MessageSecurityState) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetConnectingIP sets the connectingIP property value. The connectingIP property
 func (m *MessageSecurityState) SetConnectingIP(value *string)() {
-    m.connectingIP = value
+    err := m.GetBackingStore().Set("connectingIP", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeliveryAction sets the deliveryAction property value. The deliveryAction property
 func (m *MessageSecurityState) SetDeliveryAction(value *string)() {
-    m.deliveryAction = value
+    err := m.GetBackingStore().Set("deliveryAction", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeliveryLocation sets the deliveryLocation property value. The deliveryLocation property
 func (m *MessageSecurityState) SetDeliveryLocation(value *string)() {
-    m.deliveryLocation = value
+    err := m.GetBackingStore().Set("deliveryLocation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDirectionality sets the directionality property value. The directionality property
 func (m *MessageSecurityState) SetDirectionality(value *string)() {
-    m.directionality = value
+    err := m.GetBackingStore().Set("directionality", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInternetMessageId sets the internetMessageId property value. The internetMessageId property
 func (m *MessageSecurityState) SetInternetMessageId(value *string)() {
-    m.internetMessageId = value
+    err := m.GetBackingStore().Set("internetMessageId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMessageFingerprint sets the messageFingerprint property value. The messageFingerprint property
 func (m *MessageSecurityState) SetMessageFingerprint(value *string)() {
-    m.messageFingerprint = value
+    err := m.GetBackingStore().Set("messageFingerprint", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMessageReceivedDateTime sets the messageReceivedDateTime property value. The messageReceivedDateTime property
 func (m *MessageSecurityState) SetMessageReceivedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.messageReceivedDateTime = value
+    err := m.GetBackingStore().Set("messageReceivedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMessageSubject sets the messageSubject property value. The messageSubject property
 func (m *MessageSecurityState) SetMessageSubject(value *string)() {
-    m.messageSubject = value
+    err := m.GetBackingStore().Set("messageSubject", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNetworkMessageId sets the networkMessageId property value. The networkMessageId property
 func (m *MessageSecurityState) SetNetworkMessageId(value *string)() {
-    m.networkMessageId = value
+    err := m.GetBackingStore().Set("networkMessageId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *MessageSecurityState) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MessageSecurityStateable 
+type MessageSecurityStateable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetConnectingIP()(*string)
+    GetDeliveryAction()(*string)
+    GetDeliveryLocation()(*string)
+    GetDirectionality()(*string)
+    GetInternetMessageId()(*string)
+    GetMessageFingerprint()(*string)
+    GetMessageReceivedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetMessageSubject()(*string)
+    GetNetworkMessageId()(*string)
+    GetOdataType()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetConnectingIP(value *string)()
+    SetDeliveryAction(value *string)()
+    SetDeliveryLocation(value *string)()
+    SetDirectionality(value *string)()
+    SetInternetMessageId(value *string)()
+    SetMessageFingerprint(value *string)()
+    SetMessageReceivedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetMessageSubject(value *string)()
+    SetNetworkMessageId(value *string)()
+    SetOdataType(value *string)()
 }

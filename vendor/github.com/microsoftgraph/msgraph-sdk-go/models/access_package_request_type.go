@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AccessPackageRequestType int
 
 const (
@@ -23,7 +23,7 @@ const (
 func (i AccessPackageRequestType) String() string {
     return []string{"notSpecified", "userAdd", "userUpdate", "userRemove", "adminAdd", "adminUpdate", "adminRemove", "systemAdd", "systemUpdate", "systemRemove", "onBehalfAdd", "unknownFutureValue"}[i]
 }
-func ParseAccessPackageRequestType(v string) (interface{}, error) {
+func ParseAccessPackageRequestType(v string) (any, error) {
     result := NOTSPECIFIED_ACCESSPACKAGEREQUESTTYPE
     switch v {
         case "notSpecified":

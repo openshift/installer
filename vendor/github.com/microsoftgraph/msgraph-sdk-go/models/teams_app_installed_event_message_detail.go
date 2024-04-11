@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // TeamsAppInstalledEventMessageDetail 
 type TeamsAppInstalledEventMessageDetail struct {
     EventMessageDetail
-    // Initiator of the event.
-    initiator IdentitySetable
-    // Display name of the teamsApp.
-    teamsAppDisplayName *string
-    // Unique identifier of the teamsApp.
-    teamsAppId *string
 }
 // NewTeamsAppInstalledEventMessageDetail instantiates a new TeamsAppInstalledEventMessageDetail and sets the default values.
 func NewTeamsAppInstalledEventMessageDetail()(*TeamsAppInstalledEventMessageDetail) {
     m := &TeamsAppInstalledEventMessageDetail{
         EventMessageDetail: *NewEventMessageDetail(),
     }
-    odataTypeValue := "#microsoft.graph.teamsAppInstalledEventMessageDetail";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.teamsAppInstalledEventMessageDetail"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTeamsAppInstalledEventMessageDetailFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -31,22 +24,70 @@ func CreateTeamsAppInstalledEventMessageDetailFromDiscriminatorValue(parseNode i
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeamsAppInstalledEventMessageDetail) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EventMessageDetail.GetFieldDeserializers()
-    res["initiator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetInitiator)
-    res["teamsAppDisplayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTeamsAppDisplayName)
-    res["teamsAppId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTeamsAppId)
+    res["initiator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInitiator(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["teamsAppDisplayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamsAppDisplayName(val)
+        }
+        return nil
+    }
+    res["teamsAppId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamsAppId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetInitiator gets the initiator property value. Initiator of the event.
 func (m *TeamsAppInstalledEventMessageDetail) GetInitiator()(IdentitySetable) {
-    return m.initiator
+    val, err := m.GetBackingStore().Get("initiator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetTeamsAppDisplayName gets the teamsAppDisplayName property value. Display name of the teamsApp.
 func (m *TeamsAppInstalledEventMessageDetail) GetTeamsAppDisplayName()(*string) {
-    return m.teamsAppDisplayName
+    val, err := m.GetBackingStore().Get("teamsAppDisplayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTeamsAppId gets the teamsAppId property value. Unique identifier of the teamsApp.
 func (m *TeamsAppInstalledEventMessageDetail) GetTeamsAppId()(*string) {
-    return m.teamsAppId
+    val, err := m.GetBackingStore().Get("teamsAppId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TeamsAppInstalledEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -76,13 +117,33 @@ func (m *TeamsAppInstalledEventMessageDetail) Serialize(writer i878a80d2330e89d2
 }
 // SetInitiator sets the initiator property value. Initiator of the event.
 func (m *TeamsAppInstalledEventMessageDetail) SetInitiator(value IdentitySetable)() {
-    m.initiator = value
+    err := m.GetBackingStore().Set("initiator", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeamsAppDisplayName sets the teamsAppDisplayName property value. Display name of the teamsApp.
 func (m *TeamsAppInstalledEventMessageDetail) SetTeamsAppDisplayName(value *string)() {
-    m.teamsAppDisplayName = value
+    err := m.GetBackingStore().Set("teamsAppDisplayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeamsAppId sets the teamsAppId property value. Unique identifier of the teamsApp.
 func (m *TeamsAppInstalledEventMessageDetail) SetTeamsAppId(value *string)() {
-    m.teamsAppId = value
+    err := m.GetBackingStore().Set("teamsAppId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeamsAppInstalledEventMessageDetailable 
+type TeamsAppInstalledEventMessageDetailable interface {
+    EventMessageDetailable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetInitiator()(IdentitySetable)
+    GetTeamsAppDisplayName()(*string)
+    GetTeamsAppId()(*string)
+    SetInitiator(value IdentitySetable)()
+    SetTeamsAppDisplayName(value *string)()
+    SetTeamsAppId(value *string)()
 }

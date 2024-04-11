@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // X509CertificateAuthenticationMethodConfigurationCollectionResponse 
 type X509CertificateAuthenticationMethodConfigurationCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []X509CertificateAuthenticationMethodConfigurationable
 }
 // NewX509CertificateAuthenticationMethodConfigurationCollectionResponse instantiates a new X509CertificateAuthenticationMethodConfigurationCollectionResponse and sets the default values.
 func NewX509CertificateAuthenticationMethodConfigurationCollectionResponse()(*X509CertificateAuthenticationMethodConfigurationCollectionResponse) {
@@ -25,12 +22,32 @@ func CreateX509CertificateAuthenticationMethodConfigurationCollectionResponseFro
 // GetFieldDeserializers the deserialization information for the current model
 func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateX509CertificateAuthenticationMethodConfigurationFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateX509CertificateAuthenticationMethodConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]X509CertificateAuthenticationMethodConfigurationable, len(val))
+            for i, v := range val {
+                res[i] = v.(X509CertificateAuthenticationMethodConfigurationable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) GetValue()([]X509CertificateAuthenticationMethodConfigurationable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]X509CertificateAuthenticationMethodConfigurationable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) Ser
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) Ser
 }
 // SetValue sets the value property value. The value property
 func (m *X509CertificateAuthenticationMethodConfigurationCollectionResponse) SetValue(value []X509CertificateAuthenticationMethodConfigurationable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// X509CertificateAuthenticationMethodConfigurationCollectionResponseable 
+type X509CertificateAuthenticationMethodConfigurationCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]X509CertificateAuthenticationMethodConfigurationable)
+    SetValue(value []X509CertificateAuthenticationMethodConfigurationable)()
 }

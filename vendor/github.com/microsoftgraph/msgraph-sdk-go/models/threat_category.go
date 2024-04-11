@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ThreatCategory int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i ThreatCategory) String() string {
     return []string{"undefined", "spam", "phishing", "malware", "unknownFutureValue"}[i]
 }
-func ParseThreatCategory(v string) (interface{}, error) {
+func ParseThreatCategory(v string) (any, error) {
     result := UNDEFINED_THREATCATEGORY
     switch v {
         case "undefined":

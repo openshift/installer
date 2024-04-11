@@ -1,36 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // BookingQuestionAnswer 
 type BookingQuestionAnswer struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The answer given by the user in case the answerInputType is text.
-    answer *string
-    // The expected answer type. The possible values are: text, radioButton, unknownFutureValue.
-    answerInputType *AnswerInputType
-    // In case the answerInputType is radioButton, this will consists of a list of possible answer values.
-    answerOptions []string
-    // Indicates whether it is mandatory to answer the custom question.
-    isRequired *bool
-    // The OdataType property
-    odataType *string
-    // The question.
-    question *string
-    // The ID of the custom question.
-    questionId *string
-    // The answers selected by the user.
-    selectedOptions []string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewBookingQuestionAnswer instantiates a new bookingQuestionAnswer and sets the default values.
 func NewBookingQuestionAnswer()(*BookingQuestionAnswer) {
     m := &BookingQuestionAnswer{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateBookingQuestionAnswerFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -38,53 +23,201 @@ func CreateBookingQuestionAnswerFromDiscriminatorValue(parseNode i878a80d2330e89
     return NewBookingQuestionAnswer(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BookingQuestionAnswer) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *BookingQuestionAnswer) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAnswer gets the answer property value. The answer given by the user in case the answerInputType is text.
 func (m *BookingQuestionAnswer) GetAnswer()(*string) {
-    return m.answer
+    val, err := m.GetBackingStore().Get("answer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAnswerInputType gets the answerInputType property value. The expected answer type. The possible values are: text, radioButton, unknownFutureValue.
 func (m *BookingQuestionAnswer) GetAnswerInputType()(*AnswerInputType) {
-    return m.answerInputType
+    val, err := m.GetBackingStore().Get("answerInputType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*AnswerInputType)
+    }
+    return nil
 }
 // GetAnswerOptions gets the answerOptions property value. In case the answerInputType is radioButton, this will consists of a list of possible answer values.
 func (m *BookingQuestionAnswer) GetAnswerOptions()([]string) {
-    return m.answerOptions
+    val, err := m.GetBackingStore().Get("answerOptions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *BookingQuestionAnswer) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *BookingQuestionAnswer) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["answer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAnswer)
-    res["answerInputType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseAnswerInputType , m.SetAnswerInputType)
-    res["answerOptions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetAnswerOptions)
-    res["isRequired"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsRequired)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["question"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQuestion)
-    res["questionId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQuestionId)
-    res["selectedOptions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetSelectedOptions)
+    res["answer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAnswer(val)
+        }
+        return nil
+    }
+    res["answerInputType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseAnswerInputType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAnswerInputType(val.(*AnswerInputType))
+        }
+        return nil
+    }
+    res["answerOptions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetAnswerOptions(res)
+        }
+        return nil
+    }
+    res["isRequired"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsRequired(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["question"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQuestion(val)
+        }
+        return nil
+    }
+    res["questionId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQuestionId(val)
+        }
+        return nil
+    }
+    res["selectedOptions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetSelectedOptions(res)
+        }
+        return nil
+    }
     return res
 }
 // GetIsRequired gets the isRequired property value. Indicates whether it is mandatory to answer the custom question.
 func (m *BookingQuestionAnswer) GetIsRequired()(*bool) {
-    return m.isRequired
+    val, err := m.GetBackingStore().Get("isRequired")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *BookingQuestionAnswer) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetQuestion gets the question property value. The question.
 func (m *BookingQuestionAnswer) GetQuestion()(*string) {
-    return m.question
+    val, err := m.GetBackingStore().Get("question")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetQuestionId gets the questionId property value. The ID of the custom question.
 func (m *BookingQuestionAnswer) GetQuestionId()(*string) {
-    return m.questionId
+    val, err := m.GetBackingStore().Get("questionId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSelectedOptions gets the selectedOptions property value. The answers selected by the user.
 func (m *BookingQuestionAnswer) GetSelectedOptions()([]string) {
-    return m.selectedOptions
+    val, err := m.GetBackingStore().Get("selectedOptions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *BookingQuestionAnswer) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -146,38 +279,93 @@ func (m *BookingQuestionAnswer) Serialize(writer i878a80d2330e89d26896388a3f487e
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *BookingQuestionAnswer) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *BookingQuestionAnswer) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAnswer sets the answer property value. The answer given by the user in case the answerInputType is text.
 func (m *BookingQuestionAnswer) SetAnswer(value *string)() {
-    m.answer = value
+    err := m.GetBackingStore().Set("answer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAnswerInputType sets the answerInputType property value. The expected answer type. The possible values are: text, radioButton, unknownFutureValue.
 func (m *BookingQuestionAnswer) SetAnswerInputType(value *AnswerInputType)() {
-    m.answerInputType = value
+    err := m.GetBackingStore().Set("answerInputType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAnswerOptions sets the answerOptions property value. In case the answerInputType is radioButton, this will consists of a list of possible answer values.
 func (m *BookingQuestionAnswer) SetAnswerOptions(value []string)() {
-    m.answerOptions = value
+    err := m.GetBackingStore().Set("answerOptions", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *BookingQuestionAnswer) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetIsRequired sets the isRequired property value. Indicates whether it is mandatory to answer the custom question.
 func (m *BookingQuestionAnswer) SetIsRequired(value *bool)() {
-    m.isRequired = value
+    err := m.GetBackingStore().Set("isRequired", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *BookingQuestionAnswer) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQuestion sets the question property value. The question.
 func (m *BookingQuestionAnswer) SetQuestion(value *string)() {
-    m.question = value
+    err := m.GetBackingStore().Set("question", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQuestionId sets the questionId property value. The ID of the custom question.
 func (m *BookingQuestionAnswer) SetQuestionId(value *string)() {
-    m.questionId = value
+    err := m.GetBackingStore().Set("questionId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSelectedOptions sets the selectedOptions property value. The answers selected by the user.
 func (m *BookingQuestionAnswer) SetSelectedOptions(value []string)() {
-    m.selectedOptions = value
+    err := m.GetBackingStore().Set("selectedOptions", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// BookingQuestionAnswerable 
+type BookingQuestionAnswerable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAnswer()(*string)
+    GetAnswerInputType()(*AnswerInputType)
+    GetAnswerOptions()([]string)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetIsRequired()(*bool)
+    GetOdataType()(*string)
+    GetQuestion()(*string)
+    GetQuestionId()(*string)
+    GetSelectedOptions()([]string)
+    SetAnswer(value *string)()
+    SetAnswerInputType(value *AnswerInputType)()
+    SetAnswerOptions(value []string)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetIsRequired(value *bool)()
+    SetOdataType(value *string)()
+    SetQuestion(value *string)()
+    SetQuestionId(value *string)()
+    SetSelectedOptions(value []string)()
 }

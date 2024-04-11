@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of chat entities.
+// 
 type ChatMessageImportance int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ChatMessageImportance) String() string {
     return []string{"normal", "high", "urgent", "unknownFutureValue"}[i]
 }
-func ParseChatMessageImportance(v string) (interface{}, error) {
+func ParseChatMessageImportance(v string) (any, error) {
     result := NORMAL_CHATMESSAGEIMPORTANCE
     switch v {
         case "normal":

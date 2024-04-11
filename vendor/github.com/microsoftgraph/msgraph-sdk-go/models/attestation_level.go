@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AttestationLevel int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i AttestationLevel) String() string {
     return []string{"attested", "notAttested", "unknownFutureValue"}[i]
 }
-func ParseAttestationLevel(v string) (interface{}, error) {
+func ParseAttestationLevel(v string) (any, error) {
     result := ATTESTED_ATTESTATIONLEVEL
     switch v {
         case "attested":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type EducationFeedbackResourceOutcomeStatus int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i EducationFeedbackResourceOutcomeStatus) String() string {
     return []string{"notPublished", "pendingPublish", "published", "failedPublish", "unknownFutureValue"}[i]
 }
-func ParseEducationFeedbackResourceOutcomeStatus(v string) (interface{}, error) {
+func ParseEducationFeedbackResourceOutcomeStatus(v string) (any, error) {
     result := NOTPUBLISHED_EDUCATIONFEEDBACKRESOURCEOUTCOMESTATUS
     switch v {
         case "notPublished":

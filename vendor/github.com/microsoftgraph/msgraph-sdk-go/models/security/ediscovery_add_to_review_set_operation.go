@@ -1,17 +1,12 @@
 package security
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // EdiscoveryAddToReviewSetOperation 
 type EdiscoveryAddToReviewSetOperation struct {
     CaseOperation
-    // eDiscovery review set to which items matching source collection query gets added.
-    reviewSet EdiscoveryReviewSetable
-    // eDiscovery search that gets added to review set.
-    search EdiscoverySearchable
 }
 // NewEdiscoveryAddToReviewSetOperation instantiates a new EdiscoveryAddToReviewSetOperation and sets the default values.
 func NewEdiscoveryAddToReviewSetOperation()(*EdiscoveryAddToReviewSetOperation) {
@@ -27,17 +22,49 @@ func CreateEdiscoveryAddToReviewSetOperationFromDiscriminatorValue(parseNode i87
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EdiscoveryAddToReviewSetOperation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.CaseOperation.GetFieldDeserializers()
-    res["reviewSet"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEdiscoveryReviewSetFromDiscriminatorValue , m.SetReviewSet)
-    res["search"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEdiscoverySearchFromDiscriminatorValue , m.SetSearch)
+    res["reviewSet"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEdiscoveryReviewSetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReviewSet(val.(EdiscoveryReviewSetable))
+        }
+        return nil
+    }
+    res["search"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEdiscoverySearchFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSearch(val.(EdiscoverySearchable))
+        }
+        return nil
+    }
     return res
 }
 // GetReviewSet gets the reviewSet property value. eDiscovery review set to which items matching source collection query gets added.
 func (m *EdiscoveryAddToReviewSetOperation) GetReviewSet()(EdiscoveryReviewSetable) {
-    return m.reviewSet
+    val, err := m.GetBackingStore().Get("reviewSet")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EdiscoveryReviewSetable)
+    }
+    return nil
 }
 // GetSearch gets the search property value. eDiscovery search that gets added to review set.
 func (m *EdiscoveryAddToReviewSetOperation) GetSearch()(EdiscoverySearchable) {
-    return m.search
+    val, err := m.GetBackingStore().Get("search")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EdiscoverySearchable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EdiscoveryAddToReviewSetOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,9 +88,24 @@ func (m *EdiscoveryAddToReviewSetOperation) Serialize(writer i878a80d2330e89d268
 }
 // SetReviewSet sets the reviewSet property value. eDiscovery review set to which items matching source collection query gets added.
 func (m *EdiscoveryAddToReviewSetOperation) SetReviewSet(value EdiscoveryReviewSetable)() {
-    m.reviewSet = value
+    err := m.GetBackingStore().Set("reviewSet", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSearch sets the search property value. eDiscovery search that gets added to review set.
 func (m *EdiscoveryAddToReviewSetOperation) SetSearch(value EdiscoverySearchable)() {
-    m.search = value
+    err := m.GetBackingStore().Set("search", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EdiscoveryAddToReviewSetOperationable 
+type EdiscoveryAddToReviewSetOperationable interface {
+    CaseOperationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetReviewSet()(EdiscoveryReviewSetable)
+    GetSearch()(EdiscoverySearchable)
+    SetReviewSet(value EdiscoveryReviewSetable)()
+    SetSearch(value EdiscoverySearchable)()
 }

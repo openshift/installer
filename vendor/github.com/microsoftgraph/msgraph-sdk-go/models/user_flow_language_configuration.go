@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// UserFlowLanguageConfiguration provides operations to manage the collection of agreement entities.
+// UserFlowLanguageConfiguration 
 type UserFlowLanguageConfiguration struct {
     Entity
-    // Collection of pages with the default content to display in a user flow for a specified language. This collection does not allow any kind of modification.
-    defaultPages []UserFlowLanguagePageable
-    // The language name to display. This property is read-only.
-    displayName *string
-    // Indicates whether the language is enabled within the user flow.
-    isEnabled *bool
-    // Collection of pages with the overrides messages to display in a user flow for a specified language. This collection only allows to modify the content of the page, any other modification is not allowed (creation or deletion of pages).
-    overridesPages []UserFlowLanguagePageable
 }
 // NewUserFlowLanguageConfiguration instantiates a new userFlowLanguageConfiguration and sets the default values.
 func NewUserFlowLanguageConfiguration()(*UserFlowLanguageConfiguration) {
@@ -30,28 +21,100 @@ func CreateUserFlowLanguageConfigurationFromDiscriminatorValue(parseNode i878a80
 }
 // GetDefaultPages gets the defaultPages property value. Collection of pages with the default content to display in a user flow for a specified language. This collection does not allow any kind of modification.
 func (m *UserFlowLanguageConfiguration) GetDefaultPages()([]UserFlowLanguagePageable) {
-    return m.defaultPages
+    val, err := m.GetBackingStore().Get("defaultPages")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserFlowLanguagePageable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The language name to display. This property is read-only.
 func (m *UserFlowLanguageConfiguration) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *UserFlowLanguageConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["defaultPages"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserFlowLanguagePageFromDiscriminatorValue , m.SetDefaultPages)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["isEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsEnabled)
-    res["overridesPages"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserFlowLanguagePageFromDiscriminatorValue , m.SetOverridesPages)
+    res["defaultPages"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserFlowLanguagePageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserFlowLanguagePageable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserFlowLanguagePageable)
+            }
+            m.SetDefaultPages(res)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["isEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsEnabled(val)
+        }
+        return nil
+    }
+    res["overridesPages"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserFlowLanguagePageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserFlowLanguagePageable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserFlowLanguagePageable)
+            }
+            m.SetOverridesPages(res)
+        }
+        return nil
+    }
     return res
 }
 // GetIsEnabled gets the isEnabled property value. Indicates whether the language is enabled within the user flow.
 func (m *UserFlowLanguageConfiguration) GetIsEnabled()(*bool) {
-    return m.isEnabled
+    val, err := m.GetBackingStore().Get("isEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOverridesPages gets the overridesPages property value. Collection of pages with the overrides messages to display in a user flow for a specified language. This collection only allows to modify the content of the page, any other modification is not allowed (creation or deletion of pages).
 func (m *UserFlowLanguageConfiguration) GetOverridesPages()([]UserFlowLanguagePageable) {
-    return m.overridesPages
+    val, err := m.GetBackingStore().Get("overridesPages")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserFlowLanguagePageable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *UserFlowLanguageConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -60,7 +123,10 @@ func (m *UserFlowLanguageConfiguration) Serialize(writer i878a80d2330e89d2689638
         return err
     }
     if m.GetDefaultPages() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetDefaultPages())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetDefaultPages()))
+        for i, v := range m.GetDefaultPages() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("defaultPages", cast)
         if err != nil {
             return err
@@ -79,7 +145,10 @@ func (m *UserFlowLanguageConfiguration) Serialize(writer i878a80d2330e89d2689638
         }
     }
     if m.GetOverridesPages() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetOverridesPages())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetOverridesPages()))
+        for i, v := range m.GetOverridesPages() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("overridesPages", cast)
         if err != nil {
             return err
@@ -89,17 +158,42 @@ func (m *UserFlowLanguageConfiguration) Serialize(writer i878a80d2330e89d2689638
 }
 // SetDefaultPages sets the defaultPages property value. Collection of pages with the default content to display in a user flow for a specified language. This collection does not allow any kind of modification.
 func (m *UserFlowLanguageConfiguration) SetDefaultPages(value []UserFlowLanguagePageable)() {
-    m.defaultPages = value
+    err := m.GetBackingStore().Set("defaultPages", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The language name to display. This property is read-only.
 func (m *UserFlowLanguageConfiguration) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsEnabled sets the isEnabled property value. Indicates whether the language is enabled within the user flow.
 func (m *UserFlowLanguageConfiguration) SetIsEnabled(value *bool)() {
-    m.isEnabled = value
+    err := m.GetBackingStore().Set("isEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOverridesPages sets the overridesPages property value. Collection of pages with the overrides messages to display in a user flow for a specified language. This collection only allows to modify the content of the page, any other modification is not allowed (creation or deletion of pages).
 func (m *UserFlowLanguageConfiguration) SetOverridesPages(value []UserFlowLanguagePageable)() {
-    m.overridesPages = value
+    err := m.GetBackingStore().Set("overridesPages", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// UserFlowLanguageConfigurationable 
+type UserFlowLanguageConfigurationable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDefaultPages()([]UserFlowLanguagePageable)
+    GetDisplayName()(*string)
+    GetIsEnabled()(*bool)
+    GetOverridesPages()([]UserFlowLanguagePageable)
+    SetDefaultPages(value []UserFlowLanguagePageable)()
+    SetDisplayName(value *string)()
+    SetIsEnabled(value *bool)()
+    SetOverridesPages(value []UserFlowLanguagePageable)()
 }

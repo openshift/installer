@@ -1,56 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // PrinterDefaults 
 type PrinterDefaults struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The default color mode to use when printing the document. Valid values are described in the following table.
-    colorMode *PrintColorMode
-    // The default content (MIME) type to use when processing documents.
-    contentType *string
-    // The default number of copies printed per job.
-    copiesPerJob *int32
-    // The default resolution in DPI to use when printing the job.
-    dpi *int32
-    // The default duplex (double-sided) configuration to use when printing a document. Valid values are described in the following table.
-    duplexMode *PrintDuplexMode
-    // The default set of finishings to apply to print jobs. Valid values are described in the following table.
-    finishings []PrintFinishing
-    // The default fitPdfToPage setting. True to fit each page of a PDF document to a physical sheet of media; false to let the printer decide how to lay out impressions.
-    fitPdfToPage *bool
-    // The inputBin property
-    inputBin *string
-    // The default media (such as paper) color to print the document on.
-    mediaColor *string
-    // The default media size to use. Supports standard size names for ISO and ANSI media sizes. Valid values are listed in the printerCapabilities topic.
-    mediaSize *string
-    // The default media (such as paper) type to print the document on.
-    mediaType *string
-    // The default direction to lay out pages when multiple pages are being printed per sheet. Valid values are described in the following table.
-    multipageLayout *PrintMultipageLayout
-    // The OdataType property
-    odataType *string
-    // The default orientation to use when printing the document. Valid values are described in the following table.
-    orientation *PrintOrientation
-    // The default output bin to place completed prints into. See the printer's capabilities for a list of supported output bins.
-    outputBin *string
-    // The default number of document pages to print on each sheet.
-    pagesPerSheet *int32
-    // The default quality to use when printing the document. Valid values are described in the following table.
-    quality *PrintQuality
-    // Specifies how the printer scales the document data to fit the requested media. Valid values are described in the following table.
-    scaling *PrintScaling
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewPrinterDefaults instantiates a new printerDefaults and sets the default values.
 func NewPrinterDefaults()(*PrinterDefaults) {
     m := &PrinterDefaults{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreatePrinterDefaultsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -58,103 +23,407 @@ func CreatePrinterDefaultsFromDiscriminatorValue(parseNode i878a80d2330e89d26896
     return NewPrinterDefaults(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PrinterDefaults) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *PrinterDefaults) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *PrinterDefaults) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetColorMode gets the colorMode property value. The default color mode to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) GetColorMode()(*PrintColorMode) {
-    return m.colorMode
+    val, err := m.GetBackingStore().Get("colorMode")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintColorMode)
+    }
+    return nil
 }
 // GetContentType gets the contentType property value. The default content (MIME) type to use when processing documents.
 func (m *PrinterDefaults) GetContentType()(*string) {
-    return m.contentType
+    val, err := m.GetBackingStore().Get("contentType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCopiesPerJob gets the copiesPerJob property value. The default number of copies printed per job.
 func (m *PrinterDefaults) GetCopiesPerJob()(*int32) {
-    return m.copiesPerJob
+    val, err := m.GetBackingStore().Get("copiesPerJob")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetDpi gets the dpi property value. The default resolution in DPI to use when printing the job.
 func (m *PrinterDefaults) GetDpi()(*int32) {
-    return m.dpi
+    val, err := m.GetBackingStore().Get("dpi")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetDuplexMode gets the duplexMode property value. The default duplex (double-sided) configuration to use when printing a document. Valid values are described in the following table.
 func (m *PrinterDefaults) GetDuplexMode()(*PrintDuplexMode) {
-    return m.duplexMode
+    val, err := m.GetBackingStore().Get("duplexMode")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintDuplexMode)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *PrinterDefaults) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["colorMode"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintColorMode , m.SetColorMode)
-    res["contentType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentType)
-    res["copiesPerJob"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetCopiesPerJob)
-    res["dpi"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetDpi)
-    res["duplexMode"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintDuplexMode , m.SetDuplexMode)
-    res["finishings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfEnumValues(ParsePrintFinishing , m.SetFinishings)
-    res["fitPdfToPage"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetFitPdfToPage)
-    res["inputBin"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetInputBin)
-    res["mediaColor"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMediaColor)
-    res["mediaSize"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMediaSize)
-    res["mediaType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetMediaType)
-    res["multipageLayout"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintMultipageLayout , m.SetMultipageLayout)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["orientation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintOrientation , m.SetOrientation)
-    res["outputBin"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOutputBin)
-    res["pagesPerSheet"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPagesPerSheet)
-    res["quality"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintQuality , m.SetQuality)
-    res["scaling"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParsePrintScaling , m.SetScaling)
+    res["colorMode"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintColorMode)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColorMode(val.(*PrintColorMode))
+        }
+        return nil
+    }
+    res["contentType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentType(val)
+        }
+        return nil
+    }
+    res["copiesPerJob"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCopiesPerJob(val)
+        }
+        return nil
+    }
+    res["dpi"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDpi(val)
+        }
+        return nil
+    }
+    res["duplexMode"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintDuplexMode)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDuplexMode(val.(*PrintDuplexMode))
+        }
+        return nil
+    }
+    res["finishings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfEnumValues(ParsePrintFinishing)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]PrintFinishing, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*PrintFinishing))
+            }
+            m.SetFinishings(res)
+        }
+        return nil
+    }
+    res["fitPdfToPage"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFitPdfToPage(val)
+        }
+        return nil
+    }
+    res["inputBin"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInputBin(val)
+        }
+        return nil
+    }
+    res["mediaColor"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMediaColor(val)
+        }
+        return nil
+    }
+    res["mediaSize"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMediaSize(val)
+        }
+        return nil
+    }
+    res["mediaType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMediaType(val)
+        }
+        return nil
+    }
+    res["multipageLayout"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintMultipageLayout)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMultipageLayout(val.(*PrintMultipageLayout))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["orientation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintOrientation)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOrientation(val.(*PrintOrientation))
+        }
+        return nil
+    }
+    res["outputBin"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOutputBin(val)
+        }
+        return nil
+    }
+    res["pagesPerSheet"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPagesPerSheet(val)
+        }
+        return nil
+    }
+    res["quality"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintQuality)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQuality(val.(*PrintQuality))
+        }
+        return nil
+    }
+    res["scaling"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParsePrintScaling)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetScaling(val.(*PrintScaling))
+        }
+        return nil
+    }
     return res
 }
 // GetFinishings gets the finishings property value. The default set of finishings to apply to print jobs. Valid values are described in the following table.
 func (m *PrinterDefaults) GetFinishings()([]PrintFinishing) {
-    return m.finishings
+    val, err := m.GetBackingStore().Get("finishings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]PrintFinishing)
+    }
+    return nil
 }
 // GetFitPdfToPage gets the fitPdfToPage property value. The default fitPdfToPage setting. True to fit each page of a PDF document to a physical sheet of media; false to let the printer decide how to lay out impressions.
 func (m *PrinterDefaults) GetFitPdfToPage()(*bool) {
-    return m.fitPdfToPage
+    val, err := m.GetBackingStore().Get("fitPdfToPage")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetInputBin gets the inputBin property value. The inputBin property
 func (m *PrinterDefaults) GetInputBin()(*string) {
-    return m.inputBin
+    val, err := m.GetBackingStore().Get("inputBin")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMediaColor gets the mediaColor property value. The default media (such as paper) color to print the document on.
 func (m *PrinterDefaults) GetMediaColor()(*string) {
-    return m.mediaColor
+    val, err := m.GetBackingStore().Get("mediaColor")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMediaSize gets the mediaSize property value. The default media size to use. Supports standard size names for ISO and ANSI media sizes. Valid values are listed in the printerCapabilities topic.
 func (m *PrinterDefaults) GetMediaSize()(*string) {
-    return m.mediaSize
+    val, err := m.GetBackingStore().Get("mediaSize")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMediaType gets the mediaType property value. The default media (such as paper) type to print the document on.
 func (m *PrinterDefaults) GetMediaType()(*string) {
-    return m.mediaType
+    val, err := m.GetBackingStore().Get("mediaType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetMultipageLayout gets the multipageLayout property value. The default direction to lay out pages when multiple pages are being printed per sheet. Valid values are described in the following table.
 func (m *PrinterDefaults) GetMultipageLayout()(*PrintMultipageLayout) {
-    return m.multipageLayout
+    val, err := m.GetBackingStore().Get("multipageLayout")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintMultipageLayout)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *PrinterDefaults) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOrientation gets the orientation property value. The default orientation to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) GetOrientation()(*PrintOrientation) {
-    return m.orientation
+    val, err := m.GetBackingStore().Get("orientation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintOrientation)
+    }
+    return nil
 }
 // GetOutputBin gets the outputBin property value. The default output bin to place completed prints into. See the printer's capabilities for a list of supported output bins.
 func (m *PrinterDefaults) GetOutputBin()(*string) {
-    return m.outputBin
+    val, err := m.GetBackingStore().Get("outputBin")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPagesPerSheet gets the pagesPerSheet property value. The default number of document pages to print on each sheet.
 func (m *PrinterDefaults) GetPagesPerSheet()(*int32) {
-    return m.pagesPerSheet
+    val, err := m.GetBackingStore().Get("pagesPerSheet")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetQuality gets the quality property value. The default quality to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) GetQuality()(*PrintQuality) {
-    return m.quality
+    val, err := m.GetBackingStore().Get("quality")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintQuality)
+    }
+    return nil
 }
 // GetScaling gets the scaling property value. Specifies how the printer scales the document data to fit the requested media. Valid values are described in the following table.
 func (m *PrinterDefaults) GetScaling()(*PrintScaling) {
-    return m.scaling
+    val, err := m.GetBackingStore().Get("scaling")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*PrintScaling)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *PrinterDefaults) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -281,78 +550,183 @@ func (m *PrinterDefaults) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *PrinterDefaults) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *PrinterDefaults) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *PrinterDefaults) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetColorMode sets the colorMode property value. The default color mode to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) SetColorMode(value *PrintColorMode)() {
-    m.colorMode = value
+    err := m.GetBackingStore().Set("colorMode", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentType sets the contentType property value. The default content (MIME) type to use when processing documents.
 func (m *PrinterDefaults) SetContentType(value *string)() {
-    m.contentType = value
+    err := m.GetBackingStore().Set("contentType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCopiesPerJob sets the copiesPerJob property value. The default number of copies printed per job.
 func (m *PrinterDefaults) SetCopiesPerJob(value *int32)() {
-    m.copiesPerJob = value
+    err := m.GetBackingStore().Set("copiesPerJob", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDpi sets the dpi property value. The default resolution in DPI to use when printing the job.
 func (m *PrinterDefaults) SetDpi(value *int32)() {
-    m.dpi = value
+    err := m.GetBackingStore().Set("dpi", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDuplexMode sets the duplexMode property value. The default duplex (double-sided) configuration to use when printing a document. Valid values are described in the following table.
 func (m *PrinterDefaults) SetDuplexMode(value *PrintDuplexMode)() {
-    m.duplexMode = value
+    err := m.GetBackingStore().Set("duplexMode", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFinishings sets the finishings property value. The default set of finishings to apply to print jobs. Valid values are described in the following table.
 func (m *PrinterDefaults) SetFinishings(value []PrintFinishing)() {
-    m.finishings = value
+    err := m.GetBackingStore().Set("finishings", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFitPdfToPage sets the fitPdfToPage property value. The default fitPdfToPage setting. True to fit each page of a PDF document to a physical sheet of media; false to let the printer decide how to lay out impressions.
 func (m *PrinterDefaults) SetFitPdfToPage(value *bool)() {
-    m.fitPdfToPage = value
+    err := m.GetBackingStore().Set("fitPdfToPage", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInputBin sets the inputBin property value. The inputBin property
 func (m *PrinterDefaults) SetInputBin(value *string)() {
-    m.inputBin = value
+    err := m.GetBackingStore().Set("inputBin", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMediaColor sets the mediaColor property value. The default media (such as paper) color to print the document on.
 func (m *PrinterDefaults) SetMediaColor(value *string)() {
-    m.mediaColor = value
+    err := m.GetBackingStore().Set("mediaColor", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMediaSize sets the mediaSize property value. The default media size to use. Supports standard size names for ISO and ANSI media sizes. Valid values are listed in the printerCapabilities topic.
 func (m *PrinterDefaults) SetMediaSize(value *string)() {
-    m.mediaSize = value
+    err := m.GetBackingStore().Set("mediaSize", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMediaType sets the mediaType property value. The default media (such as paper) type to print the document on.
 func (m *PrinterDefaults) SetMediaType(value *string)() {
-    m.mediaType = value
+    err := m.GetBackingStore().Set("mediaType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMultipageLayout sets the multipageLayout property value. The default direction to lay out pages when multiple pages are being printed per sheet. Valid values are described in the following table.
 func (m *PrinterDefaults) SetMultipageLayout(value *PrintMultipageLayout)() {
-    m.multipageLayout = value
+    err := m.GetBackingStore().Set("multipageLayout", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *PrinterDefaults) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOrientation sets the orientation property value. The default orientation to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) SetOrientation(value *PrintOrientation)() {
-    m.orientation = value
+    err := m.GetBackingStore().Set("orientation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOutputBin sets the outputBin property value. The default output bin to place completed prints into. See the printer's capabilities for a list of supported output bins.
 func (m *PrinterDefaults) SetOutputBin(value *string)() {
-    m.outputBin = value
+    err := m.GetBackingStore().Set("outputBin", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPagesPerSheet sets the pagesPerSheet property value. The default number of document pages to print on each sheet.
 func (m *PrinterDefaults) SetPagesPerSheet(value *int32)() {
-    m.pagesPerSheet = value
+    err := m.GetBackingStore().Set("pagesPerSheet", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQuality sets the quality property value. The default quality to use when printing the document. Valid values are described in the following table.
 func (m *PrinterDefaults) SetQuality(value *PrintQuality)() {
-    m.quality = value
+    err := m.GetBackingStore().Set("quality", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScaling sets the scaling property value. Specifies how the printer scales the document data to fit the requested media. Valid values are described in the following table.
 func (m *PrinterDefaults) SetScaling(value *PrintScaling)() {
-    m.scaling = value
+    err := m.GetBackingStore().Set("scaling", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// PrinterDefaultsable 
+type PrinterDefaultsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetColorMode()(*PrintColorMode)
+    GetContentType()(*string)
+    GetCopiesPerJob()(*int32)
+    GetDpi()(*int32)
+    GetDuplexMode()(*PrintDuplexMode)
+    GetFinishings()([]PrintFinishing)
+    GetFitPdfToPage()(*bool)
+    GetInputBin()(*string)
+    GetMediaColor()(*string)
+    GetMediaSize()(*string)
+    GetMediaType()(*string)
+    GetMultipageLayout()(*PrintMultipageLayout)
+    GetOdataType()(*string)
+    GetOrientation()(*PrintOrientation)
+    GetOutputBin()(*string)
+    GetPagesPerSheet()(*int32)
+    GetQuality()(*PrintQuality)
+    GetScaling()(*PrintScaling)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetColorMode(value *PrintColorMode)()
+    SetContentType(value *string)()
+    SetCopiesPerJob(value *int32)()
+    SetDpi(value *int32)()
+    SetDuplexMode(value *PrintDuplexMode)()
+    SetFinishings(value []PrintFinishing)()
+    SetFitPdfToPage(value *bool)()
+    SetInputBin(value *string)()
+    SetMediaColor(value *string)()
+    SetMediaSize(value *string)()
+    SetMediaType(value *string)()
+    SetMultipageLayout(value *PrintMultipageLayout)()
+    SetOdataType(value *string)()
+    SetOrientation(value *PrintOrientation)()
+    SetOutputBin(value *string)()
+    SetPagesPerSheet(value *int32)()
+    SetQuality(value *PrintQuality)()
+    SetScaling(value *PrintScaling)()
 }

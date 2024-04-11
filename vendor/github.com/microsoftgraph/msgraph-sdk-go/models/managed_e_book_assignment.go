@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // ManagedEBookAssignment contains properties used to assign a eBook to a group.
 type ManagedEBookAssignment struct {
     Entity
-    // Possible values for the install intent chosen by the admin.
-    installIntent *InstallIntent
-    // The assignment target for eBook.
-    target DeviceAndAppManagementAssignmentTargetable
 }
 // NewManagedEBookAssignment instantiates a new managedEBookAssignment and sets the default values.
 func NewManagedEBookAssignment()(*ManagedEBookAssignment) {
@@ -45,17 +40,49 @@ func CreateManagedEBookAssignmentFromDiscriminatorValue(parseNode i878a80d2330e8
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ManagedEBookAssignment) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["installIntent"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseInstallIntent , m.SetInstallIntent)
-    res["target"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDeviceAndAppManagementAssignmentTargetFromDiscriminatorValue , m.SetTarget)
+    res["installIntent"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseInstallIntent)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInstallIntent(val.(*InstallIntent))
+        }
+        return nil
+    }
+    res["target"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDeviceAndAppManagementAssignmentTargetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTarget(val.(DeviceAndAppManagementAssignmentTargetable))
+        }
+        return nil
+    }
     return res
 }
 // GetInstallIntent gets the installIntent property value. Possible values for the install intent chosen by the admin.
 func (m *ManagedEBookAssignment) GetInstallIntent()(*InstallIntent) {
-    return m.installIntent
+    val, err := m.GetBackingStore().Get("installIntent")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*InstallIntent)
+    }
+    return nil
 }
 // GetTarget gets the target property value. The assignment target for eBook.
 func (m *ManagedEBookAssignment) GetTarget()(DeviceAndAppManagementAssignmentTargetable) {
-    return m.target
+    val, err := m.GetBackingStore().Get("target")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DeviceAndAppManagementAssignmentTargetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ManagedEBookAssignment) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -80,9 +107,24 @@ func (m *ManagedEBookAssignment) Serialize(writer i878a80d2330e89d26896388a3f487
 }
 // SetInstallIntent sets the installIntent property value. Possible values for the install intent chosen by the admin.
 func (m *ManagedEBookAssignment) SetInstallIntent(value *InstallIntent)() {
-    m.installIntent = value
+    err := m.GetBackingStore().Set("installIntent", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTarget sets the target property value. The assignment target for eBook.
 func (m *ManagedEBookAssignment) SetTarget(value DeviceAndAppManagementAssignmentTargetable)() {
-    m.target = value
+    err := m.GetBackingStore().Set("target", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ManagedEBookAssignmentable 
+type ManagedEBookAssignmentable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetInstallIntent()(*InstallIntent)
+    GetTarget()(DeviceAndAppManagementAssignmentTargetable)
+    SetInstallIntent(value *InstallIntent)()
+    SetTarget(value DeviceAndAppManagementAssignmentTargetable)()
 }

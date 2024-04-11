@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Represents the type of pricing of a booking service.
 type BookingPriceType int
 
 const (
@@ -28,7 +28,7 @@ const (
 func (i BookingPriceType) String() string {
     return []string{"undefined", "fixedPrice", "startingAt", "hourly", "free", "priceVaries", "callUs", "notSet", "unknownFutureValue"}[i]
 }
-func ParseBookingPriceType(v string) (interface{}, error) {
+func ParseBookingPriceType(v string) (any, error) {
     result := UNDEFINED_BOOKINGPRICETYPE
     switch v {
         case "undefined":

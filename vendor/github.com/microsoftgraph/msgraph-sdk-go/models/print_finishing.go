@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrintFinishing int
 
 const (
@@ -31,7 +31,7 @@ const (
 func (i PrintFinishing) String() string {
     return []string{"none", "staple", "punch", "cover", "bind", "saddleStitch", "stitchEdge", "stapleTopLeft", "stapleBottomLeft", "stapleTopRight", "stapleBottomRight", "stitchLeftEdge", "stitchTopEdge", "stitchRightEdge", "stitchBottomEdge", "stapleDualLeft", "stapleDualTop", "stapleDualRight", "stapleDualBottom", "unknownFutureValue"}[i]
 }
-func ParsePrintFinishing(v string) (interface{}, error) {
+func ParsePrintFinishing(v string) (any, error) {
     result := NONE_PRINTFINISHING
     switch v {
         case "none":

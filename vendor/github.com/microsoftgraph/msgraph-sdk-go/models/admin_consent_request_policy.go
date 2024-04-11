@@ -1,25 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // AdminConsentRequestPolicy 
 type AdminConsentRequestPolicy struct {
     Entity
-    // Specifies whether the admin consent request feature is enabled or disabled. Required.
-    isEnabled *bool
-    // Specifies whether reviewers will receive notifications. Required.
-    notifyReviewers *bool
-    // Specifies whether reviewers will receive reminder emails. Required.
-    remindersEnabled *bool
-    // Specifies the duration the request is active before it automatically expires if no decision is applied.
-    requestDurationInDays *int32
-    // The list of reviewers for the admin consent. Required.
-    reviewers []AccessReviewReviewerScopeable
-    // Specifies the version of this policy. When the policy is updated, this version is updated. Read-only.
-    version *int32
 }
 // NewAdminConsentRequestPolicy instantiates a new adminConsentRequestPolicy and sets the default values.
 func NewAdminConsentRequestPolicy()(*AdminConsentRequestPolicy) {
@@ -35,37 +22,137 @@ func CreateAdminConsentRequestPolicyFromDiscriminatorValue(parseNode i878a80d233
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AdminConsentRequestPolicy) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["isEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsEnabled)
-    res["notifyReviewers"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetNotifyReviewers)
-    res["remindersEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetRemindersEnabled)
-    res["requestDurationInDays"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetRequestDurationInDays)
-    res["reviewers"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAccessReviewReviewerScopeFromDiscriminatorValue , m.SetReviewers)
-    res["version"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetVersion)
+    res["isEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsEnabled(val)
+        }
+        return nil
+    }
+    res["notifyReviewers"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetNotifyReviewers(val)
+        }
+        return nil
+    }
+    res["remindersEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRemindersEnabled(val)
+        }
+        return nil
+    }
+    res["requestDurationInDays"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetRequestDurationInDays(val)
+        }
+        return nil
+    }
+    res["reviewers"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAccessReviewReviewerScopeFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AccessReviewReviewerScopeable, len(val))
+            for i, v := range val {
+                res[i] = v.(AccessReviewReviewerScopeable)
+            }
+            m.SetReviewers(res)
+        }
+        return nil
+    }
+    res["version"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVersion(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsEnabled gets the isEnabled property value. Specifies whether the admin consent request feature is enabled or disabled. Required.
 func (m *AdminConsentRequestPolicy) GetIsEnabled()(*bool) {
-    return m.isEnabled
+    val, err := m.GetBackingStore().Get("isEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetNotifyReviewers gets the notifyReviewers property value. Specifies whether reviewers will receive notifications. Required.
 func (m *AdminConsentRequestPolicy) GetNotifyReviewers()(*bool) {
-    return m.notifyReviewers
+    val, err := m.GetBackingStore().Get("notifyReviewers")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetRemindersEnabled gets the remindersEnabled property value. Specifies whether reviewers will receive reminder emails. Required.
 func (m *AdminConsentRequestPolicy) GetRemindersEnabled()(*bool) {
-    return m.remindersEnabled
+    val, err := m.GetBackingStore().Get("remindersEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetRequestDurationInDays gets the requestDurationInDays property value. Specifies the duration the request is active before it automatically expires if no decision is applied.
 func (m *AdminConsentRequestPolicy) GetRequestDurationInDays()(*int32) {
-    return m.requestDurationInDays
+    val, err := m.GetBackingStore().Get("requestDurationInDays")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetReviewers gets the reviewers property value. The list of reviewers for the admin consent. Required.
 func (m *AdminConsentRequestPolicy) GetReviewers()([]AccessReviewReviewerScopeable) {
-    return m.reviewers
+    val, err := m.GetBackingStore().Get("reviewers")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AccessReviewReviewerScopeable)
+    }
+    return nil
 }
 // GetVersion gets the version property value. Specifies the version of this policy. When the policy is updated, this version is updated. Read-only.
 func (m *AdminConsentRequestPolicy) GetVersion()(*int32) {
-    return m.version
+    val, err := m.GetBackingStore().Get("version")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AdminConsentRequestPolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -98,7 +185,10 @@ func (m *AdminConsentRequestPolicy) Serialize(writer i878a80d2330e89d26896388a3f
         }
     }
     if m.GetReviewers() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetReviewers())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetReviewers()))
+        for i, v := range m.GetReviewers() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("reviewers", cast)
         if err != nil {
             return err
@@ -114,25 +204,60 @@ func (m *AdminConsentRequestPolicy) Serialize(writer i878a80d2330e89d26896388a3f
 }
 // SetIsEnabled sets the isEnabled property value. Specifies whether the admin consent request feature is enabled or disabled. Required.
 func (m *AdminConsentRequestPolicy) SetIsEnabled(value *bool)() {
-    m.isEnabled = value
+    err := m.GetBackingStore().Set("isEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetNotifyReviewers sets the notifyReviewers property value. Specifies whether reviewers will receive notifications. Required.
 func (m *AdminConsentRequestPolicy) SetNotifyReviewers(value *bool)() {
-    m.notifyReviewers = value
+    err := m.GetBackingStore().Set("notifyReviewers", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRemindersEnabled sets the remindersEnabled property value. Specifies whether reviewers will receive reminder emails. Required.
 func (m *AdminConsentRequestPolicy) SetRemindersEnabled(value *bool)() {
-    m.remindersEnabled = value
+    err := m.GetBackingStore().Set("remindersEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetRequestDurationInDays sets the requestDurationInDays property value. Specifies the duration the request is active before it automatically expires if no decision is applied.
 func (m *AdminConsentRequestPolicy) SetRequestDurationInDays(value *int32)() {
-    m.requestDurationInDays = value
+    err := m.GetBackingStore().Set("requestDurationInDays", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReviewers sets the reviewers property value. The list of reviewers for the admin consent. Required.
 func (m *AdminConsentRequestPolicy) SetReviewers(value []AccessReviewReviewerScopeable)() {
-    m.reviewers = value
+    err := m.GetBackingStore().Set("reviewers", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVersion sets the version property value. Specifies the version of this policy. When the policy is updated, this version is updated. Read-only.
 func (m *AdminConsentRequestPolicy) SetVersion(value *int32)() {
-    m.version = value
+    err := m.GetBackingStore().Set("version", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AdminConsentRequestPolicyable 
+type AdminConsentRequestPolicyable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetIsEnabled()(*bool)
+    GetNotifyReviewers()(*bool)
+    GetRemindersEnabled()(*bool)
+    GetRequestDurationInDays()(*int32)
+    GetReviewers()([]AccessReviewReviewerScopeable)
+    GetVersion()(*int32)
+    SetIsEnabled(value *bool)()
+    SetNotifyReviewers(value *bool)()
+    SetRemindersEnabled(value *bool)()
+    SetRequestDurationInDays(value *int32)()
+    SetReviewers(value []AccessReviewReviewerScopeable)()
+    SetVersion(value *int32)()
 }

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type RecurrencePatternType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i RecurrencePatternType) String() string {
     return []string{"daily", "weekly", "absoluteMonthly", "relativeMonthly", "absoluteYearly", "relativeYearly"}[i]
 }
-func ParseRecurrencePatternType(v string) (interface{}, error) {
+func ParseRecurrencePatternType(v string) (any, error) {
     result := DAILY_RECURRENCEPATTERNTYPE
     switch v {
         case "daily":

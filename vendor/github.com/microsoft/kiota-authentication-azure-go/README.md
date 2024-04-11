@@ -17,6 +17,9 @@ go get github.com/microsoft/kiota-authentication-azure-go
 ```Golang
 cred, err := azidentity.NewDeviceCodeCredential(nil)
 authProvider, err := kiotaazure.NewAzureIdentityAuthenticationProviderWithScopes(cred, []string{"User.Read"})
+
+// azidentity is an import of github.com/Azure/azure-sdk-for-go/sdk/azidentity
+// kiotaazure is an import of github.com/microsoft/kiota-authentication-azure-go
 ```
 
 ## Contributing

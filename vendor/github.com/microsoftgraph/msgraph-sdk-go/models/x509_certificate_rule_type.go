@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of authenticationMethodConfiguration entities.
+// 
 type X509CertificateRuleType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i X509CertificateRuleType) String() string {
     return []string{"issuerSubject", "policyOID", "unknownFutureValue"}[i]
 }
-func ParseX509CertificateRuleType(v string) (interface{}, error) {
+func ParseX509CertificateRuleType(v string) (any, error) {
     result := ISSUERSUBJECT_X509CERTIFICATERULETYPE
     switch v {
         case "issuerSubject":

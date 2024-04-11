@@ -2,11 +2,11 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of authenticationMethodConfiguration entities.
+// 
 type AdvancedConfigState int
 
 const (
-    DEFAULT_ESCAPED_ADVANCEDCONFIGSTATE AdvancedConfigState = iota
+    DEFAULTESCAPED_ADVANCEDCONFIGSTATE AdvancedConfigState = iota
     ENABLED_ADVANCEDCONFIGSTATE
     DISABLED_ADVANCEDCONFIGSTATE
     UNKNOWNFUTUREVALUE_ADVANCEDCONFIGSTATE
@@ -15,11 +15,11 @@ const (
 func (i AdvancedConfigState) String() string {
     return []string{"default", "enabled", "disabled", "unknownFutureValue"}[i]
 }
-func ParseAdvancedConfigState(v string) (interface{}, error) {
-    result := DEFAULT_ESCAPED_ADVANCEDCONFIGSTATE
+func ParseAdvancedConfigState(v string) (any, error) {
+    result := DEFAULTESCAPED_ADVANCEDCONFIGSTATE
     switch v {
         case "default":
-            result = DEFAULT_ESCAPED_ADVANCEDCONFIGSTATE
+            result = DEFAULTESCAPED_ADVANCEDCONFIGSTATE
         case "enabled":
             result = ENABLED_ADVANCEDCONFIGSTATE
         case "disabled":

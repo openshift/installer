@@ -2,60 +2,23 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // RemoteItem 
 type RemoteItem struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Identity of the user, device, and application which created the item. Read-only.
-    createdBy IdentitySetable
-    // Date and time of item creation. Read-only.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Indicates that the remote item is a file. Read-only.
-    file Fileable
-    // Information about the remote item from the local file system. Read-only.
-    fileSystemInfo FileSystemInfoable
-    // Indicates that the remote item is a folder. Read-only.
-    folder Folderable
-    // Unique identifier for the remote item in its drive. Read-only.
-    id *string
-    // Image metadata, if the item is an image. Read-only.
-    image Imageable
-    // Identity of the user, device, and application which last modified the item. Read-only.
-    lastModifiedBy IdentitySetable
-    // Date and time the item was last modified. Read-only.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Optional. Filename of the remote item. Read-only.
-    name *string
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
     // If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-    package_escaped Package_escapedable
-    // Properties of the parent of the remote item. Read-only.
-    parentReference ItemReferenceable
-    // Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
-    shared Sharedable
-    // Provides interop between items in OneDrive for Business and SharePoint with the full set of item identifiers. Read-only.
-    sharepointIds SharepointIdsable
-    // Size of the remote item. Read-only.
-    size *int64
-    // If the current item is also available as a special folder, this facet is returned. Read-only.
-    specialFolder SpecialFolderable
-    // Video metadata, if the item is a video. Read-only.
-    video Videoable
-    // DAV compatible URL for the item.
-    webDavUrl *string
-    // URL that displays the resource in the browser. Read-only.
-    webUrl *string
+    PackageEscaped PackageEscapedable
 }
 // NewRemoteItem instantiates a new remoteItem and sets the default values.
 func NewRemoteItem()(*RemoteItem) {
     m := &RemoteItem{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateRemoteItemFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -63,113 +26,445 @@ func CreateRemoteItemFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3
     return NewRemoteItem(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RemoteItem) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *RemoteItem) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *RemoteItem) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCreatedBy gets the createdBy property value. Identity of the user, device, and application which created the item. Read-only.
 func (m *RemoteItem) GetCreatedBy()(IdentitySetable) {
-    return m.createdBy
+    val, err := m.GetBackingStore().Get("createdBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. Date and time of item creation. Read-only.
 func (m *RemoteItem) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *RemoteItem) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["createdBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetCreatedBy)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["file"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFileFromDiscriminatorValue , m.SetFile)
-    res["fileSystemInfo"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFileSystemInfoFromDiscriminatorValue , m.SetFileSystemInfo)
-    res["folder"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateFolderFromDiscriminatorValue , m.SetFolder)
-    res["id"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetId)
-    res["image"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateImageFromDiscriminatorValue , m.SetImage)
-    res["lastModifiedBy"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetLastModifiedBy)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["package"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePackage_escapedFromDiscriminatorValue , m.SetPackage)
-    res["parentReference"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateItemReferenceFromDiscriminatorValue , m.SetParentReference)
-    res["shared"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSharedFromDiscriminatorValue , m.SetShared)
-    res["sharepointIds"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSharepointIdsFromDiscriminatorValue , m.SetSharepointIds)
-    res["size"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSize)
-    res["specialFolder"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateSpecialFolderFromDiscriminatorValue , m.SetSpecialFolder)
-    res["video"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateVideoFromDiscriminatorValue , m.SetVideo)
-    res["webDavUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWebDavUrl)
-    res["webUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWebUrl)
+    res["createdBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedBy(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["file"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFileFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFile(val.(Fileable))
+        }
+        return nil
+    }
+    res["fileSystemInfo"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFileSystemInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFileSystemInfo(val.(FileSystemInfoable))
+        }
+        return nil
+    }
+    res["folder"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateFolderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetFolder(val.(Folderable))
+        }
+        return nil
+    }
+    res["id"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetId(val)
+        }
+        return nil
+    }
+    res["image"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateImageFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetImage(val.(Imageable))
+        }
+        return nil
+    }
+    res["lastModifiedBy"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedBy(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["package"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePackageEscapedFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPackage(val.(PackageEscapedable))
+        }
+        return nil
+    }
+    res["parentReference"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateItemReferenceFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentReference(val.(ItemReferenceable))
+        }
+        return nil
+    }
+    res["shared"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSharedFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetShared(val.(Sharedable))
+        }
+        return nil
+    }
+    res["sharepointIds"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSharepointIdsFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSharepointIds(val.(SharepointIdsable))
+        }
+        return nil
+    }
+    res["size"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSize(val)
+        }
+        return nil
+    }
+    res["specialFolder"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateSpecialFolderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSpecialFolder(val.(SpecialFolderable))
+        }
+        return nil
+    }
+    res["video"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateVideoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetVideo(val.(Videoable))
+        }
+        return nil
+    }
+    res["webDavUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWebDavUrl(val)
+        }
+        return nil
+    }
+    res["webUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWebUrl(val)
+        }
+        return nil
+    }
     return res
 }
 // GetFile gets the file property value. Indicates that the remote item is a file. Read-only.
 func (m *RemoteItem) GetFile()(Fileable) {
-    return m.file
+    val, err := m.GetBackingStore().Get("file")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Fileable)
+    }
+    return nil
 }
 // GetFileSystemInfo gets the fileSystemInfo property value. Information about the remote item from the local file system. Read-only.
 func (m *RemoteItem) GetFileSystemInfo()(FileSystemInfoable) {
-    return m.fileSystemInfo
+    val, err := m.GetBackingStore().Get("fileSystemInfo")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(FileSystemInfoable)
+    }
+    return nil
 }
 // GetFolder gets the folder property value. Indicates that the remote item is a folder. Read-only.
 func (m *RemoteItem) GetFolder()(Folderable) {
-    return m.folder
+    val, err := m.GetBackingStore().Get("folder")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Folderable)
+    }
+    return nil
 }
 // GetId gets the id property value. Unique identifier for the remote item in its drive. Read-only.
 func (m *RemoteItem) GetId()(*string) {
-    return m.id
+    val, err := m.GetBackingStore().Get("id")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetImage gets the image property value. Image metadata, if the item is an image. Read-only.
 func (m *RemoteItem) GetImage()(Imageable) {
-    return m.image
+    val, err := m.GetBackingStore().Get("image")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Imageable)
+    }
+    return nil
 }
 // GetLastModifiedBy gets the lastModifiedBy property value. Identity of the user, device, and application which last modified the item. Read-only.
 func (m *RemoteItem) GetLastModifiedBy()(IdentitySetable) {
-    return m.lastModifiedBy
+    val, err := m.GetBackingStore().Get("lastModifiedBy")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. Date and time the item was last modified. Read-only.
 func (m *RemoteItem) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetName gets the name property value. Optional. Filename of the remote item. Read-only.
 func (m *RemoteItem) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *RemoteItem) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPackage gets the package property value. If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-func (m *RemoteItem) GetPackage()(Package_escapedable) {
-    return m.package_escaped
+func (m *RemoteItem) GetPackage()(PackageEscapedable) {
+    val, err := m.GetBackingStore().Get("packageEscaped")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PackageEscapedable)
+    }
+    return nil
 }
 // GetParentReference gets the parentReference property value. Properties of the parent of the remote item. Read-only.
 func (m *RemoteItem) GetParentReference()(ItemReferenceable) {
-    return m.parentReference
+    val, err := m.GetBackingStore().Get("parentReference")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(ItemReferenceable)
+    }
+    return nil
 }
 // GetShared gets the shared property value. Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
 func (m *RemoteItem) GetShared()(Sharedable) {
-    return m.shared
+    val, err := m.GetBackingStore().Get("shared")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Sharedable)
+    }
+    return nil
 }
 // GetSharepointIds gets the sharepointIds property value. Provides interop between items in OneDrive for Business and SharePoint with the full set of item identifiers. Read-only.
 func (m *RemoteItem) GetSharepointIds()(SharepointIdsable) {
-    return m.sharepointIds
+    val, err := m.GetBackingStore().Get("sharepointIds")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SharepointIdsable)
+    }
+    return nil
 }
 // GetSize gets the size property value. Size of the remote item. Read-only.
 func (m *RemoteItem) GetSize()(*int64) {
-    return m.size
+    val, err := m.GetBackingStore().Get("size")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetSpecialFolder gets the specialFolder property value. If the current item is also available as a special folder, this facet is returned. Read-only.
 func (m *RemoteItem) GetSpecialFolder()(SpecialFolderable) {
-    return m.specialFolder
+    val, err := m.GetBackingStore().Get("specialFolder")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(SpecialFolderable)
+    }
+    return nil
 }
 // GetVideo gets the video property value. Video metadata, if the item is a video. Read-only.
 func (m *RemoteItem) GetVideo()(Videoable) {
-    return m.video
+    val, err := m.GetBackingStore().Get("video")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Videoable)
+    }
+    return nil
 }
 // GetWebDavUrl gets the webDavUrl property value. DAV compatible URL for the item.
 func (m *RemoteItem) GetWebDavUrl()(*string) {
-    return m.webDavUrl
+    val, err := m.GetBackingStore().Get("webDavUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWebUrl gets the webUrl property value. URL that displays the resource in the browser. Read-only.
 func (m *RemoteItem) GetWebUrl()(*string) {
-    return m.webUrl
+    val, err := m.GetBackingStore().Get("webUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *RemoteItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -302,86 +597,201 @@ func (m *RemoteItem) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RemoteItem) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *RemoteItem) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *RemoteItem) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCreatedBy sets the createdBy property value. Identity of the user, device, and application which created the item. Read-only.
 func (m *RemoteItem) SetCreatedBy(value IdentitySetable)() {
-    m.createdBy = value
+    err := m.GetBackingStore().Set("createdBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. Date and time of item creation. Read-only.
 func (m *RemoteItem) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFile sets the file property value. Indicates that the remote item is a file. Read-only.
 func (m *RemoteItem) SetFile(value Fileable)() {
-    m.file = value
+    err := m.GetBackingStore().Set("file", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFileSystemInfo sets the fileSystemInfo property value. Information about the remote item from the local file system. Read-only.
 func (m *RemoteItem) SetFileSystemInfo(value FileSystemInfoable)() {
-    m.fileSystemInfo = value
+    err := m.GetBackingStore().Set("fileSystemInfo", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetFolder sets the folder property value. Indicates that the remote item is a folder. Read-only.
 func (m *RemoteItem) SetFolder(value Folderable)() {
-    m.folder = value
+    err := m.GetBackingStore().Set("folder", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetId sets the id property value. Unique identifier for the remote item in its drive. Read-only.
 func (m *RemoteItem) SetId(value *string)() {
-    m.id = value
+    err := m.GetBackingStore().Set("id", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetImage sets the image property value. Image metadata, if the item is an image. Read-only.
 func (m *RemoteItem) SetImage(value Imageable)() {
-    m.image = value
+    err := m.GetBackingStore().Set("image", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedBy sets the lastModifiedBy property value. Identity of the user, device, and application which last modified the item. Read-only.
 func (m *RemoteItem) SetLastModifiedBy(value IdentitySetable)() {
-    m.lastModifiedBy = value
+    err := m.GetBackingStore().Set("lastModifiedBy", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. Date and time the item was last modified. Read-only.
 func (m *RemoteItem) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. Optional. Filename of the remote item. Read-only.
 func (m *RemoteItem) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *RemoteItem) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPackage sets the package property value. If present, indicates that this item is a package instead of a folder or file. Packages are treated like files in some contexts and folders in others. Read-only.
-func (m *RemoteItem) SetPackage(value Package_escapedable)() {
-    m.package_escaped = value
+func (m *RemoteItem) SetPackage(value PackageEscapedable)() {
+    err := m.GetBackingStore().Set("packageEscaped", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentReference sets the parentReference property value. Properties of the parent of the remote item. Read-only.
 func (m *RemoteItem) SetParentReference(value ItemReferenceable)() {
-    m.parentReference = value
+    err := m.GetBackingStore().Set("parentReference", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetShared sets the shared property value. Indicates that the item has been shared with others and provides information about the shared state of the item. Read-only.
 func (m *RemoteItem) SetShared(value Sharedable)() {
-    m.shared = value
+    err := m.GetBackingStore().Set("shared", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSharepointIds sets the sharepointIds property value. Provides interop between items in OneDrive for Business and SharePoint with the full set of item identifiers. Read-only.
 func (m *RemoteItem) SetSharepointIds(value SharepointIdsable)() {
-    m.sharepointIds = value
+    err := m.GetBackingStore().Set("sharepointIds", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSize sets the size property value. Size of the remote item. Read-only.
 func (m *RemoteItem) SetSize(value *int64)() {
-    m.size = value
+    err := m.GetBackingStore().Set("size", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSpecialFolder sets the specialFolder property value. If the current item is also available as a special folder, this facet is returned. Read-only.
 func (m *RemoteItem) SetSpecialFolder(value SpecialFolderable)() {
-    m.specialFolder = value
+    err := m.GetBackingStore().Set("specialFolder", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetVideo sets the video property value. Video metadata, if the item is a video. Read-only.
 func (m *RemoteItem) SetVideo(value Videoable)() {
-    m.video = value
+    err := m.GetBackingStore().Set("video", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWebDavUrl sets the webDavUrl property value. DAV compatible URL for the item.
 func (m *RemoteItem) SetWebDavUrl(value *string)() {
-    m.webDavUrl = value
+    err := m.GetBackingStore().Set("webDavUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWebUrl sets the webUrl property value. URL that displays the resource in the browser. Read-only.
 func (m *RemoteItem) SetWebUrl(value *string)() {
-    m.webUrl = value
+    err := m.GetBackingStore().Set("webUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// RemoteItemable 
+type RemoteItemable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCreatedBy()(IdentitySetable)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetFile()(Fileable)
+    GetFileSystemInfo()(FileSystemInfoable)
+    GetFolder()(Folderable)
+    GetId()(*string)
+    GetImage()(Imageable)
+    GetLastModifiedBy()(IdentitySetable)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetName()(*string)
+    GetOdataType()(*string)
+    GetPackage()(PackageEscapedable)
+    GetParentReference()(ItemReferenceable)
+    GetShared()(Sharedable)
+    GetSharepointIds()(SharepointIdsable)
+    GetSize()(*int64)
+    GetSpecialFolder()(SpecialFolderable)
+    GetVideo()(Videoable)
+    GetWebDavUrl()(*string)
+    GetWebUrl()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCreatedBy(value IdentitySetable)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetFile(value Fileable)()
+    SetFileSystemInfo(value FileSystemInfoable)()
+    SetFolder(value Folderable)()
+    SetId(value *string)()
+    SetImage(value Imageable)()
+    SetLastModifiedBy(value IdentitySetable)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetName(value *string)()
+    SetOdataType(value *string)()
+    SetPackage(value PackageEscapedable)()
+    SetParentReference(value ItemReferenceable)()
+    SetShared(value Sharedable)()
+    SetSharepointIds(value SharepointIdsable)()
+    SetSize(value *int64)()
+    SetSpecialFolder(value SpecialFolderable)()
+    SetVideo(value Videoable)()
+    SetWebDavUrl(value *string)()
+    SetWebUrl(value *string)()
 }

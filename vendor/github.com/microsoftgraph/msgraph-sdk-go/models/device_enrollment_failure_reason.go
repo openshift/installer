@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Top level failure categories for enrollment.
 type DeviceEnrollmentFailureReason int
 
 const (
@@ -35,7 +35,7 @@ const (
 func (i DeviceEnrollmentFailureReason) String() string {
     return []string{"unknown", "authentication", "authorization", "accountValidation", "userValidation", "deviceNotSupported", "inMaintenance", "badRequest", "featureNotSupported", "enrollmentRestrictionsEnforced", "clientDisconnected", "userAbandonment"}[i]
 }
-func ParseDeviceEnrollmentFailureReason(v string) (interface{}, error) {
+func ParseDeviceEnrollmentFailureReason(v string) (any, error) {
     result := UNKNOWN_DEVICEENROLLMENTFAILUREREASON
     switch v {
         case "unknown":

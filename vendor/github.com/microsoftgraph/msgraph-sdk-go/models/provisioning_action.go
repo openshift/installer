@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ProvisioningAction int
 
 const (
@@ -18,7 +18,7 @@ const (
 func (i ProvisioningAction) String() string {
     return []string{"other", "create", "delete", "disable", "update", "stagedDelete", "unknownFutureValue"}[i]
 }
-func ParseProvisioningAction(v string) (interface{}, error) {
+func ParseProvisioningAction(v string) (any, error) {
     result := OTHER_PROVISIONINGACTION
     switch v {
         case "other":

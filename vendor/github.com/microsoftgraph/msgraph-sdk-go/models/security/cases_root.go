@@ -1,7 +1,6 @@
 package security
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
     iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242 "github.com/microsoftgraph/msgraph-sdk-go/models"
 )
@@ -9,8 +8,6 @@ import (
 // CasesRoot 
 type CasesRoot struct {
     iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242.Entity
-    // The ediscoveryCases property
-    ediscoveryCases []EdiscoveryCaseable
 }
 // NewCasesRoot instantiates a new casesRoot and sets the default values.
 func NewCasesRoot()(*CasesRoot) {
@@ -25,12 +22,32 @@ func CreateCasesRootFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f
 }
 // GetEdiscoveryCases gets the ediscoveryCases property value. The ediscoveryCases property
 func (m *CasesRoot) GetEdiscoveryCases()([]EdiscoveryCaseable) {
-    return m.ediscoveryCases
+    val, err := m.GetBackingStore().Get("ediscoveryCases")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EdiscoveryCaseable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CasesRoot) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["ediscoveryCases"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEdiscoveryCaseFromDiscriminatorValue , m.SetEdiscoveryCases)
+    res["ediscoveryCases"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEdiscoveryCaseFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EdiscoveryCaseable, len(val))
+            for i, v := range val {
+                res[i] = v.(EdiscoveryCaseable)
+            }
+            m.SetEdiscoveryCases(res)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -40,7 +57,10 @@ func (m *CasesRoot) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
         return err
     }
     if m.GetEdiscoveryCases() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetEdiscoveryCases())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetEdiscoveryCases()))
+        for i, v := range m.GetEdiscoveryCases() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("ediscoveryCases", cast)
         if err != nil {
             return err
@@ -50,5 +70,15 @@ func (m *CasesRoot) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c0
 }
 // SetEdiscoveryCases sets the ediscoveryCases property value. The ediscoveryCases property
 func (m *CasesRoot) SetEdiscoveryCases(value []EdiscoveryCaseable)() {
-    m.ediscoveryCases = value
+    err := m.GetBackingStore().Set("ediscoveryCases", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CasesRootable 
+type CasesRootable interface {
+    iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242.Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetEdiscoveryCases()([]EdiscoveryCaseable)
+    SetEdiscoveryCases(value []EdiscoveryCaseable)()
 }

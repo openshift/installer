@@ -13,8 +13,8 @@ func NewOutgoingCallOptions()(*OutgoingCallOptions) {
     m := &OutgoingCallOptions{
         CallOptions: *NewCallOptions(),
     }
-    odataTypeValue := "#microsoft.graph.outgoingCallOptions";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.outgoingCallOptions"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOutgoingCallOptionsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *OutgoingCallOptions) Serialize(writer i878a80d2330e89d26896388a3f487eef
         return err
     }
     return nil
+}
+// OutgoingCallOptionsable 
+type OutgoingCallOptionsable interface {
+    CallOptionsable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

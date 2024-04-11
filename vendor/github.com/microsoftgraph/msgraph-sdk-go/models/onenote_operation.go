@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OnenoteOperation 
 type OnenoteOperation struct {
     Operation
-    // The error returned by the operation.
-    error OnenoteOperationErrorable
-    // The operation percent complete if the operation is still in running status.
-    percentComplete *string
-    // The resource id.
-    resourceId *string
-    // The resource URI for the object. For example, the resource URI for a copied page or section.
-    resourceLocation *string
 }
 // NewOnenoteOperation instantiates a new OnenoteOperation and sets the default values.
 func NewOnenoteOperation()(*OnenoteOperation) {
@@ -30,28 +21,92 @@ func CreateOnenoteOperationFromDiscriminatorValue(parseNode i878a80d2330e89d2689
 }
 // GetError gets the error property value. The error returned by the operation.
 func (m *OnenoteOperation) GetError()(OnenoteOperationErrorable) {
-    return m.error
+    val, err := m.GetBackingStore().Get("error")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(OnenoteOperationErrorable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OnenoteOperation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Operation.GetFieldDeserializers()
-    res["error"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateOnenoteOperationErrorFromDiscriminatorValue , m.SetError)
-    res["percentComplete"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPercentComplete)
-    res["resourceId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetResourceId)
-    res["resourceLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetResourceLocation)
+    res["error"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateOnenoteOperationErrorFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetError(val.(OnenoteOperationErrorable))
+        }
+        return nil
+    }
+    res["percentComplete"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPercentComplete(val)
+        }
+        return nil
+    }
+    res["resourceId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceId(val)
+        }
+        return nil
+    }
+    res["resourceLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetResourceLocation(val)
+        }
+        return nil
+    }
     return res
 }
 // GetPercentComplete gets the percentComplete property value. The operation percent complete if the operation is still in running status.
 func (m *OnenoteOperation) GetPercentComplete()(*string) {
-    return m.percentComplete
+    val, err := m.GetBackingStore().Get("percentComplete")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResourceId gets the resourceId property value. The resource id.
 func (m *OnenoteOperation) GetResourceId()(*string) {
-    return m.resourceId
+    val, err := m.GetBackingStore().Get("resourceId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetResourceLocation gets the resourceLocation property value. The resource URI for the object. For example, the resource URI for a copied page or section.
 func (m *OnenoteOperation) GetResourceLocation()(*string) {
-    return m.resourceLocation
+    val, err := m.GetBackingStore().Get("resourceLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OnenoteOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +142,42 @@ func (m *OnenoteOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
 }
 // SetError sets the error property value. The error returned by the operation.
 func (m *OnenoteOperation) SetError(value OnenoteOperationErrorable)() {
-    m.error = value
+    err := m.GetBackingStore().Set("error", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPercentComplete sets the percentComplete property value. The operation percent complete if the operation is still in running status.
 func (m *OnenoteOperation) SetPercentComplete(value *string)() {
-    m.percentComplete = value
+    err := m.GetBackingStore().Set("percentComplete", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceId sets the resourceId property value. The resource id.
 func (m *OnenoteOperation) SetResourceId(value *string)() {
-    m.resourceId = value
+    err := m.GetBackingStore().Set("resourceId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetResourceLocation sets the resourceLocation property value. The resource URI for the object. For example, the resource URI for a copied page or section.
 func (m *OnenoteOperation) SetResourceLocation(value *string)() {
-    m.resourceLocation = value
+    err := m.GetBackingStore().Set("resourceLocation", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OnenoteOperationable 
+type OnenoteOperationable interface {
+    Operationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetError()(OnenoteOperationErrorable)
+    GetPercentComplete()(*string)
+    GetResourceId()(*string)
+    GetResourceLocation()(*string)
+    SetError(value OnenoteOperationErrorable)()
+    SetPercentComplete(value *string)()
+    SetResourceId(value *string)()
+    SetResourceLocation(value *string)()
 }

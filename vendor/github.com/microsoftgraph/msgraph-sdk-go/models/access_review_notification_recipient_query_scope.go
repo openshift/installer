@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // AccessReviewNotificationRecipientQueryScope 
 type AccessReviewNotificationRecipientQueryScope struct {
     AccessReviewNotificationRecipientScope
-    // Represents the query for who the recipients are. For example, /groups/{group id}/members for group members and /users/{user id} for a specific user.
-    query *string
-    // In the scenario where reviewers need to be specified dynamically, indicates the relative source of the query. This property is only required if a relative query (that is, ./manager) is specified.
-    queryRoot *string
-    // Indicates the type of query. Allowed value is MicrosoftGraph.
-    queryType *string
 }
 // NewAccessReviewNotificationRecipientQueryScope instantiates a new AccessReviewNotificationRecipientQueryScope and sets the default values.
 func NewAccessReviewNotificationRecipientQueryScope()(*AccessReviewNotificationRecipientQueryScope) {
     m := &AccessReviewNotificationRecipientQueryScope{
         AccessReviewNotificationRecipientScope: *NewAccessReviewNotificationRecipientScope(),
     }
-    odataTypeValue := "#microsoft.graph.accessReviewNotificationRecipientQueryScope";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.accessReviewNotificationRecipientQueryScope"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateAccessReviewNotificationRecipientQueryScopeFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -31,22 +24,70 @@ func CreateAccessReviewNotificationRecipientQueryScopeFromDiscriminatorValue(par
 // GetFieldDeserializers the deserialization information for the current model
 func (m *AccessReviewNotificationRecipientQueryScope) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.AccessReviewNotificationRecipientScope.GetFieldDeserializers()
-    res["query"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQuery)
-    res["queryRoot"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQueryRoot)
-    res["queryType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQueryType)
+    res["query"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQuery(val)
+        }
+        return nil
+    }
+    res["queryRoot"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQueryRoot(val)
+        }
+        return nil
+    }
+    res["queryType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQueryType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetQuery gets the query property value. Represents the query for who the recipients are. For example, /groups/{group id}/members for group members and /users/{user id} for a specific user.
 func (m *AccessReviewNotificationRecipientQueryScope) GetQuery()(*string) {
-    return m.query
+    val, err := m.GetBackingStore().Get("query")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetQueryRoot gets the queryRoot property value. In the scenario where reviewers need to be specified dynamically, indicates the relative source of the query. This property is only required if a relative query (that is, ./manager) is specified.
 func (m *AccessReviewNotificationRecipientQueryScope) GetQueryRoot()(*string) {
-    return m.queryRoot
+    val, err := m.GetBackingStore().Get("queryRoot")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetQueryType gets the queryType property value. Indicates the type of query. Allowed value is MicrosoftGraph.
 func (m *AccessReviewNotificationRecipientQueryScope) GetQueryType()(*string) {
-    return m.queryType
+    val, err := m.GetBackingStore().Get("queryType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *AccessReviewNotificationRecipientQueryScope) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -76,13 +117,33 @@ func (m *AccessReviewNotificationRecipientQueryScope) Serialize(writer i878a80d2
 }
 // SetQuery sets the query property value. Represents the query for who the recipients are. For example, /groups/{group id}/members for group members and /users/{user id} for a specific user.
 func (m *AccessReviewNotificationRecipientQueryScope) SetQuery(value *string)() {
-    m.query = value
+    err := m.GetBackingStore().Set("query", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQueryRoot sets the queryRoot property value. In the scenario where reviewers need to be specified dynamically, indicates the relative source of the query. This property is only required if a relative query (that is, ./manager) is specified.
 func (m *AccessReviewNotificationRecipientQueryScope) SetQueryRoot(value *string)() {
-    m.queryRoot = value
+    err := m.GetBackingStore().Set("queryRoot", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQueryType sets the queryType property value. Indicates the type of query. Allowed value is MicrosoftGraph.
 func (m *AccessReviewNotificationRecipientQueryScope) SetQueryType(value *string)() {
-    m.queryType = value
+    err := m.GetBackingStore().Set("queryType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// AccessReviewNotificationRecipientQueryScopeable 
+type AccessReviewNotificationRecipientQueryScopeable interface {
+    AccessReviewNotificationRecipientScopeable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetQuery()(*string)
+    GetQueryRoot()(*string)
+    GetQueryType()(*string)
+    SetQuery(value *string)()
+    SetQueryRoot(value *string)()
+    SetQueryType(value *string)()
 }

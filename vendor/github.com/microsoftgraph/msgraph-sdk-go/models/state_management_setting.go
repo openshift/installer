@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// State Management Setting.
 type StateManagementSetting int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i StateManagementSetting) String() string {
     return []string{"notConfigured", "blocked", "allowed"}[i]
 }
-func ParseStateManagementSetting(v string) (interface{}, error) {
+func ParseStateManagementSetting(v string) (any, error) {
     result := NOTCONFIGURED_STATEMANAGEMENTSETTING
     switch v {
         case "notConfigured":

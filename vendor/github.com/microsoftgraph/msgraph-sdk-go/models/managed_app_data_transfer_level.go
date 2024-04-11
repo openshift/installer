@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Data can be transferred from/to these classes of apps
 type ManagedAppDataTransferLevel int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i ManagedAppDataTransferLevel) String() string {
     return []string{"allApps", "managedApps", "none"}[i]
 }
-func ParseManagedAppDataTransferLevel(v string) (interface{}, error) {
+func ParseManagedAppDataTransferLevel(v string) (any, error) {
     result := ALLAPPS_MANAGEDAPPDATATRANSFERLEVEL
     switch v {
         case "allApps":

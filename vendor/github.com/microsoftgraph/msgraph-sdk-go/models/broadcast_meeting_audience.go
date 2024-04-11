@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type BroadcastMeetingAudience int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i BroadcastMeetingAudience) String() string {
     return []string{"roleIsAttendee", "organization", "everyone", "unknownFutureValue"}[i]
 }
-func ParseBroadcastMeetingAudience(v string) (interface{}, error) {
+func ParseBroadcastMeetingAudience(v string) (any, error) {
     result := ROLEISATTENDEE_BROADCASTMEETINGAUDIENCE
     switch v {
         case "roleIsAttendee":

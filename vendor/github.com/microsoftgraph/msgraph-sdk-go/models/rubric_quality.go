@@ -1,32 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // RubricQuality 
 type RubricQuality struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The collection of criteria for this rubric quality.
-    criteria []RubricCriterionable
-    // The description of this rubric quality.
-    description EducationItemBodyable
-    // The name of this rubric quality.
-    displayName *string
-    // The OdataType property
-    odataType *string
-    // The ID of this resource.
-    qualityId *string
-    // If present, a numerical weight for this quality.  Weights must add up to 100.
-    weight *float32
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewRubricQuality instantiates a new rubricQuality and sets the default values.
 func NewRubricQuality()(*RubricQuality) {
     m := &RubricQuality{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateRubricQualityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -34,48 +23,163 @@ func CreateRubricQualityFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
     return NewRubricQuality(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RubricQuality) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *RubricQuality) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *RubricQuality) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCriteria gets the criteria property value. The collection of criteria for this rubric quality.
 func (m *RubricQuality) GetCriteria()([]RubricCriterionable) {
-    return m.criteria
+    val, err := m.GetBackingStore().Get("criteria")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]RubricCriterionable)
+    }
+    return nil
 }
 // GetDescription gets the description property value. The description of this rubric quality.
 func (m *RubricQuality) GetDescription()(EducationItemBodyable) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EducationItemBodyable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. The name of this rubric quality.
 func (m *RubricQuality) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *RubricQuality) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["criteria"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateRubricCriterionFromDiscriminatorValue , m.SetCriteria)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEducationItemBodyFromDiscriminatorValue , m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["qualityId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetQualityId)
-    res["weight"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetWeight)
+    res["criteria"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateRubricCriterionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]RubricCriterionable, len(val))
+            for i, v := range val {
+                res[i] = v.(RubricCriterionable)
+            }
+            m.SetCriteria(res)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEducationItemBodyFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val.(EducationItemBodyable))
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["qualityId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetQualityId(val)
+        }
+        return nil
+    }
+    res["weight"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWeight(val)
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *RubricQuality) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetQualityId gets the qualityId property value. The ID of this resource.
 func (m *RubricQuality) GetQualityId()(*string) {
-    return m.qualityId
+    val, err := m.GetBackingStore().Get("qualityId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetWeight gets the weight property value. If present, a numerical weight for this quality.  Weights must add up to 100.
 func (m *RubricQuality) GetWeight()(*float32) {
-    return m.weight
+    val, err := m.GetBackingStore().Get("weight")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *RubricQuality) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     if m.GetCriteria() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetCriteria())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetCriteria()))
+        for i, v := range m.GetCriteria() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("criteria", cast)
         if err != nil {
             return err
@@ -120,30 +224,75 @@ func (m *RubricQuality) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RubricQuality) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *RubricQuality) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *RubricQuality) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCriteria sets the criteria property value. The collection of criteria for this rubric quality.
 func (m *RubricQuality) SetCriteria(value []RubricCriterionable)() {
-    m.criteria = value
+    err := m.GetBackingStore().Set("criteria", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. The description of this rubric quality.
 func (m *RubricQuality) SetDescription(value EducationItemBodyable)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. The name of this rubric quality.
 func (m *RubricQuality) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *RubricQuality) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetQualityId sets the qualityId property value. The ID of this resource.
 func (m *RubricQuality) SetQualityId(value *string)() {
-    m.qualityId = value
+    err := m.GetBackingStore().Set("qualityId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWeight sets the weight property value. If present, a numerical weight for this quality.  Weights must add up to 100.
 func (m *RubricQuality) SetWeight(value *float32)() {
-    m.weight = value
+    err := m.GetBackingStore().Set("weight", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// RubricQualityable 
+type RubricQualityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCriteria()([]RubricCriterionable)
+    GetDescription()(EducationItemBodyable)
+    GetDisplayName()(*string)
+    GetOdataType()(*string)
+    GetQualityId()(*string)
+    GetWeight()(*float32)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCriteria(value []RubricCriterionable)()
+    SetDescription(value EducationItemBodyable)()
+    SetDisplayName(value *string)()
+    SetOdataType(value *string)()
+    SetQualityId(value *string)()
+    SetWeight(value *float32)()
 }

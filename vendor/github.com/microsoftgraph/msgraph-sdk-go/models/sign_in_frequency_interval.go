@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SignInFrequencyInterval int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i SignInFrequencyInterval) String() string {
     return []string{"timeBased", "everyTime", "unknownFutureValue"}[i]
 }
-func ParseSignInFrequencyInterval(v string) (interface{}, error) {
+func ParseSignInFrequencyInterval(v string) (any, error) {
     result := TIMEBASED_SIGNINFREQUENCYINTERVAL
     switch v {
         case "timeBased":

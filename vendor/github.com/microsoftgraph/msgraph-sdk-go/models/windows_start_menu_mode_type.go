@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Type of display modes for the start menu.
 type WindowsStartMenuModeType int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i WindowsStartMenuModeType) String() string {
     return []string{"userDefined", "fullScreen", "nonFullScreen"}[i]
 }
-func ParseWindowsStartMenuModeType(v string) (interface{}, error) {
+func ParseWindowsStartMenuModeType(v string) (any, error) {
     result := USERDEFINED_WINDOWSSTARTMENUMODETYPE
     switch v {
         case "userDefined":

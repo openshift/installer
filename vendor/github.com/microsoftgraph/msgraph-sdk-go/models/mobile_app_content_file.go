@@ -2,31 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // MobileAppContentFile contains properties for a single installer file that is associated with a given mobileAppContent version.
 type MobileAppContentFile struct {
     Entity
-    // The Azure Storage URI.
-    azureStorageUri *string
-    // The time the Azure storage Uri expires.
-    azureStorageUriExpirationDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The time the file was created.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // A value indicating whether the file is committed.
-    isCommitted *bool
-    // The manifest information.
-    manifest []byte
-    // the file name.
-    name *string
-    // The size of the file prior to encryption.
-    size *int64
-    // The size of the file after encryption.
-    sizeEncrypted *int64
-    // Contains properties for upload request states.
-    uploadState *MobileAppContentFileUploadState
 }
 // NewMobileAppContentFile instantiates a new mobileAppContentFile and sets the default values.
 func NewMobileAppContentFile()(*MobileAppContentFile) {
@@ -41,53 +22,197 @@ func CreateMobileAppContentFileFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetAzureStorageUri gets the azureStorageUri property value. The Azure Storage URI.
 func (m *MobileAppContentFile) GetAzureStorageUri()(*string) {
-    return m.azureStorageUri
+    val, err := m.GetBackingStore().Get("azureStorageUri")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetAzureStorageUriExpirationDateTime gets the azureStorageUriExpirationDateTime property value. The time the Azure storage Uri expires.
 func (m *MobileAppContentFile) GetAzureStorageUriExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.azureStorageUriExpirationDateTime
+    val, err := m.GetBackingStore().Get("azureStorageUriExpirationDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetCreatedDateTime gets the createdDateTime property value. The time the file was created.
 func (m *MobileAppContentFile) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *MobileAppContentFile) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["azureStorageUri"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAzureStorageUri)
-    res["azureStorageUriExpirationDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetAzureStorageUriExpirationDateTime)
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["isCommitted"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsCommitted)
-    res["manifest"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetManifest)
-    res["name"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetName)
-    res["size"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSize)
-    res["sizeEncrypted"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt64Value(m.SetSizeEncrypted)
-    res["uploadState"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseMobileAppContentFileUploadState , m.SetUploadState)
+    res["azureStorageUri"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAzureStorageUri(val)
+        }
+        return nil
+    }
+    res["azureStorageUriExpirationDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAzureStorageUriExpirationDateTime(val)
+        }
+        return nil
+    }
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["isCommitted"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsCommitted(val)
+        }
+        return nil
+    }
+    res["manifest"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManifest(val)
+        }
+        return nil
+    }
+    res["name"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetName(val)
+        }
+        return nil
+    }
+    res["size"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSize(val)
+        }
+        return nil
+    }
+    res["sizeEncrypted"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt64Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSizeEncrypted(val)
+        }
+        return nil
+    }
+    res["uploadState"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseMobileAppContentFileUploadState)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUploadState(val.(*MobileAppContentFileUploadState))
+        }
+        return nil
+    }
     return res
 }
 // GetIsCommitted gets the isCommitted property value. A value indicating whether the file is committed.
 func (m *MobileAppContentFile) GetIsCommitted()(*bool) {
-    return m.isCommitted
+    val, err := m.GetBackingStore().Get("isCommitted")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetManifest gets the manifest property value. The manifest information.
 func (m *MobileAppContentFile) GetManifest()([]byte) {
-    return m.manifest
+    val, err := m.GetBackingStore().Get("manifest")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetName gets the name property value. the file name.
 func (m *MobileAppContentFile) GetName()(*string) {
-    return m.name
+    val, err := m.GetBackingStore().Get("name")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSize gets the size property value. The size of the file prior to encryption.
 func (m *MobileAppContentFile) GetSize()(*int64) {
-    return m.size
+    val, err := m.GetBackingStore().Get("size")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetSizeEncrypted gets the sizeEncrypted property value. The size of the file after encryption.
 func (m *MobileAppContentFile) GetSizeEncrypted()(*int64) {
-    return m.sizeEncrypted
+    val, err := m.GetBackingStore().Get("sizeEncrypted")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int64)
+    }
+    return nil
 }
 // GetUploadState gets the uploadState property value. Contains properties for upload request states.
 func (m *MobileAppContentFile) GetUploadState()(*MobileAppContentFileUploadState) {
-    return m.uploadState
+    val, err := m.GetBackingStore().Get("uploadState")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*MobileAppContentFileUploadState)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *MobileAppContentFile) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -154,37 +279,87 @@ func (m *MobileAppContentFile) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetAzureStorageUri sets the azureStorageUri property value. The Azure Storage URI.
 func (m *MobileAppContentFile) SetAzureStorageUri(value *string)() {
-    m.azureStorageUri = value
+    err := m.GetBackingStore().Set("azureStorageUri", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAzureStorageUriExpirationDateTime sets the azureStorageUriExpirationDateTime property value. The time the Azure storage Uri expires.
 func (m *MobileAppContentFile) SetAzureStorageUriExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.azureStorageUriExpirationDateTime = value
+    err := m.GetBackingStore().Set("azureStorageUriExpirationDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedDateTime sets the createdDateTime property value. The time the file was created.
 func (m *MobileAppContentFile) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsCommitted sets the isCommitted property value. A value indicating whether the file is committed.
 func (m *MobileAppContentFile) SetIsCommitted(value *bool)() {
-    m.isCommitted = value
+    err := m.GetBackingStore().Set("isCommitted", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManifest sets the manifest property value. The manifest information.
 func (m *MobileAppContentFile) SetManifest(value []byte)() {
-    m.manifest = value
+    err := m.GetBackingStore().Set("manifest", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetName sets the name property value. the file name.
 func (m *MobileAppContentFile) SetName(value *string)() {
-    m.name = value
+    err := m.GetBackingStore().Set("name", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSize sets the size property value. The size of the file prior to encryption.
 func (m *MobileAppContentFile) SetSize(value *int64)() {
-    m.size = value
+    err := m.GetBackingStore().Set("size", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSizeEncrypted sets the sizeEncrypted property value. The size of the file after encryption.
 func (m *MobileAppContentFile) SetSizeEncrypted(value *int64)() {
-    m.sizeEncrypted = value
+    err := m.GetBackingStore().Set("sizeEncrypted", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUploadState sets the uploadState property value. Contains properties for upload request states.
 func (m *MobileAppContentFile) SetUploadState(value *MobileAppContentFileUploadState)() {
-    m.uploadState = value
+    err := m.GetBackingStore().Set("uploadState", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// MobileAppContentFileable 
+type MobileAppContentFileable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAzureStorageUri()(*string)
+    GetAzureStorageUriExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetIsCommitted()(*bool)
+    GetManifest()([]byte)
+    GetName()(*string)
+    GetSize()(*int64)
+    GetSizeEncrypted()(*int64)
+    GetUploadState()(*MobileAppContentFileUploadState)
+    SetAzureStorageUri(value *string)()
+    SetAzureStorageUriExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetIsCommitted(value *bool)()
+    SetManifest(value []byte)()
+    SetName(value *string)()
+    SetSize(value *int64)()
+    SetSizeEncrypted(value *int64)()
+    SetUploadState(value *MobileAppContentFileUploadState)()
 }

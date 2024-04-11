@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AllowedTargetScope int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i AllowedTargetScope) String() string {
     return []string{"notSpecified", "specificDirectoryUsers", "specificConnectedOrganizationUsers", "specificDirectoryServicePrincipals", "allMemberUsers", "allDirectoryUsers", "allDirectoryServicePrincipals", "allConfiguredConnectedOrganizationUsers", "allExternalUsers", "unknownFutureValue"}[i]
 }
-func ParseAllowedTargetScope(v string) (interface{}, error) {
+func ParseAllowedTargetScope(v string) (any, error) {
     result := NOTSPECIFIED_ALLOWEDTARGETSCOPE
     switch v {
         case "notSpecified":

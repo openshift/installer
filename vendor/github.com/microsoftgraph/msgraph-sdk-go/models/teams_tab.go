@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// TeamsTab provides operations to manage the collection of chat entities.
+// TeamsTab 
 type TeamsTab struct {
     Entity
-    // Container for custom settings applied to a tab. The tab is considered configured only once this property is set.
-    configuration TeamsTabConfigurationable
-    // Name of the tab.
-    displayName *string
-    // The application that is linked to the tab. This cannot be changed after tab creation.
-    teamsApp TeamsAppable
-    // Deep link URL of the tab instance. Read only.
-    webUrl *string
 }
 // NewTeamsTab instantiates a new teamsTab and sets the default values.
 func NewTeamsTab()(*TeamsTab) {
@@ -30,28 +21,92 @@ func CreateTeamsTabFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f4
 }
 // GetConfiguration gets the configuration property value. Container for custom settings applied to a tab. The tab is considered configured only once this property is set.
 func (m *TeamsTab) GetConfiguration()(TeamsTabConfigurationable) {
-    return m.configuration
+    val, err := m.GetBackingStore().Get("configuration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TeamsTabConfigurationable)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. Name of the tab.
 func (m *TeamsTab) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TeamsTab) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["configuration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamsTabConfigurationFromDiscriminatorValue , m.SetConfiguration)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["teamsApp"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTeamsAppFromDiscriminatorValue , m.SetTeamsApp)
-    res["webUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetWebUrl)
+    res["configuration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamsTabConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetConfiguration(val.(TeamsTabConfigurationable))
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["teamsApp"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTeamsAppFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTeamsApp(val.(TeamsAppable))
+        }
+        return nil
+    }
+    res["webUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetWebUrl(val)
+        }
+        return nil
+    }
     return res
 }
 // GetTeamsApp gets the teamsApp property value. The application that is linked to the tab. This cannot be changed after tab creation.
 func (m *TeamsTab) GetTeamsApp()(TeamsAppable) {
-    return m.teamsApp
+    val, err := m.GetBackingStore().Get("teamsApp")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TeamsAppable)
+    }
+    return nil
 }
 // GetWebUrl gets the webUrl property value. Deep link URL of the tab instance. Read only.
 func (m *TeamsTab) GetWebUrl()(*string) {
-    return m.webUrl
+    val, err := m.GetBackingStore().Get("webUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TeamsTab) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -87,17 +142,42 @@ func (m *TeamsTab) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c01
 }
 // SetConfiguration sets the configuration property value. Container for custom settings applied to a tab. The tab is considered configured only once this property is set.
 func (m *TeamsTab) SetConfiguration(value TeamsTabConfigurationable)() {
-    m.configuration = value
+    err := m.GetBackingStore().Set("configuration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. Name of the tab.
 func (m *TeamsTab) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTeamsApp sets the teamsApp property value. The application that is linked to the tab. This cannot be changed after tab creation.
 func (m *TeamsTab) SetTeamsApp(value TeamsAppable)() {
-    m.teamsApp = value
+    err := m.GetBackingStore().Set("teamsApp", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetWebUrl sets the webUrl property value. Deep link URL of the tab instance. Read only.
 func (m *TeamsTab) SetWebUrl(value *string)() {
-    m.webUrl = value
+    err := m.GetBackingStore().Set("webUrl", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TeamsTabable 
+type TeamsTabable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetConfiguration()(TeamsTabConfigurationable)
+    GetDisplayName()(*string)
+    GetTeamsApp()(TeamsAppable)
+    GetWebUrl()(*string)
+    SetConfiguration(value TeamsTabConfigurationable)()
+    SetDisplayName(value *string)()
+    SetTeamsApp(value TeamsAppable)()
+    SetWebUrl(value *string)()
 }

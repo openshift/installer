@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Represents the level to which the device's clipboard may be shared between apps
 type ManagedAppClipboardSharingLevel int
 
 const (
@@ -19,7 +19,7 @@ const (
 func (i ManagedAppClipboardSharingLevel) String() string {
     return []string{"allApps", "managedAppsWithPasteIn", "managedApps", "blocked"}[i]
 }
-func ParseManagedAppClipboardSharingLevel(v string) (interface{}, error) {
+func ParseManagedAppClipboardSharingLevel(v string) (any, error) {
     result := ALLAPPS_MANAGEDAPPCLIPBOARDSHARINGLEVEL
     switch v {
         case "allApps":

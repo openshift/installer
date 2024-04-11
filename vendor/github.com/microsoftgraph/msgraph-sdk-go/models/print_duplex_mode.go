@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type PrintDuplexMode int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i PrintDuplexMode) String() string {
     return []string{"flipOnLongEdge", "flipOnShortEdge", "oneSided", "unknownFutureValue"}[i]
 }
-func ParsePrintDuplexMode(v string) (interface{}, error) {
+func ParsePrintDuplexMode(v string) (any, error) {
     result := FLIPONLONGEDGE_PRINTDUPLEXMODE
     switch v {
         case "flipOnLongEdge":

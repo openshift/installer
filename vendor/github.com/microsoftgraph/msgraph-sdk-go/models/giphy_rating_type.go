@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type GiphyRatingType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i GiphyRatingType) String() string {
     return []string{"strict", "moderate", "unknownFutureValue"}[i]
 }
-func ParseGiphyRatingType(v string) (interface{}, error) {
+func ParseGiphyRatingType(v string) (any, error) {
     result := STRICT_GIPHYRATINGTYPE
     switch v {
         case "strict":

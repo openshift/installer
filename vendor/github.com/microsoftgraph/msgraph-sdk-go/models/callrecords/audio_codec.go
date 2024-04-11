@@ -2,7 +2,7 @@ package callrecords
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type AudioCodec int
 
 const (
@@ -34,7 +34,7 @@ const (
 func (i AudioCodec) String() string {
     return []string{"unknown", "invalid", "cn", "pcma", "pcmu", "amrWide", "g722", "g7221", "g7221c", "g729", "multiChannelAudio", "muchv2", "opus", "satin", "satinFullband", "rtAudio8", "rtAudio16", "silk", "silkNarrow", "silkWide", "siren", "xmsRta", "unknownFutureValue"}[i]
 }
-func ParseAudioCodec(v string) (interface{}, error) {
+func ParseAudioCodec(v string) (any, error) {
     result := UNKNOWN_AUDIOCODEC
     switch v {
         case "unknown":

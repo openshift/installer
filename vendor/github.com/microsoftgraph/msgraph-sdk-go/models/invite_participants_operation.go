@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // InviteParticipantsOperation 
 type InviteParticipantsOperation struct {
     CommsOperation
-    // The participants to invite.
-    participants []InvitationParticipantInfoable
 }
 // NewInviteParticipantsOperation instantiates a new InviteParticipantsOperation and sets the default values.
 func NewInviteParticipantsOperation()(*InviteParticipantsOperation) {
@@ -25,12 +22,32 @@ func CreateInviteParticipantsOperationFromDiscriminatorValue(parseNode i878a80d2
 // GetFieldDeserializers the deserialization information for the current model
 func (m *InviteParticipantsOperation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.CommsOperation.GetFieldDeserializers()
-    res["participants"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateInvitationParticipantInfoFromDiscriminatorValue , m.SetParticipants)
+    res["participants"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateInvitationParticipantInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]InvitationParticipantInfoable, len(val))
+            for i, v := range val {
+                res[i] = v.(InvitationParticipantInfoable)
+            }
+            m.SetParticipants(res)
+        }
+        return nil
+    }
     return res
 }
 // GetParticipants gets the participants property value. The participants to invite.
 func (m *InviteParticipantsOperation) GetParticipants()([]InvitationParticipantInfoable) {
-    return m.participants
+    val, err := m.GetBackingStore().Get("participants")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]InvitationParticipantInfoable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *InviteParticipantsOperation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *InviteParticipantsOperation) Serialize(writer i878a80d2330e89d26896388a
         return err
     }
     if m.GetParticipants() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetParticipants())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetParticipants()))
+        for i, v := range m.GetParticipants() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("participants", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *InviteParticipantsOperation) Serialize(writer i878a80d2330e89d26896388a
 }
 // SetParticipants sets the participants property value. The participants to invite.
 func (m *InviteParticipantsOperation) SetParticipants(value []InvitationParticipantInfoable)() {
-    m.participants = value
+    err := m.GetBackingStore().Set("participants", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// InviteParticipantsOperationable 
+type InviteParticipantsOperationable interface {
+    CommsOperationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetParticipants()([]InvitationParticipantInfoable)
+    SetParticipants(value []InvitationParticipantInfoable)()
 }

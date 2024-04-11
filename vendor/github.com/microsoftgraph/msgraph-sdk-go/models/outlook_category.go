@@ -1,17 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// OutlookCategory provides operations to manage the collection of agreement entities.
+// OutlookCategory 
 type OutlookCategory struct {
     Entity
-    // A pre-set color constant that characterizes a category, and that is mapped to one of 25 predefined colors. See the note below.
-    color *CategoryColor
-    // A unique name that identifies a category in the user's mailbox. After a category is created, the name cannot be changed. Read-only.
-    displayName *string
 }
 // NewOutlookCategory instantiates a new outlookCategory and sets the default values.
 func NewOutlookCategory()(*OutlookCategory) {
@@ -26,17 +21,49 @@ func CreateOutlookCategoryFromDiscriminatorValue(parseNode i878a80d2330e89d26896
 }
 // GetColor gets the color property value. A pre-set color constant that characterizes a category, and that is mapped to one of 25 predefined colors. See the note below.
 func (m *OutlookCategory) GetColor()(*CategoryColor) {
-    return m.color
+    val, err := m.GetBackingStore().Get("color")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*CategoryColor)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. A unique name that identifies a category in the user's mailbox. After a category is created, the name cannot be changed. Read-only.
 func (m *OutlookCategory) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OutlookCategory) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["color"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseCategoryColor , m.SetColor)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
+    res["color"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseCategoryColor)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetColor(val.(*CategoryColor))
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -62,9 +89,24 @@ func (m *OutlookCategory) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0
 }
 // SetColor sets the color property value. A pre-set color constant that characterizes a category, and that is mapped to one of 25 predefined colors. See the note below.
 func (m *OutlookCategory) SetColor(value *CategoryColor)() {
-    m.color = value
+    err := m.GetBackingStore().Set("color", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. A unique name that identifies a category in the user's mailbox. After a category is created, the name cannot be changed. Read-only.
 func (m *OutlookCategory) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OutlookCategoryable 
+type OutlookCategoryable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetColor()(*CategoryColor)
+    GetDisplayName()(*string)
+    SetColor(value *CategoryColor)()
+    SetDisplayName(value *string)()
 }

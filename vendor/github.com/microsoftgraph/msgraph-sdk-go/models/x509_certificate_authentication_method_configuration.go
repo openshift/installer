@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // X509CertificateAuthenticationMethodConfiguration 
 type X509CertificateAuthenticationMethodConfiguration struct {
     AuthenticationMethodConfiguration
-    // Defines strong authentication configurations. This configuration includes the default authentication mode and the different rules for strong authentication bindings.
-    authenticationModeConfiguration X509CertificateAuthenticationModeConfigurationable
-    // Defines fields in the X.509 certificate that map to attributes of the Azure AD user object in order to bind the certificate to the user. The priority of the object determines the order in which the binding is carried out. The first binding that matches will be used and the rest ignored.
-    certificateUserBindings []X509CertificateUserBindingable
-    // A collection of users or groups who are enabled to use the authentication method.
-    includeTargets []AuthenticationMethodTargetable
 }
 // NewX509CertificateAuthenticationMethodConfiguration instantiates a new X509CertificateAuthenticationMethodConfiguration and sets the default values.
 func NewX509CertificateAuthenticationMethodConfiguration()(*X509CertificateAuthenticationMethodConfiguration) {
     m := &X509CertificateAuthenticationMethodConfiguration{
         AuthenticationMethodConfiguration: *NewAuthenticationMethodConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.x509CertificateAuthenticationMethodConfiguration";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.x509CertificateAuthenticationMethodConfiguration"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateX509CertificateAuthenticationMethodConfigurationFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,23 +23,79 @@ func CreateX509CertificateAuthenticationMethodConfigurationFromDiscriminatorValu
 }
 // GetAuthenticationModeConfiguration gets the authenticationModeConfiguration property value. Defines strong authentication configurations. This configuration includes the default authentication mode and the different rules for strong authentication bindings.
 func (m *X509CertificateAuthenticationMethodConfiguration) GetAuthenticationModeConfiguration()(X509CertificateAuthenticationModeConfigurationable) {
-    return m.authenticationModeConfiguration
+    val, err := m.GetBackingStore().Get("authenticationModeConfiguration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(X509CertificateAuthenticationModeConfigurationable)
+    }
+    return nil
 }
 // GetCertificateUserBindings gets the certificateUserBindings property value. Defines fields in the X.509 certificate that map to attributes of the Azure AD user object in order to bind the certificate to the user. The priority of the object determines the order in which the binding is carried out. The first binding that matches will be used and the rest ignored.
 func (m *X509CertificateAuthenticationMethodConfiguration) GetCertificateUserBindings()([]X509CertificateUserBindingable) {
-    return m.certificateUserBindings
+    val, err := m.GetBackingStore().Get("certificateUserBindings")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]X509CertificateUserBindingable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *X509CertificateAuthenticationMethodConfiguration) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.AuthenticationMethodConfiguration.GetFieldDeserializers()
-    res["authenticationModeConfiguration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateX509CertificateAuthenticationModeConfigurationFromDiscriminatorValue , m.SetAuthenticationModeConfiguration)
-    res["certificateUserBindings"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateX509CertificateUserBindingFromDiscriminatorValue , m.SetCertificateUserBindings)
-    res["includeTargets"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateAuthenticationMethodTargetFromDiscriminatorValue , m.SetIncludeTargets)
+    res["authenticationModeConfiguration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateX509CertificateAuthenticationModeConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAuthenticationModeConfiguration(val.(X509CertificateAuthenticationModeConfigurationable))
+        }
+        return nil
+    }
+    res["certificateUserBindings"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateX509CertificateUserBindingFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]X509CertificateUserBindingable, len(val))
+            for i, v := range val {
+                res[i] = v.(X509CertificateUserBindingable)
+            }
+            m.SetCertificateUserBindings(res)
+        }
+        return nil
+    }
+    res["includeTargets"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateAuthenticationMethodTargetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]AuthenticationMethodTargetable, len(val))
+            for i, v := range val {
+                res[i] = v.(AuthenticationMethodTargetable)
+            }
+            m.SetIncludeTargets(res)
+        }
+        return nil
+    }
     return res
 }
-// GetIncludeTargets gets the includeTargets property value. A collection of users or groups who are enabled to use the authentication method.
+// GetIncludeTargets gets the includeTargets property value. A collection of groups that are enabled to use the authentication method.
 func (m *X509CertificateAuthenticationMethodConfiguration) GetIncludeTargets()([]AuthenticationMethodTargetable) {
-    return m.includeTargets
+    val, err := m.GetBackingStore().Get("includeTargets")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]AuthenticationMethodTargetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *X509CertificateAuthenticationMethodConfiguration) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -61,14 +110,20 @@ func (m *X509CertificateAuthenticationMethodConfiguration) Serialize(writer i878
         }
     }
     if m.GetCertificateUserBindings() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetCertificateUserBindings())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetCertificateUserBindings()))
+        for i, v := range m.GetCertificateUserBindings() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("certificateUserBindings", cast)
         if err != nil {
             return err
         }
     }
     if m.GetIncludeTargets() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetIncludeTargets())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetIncludeTargets()))
+        for i, v := range m.GetIncludeTargets() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("includeTargets", cast)
         if err != nil {
             return err
@@ -78,13 +133,33 @@ func (m *X509CertificateAuthenticationMethodConfiguration) Serialize(writer i878
 }
 // SetAuthenticationModeConfiguration sets the authenticationModeConfiguration property value. Defines strong authentication configurations. This configuration includes the default authentication mode and the different rules for strong authentication bindings.
 func (m *X509CertificateAuthenticationMethodConfiguration) SetAuthenticationModeConfiguration(value X509CertificateAuthenticationModeConfigurationable)() {
-    m.authenticationModeConfiguration = value
+    err := m.GetBackingStore().Set("authenticationModeConfiguration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCertificateUserBindings sets the certificateUserBindings property value. Defines fields in the X.509 certificate that map to attributes of the Azure AD user object in order to bind the certificate to the user. The priority of the object determines the order in which the binding is carried out. The first binding that matches will be used and the rest ignored.
 func (m *X509CertificateAuthenticationMethodConfiguration) SetCertificateUserBindings(value []X509CertificateUserBindingable)() {
-    m.certificateUserBindings = value
+    err := m.GetBackingStore().Set("certificateUserBindings", value)
+    if err != nil {
+        panic(err)
+    }
 }
-// SetIncludeTargets sets the includeTargets property value. A collection of users or groups who are enabled to use the authentication method.
+// SetIncludeTargets sets the includeTargets property value. A collection of groups that are enabled to use the authentication method.
 func (m *X509CertificateAuthenticationMethodConfiguration) SetIncludeTargets(value []AuthenticationMethodTargetable)() {
-    m.includeTargets = value
+    err := m.GetBackingStore().Set("includeTargets", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// X509CertificateAuthenticationMethodConfigurationable 
+type X509CertificateAuthenticationMethodConfigurationable interface {
+    AuthenticationMethodConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAuthenticationModeConfiguration()(X509CertificateAuthenticationModeConfigurationable)
+    GetCertificateUserBindings()([]X509CertificateUserBindingable)
+    GetIncludeTargets()([]AuthenticationMethodTargetable)
+    SetAuthenticationModeConfiguration(value X509CertificateAuthenticationModeConfigurationable)()
+    SetCertificateUserBindings(value []X509CertificateUserBindingable)()
+    SetIncludeTargets(value []AuthenticationMethodTargetable)()
 }

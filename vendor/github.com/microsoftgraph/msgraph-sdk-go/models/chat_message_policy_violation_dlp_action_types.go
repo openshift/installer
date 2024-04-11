@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of chat entities.
+// 
 type ChatMessagePolicyViolationDlpActionTypes int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ChatMessagePolicyViolationDlpActionTypes) String() string {
     return []string{"none", "notifySender", "blockAccess", "blockAccessExternal"}[i]
 }
-func ParseChatMessagePolicyViolationDlpActionTypes(v string) (interface{}, error) {
+func ParseChatMessagePolicyViolationDlpActionTypes(v string) (any, error) {
     result := NONE_CHATMESSAGEPOLICYVIOLATIONDLPACTIONTYPES
     switch v {
         case "none":

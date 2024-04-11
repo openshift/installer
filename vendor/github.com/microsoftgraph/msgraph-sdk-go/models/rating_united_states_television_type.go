@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// TV content rating labels in United States
 type RatingUnitedStatesTelevisionType int
 
 const (
@@ -27,7 +27,7 @@ const (
 func (i RatingUnitedStatesTelevisionType) String() string {
     return []string{"allAllowed", "allBlocked", "childrenAll", "childrenAbove7", "general", "parentalGuidance", "childrenAbove14", "adults"}[i]
 }
-func ParseRatingUnitedStatesTelevisionType(v string) (interface{}, error) {
+func ParseRatingUnitedStatesTelevisionType(v string) (any, error) {
     result := ALLALLOWED_RATINGUNITEDSTATESTELEVISIONTYPE
     switch v {
         case "allAllowed":

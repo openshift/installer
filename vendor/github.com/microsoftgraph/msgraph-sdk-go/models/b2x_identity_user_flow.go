@@ -1,23 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // B2xIdentityUserFlow 
 type B2xIdentityUserFlow struct {
     IdentityUserFlow
-    // Configuration for enabling an API connector for use as part of the self-service sign-up user flow. You can only obtain the value of this object using Get userFlowApiConnectorConfiguration.
-    apiConnectorConfiguration UserFlowApiConnectorConfigurationable
-    // The identity providers included in the user flow.
-    identityProviders []IdentityProviderable
-    // The languages supported for customization within the user flow. Language customization is enabled by default in self-service sign-up user flow. You cannot create custom languages in self-service sign-up user flows.
-    languages []UserFlowLanguageConfigurationable
-    // The user attribute assignments included in the user flow.
-    userAttributeAssignments []IdentityUserFlowAttributeAssignmentable
-    // The userFlowIdentityProviders property
-    userFlowIdentityProviders []IdentityProviderBaseable
 }
 // NewB2xIdentityUserFlow instantiates a new B2xIdentityUserFlow and sets the default values.
 func NewB2xIdentityUserFlow()(*B2xIdentityUserFlow) {
@@ -32,33 +21,129 @@ func CreateB2xIdentityUserFlowFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetApiConnectorConfiguration gets the apiConnectorConfiguration property value. Configuration for enabling an API connector for use as part of the self-service sign-up user flow. You can only obtain the value of this object using Get userFlowApiConnectorConfiguration.
 func (m *B2xIdentityUserFlow) GetApiConnectorConfiguration()(UserFlowApiConnectorConfigurationable) {
-    return m.apiConnectorConfiguration
+    val, err := m.GetBackingStore().Get("apiConnectorConfiguration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(UserFlowApiConnectorConfigurationable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *B2xIdentityUserFlow) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.IdentityUserFlow.GetFieldDeserializers()
-    res["apiConnectorConfiguration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateUserFlowApiConnectorConfigurationFromDiscriminatorValue , m.SetApiConnectorConfiguration)
-    res["identityProviders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateIdentityProviderFromDiscriminatorValue , m.SetIdentityProviders)
-    res["languages"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserFlowLanguageConfigurationFromDiscriminatorValue , m.SetLanguages)
-    res["userAttributeAssignments"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateIdentityUserFlowAttributeAssignmentFromDiscriminatorValue , m.SetUserAttributeAssignments)
-    res["userFlowIdentityProviders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateIdentityProviderBaseFromDiscriminatorValue , m.SetUserFlowIdentityProviders)
+    res["apiConnectorConfiguration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateUserFlowApiConnectorConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetApiConnectorConfiguration(val.(UserFlowApiConnectorConfigurationable))
+        }
+        return nil
+    }
+    res["identityProviders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateIdentityProviderFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]IdentityProviderable, len(val))
+            for i, v := range val {
+                res[i] = v.(IdentityProviderable)
+            }
+            m.SetIdentityProviders(res)
+        }
+        return nil
+    }
+    res["languages"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserFlowLanguageConfigurationFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserFlowLanguageConfigurationable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserFlowLanguageConfigurationable)
+            }
+            m.SetLanguages(res)
+        }
+        return nil
+    }
+    res["userAttributeAssignments"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateIdentityUserFlowAttributeAssignmentFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]IdentityUserFlowAttributeAssignmentable, len(val))
+            for i, v := range val {
+                res[i] = v.(IdentityUserFlowAttributeAssignmentable)
+            }
+            m.SetUserAttributeAssignments(res)
+        }
+        return nil
+    }
+    res["userFlowIdentityProviders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateIdentityProviderBaseFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]IdentityProviderBaseable, len(val))
+            for i, v := range val {
+                res[i] = v.(IdentityProviderBaseable)
+            }
+            m.SetUserFlowIdentityProviders(res)
+        }
+        return nil
+    }
     return res
 }
 // GetIdentityProviders gets the identityProviders property value. The identity providers included in the user flow.
 func (m *B2xIdentityUserFlow) GetIdentityProviders()([]IdentityProviderable) {
-    return m.identityProviders
+    val, err := m.GetBackingStore().Get("identityProviders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]IdentityProviderable)
+    }
+    return nil
 }
 // GetLanguages gets the languages property value. The languages supported for customization within the user flow. Language customization is enabled by default in self-service sign-up user flow. You cannot create custom languages in self-service sign-up user flows.
 func (m *B2xIdentityUserFlow) GetLanguages()([]UserFlowLanguageConfigurationable) {
-    return m.languages
+    val, err := m.GetBackingStore().Get("languages")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserFlowLanguageConfigurationable)
+    }
+    return nil
 }
 // GetUserAttributeAssignments gets the userAttributeAssignments property value. The user attribute assignments included in the user flow.
 func (m *B2xIdentityUserFlow) GetUserAttributeAssignments()([]IdentityUserFlowAttributeAssignmentable) {
-    return m.userAttributeAssignments
+    val, err := m.GetBackingStore().Get("userAttributeAssignments")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]IdentityUserFlowAttributeAssignmentable)
+    }
+    return nil
 }
 // GetUserFlowIdentityProviders gets the userFlowIdentityProviders property value. The userFlowIdentityProviders property
 func (m *B2xIdentityUserFlow) GetUserFlowIdentityProviders()([]IdentityProviderBaseable) {
-    return m.userFlowIdentityProviders
+    val, err := m.GetBackingStore().Get("userFlowIdentityProviders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]IdentityProviderBaseable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *B2xIdentityUserFlow) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -73,28 +158,40 @@ func (m *B2xIdentityUserFlow) Serialize(writer i878a80d2330e89d26896388a3f487eef
         }
     }
     if m.GetIdentityProviders() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetIdentityProviders())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetIdentityProviders()))
+        for i, v := range m.GetIdentityProviders() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("identityProviders", cast)
         if err != nil {
             return err
         }
     }
     if m.GetLanguages() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetLanguages())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetLanguages()))
+        for i, v := range m.GetLanguages() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("languages", cast)
         if err != nil {
             return err
         }
     }
     if m.GetUserAttributeAssignments() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetUserAttributeAssignments())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetUserAttributeAssignments()))
+        for i, v := range m.GetUserAttributeAssignments() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("userAttributeAssignments", cast)
         if err != nil {
             return err
         }
     }
     if m.GetUserFlowIdentityProviders() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetUserFlowIdentityProviders())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetUserFlowIdentityProviders()))
+        for i, v := range m.GetUserFlowIdentityProviders() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("userFlowIdentityProviders", cast)
         if err != nil {
             return err
@@ -104,21 +201,51 @@ func (m *B2xIdentityUserFlow) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetApiConnectorConfiguration sets the apiConnectorConfiguration property value. Configuration for enabling an API connector for use as part of the self-service sign-up user flow. You can only obtain the value of this object using Get userFlowApiConnectorConfiguration.
 func (m *B2xIdentityUserFlow) SetApiConnectorConfiguration(value UserFlowApiConnectorConfigurationable)() {
-    m.apiConnectorConfiguration = value
+    err := m.GetBackingStore().Set("apiConnectorConfiguration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIdentityProviders sets the identityProviders property value. The identity providers included in the user flow.
 func (m *B2xIdentityUserFlow) SetIdentityProviders(value []IdentityProviderable)() {
-    m.identityProviders = value
+    err := m.GetBackingStore().Set("identityProviders", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLanguages sets the languages property value. The languages supported for customization within the user flow. Language customization is enabled by default in self-service sign-up user flow. You cannot create custom languages in self-service sign-up user flows.
 func (m *B2xIdentityUserFlow) SetLanguages(value []UserFlowLanguageConfigurationable)() {
-    m.languages = value
+    err := m.GetBackingStore().Set("languages", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserAttributeAssignments sets the userAttributeAssignments property value. The user attribute assignments included in the user flow.
 func (m *B2xIdentityUserFlow) SetUserAttributeAssignments(value []IdentityUserFlowAttributeAssignmentable)() {
-    m.userAttributeAssignments = value
+    err := m.GetBackingStore().Set("userAttributeAssignments", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserFlowIdentityProviders sets the userFlowIdentityProviders property value. The userFlowIdentityProviders property
 func (m *B2xIdentityUserFlow) SetUserFlowIdentityProviders(value []IdentityProviderBaseable)() {
-    m.userFlowIdentityProviders = value
+    err := m.GetBackingStore().Set("userFlowIdentityProviders", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// B2xIdentityUserFlowable 
+type B2xIdentityUserFlowable interface {
+    IdentityUserFlowable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetApiConnectorConfiguration()(UserFlowApiConnectorConfigurationable)
+    GetIdentityProviders()([]IdentityProviderable)
+    GetLanguages()([]UserFlowLanguageConfigurationable)
+    GetUserAttributeAssignments()([]IdentityUserFlowAttributeAssignmentable)
+    GetUserFlowIdentityProviders()([]IdentityProviderBaseable)
+    SetApiConnectorConfiguration(value UserFlowApiConnectorConfigurationable)()
+    SetIdentityProviders(value []IdentityProviderable)()
+    SetLanguages(value []UserFlowLanguageConfigurationable)()
+    SetUserAttributeAssignments(value []IdentityUserFlowAttributeAssignmentable)()
+    SetUserFlowIdentityProviders(value []IdentityProviderBaseable)()
 }

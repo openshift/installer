@@ -1,19 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // CountryNamedLocation 
 type CountryNamedLocation struct {
     NamedLocation
-    // List of countries and/or regions in two-letter format specified by ISO 3166-2. Required.
-    countriesAndRegions []string
-    // Determines what method is used to decide which country the user is located in. Possible values are clientIpAddress(default) and authenticatorAppGps. Note: authenticatorAppGps is not yet supported in the Microsoft Cloud for US Government.
-    countryLookupMethod *CountryLookupMethodType
-    // true if IP addresses that don't map to a country or region should be included in the named location. Optional. Default value is false.
-    includeUnknownCountriesAndRegions *bool
 }
 // NewCountryNamedLocation instantiates a new CountryNamedLocation and sets the default values.
 func NewCountryNamedLocation()(*CountryNamedLocation) {
@@ -28,23 +21,75 @@ func CreateCountryNamedLocationFromDiscriminatorValue(parseNode i878a80d2330e89d
 }
 // GetCountriesAndRegions gets the countriesAndRegions property value. List of countries and/or regions in two-letter format specified by ISO 3166-2. Required.
 func (m *CountryNamedLocation) GetCountriesAndRegions()([]string) {
-    return m.countriesAndRegions
+    val, err := m.GetBackingStore().Get("countriesAndRegions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // GetCountryLookupMethod gets the countryLookupMethod property value. Determines what method is used to decide which country the user is located in. Possible values are clientIpAddress(default) and authenticatorAppGps. Note: authenticatorAppGps is not yet supported in the Microsoft Cloud for US Government.
 func (m *CountryNamedLocation) GetCountryLookupMethod()(*CountryLookupMethodType) {
-    return m.countryLookupMethod
+    val, err := m.GetBackingStore().Get("countryLookupMethod")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*CountryLookupMethodType)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CountryNamedLocation) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.NamedLocation.GetFieldDeserializers()
-    res["countriesAndRegions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetCountriesAndRegions)
-    res["countryLookupMethod"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseCountryLookupMethodType , m.SetCountryLookupMethod)
-    res["includeUnknownCountriesAndRegions"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIncludeUnknownCountriesAndRegions)
+    res["countriesAndRegions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetCountriesAndRegions(res)
+        }
+        return nil
+    }
+    res["countryLookupMethod"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseCountryLookupMethodType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCountryLookupMethod(val.(*CountryLookupMethodType))
+        }
+        return nil
+    }
+    res["includeUnknownCountriesAndRegions"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIncludeUnknownCountriesAndRegions(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIncludeUnknownCountriesAndRegions gets the includeUnknownCountriesAndRegions property value. true if IP addresses that don't map to a country or region should be included in the named location. Optional. Default value is false.
 func (m *CountryNamedLocation) GetIncludeUnknownCountriesAndRegions()(*bool) {
-    return m.includeUnknownCountriesAndRegions
+    val, err := m.GetBackingStore().Get("includeUnknownCountriesAndRegions")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *CountryNamedLocation) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -75,13 +120,33 @@ func (m *CountryNamedLocation) Serialize(writer i878a80d2330e89d26896388a3f487ee
 }
 // SetCountriesAndRegions sets the countriesAndRegions property value. List of countries and/or regions in two-letter format specified by ISO 3166-2. Required.
 func (m *CountryNamedLocation) SetCountriesAndRegions(value []string)() {
-    m.countriesAndRegions = value
+    err := m.GetBackingStore().Set("countriesAndRegions", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCountryLookupMethod sets the countryLookupMethod property value. Determines what method is used to decide which country the user is located in. Possible values are clientIpAddress(default) and authenticatorAppGps. Note: authenticatorAppGps is not yet supported in the Microsoft Cloud for US Government.
 func (m *CountryNamedLocation) SetCountryLookupMethod(value *CountryLookupMethodType)() {
-    m.countryLookupMethod = value
+    err := m.GetBackingStore().Set("countryLookupMethod", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIncludeUnknownCountriesAndRegions sets the includeUnknownCountriesAndRegions property value. true if IP addresses that don't map to a country or region should be included in the named location. Optional. Default value is false.
 func (m *CountryNamedLocation) SetIncludeUnknownCountriesAndRegions(value *bool)() {
-    m.includeUnknownCountriesAndRegions = value
+    err := m.GetBackingStore().Set("includeUnknownCountriesAndRegions", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CountryNamedLocationable 
+type CountryNamedLocationable interface {
+    NamedLocationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCountriesAndRegions()([]string)
+    GetCountryLookupMethod()(*CountryLookupMethodType)
+    GetIncludeUnknownCountriesAndRegions()(*bool)
+    SetCountriesAndRegions(value []string)()
+    SetCountryLookupMethod(value *CountryLookupMethodType)()
+    SetIncludeUnknownCountriesAndRegions(value *bool)()
 }

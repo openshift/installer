@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // TimeOff 
 type TimeOff struct {
     ChangeTrackedEntity
-    // The draft version of this timeOff that is viewable by managers. Required.
-    draftTimeOff TimeOffItemable
-    // The shared version of this timeOff that is viewable by both employees and managers. Required.
-    sharedTimeOff TimeOffItemable
-    // ID of the user assigned to the timeOff. Required.
-    userId *string
 }
 // NewTimeOff instantiates a new TimeOff and sets the default values.
 func NewTimeOff()(*TimeOff) {
     m := &TimeOff{
         ChangeTrackedEntity: *NewChangeTrackedEntity(),
     }
-    odataTypeValue := "#microsoft.graph.timeOff";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.timeOff"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTimeOffFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,23 +23,71 @@ func CreateTimeOffFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f48
 }
 // GetDraftTimeOff gets the draftTimeOff property value. The draft version of this timeOff that is viewable by managers. Required.
 func (m *TimeOff) GetDraftTimeOff()(TimeOffItemable) {
-    return m.draftTimeOff
+    val, err := m.GetBackingStore().Get("draftTimeOff")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TimeOffItemable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *TimeOff) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.ChangeTrackedEntity.GetFieldDeserializers()
-    res["draftTimeOff"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTimeOffItemFromDiscriminatorValue , m.SetDraftTimeOff)
-    res["sharedTimeOff"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTimeOffItemFromDiscriminatorValue , m.SetSharedTimeOff)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
+    res["draftTimeOff"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTimeOffItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDraftTimeOff(val.(TimeOffItemable))
+        }
+        return nil
+    }
+    res["sharedTimeOff"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTimeOffItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSharedTimeOff(val.(TimeOffItemable))
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
     return res
 }
 // GetSharedTimeOff gets the sharedTimeOff property value. The shared version of this timeOff that is viewable by both employees and managers. Required.
 func (m *TimeOff) GetSharedTimeOff()(TimeOffItemable) {
-    return m.sharedTimeOff
+    val, err := m.GetBackingStore().Get("sharedTimeOff")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TimeOffItemable)
+    }
+    return nil
 }
 // GetUserId gets the userId property value. ID of the user assigned to the timeOff. Required.
 func (m *TimeOff) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *TimeOff) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -76,13 +117,33 @@ func (m *TimeOff) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010
 }
 // SetDraftTimeOff sets the draftTimeOff property value. The draft version of this timeOff that is viewable by managers. Required.
 func (m *TimeOff) SetDraftTimeOff(value TimeOffItemable)() {
-    m.draftTimeOff = value
+    err := m.GetBackingStore().Set("draftTimeOff", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSharedTimeOff sets the sharedTimeOff property value. The shared version of this timeOff that is viewable by both employees and managers. Required.
 func (m *TimeOff) SetSharedTimeOff(value TimeOffItemable)() {
-    m.sharedTimeOff = value
+    err := m.GetBackingStore().Set("sharedTimeOff", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserId sets the userId property value. ID of the user assigned to the timeOff. Required.
 func (m *TimeOff) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// TimeOffable 
+type TimeOffable interface {
+    ChangeTrackedEntityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDraftTimeOff()(TimeOffItemable)
+    GetSharedTimeOff()(TimeOffItemable)
+    GetUserId()(*string)
+    SetDraftTimeOff(value TimeOffItemable)()
+    SetSharedTimeOff(value TimeOffItemable)()
+    SetUserId(value *string)()
 }

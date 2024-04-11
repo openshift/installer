@@ -2,26 +2,13 @@ package termstore
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
     iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242 "github.com/microsoftgraph/msgraph-sdk-go/models"
 )
 
-// Group provides operations to manage the collection of agreement entities.
+// Group 
 type Group struct {
     iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242.Entity
-    // Date and time of the group creation. Read-only.
-    createdDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Description that gives details on the term usage.
-    description *string
-    // Name of the group.
-    displayName *string
-    // ID of the parent site of this group.
-    parentSiteId *string
-    // Returns the type of the group. Possible values are: global, system, and siteCollection.
-    scope *TermGroupScope
-    // All sets under the group in a term [store].
-    sets []Setable
 }
 // NewGroup instantiates a new group and sets the default values.
 func NewGroup()(*Group) {
@@ -36,38 +23,138 @@ func CreateGroupFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487e
 }
 // GetCreatedDateTime gets the createdDateTime property value. Date and time of the group creation. Read-only.
 func (m *Group) GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.createdDateTime
+    val, err := m.GetBackingStore().Get("createdDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDescription gets the description property value. Description that gives details on the term usage.
 func (m *Group) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. Name of the group.
 func (m *Group) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *Group) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["createdDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCreatedDateTime)
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["parentSiteId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetParentSiteId)
-    res["scope"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseTermGroupScope , m.SetScope)
-    res["sets"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateSetFromDiscriminatorValue , m.SetSets)
+    res["createdDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedDateTime(val)
+        }
+        return nil
+    }
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["parentSiteId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentSiteId(val)
+        }
+        return nil
+    }
+    res["scope"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseTermGroupScope)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetScope(val.(*TermGroupScope))
+        }
+        return nil
+    }
+    res["sets"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateSetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Setable, len(val))
+            for i, v := range val {
+                res[i] = v.(Setable)
+            }
+            m.SetSets(res)
+        }
+        return nil
+    }
     return res
 }
 // GetParentSiteId gets the parentSiteId property value. ID of the parent site of this group.
 func (m *Group) GetParentSiteId()(*string) {
-    return m.parentSiteId
+    val, err := m.GetBackingStore().Get("parentSiteId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetScope gets the scope property value. Returns the type of the group. Possible values are: global, system, and siteCollection.
 func (m *Group) GetScope()(*TermGroupScope) {
-    return m.scope
+    val, err := m.GetBackingStore().Get("scope")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*TermGroupScope)
+    }
+    return nil
 }
 // GetSets gets the sets property value. All sets under the group in a term [store].
 func (m *Group) GetSets()([]Setable) {
-    return m.sets
+    val, err := m.GetBackingStore().Get("sets")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Setable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *Group) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -107,7 +194,10 @@ func (m *Group) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c4
         }
     }
     if m.GetSets() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSets())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSets()))
+        for i, v := range m.GetSets() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("sets", cast)
         if err != nil {
             return err
@@ -117,25 +207,60 @@ func (m *Group) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c4
 }
 // SetCreatedDateTime sets the createdDateTime property value. Date and time of the group creation. Read-only.
 func (m *Group) SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.createdDateTime = value
+    err := m.GetBackingStore().Set("createdDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDescription sets the description property value. Description that gives details on the term usage.
 func (m *Group) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. Name of the group.
 func (m *Group) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentSiteId sets the parentSiteId property value. ID of the parent site of this group.
 func (m *Group) SetParentSiteId(value *string)() {
-    m.parentSiteId = value
+    err := m.GetBackingStore().Set("parentSiteId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetScope sets the scope property value. Returns the type of the group. Possible values are: global, system, and siteCollection.
 func (m *Group) SetScope(value *TermGroupScope)() {
-    m.scope = value
+    err := m.GetBackingStore().Set("scope", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSets sets the sets property value. All sets under the group in a term [store].
 func (m *Group) SetSets(value []Setable)() {
-    m.sets = value
+    err := m.GetBackingStore().Set("sets", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// Groupable 
+type Groupable interface {
+    iadcd81124412c61e647227ecfc4449d8bba17de0380ddda76f641a29edf2b242.Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCreatedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetParentSiteId()(*string)
+    GetScope()(*TermGroupScope)
+    GetSets()([]Setable)
+    SetCreatedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetParentSiteId(value *string)()
+    SetScope(value *TermGroupScope)()
+    SetSets(value []Setable)()
 }

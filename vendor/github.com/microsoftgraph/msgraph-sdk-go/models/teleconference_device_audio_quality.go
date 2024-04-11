@@ -13,8 +13,8 @@ func NewTeleconferenceDeviceAudioQuality()(*TeleconferenceDeviceAudioQuality) {
     m := &TeleconferenceDeviceAudioQuality{
         TeleconferenceDeviceMediaQuality: *NewTeleconferenceDeviceMediaQuality(),
     }
-    odataTypeValue := "#microsoft.graph.teleconferenceDeviceAudioQuality";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.teleconferenceDeviceAudioQuality"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateTeleconferenceDeviceAudioQualityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *TeleconferenceDeviceAudioQuality) Serialize(writer i878a80d2330e89d2689
         return err
     }
     return nil
+}
+// TeleconferenceDeviceAudioQualityable 
+type TeleconferenceDeviceAudioQualityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    TeleconferenceDeviceMediaQualityable
 }

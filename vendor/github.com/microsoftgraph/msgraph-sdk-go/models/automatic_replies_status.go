@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AutomaticRepliesStatus int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i AutomaticRepliesStatus) String() string {
     return []string{"disabled", "alwaysEnabled", "scheduled"}[i]
 }
-func ParseAutomaticRepliesStatus(v string) (interface{}, error) {
+func ParseAutomaticRepliesStatus(v string) (any, error) {
     result := DISABLED_AUTOMATICREPLIESSTATUS
     switch v {
         case "disabled":

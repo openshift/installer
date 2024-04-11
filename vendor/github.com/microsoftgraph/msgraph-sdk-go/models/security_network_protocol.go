@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type SecurityNetworkProtocol int
 
 const (
@@ -35,7 +35,7 @@ const (
 func (i SecurityNetworkProtocol) String() string {
     return []string{"unknown", "ip", "icmp", "igmp", "ggp", "ipv4", "tcp", "pup", "udp", "idp", "ipv6", "ipv6RoutingHeader", "ipv6FragmentHeader", "ipSecEncapsulatingSecurityPayload", "ipSecAuthenticationHeader", "icmpV6", "ipv6NoNextHeader", "ipv6DestinationOptions", "nd", "raw", "ipx", "spx", "spxII", "unknownFutureValue"}[i]
 }
-func ParseSecurityNetworkProtocol(v string) (interface{}, error) {
+func ParseSecurityNetworkProtocol(v string) (any, error) {
     result := UNKNOWN_SECURITYNETWORKPROTOCOL
     switch v {
         case "unknown":

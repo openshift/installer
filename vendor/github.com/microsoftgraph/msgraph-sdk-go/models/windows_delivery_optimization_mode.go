@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Delivery optimization mode for peer distribution
 type WindowsDeliveryOptimizationMode int
 
 const (
@@ -25,7 +25,7 @@ const (
 func (i WindowsDeliveryOptimizationMode) String() string {
     return []string{"userDefined", "httpOnly", "httpWithPeeringNat", "httpWithPeeringPrivateGroup", "httpWithInternetPeering", "simpleDownload", "bypassMode"}[i]
 }
-func ParseWindowsDeliveryOptimizationMode(v string) (interface{}, error) {
+func ParseWindowsDeliveryOptimizationMode(v string) (any, error) {
     result := USERDEFINED_WINDOWSDELIVERYOPTIMIZATIONMODE
     switch v {
         case "userDefined":

@@ -2,43 +2,20 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// OnenotePage provides operations to manage the collection of agreement entities.
+// OnenotePage 
 type OnenotePage struct {
     OnenoteEntitySchemaObjectModel
-    // The page's HTML content.
-    content []byte
-    // The URL for the page's HTML content.  Read-only.
-    contentUrl *string
-    // The unique identifier of the application that created the page. Read-only.
-    createdByAppId *string
-    // The date and time when the page was last modified. The timestamp represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Read-only.
-    lastModifiedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The indentation level of the page. Read-only.
-    level *int32
-    // Links for opening the page. The oneNoteClientURL link opens the page in the OneNote native client if it 's installed. The oneNoteWebUrl link opens the page in OneNote on the web. Read-only.
-    links PageLinksable
-    // The order of the page within its parent section. Read-only.
-    order *int32
-    // The notebook that contains the page.  Read-only.
-    parentNotebook Notebookable
-    // The section that contains the page. Read-only.
-    parentSection OnenoteSectionable
-    // The title of the page.
-    title *string
-    // The userTags property
-    userTags []string
 }
 // NewOnenotePage instantiates a new onenotePage and sets the default values.
 func NewOnenotePage()(*OnenotePage) {
     m := &OnenotePage{
         OnenoteEntitySchemaObjectModel: *NewOnenoteEntitySchemaObjectModel(),
     }
-    odataTypeValue := "#microsoft.graph.onenotePage";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.onenotePage"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOnenotePageFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -47,63 +24,243 @@ func CreateOnenotePageFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a
 }
 // GetContent gets the content property value. The page's HTML content.
 func (m *OnenotePage) GetContent()([]byte) {
-    return m.content
+    val, err := m.GetBackingStore().Get("content")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetContentUrl gets the contentUrl property value. The URL for the page's HTML content.  Read-only.
 func (m *OnenotePage) GetContentUrl()(*string) {
-    return m.contentUrl
+    val, err := m.GetBackingStore().Get("contentUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCreatedByAppId gets the createdByAppId property value. The unique identifier of the application that created the page. Read-only.
 func (m *OnenotePage) GetCreatedByAppId()(*string) {
-    return m.createdByAppId
+    val, err := m.GetBackingStore().Get("createdByAppId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OnenotePage) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OnenoteEntitySchemaObjectModel.GetFieldDeserializers()
-    res["content"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetContent)
-    res["contentUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentUrl)
-    res["createdByAppId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCreatedByAppId)
-    res["lastModifiedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastModifiedDateTime)
-    res["level"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetLevel)
-    res["links"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreatePageLinksFromDiscriminatorValue , m.SetLinks)
-    res["order"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetOrder)
-    res["parentNotebook"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateNotebookFromDiscriminatorValue , m.SetParentNotebook)
-    res["parentSection"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateOnenoteSectionFromDiscriminatorValue , m.SetParentSection)
-    res["title"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTitle)
-    res["userTags"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetUserTags)
+    res["content"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContent(val)
+        }
+        return nil
+    }
+    res["contentUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentUrl(val)
+        }
+        return nil
+    }
+    res["createdByAppId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCreatedByAppId(val)
+        }
+        return nil
+    }
+    res["lastModifiedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastModifiedDateTime(val)
+        }
+        return nil
+    }
+    res["level"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLevel(val)
+        }
+        return nil
+    }
+    res["links"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreatePageLinksFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLinks(val.(PageLinksable))
+        }
+        return nil
+    }
+    res["order"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOrder(val)
+        }
+        return nil
+    }
+    res["parentNotebook"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateNotebookFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentNotebook(val.(Notebookable))
+        }
+        return nil
+    }
+    res["parentSection"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateOnenoteSectionFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetParentSection(val.(OnenoteSectionable))
+        }
+        return nil
+    }
+    res["title"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTitle(val)
+        }
+        return nil
+    }
+    res["userTags"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetUserTags(res)
+        }
+        return nil
+    }
     return res
 }
 // GetLastModifiedDateTime gets the lastModifiedDateTime property value. The date and time when the page was last modified. The timestamp represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Read-only.
 func (m *OnenotePage) GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastModifiedDateTime
+    val, err := m.GetBackingStore().Get("lastModifiedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetLevel gets the level property value. The indentation level of the page. Read-only.
 func (m *OnenotePage) GetLevel()(*int32) {
-    return m.level
+    val, err := m.GetBackingStore().Get("level")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetLinks gets the links property value. Links for opening the page. The oneNoteClientURL link opens the page in the OneNote native client if it 's installed. The oneNoteWebUrl link opens the page in OneNote on the web. Read-only.
 func (m *OnenotePage) GetLinks()(PageLinksable) {
-    return m.links
+    val, err := m.GetBackingStore().Get("links")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(PageLinksable)
+    }
+    return nil
 }
 // GetOrder gets the order property value. The order of the page within its parent section. Read-only.
 func (m *OnenotePage) GetOrder()(*int32) {
-    return m.order
+    val, err := m.GetBackingStore().Get("order")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetParentNotebook gets the parentNotebook property value. The notebook that contains the page.  Read-only.
 func (m *OnenotePage) GetParentNotebook()(Notebookable) {
-    return m.parentNotebook
+    val, err := m.GetBackingStore().Get("parentNotebook")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(Notebookable)
+    }
+    return nil
 }
 // GetParentSection gets the parentSection property value. The section that contains the page. Read-only.
 func (m *OnenotePage) GetParentSection()(OnenoteSectionable) {
-    return m.parentSection
+    val, err := m.GetBackingStore().Get("parentSection")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(OnenoteSectionable)
+    }
+    return nil
 }
 // GetTitle gets the title property value. The title of the page.
 func (m *OnenotePage) GetTitle()(*string) {
-    return m.title
+    val, err := m.GetBackingStore().Get("title")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserTags gets the userTags property value. The userTags property
 func (m *OnenotePage) GetUserTags()([]string) {
-    return m.userTags
+    val, err := m.GetBackingStore().Get("userTags")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OnenotePage) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -181,45 +338,105 @@ func (m *OnenotePage) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6
 }
 // SetContent sets the content property value. The page's HTML content.
 func (m *OnenotePage) SetContent(value []byte)() {
-    m.content = value
+    err := m.GetBackingStore().Set("content", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentUrl sets the contentUrl property value. The URL for the page's HTML content.  Read-only.
 func (m *OnenotePage) SetContentUrl(value *string)() {
-    m.contentUrl = value
+    err := m.GetBackingStore().Set("contentUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCreatedByAppId sets the createdByAppId property value. The unique identifier of the application that created the page. Read-only.
 func (m *OnenotePage) SetCreatedByAppId(value *string)() {
-    m.createdByAppId = value
+    err := m.GetBackingStore().Set("createdByAppId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastModifiedDateTime sets the lastModifiedDateTime property value. The date and time when the page was last modified. The timestamp represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z. Read-only.
 func (m *OnenotePage) SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastModifiedDateTime = value
+    err := m.GetBackingStore().Set("lastModifiedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLevel sets the level property value. The indentation level of the page. Read-only.
 func (m *OnenotePage) SetLevel(value *int32)() {
-    m.level = value
+    err := m.GetBackingStore().Set("level", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLinks sets the links property value. Links for opening the page. The oneNoteClientURL link opens the page in the OneNote native client if it 's installed. The oneNoteWebUrl link opens the page in OneNote on the web. Read-only.
 func (m *OnenotePage) SetLinks(value PageLinksable)() {
-    m.links = value
+    err := m.GetBackingStore().Set("links", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOrder sets the order property value. The order of the page within its parent section. Read-only.
 func (m *OnenotePage) SetOrder(value *int32)() {
-    m.order = value
+    err := m.GetBackingStore().Set("order", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentNotebook sets the parentNotebook property value. The notebook that contains the page.  Read-only.
 func (m *OnenotePage) SetParentNotebook(value Notebookable)() {
-    m.parentNotebook = value
+    err := m.GetBackingStore().Set("parentNotebook", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetParentSection sets the parentSection property value. The section that contains the page. Read-only.
 func (m *OnenotePage) SetParentSection(value OnenoteSectionable)() {
-    m.parentSection = value
+    err := m.GetBackingStore().Set("parentSection", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTitle sets the title property value. The title of the page.
 func (m *OnenotePage) SetTitle(value *string)() {
-    m.title = value
+    err := m.GetBackingStore().Set("title", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserTags sets the userTags property value. The userTags property
 func (m *OnenotePage) SetUserTags(value []string)() {
-    m.userTags = value
+    err := m.GetBackingStore().Set("userTags", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OnenotePageable 
+type OnenotePageable interface {
+    OnenoteEntitySchemaObjectModelable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetContent()([]byte)
+    GetContentUrl()(*string)
+    GetCreatedByAppId()(*string)
+    GetLastModifiedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetLevel()(*int32)
+    GetLinks()(PageLinksable)
+    GetOrder()(*int32)
+    GetParentNotebook()(Notebookable)
+    GetParentSection()(OnenoteSectionable)
+    GetTitle()(*string)
+    GetUserTags()([]string)
+    SetContent(value []byte)()
+    SetContentUrl(value *string)()
+    SetCreatedByAppId(value *string)()
+    SetLastModifiedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetLevel(value *int32)()
+    SetLinks(value PageLinksable)()
+    SetOrder(value *int32)()
+    SetParentNotebook(value Notebookable)()
+    SetParentSection(value OnenoteSectionable)()
+    SetTitle(value *string)()
+    SetUserTags(value []string)()
 }

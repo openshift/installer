@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the getMailTips method.
+// 
 type MailTipsType int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i MailTipsType) String() string {
     return []string{"automaticReplies", "mailboxFullStatus", "customMailTip", "externalMemberCount", "totalMemberCount", "maxMessageSize", "deliveryRestriction", "moderationStatus", "recipientScope", "recipientSuggestions"}[i]
 }
-func ParseMailTipsType(v string) (interface{}, error) {
+func ParseMailTipsType(v string) (any, error) {
     result := AUTOMATICREPLIES_MAILTIPSTYPE
     switch v {
         case "automaticReplies":

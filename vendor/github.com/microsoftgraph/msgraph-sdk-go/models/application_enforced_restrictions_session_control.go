@@ -13,8 +13,8 @@ func NewApplicationEnforcedRestrictionsSessionControl()(*ApplicationEnforcedRest
     m := &ApplicationEnforcedRestrictionsSessionControl{
         ConditionalAccessSessionControl: *NewConditionalAccessSessionControl(),
     }
-    odataTypeValue := "#microsoft.graph.applicationEnforcedRestrictionsSessionControl";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.applicationEnforcedRestrictionsSessionControl"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateApplicationEnforcedRestrictionsSessionControlFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *ApplicationEnforcedRestrictionsSessionControl) Serialize(writer i878a80
         return err
     }
     return nil
+}
+// ApplicationEnforcedRestrictionsSessionControlable 
+type ApplicationEnforcedRestrictionsSessionControlable interface {
+    ConditionalAccessSessionControlable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

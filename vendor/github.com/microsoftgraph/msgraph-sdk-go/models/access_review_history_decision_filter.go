@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AccessReviewHistoryDecisionFilter int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i AccessReviewHistoryDecisionFilter) String() string {
     return []string{"approve", "deny", "notReviewed", "dontKnow", "notNotified", "unknownFutureValue"}[i]
 }
-func ParseAccessReviewHistoryDecisionFilter(v string) (interface{}, error) {
+func ParseAccessReviewHistoryDecisionFilter(v string) (any, error) {
     result := APPROVE_ACCESSREVIEWHISTORYDECISIONFILTER
     switch v {
         case "approve":

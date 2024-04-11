@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AccessReviewExpirationBehavior int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i AccessReviewExpirationBehavior) String() string {
     return []string{"keepAccess", "removeAccess", "acceptAccessRecommendation", "unknownFutureValue"}[i]
 }
-func ParseAccessReviewExpirationBehavior(v string) (interface{}, error) {
+func ParseAccessReviewExpirationBehavior(v string) (any, error) {
     result := KEEPACCESS_ACCESSREVIEWEXPIRATIONBEHAVIOR
     switch v {
         case "keepAccess":

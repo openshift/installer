@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // EnrollmentConfigurationAssignment enrollment Configuration Assignment
 type EnrollmentConfigurationAssignment struct {
     Entity
-    // Represents an assignment to managed devices in the tenant
-    target DeviceAndAppManagementAssignmentTargetable
 }
 // NewEnrollmentConfigurationAssignment instantiates a new enrollmentConfigurationAssignment and sets the default values.
 func NewEnrollmentConfigurationAssignment()(*EnrollmentConfigurationAssignment) {
@@ -25,12 +22,28 @@ func CreateEnrollmentConfigurationAssignmentFromDiscriminatorValue(parseNode i87
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EnrollmentConfigurationAssignment) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["target"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateDeviceAndAppManagementAssignmentTargetFromDiscriminatorValue , m.SetTarget)
+    res["target"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateDeviceAndAppManagementAssignmentTargetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTarget(val.(DeviceAndAppManagementAssignmentTargetable))
+        }
+        return nil
+    }
     return res
 }
 // GetTarget gets the target property value. Represents an assignment to managed devices in the tenant
 func (m *EnrollmentConfigurationAssignment) GetTarget()(DeviceAndAppManagementAssignmentTargetable) {
-    return m.target
+    val, err := m.GetBackingStore().Get("target")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(DeviceAndAppManagementAssignmentTargetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EnrollmentConfigurationAssignment) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -48,5 +61,15 @@ func (m *EnrollmentConfigurationAssignment) Serialize(writer i878a80d2330e89d268
 }
 // SetTarget sets the target property value. Represents an assignment to managed devices in the tenant
 func (m *EnrollmentConfigurationAssignment) SetTarget(value DeviceAndAppManagementAssignmentTargetable)() {
-    m.target = value
+    err := m.GetBackingStore().Set("target", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EnrollmentConfigurationAssignmentable 
+type EnrollmentConfigurationAssignmentable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetTarget()(DeviceAndAppManagementAssignmentTargetable)
+    SetTarget(value DeviceAndAppManagementAssignmentTargetable)()
 }

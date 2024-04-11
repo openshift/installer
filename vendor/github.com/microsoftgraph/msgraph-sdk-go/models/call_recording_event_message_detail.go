@@ -1,35 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // CallRecordingEventMessageDetail 
 type CallRecordingEventMessageDetail struct {
     EventMessageDetail
-    // Unique identifier of the call.
-    callId *string
-    // Display name for the call recording.
-    callRecordingDisplayName *string
-    // Duration of the call recording.
-    callRecordingDuration *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration
-    // Status of the call recording. Possible values are: success, failure, initial, chunkFinished, unknownFutureValue.
-    callRecordingStatus *CallRecordingStatus
-    // Call recording URL.
-    callRecordingUrl *string
-    // Initiator of the event.
-    initiator IdentitySetable
-    // Organizer of the meeting.
-    meetingOrganizer IdentitySetable
 }
 // NewCallRecordingEventMessageDetail instantiates a new CallRecordingEventMessageDetail and sets the default values.
 func NewCallRecordingEventMessageDetail()(*CallRecordingEventMessageDetail) {
     m := &CallRecordingEventMessageDetail{
         EventMessageDetail: *NewEventMessageDetail(),
     }
-    odataTypeValue := "#microsoft.graph.callRecordingEventMessageDetail";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.callRecordingEventMessageDetail"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateCallRecordingEventMessageDetailFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -38,43 +23,155 @@ func CreateCallRecordingEventMessageDetailFromDiscriminatorValue(parseNode i878a
 }
 // GetCallId gets the callId property value. Unique identifier of the call.
 func (m *CallRecordingEventMessageDetail) GetCallId()(*string) {
-    return m.callId
+    val, err := m.GetBackingStore().Get("callId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCallRecordingDisplayName gets the callRecordingDisplayName property value. Display name for the call recording.
 func (m *CallRecordingEventMessageDetail) GetCallRecordingDisplayName()(*string) {
-    return m.callRecordingDisplayName
+    val, err := m.GetBackingStore().Get("callRecordingDisplayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetCallRecordingDuration gets the callRecordingDuration property value. Duration of the call recording.
 func (m *CallRecordingEventMessageDetail) GetCallRecordingDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration) {
-    return m.callRecordingDuration
+    val, err := m.GetBackingStore().Get("callRecordingDuration")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    }
+    return nil
 }
 // GetCallRecordingStatus gets the callRecordingStatus property value. Status of the call recording. Possible values are: success, failure, initial, chunkFinished, unknownFutureValue.
 func (m *CallRecordingEventMessageDetail) GetCallRecordingStatus()(*CallRecordingStatus) {
-    return m.callRecordingStatus
+    val, err := m.GetBackingStore().Get("callRecordingStatus")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*CallRecordingStatus)
+    }
+    return nil
 }
 // GetCallRecordingUrl gets the callRecordingUrl property value. Call recording URL.
 func (m *CallRecordingEventMessageDetail) GetCallRecordingUrl()(*string) {
-    return m.callRecordingUrl
+    val, err := m.GetBackingStore().Get("callRecordingUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CallRecordingEventMessageDetail) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.EventMessageDetail.GetFieldDeserializers()
-    res["callId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCallId)
-    res["callRecordingDisplayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCallRecordingDisplayName)
-    res["callRecordingDuration"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetISODurationValue(m.SetCallRecordingDuration)
-    res["callRecordingStatus"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseCallRecordingStatus , m.SetCallRecordingStatus)
-    res["callRecordingUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCallRecordingUrl)
-    res["initiator"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetInitiator)
-    res["meetingOrganizer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateIdentitySetFromDiscriminatorValue , m.SetMeetingOrganizer)
+    res["callId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallId(val)
+        }
+        return nil
+    }
+    res["callRecordingDisplayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallRecordingDisplayName(val)
+        }
+        return nil
+    }
+    res["callRecordingDuration"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetISODurationValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallRecordingDuration(val)
+        }
+        return nil
+    }
+    res["callRecordingStatus"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseCallRecordingStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallRecordingStatus(val.(*CallRecordingStatus))
+        }
+        return nil
+    }
+    res["callRecordingUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCallRecordingUrl(val)
+        }
+        return nil
+    }
+    res["initiator"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInitiator(val.(IdentitySetable))
+        }
+        return nil
+    }
+    res["meetingOrganizer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateIdentitySetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMeetingOrganizer(val.(IdentitySetable))
+        }
+        return nil
+    }
     return res
 }
 // GetInitiator gets the initiator property value. Initiator of the event.
 func (m *CallRecordingEventMessageDetail) GetInitiator()(IdentitySetable) {
-    return m.initiator
+    val, err := m.GetBackingStore().Get("initiator")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // GetMeetingOrganizer gets the meetingOrganizer property value. Organizer of the meeting.
 func (m *CallRecordingEventMessageDetail) GetMeetingOrganizer()(IdentitySetable) {
-    return m.meetingOrganizer
+    val, err := m.GetBackingStore().Get("meetingOrganizer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(IdentitySetable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *CallRecordingEventMessageDetail) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -129,29 +226,69 @@ func (m *CallRecordingEventMessageDetail) Serialize(writer i878a80d2330e89d26896
 }
 // SetCallId sets the callId property value. Unique identifier of the call.
 func (m *CallRecordingEventMessageDetail) SetCallId(value *string)() {
-    m.callId = value
+    err := m.GetBackingStore().Set("callId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallRecordingDisplayName sets the callRecordingDisplayName property value. Display name for the call recording.
 func (m *CallRecordingEventMessageDetail) SetCallRecordingDisplayName(value *string)() {
-    m.callRecordingDisplayName = value
+    err := m.GetBackingStore().Set("callRecordingDisplayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallRecordingDuration sets the callRecordingDuration property value. Duration of the call recording.
 func (m *CallRecordingEventMessageDetail) SetCallRecordingDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)() {
-    m.callRecordingDuration = value
+    err := m.GetBackingStore().Set("callRecordingDuration", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallRecordingStatus sets the callRecordingStatus property value. Status of the call recording. Possible values are: success, failure, initial, chunkFinished, unknownFutureValue.
 func (m *CallRecordingEventMessageDetail) SetCallRecordingStatus(value *CallRecordingStatus)() {
-    m.callRecordingStatus = value
+    err := m.GetBackingStore().Set("callRecordingStatus", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCallRecordingUrl sets the callRecordingUrl property value. Call recording URL.
 func (m *CallRecordingEventMessageDetail) SetCallRecordingUrl(value *string)() {
-    m.callRecordingUrl = value
+    err := m.GetBackingStore().Set("callRecordingUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInitiator sets the initiator property value. Initiator of the event.
 func (m *CallRecordingEventMessageDetail) SetInitiator(value IdentitySetable)() {
-    m.initiator = value
+    err := m.GetBackingStore().Set("initiator", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMeetingOrganizer sets the meetingOrganizer property value. Organizer of the meeting.
 func (m *CallRecordingEventMessageDetail) SetMeetingOrganizer(value IdentitySetable)() {
-    m.meetingOrganizer = value
+    err := m.GetBackingStore().Set("meetingOrganizer", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CallRecordingEventMessageDetailable 
+type CallRecordingEventMessageDetailable interface {
+    EventMessageDetailable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCallId()(*string)
+    GetCallRecordingDisplayName()(*string)
+    GetCallRecordingDuration()(*i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)
+    GetCallRecordingStatus()(*CallRecordingStatus)
+    GetCallRecordingUrl()(*string)
+    GetInitiator()(IdentitySetable)
+    GetMeetingOrganizer()(IdentitySetable)
+    SetCallId(value *string)()
+    SetCallRecordingDisplayName(value *string)()
+    SetCallRecordingDuration(value *i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ISODuration)()
+    SetCallRecordingStatus(value *CallRecordingStatus)()
+    SetCallRecordingUrl(value *string)()
+    SetInitiator(value IdentitySetable)()
+    SetMeetingOrganizer(value IdentitySetable)()
 }

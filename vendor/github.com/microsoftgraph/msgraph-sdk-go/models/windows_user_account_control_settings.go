@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values for Windows user account control settings.
 type WindowsUserAccountControlSettings int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i WindowsUserAccountControlSettings) String() string {
     return []string{"userDefined", "alwaysNotify", "notifyOnAppChanges", "notifyOnAppChangesWithoutDimming", "neverNotify"}[i]
 }
-func ParseWindowsUserAccountControlSettings(v string) (interface{}, error) {
+func ParseWindowsUserAccountControlSettings(v string) (any, error) {
     result := USERDEFINED_WINDOWSUSERACCOUNTCONTROLSETTINGS
     switch v {
         case "userDefined":

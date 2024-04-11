@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains all supported Powershell Script output detection type.
 type Win32LobAppPowerShellScriptRuleOperationType int
 
 const (
@@ -25,7 +25,7 @@ const (
 func (i Win32LobAppPowerShellScriptRuleOperationType) String() string {
     return []string{"notConfigured", "string", "dateTime", "integer", "float", "version", "boolean"}[i]
 }
-func ParseWin32LobAppPowerShellScriptRuleOperationType(v string) (interface{}, error) {
+func ParseWin32LobAppPowerShellScriptRuleOperationType(v string) (any, error) {
     result := NOTCONFIGURED_WIN32LOBAPPPOWERSHELLSCRIPTRULEOPERATIONTYPE
     switch v {
         case "notConfigured":

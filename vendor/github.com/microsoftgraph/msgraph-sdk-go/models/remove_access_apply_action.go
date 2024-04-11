@@ -13,8 +13,8 @@ func NewRemoveAccessApplyAction()(*RemoveAccessApplyAction) {
     m := &RemoveAccessApplyAction{
         AccessReviewApplyAction: *NewAccessReviewApplyAction(),
     }
-    odataTypeValue := "#microsoft.graph.removeAccessApplyAction";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.removeAccessApplyAction"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateRemoveAccessApplyActionFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *RemoveAccessApplyAction) Serialize(writer i878a80d2330e89d26896388a3f48
         return err
     }
     return nil
+}
+// RemoveAccessApplyActionable 
+type RemoveAccessApplyActionable interface {
+    AccessReviewApplyActionable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

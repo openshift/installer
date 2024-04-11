@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the admin singleton.
+// 
 type ServiceHealthOrigin int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i ServiceHealthOrigin) String() string {
     return []string{"microsoft", "thirdParty", "customer", "unknownFutureValue"}[i]
 }
-func ParseServiceHealthOrigin(v string) (interface{}, error) {
+func ParseServiceHealthOrigin(v string) (any, error) {
     result := MICROSOFT_SERVICEHEALTHORIGIN
     switch v {
         case "microsoft":

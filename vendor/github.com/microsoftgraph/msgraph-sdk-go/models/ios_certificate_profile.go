@@ -13,8 +13,8 @@ func NewIosCertificateProfile()(*IosCertificateProfile) {
     m := &IosCertificateProfile{
         DeviceConfiguration: *NewDeviceConfiguration(),
     }
-    odataTypeValue := "#microsoft.graph.iosCertificateProfile";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.iosCertificateProfile"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateIosCertificateProfileFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,4 +33,9 @@ func (m *IosCertificateProfile) Serialize(writer i878a80d2330e89d26896388a3f487e
         return err
     }
     return nil
+}
+// IosCertificateProfileable 
+type IosCertificateProfileable interface {
+    DeviceConfigurationable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
 }

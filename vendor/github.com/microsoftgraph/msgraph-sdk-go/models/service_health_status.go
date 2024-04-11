@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the admin singleton.
+// 
 type ServiceHealthStatus int
 
 const (
@@ -29,7 +29,7 @@ const (
 func (i ServiceHealthStatus) String() string {
     return []string{"serviceOperational", "investigating", "restoringService", "verifyingService", "serviceRestored", "postIncidentReviewPublished", "serviceDegradation", "serviceInterruption", "extendedRecovery", "falsePositive", "investigationSuspended", "resolved", "mitigatedExternal", "mitigated", "resolvedExternal", "confirmed", "reported", "unknownFutureValue"}[i]
 }
-func ParseServiceHealthStatus(v string) (interface{}, error) {
+func ParseServiceHealthStatus(v string) (any, error) {
     result := SERVICEOPERATIONAL_SERVICEHEALTHSTATUS
     switch v {
         case "serviceOperational":

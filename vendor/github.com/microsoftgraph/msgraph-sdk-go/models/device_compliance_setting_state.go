@@ -2,35 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // DeviceComplianceSettingState device compliance setting State for a given device.
 type DeviceComplianceSettingState struct {
     Entity
-    // The DateTime when device compliance grace period expires
-    complianceGracePeriodExpirationDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The Device Id that is being reported
-    deviceId *string
-    // The device model that is being reported
-    deviceModel *string
-    // The Device Name that is being reported
-    deviceName *string
-    // The setting class name and property name.
-    setting *string
-    // The Setting Name that is being reported
-    settingName *string
-    // The state property
-    state *ComplianceStatus
-    // The User email address that is being reported
-    userEmail *string
-    // The user Id that is being reported
-    userId *string
-    // The User Name that is being reported
-    userName *string
-    // The User PrincipalName that is being reported
-    userPrincipalName *string
 }
 // NewDeviceComplianceSettingState instantiates a new deviceComplianceSettingState and sets the default values.
 func NewDeviceComplianceSettingState()(*DeviceComplianceSettingState) {
@@ -45,63 +22,239 @@ func CreateDeviceComplianceSettingStateFromDiscriminatorValue(parseNode i878a80d
 }
 // GetComplianceGracePeriodExpirationDateTime gets the complianceGracePeriodExpirationDateTime property value. The DateTime when device compliance grace period expires
 func (m *DeviceComplianceSettingState) GetComplianceGracePeriodExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.complianceGracePeriodExpirationDateTime
+    val, err := m.GetBackingStore().Get("complianceGracePeriodExpirationDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetDeviceId gets the deviceId property value. The Device Id that is being reported
 func (m *DeviceComplianceSettingState) GetDeviceId()(*string) {
-    return m.deviceId
+    val, err := m.GetBackingStore().Get("deviceId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceModel gets the deviceModel property value. The device model that is being reported
 func (m *DeviceComplianceSettingState) GetDeviceModel()(*string) {
-    return m.deviceModel
+    val, err := m.GetBackingStore().Get("deviceModel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeviceName gets the deviceName property value. The Device Name that is being reported
 func (m *DeviceComplianceSettingState) GetDeviceName()(*string) {
-    return m.deviceName
+    val, err := m.GetBackingStore().Get("deviceName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceComplianceSettingState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["complianceGracePeriodExpirationDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetComplianceGracePeriodExpirationDateTime)
-    res["deviceId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceId)
-    res["deviceModel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceModel)
-    res["deviceName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeviceName)
-    res["setting"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSetting)
-    res["settingName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetSettingName)
-    res["state"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseComplianceStatus , m.SetState)
-    res["userEmail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserEmail)
-    res["userId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserId)
-    res["userName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserName)
-    res["userPrincipalName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetUserPrincipalName)
+    res["complianceGracePeriodExpirationDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetComplianceGracePeriodExpirationDateTime(val)
+        }
+        return nil
+    }
+    res["deviceId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceId(val)
+        }
+        return nil
+    }
+    res["deviceModel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceModel(val)
+        }
+        return nil
+    }
+    res["deviceName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceName(val)
+        }
+        return nil
+    }
+    res["setting"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSetting(val)
+        }
+        return nil
+    }
+    res["settingName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSettingName(val)
+        }
+        return nil
+    }
+    res["state"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseComplianceStatus)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetState(val.(*ComplianceStatus))
+        }
+        return nil
+    }
+    res["userEmail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserEmail(val)
+        }
+        return nil
+    }
+    res["userId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserId(val)
+        }
+        return nil
+    }
+    res["userName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserName(val)
+        }
+        return nil
+    }
+    res["userPrincipalName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUserPrincipalName(val)
+        }
+        return nil
+    }
     return res
 }
 // GetSetting gets the setting property value. The setting class name and property name.
 func (m *DeviceComplianceSettingState) GetSetting()(*string) {
-    return m.setting
+    val, err := m.GetBackingStore().Get("setting")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSettingName gets the settingName property value. The Setting Name that is being reported
 func (m *DeviceComplianceSettingState) GetSettingName()(*string) {
-    return m.settingName
+    val, err := m.GetBackingStore().Get("settingName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetState gets the state property value. The state property
 func (m *DeviceComplianceSettingState) GetState()(*ComplianceStatus) {
-    return m.state
+    val, err := m.GetBackingStore().Get("state")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*ComplianceStatus)
+    }
+    return nil
 }
 // GetUserEmail gets the userEmail property value. The User email address that is being reported
 func (m *DeviceComplianceSettingState) GetUserEmail()(*string) {
-    return m.userEmail
+    val, err := m.GetBackingStore().Get("userEmail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserId gets the userId property value. The user Id that is being reported
 func (m *DeviceComplianceSettingState) GetUserId()(*string) {
-    return m.userId
+    val, err := m.GetBackingStore().Get("userId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserName gets the userName property value. The User Name that is being reported
 func (m *DeviceComplianceSettingState) GetUserName()(*string) {
-    return m.userName
+    val, err := m.GetBackingStore().Get("userName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetUserPrincipalName gets the userPrincipalName property value. The User PrincipalName that is being reported
 func (m *DeviceComplianceSettingState) GetUserPrincipalName()(*string) {
-    return m.userPrincipalName
+    val, err := m.GetBackingStore().Get("userPrincipalName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceComplianceSettingState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -180,45 +333,105 @@ func (m *DeviceComplianceSettingState) Serialize(writer i878a80d2330e89d26896388
 }
 // SetComplianceGracePeriodExpirationDateTime sets the complianceGracePeriodExpirationDateTime property value. The DateTime when device compliance grace period expires
 func (m *DeviceComplianceSettingState) SetComplianceGracePeriodExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.complianceGracePeriodExpirationDateTime = value
+    err := m.GetBackingStore().Set("complianceGracePeriodExpirationDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceId sets the deviceId property value. The Device Id that is being reported
 func (m *DeviceComplianceSettingState) SetDeviceId(value *string)() {
-    m.deviceId = value
+    err := m.GetBackingStore().Set("deviceId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceModel sets the deviceModel property value. The device model that is being reported
 func (m *DeviceComplianceSettingState) SetDeviceModel(value *string)() {
-    m.deviceModel = value
+    err := m.GetBackingStore().Set("deviceModel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceName sets the deviceName property value. The Device Name that is being reported
 func (m *DeviceComplianceSettingState) SetDeviceName(value *string)() {
-    m.deviceName = value
+    err := m.GetBackingStore().Set("deviceName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSetting sets the setting property value. The setting class name and property name.
 func (m *DeviceComplianceSettingState) SetSetting(value *string)() {
-    m.setting = value
+    err := m.GetBackingStore().Set("setting", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSettingName sets the settingName property value. The Setting Name that is being reported
 func (m *DeviceComplianceSettingState) SetSettingName(value *string)() {
-    m.settingName = value
+    err := m.GetBackingStore().Set("settingName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetState sets the state property value. The state property
 func (m *DeviceComplianceSettingState) SetState(value *ComplianceStatus)() {
-    m.state = value
+    err := m.GetBackingStore().Set("state", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserEmail sets the userEmail property value. The User email address that is being reported
 func (m *DeviceComplianceSettingState) SetUserEmail(value *string)() {
-    m.userEmail = value
+    err := m.GetBackingStore().Set("userEmail", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserId sets the userId property value. The user Id that is being reported
 func (m *DeviceComplianceSettingState) SetUserId(value *string)() {
-    m.userId = value
+    err := m.GetBackingStore().Set("userId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserName sets the userName property value. The User Name that is being reported
 func (m *DeviceComplianceSettingState) SetUserName(value *string)() {
-    m.userName = value
+    err := m.GetBackingStore().Set("userName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUserPrincipalName sets the userPrincipalName property value. The User PrincipalName that is being reported
 func (m *DeviceComplianceSettingState) SetUserPrincipalName(value *string)() {
-    m.userPrincipalName = value
+    err := m.GetBackingStore().Set("userPrincipalName", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceComplianceSettingStateable 
+type DeviceComplianceSettingStateable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetComplianceGracePeriodExpirationDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetDeviceId()(*string)
+    GetDeviceModel()(*string)
+    GetDeviceName()(*string)
+    GetSetting()(*string)
+    GetSettingName()(*string)
+    GetState()(*ComplianceStatus)
+    GetUserEmail()(*string)
+    GetUserId()(*string)
+    GetUserName()(*string)
+    GetUserPrincipalName()(*string)
+    SetComplianceGracePeriodExpirationDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetDeviceId(value *string)()
+    SetDeviceModel(value *string)()
+    SetDeviceName(value *string)()
+    SetSetting(value *string)()
+    SetSettingName(value *string)()
+    SetState(value *ComplianceStatus)()
+    SetUserEmail(value *string)()
+    SetUserId(value *string)()
+    SetUserName(value *string)()
+    SetUserPrincipalName(value *string)()
 }

@@ -22,11 +22,23 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 )
 
-// NewScheme creates a new Scheme
-func NewScheme() (*runtime.Scheme, error) {
-	return SchemeBuilder.Build()
+var scheme = runtime.NewScheme()
+var codecFactory = serializer.NewCodecFactory(scheme)
+var encoder runtime.Encoder = nil
+var Codec *ProviderCodec = nil
+
+func init() {
+	utilruntime.Must(Install(scheme))
+	var err error
+	encoder, err = newEncoder(&codecFactory)
+	utilruntime.Must(err)
+	Codec = &ProviderCodec{
+		encoder: encoder,
+		decoder: codecFactory.UniversalDecoder(SchemeGroupVersion),
+	}
 }
 
 // ProviderCodec is a runtime codec for providers.
@@ -34,24 +46,6 @@ func NewScheme() (*runtime.Scheme, error) {
 type ProviderCodec struct {
 	encoder runtime.Encoder
 	decoder runtime.Decoder
-}
-
-// NewCodec creates a serializer/deserializer for the provider configuration
-func NewCodec() (*ProviderCodec, error) {
-	scheme, err := NewScheme()
-	if err != nil {
-		return nil, err
-	}
-	codecFactory := serializer.NewCodecFactory(scheme)
-	encoder, err := newEncoder(&codecFactory)
-	if err != nil {
-		return nil, err
-	}
-	codec := ProviderCodec{
-		encoder: encoder,
-		decoder: codecFactory.UniversalDecoder(SchemeGroupVersion),
-	}
-	return &codec, nil
 }
 
 // EncodeProvider serializes an object to the provider spec.

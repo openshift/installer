@@ -9,12 +9,16 @@ import (
 
 	"github.com/google/uuid"
 
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	absser "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // JsonSerializationWriter implements SerializationWriter for JSON.
 type JsonSerializationWriter struct {
-	writer []string
+	writer                     []string
+	onBeforeAssignFieldValues  absser.ParsableAction
+	onAfterAssignFieldValues   absser.ParsableAction
+	onStartObjectSerialization absser.ParsableWriter
 }
 
 // NewJsonSerializationWriter creates a new instance of the JsonSerializationWriter.
@@ -250,26 +254,32 @@ func (w *JsonSerializationWriter) WriteObjectValue(key string, item absser.Parsa
 		if key != "" {
 			w.writePropertyName(key)
 		}
-		//TODO onBefore for backing store
+		abstractions.InvokeParsableAction(w.GetOnBeforeSerialization(), item)
 		w.writeObjectStart()
 		if item != nil {
-			//TODO onStart for backing store
-			err := item.Serialize(w)
+			err := abstractions.InvokeParsableWriter(w.GetOnStartObjectSerialization(), item, w)
+			if err != nil {
+				return err
+			}
+			err = item.Serialize(w)
 
-			//TODO onAfter for backing store
+			abstractions.InvokeParsableAction(w.GetOnAfterObjectSerialization(), item)
 			if err != nil {
 				return err
 			}
 		}
 
 		for _, additionalValue := range additionalValuesToMerge {
-			//TODO onBefore for backing store
-			//TODO onStart for backing store
-			err := additionalValue.Serialize(w)
+			abstractions.InvokeParsableAction(w.GetOnBeforeSerialization(), additionalValue)
+			err := abstractions.InvokeParsableWriter(w.GetOnStartObjectSerialization(), additionalValue, w)
 			if err != nil {
 				return err
 			}
-			//TODO onAfter for backing store
+			err = additionalValue.Serialize(w)
+			if err != nil {
+				return err
+			}
+			abstractions.InvokeParsableAction(w.GetOnAfterObjectSerialization(), additionalValue)
 		}
 
 		w.writeObjectEnd()
@@ -627,6 +637,47 @@ func (w *JsonSerializationWriter) WriteAnyValue(key string, value interface{}) e
 			w.writePropertySeparator()
 		}
 	}
+	return nil
+}
+
+func (w *JsonSerializationWriter) WriteNullValue(key string) error {
+	if key != "" {
+		w.writePropertyName(key)
+	}
+
+	w.writeRawValue("null")
+
+	if key != "" {
+		w.writePropertySeparator()
+	}
+
+	return nil
+}
+
+func (w *JsonSerializationWriter) GetOnBeforeSerialization() absser.ParsableAction {
+	return w.onBeforeAssignFieldValues
+}
+
+func (w *JsonSerializationWriter) SetOnBeforeSerialization(action absser.ParsableAction) error {
+	w.onBeforeAssignFieldValues = action
+	return nil
+}
+
+func (w *JsonSerializationWriter) GetOnAfterObjectSerialization() absser.ParsableAction {
+	return w.onAfterAssignFieldValues
+}
+
+func (w *JsonSerializationWriter) SetOnAfterObjectSerialization(action absser.ParsableAction) error {
+	w.onAfterAssignFieldValues = action
+	return nil
+}
+
+func (w *JsonSerializationWriter) GetOnStartObjectSerialization() absser.ParsableWriter {
+	return w.onStartObjectSerialization
+}
+
+func (w *JsonSerializationWriter) SetOnStartObjectSerialization(writer absser.ParsableWriter) error {
+	w.onStartObjectSerialization = writer
 	return nil
 }
 

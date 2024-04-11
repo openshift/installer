@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type AccessPackageCatalogType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i AccessPackageCatalogType) String() string {
     return []string{"userManaged", "serviceDefault", "serviceManaged", "unknownFutureValue"}[i]
 }
-func ParseAccessPackageCatalogType(v string) (interface{}, error) {
+func ParseAccessPackageCatalogType(v string) (any, error) {
     result := USERMANAGED_ACCESSPACKAGECATALOGTYPE
     switch v {
         case "userManaged":

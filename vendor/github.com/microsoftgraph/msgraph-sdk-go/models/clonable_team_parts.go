@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the clone method.
+// 
 type ClonableTeamParts int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i ClonableTeamParts) String() string {
     return []string{"apps", "tabs", "settings", "channels", "members"}[i]
 }
-func ParseClonableTeamParts(v string) (interface{}, error) {
+func ParseClonableTeamParts(v string) (any, error) {
     result := APPS_CLONABLETEAMPARTS
     switch v {
         case "apps":

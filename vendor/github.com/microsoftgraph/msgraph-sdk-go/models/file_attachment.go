@@ -1,27 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // FileAttachment 
 type FileAttachment struct {
     Attachment
-    // The base64-encoded contents of the file.
-    contentBytes []byte
-    // The ID of the attachment in the Exchange store.
-    contentId *string
-    // Do not use this property as it is not supported.
-    contentLocation *string
 }
 // NewFileAttachment instantiates a new FileAttachment and sets the default values.
 func NewFileAttachment()(*FileAttachment) {
     m := &FileAttachment{
         Attachment: *NewAttachment(),
     }
-    odataTypeValue := "#microsoft.graph.fileAttachment";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.fileAttachment"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateFileAttachmentFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -30,22 +23,70 @@ func CreateFileAttachmentFromDiscriminatorValue(parseNode i878a80d2330e89d268963
 }
 // GetContentBytes gets the contentBytes property value. The base64-encoded contents of the file.
 func (m *FileAttachment) GetContentBytes()([]byte) {
-    return m.contentBytes
+    val, err := m.GetBackingStore().Get("contentBytes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetContentId gets the contentId property value. The ID of the attachment in the Exchange store.
 func (m *FileAttachment) GetContentId()(*string) {
-    return m.contentId
+    val, err := m.GetBackingStore().Get("contentId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetContentLocation gets the contentLocation property value. Do not use this property as it is not supported.
 func (m *FileAttachment) GetContentLocation()(*string) {
-    return m.contentLocation
+    val, err := m.GetBackingStore().Get("contentLocation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *FileAttachment) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Attachment.GetFieldDeserializers()
-    res["contentBytes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetContentBytes)
-    res["contentId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentId)
-    res["contentLocation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetContentLocation)
+    res["contentBytes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentBytes(val)
+        }
+        return nil
+    }
+    res["contentId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentId(val)
+        }
+        return nil
+    }
+    res["contentLocation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetContentLocation(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -76,13 +117,33 @@ func (m *FileAttachment) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a
 }
 // SetContentBytes sets the contentBytes property value. The base64-encoded contents of the file.
 func (m *FileAttachment) SetContentBytes(value []byte)() {
-    m.contentBytes = value
+    err := m.GetBackingStore().Set("contentBytes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentId sets the contentId property value. The ID of the attachment in the Exchange store.
 func (m *FileAttachment) SetContentId(value *string)() {
-    m.contentId = value
+    err := m.GetBackingStore().Set("contentId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetContentLocation sets the contentLocation property value. Do not use this property as it is not supported.
 func (m *FileAttachment) SetContentLocation(value *string)() {
-    m.contentLocation = value
+    err := m.GetBackingStore().Set("contentLocation", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// FileAttachmentable 
+type FileAttachmentable interface {
+    Attachmentable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetContentBytes()([]byte)
+    GetContentId()(*string)
+    GetContentLocation()(*string)
+    SetContentBytes(value []byte)()
+    SetContentId(value *string)()
+    SetContentLocation(value *string)()
 }

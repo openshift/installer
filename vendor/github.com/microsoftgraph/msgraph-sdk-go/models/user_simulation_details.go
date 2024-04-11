@@ -2,40 +2,21 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // UserSimulationDetails 
 type UserSimulationDetails struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Number of trainings assigned to a user in an attack simulation and training campaign.
-    assignedTrainingsCount *int32
-    // Number of trainings completed by a user in an attack simulation and training campaign.
-    completedTrainingsCount *int32
-    // Date and time of the compromising online action by a user in an attack simulation and training campaign.
-    compromisedDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // Number of trainings in progress by a user in an attack simulation and training campaign.
-    inProgressTrainingsCount *int32
-    // Indicates whether a user was compromised in an attack simulation and training campaign.
-    isCompromised *bool
-    // The OdataType property
-    odataType *string
-    // Date and time when a user reported the delivered payload as phishing in the attack simulation and training campaign.
-    reportedPhishDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // List of simulation events of a user in the attack simulation and training campaign.
-    simulationEvents []UserSimulationEventInfoable
-    // User in an attack simulation and training campaign.
-    simulationUser AttackSimulationUserable
-    // List of training events of a user in the attack simulation and training campaign.
-    trainingEvents []UserTrainingEventInfoable
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewUserSimulationDetails instantiates a new userSimulationDetails and sets the default values.
 func NewUserSimulationDetails()(*UserSimulationDetails) {
     m := &UserSimulationDetails{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateUserSimulationDetailsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -43,63 +24,243 @@ func CreateUserSimulationDetailsFromDiscriminatorValue(parseNode i878a80d2330e89
     return NewUserSimulationDetails(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *UserSimulationDetails) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *UserSimulationDetails) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAssignedTrainingsCount gets the assignedTrainingsCount property value. Number of trainings assigned to a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetAssignedTrainingsCount()(*int32) {
-    return m.assignedTrainingsCount
+    val, err := m.GetBackingStore().Get("assignedTrainingsCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *UserSimulationDetails) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCompletedTrainingsCount gets the completedTrainingsCount property value. Number of trainings completed by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetCompletedTrainingsCount()(*int32) {
-    return m.completedTrainingsCount
+    val, err := m.GetBackingStore().Get("completedTrainingsCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetCompromisedDateTime gets the compromisedDateTime property value. Date and time of the compromising online action by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetCompromisedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.compromisedDateTime
+    val, err := m.GetBackingStore().Get("compromisedDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *UserSimulationDetails) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["assignedTrainingsCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetAssignedTrainingsCount)
-    res["completedTrainingsCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetCompletedTrainingsCount)
-    res["compromisedDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetCompromisedDateTime)
-    res["inProgressTrainingsCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetInProgressTrainingsCount)
-    res["isCompromised"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsCompromised)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["reportedPhishDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetReportedPhishDateTime)
-    res["simulationEvents"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserSimulationEventInfoFromDiscriminatorValue , m.SetSimulationEvents)
-    res["simulationUser"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAttackSimulationUserFromDiscriminatorValue , m.SetSimulationUser)
-    res["trainingEvents"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateUserTrainingEventInfoFromDiscriminatorValue , m.SetTrainingEvents)
+    res["assignedTrainingsCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAssignedTrainingsCount(val)
+        }
+        return nil
+    }
+    res["completedTrainingsCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCompletedTrainingsCount(val)
+        }
+        return nil
+    }
+    res["compromisedDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCompromisedDateTime(val)
+        }
+        return nil
+    }
+    res["inProgressTrainingsCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetInProgressTrainingsCount(val)
+        }
+        return nil
+    }
+    res["isCompromised"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsCompromised(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["reportedPhishDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetReportedPhishDateTime(val)
+        }
+        return nil
+    }
+    res["simulationEvents"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserSimulationEventInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserSimulationEventInfoable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserSimulationEventInfoable)
+            }
+            m.SetSimulationEvents(res)
+        }
+        return nil
+    }
+    res["simulationUser"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAttackSimulationUserFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSimulationUser(val.(AttackSimulationUserable))
+        }
+        return nil
+    }
+    res["trainingEvents"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateUserTrainingEventInfoFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]UserTrainingEventInfoable, len(val))
+            for i, v := range val {
+                res[i] = v.(UserTrainingEventInfoable)
+            }
+            m.SetTrainingEvents(res)
+        }
+        return nil
+    }
     return res
 }
 // GetInProgressTrainingsCount gets the inProgressTrainingsCount property value. Number of trainings in progress by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetInProgressTrainingsCount()(*int32) {
-    return m.inProgressTrainingsCount
+    val, err := m.GetBackingStore().Get("inProgressTrainingsCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetIsCompromised gets the isCompromised property value. Indicates whether a user was compromised in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetIsCompromised()(*bool) {
-    return m.isCompromised
+    val, err := m.GetBackingStore().Get("isCompromised")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *UserSimulationDetails) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetReportedPhishDateTime gets the reportedPhishDateTime property value. Date and time when a user reported the delivered payload as phishing in the attack simulation and training campaign.
 func (m *UserSimulationDetails) GetReportedPhishDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.reportedPhishDateTime
+    val, err := m.GetBackingStore().Get("reportedPhishDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetSimulationEvents gets the simulationEvents property value. List of simulation events of a user in the attack simulation and training campaign.
 func (m *UserSimulationDetails) GetSimulationEvents()([]UserSimulationEventInfoable) {
-    return m.simulationEvents
+    val, err := m.GetBackingStore().Get("simulationEvents")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserSimulationEventInfoable)
+    }
+    return nil
 }
 // GetSimulationUser gets the simulationUser property value. User in an attack simulation and training campaign.
 func (m *UserSimulationDetails) GetSimulationUser()(AttackSimulationUserable) {
-    return m.simulationUser
+    val, err := m.GetBackingStore().Get("simulationUser")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AttackSimulationUserable)
+    }
+    return nil
 }
 // GetTrainingEvents gets the trainingEvents property value. List of training events of a user in the attack simulation and training campaign.
 func (m *UserSimulationDetails) GetTrainingEvents()([]UserTrainingEventInfoable) {
-    return m.trainingEvents
+    val, err := m.GetBackingStore().Get("trainingEvents")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]UserTrainingEventInfoable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *UserSimulationDetails) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -146,7 +307,10 @@ func (m *UserSimulationDetails) Serialize(writer i878a80d2330e89d26896388a3f487e
         }
     }
     if m.GetSimulationEvents() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSimulationEvents())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSimulationEvents()))
+        for i, v := range m.GetSimulationEvents() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("simulationEvents", cast)
         if err != nil {
             return err
@@ -159,7 +323,10 @@ func (m *UserSimulationDetails) Serialize(writer i878a80d2330e89d26896388a3f487e
         }
     }
     if m.GetTrainingEvents() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetTrainingEvents())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetTrainingEvents()))
+        for i, v := range m.GetTrainingEvents() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("trainingEvents", cast)
         if err != nil {
             return err
@@ -174,46 +341,111 @@ func (m *UserSimulationDetails) Serialize(writer i878a80d2330e89d26896388a3f487e
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *UserSimulationDetails) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *UserSimulationDetails) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAssignedTrainingsCount sets the assignedTrainingsCount property value. Number of trainings assigned to a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetAssignedTrainingsCount(value *int32)() {
-    m.assignedTrainingsCount = value
+    err := m.GetBackingStore().Set("assignedTrainingsCount", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *UserSimulationDetails) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCompletedTrainingsCount sets the completedTrainingsCount property value. Number of trainings completed by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetCompletedTrainingsCount(value *int32)() {
-    m.completedTrainingsCount = value
+    err := m.GetBackingStore().Set("completedTrainingsCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCompromisedDateTime sets the compromisedDateTime property value. Date and time of the compromising online action by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetCompromisedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.compromisedDateTime = value
+    err := m.GetBackingStore().Set("compromisedDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetInProgressTrainingsCount sets the inProgressTrainingsCount property value. Number of trainings in progress by a user in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetInProgressTrainingsCount(value *int32)() {
-    m.inProgressTrainingsCount = value
+    err := m.GetBackingStore().Set("inProgressTrainingsCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsCompromised sets the isCompromised property value. Indicates whether a user was compromised in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetIsCompromised(value *bool)() {
-    m.isCompromised = value
+    err := m.GetBackingStore().Set("isCompromised", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *UserSimulationDetails) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetReportedPhishDateTime sets the reportedPhishDateTime property value. Date and time when a user reported the delivered payload as phishing in the attack simulation and training campaign.
 func (m *UserSimulationDetails) SetReportedPhishDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.reportedPhishDateTime = value
+    err := m.GetBackingStore().Set("reportedPhishDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSimulationEvents sets the simulationEvents property value. List of simulation events of a user in the attack simulation and training campaign.
 func (m *UserSimulationDetails) SetSimulationEvents(value []UserSimulationEventInfoable)() {
-    m.simulationEvents = value
+    err := m.GetBackingStore().Set("simulationEvents", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSimulationUser sets the simulationUser property value. User in an attack simulation and training campaign.
 func (m *UserSimulationDetails) SetSimulationUser(value AttackSimulationUserable)() {
-    m.simulationUser = value
+    err := m.GetBackingStore().Set("simulationUser", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTrainingEvents sets the trainingEvents property value. List of training events of a user in the attack simulation and training campaign.
 func (m *UserSimulationDetails) SetTrainingEvents(value []UserTrainingEventInfoable)() {
-    m.trainingEvents = value
+    err := m.GetBackingStore().Set("trainingEvents", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// UserSimulationDetailsable 
+type UserSimulationDetailsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAssignedTrainingsCount()(*int32)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCompletedTrainingsCount()(*int32)
+    GetCompromisedDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetInProgressTrainingsCount()(*int32)
+    GetIsCompromised()(*bool)
+    GetOdataType()(*string)
+    GetReportedPhishDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetSimulationEvents()([]UserSimulationEventInfoable)
+    GetSimulationUser()(AttackSimulationUserable)
+    GetTrainingEvents()([]UserTrainingEventInfoable)
+    SetAssignedTrainingsCount(value *int32)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCompletedTrainingsCount(value *int32)()
+    SetCompromisedDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetInProgressTrainingsCount(value *int32)()
+    SetIsCompromised(value *bool)()
+    SetOdataType(value *string)()
+    SetReportedPhishDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetSimulationEvents(value []UserSimulationEventInfoable)()
+    SetSimulationUser(value AttackSimulationUserable)()
+    SetTrainingEvents(value []UserTrainingEventInfoable)()
 }

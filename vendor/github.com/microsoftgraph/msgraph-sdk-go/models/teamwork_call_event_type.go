@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of chat entities.
+// 
 type TeamworkCallEventType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i TeamworkCallEventType) String() string {
     return []string{"call", "meeting", "screenShare", "unknownFutureValue"}[i]
 }
-func ParseTeamworkCallEventType(v string) (interface{}, error) {
+func ParseTeamworkCallEventType(v string) (any, error) {
     result := CALL_TEAMWORKCALLEVENTTYPE
     switch v {
         case "call":

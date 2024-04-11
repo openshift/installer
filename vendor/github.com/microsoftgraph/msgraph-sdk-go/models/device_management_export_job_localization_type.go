@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Configures how the requested export job is localized
 type DeviceManagementExportJobLocalizationType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i DeviceManagementExportJobLocalizationType) String() string {
     return []string{"localizedValuesAsAdditionalColumn", "replaceLocalizableValues"}[i]
 }
-func ParseDeviceManagementExportJobLocalizationType(v string) (interface{}, error) {
+func ParseDeviceManagementExportJobLocalizationType(v string) (any, error) {
     result := LOCALIZEDVALUESASADDITIONALCOLUMN_DEVICEMANAGEMENTEXPORTJOBLOCALIZATIONTYPE
     switch v {
         case "localizedValuesAsAdditionalColumn":

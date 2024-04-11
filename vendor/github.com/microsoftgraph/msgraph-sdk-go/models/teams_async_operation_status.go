@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TeamsAsyncOperationStatus int
 
 const (
@@ -17,7 +17,7 @@ const (
 func (i TeamsAsyncOperationStatus) String() string {
     return []string{"invalid", "notStarted", "inProgress", "succeeded", "failed", "unknownFutureValue"}[i]
 }
-func ParseTeamsAsyncOperationStatus(v string) (interface{}, error) {
+func ParseTeamsAsyncOperationStatus(v string) (any, error) {
     result := INVALID_TEAMSASYNCOPERATIONSTATUS
     switch v {
         case "invalid":

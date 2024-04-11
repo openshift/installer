@@ -2,31 +2,12 @@ package models
 
 import (
     i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e "time"
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// ConversationThread provides operations to manage the collection of agreement entities.
+// ConversationThread 
 type ConversationThread struct {
     Entity
-    // The Cc: recipients for the thread. Returned only on $select.
-    ccRecipients []Recipientable
-    // Indicates whether any of the posts within this thread has at least one attachment. Returned by default.
-    hasAttachments *bool
-    // Indicates if the thread is locked. Returned by default.
-    isLocked *bool
-    // The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.Returned by default.
-    lastDeliveredDateTime *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time
-    // The posts property
-    posts []Postable
-    // A short summary from the body of the latest post in this conversation. Returned by default.
-    preview *string
-    // The topic of the conversation. This property can be set when the conversation is created, but it cannot be updated. Returned by default.
-    topic *string
-    // The To: recipients for the thread. Returned only on $select.
-    toRecipients []Recipientable
-    // All the users that sent a message to this thread. Returned by default.
-    uniqueSenders []string
 }
 // NewConversationThread instantiates a new conversationThread and sets the default values.
 func NewConversationThread()(*ConversationThread) {
@@ -41,53 +22,213 @@ func CreateConversationThreadFromDiscriminatorValue(parseNode i878a80d2330e89d26
 }
 // GetCcRecipients gets the ccRecipients property value. The Cc: recipients for the thread. Returned only on $select.
 func (m *ConversationThread) GetCcRecipients()([]Recipientable) {
-    return m.ccRecipients
+    val, err := m.GetBackingStore().Get("ccRecipients")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Recipientable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *ConversationThread) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["ccRecipients"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue , m.SetCcRecipients)
-    res["hasAttachments"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetHasAttachments)
-    res["isLocked"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsLocked)
-    res["lastDeliveredDateTime"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetTimeValue(m.SetLastDeliveredDateTime)
-    res["posts"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreatePostFromDiscriminatorValue , m.SetPosts)
-    res["preview"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetPreview)
-    res["topic"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetTopic)
-    res["toRecipients"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue , m.SetToRecipients)
-    res["uniqueSenders"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfPrimitiveValues("string" , m.SetUniqueSenders)
+    res["ccRecipients"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Recipientable, len(val))
+            for i, v := range val {
+                res[i] = v.(Recipientable)
+            }
+            m.SetCcRecipients(res)
+        }
+        return nil
+    }
+    res["hasAttachments"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHasAttachments(val)
+        }
+        return nil
+    }
+    res["isLocked"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsLocked(val)
+        }
+        return nil
+    }
+    res["lastDeliveredDateTime"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetTimeValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetLastDeliveredDateTime(val)
+        }
+        return nil
+    }
+    res["posts"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreatePostFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Postable, len(val))
+            for i, v := range val {
+                res[i] = v.(Postable)
+            }
+            m.SetPosts(res)
+        }
+        return nil
+    }
+    res["preview"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPreview(val)
+        }
+        return nil
+    }
+    res["topic"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTopic(val)
+        }
+        return nil
+    }
+    res["toRecipients"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateRecipientFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]Recipientable, len(val))
+            for i, v := range val {
+                res[i] = v.(Recipientable)
+            }
+            m.SetToRecipients(res)
+        }
+        return nil
+    }
+    res["uniqueSenders"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfPrimitiveValues("string")
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]string, len(val))
+            for i, v := range val {
+                res[i] = *(v.(*string))
+            }
+            m.SetUniqueSenders(res)
+        }
+        return nil
+    }
     return res
 }
 // GetHasAttachments gets the hasAttachments property value. Indicates whether any of the posts within this thread has at least one attachment. Returned by default.
 func (m *ConversationThread) GetHasAttachments()(*bool) {
-    return m.hasAttachments
+    val, err := m.GetBackingStore().Get("hasAttachments")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIsLocked gets the isLocked property value. Indicates if the thread is locked. Returned by default.
 func (m *ConversationThread) GetIsLocked()(*bool) {
-    return m.isLocked
+    val, err := m.GetBackingStore().Get("isLocked")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetLastDeliveredDateTime gets the lastDeliveredDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.Returned by default.
 func (m *ConversationThread) GetLastDeliveredDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time) {
-    return m.lastDeliveredDateTime
+    val, err := m.GetBackingStore().Get("lastDeliveredDateTime")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    }
+    return nil
 }
 // GetPosts gets the posts property value. The posts property
 func (m *ConversationThread) GetPosts()([]Postable) {
-    return m.posts
+    val, err := m.GetBackingStore().Get("posts")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Postable)
+    }
+    return nil
 }
 // GetPreview gets the preview property value. A short summary from the body of the latest post in this conversation. Returned by default.
 func (m *ConversationThread) GetPreview()(*string) {
-    return m.preview
+    val, err := m.GetBackingStore().Get("preview")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTopic gets the topic property value. The topic of the conversation. This property can be set when the conversation is created, but it cannot be updated. Returned by default.
 func (m *ConversationThread) GetTopic()(*string) {
-    return m.topic
+    val, err := m.GetBackingStore().Get("topic")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetToRecipients gets the toRecipients property value. The To: recipients for the thread. Returned only on $select.
 func (m *ConversationThread) GetToRecipients()([]Recipientable) {
-    return m.toRecipients
+    val, err := m.GetBackingStore().Get("toRecipients")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]Recipientable)
+    }
+    return nil
 }
 // GetUniqueSenders gets the uniqueSenders property value. All the users that sent a message to this thread. Returned by default.
 func (m *ConversationThread) GetUniqueSenders()([]string) {
-    return m.uniqueSenders
+    val, err := m.GetBackingStore().Get("uniqueSenders")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *ConversationThread) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -96,7 +237,10 @@ func (m *ConversationThread) Serialize(writer i878a80d2330e89d26896388a3f487eef2
         return err
     }
     if m.GetCcRecipients() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetCcRecipients())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetCcRecipients()))
+        for i, v := range m.GetCcRecipients() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("ccRecipients", cast)
         if err != nil {
             return err
@@ -121,7 +265,10 @@ func (m *ConversationThread) Serialize(writer i878a80d2330e89d26896388a3f487eef2
         }
     }
     if m.GetPosts() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetPosts())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetPosts()))
+        for i, v := range m.GetPosts() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("posts", cast)
         if err != nil {
             return err
@@ -140,7 +287,10 @@ func (m *ConversationThread) Serialize(writer i878a80d2330e89d26896388a3f487eef2
         }
     }
     if m.GetToRecipients() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetToRecipients())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetToRecipients()))
+        for i, v := range m.GetToRecipients() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("toRecipients", cast)
         if err != nil {
             return err
@@ -156,37 +306,87 @@ func (m *ConversationThread) Serialize(writer i878a80d2330e89d26896388a3f487eef2
 }
 // SetCcRecipients sets the ccRecipients property value. The Cc: recipients for the thread. Returned only on $select.
 func (m *ConversationThread) SetCcRecipients(value []Recipientable)() {
-    m.ccRecipients = value
+    err := m.GetBackingStore().Set("ccRecipients", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetHasAttachments sets the hasAttachments property value. Indicates whether any of the posts within this thread has at least one attachment. Returned by default.
 func (m *ConversationThread) SetHasAttachments(value *bool)() {
-    m.hasAttachments = value
+    err := m.GetBackingStore().Set("hasAttachments", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsLocked sets the isLocked property value. Indicates if the thread is locked. Returned by default.
 func (m *ConversationThread) SetIsLocked(value *bool)() {
-    m.isLocked = value
+    err := m.GetBackingStore().Set("isLocked", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetLastDeliveredDateTime sets the lastDeliveredDateTime property value. The Timestamp type represents date and time information using ISO 8601 format and is always in UTC time. For example, midnight UTC on Jan 1, 2014 is 2014-01-01T00:00:00Z.Returned by default.
 func (m *ConversationThread) SetLastDeliveredDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)() {
-    m.lastDeliveredDateTime = value
+    err := m.GetBackingStore().Set("lastDeliveredDateTime", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPosts sets the posts property value. The posts property
 func (m *ConversationThread) SetPosts(value []Postable)() {
-    m.posts = value
+    err := m.GetBackingStore().Set("posts", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPreview sets the preview property value. A short summary from the body of the latest post in this conversation. Returned by default.
 func (m *ConversationThread) SetPreview(value *string)() {
-    m.preview = value
+    err := m.GetBackingStore().Set("preview", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTopic sets the topic property value. The topic of the conversation. This property can be set when the conversation is created, but it cannot be updated. Returned by default.
 func (m *ConversationThread) SetTopic(value *string)() {
-    m.topic = value
+    err := m.GetBackingStore().Set("topic", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetToRecipients sets the toRecipients property value. The To: recipients for the thread. Returned only on $select.
 func (m *ConversationThread) SetToRecipients(value []Recipientable)() {
-    m.toRecipients = value
+    err := m.GetBackingStore().Set("toRecipients", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUniqueSenders sets the uniqueSenders property value. All the users that sent a message to this thread. Returned by default.
 func (m *ConversationThread) SetUniqueSenders(value []string)() {
-    m.uniqueSenders = value
+    err := m.GetBackingStore().Set("uniqueSenders", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// ConversationThreadable 
+type ConversationThreadable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetCcRecipients()([]Recipientable)
+    GetHasAttachments()(*bool)
+    GetIsLocked()(*bool)
+    GetLastDeliveredDateTime()(*i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)
+    GetPosts()([]Postable)
+    GetPreview()(*string)
+    GetTopic()(*string)
+    GetToRecipients()([]Recipientable)
+    GetUniqueSenders()([]string)
+    SetCcRecipients(value []Recipientable)()
+    SetHasAttachments(value *bool)()
+    SetIsLocked(value *bool)()
+    SetLastDeliveredDateTime(value *i336074805fc853987abe6f7fe3ad97a6a6f3077a16391fec744f671a015fbd7e.Time)()
+    SetPosts(value []Postable)()
+    SetPreview(value *string)()
+    SetTopic(value *string)()
+    SetToRecipients(value []Recipientable)()
+    SetUniqueSenders(value []string)()
 }

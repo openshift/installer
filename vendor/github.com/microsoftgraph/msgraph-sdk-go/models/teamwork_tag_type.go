@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type TeamworkTagType int
 
 const (
@@ -13,7 +13,7 @@ const (
 func (i TeamworkTagType) String() string {
     return []string{"standard", "unknownFutureValue"}[i]
 }
-func ParseTeamworkTagType(v string) (interface{}, error) {
+func ParseTeamworkTagType(v string) (any, error) {
     result := STANDARD_TEAMWORKTAGTYPE
     switch v {
         case "standard":

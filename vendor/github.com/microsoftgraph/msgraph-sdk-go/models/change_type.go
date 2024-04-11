@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ChangeType int
 
 const (
@@ -14,7 +14,7 @@ const (
 func (i ChangeType) String() string {
     return []string{"created", "updated", "deleted"}[i]
 }
-func ParseChangeType(v string) (interface{}, error) {
+func ParseChangeType(v string) (any, error) {
     result := CREATED_CHANGETYPE
     switch v {
         case "created":

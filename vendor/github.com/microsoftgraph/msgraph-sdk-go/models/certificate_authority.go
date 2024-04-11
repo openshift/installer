@@ -1,34 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // CertificateAuthority 
 type CertificateAuthority struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // Required. The base64 encoded string representing the public certificate.
-    certificate []byte
-    // The URL of the certificate revocation list.
-    certificateRevocationListUrl *string
-    // The URL contains the list of all revoked certificates since the last time a full certificate revocaton list was created.
-    deltaCertificateRevocationListUrl *string
-    // Required. true if the trusted certificate is a root authority, false if the trusted certificate is an intermediate authority.
-    isRootAuthority *bool
-    // The issuer of the certificate, calculated from the certificate value. Read-only.
-    issuer *string
-    // The subject key identifier of the certificate, calculated from the certificate value. Read-only.
-    issuerSki *string
-    // The OdataType property
-    odataType *string
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewCertificateAuthority instantiates a new certificateAuthority and sets the default values.
 func NewCertificateAuthority()(*CertificateAuthority) {
     m := &CertificateAuthority{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateCertificateAuthorityFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -36,48 +23,172 @@ func CreateCertificateAuthorityFromDiscriminatorValue(parseNode i878a80d2330e89d
     return NewCertificateAuthority(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *CertificateAuthority) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *CertificateAuthority) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *CertificateAuthority) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetCertificate gets the certificate property value. Required. The base64 encoded string representing the public certificate.
 func (m *CertificateAuthority) GetCertificate()([]byte) {
-    return m.certificate
+    val, err := m.GetBackingStore().Get("certificate")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]byte)
+    }
+    return nil
 }
 // GetCertificateRevocationListUrl gets the certificateRevocationListUrl property value. The URL of the certificate revocation list.
 func (m *CertificateAuthority) GetCertificateRevocationListUrl()(*string) {
-    return m.certificateRevocationListUrl
+    val, err := m.GetBackingStore().Get("certificateRevocationListUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDeltaCertificateRevocationListUrl gets the deltaCertificateRevocationListUrl property value. The URL contains the list of all revoked certificates since the last time a full certificate revocaton list was created.
 func (m *CertificateAuthority) GetDeltaCertificateRevocationListUrl()(*string) {
-    return m.deltaCertificateRevocationListUrl
+    val, err := m.GetBackingStore().Get("deltaCertificateRevocationListUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *CertificateAuthority) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["certificate"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetByteArrayValue(m.SetCertificate)
-    res["certificateRevocationListUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetCertificateRevocationListUrl)
-    res["deltaCertificateRevocationListUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDeltaCertificateRevocationListUrl)
-    res["isRootAuthority"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetIsRootAuthority)
-    res["issuer"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetIssuer)
-    res["issuerSki"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetIssuerSki)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
+    res["certificate"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetByteArrayValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCertificate(val)
+        }
+        return nil
+    }
+    res["certificateRevocationListUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetCertificateRevocationListUrl(val)
+        }
+        return nil
+    }
+    res["deltaCertificateRevocationListUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeltaCertificateRevocationListUrl(val)
+        }
+        return nil
+    }
+    res["isRootAuthority"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsRootAuthority(val)
+        }
+        return nil
+    }
+    res["issuer"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIssuer(val)
+        }
+        return nil
+    }
+    res["issuerSki"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIssuerSki(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
     return res
 }
 // GetIsRootAuthority gets the isRootAuthority property value. Required. true if the trusted certificate is a root authority, false if the trusted certificate is an intermediate authority.
 func (m *CertificateAuthority) GetIsRootAuthority()(*bool) {
-    return m.isRootAuthority
+    val, err := m.GetBackingStore().Get("isRootAuthority")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetIssuer gets the issuer property value. The issuer of the certificate, calculated from the certificate value. Read-only.
 func (m *CertificateAuthority) GetIssuer()(*string) {
-    return m.issuer
+    val, err := m.GetBackingStore().Get("issuer")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetIssuerSki gets the issuerSki property value. The subject key identifier of the certificate, calculated from the certificate value. Read-only.
 func (m *CertificateAuthority) GetIssuerSki()(*string) {
-    return m.issuerSki
+    val, err := m.GetBackingStore().Get("issuerSki")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *CertificateAuthority) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *CertificateAuthority) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -132,34 +243,84 @@ func (m *CertificateAuthority) Serialize(writer i878a80d2330e89d26896388a3f487ee
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *CertificateAuthority) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *CertificateAuthority) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *CertificateAuthority) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetCertificate sets the certificate property value. Required. The base64 encoded string representing the public certificate.
 func (m *CertificateAuthority) SetCertificate(value []byte)() {
-    m.certificate = value
+    err := m.GetBackingStore().Set("certificate", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetCertificateRevocationListUrl sets the certificateRevocationListUrl property value. The URL of the certificate revocation list.
 func (m *CertificateAuthority) SetCertificateRevocationListUrl(value *string)() {
-    m.certificateRevocationListUrl = value
+    err := m.GetBackingStore().Set("certificateRevocationListUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeltaCertificateRevocationListUrl sets the deltaCertificateRevocationListUrl property value. The URL contains the list of all revoked certificates since the last time a full certificate revocaton list was created.
 func (m *CertificateAuthority) SetDeltaCertificateRevocationListUrl(value *string)() {
-    m.deltaCertificateRevocationListUrl = value
+    err := m.GetBackingStore().Set("deltaCertificateRevocationListUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIsRootAuthority sets the isRootAuthority property value. Required. true if the trusted certificate is a root authority, false if the trusted certificate is an intermediate authority.
 func (m *CertificateAuthority) SetIsRootAuthority(value *bool)() {
-    m.isRootAuthority = value
+    err := m.GetBackingStore().Set("isRootAuthority", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIssuer sets the issuer property value. The issuer of the certificate, calculated from the certificate value. Read-only.
 func (m *CertificateAuthority) SetIssuer(value *string)() {
-    m.issuer = value
+    err := m.GetBackingStore().Set("issuer", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetIssuerSki sets the issuerSki property value. The subject key identifier of the certificate, calculated from the certificate value. Read-only.
 func (m *CertificateAuthority) SetIssuerSki(value *string)() {
-    m.issuerSki = value
+    err := m.GetBackingStore().Set("issuerSki", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *CertificateAuthority) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// CertificateAuthorityable 
+type CertificateAuthorityable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetCertificate()([]byte)
+    GetCertificateRevocationListUrl()(*string)
+    GetDeltaCertificateRevocationListUrl()(*string)
+    GetIsRootAuthority()(*bool)
+    GetIssuer()(*string)
+    GetIssuerSki()(*string)
+    GetOdataType()(*string)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetCertificate(value []byte)()
+    SetCertificateRevocationListUrl(value *string)()
+    SetDeltaCertificateRevocationListUrl(value *string)()
+    SetIsRootAuthority(value *bool)()
+    SetIssuer(value *string)()
+    SetIssuerSki(value *string)()
+    SetOdataType(value *string)()
 }

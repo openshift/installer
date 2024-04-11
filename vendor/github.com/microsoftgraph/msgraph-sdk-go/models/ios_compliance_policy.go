@@ -1,49 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // IosCompliancePolicy 
 type IosCompliancePolicy struct {
     DeviceCompliancePolicy
-    // Require that devices have enabled device threat protection .
-    deviceThreatProtectionEnabled *bool
-    // Device threat protection levels for the Device Threat Protection API.
-    deviceThreatProtectionRequiredSecurityLevel *DeviceThreatProtectionLevel
-    // Indicates whether or not to require a managed email profile.
-    managedEmailProfileRequired *bool
-    // Maximum IOS version.
-    osMaximumVersion *string
-    // Minimum IOS version.
-    osMinimumVersion *string
-    // Indicates whether or not to block simple passcodes.
-    passcodeBlockSimple *bool
-    // Number of days before the passcode expires. Valid values 1 to 65535
-    passcodeExpirationDays *int32
-    // The number of character sets required in the password.
-    passcodeMinimumCharacterSetCount *int32
-    // Minimum length of passcode. Valid values 4 to 14
-    passcodeMinimumLength *int32
-    // Minutes of inactivity before a passcode is required.
-    passcodeMinutesOfInactivityBeforeLock *int32
-    // Number of previous passcodes to block. Valid values 1 to 24
-    passcodePreviousPasscodeBlockCount *int32
-    // Indicates whether or not to require a passcode.
-    passcodeRequired *bool
-    // Possible values of required passwords.
-    passcodeRequiredType *RequiredPasswordType
-    // Devices must not be jailbroken or rooted.
-    securityBlockJailbrokenDevices *bool
 }
 // NewIosCompliancePolicy instantiates a new IosCompliancePolicy and sets the default values.
 func NewIosCompliancePolicy()(*IosCompliancePolicy) {
     m := &IosCompliancePolicy{
         DeviceCompliancePolicy: *NewDeviceCompliancePolicy(),
     }
-    odataTypeValue := "#microsoft.graph.iosCompliancePolicy";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.iosCompliancePolicy"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateIosCompliancePolicyFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -52,78 +23,302 @@ func CreateIosCompliancePolicyFromDiscriminatorValue(parseNode i878a80d2330e89d2
 }
 // GetDeviceThreatProtectionEnabled gets the deviceThreatProtectionEnabled property value. Require that devices have enabled device threat protection .
 func (m *IosCompliancePolicy) GetDeviceThreatProtectionEnabled()(*bool) {
-    return m.deviceThreatProtectionEnabled
+    val, err := m.GetBackingStore().Get("deviceThreatProtectionEnabled")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetDeviceThreatProtectionRequiredSecurityLevel gets the deviceThreatProtectionRequiredSecurityLevel property value. Device threat protection levels for the Device Threat Protection API.
 func (m *IosCompliancePolicy) GetDeviceThreatProtectionRequiredSecurityLevel()(*DeviceThreatProtectionLevel) {
-    return m.deviceThreatProtectionRequiredSecurityLevel
+    val, err := m.GetBackingStore().Get("deviceThreatProtectionRequiredSecurityLevel")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*DeviceThreatProtectionLevel)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *IosCompliancePolicy) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.DeviceCompliancePolicy.GetFieldDeserializers()
-    res["deviceThreatProtectionEnabled"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetDeviceThreatProtectionEnabled)
-    res["deviceThreatProtectionRequiredSecurityLevel"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseDeviceThreatProtectionLevel , m.SetDeviceThreatProtectionRequiredSecurityLevel)
-    res["managedEmailProfileRequired"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetManagedEmailProfileRequired)
-    res["osMaximumVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOsMaximumVersion)
-    res["osMinimumVersion"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOsMinimumVersion)
-    res["passcodeBlockSimple"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetPasscodeBlockSimple)
-    res["passcodeExpirationDays"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasscodeExpirationDays)
-    res["passcodeMinimumCharacterSetCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasscodeMinimumCharacterSetCount)
-    res["passcodeMinimumLength"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasscodeMinimumLength)
-    res["passcodeMinutesOfInactivityBeforeLock"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasscodeMinutesOfInactivityBeforeLock)
-    res["passcodePreviousPasscodeBlockCount"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetPasscodePreviousPasscodeBlockCount)
-    res["passcodeRequired"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetPasscodeRequired)
-    res["passcodeRequiredType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRequiredPasswordType , m.SetPasscodeRequiredType)
-    res["securityBlockJailbrokenDevices"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetSecurityBlockJailbrokenDevices)
+    res["deviceThreatProtectionEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceThreatProtectionEnabled(val)
+        }
+        return nil
+    }
+    res["deviceThreatProtectionRequiredSecurityLevel"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseDeviceThreatProtectionLevel)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDeviceThreatProtectionRequiredSecurityLevel(val.(*DeviceThreatProtectionLevel))
+        }
+        return nil
+    }
+    res["managedEmailProfileRequired"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetManagedEmailProfileRequired(val)
+        }
+        return nil
+    }
+    res["osMaximumVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOsMaximumVersion(val)
+        }
+        return nil
+    }
+    res["osMinimumVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOsMinimumVersion(val)
+        }
+        return nil
+    }
+    res["passcodeBlockSimple"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeBlockSimple(val)
+        }
+        return nil
+    }
+    res["passcodeExpirationDays"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeExpirationDays(val)
+        }
+        return nil
+    }
+    res["passcodeMinimumCharacterSetCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeMinimumCharacterSetCount(val)
+        }
+        return nil
+    }
+    res["passcodeMinimumLength"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeMinimumLength(val)
+        }
+        return nil
+    }
+    res["passcodeMinutesOfInactivityBeforeLock"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeMinutesOfInactivityBeforeLock(val)
+        }
+        return nil
+    }
+    res["passcodePreviousPasscodeBlockCount"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodePreviousPasscodeBlockCount(val)
+        }
+        return nil
+    }
+    res["passcodeRequired"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeRequired(val)
+        }
+        return nil
+    }
+    res["passcodeRequiredType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRequiredPasswordType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetPasscodeRequiredType(val.(*RequiredPasswordType))
+        }
+        return nil
+    }
+    res["securityBlockJailbrokenDevices"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetSecurityBlockJailbrokenDevices(val)
+        }
+        return nil
+    }
     return res
 }
 // GetManagedEmailProfileRequired gets the managedEmailProfileRequired property value. Indicates whether or not to require a managed email profile.
 func (m *IosCompliancePolicy) GetManagedEmailProfileRequired()(*bool) {
-    return m.managedEmailProfileRequired
+    val, err := m.GetBackingStore().Get("managedEmailProfileRequired")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetOsMaximumVersion gets the osMaximumVersion property value. Maximum IOS version.
 func (m *IosCompliancePolicy) GetOsMaximumVersion()(*string) {
-    return m.osMaximumVersion
+    val, err := m.GetBackingStore().Get("osMaximumVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOsMinimumVersion gets the osMinimumVersion property value. Minimum IOS version.
 func (m *IosCompliancePolicy) GetOsMinimumVersion()(*string) {
-    return m.osMinimumVersion
+    val, err := m.GetBackingStore().Get("osMinimumVersion")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetPasscodeBlockSimple gets the passcodeBlockSimple property value. Indicates whether or not to block simple passcodes.
 func (m *IosCompliancePolicy) GetPasscodeBlockSimple()(*bool) {
-    return m.passcodeBlockSimple
+    val, err := m.GetBackingStore().Get("passcodeBlockSimple")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetPasscodeExpirationDays gets the passcodeExpirationDays property value. Number of days before the passcode expires. Valid values 1 to 65535
 func (m *IosCompliancePolicy) GetPasscodeExpirationDays()(*int32) {
-    return m.passcodeExpirationDays
+    val, err := m.GetBackingStore().Get("passcodeExpirationDays")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasscodeMinimumCharacterSetCount gets the passcodeMinimumCharacterSetCount property value. The number of character sets required in the password.
 func (m *IosCompliancePolicy) GetPasscodeMinimumCharacterSetCount()(*int32) {
-    return m.passcodeMinimumCharacterSetCount
+    val, err := m.GetBackingStore().Get("passcodeMinimumCharacterSetCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasscodeMinimumLength gets the passcodeMinimumLength property value. Minimum length of passcode. Valid values 4 to 14
 func (m *IosCompliancePolicy) GetPasscodeMinimumLength()(*int32) {
-    return m.passcodeMinimumLength
+    val, err := m.GetBackingStore().Get("passcodeMinimumLength")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasscodeMinutesOfInactivityBeforeLock gets the passcodeMinutesOfInactivityBeforeLock property value. Minutes of inactivity before a passcode is required.
 func (m *IosCompliancePolicy) GetPasscodeMinutesOfInactivityBeforeLock()(*int32) {
-    return m.passcodeMinutesOfInactivityBeforeLock
+    val, err := m.GetBackingStore().Get("passcodeMinutesOfInactivityBeforeLock")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasscodePreviousPasscodeBlockCount gets the passcodePreviousPasscodeBlockCount property value. Number of previous passcodes to block. Valid values 1 to 24
 func (m *IosCompliancePolicy) GetPasscodePreviousPasscodeBlockCount()(*int32) {
-    return m.passcodePreviousPasscodeBlockCount
+    val, err := m.GetBackingStore().Get("passcodePreviousPasscodeBlockCount")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetPasscodeRequired gets the passcodeRequired property value. Indicates whether or not to require a passcode.
 func (m *IosCompliancePolicy) GetPasscodeRequired()(*bool) {
-    return m.passcodeRequired
+    val, err := m.GetBackingStore().Get("passcodeRequired")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // GetPasscodeRequiredType gets the passcodeRequiredType property value. Possible values of required passwords.
 func (m *IosCompliancePolicy) GetPasscodeRequiredType()(*RequiredPasswordType) {
-    return m.passcodeRequiredType
+    val, err := m.GetBackingStore().Get("passcodeRequiredType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RequiredPasswordType)
+    }
+    return nil
 }
 // GetSecurityBlockJailbrokenDevices gets the securityBlockJailbrokenDevices property value. Devices must not be jailbroken or rooted.
 func (m *IosCompliancePolicy) GetSecurityBlockJailbrokenDevices()(*bool) {
-    return m.securityBlockJailbrokenDevices
+    val, err := m.GetBackingStore().Get("securityBlockJailbrokenDevices")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *IosCompliancePolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -221,57 +416,132 @@ func (m *IosCompliancePolicy) Serialize(writer i878a80d2330e89d26896388a3f487eef
 }
 // SetDeviceThreatProtectionEnabled sets the deviceThreatProtectionEnabled property value. Require that devices have enabled device threat protection .
 func (m *IosCompliancePolicy) SetDeviceThreatProtectionEnabled(value *bool)() {
-    m.deviceThreatProtectionEnabled = value
+    err := m.GetBackingStore().Set("deviceThreatProtectionEnabled", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDeviceThreatProtectionRequiredSecurityLevel sets the deviceThreatProtectionRequiredSecurityLevel property value. Device threat protection levels for the Device Threat Protection API.
 func (m *IosCompliancePolicy) SetDeviceThreatProtectionRequiredSecurityLevel(value *DeviceThreatProtectionLevel)() {
-    m.deviceThreatProtectionRequiredSecurityLevel = value
+    err := m.GetBackingStore().Set("deviceThreatProtectionRequiredSecurityLevel", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetManagedEmailProfileRequired sets the managedEmailProfileRequired property value. Indicates whether or not to require a managed email profile.
 func (m *IosCompliancePolicy) SetManagedEmailProfileRequired(value *bool)() {
-    m.managedEmailProfileRequired = value
+    err := m.GetBackingStore().Set("managedEmailProfileRequired", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOsMaximumVersion sets the osMaximumVersion property value. Maximum IOS version.
 func (m *IosCompliancePolicy) SetOsMaximumVersion(value *string)() {
-    m.osMaximumVersion = value
+    err := m.GetBackingStore().Set("osMaximumVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOsMinimumVersion sets the osMinimumVersion property value. Minimum IOS version.
 func (m *IosCompliancePolicy) SetOsMinimumVersion(value *string)() {
-    m.osMinimumVersion = value
+    err := m.GetBackingStore().Set("osMinimumVersion", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeBlockSimple sets the passcodeBlockSimple property value. Indicates whether or not to block simple passcodes.
 func (m *IosCompliancePolicy) SetPasscodeBlockSimple(value *bool)() {
-    m.passcodeBlockSimple = value
+    err := m.GetBackingStore().Set("passcodeBlockSimple", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeExpirationDays sets the passcodeExpirationDays property value. Number of days before the passcode expires. Valid values 1 to 65535
 func (m *IosCompliancePolicy) SetPasscodeExpirationDays(value *int32)() {
-    m.passcodeExpirationDays = value
+    err := m.GetBackingStore().Set("passcodeExpirationDays", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeMinimumCharacterSetCount sets the passcodeMinimumCharacterSetCount property value. The number of character sets required in the password.
 func (m *IosCompliancePolicy) SetPasscodeMinimumCharacterSetCount(value *int32)() {
-    m.passcodeMinimumCharacterSetCount = value
+    err := m.GetBackingStore().Set("passcodeMinimumCharacterSetCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeMinimumLength sets the passcodeMinimumLength property value. Minimum length of passcode. Valid values 4 to 14
 func (m *IosCompliancePolicy) SetPasscodeMinimumLength(value *int32)() {
-    m.passcodeMinimumLength = value
+    err := m.GetBackingStore().Set("passcodeMinimumLength", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeMinutesOfInactivityBeforeLock sets the passcodeMinutesOfInactivityBeforeLock property value. Minutes of inactivity before a passcode is required.
 func (m *IosCompliancePolicy) SetPasscodeMinutesOfInactivityBeforeLock(value *int32)() {
-    m.passcodeMinutesOfInactivityBeforeLock = value
+    err := m.GetBackingStore().Set("passcodeMinutesOfInactivityBeforeLock", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodePreviousPasscodeBlockCount sets the passcodePreviousPasscodeBlockCount property value. Number of previous passcodes to block. Valid values 1 to 24
 func (m *IosCompliancePolicy) SetPasscodePreviousPasscodeBlockCount(value *int32)() {
-    m.passcodePreviousPasscodeBlockCount = value
+    err := m.GetBackingStore().Set("passcodePreviousPasscodeBlockCount", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeRequired sets the passcodeRequired property value. Indicates whether or not to require a passcode.
 func (m *IosCompliancePolicy) SetPasscodeRequired(value *bool)() {
-    m.passcodeRequired = value
+    err := m.GetBackingStore().Set("passcodeRequired", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetPasscodeRequiredType sets the passcodeRequiredType property value. Possible values of required passwords.
 func (m *IosCompliancePolicy) SetPasscodeRequiredType(value *RequiredPasswordType)() {
-    m.passcodeRequiredType = value
+    err := m.GetBackingStore().Set("passcodeRequiredType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSecurityBlockJailbrokenDevices sets the securityBlockJailbrokenDevices property value. Devices must not be jailbroken or rooted.
 func (m *IosCompliancePolicy) SetSecurityBlockJailbrokenDevices(value *bool)() {
-    m.securityBlockJailbrokenDevices = value
+    err := m.GetBackingStore().Set("securityBlockJailbrokenDevices", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// IosCompliancePolicyable 
+type IosCompliancePolicyable interface {
+    DeviceCompliancePolicyable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDeviceThreatProtectionEnabled()(*bool)
+    GetDeviceThreatProtectionRequiredSecurityLevel()(*DeviceThreatProtectionLevel)
+    GetManagedEmailProfileRequired()(*bool)
+    GetOsMaximumVersion()(*string)
+    GetOsMinimumVersion()(*string)
+    GetPasscodeBlockSimple()(*bool)
+    GetPasscodeExpirationDays()(*int32)
+    GetPasscodeMinimumCharacterSetCount()(*int32)
+    GetPasscodeMinimumLength()(*int32)
+    GetPasscodeMinutesOfInactivityBeforeLock()(*int32)
+    GetPasscodePreviousPasscodeBlockCount()(*int32)
+    GetPasscodeRequired()(*bool)
+    GetPasscodeRequiredType()(*RequiredPasswordType)
+    GetSecurityBlockJailbrokenDevices()(*bool)
+    SetDeviceThreatProtectionEnabled(value *bool)()
+    SetDeviceThreatProtectionRequiredSecurityLevel(value *DeviceThreatProtectionLevel)()
+    SetManagedEmailProfileRequired(value *bool)()
+    SetOsMaximumVersion(value *string)()
+    SetOsMinimumVersion(value *string)()
+    SetPasscodeBlockSimple(value *bool)()
+    SetPasscodeExpirationDays(value *int32)()
+    SetPasscodeMinimumCharacterSetCount(value *int32)()
+    SetPasscodeMinimumLength(value *int32)()
+    SetPasscodeMinutesOfInactivityBeforeLock(value *int32)()
+    SetPasscodePreviousPasscodeBlockCount(value *int32)()
+    SetPasscodeRequired(value *bool)()
+    SetPasscodeRequiredType(value *RequiredPasswordType)()
+    SetSecurityBlockJailbrokenDevices(value *bool)()
 }

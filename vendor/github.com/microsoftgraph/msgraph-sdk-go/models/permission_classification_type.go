@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to call the instantiate method.
+// 
 type PermissionClassificationType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i PermissionClassificationType) String() string {
     return []string{"low", "medium", "high", "unknownFutureValue"}[i]
 }
-func ParsePermissionClassificationType(v string) (interface{}, error) {
+func ParsePermissionClassificationType(v string) (any, error) {
     result := LOW_PERMISSIONCLASSIFICATIONTYPE
     switch v {
         case "low":

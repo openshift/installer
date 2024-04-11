@@ -1,30 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // EducationRoot 
 type EducationRoot struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The classes property
-    classes []EducationClassable
-    // The me property
-    me EducationUserable
-    // The OdataType property
-    odataType *string
-    // The schools property
-    schools []EducationSchoolable
-    // The users property
-    users []EducationUserable
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewEducationRoot instantiates a new EducationRoot and sets the default values.
 func NewEducationRoot()(*EducationRoot) {
     m := &EducationRoot{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateEducationRootFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -32,43 +23,150 @@ func CreateEducationRootFromDiscriminatorValue(parseNode i878a80d2330e89d2689638
     return NewEducationRoot(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *EducationRoot) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *EducationRoot) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *EducationRoot) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetClasses gets the classes property value. The classes property
 func (m *EducationRoot) GetClasses()([]EducationClassable) {
-    return m.classes
+    val, err := m.GetBackingStore().Get("classes")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationClassable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EducationRoot) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["classes"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue , m.SetClasses)
-    res["me"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEducationUserFromDiscriminatorValue , m.SetMe)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["schools"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationSchoolFromDiscriminatorValue , m.SetSchools)
-    res["users"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateEducationUserFromDiscriminatorValue , m.SetUsers)
+    res["classes"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationClassFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationClassable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationClassable)
+            }
+            m.SetClasses(res)
+        }
+        return nil
+    }
+    res["me"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEducationUserFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetMe(val.(EducationUserable))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["schools"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationSchoolFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationSchoolable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationSchoolable)
+            }
+            m.SetSchools(res)
+        }
+        return nil
+    }
+    res["users"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateEducationUserFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]EducationUserable, len(val))
+            for i, v := range val {
+                res[i] = v.(EducationUserable)
+            }
+            m.SetUsers(res)
+        }
+        return nil
+    }
     return res
 }
 // GetMe gets the me property value. The me property
 func (m *EducationRoot) GetMe()(EducationUserable) {
-    return m.me
+    val, err := m.GetBackingStore().Get("me")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EducationUserable)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *EducationRoot) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetSchools gets the schools property value. The schools property
 func (m *EducationRoot) GetSchools()([]EducationSchoolable) {
-    return m.schools
+    val, err := m.GetBackingStore().Get("schools")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationSchoolable)
+    }
+    return nil
 }
 // GetUsers gets the users property value. The users property
 func (m *EducationRoot) GetUsers()([]EducationUserable) {
-    return m.users
+    val, err := m.GetBackingStore().Get("users")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]EducationUserable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *EducationRoot) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
     if m.GetClasses() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetClasses())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetClasses()))
+        for i, v := range m.GetClasses() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("classes", cast)
         if err != nil {
             return err
@@ -87,14 +185,20 @@ func (m *EducationRoot) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
         }
     }
     if m.GetSchools() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetSchools())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetSchools()))
+        for i, v := range m.GetSchools() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("schools", cast)
         if err != nil {
             return err
         }
     }
     if m.GetUsers() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetUsers())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetUsers()))
+        for i, v := range m.GetUsers() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err := writer.WriteCollectionOfObjectValues("users", cast)
         if err != nil {
             return err
@@ -109,26 +213,66 @@ func (m *EducationRoot) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *EducationRoot) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *EducationRoot) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *EducationRoot) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetClasses sets the classes property value. The classes property
 func (m *EducationRoot) SetClasses(value []EducationClassable)() {
-    m.classes = value
+    err := m.GetBackingStore().Set("classes", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetMe sets the me property value. The me property
 func (m *EducationRoot) SetMe(value EducationUserable)() {
-    m.me = value
+    err := m.GetBackingStore().Set("me", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *EducationRoot) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetSchools sets the schools property value. The schools property
 func (m *EducationRoot) SetSchools(value []EducationSchoolable)() {
-    m.schools = value
+    err := m.GetBackingStore().Set("schools", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUsers sets the users property value. The users property
 func (m *EducationRoot) SetUsers(value []EducationUserable)() {
-    m.users = value
+    err := m.GetBackingStore().Set("users", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EducationRootable 
+type EducationRootable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetClasses()([]EducationClassable)
+    GetMe()(EducationUserable)
+    GetOdataType()(*string)
+    GetSchools()([]EducationSchoolable)
+    GetUsers()([]EducationUserable)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetClasses(value []EducationClassable)()
+    SetMe(value EducationUserable)()
+    SetOdataType(value *string)()
+    SetSchools(value []EducationSchoolable)()
+    SetUsers(value []EducationUserable)()
 }

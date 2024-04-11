@@ -1,21 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// EducationOrganization provides operations to manage the collection of agreement entities.
+// EducationOrganization 
 type EducationOrganization struct {
     Entity
-    // Organization description.
-    description *string
-    // Organization display name.
-    displayName *string
-    // Source where this organization was created from. Possible values are: sis, manual.
-    externalSource *EducationExternalSource
-    // The name of the external source this resources was generated from.
-    externalSourceDetail *string
 }
 // NewEducationOrganization instantiates a new educationOrganization and sets the default values.
 func NewEducationOrganization()(*EducationOrganization) {
@@ -48,27 +39,91 @@ func CreateEducationOrganizationFromDiscriminatorValue(parseNode i878a80d2330e89
 }
 // GetDescription gets the description property value. Organization description.
 func (m *EducationOrganization) GetDescription()(*string) {
-    return m.description
+    val, err := m.GetBackingStore().Get("description")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetDisplayName gets the displayName property value. Organization display name.
 func (m *EducationOrganization) GetDisplayName()(*string) {
-    return m.displayName
+    val, err := m.GetBackingStore().Get("displayName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetExternalSource gets the externalSource property value. Source where this organization was created from. Possible values are: sis, manual.
 func (m *EducationOrganization) GetExternalSource()(*EducationExternalSource) {
-    return m.externalSource
+    val, err := m.GetBackingStore().Get("externalSource")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*EducationExternalSource)
+    }
+    return nil
 }
 // GetExternalSourceDetail gets the externalSourceDetail property value. The name of the external source this resources was generated from.
 func (m *EducationOrganization) GetExternalSourceDetail()(*string) {
-    return m.externalSourceDetail
+    val, err := m.GetBackingStore().Get("externalSourceDetail")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *EducationOrganization) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.Entity.GetFieldDeserializers()
-    res["description"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDescription)
-    res["displayName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetDisplayName)
-    res["externalSource"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseEducationExternalSource , m.SetExternalSource)
-    res["externalSourceDetail"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetExternalSourceDetail)
+    res["description"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDescription(val)
+        }
+        return nil
+    }
+    res["displayName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetDisplayName(val)
+        }
+        return nil
+    }
+    res["externalSource"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseEducationExternalSource)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExternalSource(val.(*EducationExternalSource))
+        }
+        return nil
+    }
+    res["externalSourceDetail"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetExternalSourceDetail(val)
+        }
+        return nil
+    }
     return res
 }
 // Serialize serializes information the current object
@@ -106,17 +161,42 @@ func (m *EducationOrganization) Serialize(writer i878a80d2330e89d26896388a3f487e
 }
 // SetDescription sets the description property value. Organization description.
 func (m *EducationOrganization) SetDescription(value *string)() {
-    m.description = value
+    err := m.GetBackingStore().Set("description", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetDisplayName sets the displayName property value. Organization display name.
 func (m *EducationOrganization) SetDisplayName(value *string)() {
-    m.displayName = value
+    err := m.GetBackingStore().Set("displayName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExternalSource sets the externalSource property value. Source where this organization was created from. Possible values are: sis, manual.
 func (m *EducationOrganization) SetExternalSource(value *EducationExternalSource)() {
-    m.externalSource = value
+    err := m.GetBackingStore().Set("externalSource", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetExternalSourceDetail sets the externalSourceDetail property value. The name of the external source this resources was generated from.
 func (m *EducationOrganization) SetExternalSourceDetail(value *string)() {
-    m.externalSourceDetail = value
+    err := m.GetBackingStore().Set("externalSourceDetail", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// EducationOrganizationable 
+type EducationOrganizationable interface {
+    Entityable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetDescription()(*string)
+    GetDisplayName()(*string)
+    GetExternalSource()(*EducationExternalSource)
+    GetExternalSourceDetail()(*string)
+    SetDescription(value *string)()
+    SetDisplayName(value *string)()
+    SetExternalSource(value *EducationExternalSource)()
+    SetExternalSourceDetail(value *string)()
 }

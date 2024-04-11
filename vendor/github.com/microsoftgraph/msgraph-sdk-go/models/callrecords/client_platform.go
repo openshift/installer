@@ -2,7 +2,7 @@ package callrecords
 import (
     "errors"
 )
-// Provides operations to manage the cloudCommunications singleton.
+// 
 type ClientPlatform int
 
 const (
@@ -22,7 +22,7 @@ const (
 func (i ClientPlatform) String() string {
     return []string{"unknown", "windows", "macOS", "iOS", "android", "web", "ipPhone", "roomSystem", "surfaceHub", "holoLens", "unknownFutureValue"}[i]
 }
-func ParseClientPlatform(v string) (interface{}, error) {
+func ParseClientPlatform(v string) (any, error) {
     result := UNKNOWN_CLIENTPLATFORM
     switch v {
         case "unknown":

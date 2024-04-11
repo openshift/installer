@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Possible values of AppLocker Application Control Types
 type AppLockerApplicationControlType int
 
 const (
@@ -21,7 +21,7 @@ const (
 func (i AppLockerApplicationControlType) String() string {
     return []string{"notConfigured", "enforceComponentsAndStoreApps", "auditComponentsAndStoreApps", "enforceComponentsStoreAppsAndSmartlocker", "auditComponentsStoreAppsAndSmartlocker"}[i]
 }
-func ParseAppLockerApplicationControlType(v string) (interface{}, error) {
+func ParseAppLockerApplicationControlType(v string) (any, error) {
     result := NOTCONFIGURED_APPLOCKERAPPLICATIONCONTROLTYPE
     switch v {
         case "notConfigured":

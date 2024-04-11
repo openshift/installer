@@ -1,42 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // RegistryKeyState 
 type RegistryKeyState struct {
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // A Windows registry hive : HKEY_CURRENT_CONFIG HKEY_CURRENT_USER HKEY_LOCAL_MACHINE/SAM HKEY_LOCAL_MACHINE/Security HKEY_LOCAL_MACHINE/Software HKEY_LOCAL_MACHINE/System HKEY_USERS/.Default. Possible values are: unknown, currentConfig, currentUser, localMachineSam, localMachineSecurity, localMachineSoftware, localMachineSystem, usersDefault.
-    hive *RegistryHive
-    // Current (i.e. changed) registry key (excludes HIVE).
-    key *string
-    // The OdataType property
-    odataType *string
-    // Previous (i.e. before changed) registry key (excludes HIVE).
-    oldKey *string
-    // Previous (i.e. before changed) registry key value data (contents).
-    oldValueData *string
-    // Previous (i.e. before changed) registry key value name.
-    oldValueName *string
-    // Operation that changed the registry key name and/or value. Possible values are: unknown, create, modify, delete.
-    operation *RegistryOperation
-    // Process ID (PID) of the process that modified the registry key (process details will appear in the alert 'processes' collection).
-    processId *int32
-    // Current (i.e. changed) registry key value data (contents).
-    valueData *string
-    // Current (i.e. changed) registry key value name
-    valueName *string
-    // Registry key value type REG_BINARY REG_DWORD REG_DWORD_LITTLE_ENDIAN REG_DWORD_BIG_ENDIANREG_EXPAND_SZ REG_LINK REG_MULTI_SZ REG_NONE REG_QWORD REG_QWORD_LITTLE_ENDIAN REG_SZ Possible values are: unknown, binary, dword, dwordLittleEndian, dwordBigEndian, expandSz, link, multiSz, none, qword, qwordlittleEndian, sz.
-    valueType *RegistryValueType
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewRegistryKeyState instantiates a new registryKeyState and sets the default values.
 func NewRegistryKeyState()(*RegistryKeyState) {
     m := &RegistryKeyState{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateRegistryKeyStateFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -44,68 +23,256 @@ func CreateRegistryKeyStateFromDiscriminatorValue(parseNode i878a80d2330e89d2689
     return NewRegistryKeyState(), nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RegistryKeyState) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *RegistryKeyState) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *RegistryKeyState) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *RegistryKeyState) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["hive"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRegistryHive , m.SetHive)
-    res["key"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetKey)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["oldKey"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOldKey)
-    res["oldValueData"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOldValueData)
-    res["oldValueName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOldValueName)
-    res["operation"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRegistryOperation , m.SetOperation)
-    res["processId"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetInt32Value(m.SetProcessId)
-    res["valueData"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetValueData)
-    res["valueName"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetValueName)
-    res["valueType"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetEnumValue(ParseRegistryValueType , m.SetValueType)
+    res["hive"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRegistryHive)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetHive(val.(*RegistryHive))
+        }
+        return nil
+    }
+    res["key"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetKey(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["oldKey"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOldKey(val)
+        }
+        return nil
+    }
+    res["oldValueData"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOldValueData(val)
+        }
+        return nil
+    }
+    res["oldValueName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOldValueName(val)
+        }
+        return nil
+    }
+    res["operation"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRegistryOperation)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOperation(val.(*RegistryOperation))
+        }
+        return nil
+    }
+    res["processId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetInt32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetProcessId(val)
+        }
+        return nil
+    }
+    res["valueData"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValueData(val)
+        }
+        return nil
+    }
+    res["valueName"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValueName(val)
+        }
+        return nil
+    }
+    res["valueType"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetEnumValue(ParseRegistryValueType)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValueType(val.(*RegistryValueType))
+        }
+        return nil
+    }
     return res
 }
 // GetHive gets the hive property value. A Windows registry hive : HKEY_CURRENT_CONFIG HKEY_CURRENT_USER HKEY_LOCAL_MACHINE/SAM HKEY_LOCAL_MACHINE/Security HKEY_LOCAL_MACHINE/Software HKEY_LOCAL_MACHINE/System HKEY_USERS/.Default. Possible values are: unknown, currentConfig, currentUser, localMachineSam, localMachineSecurity, localMachineSoftware, localMachineSystem, usersDefault.
 func (m *RegistryKeyState) GetHive()(*RegistryHive) {
-    return m.hive
+    val, err := m.GetBackingStore().Get("hive")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RegistryHive)
+    }
+    return nil
 }
 // GetKey gets the key property value. Current (i.e. changed) registry key (excludes HIVE).
 func (m *RegistryKeyState) GetKey()(*string) {
-    return m.key
+    val, err := m.GetBackingStore().Get("key")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *RegistryKeyState) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOldKey gets the oldKey property value. Previous (i.e. before changed) registry key (excludes HIVE).
 func (m *RegistryKeyState) GetOldKey()(*string) {
-    return m.oldKey
+    val, err := m.GetBackingStore().Get("oldKey")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOldValueData gets the oldValueData property value. Previous (i.e. before changed) registry key value data (contents).
 func (m *RegistryKeyState) GetOldValueData()(*string) {
-    return m.oldValueData
+    val, err := m.GetBackingStore().Get("oldValueData")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOldValueName gets the oldValueName property value. Previous (i.e. before changed) registry key value name.
 func (m *RegistryKeyState) GetOldValueName()(*string) {
-    return m.oldValueName
+    val, err := m.GetBackingStore().Get("oldValueName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetOperation gets the operation property value. Operation that changed the registry key name and/or value. Possible values are: unknown, create, modify, delete.
 func (m *RegistryKeyState) GetOperation()(*RegistryOperation) {
-    return m.operation
+    val, err := m.GetBackingStore().Get("operation")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RegistryOperation)
+    }
+    return nil
 }
 // GetProcessId gets the processId property value. Process ID (PID) of the process that modified the registry key (process details will appear in the alert 'processes' collection).
 func (m *RegistryKeyState) GetProcessId()(*int32) {
-    return m.processId
+    val, err := m.GetBackingStore().Get("processId")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*int32)
+    }
+    return nil
 }
 // GetValueData gets the valueData property value. Current (i.e. changed) registry key value data (contents).
 func (m *RegistryKeyState) GetValueData()(*string) {
-    return m.valueData
+    val, err := m.GetBackingStore().Get("valueData")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetValueName gets the valueName property value. Current (i.e. changed) registry key value name
 func (m *RegistryKeyState) GetValueName()(*string) {
-    return m.valueName
+    val, err := m.GetBackingStore().Get("valueName")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetValueType gets the valueType property value. Registry key value type REG_BINARY REG_DWORD REG_DWORD_LITTLE_ENDIAN REG_DWORD_BIG_ENDIANREG_EXPAND_SZ REG_LINK REG_MULTI_SZ REG_NONE REG_QWORD REG_QWORD_LITTLE_ENDIAN REG_SZ Possible values are: unknown, binary, dword, dwordLittleEndian, dwordBigEndian, expandSz, link, multiSz, none, qword, qwordlittleEndian, sz.
 func (m *RegistryKeyState) GetValueType()(*RegistryValueType) {
-    return m.valueType
+    val, err := m.GetBackingStore().Get("valueType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*RegistryValueType)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *RegistryKeyState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -187,50 +354,120 @@ func (m *RegistryKeyState) Serialize(writer i878a80d2330e89d26896388a3f487eef27b
     return nil
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *RegistryKeyState) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *RegistryKeyState) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *RegistryKeyState) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetHive sets the hive property value. A Windows registry hive : HKEY_CURRENT_CONFIG HKEY_CURRENT_USER HKEY_LOCAL_MACHINE/SAM HKEY_LOCAL_MACHINE/Security HKEY_LOCAL_MACHINE/Software HKEY_LOCAL_MACHINE/System HKEY_USERS/.Default. Possible values are: unknown, currentConfig, currentUser, localMachineSam, localMachineSecurity, localMachineSoftware, localMachineSystem, usersDefault.
 func (m *RegistryKeyState) SetHive(value *RegistryHive)() {
-    m.hive = value
+    err := m.GetBackingStore().Set("hive", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetKey sets the key property value. Current (i.e. changed) registry key (excludes HIVE).
 func (m *RegistryKeyState) SetKey(value *string)() {
-    m.key = value
+    err := m.GetBackingStore().Set("key", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *RegistryKeyState) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOldKey sets the oldKey property value. Previous (i.e. before changed) registry key (excludes HIVE).
 func (m *RegistryKeyState) SetOldKey(value *string)() {
-    m.oldKey = value
+    err := m.GetBackingStore().Set("oldKey", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOldValueData sets the oldValueData property value. Previous (i.e. before changed) registry key value data (contents).
 func (m *RegistryKeyState) SetOldValueData(value *string)() {
-    m.oldValueData = value
+    err := m.GetBackingStore().Set("oldValueData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOldValueName sets the oldValueName property value. Previous (i.e. before changed) registry key value name.
 func (m *RegistryKeyState) SetOldValueName(value *string)() {
-    m.oldValueName = value
+    err := m.GetBackingStore().Set("oldValueName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOperation sets the operation property value. Operation that changed the registry key name and/or value. Possible values are: unknown, create, modify, delete.
 func (m *RegistryKeyState) SetOperation(value *RegistryOperation)() {
-    m.operation = value
+    err := m.GetBackingStore().Set("operation", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetProcessId sets the processId property value. Process ID (PID) of the process that modified the registry key (process details will appear in the alert 'processes' collection).
 func (m *RegistryKeyState) SetProcessId(value *int32)() {
-    m.processId = value
+    err := m.GetBackingStore().Set("processId", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValueData sets the valueData property value. Current (i.e. changed) registry key value data (contents).
 func (m *RegistryKeyState) SetValueData(value *string)() {
-    m.valueData = value
+    err := m.GetBackingStore().Set("valueData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValueName sets the valueName property value. Current (i.e. changed) registry key value name
 func (m *RegistryKeyState) SetValueName(value *string)() {
-    m.valueName = value
+    err := m.GetBackingStore().Set("valueName", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetValueType sets the valueType property value. Registry key value type REG_BINARY REG_DWORD REG_DWORD_LITTLE_ENDIAN REG_DWORD_BIG_ENDIANREG_EXPAND_SZ REG_LINK REG_MULTI_SZ REG_NONE REG_QWORD REG_QWORD_LITTLE_ENDIAN REG_SZ Possible values are: unknown, binary, dword, dwordLittleEndian, dwordBigEndian, expandSz, link, multiSz, none, qword, qwordlittleEndian, sz.
 func (m *RegistryKeyState) SetValueType(value *RegistryValueType)() {
-    m.valueType = value
+    err := m.GetBackingStore().Set("valueType", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// RegistryKeyStateable 
+type RegistryKeyStateable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetHive()(*RegistryHive)
+    GetKey()(*string)
+    GetOdataType()(*string)
+    GetOldKey()(*string)
+    GetOldValueData()(*string)
+    GetOldValueName()(*string)
+    GetOperation()(*RegistryOperation)
+    GetProcessId()(*int32)
+    GetValueData()(*string)
+    GetValueName()(*string)
+    GetValueType()(*RegistryValueType)
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetHive(value *RegistryHive)()
+    SetKey(value *string)()
+    SetOdataType(value *string)()
+    SetOldKey(value *string)()
+    SetOldValueData(value *string)()
+    SetOldValueName(value *string)()
+    SetOperation(value *RegistryOperation)()
+    SetProcessId(value *int32)()
+    SetValueData(value *string)()
+    SetValueName(value *string)()
+    SetValueType(value *RegistryValueType)()
 }

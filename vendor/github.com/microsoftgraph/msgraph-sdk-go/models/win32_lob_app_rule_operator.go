@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Contains properties for detection operator.
 type Win32LobAppRuleOperator int
 
 const (
@@ -25,7 +25,7 @@ const (
 func (i Win32LobAppRuleOperator) String() string {
     return []string{"notConfigured", "equal", "notEqual", "greaterThan", "greaterThanOrEqual", "lessThan", "lessThanOrEqual"}[i]
 }
-func ParseWin32LobAppRuleOperator(v string) (interface{}, error) {
+func ParseWin32LobAppRuleOperator(v string) (any, error) {
     result := NOTCONFIGURED_WIN32LOBAPPRULEOPERATOR
     switch v {
         case "notConfigured":

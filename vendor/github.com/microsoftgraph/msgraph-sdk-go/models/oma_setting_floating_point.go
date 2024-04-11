@@ -1,23 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // OmaSettingFloatingPoint 
 type OmaSettingFloatingPoint struct {
     OmaSetting
-    // Value.
-    value *float32
 }
 // NewOmaSettingFloatingPoint instantiates a new OmaSettingFloatingPoint and sets the default values.
 func NewOmaSettingFloatingPoint()(*OmaSettingFloatingPoint) {
     m := &OmaSettingFloatingPoint{
         OmaSetting: *NewOmaSetting(),
     }
-    odataTypeValue := "#microsoft.graph.omaSettingFloatingPoint";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.omaSettingFloatingPoint"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateOmaSettingFloatingPointFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -27,12 +24,28 @@ func CreateOmaSettingFloatingPointFromDiscriminatorValue(parseNode i878a80d2330e
 // GetFieldDeserializers the deserialization information for the current model
 func (m *OmaSettingFloatingPoint) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.OmaSetting.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetFloat32Value(m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetFloat32Value()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetValue(val)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. Value.
 func (m *OmaSettingFloatingPoint) GetValue()(*float32) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*float32)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *OmaSettingFloatingPoint) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -50,5 +63,15 @@ func (m *OmaSettingFloatingPoint) Serialize(writer i878a80d2330e89d26896388a3f48
 }
 // SetValue sets the value property value. Value.
 func (m *OmaSettingFloatingPoint) SetValue(value *float32)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// OmaSettingFloatingPointable 
+type OmaSettingFloatingPointable interface {
+    OmaSettingable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()(*float32)
+    SetValue(value *float32)()
 }

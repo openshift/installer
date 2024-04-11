@@ -1,30 +1,21 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e "github.com/microsoft/kiota-abstractions-go/store"
 )
 
 // IdentityGovernance 
 type IdentityGovernance struct {
-    // The accessReviews property
-    accessReviews AccessReviewSetable
-    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-    additionalData map[string]interface{}
-    // The appConsent property
-    appConsent AppConsentApprovalRouteable
-    // The entitlementManagement property
-    entitlementManagement EntitlementManagementable
-    // The OdataType property
-    odataType *string
-    // The termsOfUse property
-    termsOfUse TermsOfUseContainerable
+    // Stores model information.
+    backingStore ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore
 }
 // NewIdentityGovernance instantiates a new IdentityGovernance and sets the default values.
 func NewIdentityGovernance()(*IdentityGovernance) {
     m := &IdentityGovernance{
     }
-    m.SetAdditionalData(make(map[string]interface{}));
+    m.backingStore = ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStoreFactoryInstance();
+    m.SetAdditionalData(make(map[string]any))
     return m
 }
 // CreateIdentityGovernanceFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -33,37 +24,129 @@ func CreateIdentityGovernanceFromDiscriminatorValue(parseNode i878a80d2330e89d26
 }
 // GetAccessReviews gets the accessReviews property value. The accessReviews property
 func (m *IdentityGovernance) GetAccessReviews()(AccessReviewSetable) {
-    return m.accessReviews
+    val, err := m.GetBackingStore().Get("accessReviews")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AccessReviewSetable)
+    }
+    return nil
 }
 // GetAdditionalData gets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *IdentityGovernance) GetAdditionalData()(map[string]interface{}) {
-    return m.additionalData
+func (m *IdentityGovernance) GetAdditionalData()(map[string]any) {
+    val , err :=  m.backingStore.Get("additionalData")
+    if err != nil {
+        panic(err)
+    }
+    if val == nil {
+        var value = make(map[string]any);
+        m.SetAdditionalData(value);
+    }
+    return val.(map[string]any)
 }
 // GetAppConsent gets the appConsent property value. The appConsent property
 func (m *IdentityGovernance) GetAppConsent()(AppConsentApprovalRouteable) {
-    return m.appConsent
+    val, err := m.GetBackingStore().Get("appConsent")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(AppConsentApprovalRouteable)
+    }
+    return nil
+}
+// GetBackingStore gets the backingStore property value. Stores model information.
+func (m *IdentityGovernance) GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore) {
+    return m.backingStore
 }
 // GetEntitlementManagement gets the entitlementManagement property value. The entitlementManagement property
 func (m *IdentityGovernance) GetEntitlementManagement()(EntitlementManagementable) {
-    return m.entitlementManagement
+    val, err := m.GetBackingStore().Get("entitlementManagement")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(EntitlementManagementable)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *IdentityGovernance) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
-    res["accessReviews"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAccessReviewSetFromDiscriminatorValue , m.SetAccessReviews)
-    res["appConsent"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateAppConsentApprovalRouteFromDiscriminatorValue , m.SetAppConsent)
-    res["entitlementManagement"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateEntitlementManagementFromDiscriminatorValue , m.SetEntitlementManagement)
-    res["@odata.type"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetOdataType)
-    res["termsOfUse"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetObjectValue(CreateTermsOfUseContainerFromDiscriminatorValue , m.SetTermsOfUse)
+    res["accessReviews"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAccessReviewSetFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAccessReviews(val.(AccessReviewSetable))
+        }
+        return nil
+    }
+    res["appConsent"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateAppConsentApprovalRouteFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppConsent(val.(AppConsentApprovalRouteable))
+        }
+        return nil
+    }
+    res["entitlementManagement"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateEntitlementManagementFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetEntitlementManagement(val.(EntitlementManagementable))
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    res["termsOfUse"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetObjectValue(CreateTermsOfUseContainerFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetTermsOfUse(val.(TermsOfUseContainerable))
+        }
+        return nil
+    }
     return res
 }
 // GetOdataType gets the @odata.type property value. The OdataType property
 func (m *IdentityGovernance) GetOdataType()(*string) {
-    return m.odataType
+    val, err := m.GetBackingStore().Get("odataType")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetTermsOfUse gets the termsOfUse property value. The termsOfUse property
 func (m *IdentityGovernance) GetTermsOfUse()(TermsOfUseContainerable) {
-    return m.termsOfUse
+    val, err := m.GetBackingStore().Get("termsOfUse")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(TermsOfUseContainerable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *IdentityGovernance) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -107,25 +190,65 @@ func (m *IdentityGovernance) Serialize(writer i878a80d2330e89d26896388a3f487eef2
 }
 // SetAccessReviews sets the accessReviews property value. The accessReviews property
 func (m *IdentityGovernance) SetAccessReviews(value AccessReviewSetable)() {
-    m.accessReviews = value
+    err := m.GetBackingStore().Set("accessReviews", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAdditionalData sets the additionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-func (m *IdentityGovernance) SetAdditionalData(value map[string]interface{})() {
-    m.additionalData = value
+func (m *IdentityGovernance) SetAdditionalData(value map[string]any)() {
+    err := m.GetBackingStore().Set("additionalData", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetAppConsent sets the appConsent property value. The appConsent property
 func (m *IdentityGovernance) SetAppConsent(value AppConsentApprovalRouteable)() {
-    m.appConsent = value
+    err := m.GetBackingStore().Set("appConsent", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// SetBackingStore sets the backingStore property value. Stores model information.
+func (m *IdentityGovernance) SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)() {
+    m.backingStore = value
 }
 // SetEntitlementManagement sets the entitlementManagement property value. The entitlementManagement property
 func (m *IdentityGovernance) SetEntitlementManagement(value EntitlementManagementable)() {
-    m.entitlementManagement = value
+    err := m.GetBackingStore().Set("entitlementManagement", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetOdataType sets the @odata.type property value. The OdataType property
 func (m *IdentityGovernance) SetOdataType(value *string)() {
-    m.odataType = value
+    err := m.GetBackingStore().Set("odataType", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetTermsOfUse sets the termsOfUse property value. The termsOfUse property
 func (m *IdentityGovernance) SetTermsOfUse(value TermsOfUseContainerable)() {
-    m.termsOfUse = value
+    err := m.GetBackingStore().Set("termsOfUse", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// IdentityGovernanceable 
+type IdentityGovernanceable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackedModel
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAccessReviews()(AccessReviewSetable)
+    GetAppConsent()(AppConsentApprovalRouteable)
+    GetBackingStore()(ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)
+    GetEntitlementManagement()(EntitlementManagementable)
+    GetOdataType()(*string)
+    GetTermsOfUse()(TermsOfUseContainerable)
+    SetAccessReviews(value AccessReviewSetable)()
+    SetAppConsent(value AppConsentApprovalRouteable)()
+    SetBackingStore(value ie8677ce2c7e1b4c22e9c3827ecd078d41185424dd9eeb92b7d971ed2d49a392e.BackingStore)()
+    SetEntitlementManagement(value EntitlementManagementable)()
+    SetOdataType(value *string)()
+    SetTermsOfUse(value TermsOfUseContainerable)()
 }

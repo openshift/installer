@@ -1,15 +1,12 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
-// DeviceComplianceActionItemCollectionResponse provides operations to manage the scheduledActionConfigurations property of the microsoft.graph.deviceComplianceScheduledActionForRule entity.
+// DeviceComplianceActionItemCollectionResponse 
 type DeviceComplianceActionItemCollectionResponse struct {
     BaseCollectionPaginationCountResponse
-    // The value property
-    value []DeviceComplianceActionItemable
 }
 // NewDeviceComplianceActionItemCollectionResponse instantiates a new DeviceComplianceActionItemCollectionResponse and sets the default values.
 func NewDeviceComplianceActionItemCollectionResponse()(*DeviceComplianceActionItemCollectionResponse) {
@@ -25,12 +22,32 @@ func CreateDeviceComplianceActionItemCollectionResponseFromDiscriminatorValue(pa
 // GetFieldDeserializers the deserialization information for the current model
 func (m *DeviceComplianceActionItemCollectionResponse) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.BaseCollectionPaginationCountResponse.GetFieldDeserializers()
-    res["value"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetCollectionOfObjectValues(CreateDeviceComplianceActionItemFromDiscriminatorValue , m.SetValue)
+    res["value"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetCollectionOfObjectValues(CreateDeviceComplianceActionItemFromDiscriminatorValue)
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            res := make([]DeviceComplianceActionItemable, len(val))
+            for i, v := range val {
+                res[i] = v.(DeviceComplianceActionItemable)
+            }
+            m.SetValue(res)
+        }
+        return nil
+    }
     return res
 }
 // GetValue gets the value property value. The value property
 func (m *DeviceComplianceActionItemCollectionResponse) GetValue()([]DeviceComplianceActionItemable) {
-    return m.value
+    val, err := m.GetBackingStore().Get("value")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.([]DeviceComplianceActionItemable)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *DeviceComplianceActionItemCollectionResponse) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -39,7 +56,10 @@ func (m *DeviceComplianceActionItemCollectionResponse) Serialize(writer i878a80d
         return err
     }
     if m.GetValue() != nil {
-        cast := i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.CollectionCast[i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable](m.GetValue())
+        cast := make([]i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, len(m.GetValue()))
+        for i, v := range m.GetValue() {
+            cast[i] = v.(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable)
+        }
         err = writer.WriteCollectionOfObjectValues("value", cast)
         if err != nil {
             return err
@@ -49,5 +69,15 @@ func (m *DeviceComplianceActionItemCollectionResponse) Serialize(writer i878a80d
 }
 // SetValue sets the value property value. The value property
 func (m *DeviceComplianceActionItemCollectionResponse) SetValue(value []DeviceComplianceActionItemable)() {
-    m.value = value
+    err := m.GetBackingStore().Set("value", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// DeviceComplianceActionItemCollectionResponseable 
+type DeviceComplianceActionItemCollectionResponseable interface {
+    BaseCollectionPaginationCountResponseable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetValue()([]DeviceComplianceActionItemable)
+    SetValue(value []DeviceComplianceActionItemable)()
 }

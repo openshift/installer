@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// Edition Upgrade License type
 type EditionUpgradeLicenseType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i EditionUpgradeLicenseType) String() string {
     return []string{"productKey", "licenseFile"}[i]
 }
-func ParseEditionUpgradeLicenseType(v string) (interface{}, error) {
+func ParseEditionUpgradeLicenseType(v string) (any, error) {
     result := PRODUCTKEY_EDITIONUPGRADELICENSETYPE
     switch v {
         case "productKey":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type ScheduleChangeRequestActor int
 
 const (
@@ -16,7 +16,7 @@ const (
 func (i ScheduleChangeRequestActor) String() string {
     return []string{"sender", "recipient", "manager", "system", "unknownFutureValue"}[i]
 }
-func ParseScheduleChangeRequestActor(v string) (interface{}, error) {
+func ParseScheduleChangeRequestActor(v string) (any, error) {
     result := SENDER_SCHEDULECHANGEREQUESTACTOR
     switch v {
         case "sender":

@@ -2,7 +2,7 @@ package models
 import (
     "errors"
 )
-// Provides operations to manage the collection of agreement entities.
+// 
 type OnlineMeetingProviderType int
 
 const (
@@ -15,7 +15,7 @@ const (
 func (i OnlineMeetingProviderType) String() string {
     return []string{"unknown", "skypeForBusiness", "skypeForConsumer", "teamsForBusiness"}[i]
 }
-func ParseOnlineMeetingProviderType(v string) (interface{}, error) {
+func ParseOnlineMeetingProviderType(v string) (any, error) {
     result := UNKNOWN_ONLINEMEETINGPROVIDERTYPE
     switch v {
         case "unknown":

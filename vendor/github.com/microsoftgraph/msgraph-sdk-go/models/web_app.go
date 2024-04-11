@@ -1,25 +1,20 @@
 package models
 
 import (
-    i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f "github.com/microsoft/kiota-abstractions-go"
     i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // WebApp 
 type WebApp struct {
     MobileApp
-    // The web app URL. This property cannot be PATCHed.
-    appUrl *string
-    // Whether or not to use managed browser. This property is only applicable for Android and IOS.
-    useManagedBrowser *bool
 }
 // NewWebApp instantiates a new WebApp and sets the default values.
 func NewWebApp()(*WebApp) {
     m := &WebApp{
         MobileApp: *NewMobileApp(),
     }
-    odataTypeValue := "#microsoft.graph.webApp";
-    m.SetOdataType(&odataTypeValue);
+    odataTypeValue := "#microsoft.graph.webApp"
+    m.SetOdataType(&odataTypeValue)
     return m
 }
 // CreateWebAppFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
@@ -28,18 +23,50 @@ func CreateWebAppFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487
 }
 // GetAppUrl gets the appUrl property value. The web app URL. This property cannot be PATCHed.
 func (m *WebApp) GetAppUrl()(*string) {
-    return m.appUrl
+    val, err := m.GetBackingStore().Get("appUrl")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*string)
+    }
+    return nil
 }
 // GetFieldDeserializers the deserialization information for the current model
 func (m *WebApp) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
     res := m.MobileApp.GetFieldDeserializers()
-    res["appUrl"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetStringValue(m.SetAppUrl)
-    res["useManagedBrowser"] = i2ae4187f7daee263371cb1c977df639813ab50ffa529013b7437480d1ec0158f.SetBoolValue(m.SetUseManagedBrowser)
+    res["appUrl"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetAppUrl(val)
+        }
+        return nil
+    }
+    res["useManagedBrowser"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetUseManagedBrowser(val)
+        }
+        return nil
+    }
     return res
 }
 // GetUseManagedBrowser gets the useManagedBrowser property value. Whether or not to use managed browser. This property is only applicable for Android and IOS.
 func (m *WebApp) GetUseManagedBrowser()(*bool) {
-    return m.useManagedBrowser
+    val, err := m.GetBackingStore().Get("useManagedBrowser")
+    if err != nil {
+        panic(err)
+    }
+    if val != nil {
+        return val.(*bool)
+    }
+    return nil
 }
 // Serialize serializes information the current object
 func (m *WebApp) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
@@ -63,9 +90,24 @@ func (m *WebApp) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c
 }
 // SetAppUrl sets the appUrl property value. The web app URL. This property cannot be PATCHed.
 func (m *WebApp) SetAppUrl(value *string)() {
-    m.appUrl = value
+    err := m.GetBackingStore().Set("appUrl", value)
+    if err != nil {
+        panic(err)
+    }
 }
 // SetUseManagedBrowser sets the useManagedBrowser property value. Whether or not to use managed browser. This property is only applicable for Android and IOS.
 func (m *WebApp) SetUseManagedBrowser(value *bool)() {
-    m.useManagedBrowser = value
+    err := m.GetBackingStore().Set("useManagedBrowser", value)
+    if err != nil {
+        panic(err)
+    }
+}
+// WebAppable 
+type WebAppable interface {
+    MobileAppable
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetAppUrl()(*string)
+    GetUseManagedBrowser()(*bool)
+    SetAppUrl(value *string)()
+    SetUseManagedBrowser(value *bool)()
 }
