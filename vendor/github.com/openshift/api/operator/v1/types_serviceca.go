@@ -7,6 +7,11 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=servicecas,scope=Cluster
+// +kubebuilder:subresource:status
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/475
+// +openshift:file-pattern=0000_50_service-ca-operator_02_MARKERScrd.yaml
 
 // ServiceCA provides information to configure an operator to manage the service cert controllers
 //

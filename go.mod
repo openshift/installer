@@ -63,7 +63,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.31.1
-	github.com/openshift/api v0.0.0-20240301093301-ce10821dc999
+	github.com/openshift/api v0.0.0-20240313103236-5f1498accd5d
 	github.com/openshift/assisted-image-service v0.0.0-20231130154654-56d03d1503e2
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0

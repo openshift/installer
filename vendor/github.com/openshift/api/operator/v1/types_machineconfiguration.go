@@ -7,6 +7,11 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:path=machineconfigurations,scope=Cluster
+// +kubebuilder:subresource:status
+// +openshift:api-approved.openshift.io=https://github.com/openshift/api/pull/1453
+// +openshift:file-pattern=0000_80_machine-config-operator_01_configMARKERS.crd.yaml
 
 // MachineConfiguration provides information to configure an operator to manage Machine Configuration.
 //
@@ -38,7 +43,7 @@ type MachineConfigurationSpec struct {
 	// be updated to the latest boot images during cluster upgrades, ensuring that new machines
 	// always boot with the current cluster version's boot image. When omitted, no boot images
 	// will be updated.
-	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+	// +openshift:enable:FeatureGate=ManagedBootImages
 	// +optional
 	ManagedBootImages ManagedBootImages `json:"managedBootImages"`
 }
