@@ -324,6 +324,7 @@ func findMachineAddress(ctx context.Context, in clusterapi.PostProvisionInput, k
 func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
 	var (
 		client             *powervsconfig.Client
+		vpcRegion          string
 		ipAddr             string
 		refServiceInstance *capibm.IBMPowerVSResourceReference
 		sshKeyName         string
@@ -339,6 +340,19 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 		return fmt.Errorf("failed to get NewClient in PostProvision: %w", err)
 	}
 	logrus.Debugf("PostProvision: NewClient returns %+v", client)
+
+	// We need to set the region we will eventually query inside
+	vpcRegion = in.InstallConfig.Config.Platform.PowerVS.VPCRegion
+	if vpcRegion == "" {
+		vpcRegion, err = powervstypes.VPCRegionForPowerVSRegion(in.InstallConfig.Config.Platform.PowerVS.Region)
+		if err != nil {
+			return fmt.Errorf("failed to get VPC region (%s) in PostProvision: %w", vpcRegion, err)
+		}
+	}
+	logrus.Debugf("InfraReady: vpcRegion = %s", vpcRegion)
+	if err = client.SetVPCServiceURLForRegion(ctx, vpcRegion); err != nil {
+		return fmt.Errorf("failed to set the VPC service region (%s) in PostProvision: %w", vpcRegion, err)
+	}
 
 	// Step 1.
 	// Wait until bootstrap and master nodes have IP addresses.  This will verify
@@ -436,6 +450,41 @@ func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvision
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add SSH key for the workers(%s): %w", fieldType, err)
+	}
+
+	// Step 3.
+	// @TODO Remove once https://github.com/kubernetes-sigs/cluster-api-provider-ibmcloud/issues/1679 is fixed
+	// Add the bootstrap's IP address to the load balancer pool
+	// Get the cluster from the provider so we can have what load balancers are attached
+	powerVSCluster := &capibm.IBMPowerVSCluster{}
+	key = crclient.ObjectKey{
+		Name:      in.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	logrus.Debugf("PostProvision: cluster key = %+v", key)
+	if err = in.Client.Get(ctx, key, powerVSCluster); err != nil {
+		return fmt.Errorf("failed to get PowerVS cluster in PostProvision: %w", err)
+	}
+
+	lbIntExp := regexp.MustCompile(`\b-loadbalancer-int\b$`)
+
+	// Find the internal load balancer
+	for lbKey, loadBalancerStatus := range powerVSCluster.Status.LoadBalancers {
+		if !lbIntExp.MatchString(lbKey) {
+			continue
+		}
+		logrus.Debugf("PostProvision: Found internal load balancer ID = %s, State = %s, Hostname = %s",
+			*loadBalancerStatus.ID,
+			loadBalancerStatus.State,
+			*loadBalancerStatus.Hostname)
+
+		if err = client.AddIPToLoadBalancerPool(ctx,
+			*loadBalancerStatus.ID,
+			"additional-pool-22623",
+			22623,
+			ipAddr); err != nil {
+			return fmt.Errorf("failed to add the bootstrap IP to the load balancer pool: %w", err)
+		}
 	}
 
 	return nil

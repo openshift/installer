@@ -39,6 +39,20 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// AddIPToLoadBalancerPool mocks base method.
+func (m *MockAPI) AddIPToLoadBalancerPool(ctx context.Context, lbID, poolName string, port int64, ip string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddIPToLoadBalancerPool", ctx, lbID, poolName, port, ip)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddIPToLoadBalancerPool indicates an expected call of AddIPToLoadBalancerPool.
+func (mr *MockAPIMockRecorder) AddIPToLoadBalancerPool(ctx, lbID, poolName, port, ip interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddIPToLoadBalancerPool", reflect.TypeOf((*MockAPI)(nil).AddIPToLoadBalancerPool), ctx, lbID, poolName, port, ip)
+}
+
 // AddSecurityGroupRule mocks base method.
 func (m *MockAPI) AddSecurityGroupRule(ctx context.Context, securityGroupID string, rule *vpcv1.SecurityGroupRulePrototype) error {
 	m.ctrl.T.Helper()
