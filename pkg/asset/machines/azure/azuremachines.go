@@ -88,6 +88,11 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 	additionalCapabilities := &capz.AdditionalCapabilities{
 		UltraSSDEnabled: &ultrassd,
 	}
+	if pool.Platform.Azure.DiskEncryptionSet != nil {
+		osDisk.ManagedDisk.DiskEncryptionSet = &capz.DiskEncryptionSetParameters{
+			ID: mpool.OSDisk.DiskEncryptionSet.ToID(),
+		}
+	}
 
 	machineProfile := generateSecurityProfile(mpool)
 	securityProfile := &capz.SecurityProfile{
@@ -161,6 +166,7 @@ func GenerateMachines(platform *azure.Platform, pool *types.MachinePool, userDat
 		})
 	}
 
+	osDisk.ManagedDisk.DiskEncryptionSet = nil
 	bootstrapAzureMachine := &capz.AzureMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: capiutils.GenerateBoostrapMachineName(clusterID),
