@@ -34,7 +34,7 @@ import (
 	_ "github.com/openshift/installer/pkg/gather/gcp"
 )
 
-func newGatherCmd() *cobra.Command {
+func newGatherCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "gather",
 		Short: "Gather debugging data for a given installation failure",
@@ -47,7 +47,7 @@ to debug the installation failures`,
 			return cmd.Help()
 		},
 	}
-	cmd.AddCommand(newGatherBootstrapCmd())
+	cmd.AddCommand(newGatherBootstrapCmd(ctx))
 	return cmd
 }
 
@@ -58,7 +58,7 @@ var gatherBootstrapOpts struct {
 	skipAnalysis bool
 }
 
-func newGatherBootstrapCmd() *cobra.Command {
+func newGatherBootstrapCmd(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bootstrap",
 		Short: "Gather debugging data for a failing-to-bootstrap control plane",
@@ -66,7 +66,7 @@ func newGatherBootstrapCmd() *cobra.Command {
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
-			bundlePath, err := runGatherBootstrapCmd(command.RootOpts.Dir)
+			bundlePath, err := runGatherBootstrapCmd(ctx, command.RootOpts.Dir)
 			if err != nil {
 				logrus.Fatal(err)
 			}
@@ -87,14 +87,14 @@ func newGatherBootstrapCmd() *cobra.Command {
 	return cmd
 }
 
-func runGatherBootstrapCmd(directory string) (string, error) {
+func runGatherBootstrapCmd(ctx context.Context, directory string) (string, error) {
 	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create asset store")
 	}
 	// add the default bootstrap key pair to the sshKeys list
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
-	if err := assetStore.Fetch(bootstrapSSHKeyPair); err != nil {
+	if err := assetStore.Fetch(ctx, bootstrapSSHKeyPair); err != nil {
 		return "", errors.Wrapf(err, "failed to fetch %s", bootstrapSSHKeyPair.Name())
 	}
 	tmpfile, err := os.CreateTemp("", "bootstrap-ssh")
@@ -118,7 +118,7 @@ func runGatherBootstrapCmd(directory string) (string, error) {
 
 	if ha.Bootstrap == "" && len(ha.Masters) == 0 {
 		config := &installconfig.InstallConfig{}
-		if err := assetStore.Fetch(config); err != nil {
+		if err := assetStore.Fetch(ctx, config); err != nil {
 			return "", errors.Wrapf(err, "failed to fetch %s", config.Name())
 		}
 

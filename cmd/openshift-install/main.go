@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"io"
 	"os"
@@ -12,8 +13,10 @@ import (
 	terminal "golang.org/x/term"
 	"k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/clusterapi"
 )
 
 func main() {
@@ -36,18 +39,22 @@ func main() {
 func installerMain() {
 	rootCmd := newRootCmd()
 
+	// Perform a graceful shutdown upon interrupt or at exit.
+	ctx := handleInterrupt(signals.SetupSignalHandler())
+	logrus.RegisterExitHandler(shutdown)
+
 	for _, subCmd := range []*cobra.Command{
-		newCreateCmd(),
+		newCreateCmd(ctx),
 		newDestroyCmd(),
 		newWaitForCmd(),
-		newGatherCmd(),
+		newGatherCmd(ctx),
 		newAnalyzeCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 		newCoreOSCmd(),
 		newCompletionCmd(),
 		newExplainCmd(),
-		newAgentCmd(),
+		newAgentCmd(ctx),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}
@@ -95,4 +102,27 @@ func runRootCmd(cmd *cobra.Command, args []string) {
 	if err != nil {
 		logrus.Fatal(errors.Wrap(err, "invalid log-level"))
 	}
+}
+
+// handleInterrupt executes a graceful shutdown then exits in
+// the case of a user interrupt. It returns a new context that
+// will be cancelled upon interrupt.
+func handleInterrupt(signalCtx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// If the context from the signal handler is done,
+	// an interrupt has been received, so shutdown & exit.
+	go func() {
+		<-signalCtx.Done()
+		logrus.Warn("Received interrupt signal")
+		shutdown()
+		cancel()
+		logrus.Exit(exitCodeInterrupt)
+	}()
+
+	return ctx
+}
+
+func shutdown() {
+	clusterapi.System().Teardown()
 }

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -281,7 +282,7 @@ func TestStoreFetch(t *testing.T) {
 					source: generatedSource,
 				}
 			}
-			err := store.Fetch(assets[tc.target])
+			err := store.Fetch(context.TODO(), assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 		})
@@ -375,7 +376,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 			for _, name := range tc.onDiskAssets {
 				onDiskAssets[reflect.TypeOf(assets[name])] = true
 			}
-			err := store.fetch(assets[tc.target], "")
+			err := store.fetch(context.TODO(), assets[tc.target], "")
 			assert.NoError(t, err, "unexpected error")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 			assert.Equal(t, tc.expectedDirty, store.assets[reflect.TypeOf(assets[tc.target])].anyParentsDirty)
@@ -395,7 +396,7 @@ func TestStoreFetchIdempotency(t *testing.T) {
 		}
 		assets := []asset.WritableAsset{&testStoreAssetA{}, &testStoreAssetB{}}
 		for _, a := range assets {
-			err = store.Fetch(a, assets...)
+			err = store.Fetch(context.TODO(), a, assets...)
 			if !assert.NoError(t, err, "(loop %d) unexpected error fetching asset %q", a.Name()) {
 				t.Fatal()
 			}

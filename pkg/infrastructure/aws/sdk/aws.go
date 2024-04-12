@@ -61,7 +61,7 @@ type output struct {
 }
 
 // Provision creates cluster infrastructure using AWS SDK calls.
-func (a InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.File, error) {
+func (a InfraProvider) Provision(ctx context.Context, dir string, parents asset.Parents) ([]*asset.File, error) {
 	terraformVariables := &tfvarsAsset.TerraformVariables{}
 	parents.Get(terraformVariables)
 	// Unmarshall input from tf variables, so we can use it along with
@@ -109,7 +109,7 @@ func (a InfraProvider) Provision(dir string, parents asset.Parents) ([]*asset.Fi
 	usePublicEndpoints := clusterAWSConfig.PublishStrategy == "External"
 
 	logger := logrus.StandardLogger()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 
 	ec2Client := ec2.New(awsSession)
