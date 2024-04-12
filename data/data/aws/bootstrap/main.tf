@@ -256,5 +256,12 @@ resource "aws_eip" "bootstrap" {
   instance         = aws_instance.bootstrap.id
   public_ipv4_pool = var.aws_public_ipv4_pool
 
+  tags = merge(
+    {
+      "Name" = "${var.cluster_id}-bootstrap-eip"
+    },
+    local.tags,
+  )
+
   depends_on = [aws_instance.bootstrap]
 }
