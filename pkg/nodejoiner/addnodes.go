@@ -20,7 +20,7 @@ func NewAddNodesCommand(directory string, kubeConfig string) error {
 		return err
 	}
 
-	fetcher := store.NewAssetsFetcher(directory)
+	fetcher := store.NewAssetsFetcher(directory, true)
 	return fetcher.FetchAndPersist([]asset.WritableAsset{
 		&workflow.AgentWorkflowAddNodes{},
 		&image.AgentImage{},

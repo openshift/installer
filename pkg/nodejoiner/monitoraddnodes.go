@@ -7,6 +7,6 @@ import (
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
 func NewMonitorAddNodesCommand(directory string) error {
-	fetcher := store.NewAssetsFetcher(directory)
+	fetcher := store.NewAssetsFetcher(directory, true)
 	return fetcher.FetchAndPersist([]asset.WritableAsset{})
 }
