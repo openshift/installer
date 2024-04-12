@@ -96,6 +96,7 @@ type ClusterUninstaller struct {
 	jobClient          *instance.IBMPIJobClient
 	keyClient          *instance.IBMPIKeyClient
 	dhcpClient         *instance.IBMPIDhcpClient
+	networkClient      *instance.IBMPINetworkClient
 	tgClient           *transitgatewayapisv1.TransitGatewayApisV1
 
 	resourceGroupID string
@@ -235,12 +236,13 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "Load Balancers", execute: o.destroyLoadBalancers},
 	}, {
-		{name: "Subnets", execute: o.destroySubnets},
+		{name: "Cloud Subnets", execute: o.destroyCloudSubnets},
 	}, {
 		{name: "Public Gateways", execute: o.destroyPublicGateways},
 	}, {
 		{name: "DHCPs", execute: o.destroyDHCPNetworks},
 	}, {
+		{name: "Power Subnets", execute: o.destroyPowerSubnets},
 		{name: "Images", execute: o.destroyImages},
 		{name: "VPCs", execute: o.destroyVPCs},
 	}, {
@@ -609,6 +611,11 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.dhcpClient == nil {
 		return fmt.Errorf("loadSDKServices: o.dhcpClient is nil")
+	}
+
+	o.networkClient = instance.NewIBMPINetworkClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.networkClient == nil {
+		return fmt.Errorf("loadSDKServices: o.networkClient is nil")
 	}
 
 	return nil
