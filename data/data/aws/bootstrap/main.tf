@@ -161,7 +161,7 @@ resource "aws_instance" "bootstrap" {
   subnet_id                   = var.aws_publish_strategy == "External" ? var.public_subnet_ids[0] : var.private_subnet_ids[0]
   user_data                   = var.aws_bootstrap_stub_ignition
   vpc_security_group_ids      = [var.master_sg_id, aws_security_group.bootstrap.id]
-  associate_public_ip_address = local.public_endpoints
+  associate_public_ip_address = local.public_endpoints && var.aws_public_ipv4_pool == ""
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
@@ -251,9 +251,10 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
 }
 
 resource "aws_eip" "bootstrap" {
+  count            = var.aws_public_ipv4_pool == "" ? 0 : 1
   domain           = "vpc"
   instance         = aws_instance.bootstrap.id
-  public_ipv4_pool = var.aws_public_ipv4_pool == "" ? null : var.aws_public_ipv4_pool
+  public_ipv4_pool = var.aws_public_ipv4_pool
 
   depends_on = [aws_instance.bootstrap]
 }
