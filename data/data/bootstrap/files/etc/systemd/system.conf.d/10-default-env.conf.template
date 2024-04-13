@@ -1,10 +1,10 @@
 {{if .Proxy -}}
 [Manager]
 {{if .Proxy.HTTPProxy -}}
-DefaultEnvironment=HTTP_PROXY="{{.Proxy.HTTPProxy}}"
+DefaultEnvironment=HTTP_PROXY="{{replace .Proxy.HTTPProxy "%" "%%"}}"
 {{end -}}
 {{if .Proxy.HTTPSProxy -}}
-DefaultEnvironment=HTTPS_PROXY="{{.Proxy.HTTPSProxy}}"
+DefaultEnvironment=HTTPS_PROXY="{{replace .Proxy.HTTPSProxy "%" "%%"}}"
 {{end -}}
 {{if .Proxy.NoProxy -}}
 DefaultEnvironment=NO_PROXY="{{.Proxy.NoProxy}}"
