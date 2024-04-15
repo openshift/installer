@@ -2,11 +2,6 @@
 
 set -e
 
-# Check if the OPENSHIFT_INSTALL_CLUSTER_API is not empty.
-if [ -z "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
-  return
-fi
-
 TARGET_OS_ARCH=$(go env GOOS)_$(go env GOARCH)
 CLUSTER_API_BIN_DIR="${PWD}/cluster-api/bin/${TARGET_OS_ARCH}"
 CLUSTER_API_MIRROR_DIR="${PWD}/pkg/clusterapi/mirror/"
@@ -20,7 +15,9 @@ copy_cluster_api_to_mirror() {
   # Clean the mirror, but preserve the README file.
   rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
 
-  sync_envtest
+  if [ -n "${OPENSHIFT_INSTALL_CLUSTER_API}" ]; then
+    sync_envtest
+  fi
 
   # Zip every binary in the folder into a single zip file.
   zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
