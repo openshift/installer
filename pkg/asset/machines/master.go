@@ -465,7 +465,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		machines = data.Machines
-		controlPlaneMachineSet = data.ControlPlaneMachineSet
 		ipClaims = data.IPClaims
 		ipAddrs = data.IPAddresses
 

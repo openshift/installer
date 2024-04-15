@@ -439,14 +439,6 @@ func TestConfigMasters(t *testing.T) {
 						t.Errorf("machine workspace was enountered too few times[min: %d]", tc.minAllowedWorkspaceMatches)
 					}
 				}
-
-				if data.ControlPlaneMachineSet != nil {
-					// Make sure FDs equal same quantity as config
-					fds := data.ControlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains
-					if len(fds.VSphere) != len(tc.workspaces) {
-						t.Errorf("machine workspace count %d does not equal number of failure domains [count: %d] in CPMS", len(tc.workspaces), len(fds.VSphere))
-					}
-				}
 			}
 		})
 	}

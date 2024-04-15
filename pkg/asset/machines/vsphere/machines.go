@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
 
-	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -23,10 +22,9 @@ import (
 
 // MachineData contains all result output from the Machines() function.
 type MachineData struct {
-	Machines               []machineapi.Machine
-	ControlPlaneMachineSet *machinev1.ControlPlaneMachineSet
-	IPClaims               []ipamv1.IPAddressClaim
-	IPAddresses            []ipamv1.IPAddress
+	Machines    []machineapi.Machine
+	IPClaims    []ipamv1.IPAddressClaim
+	IPAddresses []ipamv1.IPAddress
 }
 
 // Machines returns a list of machines for a machinepool.
@@ -168,52 +166,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			// Older static IP config, lets remove network since it'll come from FD
 			vsphereMachineProvider.Network = machineapi.NetworkSpec{}
 		}
-	}
-
-	data.ControlPlaneMachineSet = &machinev1.ControlPlaneMachineSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "machine.openshift.io/v1",
-			Kind:       "ControlPlaneMachineSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "openshift-machine-api",
-			Name:      "cluster",
-			Labels: map[string]string{
-				"machine.openshift.io/cluster-api-cluster": clusterID,
-			},
-		},
-		Spec: machinev1.ControlPlaneMachineSetSpec{
-			Replicas: &replicas,
-			State:    machinev1.ControlPlaneMachineSetStateActive,
-			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"machine.openshift.io/cluster-api-machine-role": role,
-					"machine.openshift.io/cluster-api-machine-type": role,
-					"machine.openshift.io/cluster-api-cluster":      clusterID,
-				},
-			},
-			Template: machinev1.ControlPlaneMachineSetTemplate{
-				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
-				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
-					FailureDomains: &machinev1.FailureDomains{
-						Platform: v1.VSpherePlatformType,
-						VSphere:  failureDomains,
-					},
-					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
-						Labels: map[string]string{
-							"machine.openshift.io/cluster-api-cluster":      clusterID,
-							"machine.openshift.io/cluster-api-machine-role": role,
-							"machine.openshift.io/cluster-api-machine-type": role,
-						},
-					},
-					Spec: machineapi.MachineSpec{
-						ProviderSpec: machineapi.ProviderSpec{
-							Value: &runtime.RawExtension{Object: vsphereMachineProvider},
-						},
-					},
-				},
-			},
-		},
 	}
 
 	return data, nil
