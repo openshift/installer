@@ -219,10 +219,10 @@ function New-OpenshiftVMs {
         }
 
         $jobs += Start-ThreadJob -n "create-vm-$($metadata.infraID)-$($key)" -ScriptBlock {
-            param($key,$node,$vm_template,$metadata,$tag,$scriptdir)
+            param($key,$node,$vm_template,$metadata,$tag,$scriptdir,$cliContext)
             . .\variables.ps1
             . ${scriptdir}\upi-functions.ps1
-            Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+            Use-PowerCLIContext -PowerCLIContext $cliContext
 
             $name = "$($metadata.infraID)-$($key)"
             Write-Output "Creating $($name)"
@@ -280,7 +280,7 @@ function New-OpenshiftVMs {
             else {
                 $vm | Start-VM
             }
-        } -ArgumentList @($key,$node,$vm_template,$metadata,$tag,$SCRIPTDIR)
+        } -ArgumentList @($key,$node,$vm_template,$metadata,$tag,$SCRIPTDIR,$cliContext)
         Write-Progress -id 222 -Activity "Creating virtual machines" -PercentComplete ($vmStep * $vmCount)
         $vmCount++
     }

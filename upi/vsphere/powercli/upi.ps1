@@ -3,6 +3,8 @@
 $MYINV = $MyInvocation
 $SCRIPTDIR = split-path $MYINV.MyCommand.Path
 
+Write-Output "SCRIPT DIR: $($SCRIPTDIR)"
+
 . .\variables.ps1
 . ${SCRIPTDIR}\upi-functions.ps1
 
@@ -14,6 +16,7 @@ $Env:GOVC_INSECURE = 1
 
 # Connect to vCenter
 Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+$cliContext = Get-PowerCLIContext
 
 if ($downloadInstaller) {
     Write-Output "Downloading the most recent $($version) installer"
@@ -186,14 +189,14 @@ foreach ($fd in $fds)
         $ovfConfig.NetworkMapping.VM_Network.Value = $fd.network
         Write-Output "OVF: $($ovfConfig)"
         $jobs += Start-ThreadJob -n "upload-template-$($fd.cluster)" -ScriptBlock {
-            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$scriptdir)
+            param($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$scriptdir,$cliContext)
             . .\variables.ps1
             . ${scriptdir}\upi-functions.ps1
             Write-Output "Version: $($Version)"
             Write-Output "VM Template: $($vm_template)"
             Write-Output "OVF Config: $($ovfConfig)"
             Write-Output "VM Host: $($vmhost)"
-            Connect-VIServer -Server $vcenter -Credential (Import-Clixml $vcentercredpath)
+            Use-PowerCLIContext -PowerCLIContext $cliContext
             $template = Import-Vapp -Source "template-$($Version).ova" -Name $vm_template -OvfConfiguration $ovfConfig -VMHost $vmhost -Datastore $datastoreInfo -InventoryLocation $folder -Force:$true
 
             $templateVIObj = Get-View -VIObject $template.Name
@@ -212,7 +215,7 @@ foreach ($fd in $fds)
             New-AdvancedSetting -Entity $template -name "disk.EnableUUID" -value 'TRUE' -confirm:$false -Force > $null
             New-AdvancedSetting -Entity $template -name "guestinfo.ignition.config.data.encoding" -value "base64" -confirm:$false -Force > $null
             #$snapshot = New-Snapshot -VM $template -Name "linked-clone" -Description "linked-clone" -Memory -Quiesce
-        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$SCRIPTDIR)
+        } -ArgumentList @($Version,$vm_template,$ovfConfig,$vmhost,$datastoreInfo,$folder,$tag,$SCRIPTDIR,$cliContext)
     }
 }
 
