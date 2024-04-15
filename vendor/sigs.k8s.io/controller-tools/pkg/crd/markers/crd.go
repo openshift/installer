@@ -18,6 +18,7 @@ package markers
 
 import (
 	"fmt"
+	"strings"
 
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
@@ -48,6 +49,12 @@ var CRDMarkers = []*definitionWithHelp{
 
 	must(markers.MakeDefinition("kubebuilder:unservedversion", markers.DescribesType, UnservedVersion{})).
 		WithHelp(UnservedVersion{}.Help()),
+
+	must(markers.MakeDefinition("kubebuilder:deprecatedversion", markers.DescribesType, DeprecatedVersion{})).
+		WithHelp(DeprecatedVersion{}.Help()),
+
+	must(markers.MakeDefinition("kubebuilder:metadata", markers.DescribesType, Metadata{})).
+		WithHelp(Metadata{}.Help()),
 }
 
 // TODO: categories and singular used to be annotations types
@@ -276,7 +283,7 @@ type Resource struct {
 	Scope string `marker:",optional"`
 }
 
-func (s Resource) ApplyToCRD(crd *apiext.CustomResourceDefinitionSpec, version string) error {
+func (s Resource) ApplyToCRD(crd *apiext.CustomResourceDefinitionSpec, _ string) error {
 	if s.Path != "" {
 		crd.Names.Plural = s.Path
 	}
@@ -316,3 +323,68 @@ func (s UnservedVersion) ApplyToCRD(crd *apiext.CustomResourceDefinitionSpec, ve
 }
 
 // NB(directxman12): singular was historically distinct, so we keep it here for backwards compat
+
+// +controllertools:marker:generateHelp:category=CRD
+
+// DeprecatedVersion marks this version as deprecated.
+type DeprecatedVersion struct {
+	// Warning message to be shown on the deprecated version
+	Warning *string `marker:",optional"`
+}
+
+func (s DeprecatedVersion) ApplyToCRD(crd *apiext.CustomResourceDefinitionSpec, version string) error {
+	if version == "" {
+		// single-version, do nothing
+		return nil
+	}
+	// multi-version
+	for i := range crd.Versions {
+		ver := &crd.Versions[i]
+		if ver.Name != version {
+			continue
+		}
+		ver.Deprecated = true
+		ver.DeprecationWarning = s.Warning
+		break
+	}
+	return nil
+}
+
+// +controllertools:marker:generateHelp:category=CRD
+
+// Metadata configures the additional annotations or labels for this CRD.
+// For example adding annotation "api-approved.kubernetes.io" for a CRD with Kubernetes groups,
+// or annotation "cert-manager.io/inject-ca-from-secret" for a CRD that needs CA injection.
+type Metadata struct {
+	// Annotations will be added into the annotations of this CRD.
+	Annotations []string `marker:",optional"`
+	// Labels will be added into the labels of this CRD.
+	Labels []string `marker:",optional"`
+}
+
+func (s Metadata) ApplyToCRD(crd *apiext.CustomResourceDefinition, _ string) error {
+	if len(s.Annotations) > 0 {
+		if crd.Annotations == nil {
+			crd.Annotations = map[string]string{}
+		}
+		for _, str := range s.Annotations {
+			kv := strings.SplitN(str, "=", 2)
+			if len(kv) < 2 {
+				return fmt.Errorf("annotation %s is not in 'xxx=xxx' format", str)
+			}
+			crd.Annotations[kv[0]] = kv[1]
+		}
+	}
+
+	if len(s.Labels) > 0 {
+		if crd.Labels == nil {
+			crd.Labels = map[string]string{}
+		}
+		for _, str := range s.Labels {
+			kv := strings.SplitN(str, "=", 2)
+			crd.Labels[kv[0]] = kv[1]
+		}
+	}
+
+	return nil
+}
