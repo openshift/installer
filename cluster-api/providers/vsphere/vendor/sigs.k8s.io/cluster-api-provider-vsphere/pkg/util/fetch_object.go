@@ -27,31 +27,33 @@ import (
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// FetchObjectInput contains data to fetch objects.
 type FetchObjectInput struct {
-	context.Context
 	ctrlclient.Client
 	Object ctrlclient.Object
 }
 
-func FetchControlPlaneOwnerObject(input FetchObjectInput) (ctrlclient.Object, error) {
+// FetchControlPlaneOwnerObject returns the ControlPlane owner for a Machine.
+func FetchControlPlaneOwnerObject(ctx context.Context, input FetchObjectInput) (ctrlclient.Object, error) {
 	gvk := controlplanev1.GroupVersion
 	kcp := &controlplanev1.KubeadmControlPlane{}
-	if err := fetchOwnerOfKindInto(input, input.Client, gvk, "KubeadmControlPlane", input.Object, kcp); err != nil {
+	if err := fetchOwnerOfKindInto(ctx, input.Client, gvk, "KubeadmControlPlane", input.Object, kcp); err != nil {
 		return nil, err
 	}
 	return kcp, nil
 }
 
-func FetchMachineDeploymentOwnerObject(input FetchObjectInput) (ctrlclient.Object, error) {
+// FetchMachineDeploymentOwnerObject returns the MachineDeployment owner for a Machine.
+func FetchMachineDeploymentOwnerObject(ctx context.Context, input FetchObjectInput) (ctrlclient.Object, error) {
 	gvk := clusterv1.GroupVersion
 
 	ms := &clusterv1.MachineSet{}
-	if err := fetchOwnerOfKindInto(input, input.Client, gvk, "MachineSet", input.Object, ms); err != nil {
+	if err := fetchOwnerOfKindInto(ctx, input.Client, gvk, "MachineSet", input.Object, ms); err != nil {
 		return nil, err
 	}
 
 	md := &clusterv1.MachineDeployment{}
-	if err := fetchOwnerOfKindInto(input, input.Client, gvk, "MachineDeployment", ms, md); err != nil {
+	if err := fetchOwnerOfKindInto(ctx, input.Client, gvk, "MachineDeployment", ms, md); err != nil {
 		return nil, err
 	}
 	return md, nil

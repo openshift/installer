@@ -4,8 +4,6 @@
 package v1alpha2
 
 import (
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/cloudinit"
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha2/sysprep"
@@ -87,14 +85,13 @@ type VirtualMachineBootstrapSpec struct {
 // VirtualMachineBootstrapCloudInitSpec describes the CloudInit configuration
 // used to bootstrap the VM.
 type VirtualMachineBootstrapCloudInitSpec struct {
-
 	// CloudConfig describes a subset of a Cloud-Init CloudConfig, used to
 	// bootstrap the VM.
 	//
 	// Please note this field and RawCloudConfig are mutually exclusive.
 	//
 	// +optional
-	CloudConfig cloudinit.CloudConfig `json:"cloudConfig,omitempty"`
+	CloudConfig *cloudinit.CloudConfig `json:"cloudConfig,omitempty"`
 
 	// RawCloudConfig describes a key in a Secret resource that contains the
 	// CloudConfig data used to bootstrap the VM.
@@ -105,7 +102,7 @@ type VirtualMachineBootstrapCloudInitSpec struct {
 	// Please note this field and CloudConfig are mutually exclusive.
 	//
 	// +optional
-	RawCloudConfig corev1.SecretKeySelector `json:"rawCloudConfig,omitempty"`
+	RawCloudConfig *common.SecretKeySelector `json:"rawCloudConfig,omitempty"`
 
 	// SSHAuthorizedKeys is a list of public keys that CloudInit will apply to
 	// the guest's default user.
@@ -150,7 +147,7 @@ type VirtualMachineBootstrapSysprepSpec struct {
 	// Please note this field and RawSysprep are mutually exclusive.
 	//
 	// +optional
-	Sysprep sysprep.Sysprep `json:"sysprep,omitempty"`
+	Sysprep *sysprep.Sysprep `json:"sysprep,omitempty"`
 
 	// RawSysprep describes a key in a Secret resource that contains an XML
 	// string of the Sysprep text used to bootstrap the VM.
@@ -161,7 +158,7 @@ type VirtualMachineBootstrapSysprepSpec struct {
 	// Please note this field and Sysprep are mutually exclusive.
 	//
 	// +optional
-	RawSysprep corev1.SecretKeySelector `json:"rawSysprep,omitempty"`
+	RawSysprep *common.SecretKeySelector `json:"rawSysprep,omitempty"`
 }
 
 // VirtualMachineBootstrapVAppConfigSpec describes the vApp configuration

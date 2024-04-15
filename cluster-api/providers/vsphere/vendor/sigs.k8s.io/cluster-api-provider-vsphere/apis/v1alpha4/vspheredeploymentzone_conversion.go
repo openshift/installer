@@ -19,29 +19,29 @@ package v1alpha4
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	infrav1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
 // ConvertTo converts this VSphereDeploymentZone to the Hub version (v1beta1).
 func (src *VSphereDeploymentZone) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereDeploymentZone)
+	dst := dstRaw.(*infrav1.VSphereDeploymentZone)
 	return Convert_v1alpha4_VSphereDeploymentZone_To_v1beta1_VSphereDeploymentZone(src, dst, nil)
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereDeploymentZone.
-func (dst *VSphereDeploymentZone) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereDeploymentZone)
+func (dst *VSphereDeploymentZone) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereDeploymentZone)
 	return Convert_v1beta1_VSphereDeploymentZone_To_v1alpha4_VSphereDeploymentZone(src, dst, nil)
 }
 
 // ConvertTo converts this VSphereDeploymentZoneList to the Hub version (v1beta1).
 func (src *VSphereDeploymentZoneList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereDeploymentZoneList)
+	dst := dstRaw.(*infrav1.VSphereDeploymentZoneList)
 	return Convert_v1alpha4_VSphereDeploymentZoneList_To_v1beta1_VSphereDeploymentZoneList(src, dst, nil)
 }
 
 // ConvertFrom converts this VSphereDeploymentZoneList to the Hub version (v1beta1).
-func (dst *VSphereDeploymentZoneList) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereDeploymentZoneList)
+func (dst *VSphereDeploymentZoneList) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereDeploymentZoneList)
 	return Convert_v1beta1_VSphereDeploymentZoneList_To_v1alpha4_VSphereDeploymentZoneList(src, dst, nil)
 }

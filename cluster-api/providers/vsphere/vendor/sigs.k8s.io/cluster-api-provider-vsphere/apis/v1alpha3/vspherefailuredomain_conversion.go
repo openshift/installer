@@ -19,29 +19,29 @@ package v1alpha3
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	infrav1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
 // ConvertTo converts this VSphereFailureDomain to the Hub version (v1beta1).
 func (src *VSphereFailureDomain) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereFailureDomain)
+	dst := dstRaw.(*infrav1.VSphereFailureDomain)
 	return Convert_v1alpha3_VSphereFailureDomain_To_v1beta1_VSphereFailureDomain(src, dst, nil)
 }
 
 // ConvertFrom converts from the Hub version (v1beta1) to this VSphereFailureDomain.
-func (dst *VSphereFailureDomain) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereFailureDomain)
+func (dst *VSphereFailureDomain) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereFailureDomain)
 	return Convert_v1beta1_VSphereFailureDomain_To_v1alpha3_VSphereFailureDomain(src, dst, nil)
 }
 
 // ConvertTo converts this VSphereFailureDomainList to the Hub version (v1beta1).
 func (src *VSphereFailureDomainList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*infrav1beta1.VSphereFailureDomainList)
+	dst := dstRaw.(*infrav1.VSphereFailureDomainList)
 	return Convert_v1alpha3_VSphereFailureDomainList_To_v1beta1_VSphereFailureDomainList(src, dst, nil)
 }
 
 // ConvertFrom converts this VSphereFailureDomainList to the Hub version (v1beta1).
-func (dst *VSphereFailureDomainList) ConvertFrom(srcRaw conversion.Hub) error { // nolint
-	src := srcRaw.(*infrav1beta1.VSphereFailureDomainList)
+func (dst *VSphereFailureDomainList) ConvertFrom(srcRaw conversion.Hub) error {
+	src := srcRaw.(*infrav1.VSphereFailureDomainList)
 	return Convert_v1beta1_VSphereFailureDomainList_To_v1alpha3_VSphereFailureDomainList(src, dst, nil)
 }

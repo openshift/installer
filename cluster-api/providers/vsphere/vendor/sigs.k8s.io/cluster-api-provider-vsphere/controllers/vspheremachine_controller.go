@@ -17,9 +17,8 @@ limitations under the License.
 package controllers
 
 import (
-	goctx "context"
+	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -29,11 +28,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apitypes "k8s.io/apimachinery/pkg/types"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/client-go/tools/record"
+	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterutilv1 "sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	clog "sigs.k8s.io/cluster-api/util/log"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -51,16 +54,17 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
 	inframanager "sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/record"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/vmoperator"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
 )
 
-const hostInfoErrStr = "host info cannot be used as a label value"
+const (
+	hostInfoErrStr = "host info cannot be used as a label value"
+)
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=vspheremachines/status,verbs=get;update;patch
@@ -77,42 +81,61 @@ const hostInfoErrStr = "host info cannot be used as a label value"
 
 // AddMachineControllerToManager adds the machine controller to the provided
 // manager.
-
-func AddMachineControllerToManager(ctx *context.ControllerManagerContext, mgr manager.Manager, controlledType client.Object, options controller.Options) error {
-	supervisorBased, err := util.IsSupervisorType(controlledType)
-	if err != nil {
-		return err
+func AddMachineControllerToManager(ctx context.Context, controllerManagerContext *capvcontext.ControllerManagerContext, mgr manager.Manager, supervisorBased bool, options controller.Options) error {
+	r := &machineReconciler{
+		Client:          controllerManagerContext.Client,
+		Recorder:        mgr.GetEventRecorderFor("vspheremachine-controller"),
+		VMService:       &services.VimMachineService{Client: controllerManagerContext.Client},
+		supervisorBased: supervisorBased,
 	}
-
-	var (
-		controlledTypeName  = reflect.TypeOf(controlledType).Elem().Name()
-		controlledTypeGVK   = infrav1.GroupVersion.WithKind(controlledTypeName)
-		controllerNameShort = fmt.Sprintf("%s-controller", strings.ToLower(controlledTypeName))
-		controllerNameLong  = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
-	)
 
 	if supervisorBased {
-		controlledTypeGVK = vmwarev1.GroupVersion.WithKind(controlledTypeName)
-		controllerNameShort = fmt.Sprintf("%s-supervisor-controller", strings.ToLower(controlledTypeName))
-		controllerNameLong = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
+		r.VMService = &vmoperator.VmopMachineService{Client: controllerManagerContext.Client}
+		networkProvider, err := inframanager.GetNetworkProvider(ctx, controllerManagerContext.Client, controllerManagerContext.NetworkProvider)
+		if err != nil {
+			return errors.Wrap(err, "failed to create a network provider")
+		}
+		r.networkProvider = networkProvider
+
+		return ctrl.NewControllerManagedBy(mgr).
+			// Watch the controlled, infrastructure resource.
+			For(&vmwarev1.VSphereMachine{}).
+			WithOptions(options).
+			// Watch the CAPI resource that owns this infrastructure resource.
+			Watches(
+				&clusterv1.Machine{},
+				handler.EnqueueRequestsFromMapFunc(clusterutilv1.MachineToInfrastructureMapFunc(vmwarev1.GroupVersion.WithKind("VSphereMachine"))),
+			).
+			Watches(
+				&clusterv1.Cluster{},
+				handler.EnqueueRequestsFromMapFunc(r.enqueueClusterToMachineRequests),
+				ctrlbldr.WithPredicates(
+					predicates.ClusterUnpausedAndInfrastructureReady(ctrl.LoggerFrom(ctx)),
+				),
+			).
+			// Watch a GenericEvent channel for the controlled resource.
+			//
+			// This is useful when there are events outside of Kubernetes that
+			// should cause a resource to be synchronized, such as a goroutine
+			// waiting on some asynchronous, external task to complete.
+			WatchesRawSource(
+				&source.Channel{Source: controllerManagerContext.GetGenericEventChannelFor(vmwarev1.GroupVersion.WithKind("VSphereMachine"))},
+				&handler.EnqueueRequestForObject{},
+			).
+			WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerContext.WatchFilterValue)).
+			// Watch any VirtualMachine resources owned by this VSphereMachine
+			Owns(&vmoprv1.VirtualMachine{}).
+			Complete(r)
 	}
 
-	// Build the controller context.
-	controllerContext := &context.ControllerContext{
-		ControllerManagerContext: ctx,
-		Name:                     controllerNameShort,
-		Recorder:                 record.New(mgr.GetEventRecorderFor(controllerNameLong)),
-		Logger:                   ctx.Logger.WithName(controllerNameShort),
-	}
-
-	builder := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		// Watch the controlled, infrastructure resource.
-		For(controlledType).
+		For(&infrav1.VSphereMachine{}).
 		WithOptions(options).
 		// Watch the CAPI resource that owns this infrastructure resource.
 		Watches(
 			&clusterv1.Machine{},
-			handler.EnqueueRequestsFromMapFunc(clusterutilv1.MachineToInfrastructureMapFunc(controlledTypeGVK)),
+			handler.EnqueueRequestsFromMapFunc(clusterutilv1.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("VSphereMachine"))),
 		).
 		// Watch a GenericEvent channel for the controlled resource.
 		//
@@ -120,31 +143,14 @@ func AddMachineControllerToManager(ctx *context.ControllerManagerContext, mgr ma
 		// should cause a resource to be synchronized, such as a goroutine
 		// waiting on some asynchronous, external task to complete.
 		WatchesRawSource(
-			&source.Channel{Source: ctx.GetGenericEventChannelFor(controlledTypeGVK)},
+			&source.Channel{Source: controllerManagerContext.GetGenericEventChannelFor(infrav1.GroupVersion.WithKind("VSphereMachine"))},
 			&handler.EnqueueRequestForObject{},
 		).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), ctx.WatchFilterValue))
-
-	r := &machineReconciler{
-		ControllerContext: controllerContext,
-		VMService:         &services.VimMachineService{},
-		supervisorBased:   supervisorBased,
-	}
-
-	if supervisorBased {
-		// Watch any VirtualMachine resources owned by this VSphereMachine
-		builder.Owns(&vmoprv1.VirtualMachine{})
-		r.VMService = &vmoperator.VmopMachineService{}
-		networkProvider, err := inframanager.GetNetworkProvider(ctx)
-		if err != nil {
-			return errors.Wrap(err, "failed to create a network provider")
-		}
-		r.networkProvider = networkProvider
-	} else {
+		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(ctrl.LoggerFrom(ctx), controllerManagerContext.WatchFilterValue)).
 		// Watch any VSphereVM resources owned by the controlled type.
-		builder.Watches(
+		Watches(
 			&infrav1.VSphereVM{},
-			handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), controlledType),
+			handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &infrav1.VSphereMachine{}),
 			ctrlbldr.WithPredicates(predicate.Funcs{
 				// ignore creation events since this controller is responsible for
 				// the creation of the type.
@@ -152,41 +158,30 @@ func AddMachineControllerToManager(ctx *context.ControllerManagerContext, mgr ma
 					return false
 				},
 			}),
-		)
-	}
-
-	c, err := builder.Build(r)
-	if err != nil {
-		return err
-	}
-
-	if !supervisorBased {
-		err = c.Watch(
-			source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
-			handler.EnqueueRequestsFromMapFunc(r.clusterToVSphereMachines),
-			predicates.ClusterUnpausedAndInfrastructureReady(r.Logger))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+		).
+		Watches(
+			&clusterv1.Cluster{},
+			handler.EnqueueRequestsFromMapFunc(r.enqueueClusterToMachineRequests),
+			ctrlbldr.WithPredicates(
+				predicates.ClusterUnpausedAndInfrastructureReady(ctrl.LoggerFrom(ctx)),
+			),
+		).Complete(r)
 }
 
 type machineReconciler struct {
-	*context.ControllerContext
+	Client          client.Client
+	Recorder        record.EventRecorder
 	VMService       services.VSphereMachineService
 	networkProvider services.NetworkProvider
 	supervisorBased bool
 }
 
 // Reconcile ensures the back-end state reflects the Kubernetes resource state intent.
-func (r *machineReconciler) Reconcile(_ goctx.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	var machineContext context.MachineContext
-	logger := r.Logger.WithName(req.Namespace).WithName(req.Name)
-	logger.V(3).Info("Starting Reconcile VSphereMachine")
+func (r *machineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
+	log := ctrl.LoggerFrom(ctx)
 
 	// Fetch VSphereMachine object and populate the machine context
-	machineContext, err := r.VMService.FetchVSphereMachine(r.Client, req.NamespacedName)
+	machineContext, err := r.VMService.FetchVSphereMachine(ctx, req.NamespacedName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -194,33 +189,54 @@ func (r *machineReconciler) Reconcile(_ goctx.Context, req ctrl.Request) (_ ctrl
 		return reconcile.Result{}, err
 	}
 
-	// Fetch the CAPI Machine and CAPI Cluster.
-	machine, err := clusterutilv1.GetOwnerMachine(r, r.Client, machineContext.GetObjectMeta())
+	// Fetch the CAPI Machine.
+	machine, err := clusterutilv1.GetOwnerMachine(ctx, r.Client, machineContext.GetObjectMeta())
 	if err != nil {
-		return reconcile.Result{}, err
+		return reconcile.Result{}, errors.Wrapf(err, "failed to get Machine for VSphereMachine")
 	}
 	if machine == nil {
-		logger.V(2).Info("waiting on Machine controller to set OwnerRef on infra machine")
+		log.Info("Waiting for Machine controller to set OwnerRef on VSphereMachine")
 		return reconcile.Result{}, nil
 	}
+	log = log.WithValues("Machine", klog.KObj(machine))
+	ctx = ctrl.LoggerInto(ctx, log)
 
-	cluster := r.fetchCAPICluster(machine, machineContext.GetVSphereMachine())
+	// AddOwners adds the owners of Machine as k/v pairs to the logger.
+	// Specifically, it will add KubeadmControlPlane, MachineSet and MachineDeployment.
+	ctx, log, err = clog.AddOwners(ctx, r.Client, machine)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	cluster, err := clusterutilv1.GetClusterFromMetadata(ctx, r.Client, machine.ObjectMeta)
+	if err != nil {
+		log.Error(err, "Failed to get Cluster from VSphereCluster: Machine is missing cluster label or cluster does not exist")
+	}
+	if cluster != nil {
+		log = log.WithValues("Cluster", klog.KObj(cluster))
+		if cluster.Spec.InfrastructureRef != nil {
+			log = log.WithValues("VSphereCluster", klog.KRef(cluster.Namespace, cluster.Spec.InfrastructureRef.Name))
+		}
+		ctx = ctrl.LoggerInto(ctx, log)
+
+		if annotations.IsPaused(cluster, machineContext.GetVSphereMachine()) {
+			log.Info("Reconciliation is paused for this object")
+			return reconcile.Result{}, nil
+		}
+	} else if annotations.HasPaused(machineContext.GetVSphereMachine()) {
+		log.Info("Reconciliation is paused for this object")
+		return reconcile.Result{}, nil
+	}
 
 	// Create the patch helper.
 	patchHelper, err := patch.NewHelper(machineContext.GetVSphereMachine(), r.Client)
 	if err != nil {
-		return reconcile.Result{}, errors.Wrapf(
-			err,
-			"failed to init patch helper for %s/%s",
-			machineContext.GetObjectMeta().Namespace,
-			machineContext.GetObjectMeta().Name)
+		return reconcile.Result{}, errors.Wrap(err, "failed to initialize patch helper")
 	}
-	machineContext.SetBaseMachineContext(&context.BaseMachineContext{
-		ControllerContext: r.ControllerContext,
-		Cluster:           cluster,
-		Machine:           machine,
-		Logger:            logger,
-		PatchHelper:       patchHelper,
+	machineContext.SetBaseMachineContext(&capvcontext.BaseMachineContext{
+		Cluster:     cluster,
+		Machine:     machine,
+		PatchHelper: patchHelper,
 	})
 	// always patch the VSphereMachine object
 	defer func() {
@@ -232,28 +248,45 @@ func (r *machineReconciler) Reconcile(_ goctx.Context, req ctrl.Request) (_ ctrl
 		)
 
 		// Patch the VSphereMachine resource.
-		if err := machineContext.Patch(); err != nil {
-			if reterr == nil {
-				reterr = err
-			}
-			machineContext.GetLogger().Error(err, "patch failed", "machine", machineContext.String())
+		if err := machineContext.Patch(ctx); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()
 
 	if !machineContext.GetObjectMeta().DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(machineContext)
+		return r.reconcileDelete(ctx, machineContext)
 	}
 
-	// Checking whether cluster is nil here as we still want to allow delete even if cluster is not found.
+	// Checking whether cluster is nil here as we still want to run reconcileDelete above even if cluster is not found.
 	if cluster == nil {
+		log.Info("Failed to get Cluster")
 		return reconcile.Result{}, nil
 	}
+
+	if cluster.Spec.InfrastructureRef == nil {
+		log.Info("Cluster.spec.infrastructureRef is not yet set")
+		return reconcile.Result{}, nil
+	}
+
+	// If the VSphereCluster has been previously set as an ownerReference remove it. This may have been set in an older
+	// version of CAPV to prevent VSphereMachines from being orphaned, but is no longer needed.
+	// For more info see: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/issues/2054
+	// TODO: This should be removed in a future release of CAPV.
+	machineContext.GetVSphereMachine().SetOwnerReferences(
+		clusterutilv1.RemoveOwnerRef(
+			machineContext.GetVSphereMachine().GetOwnerReferences(),
+			metav1.OwnerReference{
+				Name:       cluster.Spec.InfrastructureRef.Name,
+				APIVersion: cluster.Spec.InfrastructureRef.APIVersion,
+				Kind:       cluster.Spec.InfrastructureRef.Kind,
+			},
+		),
+	)
 
 	// Fetch the VSphereCluster and update the machine context
-	machineContext, err = r.VMService.FetchVSphereCluster(r.Client, cluster, machineContext)
+	machineContext, err = r.VMService.FetchVSphereCluster(ctx, cluster, machineContext)
 	if err != nil {
-		logger.Info("unable to retrieve VSphereCluster", "error", err)
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, errors.Wrapf(err, "failed to get VSphereCluster")
 	}
 
 	// If the VSphereMachine doesn't have our finalizer, add it.
@@ -262,21 +295,25 @@ func (r *machineReconciler) Reconcile(_ goctx.Context, req ctrl.Request) (_ ctrl
 		ctrlutil.AddFinalizer(machineContext.GetVSphereMachine(), infrav1.MachineFinalizer)
 		return reconcile.Result{}, nil
 	}
+
 	// Handle non-deleted machines
-	return r.reconcileNormal(machineContext)
+	return r.reconcileNormal(ctx, machineContext)
 }
 
-func (r *machineReconciler) reconcileDelete(ctx context.MachineContext) (reconcile.Result, error) {
-	ctx.GetLogger().Info("Handling deleted VSphereMachine")
-	conditions.MarkFalse(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+func (r *machineReconciler) reconcileDelete(ctx context.Context, machineCtx capvcontext.MachineContext) (reconcile.Result, error) {
+	log := ctrl.LoggerFrom(ctx)
 
-	if err := r.VMService.ReconcileDelete(ctx); err != nil {
+	conditions.MarkFalse(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.DeletingReason, clusterv1.ConditionSeverityInfo, "")
+
+	if err := r.VMService.ReconcileDelete(ctx, machineCtx); err != nil {
 		if apierrors.IsNotFound(err) {
 			// The VM is deleted so remove the finalizer.
-			ctrlutil.RemoveFinalizer(ctx.GetVSphereMachine(), infrav1.MachineFinalizer)
+			if ctrlutil.RemoveFinalizer(machineCtx.GetVSphereMachine(), infrav1.MachineFinalizer) {
+				log.Info(fmt.Sprintf("Removing finalizer %s", infrav1.MachineFinalizer))
+			}
 			return reconcile.Result{}, nil
 		}
-		conditions.MarkFalse(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.DeletionFailedReason, clusterv1.ConditionSeverityWarning, "")
+		conditions.MarkFalse(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.DeletionFailedReason, clusterv1.ConditionSeverityWarning, "")
 		return reconcile.Result{}, err
 	}
 
@@ -284,46 +321,49 @@ func (r *machineReconciler) reconcileDelete(ctx context.MachineContext) (reconci
 	return reconcile.Result{RequeueAfter: 10 * time.Second}, nil
 }
 
-func (r *machineReconciler) reconcileNormal(ctx context.MachineContext) (reconcile.Result, error) {
-	machineFailed, err := r.VMService.SyncFailureReason(ctx)
+func (r *machineReconciler) reconcileNormal(ctx context.Context, machineCtx capvcontext.MachineContext) (reconcile.Result, error) {
+	log := ctrl.LoggerFrom(ctx)
+
+	machineFailed, err := r.VMService.SyncFailureReason(ctx, machineCtx)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return reconcile.Result{}, err
 	}
 
 	// If the VSphereMachine is in an error state, return early.
 	if machineFailed {
-		ctx.GetLogger().Info("Error state detected, skipping reconciliation")
+		log.Error(err, "Error state detected, skipping reconciliation")
 		return reconcile.Result{}, nil
 	}
 
-	//nolint:gocritic
-	if r.supervisorBased {
-		err := r.setVMModifiers(ctx)
-		if err != nil {
-			return reconcile.Result{}, err
+	// Cluster `.status.infrastructureReady == false is handled differently depending on if the machine is supervisor based.
+	// 1) If the Cluster is not supervisor-based mark the VMProvisionedCondition false and return nil.
+	// 2) If the Cluster is supervisor-based continue to reconcile as InfrastructureReady is not set to true until after the kube apiserver is available.
+	if !r.supervisorBased {
+		// vmwarev1.VSphereCluster doesn't set Cluster.Status.Ready until the API endpoint is available.
+		if !machineCtx.GetCluster().Status.InfrastructureReady {
+			log.Info("Cluster infrastructure is not ready yet, skipping reconciliation")
+			conditions.MarkFalse(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1.ConditionSeverityInfo, "")
+			return reconcile.Result{}, nil
 		}
 	} else {
-		// vmwarev1.VSphereCluster doesn't set Cluster.Status.Ready until the API endpoint is available.
-		if !ctx.GetCluster().Status.InfrastructureReady {
-			ctx.GetLogger().Info("Cluster infrastructure is not ready yet")
-			conditions.MarkFalse(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition, infrav1.WaitingForClusterInfrastructureReason, clusterv1.ConditionSeverityInfo, "")
-			return reconcile.Result{}, nil
+		if err := r.setVMModifiers(ctx, machineCtx); err != nil {
+			return reconcile.Result{}, err
 		}
 	}
 
 	// Make sure bootstrap data is available and populated.
-	if ctx.GetMachine().Spec.Bootstrap.DataSecretName == nil {
-		if !util.IsControlPlaneMachine(ctx.GetVSphereMachine()) && !conditions.IsTrue(ctx.GetCluster(), clusterv1.ControlPlaneInitializedCondition) {
-			ctx.GetLogger().Info("Waiting for the control plane to be initialized")
-			conditions.MarkFalse(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.WaitingForControlPlaneAvailableReason, clusterv1.ConditionSeverityInfo, "")
+	if machineCtx.GetMachine().Spec.Bootstrap.DataSecretName == nil {
+		if !util.IsControlPlaneMachine(machineCtx.GetVSphereMachine()) && !conditions.IsTrue(machineCtx.GetCluster(), clusterv1.ControlPlaneInitializedCondition) {
+			log.Info("Waiting for the control plane to be initialized, skipping reconciliation")
+			conditions.MarkFalse(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition, clusterv1.WaitingForControlPlaneAvailableReason, clusterv1.ConditionSeverityInfo, "")
 			return ctrl.Result{}, nil
 		}
-		ctx.GetLogger().Info("Waiting for bootstrap data to be available")
-		conditions.MarkFalse(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition, infrav1.WaitingForBootstrapDataReason, clusterv1.ConditionSeverityInfo, "")
+		log.Info("Waiting for bootstrap data to be ready, skipping reconciliation")
+		conditions.MarkFalse(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition, infrav1.WaitingForBootstrapDataReason, clusterv1.ConditionSeverityInfo, "")
 		return reconcile.Result{}, nil
 	}
 
-	requeue, err := r.VMService.ReconcileNormal(ctx)
+	requeue, err := r.VMService.ReconcileNormal(ctx, machineCtx)
 	if err != nil {
 		return reconcile.Result{}, err
 	} else if requeue {
@@ -333,21 +373,20 @@ func (r *machineReconciler) reconcileNormal(ctx context.MachineContext) (reconci
 	// The machine is patched at the last stage before marking the VM as provisioned
 	// This makes sure that the VSphereMachine exists and is in a Running state
 	// before attempting to patch.
-	err = r.patchMachineLabelsWithHostInfo(ctx)
+	err = r.patchMachineLabelsWithHostInfo(ctx, machineCtx)
 	if err != nil {
-		r.Logger.Error(err, "failed to patch machine with host info label", "machine ", ctx.GetMachine().Name)
-		return reconcile.Result{}, err
+		return reconcile.Result{}, errors.Wrapf(err, "failed to patch Machine with host info label")
 	}
 
-	conditions.MarkTrue(ctx.GetVSphereMachine(), infrav1.VMProvisionedCondition)
+	conditions.MarkTrue(machineCtx.GetVSphereMachine(), infrav1.VMProvisionedCondition)
 	return reconcile.Result{}, nil
 }
 
 // patchMachineLabelsWithHostInfo adds the ESXi host information as a label to the Machine object.
 // The ESXi host information is added with the CAPI node label prefix
 // which would be added onto the node by the CAPI controllers.
-func (r *machineReconciler) patchMachineLabelsWithHostInfo(ctx context.MachineContext) error {
-	hostInfo, err := r.VMService.GetHostInfo(ctx)
+func (r *machineReconciler) patchMachineLabelsWithHostInfo(ctx context.Context, machineCtx capvcontext.MachineContext) error {
+	hostInfo, err := r.VMService.GetHostInfo(ctx, machineCtx)
 	if err != nil {
 		return err
 	}
@@ -355,12 +394,10 @@ func (r *machineReconciler) patchMachineLabelsWithHostInfo(ctx context.MachineCo
 	info := util.SanitizeHostInfoLabel(hostInfo)
 	errs := validation.IsValidLabelValue(info)
 	if len(errs) > 0 {
-		err := errors.Errorf("%s: %s", hostInfoErrStr, strings.Join(errs, ","))
-		r.Logger.Error(err, hostInfoErrStr, "info", hostInfo)
-		return err
+		return errors.Errorf("%s (hostInfo: %s): %s", hostInfoErrStr, hostInfo, strings.Join(errs, ","))
 	}
 
-	machine := ctx.GetMachine()
+	machine := machineCtx.GetMachine()
 	patchHelper, err := patch.NewHelper(machine, r.Client)
 	if err != nil {
 		return err
@@ -370,44 +407,13 @@ func (r *machineReconciler) patchMachineLabelsWithHostInfo(ctx context.MachineCo
 	labels[constants.ESXiHostInfoLabel] = info
 	machine.Labels = labels
 
-	return patchHelper.Patch(r, machine)
-}
-
-func (r *machineReconciler) clusterToVSphereMachines(ctx goctx.Context, a client.Object) []reconcile.Request {
-	requests := []reconcile.Request{}
-	machines, err := util.GetVSphereMachinesInCluster(ctx, r.Client, a.GetNamespace(), a.GetName())
-	if err != nil {
-		return requests
-	}
-	for _, m := range machines {
-		r := reconcile.Request{
-			NamespacedName: apitypes.NamespacedName{
-				Name:      m.Name,
-				Namespace: m.Namespace,
-			},
-		}
-		requests = append(requests, r)
-	}
-	return requests
-}
-
-func (r *machineReconciler) fetchCAPICluster(machine *clusterv1.Machine, vsphereMachine metav1.Object) *clusterv1.Cluster {
-	cluster, err := clusterutilv1.GetClusterFromMetadata(r, r.Client, machine.ObjectMeta)
-	if err != nil {
-		r.Logger.Info("Machine is missing cluster label or cluster does not exist")
-		return nil
-	}
-	if annotations.IsPaused(cluster, vsphereMachine) {
-		r.Logger.V(4).Info("VSphereMachine %s/%s linked to a cluster that is paused", vsphereMachine.GetNamespace(), vsphereMachine.GetName())
-		return nil
-	}
-
-	return cluster
+	return patchHelper.Patch(ctx, machine)
 }
 
 // Return hooks that will be invoked when a VirtualMachine is created.
-func (r *machineReconciler) setVMModifiers(c context.MachineContext) error {
-	ctx, ok := c.(*vmware.SupervisorMachineContext)
+func (r *machineReconciler) setVMModifiers(ctx context.Context, machineCtx capvcontext.MachineContext) error {
+	log := ctrl.LoggerFrom(ctx)
+	supervisorMachineCtx, ok := machineCtx.(*vmware.SupervisorMachineContext)
 	if !ok {
 		return errors.New("received unexpected MachineContext. expecting SupervisorMachineContext type")
 	}
@@ -415,13 +421,33 @@ func (r *machineReconciler) setVMModifiers(c context.MachineContext) error {
 	networkModifier := func(obj runtime.Object) (runtime.Object, error) {
 		// No need to check the type. We know this will be a VirtualMachine
 		vm, _ := obj.(*vmoprv1.VirtualMachine)
-		ctx.Logger.V(3).Info("Applying network config to VM", "vm-name", vm.Name)
-		err := r.networkProvider.ConfigureVirtualMachine(ctx.GetClusterContext(), vm)
+		log.V(3).Info("Applying network config to VM")
+		err := r.networkProvider.ConfigureVirtualMachine(ctx, supervisorMachineCtx.GetClusterContext(), vm)
 		if err != nil {
 			return nil, errors.Errorf("failed to configure machine network: %+v", err)
 		}
 		return vm, nil
 	}
-	ctx.VMModifiers = []vmware.VMModifier{networkModifier}
+	supervisorMachineCtx.VMModifiers = []vmware.VMModifier{networkModifier}
 	return nil
+}
+
+// enqueueClusterToMachineRequests returns a list of VSphereMachine reconcile requests
+// belonging to the cluster.
+func (r *machineReconciler) enqueueClusterToMachineRequests(ctx context.Context, a client.Object) []reconcile.Request {
+	requests := []reconcile.Request{}
+	machines, err := r.VMService.GetMachinesInCluster(ctx, a.GetNamespace(), a.GetName())
+	if err != nil {
+		return requests
+	}
+	for _, m := range machines {
+		r := reconcile.Request{
+			NamespacedName: apitypes.NamespacedName{
+				Name:      m.GetName(),
+				Namespace: m.GetNamespace(),
+			},
+		}
+		requests = append(requests, r)
+	}
+	return requests
 }

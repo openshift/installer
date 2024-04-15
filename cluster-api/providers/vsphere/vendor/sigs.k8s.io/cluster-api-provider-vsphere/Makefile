@@ -23,7 +23,7 @@ SHELL:=/usr/bin/env bash
 #
 # Go.
 #
-GO_VERSION ?= 1.20.10
+GO_VERSION ?= 1.21.9
 GO_CONTAINER_IMAGE ?= docker.io/library/golang:$(GO_VERSION)
 
 # Use GOPROXY environment variable if set
@@ -39,7 +39,7 @@ export GO111MODULE := on
 #
 # Kubebuilder.
 #
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.27.1
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.28.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?= 60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?= 60s
 
@@ -77,10 +77,10 @@ endif
 #
 GINKGO_FOCUS ?=
 GINKGO_SKIP ?=
-GINKGO_TIMEOUT ?= 2h
-E2E_CONF_FILE ?= "$(abspath test/e2e/config/vsphere-dev.yaml)"
-INTEGRATION_CONF_FILE ?= "$(abspath test/integration/integration-dev.yaml)"
-E2E_TEMPLATE_DIR := "$(abspath test/e2e/data/infrastructure-vsphere/)"
+GINKGO_TIMEOUT ?= 3h
+E2E_CONF_FILE ?= $(abspath test/e2e/config/vsphere-dev.yaml)
+INTEGRATION_CONF_FILE ?= $(abspath test/integration/integration-dev.yaml)
+E2E_TEMPLATE_DIR := $(abspath test/e2e/data/infrastructure-vsphere/)
 SKIP_RESOURCE_CLEANUP ?= false
 USE_EXISTING_CLUSTER ?= false
 GINKGO_NOCOLOR ?= false
@@ -92,6 +92,7 @@ endif
 
 # Helper function to get dependency version from go.mod
 get_go_version = $(shell go list -m $1 | awk '{print $$NF}')
+get_test_go_version = $(shell cd test; go list -m $1 | awk '{print $$NF}')
 
 #
 # Binaries.
@@ -107,17 +108,17 @@ SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-CONTROLLER_GEN_VER := v0.12.1
+CONTROLLER_GEN_VER := v0.13.0
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER))
 CONTROLLER_GEN_PKG := sigs.k8s.io/controller-tools/cmd/controller-gen
 
-GOTESTSUM_VER := v1.6.4
+GOTESTSUM_VER := v1.11.0
 GOTESTSUM_BIN := gotestsum
 GOTESTSUM := $(abspath $(TOOLS_BIN_DIR)/$(GOTESTSUM_BIN)-$(GOTESTSUM_VER))
 GOTESTSUM_PKG := gotest.tools/gotestsum
 
-CONVERSION_GEN_VER := v0.27.1
+CONVERSION_GEN_VER := v0.28.0
 CONVERSION_GEN_BIN := conversion-gen
 # We are intentionally using the binary without version suffix, to avoid the version
 # in generated files.
@@ -129,19 +130,22 @@ ENVSUBST_VER := $(call get_go_version,github.com/drone/envsubst/v2)
 ENVSUBST := $(abspath $(TOOLS_BIN_DIR)/$(ENVSUBST_BIN)-$(ENVSUBST_VER))
 ENVSUBST_PKG := github.com/drone/envsubst/v2/cmd/envsubst
 
-GO_APIDIFF_VER := v0.6.0
+GO_APIDIFF_VER := v0.8.2
 GO_APIDIFF_BIN := go-apidiff
 GO_APIDIFF := $(abspath $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)-$(GO_APIDIFF_VER))
 GO_APIDIFF_PKG := github.com/joelanford/go-apidiff
 
 SHELLCHECK_VER := v0.9.0
 
+TRIVY_VER := 0.47.0
+
 KPROMO_VER := v4.0.4
 KPROMO_BIN := kpromo
 KPROMO :=  $(abspath $(TOOLS_BIN_DIR)/$(KPROMO_BIN)-$(KPROMO_VER))
+# KPROMO_PKG may have to be changed if KPROMO_VER increases its major version.
 KPROMO_PKG := sigs.k8s.io/promo-tools/v4/cmd/kpromo
 
-YQ_VER := v4.25.2
+YQ_VER := v4.35.2
 YQ_BIN := yq
 YQ :=  $(abspath $(TOOLS_BIN_DIR)/$(YQ_BIN)-$(YQ_VER))
 YQ_PKG := github.com/mikefarah/yq/v4
@@ -157,7 +161,7 @@ GOLANGCI_LINT := $(abspath $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT
 GOLANGCI_LINT_PKG := github.com/golangci/golangci-lint/cmd/golangci-lint
 
 GOVULNCHECK_BIN := govulncheck
-GOVULNCHECK_VER := v1.0.0
+GOVULNCHECK_VER := v1.0.1
 GOVULNCHECK := $(abspath $(TOOLS_BIN_DIR)/$(GOVULNCHECK_BIN)-$(GOVULNCHECK_VER))
 GOVULNCHECK_PKG := golang.org/x/vuln/cmd/govulncheck
 
@@ -166,12 +170,17 @@ GOVC_BIN := govc
 GOVC := $(abspath $(TOOLS_BIN_DIR)/$(GOVC_BIN)-$(GOVC_VER))
 GOVC_PKG := github.com/vmware/govmomi/govc
 
-KIND_VER := $(call get_go_version,sigs.k8s.io/kind)
+KIND_VER := $(call get_test_go_version,sigs.k8s.io/kind)
 KIND_BIN := kind
 KIND := $(abspath $(TOOLS_BIN_DIR)/$(KIND_BIN)-$(KIND_VER))
 KIND_PKG := sigs.k8s.io/kind
 
-CAPI_HACK_TOOLS_VER := 4abf44cd85c4590602e4c10543d53cd4ec914845 # Note: this is the commit ID of the dependend CAPI release tag, currently v1.5.0
+IMPORT_BOSS_BIN := import-boss
+IMPORT_BOSS_VER := v0.28.1
+IMPORT_BOSS := $(abspath $(TOOLS_BIN_DIR)/$(IMPORT_BOSS_BIN))
+IMPORT_BOSS_PKG := k8s.io/code-generator/cmd/import-boss
+
+CAPI_HACK_TOOLS_VER := a150f715f5a607ef172dbe96615ffdf1d51220b3 # Note: this is the commit ID of the dependend CAPI release tag, currently v1.6.1
 
 CONVERSION_VERIFIER_VER := $(CAPI_HACK_TOOLS_VER)
 CONVERSION_VERIFIER_BIN := conversion-verifier
@@ -181,7 +190,7 @@ CONVERSION_VERIFIER_PKG := sigs.k8s.io/cluster-api/hack/tools/conversion-verifie
 RELEASE_NOTES_VER := $(CAPI_HACK_TOOLS_VER)
 RELEASE_NOTES_BIN := release-notes
 RELEASE_NOTES := $(abspath $(TOOLS_BIN_DIR)/$(RELEASE_NOTES_BIN)-$(RELEASE_NOTES_VER))
-RELEASE_NOTES_PKG := sigs.k8s.io/cluster-api/hack/tools/release
+RELEASE_NOTES_PKG := sigs.k8s.io/cluster-api/hack/tools/release/notes
 
 # Define Docker related variables. Releases should modify and double check these vars.
 REGISTRY ?= gcr.io/$(shell gcloud config get-value project)
@@ -211,7 +220,7 @@ ifeq ($(SELINUX_ENABLED),1)
 endif
 
 # Set build time variables including version details
-LDFLAGS := $(shell hack/version.sh)
+LDFLAGS ?= $(shell hack/version.sh)
 
 # Additional CAPV vars (everything else is ~ kept in sync with core CAPI)
 # Allow overriding manifest generation destination directory
@@ -239,16 +248,18 @@ generate: ## Run all generate targets
 
 .PHONY: generate-manifests
 generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
-	$(MAKE) clean-generated-yaml SRC_DIRS="$(CRD_ROOT),$(SUPERVISOR_CRD_ROOT),$(VMOP_CRD_ROOT)"
+	$(MAKE) clean-generated-yaml SRC_DIRS="$(CRD_ROOT),$(SUPERVISOR_CRD_ROOT),$(VMOP_CRD_ROOT),./config/webhook/manifests.yaml"
 	$(CONTROLLER_GEN) \
 		paths=./apis/v1alpha3 \
 		paths=./apis/v1alpha4 \
 		paths=./apis/v1beta1 \
+		paths=./internal/webhooks \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(CRD_ROOT) \
 		output:webhook:dir=$(WEBHOOK_ROOT) \
 		webhook
 	$(CONTROLLER_GEN) \
+		paths=./ \
 		paths=./controllers/... \
 		output:rbac:dir=$(RBAC_ROOT) \
 		rbac:roleName=manager-role
@@ -258,7 +269,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		output:crd:dir=$(SUPERVISOR_CRD_ROOT)
 	# vm-operator crds are loaded to be used for integration tests.
 	$(CONTROLLER_GEN) \
-		paths=github.com/vmware-tanzu/vm-operator/api/... \
+		paths=github.com/vmware-tanzu/vm-operator/api/v1alpha1/... \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(VMOP_CRD_ROOT)
 
@@ -282,38 +293,51 @@ generate-go-conversions: $(CONTROLLER_GEN) $(CONVERSION_GEN) ## Runs Go related 
 .PHONY: generate-modules
 generate-modules: ## Run go mod tidy to ensure modules are up to date
 	go mod tidy
+	cd $(TEST_DIR); go mod tidy
 
 .PHONY: generate-doctoc
 generate-doctoc:
 	TRACE=$(TRACE) ./hack/generate-doctoc.sh
 
 .PHONY: generate-e2e-templates
-generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, main) ## Generate test templates for all branches
+generate-e2e-templates: $(KUSTOMIZE) $(addprefix generate-e2e-templates-, v1.7 v1.8 main) ## Generate test templates for all branches
 
 .PHONY: generate-e2e-templates-main
 generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the main branch
 	$(MAKE) e2e-flavors-main
-	cp $(RELEASE_DIR)/main/cluster-template.yaml $(E2E_TEMPLATE_DIR)/main/base/cluster-template.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/base > $(E2E_TEMPLATE_DIR)/main/cluster-template.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/hw-upgrade > $(E2E_TEMPLATE_DIR)/main/cluster-template-hw-upgrade.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/storage-policy > $(E2E_TEMPLATE_DIR)/main/cluster-template-storage-policy.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/remote-management > $(E2E_TEMPLATE_DIR)/main/cluster-template-remote-management.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/conformance > $(E2E_TEMPLATE_DIR)/main/cluster-template-conformance.yaml
+	cp "$(RELEASE_DIR)/main/cluster-template.yaml" "$(E2E_TEMPLATE_DIR)/main/base/cluster-template.yaml"
+	cp "$(RELEASE_DIR)/main/cluster-template-ignition.yaml" "$(E2E_TEMPLATE_DIR)/main/base/cluster-template-ignition.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/base" > "$(E2E_TEMPLATE_DIR)/main/cluster-template.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/hw-upgrade" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-hw-upgrade.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/storage-policy" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-storage-policy.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/conformance" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-conformance.yaml"
 	# Since CAPI uses different flavor names for KCP and MD remediation using MHC
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/mhc-remediation/kcp > $(E2E_TEMPLATE_DIR)/main/cluster-template-kcp-remediation.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/mhc-remediation/md > $(E2E_TEMPLATE_DIR)/main/cluster-template-md-remediation.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/node-drain > $(E2E_TEMPLATE_DIR)/main/cluster-template-node-drain.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/ignition > $(E2E_TEMPLATE_DIR)/main/cluster-template-ignition.yaml
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/mhc-remediation/kcp" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-kcp-remediation.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/mhc-remediation/md" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-md-remediation.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/node-drain" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-node-drain.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/ignition" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-ignition.yaml"
 	# generate clusterclass and cluster topology
-	cp $(RELEASE_DIR)/main/cluster-template-topology.yaml $(E2E_TEMPLATE_DIR)/main/topology/cluster-template-topology.yaml
-	cp $(RELEASE_DIR)/main/clusterclass-template.yaml $(E2E_TEMPLATE_DIR)/main/clusterclass-quick-start.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/topology > $(E2E_TEMPLATE_DIR)/main/cluster-template-topology.yaml
+	cp "$(RELEASE_DIR)/main/clusterclass-template.yaml" "$(E2E_TEMPLATE_DIR)/main/clusterclass/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/clusterclass" > "$(E2E_TEMPLATE_DIR)/main/clusterclass-quick-start.yaml"
+	cp "$(RELEASE_DIR)/main/cluster-template-topology.yaml" "$(E2E_TEMPLATE_DIR)/main/topology/cluster-template-topology.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/topology" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-topology.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/remote-management" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-remote-management.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/install-on-bootstrap" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-install-on-bootstrap.yaml"
 	# for PCI passthrough template
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/pci > $(E2E_TEMPLATE_DIR)/main/cluster-template-pci.yaml
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/pci" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-pci.yaml"
 	# for DHCP overrides
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/dhcp-overrides > $(E2E_TEMPLATE_DIR)/main/cluster-template-dhcp-overrides.yaml
-	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build $(E2E_TEMPLATE_DIR)/main/ownerreferences > $(E2E_TEMPLATE_DIR)/main/cluster-template-ownerreferences.yaml
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/dhcp-overrides" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-dhcp-overrides.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/main/ownerreferences" > "$(E2E_TEMPLATE_DIR)/main/cluster-template-ownerreferences.yaml"
 
+.PHONY: generate-e2e-templates-v1.8
+generate-e2e-templates-v1.8: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/v1.8/clusterclass" > "$(E2E_TEMPLATE_DIR)/v1.8/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/v1.8/workload" > "$(E2E_TEMPLATE_DIR)/v1.8/cluster-template-workload.yaml"
+
+.PHONY: generate-e2e-templates-v1.7
+generate-e2e-templates-v1.7: $(KUSTOMIZE)
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/v1.7/clusterclass" > "$(E2E_TEMPLATE_DIR)/v1.7/clusterclass-quick-start.yaml"
+	"$(KUSTOMIZE)" --load-restrictor LoadRestrictionsNone build "$(E2E_TEMPLATE_DIR)/v1.7/workload" > "$(E2E_TEMPLATE_DIR)/v1.7/cluster-template-workload.yaml"
 
 ## --------------------------------------
 ## Lint / Verify
@@ -324,6 +348,7 @@ generate-e2e-templates-main: $(KUSTOMIZE) ## Generate test templates for the mai
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Lint the codebase
 	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
+	cd $(TEST_DIR); $(GOLANGCI_LINT) run --path-prefix $(TEST_DIR) --config $(ROOT_DIR)/.golangci.yml -v $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
 lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
@@ -335,14 +360,14 @@ APIDIFF_OLD_COMMIT ?= $(shell git rev-parse origin/main)
 apidiff: $(GO_APIDIFF) ## Check for API differences
 	$(GO_APIDIFF) $(APIDIFF_OLD_COMMIT) --print-compatible
 
-ALL_VERIFY_CHECKS = boilerplate shellcheck modules gen conversions doctoc flavors
+ALL_VERIFY_CHECKS = licenses boilerplate shellcheck modules gen conversions doctoc flavors import-restrictions
 
 .PHONY: verify
 verify: $(addprefix verify-,$(ALL_VERIFY_CHECKS)) ## Run all verify-* targets
 
 .PHONY: verify-modules
 verify-modules: generate-modules  ## Verify go modules are up to date
-	@if !(git diff --quiet HEAD -- go.sum go.mod); then \
+	@if !(git diff --quiet HEAD -- go.sum go.mod $(TEST_DIR)/go.mod $(TEST_DIR)/go.sum); then \
 		git diff; \
 		echo "go module files are out of date"; exit 1; \
 	fi
@@ -379,11 +404,19 @@ verify-shellcheck: ## Verify shell files
 
 .PHONY: verify-container-images
 verify-container-images: ## Verify container images
-	TRACE=$(TRACE) ./hack/verify-container-images.sh
+	TRACE=$(TRACE) ./hack/verify-container-images.sh  $(TRIVY_VER)
+
+.PHONY: verify-licenses
+verify-licenses: ## Verify licenses
+	TRACE=$(TRACE) ./hack/verify-licenses.sh $(TRIVY_VER)
 
 .PHONY: verify-govulncheck
 verify-govulncheck: $(GOVULNCHECK) ## Verify code for vulnerabilities
-	$(GOVULNCHECK) ./...
+	$(GOVULNCHECK) ./... && R1=$$? || R1=$$?; \
+	$(GOVULNCHECK) -C "$(TEST_DIR)" ./... && R2=$$? || R2=$$?; \
+	if [ "$$R1" -ne "0" ] || [ "$$R2" -ne "0" ]; then \
+		exit 1; \
+	fi
 
 .PHONY: verify-security
 verify-security: ## Verify code and images for vulnerabilities
@@ -400,6 +433,10 @@ verify-flavors: $(FLAVOR_DIR) generate-flavors ## Verify generated flavors
 		git diff $(FLAVOR_DIR); \
 		echo "flavor files in templates directory are out of date"; exit 1; \
 	fi
+
+.PHONY: verify-import-restrictions
+verify-import-restrictions: $(IMPORT_BOSS) ## Verify import restrictions with import-boss
+	./hack/verify-import-restrictions.sh
 
 ## --------------------------------------
 ## Build
@@ -449,7 +486,7 @@ setup-envtest: $(SETUP_ENVTEST) ## Set up envtest (download kubebuilder assets)
 
 .PHONY: test
 test: $(SETUP_ENVTEST) $(GOVC) ## Run unit tests
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -v ./apis/... ./controllers/... ./pkg/... $(TEST_ARGS)
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -v ./apis/... ./controllers/... ./pkg/... ./internal/... $(TEST_ARGS)
 
 .PHONY: test-verbose
 test-verbose: ## Run unit tests with verbose flag
@@ -457,13 +494,15 @@ test-verbose: ## Run unit tests with verbose flag
 
 .PHONY: test-junit
 test-junit: $(SETUP_ENVTEST) $(GOTESTSUM) $(GOVC) ## Run unit tests
-	set +o errexit; (KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -json ./apis/... ./controllers/... ./pkg/... $(TEST_ARGS); echo $$? > $(ARTIFACTS)/junit.exitcode) | tee $(ARTIFACTS)/junit.stdout
+	# Note: ARTIFACTS must be set so the ginkgo suites write junit reports to the ARTIFACTS folder
+	set +o errexit; (ARTIFACTS=$(ARTIFACTS) KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" GOVC_BIN_PATH=$(GOVC) go test -json ./apis/... ./controllers/... ./pkg/... ./internal/... $(TEST_ARGS); echo $$? > $(ARTIFACTS)/junit.exitcode) | tee $(ARTIFACTS)/junit.stdout
 	$(GOTESTSUM) --junitfile $(ARTIFACTS)/junit.xml --raw-command cat $(ARTIFACTS)/junit.stdout
 	exit $$(cat $(ARTIFACTS)/junit.exitcode)
 
 .PHONY: test-cover
 test-cover: ## Run unit tests and generate a coverage report
-	$(MAKE) test TEST_ARGS="$(TEST_ARGS) -coverprofile=coverage.out"
+	$(MAKE) test TEST_ARGS="$(TEST_ARGS) -coverpkg=./... -coverprofile=coverage.out"
+	./hack/codecov-ignore.sh
 	go tool cover -func=coverage.out -o coverage.txt
 	go tool cover -html=coverage.out -o coverage.html
 
@@ -699,15 +738,15 @@ clean-release-git: ## Restores the git files usually modified during a release
 	git restore ./*manager_image_patch.yaml ./*manager_pull_policy.yaml
 
 .PHONY: clean-generated-yaml
-clean-generated-yaml: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1alpha4"
+clean-generated-yaml: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1beta1"
 	(IFS=','; for i in $(SRC_DIRS); do find $$i -type f -name '*.yaml' -exec rm -f {} \;; done)
 
 .PHONY: clean-generated-deepcopy
-clean-generated-deepcopy: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1alpha4"
+clean-generated-deepcopy: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1beta1"
 	(IFS=','; for i in $(SRC_DIRS); do find $$i -type f -name 'zz_generated.deepcopy*' -exec rm -f {} \;; done)
 
 .PHONY: clean-generated-conversions
-clean-generated-conversions: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1alpha4"
+clean-generated-conversions: ## Remove files generated by conversion-gen from the mentioned dirs. Example SRC_DIRS="./api/v1beta1"
 	(IFS=','; for i in $(SRC_DIRS); do find $$i -type f -name 'zz_generated.conversion*' -exec rm -f {} \;; done)
 
 ## --------------------------------------
@@ -761,6 +800,8 @@ $(GOVC_BIN): $(GOVC) ## Build a local copy of govc.
 .PHONY: $(KIND_BIN)
 $(KIND_BIN): $(KIND) ## Build a local copy of kind.
 
+.PHONY: $(IMPORT_BOSS_BIN)
+$(IMPORT_BOSS_BIN): $(IMPORT_BOSS)
 
 .PHONY: $(RELEASE_NOTES_BIN)
 $(RELEASE_NOTES_BIN): $(RELEASE_NOTES) ## Build a local copy of release-notes.
@@ -811,8 +852,10 @@ $(GOVC): # Build GOVC.
 	CGO_ENABLED=0 GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(GOVC_PKG) $(GOVC_BIN) $(GOVC_VER)
 
 $(KIND): # Build kind.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(KIND_PKG) $(KIND_BIN) $(KIND_VER)
+	cd $(TEST_DIR); GOBIN=$(TOOLS_BIN_DIR) ../$(GO_INSTALL) $(KIND_PKG) $(KIND_BIN) $(KIND_VER)
 
+$(IMPORT_BOSS): # Build import-boss
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) $(IMPORT_BOSS_PKG) $(IMPORT_BOSS_BIN) $(IMPORT_BOSS_VER)
 
 $(RELEASE_NOTES): # Build release-notes.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_TOOLS_BUILD) $(RELEASE_NOTES_PKG) $(RELEASE_NOTES_BIN) $(RELEASE_NOTES_VER)

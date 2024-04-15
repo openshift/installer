@@ -334,7 +334,7 @@ type VirtualMachinePublishRequestStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,shortName=vmpub
-// +kubebuilder:storageversion:false
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 
 // VirtualMachinePublishRequest defines the information necessary to publish a
@@ -345,6 +345,14 @@ type VirtualMachinePublishRequest struct {
 
 	Spec   VirtualMachinePublishRequestSpec   `json:"spec,omitempty"`
 	Status VirtualMachinePublishRequestStatus `json:"status,omitempty"`
+}
+
+func (vmpub *VirtualMachinePublishRequest) GetConditions() []metav1.Condition {
+	return vmpub.Status.Conditions
+}
+
+func (vmpub *VirtualMachinePublishRequest) SetConditions(conditions []metav1.Condition) {
+	vmpub.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

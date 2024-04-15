@@ -19,7 +19,6 @@ package v1alpha4
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha4"
 )
 
 // VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone
@@ -74,10 +73,11 @@ type VSphereDeploymentZoneStatus struct {
 
 	// Conditions defines current service state of the VSphereMachine.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vspheredeploymentzones,scope=Cluster,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -93,11 +93,11 @@ type VSphereDeploymentZone struct {
 	Status VSphereDeploymentZoneStatus `json:"status,omitempty"`
 }
 
-func (z *VSphereDeploymentZone) GetConditions() clusterv1.Conditions {
+func (z *VSphereDeploymentZone) GetConditions() Conditions {
 	return z.Status.Conditions
 }
 
-func (z *VSphereDeploymentZone) SetConditions(conditions clusterv1.Conditions) {
+func (z *VSphereDeploymentZone) SetConditions(conditions Conditions) {
 	z.Status.Conditions = conditions
 }
 
@@ -113,5 +113,5 @@ type VSphereDeploymentZoneList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
+	objectTypes = append(objectTypes, &VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
 }

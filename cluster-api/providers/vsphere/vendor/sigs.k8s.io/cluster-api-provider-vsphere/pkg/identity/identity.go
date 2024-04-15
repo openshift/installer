@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package identity contains tools for managing secrets used to access the VCenter API.
 package identity
 
 import (
@@ -22,7 +23,7 @@ import (
 	"fmt"
 	"strings"
 
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,22 +32,26 @@ import (
 )
 
 const (
+	// UsernameKey is the key used for the username.
 	UsernameKey = "username"
+	// PasswordKey is the key used for the password.
 	PasswordKey = "password"
 )
 
+// Credentials are the user credentials used with the VSphere API.
 type Credentials struct {
 	Username string
 	Password string
 }
 
+// GetCredentials returns the VCenter credentials for the VSphereCluster.
 func GetCredentials(ctx context.Context, c client.Client, cluster *infrav1.VSphereCluster, controllerNamespace string) (*Credentials, error) {
 	if err := validateInputs(c, cluster); err != nil {
 		return nil, err
 	}
 
 	ref := cluster.Spec.IdentityRef
-	secret := &apiv1.Secret{}
+	secret := &corev1.Secret{}
 	var secretKey client.ObjectKey
 
 	switch ref.Kind {
@@ -77,7 +82,7 @@ func GetCredentials(ctx context.Context, c client.Client, cluster *infrav1.VSphe
 			return nil, errors.New("failed to build selector")
 		}
 
-		ns := &apiv1.Namespace{}
+		ns := &corev1.Namespace{}
 		nsKey := client.ObjectKey{
 			Name: cluster.Namespace,
 		}
@@ -130,6 +135,7 @@ func IsSecretIdentity(cluster *infrav1.VSphereCluster) bool {
 	return cluster.Spec.IdentityRef.Kind == infrav1.SecretKind
 }
 
+// IsOwnedByIdentityOrCluster discovers if a secret is owned by a VSphereCluster or VSphereClusterIdentity.
 func IsOwnedByIdentityOrCluster(ownerReferences []metav1.OwnerReference) bool {
 	if len(ownerReferences) > 0 {
 		for _, ownerReference := range ownerReferences {
@@ -144,7 +150,7 @@ func IsOwnedByIdentityOrCluster(ownerReferences []metav1.OwnerReference) bool {
 	return false
 }
 
-func getData(secret *apiv1.Secret, key string) string {
+func getData(secret *corev1.Secret, key string) string {
 	if secret.Data == nil {
 		return ""
 	}

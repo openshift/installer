@@ -92,7 +92,7 @@ const (
 	// retry the operation, but a user intervention might be required to fix the problem.
 	TaskFailure = "TaskFailure"
 
-	// WaitingForNetworkAddressesReason (Severity=Info) documents a VSphereMachine waiting for the the machine network
+	// WaitingForNetworkAddressesReason (Severity=Info) documents a VSphereMachine waiting for the machine network
 	// settings to be reported after machine being powered on.
 	//
 	// NOTE: This reason does not apply to VSphereVM (this state happens after the VSphereVM is in ready state).

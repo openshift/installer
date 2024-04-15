@@ -17,35 +17,32 @@ limitations under the License.
 package context
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
+// BaseMachineContext contains information about a CAPI Machine for VSphereMachine reconciliation.
 type BaseMachineContext struct {
-	*ControllerContext
-	Logger      logr.Logger
-	Cluster     *clusterv1.Cluster
-	Machine     *clusterv1.Machine
-	PatchHelper *patch.Helper
+	ControllerManagerContext *ControllerManagerContext
+	Cluster                  *clusterv1.Cluster
+	Machine                  *clusterv1.Machine
+	PatchHelper              *patch.Helper
 }
 
+// GetCluster returns the cluster for the BaseMachineContext.
 func (c *BaseMachineContext) GetCluster() *clusterv1.Cluster {
 	return c.Cluster
 }
 
+// GetMachine returns the Machine for the BaseMachineContext.
 func (c *BaseMachineContext) GetMachine() *clusterv1.Machine {
 	return c.Machine
-}
-
-// GetLogger returns this context's logger.
-func (c *BaseMachineContext) GetLogger() logr.Logger {
-	return c.Logger
 }
 
 // VIMMachineContext is a Go context used with a VSphereMachine.
@@ -61,18 +58,21 @@ func (c *VIMMachineContext) String() string {
 }
 
 // Patch updates the object and its status on the API server.
-func (c *VIMMachineContext) Patch() error {
-	return c.PatchHelper.Patch(c, c.VSphereMachine)
+func (c *VIMMachineContext) Patch(ctx context.Context) error {
+	return c.PatchHelper.Patch(ctx, c.VSphereMachine)
 }
 
+// GetVSphereMachine sets the VSphereMachine for the VIMMachineContext.
 func (c *VIMMachineContext) GetVSphereMachine() VSphereMachine {
 	return c.VSphereMachine
 }
 
-func (c *VIMMachineContext) GetObjectMeta() v1.ObjectMeta {
+// GetObjectMeta returns the ObjectMeta for the VSphereMachine in the VIMMachineContext.
+func (c *VIMMachineContext) GetObjectMeta() metav1.ObjectMeta {
 	return c.VSphereMachine.ObjectMeta
 }
 
+// SetBaseMachineContext sets the BaseMachineContext for the VIMMachineContext.
 func (c *VIMMachineContext) SetBaseMachineContext(base *BaseMachineContext) {
 	c.BaseMachineContext = base
 }

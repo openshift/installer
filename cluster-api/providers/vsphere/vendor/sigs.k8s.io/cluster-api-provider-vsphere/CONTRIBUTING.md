@@ -1,10 +1,49 @@
 # Contributing guidelines
 
-## Sign the CLA
+## Contributor License Agreements
 
-Kubernetes projects require that you sign a Contributor License Agreement (CLA) before we can accept your pull requests.  Please see the CLA [guidelines](https://git.k8s.io/community/CLA.md) for more info
+We'd love to accept your patches! Before we can take them, we have to jump a couple of legal hurdles.
 
-### Contributing A Patch
+Please fill out either the individual or corporate Contributor License Agreement (CLA). More information about the CLA
+and instructions for signing it [can be found here](https://git.k8s.io/community/CLA.md).
+
+***NOTE***: Only original source code from you and other people that have signed the CLA can be accepted into the
+repository.
+
+## Versioning
+
+### Branches
+
+CAPV has two types of branches: the *main* branch and *release-X* branches.
+
+The *main* branch is where development happens. All the latest and
+greatest code, including breaking changes, happens on main.
+
+The *release-X* branches contain stable, backwards compatible code. On every
+major or minor release, a new branch is created. It is from these
+branches that minor and patch releases are tagged. In some cases, it may
+be necessary to open PRs for bugfixes directly against stable branches, but
+this should generally not be the case.
+
+### Backporting a patch
+
+We generally do not accept PRs directly against release branches, while we might accept backports of fixes/changes already
+merged into the main branch. In most cases the cherry-pick bot can and should be used to automate opening a cherry-pick PR.
+
+We generally allow backports of following changes to all supported branches:
+- Bug fixes and security fixes
+- Dependency bumps for CVEs (usually limited to CVE resolution; backports of non-CVE related version bumps are considered exceptions to be evaluated case by case)
+- Changes required to support new Kubernetes versions, when possible.
+- Changes to use the latest Go patch release. If the Go minor version of a supported branch goes out of support, we will consider on a case-by-case basis
+  to bump to a newer Go minor version (e.g. to pick up CVE fixes).
+- Improvements to test and CI signal
+
+In addition to that we allow backports at maintainers discretion. Please let us know if you would like us to consider backporting a specific PR.
+
+In general, we support the two latest release branches. In addition, we will keep the CI coverage for older branches around so we're able to cut additional patch 
+releases to fix CVEs and critical bugs if needed.
+
+## Contributing A Patch
 
 1. Submit an issue describing your proposed change to the repo in question.
 1. The [repo owners](OWNERS) will respond to your issue promptly.
@@ -18,7 +57,12 @@ Kubernetes projects require that you sign a Contributor License Agreement (CLA) 
         * 📖 (:book:, documentation or proposals)
         * 🌱 (:seedling:, minor or other)
 
-### Contributer Ladder
+## Dependency Licence Management
+
+Cluster API provider vSphere follows the [license policy of the CNCF](https://github.com/cncf/foundation/blob/main/allowed-third-party-license-policy.md). This sets limits on which
+licenses dependencies and other artifacts use. For go dependencies only dependencies listed in the `go.mod` are considered dependencies. This is in line with [how dependencies are reviewed in Kubernetes](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/vendor.md#reviewing-and-approving-dependency-changes).
+
+### Contributor Ladder
 
 We broadly follow the requirements from the [Kubernetes Community Membership](https://github.com/kubernetes/community/blob/master/community-membership.md).
 

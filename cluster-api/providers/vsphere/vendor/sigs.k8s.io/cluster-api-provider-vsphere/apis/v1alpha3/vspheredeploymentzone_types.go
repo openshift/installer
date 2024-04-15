@@ -19,7 +19,6 @@ package v1alpha3
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 )
 
 // VSphereDeploymentZoneSpec defines the desired state of VSphereDeploymentZone
@@ -74,10 +73,11 @@ type VSphereDeploymentZoneStatus struct {
 
 	// Conditions defines current service state of the VSphereMachine.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vspheredeploymentzones,scope=Cluster,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -105,5 +105,5 @@ type VSphereDeploymentZoneList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
+	objectTypes = append(objectTypes, &VSphereDeploymentZone{}, &VSphereDeploymentZoneList{})
 }

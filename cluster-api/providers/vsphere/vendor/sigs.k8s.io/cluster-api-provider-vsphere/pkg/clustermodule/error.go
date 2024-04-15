@@ -40,6 +40,7 @@ func NewIncompatibleOwnerError(name string) IncompatibleOwnerError {
 	return IncompatibleOwnerError{resource: name}
 }
 
+// IsIncompatibleOwnerError checks if the passed error is an IncompatibleOwnerError.
 func IsIncompatibleOwnerError(err error) bool {
 	return strings.HasSuffix(err.Error(), errString)
 }

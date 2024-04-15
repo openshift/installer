@@ -27,6 +27,7 @@ type VSphereClusterTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vsphereclustertemplates,scope=Namespaced,categories=cluster-api
 
@@ -52,7 +53,7 @@ type VSphereClusterTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereClusterTemplate{}, &VSphereClusterTemplateList{})
+	objectTypes = append(objectTypes, &VSphereClusterTemplate{}, &VSphereClusterTemplateList{})
 }
 
 type VSphereClusterTemplateResource struct {

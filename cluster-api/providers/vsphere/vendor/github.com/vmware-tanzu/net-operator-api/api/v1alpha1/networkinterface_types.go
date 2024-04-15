@@ -56,8 +56,12 @@ const (
 type NetworkInterfaceConditionReason string
 
 const (
-	// NetworkInterface is in failed state because an IPConfig cannot be allocated.
+	// NetworkInterfaceFailureReasonCannotAllocIP indicates NetworkInterface is in failed state because an
+	// IPConfig cannot be allocated.
 	NetworkInterfaceFailureReasonCannotAllocIP NetworkInterfaceConditionReason = "CannotAllocIP"
+	// NetworkInterfaceFailureReasonCannotAllocPort indicates NetworkInterface is in failed state because
+	// port cannot be allocated for network interface on the network.
+	NetworkInterfaceFailureReasonCannotAllocPort NetworkInterfaceConditionReason = "CannotAllocPort"
 )
 
 // NetworkInterfaceCondition describes the state of a NetworkInterface at a certain point.
@@ -91,6 +95,14 @@ type NetworkInterfaceStatus struct {
 	// NetworkID is an network provider specific identifier for the network backing the network
 	// interface.
 	NetworkID string `json:"networkID,omitempty"`
+	// PortID is a network provider specific port identifier allocated for this network interface on
+	// the backing network. It is only valid on requested node and is set only if port allocation
+	// was requested.
+	PortID string `json:"portID,omitempty"`
+	// ConnectionID is a network provider specific port connection identifier allocated for this
+	// network interface on the backing network. It is only valid on requested node and is set
+	// only if port allocation was requested.
+	ConnectionID string `json:"connectionID,omitempty"`
 }
 
 type NetworkInterfaceType string
@@ -99,6 +111,12 @@ const (
 	// NetworkInterfaceTypeVMXNet3 is for a VMXNET3 device.
 	NetworkInterfaceTypeVMXNet3 = NetworkInterfaceType("vmxnet3")
 )
+
+// NetworkInterfacePortAllocation describes the settings for network interface port allocation request.
+type NetworkInterfacePortAllocation struct {
+	// NodeName is the node where port must be allocated for this network interface.
+	NodeName string `json:"nodeName"`
+}
 
 // NetworkInterfaceSpec defines the desired state of NetworkInterface.
 type NetworkInterfaceSpec struct {
@@ -110,6 +128,12 @@ type NetworkInterfaceSpec struct {
 	// that specifies the network interface configuration.
 	// If unset, default configuration is assumed.
 	ProviderRef *NetworkInterfaceProviderReference `json:"providerRef,omitempty"`
+	// PortAllocation is a request to allocate a port for this network interface on the backing network.
+	// This feature is currently supported only if backing network type is NetworkTypeVDS. In all other
+	// cases this field is ignored. Typically this is done implicitly by vCenter Server at the time
+	// of attaching a network interface to a network and should be left unset. This is used primarily when
+	// attachment of network interface to the network is done without vCenter Server's knowledge.
+	PortAllocation *NetworkInterfacePortAllocation `json:"portAllocation,omitempty"`
 }
 
 // +genclient

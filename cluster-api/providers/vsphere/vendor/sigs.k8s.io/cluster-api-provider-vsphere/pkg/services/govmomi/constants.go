@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package govmomi contains tools for interacting with vSphere APIs.
 package govmomi
 
 const (

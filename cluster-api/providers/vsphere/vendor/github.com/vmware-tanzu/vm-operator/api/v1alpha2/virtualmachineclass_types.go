@@ -10,45 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	vmClassLabel = "class." + GroupName + "/"
-
-	// VirtualMachineClassCapabilityLabel is the prefix for a label that
-	// advertises a VM class capability.
-	//
-	// For more information please see VirtualMachineClassStatus.Capabilities.
-	VirtualMachineClassCapabilityLabel = "capability." + vmClassLabel
-
-	// VirtualMachineClassReadyLabel is applied to VM class resources that can
-	// be realized in the current cluster.
-	//
-	// For more information please see VirtualMachineClassStatus.Ready.
-	VirtualMachineClassReadyLabel = vmClassLabel + "ready"
-)
-
-const (
-	// VirtualMachineClassConditionReady is a condition on the VM class that
-	// indicates whether or not the VM class's hardware can be realized on at
-	// least one host in the cluster.
-	//
-	// For example, on Supervisor the VM Class / host compatibility is
-	// performed by checking with the CheckVmConfig_Task API
-	// (https://bit.ly/3CvoCc8).
-	//
-	// It is possible for this condition's Status to flip between True and False
-	// over the lifetime of a VM class. For example, if a VM class requires a
-	// specific vGPU and there is no host that provides that vGPU then the
-	// Status for this condition is False. However, if a host is added with that
-	// vGPU then the condition's status changes to True. And vice-versa -- if
-	// the same host is removed then the condition's status flips back to False.
-	//
-	// Please note that a host in maintenance mode that would otherwise provide
-	// compatibility will not be considered for this check. Only hosts where VMs
-	// can be scheduled are part of the check.
-	//
-	VirtualMachineClassConditionReady = "VirtualMachineClassReady"
-)
-
 // VirtualMachineConfigSpec contains additional virtual machine
 // configuration settings including hardware specifications for the
 // VirtualMachine.
@@ -207,45 +168,11 @@ type VirtualMachineClassSpec struct {
 
 // VirtualMachineClassStatus defines the observed state of VirtualMachineClass.
 type VirtualMachineClassStatus struct {
-	// Capabilities describes the class's observed capabilities.
-	//
-	// The capabilities are discerned when VM Operator reconciles a class
-	// and inspects its specification. Well-known capabilities include:
-	//
-	// * instance-storage
-	// * nvidia-gpu
-	// * sriov-net
-	//
-	// In addition to "nvidia-gpu", a capability is added for every nVidia
-	// profile name associated with the class.
-	//
-	// Every capability is also added to the resource's labels as
-	// VirtualMachineClassCapabilityLabel + Value. For example, if the
-	// capability is "nvidia-gpu" then the following label will be added to the
-	// resource: capability.class.vmoperator.vmware.com/nvidia-gpu.
-	//
-	// +optional
-	// +listType=set
-	Capabilities []string `json:"capabilities,omitempty"`
-
-	// Conditions describes the observed conditions of the VirtualMachineClass.
-	//
-	// +optional
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
-
-	// Ready describes whether the class's hardware can be realized in the
-	// cluster.
-	//
-	// This field is only set to true if all of the class resource's conditions
-	// have Status=True.
-	//
-	// +optional
-	Ready bool `json:"ready,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=vmclass
-// +kubebuilder:storageversion:false
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="CPU",type="string",JSONPath=".spec.hardware.cpus"
 // +kubebuilder:printcolumn:name="Memory",type="string",JSONPath=".spec.hardware.memory"

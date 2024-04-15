@@ -14,14 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package vmoperator contains reconcilers and related functions for VM Operator based VSphereMachines.
 package vmoperator
 
 const (
 	kubeTopologyZoneLabelKey = "topology.kubernetes.io/zone"
 
+	// ControlPlaneVMClusterModuleGroupName is the name used for the control plane Cluster Module.
 	ControlPlaneVMClusterModuleGroupName = "control-plane-group"
-	ClusterModuleNameAnnotationKey       = "vsphere-cluster-module-group"
-	ProviderTagsAnnotationKey            = "vsphere-tag"
+	// ClusterModuleNameAnnotationKey is key for the Cluster Module annotation.
+	ClusterModuleNameAnnotationKey = "vsphere-cluster-module-group"
+	// ProviderTagsAnnotationKey is the key used for the provider tags annotation.
+	ProviderTagsAnnotationKey = "vsphere-tag"
+	// ControlPlaneVMVMAntiAffinityTagValue is the value used for ProviderTagsAnnotationKey when the machine is a control plane machine.
 	ControlPlaneVMVMAntiAffinityTagValue = "CtrlVmVmAATag"
-	WorkerVMVMAntiAffinityTagValue       = "WorkerVmVmAATag"
+	// WorkerVMVMAntiAffinityTagValue is the value used for ProviderTagsAnnotationKey when the machine is a worker machine.
+	WorkerVMVMAntiAffinityTagValue = "WorkerVmVmAATag"
 )

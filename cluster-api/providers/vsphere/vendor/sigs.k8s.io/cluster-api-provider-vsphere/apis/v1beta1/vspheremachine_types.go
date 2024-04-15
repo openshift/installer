@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
@@ -30,7 +29,7 @@ const (
 	MachineFinalizer = "vspheremachine.infrastructure.cluster.x-k8s.io"
 )
 
-// VSphereMachineSpec defines the desired state of VSphereMachine
+// VSphereMachineSpec defines the desired state of VSphereMachine.
 type VSphereMachineSpec struct {
 	VirtualMachineCloneSpec `json:",inline"`
 
@@ -71,7 +70,7 @@ type VSphereMachineSpec struct {
 	GuestSoftPowerOffTimeout *metav1.Duration `json:"guestSoftPowerOffTimeout,omitempty"`
 }
 
-// VSphereMachineStatus defines the observed state of VSphereMachine
+// VSphereMachineStatus defines the observed state of VSphereMachine.
 type VSphereMachineStatus struct {
 	// Ready is true when the provider resource is ready.
 	// +optional
@@ -138,7 +137,7 @@ type VSphereMachineStatus struct {
 // +kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name",description="Machine object which owns with this VSphereMachine",priority=1
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="Time duration since creation of Machine"
 
-// VSphereMachine is the Schema for the vspheremachines API
+// VSphereMachine is the Schema for the vspheremachines API.
 type VSphereMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -147,17 +146,19 @@ type VSphereMachine struct {
 	Status VSphereMachineStatus `json:"status,omitempty"`
 }
 
+// GetConditions returns the conditions for a VSphereMachine.
 func (m *VSphereMachine) GetConditions() clusterv1.Conditions {
 	return m.Status.Conditions
 }
 
+// SetConditions sets the conditions on a VSphereMachine.
 func (m *VSphereMachine) SetConditions(conditions clusterv1.Conditions) {
 	m.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true
 
-// VSphereMachineList contains a list of VSphereMachine
+// VSphereMachineList contains a list of VSphereMachine.
 type VSphereMachineList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -165,5 +166,5 @@ type VSphereMachineList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereMachine{}, &VSphereMachineList{})
+	objectTypes = append(objectTypes, &VSphereMachine{}, &VSphereMachineList{})
 }

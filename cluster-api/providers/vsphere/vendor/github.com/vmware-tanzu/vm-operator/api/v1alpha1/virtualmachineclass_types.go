@@ -133,7 +133,7 @@ type VirtualMachineClassStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=vmclass
-// +kubebuilder:storageversion
+// +kubebuilder:storageversion:false
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="CPU",type="string",JSONPath=".spec.hardware.cpus"
 // +kubebuilder:printcolumn:name="Memory",type="string",JSONPath=".spec.hardware.memory"

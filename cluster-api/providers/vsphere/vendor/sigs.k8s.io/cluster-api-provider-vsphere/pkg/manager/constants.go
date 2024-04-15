@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package manager contains tools to create the CAPV controller manager.
 package manager
 
 import "time"
@@ -32,6 +33,7 @@ const (
 	// DefaultPodName is the default value for the eponymous manager option.
 	DefaultPodName = defaultPrefix + "controller-manager"
 
+	// DefaultPodNamespace is the default value for the manager namespace.
 	DefaultPodNamespace = defaultPrefix + "system"
 
 	// DefaultLeaderElectionID is the default value for the eponymous manager option.

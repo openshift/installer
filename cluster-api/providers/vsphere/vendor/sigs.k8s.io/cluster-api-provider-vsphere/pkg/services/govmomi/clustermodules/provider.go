@@ -14,27 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package clustermodules contains tools for handling Cluster Modules.
 package clustermodules
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/vmware/govmomi/vapi/cluster"
 	"github.com/vmware/govmomi/vapi/rest"
 	"github.com/vmware/govmomi/vim25/types"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-var log = logf.Log.V(5).WithName("govmomi").WithName("clustermodule")
 
 // Provider exposes methods to interact with the cluster module vCenter API
 // TODO (srm09): Rethink and merge with ClusterModuleService.
 type Provider interface {
 	CreateModule(ctx context.Context, clusterRef types.ManagedObjectReference) (string, error)
 	DeleteModule(ctx context.Context, moduleID string) error
-	DoesModuleExist(ctx context.Context, moduleID string, cluster types.ManagedObjectReference) (bool, error)
+	DoesModuleExist(ctx context.Context, moduleID string) (bool, error)
 
 	IsMoRefModuleMember(ctx context.Context, moduleID string, moRef types.ManagedObjectReference) (bool, error)
 	AddMoRefToModule(ctx context.Context, moduleID string, moRef types.ManagedObjectReference) error
@@ -45,58 +43,65 @@ type provider struct {
 	manager *cluster.Manager
 }
 
+// NewProvider returns a new Cluster Module provider.
 func NewProvider(restClient *rest.Client) Provider {
 	return &provider{
 		manager: cluster.NewManager(restClient),
 	}
 }
 
+// CreateModule creates a new Cluster Module and returns its ID.
 func (cm *provider) CreateModule(ctx context.Context, clusterRef types.ManagedObjectReference) (string, error) {
-	log.Info("Creating cluster module", "cluster", clusterRef)
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Creating cluster module", "computeClusterRef", clusterRef)
 
-	moduleID, err := cm.manager.CreateModule(ctx, clusterRef)
+	moduleUUID, err := cm.manager.CreateModule(ctx, clusterRef)
 	if err != nil {
 		return "", err
 	}
 
-	log.Info("Created cluster module", "moduleID", moduleID)
-	return moduleID, nil
+	log.Info("Created cluster module", "computeClusterRef", clusterRef, "moduleUUID", moduleUUID)
+	return moduleUUID, nil
 }
 
-func (cm *provider) DeleteModule(ctx context.Context, moduleID string) error {
-	log.Info("Deleting cluster module", "moduleID", moduleID)
+// DeleteModule deletes a  Cluster Module by ID.
+func (cm *provider) DeleteModule(ctx context.Context, moduleUUID string) error {
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Deleting cluster module")
 
-	err := cm.manager.DeleteModule(ctx, moduleID)
-	if err != nil && !util.IsNotFoundError(err) {
+	err := cm.manager.DeleteModule(ctx, moduleUUID)
+	if err != nil && !rest.IsStatusError(err, http.StatusNotFound) {
 		return err
 	}
 
-	log.Info("Deleted cluster module", "moduleID", moduleID)
+	log.Info("Deleted cluster module")
 	return nil
 }
 
-func (cm *provider) DoesModuleExist(ctx context.Context, moduleID string, clusterRef types.ManagedObjectReference) (bool, error) {
-	log.V(4).Info("Checking if cluster module exists", "moduleID", moduleID, "clusterRef", clusterRef)
+// DoesModuleExist checks whether a module with a given moduleUUID exists.
+func (cm *provider) DoesModuleExist(ctx context.Context, moduleUUID string) (bool, error) {
+	log := ctrl.LoggerFrom(ctx)
+	log.V(4).Info("Checking if cluster module exists")
 
-	if moduleID == "" {
+	if moduleUUID == "" {
 		return false, nil
 	}
 
-	modules, err := cm.manager.ListModules(ctx)
-	if err != nil {
-		return false, err
+	_, err := cm.manager.ListModuleMembers(ctx, moduleUUID)
+	if err == nil {
+		log.V(4).Info("Cluster module exists")
+		return true, nil
 	}
 
-	for _, mod := range modules {
-		if mod.Cluster == clusterRef.Value && mod.Module == moduleID {
-			return true, nil
-		}
+	if rest.IsStatusError(err, http.StatusNotFound) {
+		log.V(4).Info("Cluster module doesn't exist")
+		return false, nil
 	}
 
-	log.V(4).Info("Cluster module doesn't exist", "moduleID", moduleID, "clusterRef", clusterRef)
-	return false, nil
+	return false, err
 }
 
+// IsMoRefModuleMember checks whether the passed managed object reference is in the ClusterModule.
 func (cm *provider) IsMoRefModuleMember(ctx context.Context, moduleID string, moRef types.ManagedObjectReference) (bool, error) {
 	moduleMembers, err := cm.manager.ListModuleMembers(ctx, moduleID)
 	if err != nil {
@@ -112,33 +117,39 @@ func (cm *provider) IsMoRefModuleMember(ctx context.Context, moduleID string, mo
 	return false, nil
 }
 
+// AddMoRefToModule adds the object to the ClusterModule if it is not already a member.
 func (cm *provider) AddMoRefToModule(ctx context.Context, moduleID string, moRef types.ManagedObjectReference) error {
+	log := ctrl.LoggerFrom(ctx)
 	isMember, err := cm.IsMoRefModuleMember(ctx, moduleID, moRef)
 	if err != nil {
 		return err
 	}
 
 	if !isMember {
-		log.Info("Adding moRef to cluster module", "moduleID", moduleID, "moRef", moRef)
+		log.Info("Adding moRef to the cluster module", "moRef", moRef)
 		// TODO: Should we just skip the IsMoRefModuleMember() and always call this since we're already
 		// ignoring the first return value?
 		_, err := cm.manager.AddModuleMembers(ctx, moduleID, moRef.Reference())
 		if err != nil {
 			return err
 		}
+
+		log.Info("Added moRef to the cluster module", "moRef", moRef)
 	}
 
 	return nil
 }
 
+// RemoveMoRefFromModule removes the object from the ClusterModule.
 func (cm *provider) RemoveMoRefFromModule(ctx context.Context, moduleID string, moRef types.ManagedObjectReference) error {
-	log.Info("Removing moRef from cluster module", "moduleID", moduleID, "moRef", moRef)
+	log := ctrl.LoggerFrom(ctx)
+	log.Info("Removing moRef from the cluster module", "moRef", moRef)
 
 	_, err := cm.manager.RemoveModuleMembers(ctx, moduleID, moRef)
 	if err != nil {
 		return err
 	}
 
-	log.Info("Removed moRef from cluster module", "moduleID", moduleID, "moRef", moRef)
+	log.Info("Removed moRef from the cluster module", "moRef", moRef)
 	return nil
 }

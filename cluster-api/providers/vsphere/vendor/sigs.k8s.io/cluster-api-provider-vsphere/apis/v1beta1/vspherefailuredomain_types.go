@@ -14,22 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// FailureDomainType defines the VCenter object the failure domain represents.
 type FailureDomainType string
 
 const (
-	HostGroupFailureDomain      FailureDomainType = "HostGroup"
+	// HostGroupFailureDomain is a failure domain for a host group.
+	HostGroupFailureDomain FailureDomainType = "HostGroup"
+	// ComputeClusterFailureDomain is a failure domain for a compute cluster.
 	ComputeClusterFailureDomain FailureDomainType = "ComputeCluster"
-	DatacenterFailureDomain     FailureDomainType = "Datacenter"
+	// DatacenterFailureDomain is a failure domain for a datacenter.
+	DatacenterFailureDomain FailureDomainType = "Datacenter"
 )
 
-// VSphereFailureDomainSpec defines the desired state of VSphereFailureDomain
+// VSphereFailureDomainSpec defines the desired state of VSphereFailureDomain.
 type VSphereFailureDomainSpec struct {
 
 	// Region defines the name and type of a region
@@ -42,6 +45,7 @@ type VSphereFailureDomainSpec struct {
 	Topology Topology `json:"topology"`
 }
 
+// FailureDomain contains data to identify and configure a failure domain.
 type FailureDomain struct {
 	// Name is the name of the tag that represents this failure domain
 	Name string `json:"name"`
@@ -59,6 +63,7 @@ type FailureDomain struct {
 	AutoConfigure *bool `json:"autoConfigure,omitempty"`
 }
 
+// Topology describes a given failure domain using vSphere constructs.
 type Topology struct {
 	// Datacenter as the failure domain.
 	// +kubebuilder:validation:Required
@@ -82,6 +87,7 @@ type Topology struct {
 	Datastore string `json:"datastore,omitempty"`
 }
 
+// FailureDomainHosts has information required for placement of machines on VSphere hosts.
 type FailureDomainHosts struct {
 	// VMGroupName is the name of the VM group
 	VMGroupName string `json:"vmGroupName"`
@@ -94,7 +100,7 @@ type FailureDomainHosts struct {
 // +kubebuilder:storageversion
 // +kubebuilder:resource:path=vspherefailuredomains,scope=Cluster,categories=cluster-api
 
-// VSphereFailureDomain is the Schema for the vspherefailuredomains API
+// VSphereFailureDomain is the Schema for the vspherefailuredomains API.
 type VSphereFailureDomain struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -104,7 +110,7 @@ type VSphereFailureDomain struct {
 
 // +kubebuilder:object:root=true
 
-// VSphereFailureDomainList contains a list of VSphereFailureDomain
+// VSphereFailureDomainList contains a list of VSphereFailureDomain.
 type VSphereFailureDomainList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -112,5 +118,5 @@ type VSphereFailureDomainList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereFailureDomain{}, &VSphereFailureDomainList{})
+	objectTypes = append(objectTypes, &VSphereFailureDomain{}, &VSphereFailureDomainList{})
 }

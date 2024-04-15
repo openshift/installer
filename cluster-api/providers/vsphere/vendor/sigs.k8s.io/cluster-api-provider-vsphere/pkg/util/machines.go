@@ -33,38 +33,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1b1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 )
-
-// GetVSphereMachinesInCluster gets a cluster's VSphereMachine resources.
-func GetVSphereMachinesInCluster(
-	ctx context.Context,
-	controllerClient client.Client,
-	namespace, clusterName string) ([]*infrav1.VSphereMachine, error) {
-	labels := map[string]string{clusterv1.ClusterNameLabel: clusterName}
-	machineList := &infrav1.VSphereMachineList{}
-
-	if err := controllerClient.List(
-		ctx, machineList,
-		client.InNamespace(namespace),
-		client.MatchingLabels(labels)); err != nil {
-		return nil, err
-	}
-
-	machines := make([]*infrav1.VSphereMachine, len(machineList.Items))
-	for i := range machineList.Items {
-		machines[i] = &machineList.Items[i]
-	}
-
-	return machines, nil
-}
 
 // GetVSphereMachine gets a vmware.infrastructure.cluster.x-k8s.io.VSphereMachine resource for the given CAPI Machine.
 func GetVSphereMachine(
 	ctx context.Context,
 	controllerClient client.Client,
-	namespace, machineName string) (*vmwarev1b1.VSphereMachine, error) {
-	machine := &vmwarev1b1.VSphereMachine{}
+	namespace, machineName string) (*vmwarev1.VSphereMachine, error) {
+	machine := &vmwarev1.VSphereMachine{}
 	namespacedName := apitypes.NamespacedName{
 		Namespace: namespace,
 		Name:      machineName,
@@ -193,6 +170,7 @@ func GetMachineMetadata(hostname string, vsphereVM infrav1.VSphereVM, ipamState 
 	return buf.Bytes(), nil
 }
 
+// GetOwnerVSphereMachine returns the VSphereMachine owner for the passed object.
 func GetOwnerVSphereMachine(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*infrav1.VSphereMachine, error) {
 	for _, ref := range obj.OwnerReferences {
 		gv, err := schema.ParseGroupVersion(ref.APIVersion)

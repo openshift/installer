@@ -14,14 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package clustermodule contains tools for handling ClusterModules.
 package clustermodule
 
-import "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+import (
+	"context"
 
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+)
+
+// Service is a ClusterModule service.
 type Service interface {
-	Create(ctx *context.ClusterContext, wrapper Wrapper) (string, error)
+	Create(ctx context.Context, clusterCtx *capvcontext.ClusterContext, wrapper Wrapper) (string, error)
 
-	DoesExist(ctx *context.ClusterContext, wrapper Wrapper, moduleUUID string) (bool, error)
+	DoesExist(ctx context.Context, clusterCtx *capvcontext.ClusterContext, wrapper Wrapper, moduleUUID string) (bool, error)
 
-	Remove(ctx *context.ClusterContext, moduleUUID string) error
+	Remove(ctx context.Context, clusterCtx *capvcontext.ClusterContext, moduleUUID string) error
 }

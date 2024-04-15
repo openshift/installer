@@ -23,12 +23,14 @@ import (
 	"github.com/vmware/govmomi/vapi/tags"
 )
 
+// Object is an object which is taggable.
 type Object interface {
 	HasTag(ctx context.Context, tagName string) (bool, error)
 
 	AttachTag(ctx context.Context, tagName string) error
 }
 
+// Objects is a list of Object.
 type Objects []Object
 
 type managedObject struct {

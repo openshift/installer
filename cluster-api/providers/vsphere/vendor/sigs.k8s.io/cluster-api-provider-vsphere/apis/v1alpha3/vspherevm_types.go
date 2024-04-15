@@ -20,7 +20,6 @@ package v1alpha3
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/errors"
 )
 
@@ -41,7 +40,7 @@ type VSphereVMSpec struct {
 	// +optional
 	BootstrapRef *corev1.ObjectReference `json:"bootstrapRef,omitempty"`
 
-	// BiosUUID is the the VM's BIOS UUID that is assigned at runtime after
+	// BiosUUID is the VM's BIOS UUID that is assigned at runtime after
 	// the VM has been created.
 	// This field is required at runtime for other controllers that read
 	// this CRD as unstructured data.
@@ -122,10 +121,11 @@ type VSphereVMStatus struct {
 
 	// Conditions defines current service state of the VSphereVM.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vspherevms,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -141,11 +141,11 @@ type VSphereVM struct {
 	Status VSphereVMStatus `json:"status,omitempty"`
 }
 
-func (m *VSphereVM) GetConditions() clusterv1.Conditions {
+func (m *VSphereVM) GetConditions() Conditions {
 	return m.Status.Conditions
 }
 
-func (m *VSphereVM) SetConditions(conditions clusterv1.Conditions) {
+func (m *VSphereVM) SetConditions(conditions Conditions) {
 	m.Status.Conditions = conditions
 }
 
@@ -161,5 +161,5 @@ type VSphereVMList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereVM{}, &VSphereVMList{})
+	objectTypes = append(objectTypes, &VSphereVM{}, &VSphereVMList{})
 }

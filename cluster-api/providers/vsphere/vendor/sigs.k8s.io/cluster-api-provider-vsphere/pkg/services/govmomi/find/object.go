@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package find is used to find VCenter objects based for failure domain handling.
 package find
 
 import (
@@ -29,6 +30,7 @@ import (
 // ManagedRefFinder is the method to find the reference of the type specified in the Failure Domain.
 type ManagedRefFinder func(context.Context) ([]object.Reference, error)
 
+// ObjectFunc returns a ManagedRefFinder for the failureDomainType.
 func ObjectFunc(failureDomainType infrav1.FailureDomainType, topology infrav1.Topology, finder *find.Finder) ManagedRefFinder {
 	var managedRefFunc ManagedRefFinder
 

@@ -28,6 +28,8 @@ const (
 	LoadBalancerConfigReady LoadBalancerConfigConditionType = "Ready"
 	// LoadBalancerConfigFailure is added if any failure is encountered while realizing LoadBalancerConfig object
 	LoadBalancerConfigFailure LoadBalancerConfigConditionType = "Failure"
+	// LoadBalancerConfigIPPoolPressure condition status is set to True when IPPool is low on free IPs.
+	LoadBalancerConfigIPPoolPressure LoadBalancerConfigConditionType = "IPPoolPressure"
 )
 
 // LoadBalancerConfigCondition describes the state of a LoadBalancerConfig at a certain point

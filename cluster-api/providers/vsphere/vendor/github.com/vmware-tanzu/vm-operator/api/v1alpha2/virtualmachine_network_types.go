@@ -11,10 +11,10 @@ import (
 
 // VirtualMachineNetworkRouteSpec defines a static route for a guest.
 type VirtualMachineNetworkRouteSpec struct {
-	// To is an IP4 address.
+	// To is an IP4 or IP6 address.
 	To string `json:"to"`
 
-	// Via is an IP4 address.
+	// Via is an IP4 or IP6 address.
 	Via string `json:"via"`
 
 	// Metric is the weight/priority of the route.
@@ -80,7 +80,7 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	// Please note this field is only supported if the network connection
 	// supports DHCP.
 	//
-	// Please note this field is mutually exclusive with IP4 addresses in the
+	// Please note this field is mutually exclusive with IP6 addresses in the
 	// Addresses field and the Gateway6 field.
 	//
 	// +optional
@@ -109,7 +109,7 @@ type VirtualMachineNetworkInterfaceSpec struct {
 	// supports manual IP allocation.
 	//
 	// If the network connection supports manual IP allocation and the
-	// Addresses field includes at least one IP4 address, then this field
+	// Addresses field includes at least one IP6 address, then this field
 	// is required.
 	//
 	// Please note the IP address must include the network prefix length, ex.
@@ -160,18 +160,14 @@ type VirtualMachineNetworkInterfaceSpec struct {
 
 // VirtualMachineNetworkSpec defines a VM's desired network configuration.
 type VirtualMachineNetworkSpec struct {
-	// Network is the optional name of the network resource to which this
-	// VM is connected.
+	// HostName is the value the guest uses as its host name.
+	// If omitted then the name of the VM will be used.
 	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored.
-	//
-	// If networking is not disabled, no interfaces are defined, and this value
-	// is omitted, then the VM will be provided a single virtual network
-	// interface and connected to the Namespace's default network.
+	// Please note this feature is available only with the following bootstrap
+	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
 	//
 	// +optional
-	Network *common.PartialObjectRef `json:"network,omitempty"`
+	HostName string `json:"hostName,omitempty"`
 
 	// Disabled is a flag that indicates whether or not to disable networking
 	// for this VM.
@@ -182,178 +178,15 @@ type VirtualMachineNetworkSpec struct {
 	// +optional
 	Disabled bool `json:"disabled,omitempty"`
 
-	// HostName is the value the guest uses as its host name.
-	// If omitted then the name of the VM will be used.
-	//
-	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
-	//
-	// +optional
-	HostName string `json:"hostName,omitempty"`
-
 	// Interfaces is the list of network interfaces used by this VM.
 	//
-	// Please note this field is mutually exclusive with the following fields:
-	// DeviceName, Network, Addresses, DHCP4, DHCP6, Gateway4,
-	// Gateway6, MTU, Nameservers, Routes, and SearchDomains.
+	// If the Interfaces field is empty and the Disabled field is false, then
+	// a default interface with the name eth0 will be created.
 	//
 	// +optional
 	// +listType=map
 	// +listMapKey=name
 	Interfaces []VirtualMachineNetworkInterfaceSpec `json:"interfaces,omitempty"`
-
-	// DeviceName describes the unique name of this network interface, used to
-	// distinguish it from other network interfaces attached to this VM.
-	//
-	// This value is also used to rename the device inside the guest when the
-	// bootstrap provider is CloudInit. Please note it is up to the user to
-	// ensure the provided device name does not conflict with any other devices
-	// inside the guest, ex. dvd, cdrom, sda, etc.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// If the Interfaces field is empty and this field is not specified, then
-	// the default interface's name will be eth0.
-	//
-	// +optional
-	// +kubebuilder:validation:Pattern=^\w\w+$
-	DeviceName string `json:"deviceName,omitempty"`
-
-	// Addresses is an optional list of IP4 or IP6 addresses to assign to the
-	// VM.
-	//
-	// Please note this field is only supported if the connected network
-	// supports manual IP allocation.
-	//
-	// Please note IP4 and IP6 addresses must include the network prefix length,
-	// ex. 192.168.0.10/24 or 2001:db8:101::a/64.
-	//
-	// Please note this field may not contain IP4 addresses if DHCP4 is set
-	// to true or IP6 addresses if DHCP6 is set to true.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	Addresses []string `json:"addresses,omitempty"`
-
-	// DHCP4 indicates whether or not to use DHCP for IP4 networking.
-	//
-	// Please note this field is only supported if the network connection
-	// supports DHCP.
-	//
-	// Please note this field is mutually exclusive with IP4 addresses in the
-	// Addresses field and the Gateway4 field.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	DHCP4 bool `json:"dhcp4,omitempty"`
-
-	// DHCP6 indicates whether or not to use DHCP for IP6 networking.
-	//
-	// Please note this field is only supported if the network connection
-	// supports DHCP.
-	//
-	// Please note this field is mutually exclusive with IP4 addresses in the
-	// Addresses field and the Gateway6 field.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	DHCP6 bool `json:"dhcp6,omitempty"`
-
-	// Gateway4 is the default, IP4 gateway for this VM.
-	//
-	// Please note this field is only supported if the network connection
-	// supports manual IP allocation.
-	//
-	// If the network connection supports manual IP allocation and the
-	// Addresses field includes at least one IP4 address, then this field
-	// is required.
-	//
-	// Please note the IP address must include the network prefix length, ex.
-	// 192.168.0.1/24.
-	//
-	// Please note this field is mutually exclusive with DHCP4.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	Gateway4 string `json:"gateway4,omitempty"`
-
-	// Gateway6 is the primary IP6 gateway for this VM.
-	//
-	// Please note this field is only supported if the network connection
-	// supports manual IP allocation.
-	//
-	// If the network connection supports manual IP allocation and the
-	// Addresses field includes at least one IP4 address, then this field
-	// is required.
-	//
-	// Please note the IP address must include the network prefix length, ex.
-	// 2001:db8:101::1/64.
-	//
-	// Please note this field is mutually exclusive with DHCP6.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	Gateway6 string `json:"gateway6,omitempty"`
-
-	// MTU is the Maximum Transmission Unit size in bytes.
-	//
-	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	MTU *int64 `json:"mtu,omitempty"`
-
-	// Nameservers is a list of IP4 and/or IP6 addresses used as DNS
-	// nameservers.
-	//
-	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
-	//
-	// Please note that Linux allows only three nameservers
-	// (https://linux.die.net/man/5/resolv.conf).
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	Nameservers []string `json:"nameservers,omitempty"`
-
-	// Routes is a list of optional, static routes.
-	//
-	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit.
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	Routes []VirtualMachineNetworkRouteSpec `json:"routes,omitempty"`
-
-	// SearchDomains is a list of search domains used when resolving IP
-	// addresses with DNS.
-	//
-	// Please note this feature is available only with the following bootstrap
-	// providers: CloudInit, LinuxPrep, and Sysprep (except for RawSysprep).
-	//
-	// Please note if the Interfaces field is non-empty then this field is
-	// ignored and should be specified on the elements in the Interfaces list.
-	//
-	// +optional
-	SearchDomains []string `json:"searchDomains,omitempty"`
 }
 
 // VirtualMachineNetworkDNSStatus describes the observed state of the guest's

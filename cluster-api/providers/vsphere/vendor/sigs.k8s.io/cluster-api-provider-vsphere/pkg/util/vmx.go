@@ -25,12 +25,12 @@ import (
 // and returns whether the first version is less than the second.
 // It returns an error if an invalid vmx version is passed.
 func LessThan(version1, version2 string) (bool, error) {
-	v1, err := getIntVersion(version1)
+	v1, err := ParseHardwareVersion(version1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := getIntVersion(version2)
+	v2, err := ParseHardwareVersion(version2)
 	if err != nil {
 		return false, err
 	}
@@ -38,7 +38,10 @@ func LessThan(version1, version2 string) (bool, error) {
 	return v1 < v2, nil
 }
 
-func getIntVersion(version string) (int, error) {
+// ParseHardwareVersion returns the virtual machine hardware version from the input.
+// It expects the input formatted as vmx-17, where the trailing number is
+// virtual machine hardware version.
+func ParseHardwareVersion(version string) (int, error) {
 	versionStr := strings.TrimPrefix(version, "vmx-")
 	return strconv.Atoi(versionStr)
 }

@@ -17,6 +17,12 @@ func Convert_v1alpha1_Condition_To_v1_Condition(in *Condition, out *metav1.Condi
 	out.Reason = in.Reason
 	out.Message = in.Message
 
+	// The metav1.Condition requires the reason to be non-empty, when it was not in our prior v1a1 Condition.
+	// We don't have any great options as to what we can fill this in as.
+	if out.Reason == "" {
+		out.Reason = string(out.Status)
+	}
+
 	// TODO: out.ObservedGeneration =
 
 	return nil

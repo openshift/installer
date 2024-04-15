@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package pci contains tools for PCI devices.
 package pci
 
 import (
@@ -26,6 +27,7 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
+// CalculateDevicesToBeAdded calculates the PCI devices which should be added to the VM.
 func CalculateDevicesToBeAdded(ctx context.Context, vm *object.VirtualMachine, deviceSpecs []infrav1.PCIDeviceSpec) ([]infrav1.PCIDeviceSpec, error) {
 	// store the number of expected devices for each deviceID + vendorID combo
 	deviceVendorIDComboMap := map[string]int{}
@@ -56,6 +58,7 @@ func CalculateDevicesToBeAdded(ctx context.Context, vm *object.VirtualMachine, d
 	return specsToBeAdded, nil
 }
 
+// ConstructDeviceSpecs transforms a list of PCIDeviceSpec into a list of BaseVirutalDevices used by govmomi.
 func ConstructDeviceSpecs(pciDeviceSpecs []infrav1.PCIDeviceSpec) []types.BaseVirtualDevice {
 	pciDevices := []types.BaseVirtualDevice{}
 	deviceKey := int32(-200)

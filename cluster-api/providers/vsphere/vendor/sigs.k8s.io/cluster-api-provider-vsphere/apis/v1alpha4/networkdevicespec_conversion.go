@@ -19,10 +19,10 @@ package v1alpha4
 import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 
-	v1beta1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 )
 
-func Convert_v1beta1_NetworkDeviceSpec_To_v1alpha4_NetworkDeviceSpec(in *v1beta1.NetworkDeviceSpec, out *NetworkDeviceSpec, s conversion.Scope) error {
+func Convert_v1beta1_NetworkDeviceSpec_To_v1alpha4_NetworkDeviceSpec(in *infrav1.NetworkDeviceSpec, out *NetworkDeviceSpec, s conversion.Scope) error {
 	out.NetworkName = in.NetworkName
 	out.DeviceName = in.DeviceName
 	out.DHCP4 = in.DHCP4

@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package main is the main package for CAPV.
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -30,7 +32,6 @@ import (
 	"gopkg.in/fsnotify.v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/discovery"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/logs"
 	logsv1 "k8s.io/component-base/logs/api/v1"
@@ -38,27 +39,29 @@ import (
 	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	"sigs.k8s.io/cluster-api/util/flags"
+	capiflags "sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrlmgr "sigs.k8s.io/controller-runtime/pkg/manager"
-	ctrlsig "sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	vmwarev1b1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/controllers"
 	"sigs.k8s.io/cluster-api-provider-vsphere/feature"
+	"sigs.k8s.io/cluster-api-provider-vsphere/internal/webhooks"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/constants"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/session"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/version"
 )
 
 var (
-	setupLog       = ctrl.Log.WithName("entrypoint")
+	setupLog       = ctrl.Log.WithName("setup")
 	logOptions     = logs.NewOptions()
 	controllerName = "cluster-api-vsphere-manager"
 
@@ -67,7 +70,6 @@ var (
 	leaderElectionRenewDeadline time.Duration
 	leaderElectionRetryPeriod   time.Duration
 	managerOpts                 manager.Options
-	profilerAddress             string
 	restConfigBurst             int
 	restConfigQPS               float32
 	syncPeriod                  time.Duration
@@ -83,7 +85,8 @@ var (
 	vSphereClusterIdentityConcurrency int
 	vSphereDeploymentZoneConcurrency  int
 
-	tlsOptions = flags.TLSOptions{}
+	tlsOptions         = capiflags.TLSOptions{}
+	diagnosticsOptions = capiflags.DiagnosticsOptions{}
 
 	defaultProfilerAddr      = os.Getenv("PROFILER_ADDR")
 	defaultSyncPeriod        = manager.DefaultSyncPeriod
@@ -162,9 +165,6 @@ func InitFlags(fs *pflag.FlagSet) {
 
 	logsv1.AddFlags(logOptions, fs)
 
-	fs.StringVar(&managerOpts.MetricsBindAddress, "metrics-bind-addr", "localhost:8080",
-		"The address the metric endpoint binds to.")
-
 	fs.BoolVar(&managerOpts.LeaderElection, "leader-elect", true,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 
@@ -187,7 +187,7 @@ func InitFlags(fs *pflag.FlagSet) {
 		"Bind address to expose the pprof profiler (e.g. localhost:6060)")
 
 	fs.BoolVar(&enableContentionProfiling, "contention-profiling", false,
-		"Enable block profiling, if profiler-address is set.")
+		"Enable block profiling.")
 
 	fs.DurationVar(&syncPeriod, "sync-period", defaultSyncPeriod,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
@@ -208,17 +208,22 @@ func InitFlags(fs *pflag.FlagSet) {
 		"The address the health endpoint binds to.",
 	)
 
-	flags.AddTLSOptions(fs, &tlsOptions)
-
+	capiflags.AddTLSOptions(fs, &tlsOptions)
+	capiflags.AddDiagnosticsOptions(fs, &diagnosticsOptions)
 	feature.MutableGates.AddFlag(fs)
 }
 
+// Add RBAC for the authorized diagnostics endpoint.
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
+
 func main() {
 	InitFlags(pflag.CommandLine)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	// Set log level 2 as default.
 	if err := pflag.CommandLine.Set("v", "2"); err != nil {
-		setupLog.Error(err, "failed to set log level: %v")
+		setupLog.Error(err, "failed to set default log level")
 		os.Exit(1)
 	}
 	pflag.Parse()
@@ -237,17 +242,16 @@ func main() {
 	managerOpts.KubeConfig.UserAgent = remote.DefaultClusterAPIUserAgent(controllerName)
 
 	if watchNamespace != "" {
-		managerOpts.Cache.Namespaces = []string{watchNamespace}
-		setupLog.Info(
-			"Watching objects only in namespace for reconciliation",
-			"namespace", watchNamespace)
+		managerOpts.Cache.DefaultNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
 	}
 
-	if profilerAddress != "" && enableContentionProfiling {
+	if enableContentionProfiling {
 		goruntime.SetBlockProfileRate(1)
 	}
 
-	setupLog.V(1).Info(fmt.Sprintf("feature gates: %+v\n", feature.Gates))
+	setupLog.Info(fmt.Sprintf("Feature gates: %+v\n", feature.Gates))
 
 	managerOpts.Cache.SyncPeriod = &syncPeriod
 	managerOpts.LeaseDuration = &leaderElectionLeaseDuration
@@ -255,20 +259,20 @@ func main() {
 	managerOpts.RetryPeriod = &leaderElectionRetryPeriod
 
 	// Create a function that adds all the controllers and webhooks to the manager.
-	addToManager := func(ctx *context.ControllerManagerContext, mgr ctrlmgr.Manager) error {
+	addToManager := func(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager) error {
 		tracker, err := setupRemoteClusterCacheTracker(ctx, mgr)
 		if err != nil {
-			return perrors.Wrapf(err, "unable to create remote cluster tracker tracker")
+			return perrors.Wrapf(err, "unable to create remote cluster cache tracker")
 		}
 
 		// Check for non-supervisor VSphereCluster and start controller if found
-		gvr := v1beta1.GroupVersion.WithResource(reflect.TypeOf(&v1beta1.VSphereCluster{}).Elem().Name())
-		isLoaded, err := isCRDDeployed(mgr, gvr)
+		gvr := infrav1.GroupVersion.WithResource(reflect.TypeOf(&infrav1.VSphereCluster{}).Elem().Name())
+		isNonSupervisorCRDLoaded, err := isCRDDeployed(mgr, gvr)
 		if err != nil {
 			return err
 		}
-		if isLoaded {
-			if err := setupVAPIControllers(ctx, mgr, tracker); err != nil {
+		if isNonSupervisorCRDLoaded {
+			if err := setupVAPIControllers(ctx, controllerCtx, mgr, tracker); err != nil {
 				return fmt.Errorf("setupVAPIControllers: %w", err)
 			}
 		} else {
@@ -276,49 +280,56 @@ func main() {
 		}
 
 		// Check for supervisor VSphereCluster and start controller if found
-		gvr = vmwarev1b1.GroupVersion.WithResource(reflect.TypeOf(&vmwarev1b1.VSphereCluster{}).Elem().Name())
-		isLoaded, err = isCRDDeployed(mgr, gvr)
+		gvr = vmwarev1.GroupVersion.WithResource(reflect.TypeOf(&vmwarev1.VSphereCluster{}).Elem().Name())
+		isSupervisorCRDLoaded, err := isCRDDeployed(mgr, gvr)
 		if err != nil {
 			return err
 		}
-		if isLoaded {
-			if err := setupSupervisorControllers(ctx, mgr, tracker); err != nil {
+		if isSupervisorCRDLoaded {
+			if err := setupSupervisorControllers(ctx, controllerCtx, mgr, tracker); err != nil {
 				return fmt.Errorf("setupSupervisorControllers: %w", err)
 			}
 		} else {
 			setupLog.Info(fmt.Sprintf("CRD for %s not loaded, skipping.", gvr.String()))
 		}
 
+		// Continuing startup does not make sense without having managers added.
+		if !isSupervisorCRDLoaded && !isNonSupervisorCRDLoaded {
+			return errors.New("neither supervisor nor non-supervisor CRDs detected")
+		}
+
 		return nil
 	}
 
-	tlsOptionOverrides, err := flags.GetTLSOptionOverrideFuncs(tlsOptions)
+	tlsOptionOverrides, err := capiflags.GetTLSOptionOverrideFuncs(tlsOptions)
 	if err != nil {
 		setupLog.Error(err, "unable to add TLS settings to the webhook server")
 		os.Exit(1)
 	}
 	webhookOpts.TLSOpts = tlsOptionOverrides
 	managerOpts.WebhookServer = webhook.NewServer(webhookOpts)
-
-	setupLog.Info("creating controller manager", "version", version.Get().String())
 	managerOpts.AddToManager = addToManager
-	mgr, err := manager.New(managerOpts)
+	managerOpts.Metrics = capiflags.GetDiagnosticsOptions(diagnosticsOptions)
+
+	// Set up the context that's going to be used in controllers and for the manager.
+	ctx := ctrl.SetupSignalHandler()
+
+	mgr, err := manager.New(ctx, managerOpts)
 	if err != nil {
-		setupLog.Error(err, "problem creating controller manager")
+		setupLog.Error(err, "Error creating manager")
 		os.Exit(1)
 	}
 
 	setupChecks(mgr)
 
-	sigHandler := ctrlsig.SetupSignalHandler()
-	setupLog.Info("starting controller manager")
-	if err := mgr.Start(sigHandler); err != nil {
-		setupLog.Error(err, "problem running controller manager")
+	setupLog.Info("Starting manager", "version", version.Get().String())
+	if err := mgr.Start(ctx); err != nil {
+		setupLog.Error(err, "Error starting manager")
 		os.Exit(1)
 	}
 
 	// initialize notifier for capv-manager-bootstrap-credentials
-	watch, err := manager.InitializeWatch(mgr.GetContext(), &managerOpts)
+	watch, err := manager.InitializeWatch(mgr.GetControllerManagerContext(), &managerOpts)
 	if err != nil {
 		setupLog.Error(err, "failed to initialize watch on CAPV credentials file")
 		os.Exit(1)
@@ -329,61 +340,61 @@ func main() {
 	defer session.Clear()
 }
 
-func setupVAPIControllers(ctx *context.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
-	if err := (&v1beta1.VSphereClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+func setupVAPIControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
+	if err := (&webhooks.VSphereClusterTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&v1beta1.VSphereMachine{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereMachineWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&v1beta1.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereMachineTemplateWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&v1beta1.VSphereVM{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereVMWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&v1beta1.VSphereDeploymentZone{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereDeploymentZoneWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := (&v1beta1.VSphereFailureDomain{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&webhooks.VSphereFailureDomainWebhook{}).SetupWebhookWithManager(mgr); err != nil {
 		return err
 	}
 
-	if err := controllers.AddClusterControllerToManager(ctx, mgr, &v1beta1.VSphereCluster{}, concurrency(vSphereClusterConcurrency)); err != nil {
+	if err := controllers.AddClusterControllerToManager(ctx, controllerCtx, mgr, false, concurrency(vSphereClusterConcurrency)); err != nil {
 		return err
 	}
-	if err := controllers.AddMachineControllerToManager(ctx, mgr, &v1beta1.VSphereMachine{}, concurrency(vSphereMachineConcurrency)); err != nil {
+	if err := controllers.AddMachineControllerToManager(ctx, controllerCtx, mgr, false, concurrency(vSphereMachineConcurrency)); err != nil {
 		return err
 	}
-	if err := controllers.AddVMControllerToManager(ctx, mgr, tracker, concurrency(vSphereVMConcurrency)); err != nil {
+	if err := controllers.AddVMControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(vSphereVMConcurrency)); err != nil {
 		return err
 	}
-	if err := controllers.AddVsphereClusterIdentityControllerToManager(ctx, mgr, concurrency(vSphereClusterIdentityConcurrency)); err != nil {
+	if err := controllers.AddVsphereClusterIdentityControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereClusterIdentityConcurrency)); err != nil {
 		return err
 	}
 
-	return controllers.AddVSphereDeploymentZoneControllerToManager(ctx, mgr, concurrency(vSphereDeploymentZoneConcurrency))
+	return controllers.AddVSphereDeploymentZoneControllerToManager(ctx, controllerCtx, mgr, concurrency(vSphereDeploymentZoneConcurrency))
 }
 
-func setupSupervisorControllers(ctx *context.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
-	if err := controllers.AddClusterControllerToManager(ctx, mgr, &vmwarev1b1.VSphereCluster{}, concurrency(vSphereClusterConcurrency)); err != nil {
+func setupSupervisorControllers(ctx context.Context, controllerCtx *capvcontext.ControllerManagerContext, mgr ctrlmgr.Manager, tracker *remote.ClusterCacheTracker) error {
+	if err := controllers.AddClusterControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereClusterConcurrency)); err != nil {
 		return err
 	}
 
-	if err := controllers.AddMachineControllerToManager(ctx, mgr, &vmwarev1b1.VSphereMachine{}, concurrency(vSphereMachineConcurrency)); err != nil {
+	if err := controllers.AddMachineControllerToManager(ctx, controllerCtx, mgr, true, concurrency(vSphereMachineConcurrency)); err != nil {
 		return err
 	}
 
-	if err := controllers.AddServiceAccountProviderControllerToManager(ctx, mgr, tracker, concurrency(providerServiceAccountConcurrency)); err != nil {
+	if err := controllers.AddServiceAccountProviderControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(providerServiceAccountConcurrency)); err != nil {
 		return err
 	}
 
-	return controllers.AddServiceDiscoveryControllerToManager(ctx, mgr, tracker, concurrency(serviceDiscoveryConcurrency))
+	return controllers.AddServiceDiscoveryControllerToManager(ctx, controllerCtx, mgr, tracker, concurrency(serviceDiscoveryConcurrency))
 }
 
 func setupChecks(mgr ctrlmgr.Manager) {
@@ -401,11 +412,13 @@ func setupChecks(mgr ctrlmgr.Manager) {
 func isCRDDeployed(mgr ctrlmgr.Manager, gvr schema.GroupVersionResource) (bool, error) {
 	_, err := mgr.GetRESTMapper().KindFor(gvr)
 	if err != nil {
-		discoveryErr, ok := errors.Unwrap(err).(*discovery.ErrGroupDiscoveryFailed)
+		var discoveryErr *apiutil.ErrResourceDiscoveryFailed
+		ok := errors.As(errors.Unwrap(err), &discoveryErr)
 		if !ok {
 			return false, err
 		}
-		gvrErr, ok := discoveryErr.Groups[gvr.GroupVersion()]
+		discoveryErrs := *discoveryErr
+		gvrErr, ok := discoveryErrs[gvr.GroupVersion()]
 		if !ok {
 			return false, err
 		}
@@ -421,7 +434,7 @@ func concurrency(c int) controller.Options {
 	return controller.Options{MaxConcurrentReconciles: c}
 }
 
-func setupRemoteClusterCacheTracker(ctx *context.ControllerManagerContext, mgr ctrlmgr.Manager) (*remote.ClusterCacheTracker, error) {
+func setupRemoteClusterCacheTracker(ctx context.Context, mgr ctrlmgr.Manager) (*remote.ClusterCacheTracker, error) {
 	secretCachingClient, err := client.New(mgr.GetConfig(), client.Options{
 		HTTPClient: mgr.GetHTTPClient(),
 		Cache: &client.CacheOptions{
@@ -434,7 +447,7 @@ func setupRemoteClusterCacheTracker(ctx *context.ControllerManagerContext, mgr c
 
 	// Set up a ClusterCacheTracker and ClusterCacheReconciler to provide to controllers
 	// requiring a connection to a remote cluster
-	log := ctrl.Log.WithName("remote").WithName("ClusterCacheTracker")
+	log := ctrl.Log.WithValues("component", "remote/clustercachetracker")
 	tracker, err := remote.NewClusterCacheTracker(
 		mgr,
 		remote.ClusterCacheTrackerOptions{

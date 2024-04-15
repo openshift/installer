@@ -19,7 +19,6 @@ package v1alpha3
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/errors"
 )
 
@@ -51,7 +50,7 @@ type VSphereMachineStatus struct {
 	Ready bool `json:"ready"`
 
 	// Addresses contains the VSphere instance associated addresses.
-	Addresses []clusterv1.MachineAddress `json:"addresses,omitempty"`
+	Addresses []MachineAddress `json:"addresses,omitempty"`
 
 	// Network returns the network status for each of the machine's configured
 	// network interfaces.
@@ -98,10 +97,11 @@ type VSphereMachineStatus struct {
 
 	// Conditions defines current service state of the VSphereMachine.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:unservedversion
 // +kubebuilder:deprecatedversion
 // +kubebuilder:resource:path=vspheremachines,scope=Namespaced,categories=cluster-api
 // +kubebuilder:subresource:status
@@ -122,11 +122,11 @@ type VSphereMachine struct {
 	Status VSphereMachineStatus `json:"status,omitempty"`
 }
 
-func (m *VSphereMachine) GetConditions() clusterv1.Conditions {
+func (m *VSphereMachine) GetConditions() Conditions {
 	return m.Status.Conditions
 }
 
-func (m *VSphereMachine) SetConditions(conditions clusterv1.Conditions) {
+func (m *VSphereMachine) SetConditions(conditions Conditions) {
 	m.Status.Conditions = conditions
 }
 
@@ -142,5 +142,5 @@ type VSphereMachineList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereMachine{}, &VSphereMachineList{})
+	objectTypes = append(objectTypes, &VSphereMachine{}, &VSphereMachineList{})
 }

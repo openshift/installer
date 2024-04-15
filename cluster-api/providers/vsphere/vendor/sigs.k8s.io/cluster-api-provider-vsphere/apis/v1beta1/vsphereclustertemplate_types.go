@@ -14,14 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// VSphereClusterTemplateSpec defines the desired state of VSphereClusterTemplate
+// VSphereClusterTemplateSpec defines the desired state of VSphereClusterTemplate.
 type VSphereClusterTemplateSpec struct {
 	Template VSphereClusterTemplateResource `json:"template"`
 }
@@ -30,7 +29,7 @@ type VSphereClusterTemplateSpec struct {
 // +kubebuilder:resource:path=vsphereclustertemplates,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion
 
-// VSphereClusterTemplate is the Schema for the vsphereclustertemplates API
+// VSphereClusterTemplate is the Schema for the vsphereclustertemplates API.
 type VSphereClusterTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -48,9 +47,10 @@ type VSphereClusterTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereClusterTemplate{}, &VSphereClusterTemplateList{})
+	objectTypes = append(objectTypes, &VSphereClusterTemplate{}, &VSphereClusterTemplateList{})
 }
 
+// VSphereClusterTemplateResource describes the data for creating a VSphereCluster from a template.
 type VSphereClusterTemplateResource struct {
 	Spec VSphereClusterSpec `json:"spec"`
 }

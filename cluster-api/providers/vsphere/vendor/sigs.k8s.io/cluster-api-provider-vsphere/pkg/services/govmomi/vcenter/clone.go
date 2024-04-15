@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package vcenter has tools for cloning virtual machines in vcenter.
 package vcenter
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -27,11 +29,12 @@ import (
 	pbmTypes "github.com/vmware/govmomi/pbm/types"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/extra"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/govmomi/template"
 )
@@ -44,21 +47,20 @@ const (
 // Clone kicks off a clone operation on vCenter to create a new virtual machine. This function does not wait for
 // the virtual machine to be created on the vCenter, which can be resolved by waiting on the task reference stored
 // in VMContext.VSphereVM.Status.TaskRef.
-//
-//nolint:gocognit,gocyclo
-func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Format) error {
-	ctx = &context.VMContext{
-		ControllerContext: ctx.ControllerContext,
-		VSphereVM:         ctx.VSphereVM,
-		Session:           ctx.Session,
-		Logger:            ctx.Logger.WithName("vcenter"),
-		PatchHelper:       ctx.PatchHelper,
+func Clone(ctx context.Context, vmCtx *capvcontext.VMContext, bootstrapData []byte, format bootstrapv1.Format) error {
+	log := ctrl.LoggerFrom(ctx)
+
+	vmCtx = &capvcontext.VMContext{
+		ControllerManagerContext: vmCtx.ControllerManagerContext,
+		VSphereVM:                vmCtx.VSphereVM,
+		Session:                  vmCtx.Session,
+		PatchHelper:              vmCtx.PatchHelper,
 	}
-	ctx.Logger.Info("starting clone process")
+	log.Info("Starting clone process")
 
 	var extraConfig extra.Config
 	if len(bootstrapData) > 0 {
-		ctx.Logger.Info("applied bootstrap data to VM clone spec")
+		log.Info("Applied bootstrap data to VM clone spec")
 		switch format {
 		case bootstrapv1.CloudConfig:
 			extraConfig.SetCloudInitUserData(bootstrapData)
@@ -66,13 +68,13 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 			extraConfig.SetIgnitionUserData(bootstrapData)
 		}
 	}
-	if ctx.VSphereVM.Spec.CustomVMXKeys != nil {
-		ctx.Logger.Info("applied custom vmx keys o VM clone spec")
-		if err := extraConfig.SetCustomVMXKeys(ctx.VSphereVM.Spec.CustomVMXKeys); err != nil {
+	if vmCtx.VSphereVM.Spec.CustomVMXKeys != nil {
+		log.Info("Applied custom vmx keys o VM clone spec")
+		if err := extraConfig.SetCustomVMXKeys(vmCtx.VSphereVM.Spec.CustomVMXKeys); err != nil {
 			return err
 		}
 	}
-	tpl, err := template.FindTemplate(ctx, ctx.VSphereVM.Spec.Template)
+	tpl, err := template.FindTemplate(ctx, vmCtx.GetSession(), vmCtx.VSphereVM.Spec.Template)
 	if err != nil {
 		return err
 	}
@@ -80,48 +82,48 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 	// If a linked clone is requested then a MoRef for a snapshot must be
 	// found with which to perform the linked clone.
 	var snapshotRef *types.ManagedObjectReference
-	//nolint:nestif
-	if ctx.VSphereVM.Spec.CloneMode == "" || ctx.VSphereVM.Spec.CloneMode == infrav1.LinkedClone {
-		ctx.Logger.Info("linked clone requested")
+
+	if vmCtx.VSphereVM.Spec.CloneMode == "" || vmCtx.VSphereVM.Spec.CloneMode == infrav1.LinkedClone {
+		log.Info("Linked clone requested")
 		// If the name of a snapshot was not provided then find the template's
 		// current snapshot.
-		if snapshotName := ctx.VSphereVM.Spec.Snapshot; snapshotName == "" {
-			ctx.Logger.Info("searching for current snapshot")
+		if snapshotName := vmCtx.VSphereVM.Spec.Snapshot; snapshotName == "" {
+			log.Info("Searching for current snapshot")
 			var vm mo.VirtualMachine
 			if err := tpl.Properties(ctx, tpl.Reference(), []string{"snapshot"}, &vm); err != nil {
-				return errors.Wrapf(err, "error getting snapshot information for template %s", ctx.VSphereVM.Spec.Template)
+				return errors.Wrapf(err, "error getting snapshot information for template %s", vmCtx.VSphereVM.Spec.Template)
 			}
 			if vm.Snapshot != nil {
 				snapshotRef = vm.Snapshot.CurrentSnapshot
 			}
 		} else {
-			ctx.Logger.Info("searching for snapshot by name", "snapshotName", snapshotName)
+			log.Info("Searching for snapshot by name", "snapshotName", snapshotName)
 			var err error
 			snapshotRef, err = tpl.FindSnapshot(ctx, snapshotName)
 			if err != nil {
-				ctx.Logger.Info("failed to find snapshot", "snapshotName", snapshotName)
+				log.Info("Failed to find snapshot", "snapshotName", snapshotName)
 			}
 		}
 	}
 
-	// The type of clone operation depends on whether or not there is a snapshot
+	// The type of clone operation depends on whether there is a snapshot
 	// from which to do a linked clone.
 	diskMoveType := fullCloneDiskMoveType
-	ctx.VSphereVM.Status.CloneMode = infrav1.FullClone
+	vmCtx.VSphereVM.Status.CloneMode = infrav1.FullClone
 	if snapshotRef != nil {
 		// Record the actual type of clone mode used as well as the name of
 		// the snapshot (if not the current snapshot).
-		ctx.VSphereVM.Status.CloneMode = infrav1.LinkedClone
-		ctx.VSphereVM.Status.Snapshot = snapshotRef.Value
+		vmCtx.VSphereVM.Status.CloneMode = infrav1.LinkedClone
+		vmCtx.VSphereVM.Status.Snapshot = snapshotRef.Value
 		diskMoveType = linkCloneDiskMoveType
 	}
 
-	folder, err := ctx.Session.Finder.FolderOrDefault(ctx, ctx.VSphereVM.Spec.Folder)
+	folder, err := vmCtx.Session.Finder.FolderOrDefault(ctx, vmCtx.VSphereVM.Spec.Folder)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get folder for %q", ctx)
 	}
 
-	pool, err := ctx.Session.Finder.ResourcePoolOrDefault(ctx, ctx.VSphereVM.Spec.ResourcePool)
+	pool, err := vmCtx.Session.Finder.ResourcePoolOrDefault(ctx, vmCtx.VSphereVM.Spec.ResourcePool)
 	if err != nil {
 		return errors.Wrapf(err, "unable to get resource pool for %q", ctx)
 	}
@@ -136,14 +138,14 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 
 	// Only non-linked clones may expand the size of the template's disk.
 	if snapshotRef == nil {
-		diskSpecs, err := getDiskSpec(ctx, devices)
+		diskSpecs, err := getDiskSpec(vmCtx, devices)
 		if err != nil {
 			return errors.Wrapf(err, "error getting disk spec for %q", ctx)
 		}
 		deviceSpecs = append(deviceSpecs, diskSpecs...)
 	}
 
-	networkSpecs, err := getNetworkSpecs(ctx, devices)
+	networkSpecs, err := getNetworkSpecs(ctx, vmCtx, devices)
 	if err != nil {
 		return errors.Wrapf(err, "error getting network specs for %q", ctx)
 	}
@@ -154,15 +156,15 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 		return errors.Wrapf(err, "error getting network specs for %q", ctx)
 	}
 
-	numCPUs := ctx.VSphereVM.Spec.NumCPUs
+	numCPUs := vmCtx.VSphereVM.Spec.NumCPUs
 	if numCPUs < 2 {
 		numCPUs = 2
 	}
-	numCoresPerSocket := ctx.VSphereVM.Spec.NumCoresPerSocket
+	numCoresPerSocket := vmCtx.VSphereVM.Spec.NumCoresPerSocket
 	if numCoresPerSocket == 0 {
 		numCoresPerSocket = numCPUs
 	}
-	memMiB := ctx.VSphereVM.Spec.MemoryMiB
+	memMiB := vmCtx.VSphereVM.Spec.MemoryMiB
 	if memMiB == 0 {
 		memMiB = 2048
 	}
@@ -176,7 +178,7 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 			// Assign the clone's InstanceUUID the value of the Kubernetes Machine
 			// object's UID. This allows lookup of the cloned VM prior to knowing
 			// the VM's UUID.
-			InstanceUuid:      string(ctx.VSphereVM.UID),
+			InstanceUuid:      string(vmCtx.VSphereVM.UID),
 			Flags:             newVMFlagInfo(),
 			DeviceChange:      deviceSpecs,
 			ExtraConfig:       extraConfig,
@@ -201,31 +203,30 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 	// For PCI devices, the memory for the VM needs to be reserved
 	// We can replace this once we have another way of reserving memory option
 	// exposed via the API types.
-	if len(ctx.VSphereVM.Spec.PciDevices) > 0 {
-		spec.Config.MemoryReservationLockedToMax = pointer.Bool(true)
+	if len(vmCtx.VSphereVM.Spec.PciDevices) > 0 {
+		spec.Config.MemoryReservationLockedToMax = ptr.To(true)
 	}
 
 	var datastoreRef *types.ManagedObjectReference
-	if ctx.VSphereVM.Spec.Datastore != "" {
-		datastore, err := ctx.Session.Finder.Datastore(ctx, ctx.VSphereVM.Spec.Datastore)
+	if vmCtx.VSphereVM.Spec.Datastore != "" {
+		datastore, err := vmCtx.Session.Finder.Datastore(ctx, vmCtx.VSphereVM.Spec.Datastore)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get datastore %s for %q", ctx.VSphereVM.Spec.Datastore, ctx)
+			return errors.Wrapf(err, "unable to get datastore %s for %q", vmCtx.VSphereVM.Spec.Datastore, ctx)
 		}
 		datastoreRef = types.NewReference(datastore.Reference())
 		spec.Location.Datastore = datastoreRef
 	}
 
 	var storageProfileID string
-	//nolint:nestif
-	if ctx.VSphereVM.Spec.StoragePolicyName != "" {
-		pbmClient, err := pbm.NewClient(ctx, ctx.Session.Client.Client)
+	if vmCtx.VSphereVM.Spec.StoragePolicyName != "" {
+		pbmClient, err := pbm.NewClient(ctx, vmCtx.Session.Client.Client)
 		if err != nil {
 			return errors.Wrapf(err, "unable to create pbm client for %q", ctx)
 		}
 
-		storageProfileID, err = pbmClient.ProfileIDByName(ctx, ctx.VSphereVM.Spec.StoragePolicyName)
+		storageProfileID, err = pbmClient.ProfileIDByName(ctx, vmCtx.VSphereVM.Spec.StoragePolicyName)
 		if err != nil {
-			return errors.Wrapf(err, "unable to get storageProfileID from name %s for %q", ctx.VSphereVM.Spec.StoragePolicyName, ctx)
+			return errors.Wrapf(err, "unable to get storageProfileID from name %s for %q", vmCtx.VSphereVM.Spec.StoragePolicyName, ctx)
 		}
 
 		var hubs []pbmTypes.PbmPlacementHub
@@ -242,7 +243,7 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 			if err != nil {
 				return errors.Wrapf(err, "failed to get owning cluster of resourcepool %q to calculate datastore based on storage policy", pool)
 			}
-			dsGetter := object.NewComputeResource(ctx.Session.Client.Client, cluster.Reference())
+			dsGetter := object.NewComputeResource(vmCtx.Session.Client.Client, cluster.Reference())
 			datastores, err := dsGetter.Datastores(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "unable to list datastores from owning cluster of requested resourcepool")
@@ -263,14 +264,14 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 		}
 
 		if len(result.CompatibleDatastores()) == 0 {
-			return fmt.Errorf("no compatible datastores found for storage policy: %s", ctx.VSphereVM.Spec.StoragePolicyName)
+			return fmt.Errorf("no compatible datastores found for storage policy: %s", vmCtx.VSphereVM.Spec.StoragePolicyName)
 		}
 
 		// If datastoreRef is nil here it means that the user didn't specify a Datastore. So we should
 		// select one of the datastores of the owning cluster of the resource pool that matched the
 		// requirements of the storage policy.
 		if datastoreRef == nil {
-			r := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
+			r := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec // We won't need cryptographically secure randomness here.
 			ds := result.CompatibleDatastores()[r.Intn(len(result.CompatibleDatastores()))]
 			datastoreRef = &types.ManagedObjectReference{Type: ds.HubType, Value: ds.HubId}
 		}
@@ -280,7 +281,7 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 	// storagepolicy, so we should select the default
 	if datastoreRef == nil {
 		// if no datastore defined through VM spec or storage policy, use default
-		datastore, err := ctx.Session.Finder.DefaultDatastore(ctx)
+		datastore, err := vmCtx.Session.Finder.DefaultDatastore(ctx)
 		if err != nil {
 			return errors.Wrapf(err, "unable to get default datastore for %q", ctx)
 		}
@@ -292,19 +293,19 @@ func Clone(ctx *context.VMContext, bootstrapData []byte, format bootstrapv1.Form
 	spec.Location.Disk = getDiskLocators(disks, *datastoreRef, isLinkedClone)
 	spec.Location.Datastore = datastoreRef
 
-	ctx.Logger.Info("cloning machine", "namespace", ctx.VSphereVM.Namespace, "name", ctx.VSphereVM.Name, "cloneType", ctx.VSphereVM.Status.CloneMode)
-	task, err := tpl.Clone(ctx, folder, ctx.VSphereVM.Name, spec)
+	log.Info(fmt.Sprintf("Cloning Machine with clone mode %s", vmCtx.VSphereVM.Status.CloneMode))
+	task, err := tpl.Clone(ctx, folder, vmCtx.VSphereVM.Name, spec)
 	if err != nil {
 		return errors.Wrapf(err, "error trigging clone op for machine %s", ctx)
 	}
 
-	ctx.VSphereVM.Status.TaskRef = task.Reference().Value
+	vmCtx.VSphereVM.Status.TaskRef = task.Reference().Value
 
 	// patch the vsphereVM early to ensure that the task is
-	// reflected in the status right away, this avoid situations
+	// reflected in the status right away, this avoids situations
 	// of concurrent clones
-	if err := ctx.Patch(); err != nil {
-		ctx.Logger.Error(err, "patch failed", "vspherevm", ctx.VSphereVM)
+	if err := vmCtx.Patch(ctx); err != nil {
+		log.Error(err, "Failed to patch VSphereVM (best-effort)")
 	}
 	return nil
 }
@@ -337,7 +338,7 @@ func getDiskLocators(disks object.VirtualDeviceList, datastoreRef types.ManagedO
 	return diskLocators
 }
 
-func getDiskSpec(ctx *context.VMContext, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
+func getDiskSpec(vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
 	disks := devices.SelectByType((*types.VirtualDisk)(nil))
 	if len(disks) == 0 {
 		return nil, errors.Errorf("Invalid disk count: %d", len(disks))
@@ -345,8 +346,8 @@ func getDiskSpec(ctx *context.VMContext, devices object.VirtualDeviceList) ([]ty
 
 	// There is at least one disk
 	var diskSpecs []types.BaseVirtualDeviceConfigSpec
-	primaryDisk := disks[0].(*types.VirtualDisk) //nolint:forcetypeassert
-	primaryCloneCapacityKB := int64(ctx.VSphereVM.Spec.DiskGiB) * 1024 * 1024
+	primaryDisk := disks[0].(*types.VirtualDisk)
+	primaryCloneCapacityKB := int64(vmCtx.VSphereVM.Spec.DiskGiB) * 1024 * 1024
 	primaryDiskConfigSpec, err := getDiskConfigSpec(primaryDisk, primaryCloneCapacityKB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting disk config spec for primary disk")
@@ -360,8 +361,8 @@ func getDiskSpec(ctx *context.VMContext, devices object.VirtualDeviceList) ([]ty
 		for i, disk := range disks[1:] {
 			var diskCloneCapacityKB int64
 			// Check if additional Disks have been provided
-			if len(ctx.VSphereVM.Spec.AdditionalDisksGiB) > i {
-				diskCloneCapacityKB = int64(ctx.VSphereVM.Spec.AdditionalDisksGiB[i]) * 1024 * 1024
+			if len(vmCtx.VSphereVM.Spec.AdditionalDisksGiB) > i {
+				diskCloneCapacityKB = int64(vmCtx.VSphereVM.Spec.AdditionalDisksGiB[i]) * 1024 * 1024
 			} else {
 				diskCloneCapacityKB = disk.(*types.VirtualDisk).CapacityInKB
 			}
@@ -395,7 +396,9 @@ func getDiskConfigSpec(disk *types.VirtualDisk, diskCloneCapacityKB int64) (type
 
 const ethCardType = "vmxnet3"
 
-func getNetworkSpecs(ctx *context.VMContext, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
+func getNetworkSpecs(ctx context.Context, vmCtx *capvcontext.VMContext, devices object.VirtualDeviceList) ([]types.BaseVirtualDeviceConfigSpec, error) {
+	log := ctrl.LoggerFrom(ctx)
+
 	deviceSpecs := []types.BaseVirtualDeviceConfigSpec{}
 
 	// Remove any existing NICs
@@ -408,9 +411,9 @@ func getNetworkSpecs(ctx *context.VMContext, devices object.VirtualDeviceList) (
 
 	// Add new NICs based on the machine config.
 	key := int32(-100)
-	for i := range ctx.VSphereVM.Spec.Network.Devices {
-		netSpec := &ctx.VSphereVM.Spec.Network.Devices[i]
-		ref, err := ctx.Session.Finder.Network(ctx, netSpec.NetworkName)
+	for i := range vmCtx.VSphereVM.Spec.Network.Devices {
+		netSpec := &vmCtx.VSphereVM.Spec.Network.Devices[i]
+		ref, err := vmCtx.Session.Finder.Network(ctx, netSpec.NetworkName)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unable to find network %q", netSpec.NetworkName)
 		}
@@ -433,7 +436,7 @@ func getNetworkSpecs(ctx *context.VMContext, devices object.VirtualDeviceList) (
 			// Please see https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.vm.device.VirtualEthernetCard.html#addressType
 			// for the valid values for this field.
 			nic.AddressType = string(types.VirtualEthernetCardMacTypeManual)
-			ctx.Logger.V(4).Info("configured manual mac address", "mac-addr", nic.MacAddress)
+			log.V(4).Info("Configured manual MAC address", "macAddress", nic.MacAddress)
 		}
 
 		// Assign a temporary device key to ensure that a unique one will be
@@ -444,7 +447,7 @@ func getNetworkSpecs(ctx *context.VMContext, devices object.VirtualDeviceList) (
 			Device:    dev,
 			Operation: types.VirtualDeviceConfigSpecOperationAdd,
 		})
-		ctx.Logger.V(4).Info("created network device", "eth-card-type", ethCardType, "network-spec", netSpec)
+		log.V(4).Info("Created network device", "ethCardType", ethCardType, "networkSpec", netSpec)
 		key--
 	}
 

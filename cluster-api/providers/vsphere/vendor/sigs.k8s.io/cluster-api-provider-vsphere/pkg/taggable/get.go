@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package taggable handles tagging objects in VSphere.
 package taggable
 
 import (
@@ -27,13 +28,12 @@ import (
 )
 
 type taggableContext interface {
-	context.Context
 	GetSession() *session.Session
-	GetVsphereFailureDomain() infrav1.VSphereFailureDomain
 }
 
-func GetObjects(ctx taggableContext, fdType infrav1.FailureDomainType) (Objects, error) {
-	finderFunc := find.ObjectFunc(fdType, ctx.GetVsphereFailureDomain().Spec.Topology, ctx.GetSession().Finder)
+// GetObjects returns the objects for a given failure domain.
+func GetObjects(ctx context.Context, taggableCtx taggableContext, failureDomain *infrav1.VSphereFailureDomain, fdType infrav1.FailureDomainType) (Objects, error) {
+	finderFunc := find.ObjectFunc(fdType, failureDomain.Spec.Topology, taggableCtx.GetSession().Finder)
 	objRefs, err := finderFunc(ctx)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func GetObjects(ctx taggableContext, fdType infrav1.FailureDomainType) (Objects,
 	objects := make(Objects, len(objRefs))
 	for i, ref := range objRefs {
 		objects[i] = managedObject{
-			tagManager: ctx.GetSession().TagManager,
+			tagManager: taggableCtx.GetSession().TagManager,
 			ref:        ref,
 		}
 	}

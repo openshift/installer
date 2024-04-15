@@ -31,19 +31,6 @@ const (
 	VirtualMachineImageCapabilityLabel = "capability.image." + GroupName + "/"
 )
 
-// Condition types for VirtualMachineImages.
-const (
-	// VirtualMachineImageSyncedCondition documents that the image is synced with the vSphere content library item
-	// that contains the source of this image's information.
-	VirtualMachineImageSyncedCondition = "VirtualMachineImageSynced"
-
-	// VirtualMachineImageProviderReadyCondition denotes readiness of the VirtualMachineImage provider.
-	VirtualMachineImageProviderReadyCondition = "VirtualMachineImageProviderReady"
-
-	// VirtualMachineImageProviderSecurityComplianceCondition denotes security compliance of the library item provider.
-	VirtualMachineImageProviderSecurityComplianceCondition = "VirtualMachineImageProviderSecurityCompliance"
-)
-
 // Condition reasons for VirtualMachineImages.
 const (
 	// VirtualMachineImageNotSyncedReason documents that the VirtualMachineImage is not synced with
@@ -132,7 +119,7 @@ type VirtualMachineImageSpec struct {
 // VirtualMachineImageStatus defines the observed state of VirtualMachineImage.
 type VirtualMachineImageStatus struct {
 
-	// Name describes the observed, "friendly" name for this image.
+	// Name describes the display name of this image.
 	//
 	// +optional
 	Name string `json:"name,omitempty"`
@@ -177,11 +164,17 @@ type VirtualMachineImageStatus struct {
 	// +optional
 	OSInfo VirtualMachineImageOSInfo `json:"osInfo,omitempty"`
 
-	// OVFProperties describes the observed OVF properties defined for this
+	// OVFProperties describes the observed user configurable OVF properties defined for this
 	// image.
 	//
 	// +optional
 	OVFProperties []OVFProperty `json:"ovfProperties,omitempty"`
+
+	// VMwareSystemProperties describes the observed VMware system properties defined for
+	// this image.
+	//
+	// +optional
+	VMwareSystemProperties []common.KeyValuePair `json:"vmwareSystemProperties,omitempty"`
 
 	// ProductInfo describes the observed product information for this image.
 	// +optional
@@ -193,6 +186,12 @@ type VirtualMachineImageStatus struct {
 	// +optional
 	ProviderContentVersion string `json:"providerContentVersion,omitempty"`
 
+	// ProviderItemID describes the ID of the provider item that this image corresponds to.
+	// If the provider of this image is a Content Library, this ID will be that of the
+	// corresponding Content Library item.
+	// +optional
+	ProviderItemID string `json:"providerItemID,omitempty"`
+
 	// Conditions describes the observed conditions for this image.
 	//
 	// +optional
@@ -203,9 +202,9 @@ type VirtualMachineImageStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=vmi;vmimage
-// +kubebuilder:storageversion:false
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Image Name",type="string",JSONPath=".status.name"
+// +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".status.name"
 // +kubebuilder:printcolumn:name="Image Version",type="string",JSONPath=".status.productInfo.version"
 // +kubebuilder:printcolumn:name="OS Name",type="string",JSONPath=".status.osInfo.type"
 // +kubebuilder:printcolumn:name="OS Version",type="string",JSONPath=".status.osInfo.version"
@@ -221,6 +220,14 @@ type VirtualMachineImage struct {
 	Status VirtualMachineImageStatus `json:"status,omitempty"`
 }
 
+func (i *VirtualMachineImage) GetConditions() []metav1.Condition {
+	return i.Status.Conditions
+}
+
+func (i *VirtualMachineImage) SetConditions(conditions []metav1.Condition) {
+	i.Status.Conditions = conditions
+}
+
 // +kubebuilder:object:root=true
 
 // VirtualMachineImageList contains a list of VirtualMachineImage.
@@ -232,9 +239,9 @@ type VirtualMachineImageList struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,shortName=cvmi;cvmimage;clustervmi;clustervmimage
-// +kubebuilder:storageversion:false
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Image Name",type="string",JSONPath=".status.name"
+// +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".status.name"
 // +kubebuilder:printcolumn:name="Image Version",type="string",JSONPath=".status.productInfo.version"
 // +kubebuilder:printcolumn:name="OS Name",type="string",JSONPath=".status.osInfo.type"
 // +kubebuilder:printcolumn:name="OS Version",type="string",JSONPath=".status.osInfo.version"
@@ -248,6 +255,14 @@ type ClusterVirtualMachineImage struct {
 
 	Spec   VirtualMachineImageSpec   `json:"spec,omitempty"`
 	Status VirtualMachineImageStatus `json:"status,omitempty"`
+}
+
+func (i *ClusterVirtualMachineImage) GetConditions() []metav1.Condition {
+	return i.Status.Conditions
+}
+
+func (i *ClusterVirtualMachineImage) SetConditions(conditions []metav1.Condition) {
+	i.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:root=true

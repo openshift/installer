@@ -21,11 +21,11 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
+	capvcontext "sigs.k8s.io/cluster-api-provider-vsphere/pkg/context"
 )
 
 type virtualMachineContext struct {
-	context.VMContext
+	capvcontext.VMContext
 	Ref       types.ManagedObjectReference
 	Obj       *object.VirtualMachine
 	State     *infrav1.VirtualMachine

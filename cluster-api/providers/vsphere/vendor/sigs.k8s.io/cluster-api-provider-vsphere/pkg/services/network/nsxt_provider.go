@@ -17,20 +17,22 @@ limitations under the License.
 package network
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
-	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
+	vmoprv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha1"
 	ncpv1 "github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
+	vmwarev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/services"
 	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/util"
@@ -64,31 +66,32 @@ func (np *nsxtNetworkProvider) verifyNSXTVirtualNetworkStatus(ctx *vmware.Cluste
 	namespace := ctx.VSphereCluster.Namespace
 	for _, condition := range vnet.Status.Conditions {
 		if condition.Type == "Ready" && condition.Status != "True" {
-			conditions.MarkFalse(ctx.VSphereCluster, infrav1.ClusterNetworkReadyCondition, infrav1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
+			conditions.MarkFalse(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, condition.Message)
 			return errors.Errorf("virtual network ready status is: '%s' in cluster %s. reason: %s, message: %s",
 				condition.Status, types.NamespacedName{Namespace: namespace, Name: clusterName}, condition.Reason, condition.Message)
 		}
 	}
 
-	conditions.MarkTrue(ctx.VSphereCluster, infrav1.ClusterNetworkReadyCondition)
+	conditions.MarkTrue(ctx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
 	return nil
 }
 
-func (np *nsxtNetworkProvider) VerifyNetworkStatus(ctx *vmware.ClusterContext, obj runtime.Object) error {
+func (np *nsxtNetworkProvider) VerifyNetworkStatus(_ context.Context, clusterCtx *vmware.ClusterContext, obj runtime.Object) error {
 	vnet, ok := obj.(*ncpv1.VirtualNetwork)
 	if !ok {
 		return fmt.Errorf("expected NCP VirtualNetwork but got %T", obj)
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(ctx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
 }
 
-func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx *vmware.ClusterContext) error {
-	cluster := ctx.VSphereCluster
-	clusterKey := types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}
+func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx context.Context, clusterCtx *vmware.ClusterContext) error {
+	log := ctrl.LoggerFrom(ctx)
 
-	ctx.Logger.V(2).Info("Provisioning ", "vnet", GetNSXTVirtualNetworkName(cluster.Name), "namespace", cluster.Namespace)
-	defer ctx.Logger.V(2).Info("Finished provisioning", "vnet", GetNSXTVirtualNetworkName(cluster.Name), "namespace", cluster.Namespace)
+	cluster := clusterCtx.VSphereCluster
+
+	log.Info("Provisioning ", "vnet", GetNSXTVirtualNetworkName(cluster.Name))
+	defer log.Info("Finished provisioning", "vnet", GetNSXTVirtualNetworkName(cluster.Name))
 
 	vnet := &ncpv1.VirtualNetwork{
 		ObjectMeta: metav1.ObjectMeta{
@@ -102,19 +105,16 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx *vmware.ClusterContex
 		if np.disableFW != "true" && vnet.Spec.WhitelistSourceRanges == "" {
 			supportFW, err := util.NCPSupportFW(ctx, np.client)
 			if err != nil {
-				ctx.Logger.Error(err, "failed to check if NCP supports firewall rules enforcement on GC T1 router")
-				return err
+				return errors.Wrap(err, "failed to check if NCP supports firewall rules enforcement on GC T1 router")
 			}
 			// specify whitelist_source_ranges if needed and if NCP supports it
 			if supportFW {
 				// Find system namespace snat ip
 				systemNSSnatIP, err := util.GetNamespaceNetSnatIP(ctx, np.client, SystemNamespace)
 				if err != nil {
-					ctx.Logger.Error(err, "failed to get Snat IP for kube-system")
-					return err
+					return errors.Wrap(err, "failed to get Snat IP for kube-system")
 				}
-				ctx.Logger.V(4).Info("got system namespace snat ip",
-					"cluster", clusterKey, "ip", systemNSSnatIP)
+				log.V(4).Info("Got system namespace snat ip", "ip", systemNSSnatIP)
 
 				// WhitelistSourceRanges accept cidrs only
 				vnet.Spec.WhitelistSourceRanges = systemNSSnatIP + "/32"
@@ -122,15 +122,15 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx *vmware.ClusterContex
 		}
 
 		if err := ctrlutil.SetOwnerReference(
-			ctx.VSphereCluster,
+			clusterCtx.VSphereCluster,
 			vnet,
-			ctx.Scheme,
+			np.client.Scheme(),
 		); err != nil {
 			return errors.Wrapf(
 				err,
 				"error setting %s/%s as owner of %s/%s",
-				ctx.VSphereCluster.Namespace,
-				ctx.VSphereCluster.Name,
+				clusterCtx.VSphereCluster.Namespace,
+				clusterCtx.VSphereCluster.Name,
 				vnet.Namespace,
 				vnet.Name,
 			)
@@ -139,18 +139,17 @@ func (np *nsxtNetworkProvider) ProvisionClusterNetwork(ctx *vmware.ClusterContex
 		return nil
 	})
 	if err != nil {
-		conditions.MarkFalse(ctx.VSphereCluster, infrav1.ClusterNetworkReadyCondition, infrav1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
-		ctx.Logger.V(2).Info("Failed to provision network", "cluster", clusterKey)
-		return err
+		conditions.MarkFalse(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition, vmwarev1.ClusterNetworkProvisionFailedReason, clusterv1.ConditionSeverityWarning, err.Error())
+		return errors.Wrap(err, "Failed to provision network")
 	}
 
-	return np.verifyNSXTVirtualNetworkStatus(ctx, vnet)
+	return np.verifyNSXTVirtualNetworkStatus(clusterCtx, vnet)
 }
 
-// Returns the name of a valid cluster network if one exists.
-func (np *nsxtNetworkProvider) GetClusterNetworkName(ctx *vmware.ClusterContext) (string, error) {
+// GetClusterNetworkName returns the name of a valid cluster network if one exists.
+func (np *nsxtNetworkProvider) GetClusterNetworkName(ctx context.Context, clusterCtx *vmware.ClusterContext) (string, error) {
 	vnet := &ncpv1.VirtualNetwork{}
-	cluster := ctx.VSphereCluster
+	cluster := clusterCtx.VSphereCluster
 	namespacedName := types.NamespacedName{
 		Namespace: cluster.Namespace,
 		Name:      GetNSXTVirtualNetworkName(cluster.Name),
@@ -161,8 +160,8 @@ func (np *nsxtNetworkProvider) GetClusterNetworkName(ctx *vmware.ClusterContext)
 	return namespacedName.Name, nil
 }
 
-func (np *nsxtNetworkProvider) GetVMServiceAnnotations(ctx *vmware.ClusterContext) (map[string]string, error) {
-	vnetName, err := np.GetClusterNetworkName(ctx)
+func (np *nsxtNetworkProvider) GetVMServiceAnnotations(ctx context.Context, clusterCtx *vmware.ClusterContext) (map[string]string, error) {
+	vnetName, err := np.GetClusterNetworkName(ctx, clusterCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -171,15 +170,15 @@ func (np *nsxtNetworkProvider) GetVMServiceAnnotations(ctx *vmware.ClusterContex
 }
 
 // ConfigureVirtualMachine configures a VirtualMachine object based on the networking configuration.
-func (np *nsxtNetworkProvider) ConfigureVirtualMachine(ctx *vmware.ClusterContext, vm *vmopv1.VirtualMachine) error {
-	nsxtClusterNetworkName := GetNSXTVirtualNetworkName(ctx.VSphereCluster.Name)
+func (np *nsxtNetworkProvider) ConfigureVirtualMachine(_ context.Context, clusterCtx *vmware.ClusterContext, vm *vmoprv1.VirtualMachine) error {
+	nsxtClusterNetworkName := GetNSXTVirtualNetworkName(clusterCtx.VSphereCluster.Name)
 	for _, vnif := range vm.Spec.NetworkInterfaces {
 		if vnif.NetworkType == NSXTTypeNetwork && vnif.NetworkName == nsxtClusterNetworkName {
 			// expected network interface is already found
 			return nil
 		}
 	}
-	vm.Spec.NetworkInterfaces = append(vm.Spec.NetworkInterfaces, vmopv1.VirtualMachineNetworkInterface{
+	vm.Spec.NetworkInterfaces = append(vm.Spec.NetworkInterfaces, vmoprv1.VirtualMachineNetworkInterface{
 		NetworkName: nsxtClusterNetworkName,
 		NetworkType: NSXTTypeNetwork,
 	})

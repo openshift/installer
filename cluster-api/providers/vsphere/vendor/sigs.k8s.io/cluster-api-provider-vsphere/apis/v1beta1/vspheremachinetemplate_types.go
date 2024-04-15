@@ -14,14 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//nolint:godot
 package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// VSphereMachineTemplateSpec defines the desired state of VSphereMachineTemplate
+// VSphereMachineTemplateSpec defines the desired state of VSphereMachineTemplate.
 type VSphereMachineTemplateSpec struct {
 	Template VSphereMachineTemplateResource `json:"template"`
 }
@@ -30,7 +29,7 @@ type VSphereMachineTemplateSpec struct {
 // +kubebuilder:resource:path=vspheremachinetemplates,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion
 
-// VSphereMachineTemplate is the Schema for the vspheremachinetemplates API
+// VSphereMachineTemplate is the Schema for the vspheremachinetemplates API.
 type VSphereMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -40,7 +39,7 @@ type VSphereMachineTemplate struct {
 
 // +kubebuilder:object:root=true
 
-// VSphereMachineTemplateList contains a list of VSphereMachineTemplate
+// VSphereMachineTemplateList contains a list of VSphereMachineTemplate.
 type VSphereMachineTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -48,5 +47,5 @@ type VSphereMachineTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&VSphereMachineTemplate{}, &VSphereMachineTemplateList{})
+	objectTypes = append(objectTypes, &VSphereMachineTemplate{}, &VSphereMachineTemplateList{})
 }

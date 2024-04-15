@@ -14,22 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package network contains code for configuring network services.
 package network
 
 const (
+	// NSXTTypeNetwork is the name of the NSX-T network type.
 	NSXTTypeNetwork = "nsx-t"
-	// NSXTVNetSelectorKey
-	// This constant is also defined in VM Operator.
+	// NSXTVNetSelectorKey is also defined in VM Operator.
 	NSXTVNetSelectorKey = "ncp.vmware.com/virtual-network-name"
 
-	CAPVDefaultNetworkLabel    = "capv.vmware.com/is-default-network"
+	// CAPVDefaultNetworkLabel is a label used to identify the default network.
+	CAPVDefaultNetworkLabel = "capv.vmware.com/is-default-network"
+	// NetOpNetworkNameAnnotation is the key used in an annotation to define the NetOp network. The expected value is the network name.
 	NetOpNetworkNameAnnotation = "netoperator.vmware.com/network-name"
 
 	// SystemNamespace is the namespace where supervisor control plane VMs reside.
 	SystemNamespace = "kube-system"
 
 	// legacyDefaultNetworkLabel was the label used for default networks.
-	// This is deprecated and is introduced only for smoother transitions.
-	// This will be released in a future release.
+	//
+	// Deprecated: legacyDefaultNetworkLabel will be removed in a future release.
 	legacyDefaultNetworkLabel = "capw.vmware.com/is-default-network"
 )
