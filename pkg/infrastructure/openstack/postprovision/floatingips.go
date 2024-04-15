@@ -18,6 +18,9 @@ import (
 
 // FloatingIPs creates and attaches a Floating IP to the Bootstrap Machine.
 func FloatingIPs(ctx context.Context, c client.Client, cluster *capo.OpenStackCluster, installConfig *installconfig.InstallConfig, infraID string) error {
+	if cluster.Status.ExternalNetwork == nil {
+		return nil
+	}
 	bootstrapMachine := &capo.OpenStackMachine{}
 	key := client.ObjectKey{
 		Name:      capiutils.GenerateBoostrapMachineName(infraID),
