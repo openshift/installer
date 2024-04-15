@@ -113,7 +113,7 @@ then
 	GOOS='' GOARCH='' go generate ./data
 fi
 
-if (echo "${TAGS}" | grep -q 'libvirt')
+if (echo "${TAGS}" | grep -q '\bfipscapable\b')
 then
 	export CGO_ENABLED=1
 fi

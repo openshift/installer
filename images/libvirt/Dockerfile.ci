@@ -3,7 +3,7 @@
 # oc for getting assets from an existing cluster to spin up multi-architecture compute clusters on libvirt.
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder
-ARG TAGS="libvirt"
+ARG TAGS="libvirt fipscapable"
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
