@@ -304,9 +304,6 @@ replace (
 
 replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0-alpha.0.0.20240424062805-188d9e99702c
 
-// Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
-replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-
 replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8
 
 replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20230831114549-1922eda29cf8
