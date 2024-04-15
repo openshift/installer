@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -77,8 +77,8 @@ func SetControllerReference(owner, controlled metav1.Object, scheme *runtime.Sch
 		Kind:               gvk.Kind,
 		Name:               owner.GetName(),
 		UID:                owner.GetUID(),
-		BlockOwnerDeletion: pointer.Bool(true),
-		Controller:         pointer.Bool(true),
+		BlockOwnerDeletion: ptr.To(true),
+		Controller:         ptr.To(true),
 	}
 
 	// Return early with an error if the object is already controlled.
@@ -171,7 +171,32 @@ func RemoveControllerReference(owner, object metav1.Object, scheme *runtime.Sche
 	if ok := HasControllerReference(object); !ok {
 		return fmt.Errorf("%T does not have a owner reference with controller equals true", object)
 	}
-	return RemoveOwnerReference(owner, object, scheme)
+	ro, ok := owner.(runtime.Object)
+	if !ok {
+		return fmt.Errorf("%T is not a runtime.Object, cannot call RemoveControllerReference", owner)
+	}
+	gvk, err := apiutil.GVKForObject(ro, scheme)
+	if err != nil {
+		return err
+	}
+	ownerRefs := object.GetOwnerReferences()
+	index := indexOwnerRef(ownerRefs, metav1.OwnerReference{
+		APIVersion: gvk.GroupVersion().String(),
+		Name:       owner.GetName(),
+		Kind:       gvk.Kind,
+	})
+
+	if index == -1 {
+		return fmt.Errorf("%T does not have an controller reference for %T", object, owner)
+	}
+
+	if ownerRefs[index].Controller == nil || !*ownerRefs[index].Controller {
+		return fmt.Errorf("%T owner is not the controller reference for %T", owner, object)
+	}
+
+	ownerRefs = append(ownerRefs[:index], ownerRefs[index+1:]...)
+	object.SetOwnerReferences(ownerRefs)
+	return nil
 }
 
 func upsertOwnerRef(ref metav1.OwnerReference, object metav1.Object) {
@@ -219,7 +244,6 @@ func referSameObject(a, b metav1.OwnerReference) bool {
 	if err != nil {
 		return false
 	}
-
 	return aGV.Group == bGV.Group && a.Kind == b.Kind && a.Name == b.Name
 }
 
@@ -246,6 +270,9 @@ const ( // They should complete the sentence "Deployment default/foo has been ..
 // The MutateFn is called regardless of creating or updating an object.
 //
 // It returns the executed operation and an error.
+//
+// Note: changes made by MutateFn to any sub-resource (status...), will be
+// discarded.
 func CreateOrUpdate(ctx context.Context, c client.Client, obj client.Object, f MutateFn) (OperationResult, error) {
 	key := client.ObjectKeyFromObject(obj)
 	if err := c.Get(ctx, key, obj); err != nil {
@@ -283,6 +310,12 @@ func CreateOrUpdate(ctx context.Context, c client.Client, obj client.Object, f M
 // The MutateFn is called regardless of creating or updating an object.
 //
 // It returns the executed operation and an error.
+//
+// Note: changes to any sub-resource other than status will be ignored.
+// Changes to the status sub-resource will only be applied if the object
+// already exist. To change the status on object creation, the easiest
+// way is to requeue the object in the controller if OperationResult is
+// OperationResultCreated
 func CreateOrPatch(ctx context.Context, c client.Client, obj client.Object, f MutateFn) (OperationResult, error) {
 	key := client.ObjectKeyFromObject(obj)
 	if err := c.Get(ctx, key, obj); err != nil {
